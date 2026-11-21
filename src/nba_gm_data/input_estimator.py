@@ -41,6 +41,18 @@ STATS_PATH = 'Player Stats/player_stats.json'
 CAREER_PATH = 'data/research/player_career_stats.json'
 PACKET_PATH = 'docs/ratings-evidence-2026-10-29'
 SHOT_ZONE_PATH = 'data/research/shot_chart_reference.json'
+# ROOKIE-FIT (2026-11-21): the 2026 class's final college season, its projected rookie-year impact
+# (scripts/research/rookie_fit.py) and the fitted college -> 94-input mapping (data/canonical/real_prospects.json).
+ROOKIE_TRANSLATION_PATH = 'data/research/rookie_translation_2026.json'
+ROOKIE_MAPPING_PATH = 'data/canonical/real_prospects.json'
+ROOKIE_METHOD = 'rookie_translation_v1'
+# The projection is the expected rookie-year impact (already a shrunk forecast), and it is this player's only
+# level evidence. It enters the family-talent step exactly like a veteran's impact metric, at the most
+# precision one impact observation may carry there (2), so it is not shrunk twice.
+ROOKIE_PROJECTION_PRECISION = 2.0
+# Same weights as the real 2027-2029 college prospects (real_prospects.INPUT_WEIGHT_*): share of a fitted
+# college estimate = min(.6, .2 + .5 x how well college predicts the input) x minutes / (minutes + 300).
+ROOKIE_EVIDENCE_PRIOR_MINUTES = 300.0
 LIMIT = ('Raw technique is incompletely separated from tools, teammates and deployment; '
          'shared evidence is correlated, not independent observations.')
 
@@ -540,6 +552,80 @@ BBI_SAMPLE_PRIORS = {'shots': 200, 'contests': 200, 'screens': 300,
                      'drives': 300, 'rebound_chances': 300, 'possessions': 1000}
 
 
+def load_rookie_college(root: str | Path, path: Path | None = None) -> dict[str, dict]:
+    """The 2026 rookies' college evidence: {player_id: {evidence, projection, involvement, college}}.
+
+    evidence: one InputEvidence per input the college -> 94-input mapping speaks to (shooting from college
+    shooting and free throws, rebounding from rebound rates, defensive events from steal and block rates,
+    passing from assist rate and assist-to-turnover, handling and creation from usage, self-created shots and
+    turnovers), valued at NBA entry (years in league 0, his draft slot) and weighted like the real 2027-2029
+    prospects. projection: expected rookie-year impact per 100 possessions (offense 'o', defense 'd') from the
+    translation fit. involvement: [measured-scale target, weight] for T08 from college usage (applied after the
+    measured-tendency mapping, see apply_rookie_involvement). Missing files mean no rookie has college evidence.
+    """
+    root = Path(root)
+    path, mapping_path = path or root / ROOKIE_TRANSLATION_PATH, root / ROOKIE_MAPPING_PATH
+    if not path.exists() or not mapping_path.exists():
+        return {}
+    from .real_prospects import INPUT_WEIGHT_BASE, INPUT_WEIGHT_MAX, INPUT_WEIGHT_PER_R, input_parts
+    with path.open(encoding='utf-8') as stream:
+        bundle = json.load(stream)
+    with mapping_path.open(encoding='utf-8') as stream:
+        mapping = json.load(stream).get('input_mapping') or {}
+    fits = mapping.get('targets') or {}
+    out = {}
+    for pid, entry in sorted((bundle.get('class_2026') or {}).items()):
+        profile = entry['profile']
+        minutes = float(entry['effective_minutes'])
+        pick = max(1.0, float(entry['pick']))
+        parts = input_parts(profile, mapping, entry['college'].get('height_in'))
+        college = entry['college']
+        line = (f"{college['team']} {college['season']}: {college['games']} games, {college['minutes']:.0f} min, "
+                f"BPM {college['bpm']}")
+        evidence, involvement = [], None
+        for iid, part in sorted(parts.items()):
+            fit = fits[iid]
+            value = fit['intercept'] + part + fit['years_coef'] * (0 - 3) + fit['log_pick_coef'] * (math.log(pick) - 3)
+            reliability = min(INPUT_WEIGHT_MAX, INPUT_WEIGHT_BASE + INPUT_WEIGHT_PER_R * max(0.0, fit['r_college']))
+            if iid == 'T08':
+                involvement = [round(value, 6), round(reliability * minutes / (minutes + ROOKIE_EVIDENCE_PRIOR_MINUTES), 6)]
+                continue
+            grade = round(_soft_grade_bounds(value), 6)
+            radius = 2 * float(fit['residual_sd'])
+            evidence.append(InputEvidence(
+                iid, dict(grade=grade, scale=FT_SCALE if iid == 'S07' else TECHNIQUE_SCALE),
+                tuple(_bounded_band(grade, radius)), 'barttorvik:final_college_season',
+                f"{ROOKIE_METHOD}: college {'/'.join(fit['features'])} translated to NBA entry by the fitted "
+                f"college -> input mapping ({ROOKIE_MAPPING_PATH}, r={fit['r_college']}); {line}",
+                'college:' + pid, n=minutes, prior_exposure=ROOKIE_EVIDENCE_PRIOR_MINUTES,
+                reliability=reliability, exposure_unit='college_minutes'))
+        out[pid] = dict(evidence=evidence, projection=dict(entry['projection']), involvement=involvement,
+                        name=entry['name'], college=college)
+    return out
+
+
+def apply_rookie_involvement(section: dict, college: Mapping[str, dict]) -> int:
+    """College usage as evidence for involvement (T08), on the measured scale after the tendency mapping, so
+    the league-wide scale map (and every veteran) is untouched. Same weight rule as the other college inputs."""
+    changed = 0
+    for pid, entry in sorted(college.items()):
+        doc = section['players'].get(pid)
+        if doc is None or not entry.get('involvement'):
+            continue
+        target, weight = entry['involvement']
+        record = doc['inputs']['T08']
+        old = float(record['value']['probability'])
+        new = round((1 - weight) * old + weight * min(.95, max(.05, target)), 8)
+        record['value'] = dict(record['value'], probability=new)
+        record['evidence'] = [*record['evidence'], _evidence(
+            'barttorvik:final_college_season', f'{ROOKIE_METHOD}: college usage on the measured true-usage scale '
+            f'(fitted mapping, {ROOKIE_MAPPING_PATH})', 'college:' + pid,
+            exposure=dict(value=entry['college']['minutes'], unit='college_minutes'),
+            notes=f'target={target}; weight={weight}; before={old}')]
+        changed += 1
+    return changed
+
+
 def load_bbi_evidence(root: str | Path) -> dict[str, list[InputEvidence]]:
     """Load a local cache automatically, without network or absent-cache changes.
 
@@ -650,7 +736,11 @@ class InputEstimator:
                    legacy_traits=read(UNIVERSE_PATH).get('traits', []),
                    shot_zones=read(SHOT_ZONE_PATH).get('profiles', []))
 
-    def estimate_player_inputs(self, player: Any, traits: Any = None, *, prospect: bool = False) -> PlayerInputs:
+    def estimate_player_inputs(self, player: Any, traits: Any = None, *, prospect: bool = False,
+                               college: Mapping | None = None) -> PlayerInputs:
+        """college (rookies with a final college season, see load_rookie_college): its fitted skill estimates
+        enter as evidence entries and its projected rookie-year impact sets the family talent level, in place
+        of the flat pre-NBA readiness offset and the old draft-model traits."""
         player = _plain(player)
         if _fictional_player(player):
             return _generated_player_inputs(player, traits)
@@ -659,11 +749,16 @@ class InputEstimator:
         pos = _position(player)
         records = _physical_inputs(player, prospect)
         records.update(_tendency_inputs(player, prospect))
+        # The flat readiness offset is a judgement for rookies WITHOUT evidence; with a college season the
+        # translation fit measures readiness instead (ROOKIE-FIT).
+        offset = prospect and college is None
+        if college is not None:
+            traits = {}   # old draft-model traits (slot-based) are replaced by the college evidence
         for iid in DEFINITIONS:
             if DEFINITIONS[iid]['kind'] == 'grade':
-                p = _prior_grade(iid,player,prospect)
+                p = _prior_grade(iid,player,offset)
                 if iid == 'S07':
-                    p = {'guard':79,'wing':76,'big':70}[pos] - (3 if prospect else 0)
+                    p = {'guard':79,'wing':76,'big':70}[pos] - (3 if offset else 0)
                 records[iid] = _grade_record(p, 36 if prospect else 30,
                     [_evidence(METHOD_VERSION + ':position_role_prior',
                                'fixed position/role prior; no direct evidence for this technique', 'position_role_prior')],
@@ -683,7 +778,10 @@ class InputEstimator:
         # technique observations can inform their declared related family.
         bbi = [o for o in observations if o.group_id.startswith('bbi:')]
         self._apply_additional(records, [o for o in observations if not o.group_id.startswith('bbi:')])
-        if not prospect:
+        if college is not None:
+            self._apply_additional(records, [o for o in college['evidence'] if DEFINITIONS[o.input_id]['kind'] == 'grade'])
+            self._hierarchical_priors(player, records, projection=college['projection'])
+        elif not prospect:
             self._hierarchical_priors(player, records)
         self._apply_additional(records, bbi)
         document = dict(version=INPUT_VERSION, registry_version=REGISTRY_VERSION,
@@ -731,7 +829,17 @@ class InputEstimator:
                              fields={k: v for _, _, fields in parts for k, v in fields.items()})]
         return []
 
-    def _hierarchical_priors(self, player: dict, records: dict) -> None:
+    def _projection_context(self, player: dict, family: str, projection: Mapping) -> list[dict]:
+        """A rookie's projected rookie-year impact (per 100 possessions, offense / defense) as the family
+        context, on the same unit anchors as a veteran's impact metric (2 offensive / 1.5 defensive points)."""
+        channel, impact_loading, _, _ = FAMILY_CONTEXT[family]
+        value = float(projection['o' if channel == 'offense' else 'd'])
+        return [dict(signal=impact_loading * value / (2 if channel == 'offense' else 1.5),
+                     precision=ROOKIE_PROJECTION_PRECISION, source='college:' + str(player['id']),
+                     group='rookie_projection', projection_source=ROOKIE_TRANSLATION_PATH,
+                     fields={('projected_rookie_' + channel): value})]
+
+    def _hierarchical_priors(self, player: dict, records: dict, projection: Mapping | None = None) -> None:
         """Partial pooling of missing technique, with no recursive prior learning.
 
         Snapshot direct records before updating any prior. Shared source/group
@@ -791,11 +899,21 @@ class InputEstimator:
                                    precision=max(s['precision'] for s in component),
                                    inputs=sorted(i for s in component for i in s['inputs']),
                                    sources=sorted(lineage), group='direct_family'))
-            context = self._family_context(player, family)
+            context = (self._projection_context(player, family, projection) if projection is not None
+                       else self._family_context(player, family))
             observations = []
             for summary in context:
                 overlap = [g for g in groups if summary['source'] in g['sources']]
-                if overlap:
+                if overlap and summary.get('group') == 'rookie_projection':
+                    # The college skill evidence and the projection come from the same college season: one
+                    # observation (average signal, the larger precision), never counted twice.
+                    observations.append(dict(
+                        signal=_mean([summary['signal'], *(g['signal'] for g in overlap)]),
+                        precision=max([summary['precision'], *(g['precision'] for g in overlap)]),
+                        inputs=sorted(i for g in overlap for i in g['inputs']),
+                        sources=sorted(set().union(*(g['sources'] for g in overlap))),
+                        group='rookie_college_and_projection', fields=summary['fields']))
+                elif overlap:
                     # More specific family evidence supersedes broad impact
                     # from the SAME data source. Averaging them would let an
                     # ambiguous global model overwhelm its own skill evidence.

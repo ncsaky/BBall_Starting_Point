@@ -389,15 +389,21 @@ def r(value, digits=3):
 
 
 def main() -> None:
-    global K_MINUTES
+    global K_MINUTES, TARGET_DRAFT, FIT_DRAFTS, OUT
     parser = argparse.ArgumentParser()
     parser.add_argument("--no-write", action="store_true")
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--k", type=float, default=K_MINUTES, help="minutes of shrinkage toward replacement")
     parser.add_argument("--no-interactions", action="store_true",
                         help="drop the age x college production terms (sensitivity check)")
+    parser.add_argument("--backtest-2025", action="store_true",
+                        help="fit on drafts 2009-2024 only and project the 2025 class as of its draft (scratch file)")
     args = parser.parse_args()
     K_MINUTES = args.k
+    if args.backtest_2025:
+        TARGET_DRAFT, FIT_DRAFTS = 2025, range(2009, 2025)
+        OUT = ROOT / "output/rookie-fit/rookie_translation_2025_backtest.json"
+        OUT.parent.mkdir(parents=True, exist_ok=True)
     if not args.no_interactions:
         MODELS["college"] = (*FEATURES, "age_x_obpm", "age_x_dbpm")
         MODELS["college_slot"] = (*MODELS["college"], "log_pick")
@@ -478,7 +484,7 @@ def main() -> None:
             "projection": proj, "profile": e["profile"], "effective_minutes": e["effective_minutes"],
         }
     report["class_2026_without_college_line"] = missing
-    print(f"\n2026 class with a college line: {len(projections)}; without: {len(missing)} {missing}")
+    print(f"\n{TARGET_DRAFT} class with a college line: {len(projections)}; without: {len(missing)} {missing}")
     for pid, p in sorted(projections.items(), key=lambda kv: -kv[1]["projection"]["lebron"]):
         c = p["college"]
         print(f"  {p['name'][:22]:22s} pick {p['pick']:>2} age {p['age']:4.1f}  college BPM {c['bpm']:5.1f} "

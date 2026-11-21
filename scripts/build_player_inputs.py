@@ -14,7 +14,7 @@ from pathlib import Path
 import time
 
 from nba_gm_data.input_estimator import (
-    DEFINITIONS, InputEstimator, METHOD_VERSION,
+    DEFINITIONS, InputEstimator, METHOD_VERSION, apply_rookie_involvement, load_rookie_college,
     UNIVERSE_PATH, canonical_json, coverage_counts, estimation_status,
     load_reference_cells, validation_comparison, source_join_audit, rotation_input_spread,
 )
@@ -26,7 +26,10 @@ TECHNIQUE_INPUTS = tuple(iid for iid, definition in DEFINITIONS.items()
                          if definition["kind"] == "grade")
 
 
-def estimate_startup_inputs(estimator: InputEstimator, universe: dict) -> dict:
+def estimate_startup_inputs(estimator: InputEstimator, universe: dict, college: dict | None = None) -> dict:
+    """Veterans: the full evidence path. 2026 rookies (no NBA season yet): rookie technique; with a final college
+    season (ROOKIE-FIT, `college`), the technique comes from that season's evidence and the projected rookie-year
+    impact. Their physical tools and tendencies keep the original estimates before the evidence overlays."""
     section = estimator.estimate_universe(universe)
     for player in universe["players"]:
         if player.get("draft_year") != 2026 or player.get("draft_status") != "drafted":
@@ -35,7 +38,8 @@ def estimate_startup_inputs(estimator: InputEstimator, universe: dict) -> dict:
         if any(row.get("season") and row["season"] < "2026-27" and (row.get("games") or 0) > 0
                for row in career.get("seasons", [])):
             continue
-        rookie_inputs = estimator.estimate_player_inputs(player, prospect=True).to_dict()["inputs"]
+        rookie_inputs = estimator.estimate_player_inputs(
+            player, prospect=True, college=(college or {}).get(player["id"])).to_dict()["inputs"]
         inputs = section["players"][player["id"]]["inputs"]
         # Keep the original physical and tendency estimates before the evidence overlays.
         inputs.update({iid: rookie_inputs[iid] for iid in TECHNIQUE_INPUTS})
@@ -179,13 +183,16 @@ def main() -> None:
     started=time.perf_counter()
     universe=json.loads((root/UNIVERSE_PATH).read_text())
     estimator=InputEstimator.from_local(root)
-    section=estimate_startup_inputs(estimator,universe)
+    college=load_rookie_college(root)
+    section=estimate_startup_inputs(estimator,universe,college)
     bbi_summary=None
     if not args.no_bbi and (root/'data/research/bbi/normalized.json').exists() and (root/'data/research/bbi/bbi_input_mapping.json').exists():
         # Player-specific Basketball Index evidence (Leaderboards Values captures) blended over the estimate.
         from nba_gm_data.bbi_evidence import apply_overlay, apply_measured_tendencies
         bbi_summary=apply_overlay(section,root)
         bbi_summary.update(apply_measured_tendencies(section,root))
+        # College usage for the 2026 rookies' involvement, on the measured scale (veterans and the map untouched).
+        bbi_summary['rookie_college_involvement']=apply_rookie_involvement(section,college)
     # Measured dunk rates (public Basketball-Reference shooting data) for dunk execution, net of body size.
     from nba_gm_data.public_shot_evidence import apply_dunk_evidence
     bbi_summary=(bbi_summary or {})|apply_dunk_evidence(section,root,universe)
@@ -198,7 +205,7 @@ def main() -> None:
         analyst=apply_analyst_evidence(section,root)
         analyst.pop('analyst_changes')
         bbi_summary|=analyst
-    baseline=estimate_startup_inputs(InputEstimator.from_local(root,use_expert=False),universe)
+    baseline=estimate_startup_inputs(InputEstimator.from_local(root,use_expert=False),universe,college)
     comparison=validation_comparison(section,load_reference_cells(root),baseline)
     payload=canonical_json(section)
     output.parent.mkdir(parents=True,exist_ok=True)
