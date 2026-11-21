@@ -103,12 +103,51 @@ def fit_player_options(evidence):
     return validation(rows, features, lambda r: r["decision"] == "opted_out", rules)
 
 
+def fit_qualifying_offers(evidence):
+    results = {}
+    for contract in ("standard", "two_way"):
+        rows = [
+            r for r in evidence["decisions"]["qualifying_offers"]
+            if r["prior_contract"] == contract and r["eligibility"] == "reported_eligible"
+        ]
+        rules = []
+        for floor in (500, 1000, 1500, 250, 0, 50, 100, 2500):
+            rules.append((f"prior minutes >= {floor}", lambda f, m=floor: f["minutes"] >= m))
+            if contract == "standard":
+                rules.extend([
+                    (f"prior minutes >= {floor}; add 350 minutes for offers above 4% of cap",
+                     lambda f, m=floor: f["minutes"] >= m + 350 * (f["offer_share"] > .04)),
+                    (f"prior minutes >= {floor}; add 350 minutes if prior payroll exceeded 110% of cap",
+                     lambda f, m=floor: f["minutes"] >= m + 350 * (f["payroll_share"] > 1.1)),
+                    (f"prior minutes >= {floor} or at least 0.7 above replacement",
+                     lambda f, m=floor: f["minutes"] >= m or f["vorp"] >= .7),
+                ])
+
+        def features(row, _held_out):
+            _, _, minutes, vorp, _ = season_features(row)
+            cap = evidence["cap_by_start_year"][str(row["summer"])]
+            return {
+                "minutes": minutes,
+                "vorp": vorp,
+                "offer_share": (row["qo_amount"] or 0) / cap,
+                "payroll_share": (row["prior_team_active_payroll"] or 0) / row["prior_season_cap"],
+            }
+
+        results[contract] = validation(rows, features, lambda r: r["tendered"], rules)
+        if contract == "two_way":
+            # The 2023 non-tenders cannot be distinguished from ineligible players.
+            results[contract][2023] = {"status": "held-out eligibility incomplete"}
+    return results
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--evidence", type=Path, default=EVIDENCE)
     args = parser.parse_args()
     evidence = json.loads(args.evidence.read_text())
     results = {"player_options": fit_player_options(evidence)}
+    if "qualifying_offers" in evidence["decisions"]:
+        results["qualifying_offers"] = fit_qualifying_offers(evidence)
     print(json.dumps(results, indent=2, ensure_ascii=False))
 
 
