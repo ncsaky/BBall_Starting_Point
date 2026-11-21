@@ -6,7 +6,7 @@
 - A two-way deal lets a player split time between the NBA and its development league. Most clubs opened with all three slots occupied. Most promotions came in February or later.
 - An Exhibit 10 is a camp contract that can turn into a two-way deal or pay an affiliate bonus. The typical club recorded seven or eight of these signings, and few made the opening roster.
 - Camp cuts move clubs from up to 21 players to at most 15 standard players plus three two-ways. Most cuts were on camp contracts, and other clubs claimed six players.
-- Veterans who sign late or leave for another league help show how quickly the summer market thins. Those moves are being checked.
+- Most veterans who signed a regular NBA deal did so by August 1. The ones who left for a foreign league mostly had played limited NBA minutes.
 
 ## Two-way contracts
 
@@ -84,6 +84,35 @@ Every listed receiving club took on the first-apron hard cap, a firm upper limit
 
 When a team over the cap re-signs its own player with eligible Bird rights for a sufficiently large raise, base-year compensation can make his outgoing trade salary smaller than what the new team pays. Grant Williams counted for $6.20 million outgoing and $12.41 million incoming. Nickeil Alexander-Walker's reported first salary was $15.16 million, implying $7.58 million on Minnesota's side under the same conditions. The data distinguish this inference from a documented calculation. The status stays unresolved where the signing team's cap position or rights are unclear. [Williams example](https://www.hoopsrumors.com/hoops-rumors-glossary/page/4) · [Alexander-Walker terms](https://www.hoopsrumors.com/2025/07/contract-details-turner-robinson-mitchell-naw-kyrie-jones.html)
 
+## Late free agency and overseas
+
+| Summer | Standard signers through August 1 | After August 1 | Of those, from camp onward | Median age, late standard | Documented overseas movers | Median age, overseas |
+|---|---:|---:|---:|---:|---:|---:|
+| 2023 | 80 | 19 | 1 | 28 | 22 | 28 |
+| 2024 | 82 | 17 | 0 | 26 | 40 | 26 |
+| 2025 | 71 | 29 | 6 | 27 | 27 | 27 |
+| 2026 | 84 | 18 | 1 | 29.5 | 47 | 27 |
+
+This follows players with an NBA regular-season appearance in one of the previous five seasons. NBA totals use each player's first reported regular signing between July 1 and opening night. They exclude extensions of active contracts, sign-and-trades, two-ways and known camp-only deals. For example, Detroit's October 2026 deal with Jalen Duren is included because he was an unsigned restricted free agent entering camp. The ledger also records 82, 81, 95 and 87 known veteran camp contracts signed after August 1. Other non-guaranteed deals may be listed without that detail. Overseas counts are unique players with a documented signing from May 1 to NBA opening night. Some previously played overseas or took an NBA camp offer in the same summer. There is no full count of all overseas offers, and it is hard to distinguish players who waited, retired or declined offers. [NBA on Duren](https://www.nba.com/pistons/news/its-great-for-us-duren-deal-done-pistons-set-up-for) · [2024 overseas tracker](https://www.hoopsrumors.com/2024/10/nba-free-agents-who-signed-with-international-teams.html) · [2025 overseas tracker](https://www.hoopsrumors.com/2025/10/nba-free-agents-who-signed-with-overseas-teams.html)
+
+| Summer | Late standard signers, starters / rotation / limited / no games | Overseas movers, starters / rotation / limited / no games |
+|---|---:|---:|
+| 2023 | 3 / 4 / 10 / 2 | 0 / 2 / 16 / 4 |
+| 2024 | 2 / 5 / 10 / 0 | 0 / 8 / 28 / 4 |
+| 2025 | 4 / 13 / 9 / 3 | 0 / 8 / 19 / 0 |
+| 2026 | 3 / 8 / 5 / 2 | 0 / 9 / 37 / 1 |
+
+Roles use the preceding NBA season. A starter played at least 20 games and 24 minutes per game and started at least half the time. A rotation player played at least 20 games and 14 minutes per game. The other players had limited minutes or had no regular-season appearance in that season. In the four summers, 317 of 400 observed regular signers were signed by August 1, and eight signed from camp onward. Treat late standard signings as occasional roster fits, with room for delayed deals such as 39-year-old Al Horford in 2025 or James Harden's September re-signing in 2026. The preseason overseas group was mostly limited-minute players and also included Cedi Osman, who averaged 17.6 minutes for San Antonio before signing with Panathinaikos at 29. Spencer Dinwiddie signed with Bayern two days after the 2025 opener and falls outside the table. [Horford](https://www.nba.com/warriors/news/warriors-add-versatile-veteran-and-champion-al-horford-20251001) · [Harden](https://cdn-uat.nba.com/news/james-harden-cavaliers-free-agency) · [Osman](https://www.hoopsrumors.com/2024/09/cedi-osman-signing-with-panathinaikos.html) · [Dinwiddie](https://fcbayern.com/basketball/de/news/2025-26/10/verpflichtung-spencer-dinwiddie)
+
+| Summer held out | Late versus early, correct (average hit rate) | Overseas versus late NBA, correct (average hit rate) |
+|---|---:|---:|
+| 2023 | 71/99 (68%) | 23/35 (65%) |
+| 2024 | 69/99 (65%) | 35/53 (59%) |
+| 2025 | 62/100 (56%) | 36/53 (68%) |
+| 2026 | 70/102 (57%) | 48/62 (75%) |
+
+The fit chose a prior-season role outside the rotation every time. In 2026, guessing the majority outcome gave 84 of 102 for signing time and 46 of 62 for destination. The role rule does little for signing time beyond flagging where to look. Its stronger result for destination applies to players with NBA appearances the previous season and an observed late NBA or overseas deal. It should inform relative odds within that group. The sample cannot estimate the chance an unsigned player leaves.
+
 ## Resume state
 
-The first four decisions have sourced rows and held-out checks. The late market is underway. Research only, on `codex/roster-edge-evidence`.
+All five decisions have sourced rows and held-out checks. Two-way active-game and promotion context verification remains underway. Research only, on `codex/roster-edge-evidence`.

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from datetime import date
 import json
 from pathlib import Path
 from statistics import mean, median
@@ -169,7 +170,61 @@ def camp(decisions):
     }
 
 
+def first_player_moves(rows):
+    first = {}
+    for row in sorted(rows, key=lambda r: r["date"]):
+        first.setdefault((row["summer"], row["player"]), row)
+    return first
+
+
+def late_market(decisions):
+    nba = decisions["veteran_summer_nba_signings"]
+    overseas = decisions["veteran_overseas_signings"]
+    standard = first_player_moves(r for r in nba if r["contract_group"] == "standard_reported")
+    late = {key: row for key, row in standard.items() if row["late"]}
+    overseas_people = first_player_moves(overseas)
+    recent_nba = {
+        key: dict(row, signed_overseas=False) for key, row in late.items()
+        if row["prior_nba_season"] == row["summer"]
+    }
+    recent_overseas = {
+        key: dict(row, signed_overseas=True) for key, row in overseas_people.items()
+        if row["previous_nba_season_appearance"]
+    }
+    timing_rules = [
+        *[(f"age ≥ {age}", lambda r, age=age: r["season_age"] >= age) for age in (26, 29, 32, 35)],
+        *[(f"prior NBA minutes/game < {minutes}",
+           lambda r, minutes=minutes: (r["last_nba_profile"]["mpg"] or 0) < minutes)
+          for minutes in (8, 14, 20, 24)],
+        ("prior NBA season outside regular rotation",
+         lambda r: r["prior_role"] in ("limited_minutes", "no_nba_appearance")),
+    ]
+    return {
+        "standard_signers": by_year(standard.values(), lambda r: "after_august_1" if r["late"] else "through_august_1"),
+        "late_standard_signers_from_camp": by_year(
+            [r for r in late.values() if r["at_or_after_camp"]], lambda _: "signers"),
+        "known_camp_deals_after_august_1": by_year(
+            [r for r in nba if r["late"] and r["contract_group"] != "standard_reported"],
+            lambda r: r["contract_group"]),
+        "late_standard_prior_roles": by_year(late.values(), lambda r: r["prior_role"]),
+        "late_standard_median_age": {
+            y: median(r["season_age"] for r in late.values() if r["summer"] == y) for y in YEARS
+        },
+        "overseas_prior_roles": by_year(overseas_people.values(), lambda r: r["prior_role"]),
+        "overseas_median_age": {
+            y: median(r["season_age"] for r in overseas_people.values() if r["summer"] == y) for y in YEARS
+        },
+        "late_vs_early_standard_holdout": binary_holdouts(list(standard.values()), "late", timing_rules),
+        "overseas_vs_late_standard_holdout": binary_holdouts(
+            list((recent_nba | recent_overseas).values()), "signed_overseas", timing_rules),
+    }
+
+
 def validate(data):
+    for source in data["sources"].values():
+        date.fromisoformat(source["date"])
+        if not source["url"].startswith(("https://", "http://")):
+            raise ValueError(f"Invalid source URL: {source}")
     for section, rows in data["decisions"].items():
         for row in rows:
             if row["summer"] not in YEARS or not row["sources"] or set(row["sources"]) - data["sources"].keys():
@@ -191,6 +246,8 @@ def main():
         result["exhibit_10"] = exhibit_10(decisions["exhibit_10_deals"], teams)
     if "camp_team_rosters" in decisions:
         result["camp"] = camp(decisions)
+    if "veteran_summer_nba_signings" in decisions:
+        result["late_market"] = late_market(decisions)
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
 
