@@ -35,6 +35,12 @@ MODEL_KEY = "_ratings_model"
 # as in the legacy ratings (median over real players), so both rating sets develop at the size the growth model
 # was tuned for. Measured by scripts/research/prospect_realism_routing.py.
 GRADE_POINTS_PER_TRAIT_POINT = 0.41
+# Each input moves by its own league spread (DEV-CURVE, 2026-11-21). The constant above is the step for an input with
+# the reference spread (the median technique grade's); an input with half that spread moves half as far. Physical
+# capacity grades (conditioning, recovery, agility, speed) have a league spread of about 3-5 grade points against about
+# 14 for a technique grade, so the same grade-point step moved them four times as far relative to the league, and a
+# young player's stamina could jump 10+ points in one season. Spreads: scripts/research/dev_curve_spread.py.
+INPUT_SPREAD_FILE = "data/canonical/development_input_spread.json"
 # Involvement (T08, true usage share) follows offensive skill as a player develops. Real draftees' true usage rises
 # a median +3 to +7 points from year 1 to year 4 (Basketball Index leaderboards, 2013-2022 classes) as their games
 # grow; veterans' usage falls as their skills fade. Slope: league cross-section of measured true usage on the mean
@@ -147,21 +153,24 @@ def route_trait_deltas(inputs: Mapping[str, Any], trait_deltas: Mapping[str, flo
             if _grade_field(input_id, inputs.get(input_id)):
                 weighted[input_id] = weighted.get(input_id, 0.0) + float(delta) * weight
     totals = _input_trait_weight_totals()
-    out = {input_id: GRADE_POINTS_PER_TRAIT_POINT * value / totals[input_id]
+    step = _development_steps()
+    out = {input_id: step.get(input_id, GRADE_POINTS_PER_TRAIT_POINT) * value / totals[input_id]
            for input_id, value in weighted.items() if value and input_id not in DEVELOPS_LIKE}
     # Inputs outside the blended traits (or with only a token share in one) that the box score now reads develop
-    # like their closest skill (DEVELOPS_LIKE); strength and jump capacity follow a physical trait's own curve.
+    # like their closest skill (DEVELOPS_LIKE), scaled to their own spread; strength and jump capacity follow a
+    # physical trait's own curve.
     for input_id, like in DEVELOPS_LIKE.items():
         if like in out and _grade_field(input_id, inputs.get(input_id)):
-            out[input_id] = out[like]
+            out[input_id] = (out[like] * step.get(input_id, GRADE_POINTS_PER_TRAIT_POINT)
+                             / step.get(like, GRADE_POINTS_PER_TRAIT_POINT))
     for input_id, trait in DEVELOPS_WITH_TRAIT.items():
         delta = float(trait_deltas.get(trait) or 0.0)
         if not delta:
             continue
         if input_id in JUMP_CM_PER_GRADE_POINT and _jump_field(inputs.get(input_id)):
-            out[input_id] = GRADE_POINTS_PER_TRAIT_POINT * delta * JUMP_CM_PER_GRADE_POINT[input_id]
+            out[input_id] = step.get(input_id, GRADE_POINTS_PER_TRAIT_POINT * JUMP_CM_PER_GRADE_POINT[input_id]) * delta
         elif _grade_field(input_id, inputs.get(input_id)):
-            out[input_id] = GRADE_POINTS_PER_TRAIT_POINT * delta
+            out[input_id] = step.get(input_id, GRADE_POINTS_PER_TRAIT_POINT) * delta
     involvement = _involvement_delta(inputs, out)
     if involvement:
         out["T08"] = involvement
@@ -169,6 +178,23 @@ def route_trait_deltas(inputs: Mapping[str, Any], trait_deltas: Mapping[str, flo
 
 
 _WEIGHT_TOTALS: dict[str, float] = {}
+_STEPS: dict[str, float] | None = None
+
+
+def _development_steps() -> dict[str, float]:
+    """Grade points (cm for jump height) that one hidden-rating point of development moves each input: the constant
+    step scaled by the input's league spread over the reference spread. Inputs missing from the table keep the
+    constant."""
+    global _STEPS
+    if _STEPS is None:
+        path = Path(__file__).resolve().parents[2] / INPUT_SPREAD_FILE
+        try:
+            table = json.loads(path.read_text())
+        except (OSError, ValueError):
+            table = None
+        _STEPS = ({input_id: GRADE_POINTS_PER_TRAIT_POINT * float(sd) / float(table["reference"])
+                   for input_id, sd in table["spread"].items()} if table else {})
+    return _STEPS
 
 
 def _input_trait_weight_totals() -> dict[str, float]:
@@ -245,8 +271,9 @@ def _grade_field(input_id: str, record: Mapping[str, Any] | None) -> str | None:
 
 
 def apply_input_deltas(inputs: Mapping[str, Any], deltas: Mapping[str, float]) -> dict[str, Any]:
-    """Return new input records with grade deltas applied. Grades stay within 0-100 (the schema range);
-    involvement (T08) moves within INVOLVEMENT_BOUNDS."""
+    """Return new input records with grade deltas applied. Grades keep a floor at 0 but have no top (AGENTS.md rule 3,
+    no clipping at 100: a star who keeps improving can pass today's best grade, and the rating maps continue past the
+    league's best); involvement (T08) moves within INVOLVEMENT_BOUNDS."""
     out = dict(inputs)
     for input_id, delta in deltas.items():
         record = out.get(input_id)
@@ -268,11 +295,11 @@ def apply_input_deltas(inputs: Mapping[str, Any], deltas: Mapping[str, float]) -
         if not field or not delta:
             continue
         if field == "grade":
-            grade = max(0.0, min(100.0, float(record["value"]["grade"]) + delta))
+            grade = max(0.0, float(record["value"]["grade"]) + delta)
             out[input_id] = {**record, "value": {**record["value"], "grade": round(grade, 3)}}
         else:
             display = record["value"]["display_grade"]
-            grade = max(0.0, min(100.0, float(display["grade"]) + delta))
+            grade = max(0.0, float(display["grade"]) + delta)
             out[input_id] = {**record, "value": {**record["value"], "display_grade": {**display, "grade": round(grade, 3)}}}
     return out
 
