@@ -4644,7 +4644,8 @@ body[data-view="playoffs"] main {
   padding: 12px 14px;
   position: fixed;
   right: 18px;
-  z-index: 20;
+  /* Above every board window (their stacking numbers grow past 30 as windows are raised) and open dialogs. */
+  z-index: 16000;
 }
 
 .toast.bad {
@@ -4660,7 +4661,9 @@ body[data-view="playoffs"] main {
   justify-items: center;
   padding: 18px;
   position: fixed;
-  z-index: 30;
+  /* Dialogs (box scores, leaders, settings, standings) must sit above every board window. Windows are
+     stacked 1..N by how recently they were raised, and N passes 30 once enough windows exist. */
+  z-index: 1500;
 }
 
 .modal-root[hidden] {

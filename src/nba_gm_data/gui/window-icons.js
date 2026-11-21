@@ -138,6 +138,15 @@
     "card:prospect": ["cards", "grad_cap"],
     "card:freeAgent": ["cards", "price_tag"],
     "card:extension": ["cards", "renew"],
+    // Dialogs that use a window-style title bar ("modal:<kind>").
+    "modal:boxScore": ["season", "versus"],
+    "modal:playoffBoxScore": ["playoffs", "versus"],
+    "modal:leagueLeaders": ["league", "podium"],
+    "modal:playerFinder": ["league", "user_search"],
+    "modal:dashboardSettings": ["fallback", "sliders"],
+    "modal:issueReport": ["fallback", "envelope"],
+    "modal:champion": ["playoffs", "trophy"],
+    "modal:standings": ["season", "ranked"],
   };
   const FALLBACK = ["fallback", "window"];
   const NAMES = {
@@ -158,6 +167,9 @@
     "phase-fantasy_draft-roster": "Fantasy Draft Roster", "phase-fantasy_draft-ticker": "Fantasy Draft Ticker",
     "card:player": "Player Card", "card:coach": "Coach Card", "card:fantasy": "Fantasy Player Card", "card:prospect": "Prospect Card",
     "card:freeAgent": "Free-Agent Card", "card:extension": "Contract Extension",
+    "modal:boxScore": "Box Score", "modal:playoffBoxScore": "Playoff Box Score", "modal:leagueLeaders": "League Leaders",
+    "modal:playerFinder": "Player Finder", "modal:dashboardSettings": "Settings", "modal:issueReport": "Report an Issue",
+    "modal:champion": "Champion", "modal:standings": "Full Standings",
   };
   const GROUP_NAMES = {
     team: "Team & Identity", season: "Season", scouting: "Scouting & Awards", "front-office": "Front Office", league: "League Activity",
