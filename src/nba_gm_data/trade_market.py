@@ -443,9 +443,14 @@ class SearchMarket:
 
     def add_bid(self, pairing: dict[str, Any], candidate: dict[str, Any], options: list[dict[str, Any]],
                 evaluation_canonical: dict[str, Any], order: int) -> None:
-        self.bids.setdefault(pairing["row"]["id"], []).append(
-            {"pairing": pairing, "candidate": candidate, "options": options, "order": order,
-             "evaluation_canonical": evaluation_canonical, "tried": set()})
+        bids = self.bids.setdefault(pairing["row"]["id"], [])
+        entry = {"pairing": pairing, "candidate": candidate, "options": options, "order": order,
+                 "evaluation_canonical": evaluation_canonical, "tried": set()}
+        same = next((b for b in bids if b["pairing"]["buyer_id"] == pairing["buyer_id"]), None)
+        if same is None:
+            bids.append(entry)
+        elif self.seller_margin(candidate, pairing["row"]["team_id"]) > self.seller_margin(same["candidate"], pairing["row"]["team_id"]):
+            bids[bids.index(same)] = entry  # one bid per buyer (its target and its opinion can both find him)
 
     def seller_margin(self, candidate: dict[str, Any], seller_id: str) -> float:
         return self.gaps(candidate).get(seller_id, -99.0)
