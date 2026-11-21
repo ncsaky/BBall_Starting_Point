@@ -148,18 +148,12 @@ def years_of_service(player: dict[str, Any], season: str) -> int:
 # Dates
 
 def cap_year(save: dict[str, Any]) -> str:
-    """The cap year a signing made today counts in: the next season from June 22 (the end of the playoffs in the game's
-    calendar) through rollover, else the current season. Before, the signing helper switched by phase name and an
-    August or September signing landed in the season that had just ended."""
-    meta_season = str((save.get("meta") or {}).get("season") or BASE_SEASON)
-    today = str((save.get("state") or {}).get("current_date") or "")
-    start = season_start(meta_season)
-    if today and today >= f"{start + 1}-06-22":
-        return _label(start + 1)
-    phase = str((save.get("state") or {}).get("phase") or "")
-    if phase in {"draft_lottery", "draft", "re_signing", "free_agency"}:
-        return _label(start + 1)
-    return meta_season
+    """The cap year a signing made today counts in: the one contract-season switch (FA-REAL slice 2,
+    offseason_calendar.contract_season): the next season from the day the offseason opens (June 17) through rollover,
+    else the current season. Before, this switched on June 22 or by phase name."""
+    from .offseason_calendar import contract_season
+    return contract_season({"meta": {"season": str((save.get("meta") or {}).get("season") or BASE_SEASON)},
+                            "state": {"current_date": str((save.get("state") or {}).get("current_date") or "")}})
 
 
 def _today(save: dict[str, Any], when: str | None = None) -> str:
@@ -167,10 +161,12 @@ def _today(save: dict[str, Any], when: str | None = None) -> str:
 
 
 def offseason_window(season: str, today: str) -> tuple[bool, bool]:
-    """(holds count, empty-roster charges count) on ``today`` for cap year ``season``: player holds from the end of
-    the previous season to opening night, roster charges from July 1 to opening night."""
+    """(holds count, empty-roster charges count) on ``today`` for cap year ``season``: player holds from the day the
+    offseason opens (the contract-season switch, June 17) to opening night, roster charges from July 1 (the league
+    year) to opening night."""
     start = season_start(season)
-    holds = f"{start}-06-22" <= today < f"{start}-10-21"
+    from .offseason_calendar import OFFSEASON_OPENS_MONTH_DAY
+    holds = f"{start}-{OFFSEASON_OPENS_MONTH_DAY[0]:02}-{OFFSEASON_OPENS_MONTH_DAY[1]:02}" <= today < f"{start}-10-21"
     charges = f"{start}-07-01" <= today < f"{start}-10-21"
     return holds, charges
 
@@ -422,9 +418,18 @@ def team_holds(active: dict[str, Any], save: dict[str, Any], team_id: str, seaso
                         or (int(player.get("draft_round") or 0) == 1 and service == 4))
         amount = hold_amount(bird["level"], bird["previous_salary"], season, service,
                              rookie_scale=rookie_scale, previous_season=expiring)
+        # FA-REAL slice 2: a restricted free agent holds the greater of his hold and his qualifying offer (CBA Art.
+        # VII §4(d)); a declined rookie-scale option caps it at the option's salary.
+        from .offseason_decisions import declined_rookie_option, qo_record
+        qo = qo_record(save, season, pid)
+        if qo and qo.get("status") == "tendered":
+            amount = max(amount, float((qo.get("max_qo_amount") if qo.get("maximum") else qo.get("amount")) or 0.0))
+        declined = declined_rookie_option(save, pid)
+        if declined:
+            amount = min(amount, float(declined.get("salary") or amount))
         holds.append({"player_id": pid, "name": player.get("name"), "kind": f"{bird['level']}_bird",
                       "bird": bird, "previous_salary": bird["previous_salary"], "amount": round(amount),
-                      "years_of_service": service})
+                      "years_of_service": service, "restricted": bool(qo and qo.get("status") == "tendered")})
     holds.sort(key=lambda h: (-h["amount"], str(h["name"])))
     return holds
 
@@ -901,7 +906,15 @@ def incumbent_bird(active: dict[str, Any], save: dict[str, Any], player: dict[st
     if player["id"] in renounced_ids(save, team_id, season):
         return None
     contract = _index(active)["contracts"].get(player["id"])
-    return _cached_bird_rights(save, player, team_id, meta_season, contract)
+    rights = _cached_bird_rights(save, player, team_id, meta_season, contract)
+    # FA-REAL slice 2: after a declined rookie-scale option his old team may pay him at most the option's salary in
+    # the first year (CBA Art. XI §1(e)).
+    from .offseason_decisions import declined_rookie_option
+    declined = declined_rookie_option(save, player["id"])
+    if declined and rights:
+        rights = {**rights, "limit": min(float(rights.get("limit") or 0.0), float(declined.get("salary") or 0.0)),
+                  "declined_rookie_option": True}
+    return rights
 
 
 # ---------------------------------------------------------------------------------------------------------------------

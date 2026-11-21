@@ -100,7 +100,11 @@ class FranchiseStarTests(unittest.TestCase):
         line = cap_rules.cap_lines_for_season(SEASON)["tax_line"]
         add = line - 150_000_000 - 1_000_000
         plain = pp.payroll_check(data, saved, "a", SEASON, add_salary=add, minutes=34, kind="re_signing", age=33)
-        self.assertEqual(plain["reason"], "keeps_room_below_the_line_for_its_phase")
+        # FA-REAL slice 2 (rule changed): keeping any regular with Bird rights no longer keeps room below the line;
+        # only the tax bill decides (here none). A fringe re-signing still keeps the room.
+        self.assertTrue(plain["ok"])
+        fringe = pp.payroll_check(data, saved, "a", SEASON, add_salary=add, minutes=8, kind="re_signing", age=33)
+        self.assertEqual(fringe["reason"], "keeps_room_below_the_line_for_its_phase")
         star = pp.payroll_check(data, saved, "a", SEASON, add_salary=add, minutes=34, kind="re_signing", age=33,
                                 franchise_star=True)
         self.assertTrue(star["ok"])

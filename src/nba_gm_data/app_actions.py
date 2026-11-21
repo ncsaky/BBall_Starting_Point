@@ -326,6 +326,8 @@ MUTATING_ACTIONS = {
     "simulate_playoff_round",
     "submit_free_agent_offer",
     "renounce_cap_hold",
+    "decide_option",
+    "qualifying_offer",
     "update_game_settings",
     "season_slideshow",
     "season_slideshow_seen",
@@ -380,6 +382,9 @@ def runtime_status(root: Path, save_dir: Path) -> dict[str, Any]:
                 "submit_free_agent_offer",
                 "free_agent_offer_quote",
                 "renounce_cap_hold",
+                "offseason_checklist",
+                "decide_option",
+                "qualifying_offer",
                 "advance_free_agency",
                 "staff_market",
                 "staff_room",
@@ -746,6 +751,12 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return free_agent_offer_quote_action(canonical, save_path, payload)
     if action == "renounce_cap_hold":
         return renounce_cap_hold_action(canonical, save_path, payload)
+    if action == "offseason_checklist":
+        return offseason_checklist_action(canonical, save_path, payload)
+    if action == "decide_option":
+        return decide_option_action(canonical, save_path, payload)
+    if action == "qualifying_offer":
+        return qualifying_offer_action(canonical, save_path, payload)
     if action == "advance_re_signing":
         return advance_re_signing_action(canonical, save_path, payload, root)
     if action == "advance_free_agency":
@@ -1450,9 +1461,29 @@ def dashboard_snapshot_payload(
             str(payload.get("draft_year") or current_draft_year(save)),
             limit=None,
         )),
+        # FA-REAL slice 2: stop 4 (set the roster) from rollover to the rookie-option deadline.
+        "set_roster": set_roster_payload(canonical, save, active, team_query),
     }
     context["snapshots"][cache_key] = result
     return result
+
+
+def set_roster_payload(canonical: dict[str, Any], save: dict[str, Any], active: dict[str, Any],
+                       team_query: str) -> dict[str, Any] | None:
+    """The user's stop-4 checklist while it matters: preseason, and the regular season through the rookie-option
+    deadline (only when an option is still open then)."""
+    from .save import rookie_option_deadline_for
+    phase = str((save.get("state") or {}).get("phase") or "")
+    today = str((save.get("state") or {}).get("current_date") or "")
+    if phase not in {"preseason", "regular_season"} or today > rookie_option_deadline_for(save):
+        return None
+    team = resolve_team(active, team_query)
+    if team["id"] != (save.get("meta") or {}).get("user_team_id"):
+        return None
+    checklist = offseason_checklist_payload(canonical, save, team_query, active=active)
+    if phase == "regular_season" and not checklist.get("pending_count"):
+        return None
+    return checklist
 
 
 def team_wants_action(canonical, save_path, payload, action="team_wants"):
@@ -3027,6 +3058,14 @@ def extension_room_payload(
         current_year = season_start_year_for_app(save_active_contract_season(save))
         cap_rows = extension_cap_projection(active, save, team["id"], season_label_for_app(current_year), 4)
         eligible = bool(candidate.get("eligible")) and not bool(candidate.get("manual_review_required")) and safe_years > 0 and legal
+        # FA-REAL slice 2: rookie-scale extensions close the day before opening night.
+        from .save import player_extension_deadline, rookie_extension_window_closed
+        player_deadline = player_extension_deadline(save, player, season_start_year_from_date(current),
+                                                    next((c for c in active.get("contracts", []) if c.get("player_id") == candidate_id), None))
+        if eligible and rookie_extension_window_closed(save, active, player, current):
+            eligible = False
+            candidate = {**candidate, "eligibility_status": f"Rookie-scale extensions closed on {player_deadline}: he "
+                                                            "will be a restricted free agent next summer."}
         contract_seasons = list((contract_for_player(active, candidate_id) or {}).get("seasons") or [])
         # Offer-builder facts (additive), all from the rule submit_extension_offer_action applies:
         # his price from you, the market ask it starts from, and the multi-season cap table with the tax rule.
@@ -3047,6 +3086,7 @@ def extension_room_payload(
                 **candidate_terms,
                 "cap_table": cap_table,
                 "eligibility_reason": extension_eligibility_reason(candidate, legal, safe_years),
+                "extension_deadline": player_deadline,
                 "player_id": candidate_id,
                 "name": player.get("name") or candidate.get("name"),
                 "position": player.get("position") or candidate.get("position"),
@@ -3769,6 +3809,13 @@ def free_agency_room_payload(
     roster_count = sum(1 for player in active.get("players", []) if player.get("team_id") == team["id"])
     shown_candidates = (own_candidates if phase == "re_signing" else candidates)[:80]
     shown_ids = {id(candidate) for candidate in shown_candidates}
+    # FA-REAL slice 2: restricted free agents (a live qualifying offer) negotiate only with their own team for now.
+    from .offseason_decisions import restricted_player_ids
+    restricted = restricted_player_ids(save)
+    for candidate in shown_candidates:
+        holder = restricted.get(str(candidate.get("id")))
+        candidate["restricted"] = ({"team_id": holder, "team_abbrev": team_id_to_abbrev(holder),
+                                    "yours": holder == team["id"]} if holder else None)
     for candidate in candidates:
         floors = candidate.pop("_floors", None)
         if floors is not None and id(candidate) in shown_ids:
@@ -3823,7 +3870,19 @@ def free_agency_room_payload(
         "user_offers": [offer for offer in active_offers if offer.get("source") == "user"],
         "bidding_wars": free_agency_bidding_wars(canonical, save, limit=6),
         "recent_signings": recent_signings,
+        # FA-REAL slice 2: the stop's checklist (options, qualifying offers, own free agents, holds) and the dates.
+        "offseason_checklist": offseason_checklist_payload(canonical, save, team["abbrev"], active=active),
+        "stop": offseason_stop_name(phase, state),
     }
+
+
+def offseason_stop_name(phase: str, state: dict[str, Any]) -> str:
+    """Which of the four offseason stops the free-agency room is (plain words for the screens)."""
+    if phase == "re_signing":
+        return "decide_who_to_keep"
+    if phase == "free_agency":
+        return "finalize" if state.get("status") == "completed" else "make_offers"
+    return phase
 
 
 def submit_free_agent_offer_action(canonical: dict[str, Any], save_path: Path, payload: dict[str, Any]) -> dict[str, Any]:
@@ -4008,6 +4067,69 @@ def renounce_cap_hold_action(canonical: dict[str, Any], save_path: Path, payload
             "room": free_agency_room_payload(canonical, save_path, team_query, seed)}
 
 
+def offseason_checklist_payload(canonical: dict[str, Any], save: dict[str, Any], team_query: str,
+                                active: dict[str, Any] | None = None) -> dict[str, Any]:
+    """The user's offseason checklist for the stop he is at (FA-REAL slice 2): stop 1 (decide who to keep) from the
+    day the offseason opens through the market, stop 4 (set the roster) from rollover to the rookie-option deadline."""
+    from .offseason_calendar import offseason_dates
+    from .offseason_decisions import stop_four_checklist, stop_one_checklist
+    active = active if active is not None else canonical_with_save(canonical, save)
+    team = resolve_team(active, team_query)
+    phase = str((save.get("state") or {}).get("phase") or "")
+    if phase in {"re_signing", "draft", "free_agency", "offseason", "training_camp"}:
+        checklist = stop_one_checklist(canonical, save, team["id"], active=active)
+        checklist["stop"] = "decide_who_to_keep"
+    else:
+        checklist = stop_four_checklist(canonical, save, team["id"], active=active)
+        checklist["stop"] = "set_the_roster"
+    start = int(str((save.get("meta") or {}).get("season") or CANONICAL_SEASON)[:4])
+    # Summer dates of this offseason (stop 1); opening night and the autumn deadlines of this season (stop 4).
+    checklist["calendar"] = offseason_dates(start + 1 if checklist["stop"] == "decide_who_to_keep" else start, save)
+    checklist["today"] = (save.get("state") or {}).get("current_date")
+    checklist["phase"] = phase
+    checklist["team"] = {"id": team["id"], "abbrev": team.get("abbrev")}
+    return checklist
+
+
+def offseason_checklist_action(canonical: dict[str, Any], save_path: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    return offseason_checklist_payload(canonical, save, str(payload.get("team") or user_team_abbrev(canonical, save_path)))
+
+
+def decide_option_action(canonical: dict[str, Any], save_path: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    """Keep (exercise) or decline one of the user's team options (veteran or rookie-scale)."""
+    from .offseason_decisions import user_decide_option
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    result = user_decide_option(canonical, save, str(payload.get("player_id") or ""), bool(payload.get("exercise")))
+    if not result.get("ok"):
+        return {"status": "blocked", "reason": result.get("reason")}
+    option = result["option"]
+    add_news(save, "contract", f"{option.get('name')}: {option.get('reason')}", date_value=(save.get("state") or {}).get("current_date"))
+    write_save(save_path, save)
+    team = str(payload.get("team") or user_team_abbrev(canonical, save_path))
+    return {"status": option["status"], "option": option,
+            "checklist": offseason_checklist_payload(canonical, ensure_league_save_defaults(load_save(save_path), canonical), team)}
+
+
+def qualifying_offer_action(canonical: dict[str, Any], save_path: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    """Send, skip or withdraw a qualifying offer to one of the user's young free agents."""
+    from .offseason_decisions import user_tender, withdraw_qualifying_offer
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    player_id = str(payload.get("player_id") or "")
+    if payload.get("withdraw"):
+        result = withdraw_qualifying_offer(save, player_id)
+    else:
+        result = user_tender(save, player_id, bool(payload.get("tender", True)), maximum=bool(payload.get("maximum")))
+    if not result.get("ok"):
+        return {"status": "blocked", "reason": result.get("reason")}
+    record = result["qualifying_offer"]
+    add_news(save, "free_agency", f"{record.get('name')}: {record.get('reason')}", date_value=(save.get("state") or {}).get("current_date"))
+    write_save(save_path, save)
+    team = str(payload.get("team") or user_team_abbrev(canonical, save_path))
+    return {"status": record["status"], "qualifying_offer": record,
+            "checklist": offseason_checklist_payload(canonical, ensure_league_save_defaults(load_save(save_path), canonical), team)}
+
+
 def advance_re_signing_action(canonical: dict[str, Any], save_path: Path, payload: dict[str, Any], root: Path | None = None) -> dict[str, Any]:
     from .play import initialize_free_agency_market
 
@@ -4017,29 +4139,24 @@ def advance_re_signing_action(canonical: dict[str, Any], save_path: Path, payloa
     initialize_free_agency_market(canonical, save_path, team, seed)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     if str((save.get("state") or {}).get("phase") or "") != "re_signing":
-        return {"status": "blocked", "reason": "The exclusive re-signing window is not active.", "room": free_agency_room_payload(canonical, save_path, team, seed)}
-    state = save.setdefault("free_agency_state", {})
-    day = int(state.get("re_signing_day") or 1)
-    day_count = int(state.get("re_signing_day_count") or 2)
-    open_market = mode == "open_market" or day >= day_count
-    if not open_market:
-        state["re_signing_day"] = day + 1
-        current = date.fromisoformat(str(save.get("state", {}).get("current_date") or "2026-06-27"))
-        advance_lifecycle_to(canonical, save, min(current + timedelta(days=1), date(current.year, 6, 30)).isoformat(), seed, root)
-        write_save(save_path, save)
-        return {"status": "advanced_day", "room": free_agency_room_payload(canonical, save_path, team, seed)}
-
-    user_team_id = resolve_team(canonical_with_save(canonical, save), team)["id"]
-    for right in save.get("re_signing_rights", []):
-        if right.get("team_id") == user_team_id and right.get("status") == "exclusive_review_window":
-            right["status"] = "entered_open_market"
-    state["re_signing_status"] = "completed"
-    state["re_signing_day"] = day_count
+        return {"status": "blocked", "reason": "Deciding who to keep (stop 1) is not open.", "room": free_agency_room_payload(canonical, save_path, team, seed)}
+    # FA-REAL slice 2: stop 1 runs from the day the offseason opens to June 29 with the draft in the middle. Before the
+    # draft, "continue" goes to draft night; after it, it closes stop 1 (undecided items take their defaults) and
+    # opens the market on June 30.
+    from .offseason_calendar import offseason_dates
     end_year = int(str(save.get("meta", {}).get("season") or CANONICAL_SEASON).split("-")[0]) + 1
-    advance_lifecycle_to(canonical, save, f"{end_year}-07-01", seed, root)
+    calendar = offseason_dates(end_year, save)
+    current = str(save.get("state", {}).get("current_date") or "")
+    if current < calendar["draft_round_one"]:
+        advance_save(root or Path.cwd(), canonical, save_path, to_date=calendar["draft_round_one"], seed=seed)
+        return {"status": "draft", "room": free_agency_room_payload(canonical, save_path, team, seed)}
+    del mode   # one way forward from the after-draft checklist: the market
+    from .play import open_free_agency_from_re_signing
+    user_team_id = resolve_team(canonical_with_save(canonical, save), team)["id"]
+    notes = open_free_agency_from_re_signing(save, user_team_id, canonical)
     write_save(save_path, save)
     initialize_free_agency_market(canonical, save_path, team, seed)
-    return {"status": "open_market", "room": free_agency_room_payload(canonical, save_path, team, seed)}
+    return {"status": "open_market", "defaults": notes, "room": free_agency_room_payload(canonical, save_path, team, seed)}
 
 
 def advance_free_agency_action(canonical: dict[str, Any], save_path: Path, payload: dict[str, Any], root: Path) -> dict[str, Any]:
@@ -4050,8 +4167,14 @@ def advance_free_agency_action(canonical: dict[str, Any], save_path: Path, paylo
     mode = str(payload.get("mode") or "day")
     initialize_free_agency_market(canonical, save_path, team, seed)
     if mode == "end":
-        result = simulate_free_agency_to_end(canonical, save_path, team, seed, root=root)
-        finish_free_agency_phase(canonical, save_path, root=root)
+        # FA-REAL slice 2: "end" first finishes the first wave and stops on signing day (stop 3); from signing day it
+        # closes the market and runs late summer in the background to camp.
+        completed = ((load_save(save_path).get("free_agency_state") or {}).get("status") == "completed")
+        if completed:
+            result = {"status": "late_summer"}
+            finish_free_agency_phase(canonical, save_path, root=root)
+        else:
+            result = simulate_free_agency_to_end(canonical, save_path, team, seed, root=root)
     else:
         result = advance_free_agency_day(canonical, save_path, team, seed, root=root)
     return {"status": "advanced", "result": result, "room": free_agency_room_payload(canonical, save_path, team, seed)}
@@ -4498,7 +4621,8 @@ def draft_reveal_lottery_action(canonical: dict[str, Any], save_path: Path, payl
     year = str(payload.get("year") or current_draft_year(save))
     phase = str((save.get("state") or {}).get("phase") or "")
     saved_order = (save.get("draft_orders") or {}).get(year)
-    if phase not in {"draft_lottery", "draft"} and not saved_order:
+    # FA-REAL slice 2: the lottery is drawn in May; its reveal can be watched any time from the playoffs to the draft.
+    if phase not in {"draft_lottery", "draft", "playoffs", "re_signing"} and not saved_order:
         return {"status": "blocked", "notes": "The draft lottery is not active."}
     if not saved_order:
         saved_order = run_draft_lottery(canonical, save_path, year=year, seed=None, advance_to_draft=False)
@@ -5235,6 +5359,7 @@ def advance_action(root: Path, canonical: dict[str, Any], save_path: Path, paylo
     seed = int(payload["seed"] if payload.get("seed") is not None else (saved_seed if saved_seed is not None else 1))
     deadline_stop = None
     postseason_stop = None
+    option_stop = None
     if prepared_save is not None:
         current = prepared_save.get("state", {}).get("current_date") or CANONICAL_START_DATE
         if payload.get("postseason_exit"):
@@ -5242,7 +5367,8 @@ def advance_action(root: Path, canonical: dict[str, Any], save_path: Path, paylo
                 raise ValueError("The completed postseason is not awaiting a lottery handoff.")
             year = str(prepared_save["playoff_state"].get("year") or int(prepared_save["meta"]["season"][:4]) + 1)
             prepared_save["postseason_exit_confirmed"] = year
-            payload = {"to_date":max(current, f"{year}-06-22"), "postseason_exit":True}
+            from .offseason_calendar import offseason_dates
+            payload = {"to_date":max(current, offseason_dates(int(year))["offseason_opens"]), "postseason_exit":True}
             write_save(save_path, prepared_save)
         elif postseason_exit_required(prepared_save):
             snapshot = dashboard_snapshot_payload(root, canonical, save_path, {"leader_limit":9, "prospect_limit":8})
@@ -5252,7 +5378,8 @@ def advance_action(root: Path, canonical: dict[str, Any], save_path: Path, paylo
             year = str(int(prepared_save["meta"]["season"][:4]) + 1)
             if not prepared_save.get("draft_orders", {}).get(year):
                 raise ValueError("Reveal the lottery before entering draft night.")
-            payload = {"to_date":max(current, f"{year}-06-25"), "draft_enter":True}
+            from .offseason_calendar import offseason_dates
+            payload = {"to_date":max(current, offseason_dates(int(year))["draft_round_one"]), "draft_enter":True}
         deadline = trade_deadline_date(season_start_year_from_date(current))
         target = (
             add_days(current, int(payload["days"])) if payload.get("days") is not None
@@ -5265,6 +5392,12 @@ def advance_action(root: Path, canonical: dict[str, Any], save_path: Path, paylo
         if target and current <= deadline <= target and not approved:
             deadline_stop = {"date": deadline, "requested_to_date": target}
             payload = {**payload, "to_date": deadline, "next_event": False}
+            payload.pop("days", None)
+        # FA-REAL slice 2: the rookie-scale option deadline (October 31 or the next weekday) stops the calendar when
+        # the user still has an option to decide; advancing again lets an undecided one lapse.
+        option_stop = rookie_option_stop(canonical, prepared_save, current, target) if not deadline_stop else None
+        if option_stop:
+            payload = {**payload, "to_date": option_stop["date"], "next_event": False}
             payload.pop("days", None)
         boundary = f"{int(prepared_save.get('meta', {}).get('season', current[:4])[:4]) + 1}-04-13"
         postseason_approved = prepared_save.get("postseason_entry_confirmed") == boundary
@@ -5363,8 +5496,27 @@ def advance_action(root: Path, canonical: dict[str, Any], save_path: Path, paylo
         save_path,
         {"leader_limit": 9, "prospect_limit": 8},
     )
-    status = "stopped" if result.get("status") == "stopped" else "trade_deadline" if deadline_stop else "postseason" if postseason_stop else "advanced"
-    return {"status": status, "trade_deadline_checkpoint": deadline_stop, "postseason_checkpoint": postseason_stop, "result": result, "home": snapshot["home"], "dashboard_snapshot": snapshot}
+    status = ("stopped" if result.get("status") == "stopped" else "trade_deadline" if deadline_stop
+              else "rookie_option_deadline" if option_stop else "postseason" if postseason_stop else "advanced")
+    return {"status": status, "trade_deadline_checkpoint": deadline_stop, "postseason_checkpoint": postseason_stop,
+            "rookie_option_checkpoint": option_stop, "result": result, "home": snapshot["home"], "dashboard_snapshot": snapshot}
+
+
+def rookie_option_stop(canonical: dict[str, Any], save: dict[str, Any], current: str, target: str | None) -> dict[str, Any] | None:
+    """Stop at the rookie-scale option deadline if the user has an option there still to decide."""
+    from .save import rookie_option_deadline_for
+    from .offseason_decisions import user_pending_options
+    if not target:
+        return None
+    deadline = rookie_option_deadline_for(save)
+    if not (current < deadline < target):
+        return None
+    pending = user_pending_options(canonical, save, kinds={"rookie_option"})
+    if not pending:
+        return None
+    return {"date": deadline, "requested_to_date": target, "pending": [
+        {"player_id": r["player_id"], "name": r.get("name"), "salary_millions": round(r["salary"] / 1e6, 2),
+         "season": r["season"]} for r in pending]}
 
 
 def advance_with_checkpoints(

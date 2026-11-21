@@ -3013,7 +3013,8 @@ def finish_draft_phase(canonical: dict[str, Any], save_path: Path, year: str) ->
     state = save.get("draft_state") or {}
     if state.get("year") == str(year):
         state["status"] = "completed"
-    advance_lifecycle_to(canonical, save, f"{year}-06-27", int(save.get("meta", {}).get("seed", 1)))
+    from .offseason_calendar import offseason_dates
+    advance_lifecycle_to(canonical, save, offseason_dates(int(year))["after_draft"], int(save.get("meta", {}).get("seed", 1)))
     prepare_free_agency_pool(canonical, save)
     write_save(save_path, save)
 
@@ -5163,8 +5164,14 @@ def user_re_signing_window_active(canonical: dict[str, Any], save: dict[str, Any
     )
 
 
-def open_free_agency_from_re_signing(save: dict[str, Any], team_id: str, canonical: dict[str, Any]) -> None:
-    """Close exclusive rights and move the save to the July open market."""
+def open_free_agency_from_re_signing(save: dict[str, Any], team_id: str, canonical: dict[str, Any]) -> list[str]:
+    """Close stop 1 and move the save to the market (June 30). The user's undecided options and qualifying offers take
+    their defaults (offseason_decisions.finalize_stop_one); returns those plain sentences."""
+    from .offseason_calendar import offseason_dates
+    from .offseason_decisions import finalize_stop_one
+    notes = finalize_stop_one(canonical, save)
+    for note in notes:
+        add_news(save, "free_agency", note, date_value=(save.get("state") or {}).get("current_date"))
     state = save.setdefault("free_agency_state", {})
     state["re_signing_status"] = "completed"
     state["re_signing_day"] = int(state.get("re_signing_day_count") or 2)
@@ -5172,7 +5179,24 @@ def open_free_agency_from_re_signing(save: dict[str, Any], team_id: str, canonic
         if right.get("team_id") == team_id and right.get("status") == "exclusive_review_window":
             right["status"] = "entered_open_market"
     end_year = int(str(save.get("meta", {}).get("season") or CANONICAL_SEASON).split("-")[0]) + 1
-    advance_lifecycle_to(canonical, save, f"{end_year}-07-01", int(save.get("meta", {}).get("seed", 1)))
+    advance_lifecycle_to(canonical, save, offseason_dates(end_year)["market_opens"], int(save.get("meta", {}).get("seed", 1)))
+    return notes
+
+
+def leave_stop_one(canonical: dict[str, Any], save_path: Path, save: dict[str, Any], team_id: str, seed: int) -> str:
+    """FA-REAL slice 2: leave stop 1 the way the calendar allows: to draft night before the draft, else to the market
+    (undecided options and qualifying offers take their defaults)."""
+    from .offseason_calendar import offseason_dates
+    end_year = int(str(save.get("meta", {}).get("season") or CANONICAL_SEASON)[:4]) + 1
+    calendar = offseason_dates(end_year, save)
+    if str(save.get("state", {}).get("current_date") or "") < calendar["draft_round_one"]:
+        root = save_path.parent.parent if save_path.parent.name == "saves" else Path.cwd()
+        advance_save(root, canonical, save_path, to_date=calendar["draft_round_one"], seed=seed)
+        return "done"
+    for note in open_free_agency_from_re_signing(save, team_id, canonical):
+        print(note)
+    write_save(save_path, save)
+    return "done"
 
 
 def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int, forced: bool = False) -> str | None:
@@ -5188,15 +5212,14 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
             and right.get("season") == save.get("meta", {}).get("season")
         ]
         if not rights:
-            open_free_agency_from_re_signing(save, team["id"], canonical)
-            write_save(save_path, save)
-            return "done"
+            return leave_stop_one(canonical, save_path, save, team["id"], seed)
         players = {player["id"]: player for player in active.get("players", [])}
-        day = int(state.get("re_signing_day") or 1)
-        day_count = int(state.get("re_signing_day_count") or 2)
         clear_screen()
-        print_title("Own Free Agents | Exclusive Re-Signing Window")
-        print(f"Day {day}/{day_count}. No outside teams can bid yet. You may go above tax room to retain your own players.")
+        from .offseason_calendar import offseason_dates
+        calendar = offseason_dates(int(str(save.get("meta", {}).get("season") or CANONICAL_SEASON)[:4]) + 1)
+        print_title("Decide Who To Keep | Your Own Free Agents")
+        print(f"Options and qualifying offers are due {calendar['decisions_deadline']}; the draft is {calendar['draft_round_one']}; "
+              f"other teams can talk to your free agents from {calendar['market_opens']}. Deals are official when he agrees.")
         print_cap_summary(active, save, team["id"], team_cap_summary(active, save, team["id"], season=contract_start_season_for_signing(save)))
         print_rule()
         print(" #  Player                     Pos Age OVR  MPG   PPG  Ask")
@@ -5216,8 +5239,8 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
             )
         print_rule()
         print("1. Negotiate with a player")
-        print("2. Advance exclusive day")
-        print("3. Skip to open free agency")
+        print("2. Continue (to draft night, or after it to free agency)")
+        print("3. Continue (same as 2)")
         print("4. Trade Room")
         print("5. Team dashboard")
         print("0. Save and quit" if forced else "0. Back")
@@ -5264,19 +5287,8 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
                     },
                 )
                 pause("Player rejected the offer and may test open free agency.")
-        elif choice == "2":
-            if day >= day_count:
-                open_free_agency_from_re_signing(save, team["id"], canonical)
-            else:
-                state["re_signing_day"] = day + 1
-                current = date.fromisoformat(save["state"]["current_date"])
-                advance_lifecycle_to(canonical, save, min(current + timedelta(days=1), date(current.year, 6, 30)).isoformat(), seed)
-            write_save(save_path, save)
-            return "done"
-        elif choice == "3":
-            open_free_agency_from_re_signing(save, team["id"], canonical)
-            write_save(save_path, save)
-            return "done"
+        elif choice in {"2", "3"}:
+            return leave_stop_one(canonical, save_path, save, team["id"], seed)
         elif choice == "4":
             trade_room(active, save_path, user_team, seed)
         elif choice == "5":
@@ -5410,8 +5422,15 @@ def process_ai_free_agency_offers_for_day_state(
     ]
     pool.sort(key=lambda player: free_agency_player_priority(active, save, player), reverse=True)
     created = 0
-    target_count = min(len(pool), 18 + day * 8)
+    # FA-REAL slice 2: front offices look at more of the market each day (30 players on the first day, then 10 more
+    # a day; was 18 and 8): most of a real summer's deals come in its first days, and teams with a mid-level and a
+    # need were reaching it only after the best players were gone.
+    target_count = min(len(pool), FREE_AGENCY_SCREEN_FIRST + day * FREE_AGENCY_SCREEN_PER_DAY)
+    from .offseason_decisions import restricted_player_ids
+    restricted = restricted_player_ids(save)   # FA-REAL slice 2: interim rule, only the team holding him bids
     for player in pool[:target_count]:
+        if player["id"] in restricted and restricted[player["id"]] not in human_team_ids:
+            continue   # an AI team talks to its restricted free agent each day (offseason_decisions.restricted_market_day)
         market = report_by_id.get(player["id"]) or {}
         ask = (state.get("player_asks_millions") or {}).get(player["id"])
         if ask is None:
@@ -5423,6 +5442,8 @@ def process_ai_free_agency_offers_for_day_state(
             quality=float(player_attribute_summary(active, player["id"]).get("overall") or 0),
         )
         suitors = ai_free_agency_suitors(active, save, player, teams, market, seed, day)
+        if player["id"] in restricted:
+            suitors = [t for t in suitors if t["id"] == restricted[player["id"]]]
         # KEEP-STARS: a team that still holds a regular's rights bids for him first (it knows him and has Bird rights).
         if display_minutes_projection(player) >= 24.0:
             own = {r.get("team_id") for r in save.get("re_signing_rights", []) or []
@@ -5576,11 +5597,18 @@ def free_agency_player_priority(canonical: dict[str, Any], save: dict[str, Any],
     return float(attrs.get("overall") or 0) * 1.7 + display_minutes_projection(player) * 0.75 + float(stats.get("ppg") or 0) * 0.65
 
 
+FREE_AGENCY_SCREEN_FIRST = 20
+FREE_AGENCY_SCREEN_PER_DAY = 10
+ROTATION_ASK_MILLIONS = 5.0
+
+
 def desired_ai_offer_count(player: dict[str, Any], ask: float, day: int, seed: int, *, quality: float | None = None) -> int:
     if ask >= 28 or display_minutes_projection(player) >= 28:
         base = 3 if day <= 2 else 2
     elif ask >= 12 or display_minutes_projection(player) >= 20:
         base = 2 if day <= 3 else 1
+    elif ask >= ROTATION_ASK_MILLIONS or display_minutes_projection(player) >= 15:
+        base = 1   # FA-REAL slice 2: a rotation player draws an offer from the first day (was from day 2)
     else:
         base = 1 if day >= 2 else 0
     # Current NBA ability matters even when a valuable young player previously
@@ -6103,6 +6131,8 @@ def advance_free_agency_day(canonical: dict[str, Any], save_path: Path, user_tea
         phase="pre_resolution",
     )
     accepted = resolve_free_agency_day_state(canonical, save, seed)
+    from .offseason_decisions import restricted_market_day
+    restricted_market_day(canonical, save, int((save.get("free_agency_state") or {}).get("day") or 1))
     post_trades = maybe_run_free_agency_ai_trades_state(
         canonical,
         save,
@@ -6619,6 +6649,9 @@ def apply_free_agency_offer_state(
             kind="re_signing" if bird else "free_agency", committed=reserved * 1_000_000,
             age=player.get("display_age", player.get("age")),
             committed_players=int((committed_count_by_team or {}).get(team_id) or 0),
+            # FA-REAL slice 2: a regular his team sent a qualifying offer is kept like a franchise player (KEEP-STARS
+            # kept young regulars off rookie deals that way; now only the ones it tendered).
+            franchise_star=bool(offer.get("restricted_re_signing")) and display_minutes_projection(player) >= 24.0,
         )
         if not tax_plan['ok']:
             offer['status'] = 'withdrawn_tax_plan'
@@ -6828,6 +6861,9 @@ def finish_free_agency_phase(canonical: dict[str, Any], save_path: Path, *, root
     if str(save.get("state", {}).get("current_date") or "") < f"{end_year}-08-01":
         advance_lifecycle_to(canonical, save, f"{end_year}-08-01", seed, root)
         run_late_summer_ai_trades(canonical, save, seed, end_year)
+        # FA-REAL slice 2: unsigned restricted free agents settle with their teams, or take the qualifying offer.
+        from .offseason_decisions import restricted_summer_pass
+        restricted_summer_pass(canonical, save, final=False)
     advance_lifecycle_to(canonical, save, f"{end_year}-09-01", seed, root)
     save.setdefault("free_agency_state", {})["status"] = "completed"
     add_news(save, "free_agency", "Free agency period closed. Training camp is next.", date_value=f"{end_year}-09-01")
@@ -7532,6 +7568,13 @@ def signing_cap_check(
     if player is None:
         # Planning callers without a player (roster_space, release_planning): a generic veteran.
         player = {"id": None, "age": 30.0}
+    if player.get("id"):
+        # FA-REAL slice 2 (interim restricted rule): only his own team can sign a restricted free agent.
+        from .offseason_decisions import blocked_for_team
+        blocked = blocked_for_team(save, str(player["id"]), team["id"])
+        if blocked:
+            return {"ok": False, "message": blocked, "reason": "restricted_free_agent", "quote": {"ok": False,
+                    "message": blocked, "routes": []}, "payment": None, "route": None, "locks": None}
     quote = cap_ledger.quote(active, save, team["id"], player, float(aav_millions) * 1_000_000, int(years or 1),
                              season=season, route=route, raise_rate=raise_rate, bird=bird,
                              include_reservations=include_reservations, team_abbrev=team.get("abbrev"))
@@ -7571,8 +7614,8 @@ def drafted_by_team(save: dict[str, Any], player: dict[str, Any]) -> str | None:
 
 
 def contract_start_season_for_signing(save: dict[str, Any]) -> str:
-    """The season a contract signed today starts in: the cap year (cap_ledger.cap_year). From June 22 to rollover
-    that is next season, also in late summer and camp (before, an August signing started in the season just ended)."""
+    """The season a contract signed today starts in: the cap year (cap_ledger.cap_year, the one contract-season
+    switch). From the day the offseason opens (June 17) to rollover that is next season."""
     from .cap_ledger import cap_year
     return cap_year(save)
 

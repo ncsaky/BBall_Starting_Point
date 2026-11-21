@@ -402,14 +402,16 @@ def career_action(save, days, team):
     if phase in {"play_in", "playoffs"}:
         regular_complete(save)
         if (save.get("playoff_state") or {}).get("status") == "completed":
-            return "advance_save", {"to_date": f"{end}-06-22"}
+            from nba_gm_data.offseason_calendar import offseason_dates   # FA-REAL slice 2 calendar
+            return "advance_save", {"to_date": offseason_dates(end)["offseason_opens"]}
         return "simulate_playoff_all", {}
     if phase == "draft_lottery":
         regular_complete(save)
         return "draft_reveal_lottery", {"year": str(end), "team": team}
     if phase == "draft":
         if draft_completed_for_year(save, end):
-            return "advance_save", {"to_date": f"{end}-06-27"}
+            from nba_gm_data.offseason_calendar import offseason_dates
+            return "advance_save", {"to_date": offseason_dates(end)["after_draft"]}
         return "draft_sim_all", {"year": str(end), "team": team}
     if phase == "re_signing":
         return "advance_re_signing", {"mode": "open_market", "team": team}

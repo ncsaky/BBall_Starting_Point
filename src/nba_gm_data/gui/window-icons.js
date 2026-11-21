@@ -24,6 +24,8 @@
   // Drawings (24 x 24, stroke only unless a shape sets fill="currentColor").
   const GLYPHS = {
     window: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M6.5 6.5h.01M9.5 6.5h.01"/>',
+    checklist: '<path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6l1.5 1.5 2.5-3M3.5 12l1.5 1.5 2.5-3M3.5 18l1.5 1.5 2.5-3"/>',
+    calendar_check: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4M9 15l2 2 4-4"/>',
     jersey: '<path d="M8.5 3 4 5.5l1.8 4.2L8 8.8V21h8V8.8l2.2.9L20 5.5 15.5 3c-.6 1.6-1.9 2.6-3.5 2.6S9.1 4.6 8.5 3z"/>',
     signal: '<path d="M5 20v-3M10 20v-7M15 20V9M20 20V4"/>',
     heart: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.1 4.1 0 0 1 12 7.4a4.1 4.1 0 0 1 7.5 2.4C19.5 15.4 12 20 12 20z"/>',
@@ -124,6 +126,8 @@
     "phase-free_agency-wire": ["free-agency", "quill"],
     "phase-free_agency-payroll": ["free-agency", "wallet"],
     "phase-free_agency-cap": ["free-agency", "gauge"],
+    "phase-free_agency-checklist": ["free-agency", "checklist"],
+    "phase-set_roster-checklist": ["required", "calendar_check"],
     "phase-fantasy_draft-control": ["fantasy-draft", "gamepad"],
     "phase-fantasy_draft-board": ["fantasy-draft", "card_stack"],
     "phase-fantasy_draft-roster": ["fantasy-draft", "user_plus"],
@@ -149,6 +153,7 @@
     "phase-free_agency-control": "Free Agency Controls", "phase-free_agency-market": "Free-Agent Market",
     "phase-free_agency-selected": "Selected Free Agent", "phase-free_agency-offers": "Live Offers", "phase-free_agency-wire": "Signing Wire",
     "phase-free_agency-payroll": "Free Agency Payroll", "phase-free_agency-cap": "Free Agency Cap Position",
+    "phase-free_agency-checklist": "Offseason Checklist", "phase-set_roster-checklist": "Set The Roster",
     "phase-fantasy_draft-control": "Fantasy Draft Controls", "phase-fantasy_draft-board": "Fantasy Player Board",
     "phase-fantasy_draft-roster": "Fantasy Draft Roster", "phase-fantasy_draft-ticker": "Fantasy Draft Ticker",
     "card:player": "Player Card", "card:coach": "Coach Card", "card:fantasy": "Fantasy Player Card", "card:prospect": "Prospect Card",

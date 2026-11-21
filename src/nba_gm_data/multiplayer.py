@@ -80,6 +80,8 @@ TEAM_MUTATIONS = {
     "set_starting_five",
     "submit_free_agent_offer",
     "renounce_cap_hold",
+    "decide_option",
+    "qualifying_offer",
     "waive_player",
 }
 HOST_MUTATIONS = {
@@ -94,6 +96,7 @@ TEAM_DEFAULT_ACTIONS = {
     "free_agents",
     "free_agency_room",
     "free_agent_offer_quote",
+    "offseason_checklist",
     "morale",
     "social_feed",
     "staff_market",

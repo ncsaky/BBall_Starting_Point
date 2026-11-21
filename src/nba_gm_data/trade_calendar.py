@@ -47,7 +47,8 @@ FREE_AGENCY_TRADES_PER_DAY = 6
 def free_agency_trade_slots(stamp, seed, fa_day=None):
     """AI-to-AI trade slots on a free-agency day (TRADE-VOLUME-2; before, at most two trades a day)."""
     day = date.fromisoformat(stamp)
-    if day.month != 7:
+    # FA-REAL slice 2: the market opens June 30 (free-agency day 1), so that day counts too.
+    if not (day.month == 7 or (day.month == 6 and day.day >= 30)):
         return 0
     key = int(fa_day or day.day)
     mean = FREE_AGENCY_TRADE_MEANS.get(key, .3)

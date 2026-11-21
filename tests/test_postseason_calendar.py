@@ -92,16 +92,17 @@ class PostseasonCalendarTests(unittest.TestCase):
                 self.assertNotIn("player_season_stats", bulk)
 
     def test_championship_does_not_overshoot_month_endpoint(self):
-        self.advance(self.save, "2027-06-20")
-        self.assertEqual(self.save["state"]["current_date"], "2027-06-20")
+        # FA-REAL slice 2: the offseason opens June 17 (the day after the game's latest possible Finals game).
+        self.advance(self.save, "2027-06-16")
+        self.assertEqual(self.save["state"]["current_date"], "2027-06-16")
         self.assertEqual(self.save["playoff_state"]["status"], "completed")
-        self.assertEqual(sv.next_event_date(".", self.canonical, self.save), "2027-06-22")
+        self.assertEqual(sv.next_event_date(".", self.canonical, self.save), "2027-06-17")
         def day(root, canonical, path, save, current, target, seed):
             sv.set_save_date_phase(save, target)
             return {"ai_applied_count":0, "inseason_free_agent_signings":0}
         with patch.object(sv, "advance_save_day", side_effect=day) as advanced:
             result = self.advance(self.save, "2027-07-01")
-        self.assertEqual(result["through_date"], "2027-06-22")
+        self.assertEqual(result["through_date"], "2027-06-17")
         self.assertEqual(advanced.call_count, 1)
 
     def test_unplayed_matchups_are_visible_without_persisting_a_read(self):
@@ -276,7 +277,7 @@ class PostseasonCalendarTests(unittest.TestCase):
                 self.assertTrue(all(s["status"] == "completed" for s in stored["playoff_state"]["series"] if s["round"] == "first_round"))
                 action("all")
                 self.assertEqual(stored["playoff_state"]["status"], "completed")
-                self.assertLess(stored["state"]["current_date"], "2027-06-22")
+                self.assertLess(stored["state"]["current_date"], "2027-06-17")
                 self.assertEqual(stored["state"]["phase"], "playoffs")
                 completed = deepcopy(stored)
                 held = action("game")
@@ -289,14 +290,14 @@ class PostseasonCalendarTests(unittest.TestCase):
 
                 with patch.object(sv, "advance_save_day", side_effect=day):
                     aa.advance_action(Path("."), self.canonical, path, {"postseason_exit":True})
-                    self.assertEqual(stored["state"]["current_date"],"2027-06-22")
+                    self.assertEqual(stored["state"]["current_date"],"2027-06-17")   # FA-REAL slice 2: stop 1
                     self.assertFalse(sv.postseason_exit_required(stored))
                     self.assertEqual(stored["playoff_state"],completed["playoff_state"])
                     with self.assertRaisesRegex(ValueError,"Reveal the lottery"):
                         aa.advance_action(Path("."), self.canonical, path, {"draft_enter":True})
                     stored["draft_orders"] = {"2027":{"draft_order":[]}}
                     aa.advance_action(Path("."), self.canonical, path, {"draft_enter":True})
-                    self.assertEqual(stored["state"]["current_date"],"2027-06-25")
+                    self.assertEqual(stored["state"]["current_date"],"2027-06-22")   # the 2027 draft
                     self.assertEqual(stored["state"]["phase"],"draft")
 
     def test_playoff_menu_advances_after_real_history_archival_and_reload(self):
