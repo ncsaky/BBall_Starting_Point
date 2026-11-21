@@ -14,6 +14,9 @@ try again.
 **Shopping and bidding wars.** A team with a stated reason to move a good player (rebuild, tax, blocked, unhappy,
 expiring) shops him when two or more teams are interested. The seller compares every live offer each day: it asks
 the bidders for their best, each raises within its own value plus its personality premium, and the best offer wins.
+BIDWAR-PRICE: offers are compared on the seller's textbook price (``evaluation_price``); a bidder whose built packages
+cannot beat the leader adds one more asset of its own while its own check accepts; the winner pays at least the
+second-best bid, and a slightly lower bid wins only for a strong stated reason of the seller's (``SearchMarket.decide``).
 A patient seller waits for the decision day (always by the deadline) unless an offer clearly beats its price; an
 impatient one takes a good offer early. The user's offers for a shopped player enter the same comparison
 (app_actions).
@@ -527,6 +530,11 @@ class SearchMarket:
                             if self.seller_price(candidate, seller) > price(lead) + BID_RAISE_MIN:
                                 better = candidate
                                 break
+                        if better is None:
+                            # None of its built packages beats the leader: it adds one more asset of its own, as
+                            # long as its own check still accepts (BIDWAR-PRICE: losing bidders bid up to their own
+                            # limit, so the winner pays at least what the runner-up was willing to pay).
+                            better = self.raise_to_floor(bid, seller, price(lead) + BID_RAISE_MIN, evaluate)
                         if better is not None:
                             bid["candidate"] = better
                             raised[bid["pairing"]["buyer_id"]] = round(price(bid), 2)
@@ -607,8 +615,10 @@ class SearchMarket:
         return lead
 
     def raise_to_floor(self, bid: dict[str, Any], seller: str, floor: float, evaluate) -> dict[str, Any] | None:
-        """The seller's preferred bidder raises its offer to the best price: one more asset of its own (a pick, a
-        young player or a player the seller targets, the same additions a counter-offer asks for), checked in full.
+        """A bidder raises its offer to ``floor``: one more asset of its own (a pick, a young player or a player the
+        seller targets, the same additions a counter-offer asks for), the smallest that gets there, checked in full.
+        Used by a losing bidder in the rounds (to beat the leader) and by the seller's preferred bidder (to match the
+        best price).
         The raise must stay within the buyer's own price limit (its own full check accepts it, personality premium
         included) and bring the seller's textbook price up to the floor."""
         from . import trade_counters as tc

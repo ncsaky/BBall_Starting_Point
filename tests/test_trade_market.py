@@ -290,7 +290,8 @@ class ShoppingTests(unittest.TestCase):
 
         def evaluate(entry, option):
             return bid(entry["pairing"]["buyer_id"], option)
-        winners = market.resolve_bidding(evaluate, lambda entry: raises[entry["pairing"]["buyer_id"]])
+        with patch.object(tm.SearchMarket, "raise_to_floor", return_value=None):  # no asset additions (BIDWAR-PRICE)
+            winners = market.resolve_bidding(evaluate, lambda entry: raises[entry["pairing"]["buyer_id"]])
         self.assertEqual(len(winners), 1)
         war = winners[0]["war"]
         self.assertEqual(war["winner"], "c")

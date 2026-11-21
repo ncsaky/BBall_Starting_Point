@@ -2,6 +2,7 @@
 bid; a slightly lower bid wins only for a strong stated reason of the seller's; the user's offers compete the same way
 and the words say why (docs/agents/tasks/bidwar-price.md)."""
 import unittest
+import unittest.mock
 from unittest.mock import patch
 
 from nba_gm_data import front_office as fo
@@ -41,6 +42,10 @@ def war_league(**kwargs):
 
 
 def run_war(canonical, bids, raises=None, evaluate=None):
+    if not isinstance(tm.SearchMarket.raise_to_floor, unittest.mock.Mock):
+        # No asset additions in these toy leagues unless a test sets them (raise_to_floor has its own test).
+        with patch.object(tm.SearchMarket, "raise_to_floor", return_value=None):
+            return run_war(canonical, bids, raises, evaluate)
     market = tm.SearchMarket(canonical, "2027-02-05", 2)
     market.filter_pairings([pairing(b) for b in bids], {})
     for order, (buyer, candidate) in enumerate(bids.items()):
@@ -75,6 +80,22 @@ class PriceTests(unittest.TestCase):
         self.assertEqual(war["winning_price"], 8.0)
         self.assertEqual(war["second_price"], 3.0)
         self.assertEqual(war["prices"], {"a": 3.0, "c": 8.0})
+
+
+    def test_a_losing_bidder_adds_an_asset_of_its_own_to_stay_in(self):
+        # Its built packages do not beat the leader, so it adds a pick (within its own limit); the leader, now
+        # behind, cannot add more: the price rises to what the runner-up was willing to pay.
+        canonical = war_league()
+        asked = []
+
+        def raise_to_floor(entry, seller, floor, evaluate):
+            asked.append((entry["pairing"]["buyer_id"], floor))
+            return bid("a", 7.0) if entry["pairing"]["buyer_id"] == "a" else None
+        with patch.object(tm.SearchMarket, "raise_to_floor", side_effect=raise_to_floor):
+            _, winners = run_war(canonical, {"a": bid("a", 3.0), "c": bid("c", 5.0)})
+        war = winners[0]["war"]
+        self.assertEqual(asked, [("a", 6.0), ("c", 8.0)])
+        self.assertEqual((war["winner"], war["winning_price"], war["second_price"]), ("a", 7.0, 5.0))
 
 
 class LowerBidTests(unittest.TestCase):
@@ -120,10 +141,15 @@ class LowerBidTests(unittest.TestCase):
     def test_the_preferred_bidder_raises_to_the_best_price_when_it_can(self):
         canonical = war_league()
         raised = bid("a", 8.5, self.liked)
-        with patch.object(tm.SearchMarket, "raise_to_floor", return_value=raised) as floor:
+        floors = []
+
+        def raise_to_floor(entry, seller, floor, evaluate):
+            floors.append(floor)
+            return raised if floor == 8.0 else None  # it cannot outbid C in the rounds, but can match its price
+        with patch.object(tm.SearchMarket, "raise_to_floor", side_effect=raise_to_floor, autospec=False):
             _, winners = run_war(canonical, {"a": bid("a", 2.0, self.liked, self.picks), "c": bid("c", 8.0)})
         war = winners[0]["war"]
-        self.assertEqual(floor.call_args[0][2], 8.0)  # the floor is the best price
+        self.assertEqual(floors, [9.0, 8.0])  # a round raise to beat C by a point, then the floor: C's price
         self.assertEqual(war["winner"], "a")
         self.assertEqual(war["decision"]["rule"], "matched")
         self.assertGreaterEqual(war["winning_price"], war["second_price"])
