@@ -25,17 +25,64 @@ _Coordinator: Claude. The user is asleep about 8 hours and asked for "surprise d
 - **Azure:** the ten-season check, once the upload finishes.
 
 ## Morning report
-_(Filled in as work lands.)_
 
-### Landed in main (tests, browser tests and the real-stat scorecard passed before each push)
-- **Star injuries:** 2025-26 history completed. The top 30's median games fell from 70/67.5 to 63.5/59.5 (real 64.5-65.5). Injuries per team rose from 35 to 40 (real 35-43). 1,081 tests.
-- **Free agency slice 3, offer sheets:** Match or Pass, AI sheets with reasons. Qualifying offers taken fell from 7/4 to 3/0 a summer (real 0-2). 1,379 tests.
-- **Codex research:** roster-edge evidence (feeds slice 4). Codex README refresh pending.
+### TL;DR
+- **Merged into main overnight** (every one passed its tests and the real-stat check, 18/18): free agency offer sheets; star injuries; the bidding-war price floor; one overall rating scale; the first Stage 2 piece. The whole suite (2,457 tests) passed on the combined game.
+- **Branches waiting for your review:** `overnight/ui-polish` and `overnight/headshots`. Both merge cleanly.
+- **Still running:** free agency slice 4, neutral coordinators, and the ten-season check (on Azure, resumed after a safety shutdown cut it off).
 
-### Branches for review (not merged)
-- `overnight/ui-polish`: 13 fixes. Dialogs and messages no longer open behind windows; the playoff bracket fits at 1024 px; a clearer start screen; Full Standings in the house style; the server no longer drops page files under load. It merges cleanly with main. Screenshots are in `output/ui-polish/`.
+### Landed in main
+1. **Free agency slice 3: offer sheets.**
+   - Rival teams can sign your restricted free agents, and you get a Match-or-Pass countdown with the terms, your cap effect and any hard cap.
+   - AI teams bid for real reasons.
+   - Players taking the one-year qualifying offer: 3 and 0 a summer (real 0-2; it was 7 and 4).
+2. **Star injuries.**
+   - Real players' injury history now includes the 892 missing 2025-26 injuries, and history counts at its measured weight.
+   - Top-30 median games played: 63.5 / 59.5 (real 64.5-65.5; it was 70 / 67.5).
+   - Injuries per team: 40 (real 35-43; it was 35).
+3. **Bidding-war price floor** (your decision).
+   - The winner always pays at least what the second-best offer was worth to the seller, and losing bidders can raise.
+   - The rare lower-bid exception never fired in 14 bidding wars. Two constants can widen it if you want it to happen occasionally.
+4. **One overall rating scale** (your decision).
+   - One straight-line scale everywhere: 90+ is exactly the analysts' top five (Jokić 95.4, Gilgeous-Alexander 94.5, Wembanyama 92.8, Dončić 91.3, Giannis 90.4; Kawhi next at 89.6).
+   - 95% of rotation players sit in the 70s or 80s, and the bench reaches the high 60s.
+   - It also fixed the roster table's OFF column, which was showing a different number.
+5. **Stage 2, first piece.**
+   - An engine switch, with today's engine still the default and unchanged.
+   - All 691 players' 94 inputs feed the physics pieces.
+   - Shooting spot-check: the physics ranks shooters well. With its conversion refit, every shot type lands within about 1 point of real on held-out players.
+   - **Key finding:** today's engine reads players' actual 2025-26 percentages, so a fair head-to-head with Stage 2 needs held-out data.
+6. **Codex research:** offseason decisions, 2025-26 injury history, roster-edge evidence (two-ways, camp deals, sign-and-trades), and the README refresh.
 
-- `overnight/headshots`: 2,000 generated faces; every made-up staff member's name matches the face's gender; no repeats within a league. 22 of 30 real head coaches have real (freely licensed) photos, and 528 of 535 real college prospects have ESPN headshots. Merges cleanly. Style samples are in `output/headshots/options.html`; before/after screenshots are in `output/headshots/`. Decisions: face style (Open Peeps built in, Avataaars or Personas available), and whether to use NBA.com or ESPN photos for the 8 coaches without a free one.
+### Branches for your review (not merged)
+- **`overnight/ui-polish`:**
+  - dialogs and messages no longer open behind windows;
+  - the playoff bracket fits at 1024 px;
+  - a clearer start screen;
+  - Full Standings in the house style;
+  - the server no longer drops page files under load.
 
-### Infrastructure
-- **Azure worker:** working end to end (core tests passed there in about 8.5 minutes). The upload is fixed: it skipped caches and builds, and avoided a link loop in the settlement data.
+  Screenshots are in `output/ui-polish/`.
+- **`overnight/headshots`:**
+  - 2,000 generated faces, with every made-up staff member's name matching their face's gender and no repeats in a league;
+  - 22 of 30 real head coaches show real photos;
+  - 528 of 535 real college prospects show ESPN headshots.
+
+  Style options are in `output/headshots/options-view.html`.
+
+### Decisions only you can make
+1. **Prospect potentials** on the new straight-line scale come out at 100-120 for the top prospects. Options: recalibrate potential to mean expected peak value, show "+N at peak", or leave it.
+2. **Face style** for made-up people: Open Peeps (built in), Avataaars or Personas. And should we use NBA.com/ESPN photos for the 8 head coaches without a free one?
+3. **Merge** `overnight/ui-polish` and `overnight/headshots`?
+4. **Private data on GitHub:** my safety check blocked the commit and push, and I undid it fully. It needs your allowance in Claude Code's permission settings, or you can push it yourself.
+5. **Stage 2 next step** (plan in `docs/agents/tasks/stage2-plan.md`). The suggested next piece is rebounding and fouls, then perimeter contests, then the first fast possession loop.
+6. **Disk:** about 7 GB of old scratch folders from merged tasks could be deleted (needs your OK). Swap got large overnight.
+
+### Infrastructure notes
+- The Azure worker works end to end. Overnight fixes:
+  - the upload now skips caches and builds;
+  - a link loop in the settlement data is avoided;
+  - the fixed 7 a.m. safety shutdown is removed, after it cut off the ten-season run;
+  - the script now notices if the machine stops mid-job.
+- **Spend so far:** under US$1 of the ~US$100 credit.
+- **Lessons:** commit pending board edits before every merge (a blocked merge twice became a board-only commit, both caught and redone). Watch disk and swap with several agents running.
