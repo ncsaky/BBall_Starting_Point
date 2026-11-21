@@ -2513,6 +2513,123 @@
       ],
       "tool": "Built-in Codex image generation",
       "date": "2026-11-21"
+    },
+    {
+      "id": "player-m/0031",
+      "gender": "male",
+      "role": "player",
+      "stages": [
+        {
+          "min_age": 0,
+          "file": "player-m/0031-s1.jpg",
+          "age": 20,
+          "changes": "A distinctly 20-year-old fictional adult male rookie basketball player. Youthful soft face, lean young neck, no facial hair or eye lines. Black forward of Senegalese heritage with dark umber skin, high rounded forehead, long narrow nose and prominent angular ears. Tall lean neck and slender chest. Short ringlets across forehead and small easy smile. Plain muted golden brown tee and slight turn."
+        },
+        {
+          "min_age": 26,
+          "file": "player-m/0031-s2.jpg",
+          "age": 26,
+          "changes": "At 26. Ringlets brushed back with a close taper, clear narrow moustache and small patch under lip. Same angular ears and long nose. Plain burgundy tee. Clearly more adult cheek and jaw definition, some neck development."
+        },
+        {
+          "min_age": 28,
+          "file": "player-m/0031-s3.jpg",
+          "age": 31,
+          "changes": "At 31. Low brushed waves, close full dark beard, clearer early eye and cheek folds, same face outline. Solid blue-grey training shirt. Visible early-thirties maturation in the under-eye area and around the mouth."
+        },
+        {
+          "min_age": 33,
+          "file": "player-m/0031-s4.jpg",
+          "age": 35,
+          "changes": "At 35. Shorter hair with slight recession and a grey streak at the temples, trim beard to dark stubble with subtle grey at chin. Slightly fuller jaw, relaxed gaze. Plain navy tee. Four years older than the attached age-31 reference. Fine expression lines at the eyes and subtly softer mature cheek contours."
+        }
+      ],
+      "prompts": [
+        "A distinctly 20-year-old fictional adult male rookie basketball player. Youthful soft face, lean young neck, no facial hair or eye lines. Black forward of Senegalese heritage with dark umber skin, high rounded forehead, long narrow nose and prominent angular ears. Tall lean neck and slender chest. Short ringlets across forehead and small easy smile. Plain muted golden brown tee and slight turn. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 26. Ringlets brushed back with a close taper, clear narrow moustache and small patch under lip. Same angular ears and long nose. Plain burgundy tee. Clearly more adult cheek and jaw definition, some neck development. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 31. Low brushed waves, close full dark beard, clearer early eye and cheek folds, same face outline. Solid blue-grey training shirt. Visible early-thirties maturation in the under-eye area and around the mouth. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 35. Shorter hair with slight recession and a grey streak at the temples, trim beard to dark stubble with subtle grey at chin. Slightly fuller jaw, relaxed gaze. Plain navy tee. Four years older than the attached age-31 reference. Fine expression lines at the eyes and subtly softer mature cheek contours. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark."
+      ],
+      "tool": "Built-in Codex image generation",
+      "date": "2026-11-21"
+    },
+    {
+      "id": "player-m/0032",
+      "gender": "male",
+      "role": "player",
+      "stages": [
+        {
+          "min_age": 0,
+          "file": "player-m/0032-s1.jpg",
+          "age": 20,
+          "changes": "A distinctly 20-year-old fictional adult male rookie basketball player. Youthful soft face, lean young neck, no facial hair or eye lines. Black centre with light golden-brown skin, full face, heavyset shoulders with a lean youthful neck, one raised eyebrow and a softly hooked nose. Low round curls, plain muted terracotta tee, small closed-mouth smile and slight turn."
+        },
+        {
+          "min_age": 23,
+          "file": "player-m/0032-s2.jpg",
+          "age": 26,
+          "changes": "At 26. Short curl fade and evenly trimmed dark stubble, brighter smile, retain eyebrow and nose. Plain navy tee. Clearly more adult cheek and jaw definition, some neck development."
+        },
+        {
+          "min_age": 31,
+          "file": "player-m/0032-s3.jpg",
+          "age": 31,
+          "changes": "At 31. Rounded close beard and thicker neck, visible eye folds, swept short coils. Unmarked pewter training top. Visible early-thirties maturation in the under-eye area and around the mouth."
+        },
+        {
+          "min_age": 34,
+          "file": "player-m/0032-s4.jpg",
+          "age": 35,
+          "changes": "At 35. Tightly buzzed grey at temples, clipped beard with grey chin and a little weight around jaw and neck. Plain dark plum tee. Four years older than the attached age-31 reference. Fine expression lines at the eyes and subtly softer mature cheek contours."
+        }
+      ],
+      "prompts": [
+        "A distinctly 20-year-old fictional adult male rookie basketball player. Youthful soft face, lean young neck, no facial hair or eye lines. Black centre with light golden-brown skin, full face, heavyset shoulders with a lean youthful neck, one raised eyebrow and a softly hooked nose. Low round curls, plain muted terracotta tee, small closed-mouth smile and slight turn. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 26. Short curl fade and evenly trimmed dark stubble, brighter smile, retain eyebrow and nose. Plain navy tee. Clearly more adult cheek and jaw definition, some neck development. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 31. Rounded close beard and thicker neck, visible eye folds, swept short coils. Unmarked pewter training top. Visible early-thirties maturation in the under-eye area and around the mouth. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 35. Tightly buzzed grey at temples, clipped beard with grey chin and a little weight around jaw and neck. Plain dark plum tee. Four years older than the attached age-31 reference. Fine expression lines at the eyes and subtly softer mature cheek contours. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark."
+      ],
+      "tool": "Built-in Codex image generation",
+      "date": "2026-11-21"
+    },
+    {
+      "id": "player-m/0033",
+      "gender": "male",
+      "role": "player",
+      "stages": [
+        {
+          "min_age": 0,
+          "file": "player-m/0033-s1.jpg",
+          "age": 20,
+          "changes": "A distinctly 20-year-old fictional adult male rookie basketball player. Youthful soft face, lean young neck, no facial hair or eye lines. Black male point guard with neutral almost-ebony skin, a narrow oval face, notably large and widely spaced eyes, soft broad cheeks narrowing to a small chin. Young lean neck. Short close-cropped twists with one wisp at the forehead. Plain dusty blue training tee. Head angled, gentle shy smile."
+        },
+        {
+          "min_age": 25,
+          "file": "player-m/0033-s2.jpg",
+          "age": 26,
+          "changes": "At 26. Tight straight-back braids, thin moustache with a short chin shadow, same chin and eye placement. Plain flat maroon tee. Clearly more adult cheek and jaw definition, some neck development."
+        },
+        {
+          "min_age": 29,
+          "file": "player-m/0033-s3.jpg",
+          "age": 31,
+          "changes": "At 31. Buzz cut with fading at sides, short clean boxed beard, distinct eye folds and cheeks stronger through the jaw. Solid storm-grey practice top. Visible early-thirties maturation in the under-eye area and around the mouth."
+        },
+        {
+          "min_age": 33,
+          "file": "player-m/0033-s4.jpg",
+          "age": 35,
+          "changes": "At 35. Short receding natural twists, grey at chin, marked fine creases at eye corners and pronounced brow line. Plain sand tee, slightly tilted pose. Four years older than the attached age-31 reference. Fine expression lines at the eyes and subtly softer mature cheek contours."
+        }
+      ],
+      "prompts": [
+        "A distinctly 20-year-old fictional adult male rookie basketball player. Youthful soft face, lean young neck, no facial hair or eye lines. Black male point guard with neutral almost-ebony skin, a narrow oval face, notably large and widely spaced eyes, soft broad cheeks narrowing to a small chin. Young lean neck. Short close-cropped twists with one wisp at the forehead. Plain dusty blue training tee. Head angled, gentle shy smile. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 26. Tight straight-back braids, thin moustache with a short chin shadow, same chin and eye placement. Plain flat maroon tee. Clearly more adult cheek and jaw definition, some neck development. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 31. Buzz cut with fading at sides, short clean boxed beard, distinct eye folds and cheeks stronger through the jaw. Solid storm-grey practice top. Visible early-thirties maturation in the under-eye area and around the mouth. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 35. Short receding natural twists, grey at chin, marked fine creases at eye corners and pronounced brow line. Plain sand tee, slightly tilted pose. Four years older than the attached age-31 reference. Fine expression lines at the eyes and subtly softer mature cheek contours. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark."
+      ],
+      "tool": "Built-in Codex image generation",
+      "date": "2026-11-21"
     }
   ]
 }
