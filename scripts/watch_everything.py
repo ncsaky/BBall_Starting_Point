@@ -387,9 +387,11 @@ def test_bars(procs) -> list[str]:
         expected = max(max(times), sum(times) / max(1, workers)) * 1.15
         frac = elapsed / expected
         note = f"{len(mods)} test files, running {elapsed // 60} min (usually ~{expected / 60:.0f} min)"
-        if frac > 1:
-            note += "; slower than usual, the laptop is busy"
-        out.append(bar(min(frac, 0.99), f"Test run ({where(pid)})", note, YELLOW if frac > 1 else GREEN))
+        if frac > 1:   # past its usual time: no honest percentage, so a pulse and the overrun
+            note = f"OVER usual time: {elapsed // 60} min vs ~{expected / 60:.0f}; the laptop is likely short of memory"
+            out.append(bar(None, f"Test run ({where(pid)})", YELLOW + note + RESET))
+        else:
+            out.append(bar(frac, f"Test run ({where(pid)})", note))
     return out
 
 
@@ -445,6 +447,10 @@ def gauges() -> list[str]:
         return RED if f > 0.9 else YELLOW if f > 0.7 else GREEN
     cpu = load1 / cores
     mem = 1 - free / total
+    swap_mb = float(swap.group(1)) if swap else 0.0
+    swap_total = re.search(r"total = ([\d.]+)M", run(["sysctl", "-n", "vm.swapusage"]))
+    if swap_total and float(swap_total.group(1)) > 0:
+        mem = max(mem, min(1.0, swap_mb / float(swap_total.group(1))))   # a nearly full swap file means memory is short
     return [bar(min(cpu, 1), "Processor", f"load {load1:.1f} on {cores} cores" + (" (overloaded)" if cpu > 1 else ""), colour(cpu)),
             bar(mem, "Memory", f"{(total - free) / 1e9:.1f} of {total / 1e9:.0f} GB, swap {float(swap.group(1)) / 1024 if swap else 0:.1f} GB", colour(mem)),
             bar(disk.used / disk.total, "Disk", f"{disk.free / 1e9:.0f} GB free", colour(disk.used / disk.total))]
