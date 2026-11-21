@@ -527,7 +527,7 @@ def replay_staff_stints(canonical: dict[str, Any], root: str | Path) -> dict[str
         return {}
     from copy import deepcopy
     from .save import save_coach_ratings
-    from .staff import apply_head_coach_reputation, normalize_name as staff_name
+    from .staff import apply_head_coach_reputation, neutral_starting_coordinator, normalize_name as staff_name
     data = load_json(path)
     extra_grades = {staff_name(name): entry["grade"] for name, entry in (data.get("unrated_coach_grades") or {}).items()}
     teams_by_abbrev = {team["abbrev"]: team for team in canonical.get("teams", [])}
@@ -536,7 +536,9 @@ def replay_staff_stints(canonical: dict[str, Any], root: str | Path) -> dict[str
         team = teams_by_abbrev.get(abbrev)
         if team is None:
             continue
-        base = [slot for slot in canonical.get("gameplay_staff_slots", []) if slot.get("team_id") == team["id"]]
+        # The coordinators start neutral, exactly as a new save starts them (NEUTRAL-COORDINATORS, 2026-11-21).
+        base = [neutral_starting_coordinator(deepcopy(slot))
+                for slot in canonical.get("gameplay_staff_slots", []) if slot.get("team_id") == team["id"]]
         for coach in entry.get("head_coaches") or []:
             slots = deepcopy(base)
             head = next((slot for slot in slots if slot.get("slot") == "head_coach"), None)

@@ -4578,7 +4578,14 @@ class DataFoundationTests(unittest.TestCase):
                 row for row in save["staff_slots"]
                 if row["team_id"] == "team_bkn" and row["slot"] != "head_coach"
             )
-            other_staff["contract"]["annual_salary_millions"] += 1.0
+            # Leave the room the original budget allows for the head coach $1M short of the candidate's ask (neutral
+            # starting coordinators are paid less since NEUTRAL-COORDINATORS, so a fixed +$1M left enough room).
+            bkn_head = next(row for row in save["staff_slots"] if row["team_id"] == "team_bkn" and row["slot"] == "head_coach")
+            room = staff_budget_for_team(self.plain, "team_bkn") - sum(
+                float((row.get("contract") or {}).get("annual_salary_millions") or 0.0)
+                for row in save["staff_slots"] if row["team_id"] == "team_bkn" and row is not bkn_head
+            )
+            other_staff["contract"]["annual_salary_millions"] += max(1.0, room - float(candidate["asking_salary_millions"]) + 1.0)
             offer = {
                 "annual_salary_millions": float(candidate["asking_salary_millions"]),
                 "years": int(candidate["asking_years"]),

@@ -86,6 +86,31 @@ SLOT_SKILLS = {
     "performance_lead": ["injury_prevention", "conditioning", "recovery_planning"],
 }
 
+COORDINATOR_SLOTS = ("offensive_coordinator", "defensive_coordinator")
+
+# The staff model's no-effect rating: save.star_rating turns a 60 rating into 3 stars, and sim.staff_coach_effect
+# gives 3 stars (league average) no effect on either end.
+NEUTRAL_STAFF_RATING = 60.0
+
+
+def neutral_starting_coordinator(record: dict[str, Any]) -> dict[str, Any]:
+    """Start a new save's offensive or defensive coordinator at neutral ratings (NEUTRAL-COORDINATORS, 2026-11-21).
+
+    The starting coordinators are generated per team, not scouted, and on real 2025-26 teams their made-up ratings
+    pushed results against both the betting market and real results (docs/agents/tasks/odds-coach.md). User decision
+    2026-11-21: no real coordinators needed, so every starting coordinator's effect ratings are neutral. Name,
+    archetype, personality and age stay; coordinators hired later from the market can still be better or worse."""
+    if record.get("slot") not in COORDINATOR_SLOTS:
+        return record
+    keys = set(SLOT_SKILLS[record["slot"]]) | set(record.get("skill_traits") or {})
+    record["skill_traits"] = {key: NEUTRAL_STAFF_RATING for key in sorted(keys)}
+    record["starting_ratings"] = "neutral"
+    note = "Starting coordinator ratings are neutral (no evidence-based ratings for real coordinators)."
+    if note not in str(record.get("notes") or ""):
+        record["notes"] = f"{record.get('notes') or ''} {note}".strip()
+    return record
+
+
 HEAD_COACH_REPUTATION_GRADES = {
     "steve kerr": 93.0,
     "erik spoelstra": 92.0,
@@ -229,7 +254,7 @@ def initialize_save_staff_slots(canonical: dict[str, Any], seed: int) -> list[di
         if staff.get("role") == "head_coach" and staff.get("name")
     }
     for slot in sorted(canonical.get("gameplay_staff_slots", []), key=lambda item: (item["team_id"], item["slot"])):
-        record = deepcopy(slot)
+        record = neutral_starting_coordinator(deepcopy(slot))
         score = staff_grade(record)
         contract = staff_contract(record["slot"], score, seed, record["id"])
         term_rng = random.Random(f"{seed}:{record['id']}:initial_staff_term")
@@ -1124,7 +1149,9 @@ def staff_effect_summary(staff: dict[str, Any]) -> dict[str, Any]:
         return {"development_multiplier_delta": round((grade - 60) * 0.006, 3)}
     if slot == "scouting_lead":
         return {"scouting_noise_delta": round(-(grade - 60) * 0.08, 3)}
-    if slot in {"head_coach", "offensive_coordinator", "defensive_coordinator"}:
+    if slot in COORDINATOR_SLOTS:
+        return {"coach_star_equivalent": round(clamp(coordinator_engine_rating(staff) / 20, 0, 5), 2)}
+    if slot == "head_coach":
         return {"coach_star_equivalent": round(clamp(grade / 20, 0, 5), 2)}
     return {"grade": round(grade, 2)}
 
@@ -1144,14 +1171,16 @@ def staff_effect_rows(staff: dict[str, Any]) -> list[dict[str, Any]]:
         ]
     if slot == "offensive_coordinator":
         return [
-            effect_row("Coach stars", grade, "Offensive staff quality translated to a 0-5 impact shorthand.", stars=grade / 20),
+            effect_row("Coach stars", coordinator_engine_rating(staff), "Average of the three ratings below, the ones the game sim uses (60 = 3 stars, no effect).",
+                       stars=coordinator_engine_rating(staff) / 20),
             effect_row("Shot quality", traits.get("shot_quality", grade), "The main offensive coaching effect for any roster."),
             effect_row("Spacing design", traits.get("spacing_design", grade), "An offensive boost that grows with good shooters on the floor."),
             effect_row("Creator usage", traits.get("player_usage", grade), "An offensive boost that grows when the team has a true primary creator."),
         ]
     if slot == "defensive_coordinator":
         return [
-            effect_row("Coach stars", grade, "Defensive staff quality translated to a 0-5 impact shorthand.", stars=grade / 20),
+            effect_row("Coach stars", coordinator_engine_rating(staff), "Average of the three ratings below, the ones the game sim uses (60 = 3 stars, no effect).",
+                       stars=coordinator_engine_rating(staff) / 20),
             effect_row("Coverage design", traits.get("coverage_design", grade), "The main defensive coaching effect for any roster."),
             effect_row("Matchup scheming", traits.get("matchup_adjustment", grade), "Hiding weak defenders, targeting the opponent's, game-plan minutes and playoff edge."),
             effect_row("Discipline", traits.get("discipline", grade), "Fewer defensive breakdowns and fewer fouls."),
@@ -1178,6 +1207,14 @@ def staff_effect_rows(staff: dict[str, Any]) -> list[dict[str, Any]]:
             effect_row("Recovery planning", traits.get("recovery_planning", grade), "Shortens recovery and rust windows."),
         ]
     return [effect_row("Staff grade", grade, "General staff quality.")]
+
+
+def coordinator_engine_rating(staff: dict[str, Any]) -> float:
+    """A coordinator's average effect rating: the game sim uses his three skill ratings (each as stars, rating / 20)
+    and none of his personality, so this, not the staff grade, is the honest star shorthand for his impact."""
+    traits = staff.get("skill_traits") or {}
+    values = [float(traits.get(key) or staff_grade(staff) or NEUTRAL_STAFF_RATING) for key in SLOT_SKILLS.get(staff.get("slot"), [])]  # as save.trait_value
+    return sum(values) / len(values) if values else staff_grade(staff)
 
 
 def effect_row(label: str, value: Any, description: str, stars: float | None = None) -> dict[str, Any]:
