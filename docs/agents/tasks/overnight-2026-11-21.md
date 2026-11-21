@@ -29,7 +29,8 @@ _Coordinator: Claude. The user is asleep about 8 hours and asked for "surprise d
 ### TL;DR
 - **Merged into main overnight** (every one passed its tests and the real-stat check, 18/18): free agency offer sheets; star injuries; the bidding-war price floor; one overall rating scale; the first Stage 2 piece. The whole suite (2,457 tests) passed on the combined game.
 - **Branches waiting for your review:** `overnight/ui-polish` and `overnight/headshots`. Both merge cleanly.
-- **Still running:** free agency slice 4, neutral coordinators, and the ten-season check (on Azure, resumed after a safety shutdown cut it off).
+- **Free agency slice 4 also merged:** realistic free agency is now complete, all four slices. The whole suite (2,476 tests) passed on it.
+- **Still running:** neutral coordinators, and the ten-season check (on Azure, resumed after a safety shutdown cut it off).
 
 ### Landed in main
 1. **Free agency slice 3: offer sheets.**
@@ -52,7 +53,12 @@ _Coordinator: Claude. The user is asleep about 8 hours and asked for "surprise d
    - All 691 players' 94 inputs feed the physics pieces.
    - Shooting spot-check: the physics ranks shooters well. With its conversion refit, every shot type lands within about 1 point of real on held-out players.
    - **Key finding:** today's engine reads players' actual 2025-26 percentages, so a fair head-to-head with Stage 2 needs held-out data.
-6. **Codex research:** offseason decisions, 2025-26 injury history, roster-edge evidence (two-ways, camp deals, sign-and-trades), and the README refresh.
+6. **Free agency slice 4:** two-way contracts (three places outside the 15, a 50-game limit, promotions), Exhibit 10 camp deals with affiliate bonuses, the 21-to-15 opening-roster cutdown with waivers, and sign-and-trades.
+   - Real counts hit: about 7 camp deals a team; 8 and 3 sign-and-trades; 33 and 24 overseas departures.
+   - No hard-cap breaches on opening night, and nobody is ever signed onto your roster without your say-so.
+   - Still low: two-way promotions in season (15-20, real 26-32).
+   - First summer's camp period runs slower than main.
+7. **Codex research:** offseason decisions, 2025-26 injury history, roster-edge evidence (two-ways, camp deals, sign-and-trades), and the README refresh.
 
 ### Branches for your review (not merged)
 - **`overnight/ui-polish`:**
