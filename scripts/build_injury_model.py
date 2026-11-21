@@ -9,13 +9,16 @@ For each body part, a Poisson model of injuries per game played, fitted on real 
 features (standardized): age, age^2, height, weight, possessions per game (workload), rim pressure, offensive rebounding,
 conditioning (stamina), center, guard, recent same-part injuries (time-decayed) and recent other-part injuries.
 Season intercepts are unpenalized so reporting coverage across seasons cannot drive the shared slopes. Gameplay uses
-one intercept per part, anchored to the 2021-22 through 2024-25 tracker totals with the engine's history discount.
+one intercept per part, anchored to the 2021-22 through 2024-25 tracker totals with the engine's history weight
+(injury_model.HISTORY_WEIGHT, recorded as rate_fit.history_weight; rebuild whenever it changes).
 The same-part term is the compounding effect; age/body/style terms decide which
 injuries a player tends to get. Recovery times are not modeled parametrically: the engine samples a real absence for
 the drawn part (diagnosis, days, games), weighted toward recent seasons.
 
-    PYTHONPATH=src .venv/bin/python scripts/build_injury_model.py [--write]
-Writes data/canonical/injury_model_v2.json.
+    PYTHONPATH=src .venv/bin/python scripts/build_injury_model.py [--write] [--model-only]
+Writes data/canonical/injury_model_v2.json and (unless --model-only) the git-ignored per-player evidence
+data/canonical/injury_player_evidence_v3.json: real players' injury history (the tracker since 2021-22 plus the public
+2025-26 stretches it lacks, see classify_public_stretches), forecasts and recovery speed.
 """
 from __future__ import annotations
 
@@ -33,7 +36,18 @@ sys.path.insert(0, str(ROOT / "src"))
 
 B = ROOT / "data/research/bbi/tools"
 OUT = ROOT / "data/canonical/injury_model_v2.json"
-EVIDENCE_OUT = ROOT / "data/canonical/injury_player_evidence_v2.json"   # git-ignored: per-player Basketball Index evidence
+# git-ignored: per-player Basketball Index evidence plus the public 2025-26 stretches (v3, STAR-INJURIES 2026-11-21).
+EVIDENCE_OUT = ROOT / "data/canonical/injury_player_evidence_v3.json"
+# Public 2025-26 missed-game stretches (NBA injury reports + box scores; scripts/research/injury_history_2025_26.py).
+# The tracker logged only about a third of 2025-26, so real players' startup history is completed from this file.
+PUBLIC_HISTORY = ROOT / "data/research/injury_history_2025_26.json"
+# An opening-night stretch continues an injury already in the tracker when a same-part entry within this many days
+# before it either started after the previous regular season ended or never logged a return (health.py uses the same
+# 400-day window for the real 2026-27 opening-night list).
+CARRY_IN_DAYS = 400
+# A stretch on a new team that starts this soon after the same part's stretch on the old team is one injury split by a
+# trade, not a new one.
+TRADE_SPLIT_DAYS = 10
 FIRST_SEASON = "2015-16"
 RATE_ANCHOR_SEASONS = ("2021-22", "2022-23", "2023-24", "2024-25")
 # Recovery times come from absences recorded since 2015, the same seasons the injury-rate models are fitted on
@@ -70,6 +84,101 @@ def part_of(h) -> str | None:
         return None
     p = MERGE.get(h["part"], h["part"])
     return p if p in PARTS else None
+
+
+def classify_public_stretches(tracker_rows, team_names, path=PUBLIC_HISTORY):
+    """Sort every public 2025-26 missed-game stretch into what the injury history should do with it.
+
+    Returns (stretches, status) where status[i] is one of:
+      "added"          a new injury the tracker lacks: goes into the player's history;
+      "tracker"        the tracker already logged it (Codex's match: player, team, category, site, side, date);
+      "trade_split"    the same injury continuing on a new team after a trade;
+      "carried_in"     on the team's opening night, continuing an injury already in the tracker;
+      "management"     every missed game listed only as "injury management" (planned games off for a known condition:
+                       61% on the second night of a back-to-back, 93% after a same-part injury in the past year; the
+                       tracker logged them about 0.6x as often as other one-game injuries; STAR-INJURIES report);
+      "illness"        illness: the engine's injury history counts injuries only, like the tracker history it is fit on;
+      "no_part"        no body part the model knows;
+      "not_medical"    coach's decision, G League, rest, personal, suspension, not with team, trade pending,
+                       reconditioning without a named injury, or no reason given.
+    An opening-night stretch with no tracker trace (a preseason or summer injury, or one from before the NBA) is
+    "added", dated at the first game missed.
+    """
+    import sys as _sys
+    _sys.path.insert(0, str(ROOT / "scripts/research"))
+    from injury_history_2025_26 import match_tracker   # Codex's tracker match, so both reports count the same way
+    doc = json.loads(Path(path).read_text())
+    season = doc["season"]
+    stretches = doc["stretches"]
+    previous_season_end = date(int(season[:4]), 4, 15)
+    candidates = defaultdict(list)
+    for index, s in enumerate(stretches):
+        if s["reason_category"] in ("injury", "illness"):
+            candidates[s["player_id"]].append((index, s | {"team_name": team_names.get(s["team"], s["team"])}))
+    matched = set()
+    tracked = defaultdict(list)
+    for entry in tracker_rows:
+        if entry.get("cat") == "injury" and entry.get("start") and entry.get("player_id"):
+            tracked[entry["player_id"]].append(entry)
+        if entry.get("season") == season and entry.get("cat") in ("injury", "illness") and entry.get("start"):
+            index = match_tracker(entry, candidates.get(entry.get("player_id"), []))
+            if index is not None:
+                matched.add(index)
+
+    def sides_agree(a, b):
+        return not (a in ("left", "right") and b in ("left", "right") and a != b)
+
+    def carried_in(s):
+        first = date.fromisoformat(s["first_game_missed"])
+        for entry in tracked[s["player_id"]]:
+            start = date.fromisoformat(entry["start"][:10])
+            if (part_of(entry) == s["body_part"] and sides_agree((entry.get("side") or "").lower(), s.get("side") or "")
+                    and 0 <= (first - start).days <= CARRY_IN_DAYS
+                    and (start > previous_season_end or entry.get("censored") or not entry.get("end"))):
+                return True
+        return False
+
+    status = {}
+    last_by_player = {}
+    for index, s in sorted(enumerate(stretches), key=lambda item: (item[1]["player_id"], item[1]["first_game_missed"])):
+        category, part = s["reason_category"], MERGE.get(s.get("body_part") or "", s.get("body_part"))
+        if category not in ("injury", "illness"):
+            status[index] = "not_medical"
+            continue
+        previous = last_by_player.get(s["player_id"])
+        last_by_player[s["player_id"]] = s
+        if index in matched:
+            status[index] = "tracker"
+        elif category == "illness":
+            status[index] = "illness"
+        elif part not in PARTS:
+            status[index] = "no_part"
+        elif (previous and previous["team"] != s["team"] and previous.get("body_part") == s["body_part"]
+              and sides_agree(previous.get("side") or "", s.get("side") or "")
+              and 0 <= (date.fromisoformat(s["first_game_missed"])
+                        - date.fromisoformat(previous["last_game_missed"])).days <= TRADE_SPLIT_DAYS):
+            status[index] = "trade_split"
+        elif s.get("injury_management_only"):
+            status[index] = "management"
+        elif s.get("at_team_season_start") and carried_in(s):
+            status[index] = "carried_in"
+        else:
+            status[index] = "added"
+    return stretches, status
+
+
+def public_history_entries(stretches, status):
+    """History rows [start, part, days, label] for the added stretches. Days use the tracker's unit, two per missed
+    game (INJURIES-2); the engine reads only the date and part."""
+    out = defaultdict(list)
+    for index, s in enumerate(stretches):
+        if status.get(index) != "added":
+            continue
+        part = MERGE.get(s["body_part"], s["body_part"])
+        diagnosis = next((d for d in s.get("diagnoses") or [] if d), "")
+        label = f"{part} {diagnosis.lower()}".strip() if diagnosis else f"{part} injury"
+        out[s["player_id"]].append([s["first_game_missed"], part, 2 * int(s["games_missed"]), label])
+    return out
 
 
 def poisson_ridge(X, y, exposure, intercepts, lam=RIDGE, iters=60):
@@ -192,7 +301,8 @@ def main():
              "first_season": FIRST_SEASON, "player_seasons": len(data), "games": sum(d[2] for d in data),
              "features": FEATURES, "standardization": {"mean": mu, "sd": sd}, "history_decay_years": HISTORY_DECAY_YEARS,
              "parts": {}, "merge": MERGE,
-             "rate_fit": {"season_fixed_effects": True, "anchor_seasons": RATE_ANCHOR_SEASONS}}
+             "rate_fit": {"season_fixed_effects": True, "anchor_seasons": RATE_ANCHOR_SEASONS,
+                          "history_weight": HISTORY_WEIGHT}}
     fit_seasons = [row[1] for row in data]
     exposure = [row[2] for row in data]
     for part in [*PARTS, "illness"]:
@@ -290,6 +400,19 @@ def main():
         part = part_of(h)
         if part and part != "illness" and h.get("player_id") and h.get("start") and h["season"] >= "2021-22":
             recent[h["player_id"]].append([h["start"][:10], part, int(h.get("days") or 0), h.get("label")])
+    # The tracker logged about a third of 2025-26 (18 entries per 1,000 games against 50-55 in 2023-25), so the public
+    # 2025-26 stretches fill in the injuries it lacks (STAR-INJURIES, 2026-11-21). The rate fit above stays on the
+    # tracker alone: the 2025-26 season has its own intercept there and the gameplay anchor uses 2021-25.
+    public_counts = Counter()
+    if PUBLIC_HISTORY.exists():
+        stretches, status = classify_public_stretches(history, {t["abbrev"]: t["name"] for t in canonical["teams"]})
+        public_counts = Counter(status.values())
+        for pid, entries in public_history_entries(stretches, status).items():
+            if pid in players:
+                recent[pid].extend(entries)
+            else:
+                public_counts["added_but_not_in_player_pool"] += len(entries)
+        print("public 2025-26 stretches:", dict(sorted(public_counts.items())))
     model["player_history"] = {pid: sorted(v) for pid, v in sorted(recent.items())}
     # Basketball Index's 2026-27 per-player injury forecast (games missed to injury per 82): the market's view of real
     # players' current proneness, blended into the AI's injury-risk score while it is fresh.
@@ -327,6 +450,8 @@ def main():
     model["recovery_summary"] = summary
     evidence = {key: model.pop(key) for key in ("player_history", "player_forecast_2026_27", "player_recovery_pct")}
     evidence["version"] = model["version"]
+    evidence["public_history_2025_26"] = {"source": str(PUBLIC_HISTORY.relative_to(ROOT)),
+                                          "stretches": dict(sorted(public_counts.items()))}
     if args.write:
         OUT.write_text(json.dumps(model, separators=(",", ":")) + "\n")
         print("wrote", OUT, f"{OUT.stat().st_size/1e6:.2f} MB")

@@ -27,7 +27,7 @@ import top30_real_seasons as real  # noqa: E402
 
 
 def decayed(history, on, years):
-    return sum(math.exp(-((on - d).days / 365.25) / years) for d, _ in history if d < on)
+    return sum(math.exp(-((on - d).days / 365.25) / years) for d, *_ in history if d < on)
 
 
 def main() -> None:

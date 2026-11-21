@@ -4976,7 +4976,10 @@ class DataFoundationTests(unittest.TestCase):
         # counts injuries that cost no game; at the rate refitted to the tracker's 2021-25 seasons it gives ~46-47 a
         # team, while full seasons with the AI rotations give 35 a team that cost a game (Basketball Index 30-37, 35-43
         # with illness, plus its no-game entries).
-        self.assertTrue(24 <= len(events) / teams <= 52, len(events) / teams)
+        # STAR-INJURIES: with the complete 2025-26 history this replay gives ~53 and full seasons ~40 a team that cost a
+        # game. The complete public 2025-26 record has ~45 injury and illness spells a team that cost a game (not
+        # counting injury management), before the tracker-style no-game entries (~23% of the tracker's), so ~58.
+        self.assertTrue(24 <= len(events) / teams <= 60, len(events) / teams)
         days = sorted(e["expected_days_missed"] for e in events)
         q = statistics.quantiles(days, n=20)
         self.assertTrue(3 <= q[9] <= 8, q[9])        # median

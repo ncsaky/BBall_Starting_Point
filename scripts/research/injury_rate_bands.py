@@ -65,6 +65,36 @@ def tracker_bands():
     return {"minutes": aggregate(minutes, MINUTES), "age": aggregate(ages, AGES)}
 
 
+def public_bands():
+    """Real 2025-26 from the public stretches (data/research/injury_history_2025_26.json, complete for absences that cost
+    a game): injury and illness stretches costing a regular-season game, not already underway at the team's opener and
+    not injury management only (STAR-INJURIES). Games played and minutes from the box scores; age at opening night."""
+    canonical = load_app_canonical(ROOT)
+    players = {p["id"]: p for p in canonical["players"]}
+    by_espn = {str(p.get("espn_player_id")): p["id"] for p in canonical["players"] if p.get("espn_player_id")}
+    doc = json.loads((ROOT / "data/research/injury_history_2025_26.json").read_text())
+    counts = Counter(s["player_id"] for s in doc["stretches"]
+                     if s["reason_category"] in ("injury", "illness") and s["regular_season_games_missed"] >= 1
+                     and not s["at_team_season_start"] and not s["injury_management_only"])
+    gp, minutes = Counter(), defaultdict(float)
+    for game in json.loads((ROOT / "data/research/game_boxscores_2025_26.json").read_text())["games"]:
+        if game.get("phase") != "regular":
+            continue
+        for line in game["players"]:
+            pid = by_espn.get(str(line.get("espn_player_id")))
+            if pid and float(line.get("minutes") or 0) > 0:
+                gp[pid] += 1
+                minutes[pid] += float(line["minutes"])
+    opener = date(2025, 10, 21)
+
+    def age(pid):
+        birth = players[pid].get("birthdate") or players[pid].get("birth_date")
+        return (opener - date.fromisoformat(str(birth)[:10])).days / 365.25 if birth else None
+
+    return {"minutes": aggregate(((minutes[pid] / gp[pid], gp[pid], counts[pid]) for pid in gp), MINUTES),
+            "age": aggregate(((age(pid), gp[pid], counts[pid]) for pid in gp), AGES)}
+
+
 def sim_bands(prefix):
     team_games, events, _, _ = sim_source(prefix)
     player_meta = json.loads(Path(f"{prefix}_players.json").read_text())["meta"]
@@ -84,7 +114,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("runs", nargs="+")
     args = parser.parse_args()
-    results = {"tracker": tracker_bands()}
+    results = {"tracker": tracker_bands(), "public_2025_26": public_bands()}
     results.update({Path(prefix).name: sim_bands(prefix) for prefix in args.runs})
     print(json.dumps(results, indent=2))
 
