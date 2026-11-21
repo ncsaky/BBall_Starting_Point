@@ -8,7 +8,7 @@ branch; not pushed or merged). User decision: `docs/agents/tasks/stage2-plan.md`
 1. Every screen now shows the same OVR, OFF and DEF for a player: the card, every table, lists, the draft board, the
    assistant's texts and the command-line game. It is a straight line in the game's own value of the player.
 2. 90+ is the MVP tier: exactly the analysts' top five (Jokić 95.4, Gilgeous-Alexander 94.5, Wembanyama 92.8, Dončić 91.3, Giannis 90.4). Most rotation players are in the 70s and 80s (95%). The end of the bench reaches the high 60s.
-3. Display only. The AI still reads its own number, and trade-want matching was moved onto it, so no AI decision changes. Real-stat scorecard: see "Tests".
+3. Display only. The AI still reads its own number, and trade-want matching was moved onto it, so no AI decision changes. The real-stat scorecard is identical (18/18).
 
 ## 1. The mapping and its anchors
 
@@ -121,6 +121,9 @@ Places that showed a different number and were switched:
   - Thresholds stay stored and matched on the AI's scale, so AI matching is unchanged.
   - The wants screen shows them on the display scale. Thresholds the user types are converted back when saved.
   - A threshold left as shown keeps its stored value exactly, so re-saving doesn't drift.
+- **Roster card OFF column** (`gui/assets-desktop.js`, rating renderer only). Found in the running app:
+  - The column ignored the server's OFF and showed an average of three subratings (shooting, creation, passing) under the OFF label. For example, Michael Porter Jr. showed 64.9 there and 82.2 on his card.
+  - It now reads the server's OFF like OVR and DEF. This bug predates this task.
 - **Command-line game** (`play.py`): every OVR/OFF/DEF print now shows the display ratings. These are the cut list, league trait table, trade asset lists, re-signing, free-agent market and comparison, signings, the free-agent investigation (its colour cut-offs moved to 70/80), save free agents, trade offer details, trade player picker and dashboard ratings. Rankings that order those lists still use the AI's number.
 
 **Kept on the AI's scale on purpose** (AI decisions; they now read `save.player_engine_attribute_summary`, which is the old behaviour exactly):
@@ -134,7 +137,7 @@ Without this, the AI would have compared the new display numbers against thresho
 - `presentation_rating_value`.
 - The simulation.
 - Legacy mode (no new ratings): OVR/OFF/DEF show their grade, exactly as before.
-- `gui/app.js` needed no change. Every rating cell already renders the server's display values, the card header included.
+- `gui/app.js` needed no change. Its rating cells already render the server's display values, the card header included.
 
 **Speed:** a display summary costs about 0.12 ms per player with the game's caches on (0.08 ms before). Tables are not noticeably slower.
 
@@ -151,7 +154,26 @@ Without this, the AI would have compared the new display numbers against thresho
   - AI matching stays on the AI's scale.
   - Trade-want thresholds convert for display and back.
 - Updated: `tests/test_player_profile.py`. Two tests pinned the old card line (median 50, best ~98) and the removed `engine_raw` field. They now check card = table and the new line; comments say why.
-- Focused run, core suite, extra tests and the scorecard: results below (filled in when they finish).
+- **Focused run** (`run_tests_parallel.py --workers 2 --match "player_profile|ratings|summary|display|gui_concept|impact_value|overall_scale|fantasy|prospect|trade_wants|extension|wants|scale" --js`):
+  - 137 modules, 1,666 tests.
+  - Two failures were old display numbers pinned by tests, now updated with a comment:
+    - `test_foundation` league trait table: it pinned the table OVR to the AI's summary.
+    - `test_fantasy_draft`: it pinned the shown OVR equal to the engine's number. It now checks the same order.
+  - Six errors are not caused by this change: five tests need git-ignored `output/` reference files that this worktree doesn't have (experimental-engine fixtures, a defensive-scale comparison file), and `startup_video.test.cjs` needs a git-ignored video asset. The GUI-server smoke test timed out once under load and passed on rerun.
+  - After the updates, all three affected tests pass.
+- **Core suite** (`scripts/run_core_tests.sh`): 338 tests, OK.
+- **Browser JS tests:** all pass except `startup_video` (missing asset, as above).
+- **Real-stat scorecard** (`calibration_report.py --games 1230 --mode replay-real-minutes`): **18/18**.
+  - The output is identical line for line to the main checkout's latest run (`output/parallel-tests/calibration.txt`). Only the "games in N seconds" timing line differs. Display only, as intended.
+  - Saved at `output/overall-scale/calibration.txt` in the worktree.
+- **Running app** at 1440 wide, on a new save (Brooklyn). Screenshots are in `output/overall-scale/` (worktree):
+  - The card shows Jokić 95.4 / 93.6 / 82.5 on both pages, with the new scale note (`card_page1_jokic_1440.png`, `card_page2_ratings_jokic_1440.png`).
+  - The Player Finder league table shows the same numbers and the same top order as the 90+ list (`league_player_finder_1440.png`).
+  - The Roster table shows the card's numbers, after the OFF-column fix (`roster_table_1440.png`).
+  - **Free-agency room:**
+    - The room is locked in preseason, so it couldn't be shown on screen without simulating to the offseason (not a light job).
+    - Its payload was checked directly in the running app: 80 candidates, all on the new scale. Example: Russell Westbrook 75.0 / 77.6 / 73.8, which satisfies OVR = OFF + DEF/2 − 39.5.
+    - Its table renders `ratings.overall`.
 
 ## What's left
 
@@ -166,4 +188,5 @@ Without this, the AI would have compared the new display numbers against thresho
    - No clipping was added (rule 3).
 2. **Team-level "overall/offense/defense"** in the team identity panels (team signals, the power-rank slide, the CLI team identity) are team aggregates built from the AI's summary numbers. They are not player OVRs and were left alone. If they should read on the same scale, that is a small follow-up.
 3. **Generic colour helpers in the GUI.** `ratingTone` (≥92 elite, ≥82 strong, <68 weak) and `plainNumber` (≥70 green) apply to every rating, subratings included. On the new OVR scale, `plainNumber` turns almost every OVR green. Main table cells use league quartiles, which adjust automatically. I didn't touch the shared helpers, to avoid conflicts with the free-agency slice-4 agent.
-4. **Audit and probe scripts** in `scripts/` that call `player_display_attribute_summary` on new-ratings saves now get display-scale OVR/OFF/DEF. Any that compare against AI-scale cut-offs should switch to `player_engine_attribute_summary`. None of them is gameplay.
+4. **Free-agency room on screen:** check it visually the next time a save is in the offseason (its payload is verified).
+5. **Audit and probe scripts** in `scripts/` that call `player_display_attribute_summary` on new-ratings saves now get display-scale OVR/OFF/DEF. Any that compare against AI-scale cut-offs should switch to `player_engine_attribute_summary`. None of them is gameplay.
