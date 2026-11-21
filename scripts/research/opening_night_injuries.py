@@ -155,11 +155,17 @@ def norm(name: str) -> str:
 # ---- The NBA's official injury report (PDF; text cells with WinAnsi encoding, standard library only) ---------------
 def report_cells(data: bytes) -> list[list[tuple[float, float, str]]]:
     pages = []
-    for header, body in re.findall(rb"<<(.*?)>>\s*stream\r?\n(.*?)\r?\nendstream", data, re.S):
+    for stream in re.finditer(rb"<<([^<>]*)>>\s*stream\r?\n", data):
+        header = stream[1]
         if b"FlateDecode" not in header:
             continue
+        # A compressed stream can itself end in CR. Use the PDF's length
+        # instead of treating that byte as part of the endstream line break.
+        length = re.search(rb"/Length\s+(\d+)\b(?!\s+\d+\s+R)", header)
+        start = stream.end()
+        stop = start + int(length[1]) if length else len(data)
         try:
-            text = zlib.decompress(body).decode("latin-1")
+            text = zlib.decompress(data[start:stop]).decode("latin-1")
         except zlib.error:
             continue
         if "Tj" not in text:
@@ -186,14 +192,18 @@ def report_rows(data: bytes) -> list[dict]:
     team carried down to the rows below them as the report prints them."""
     out, current = [], {"date": None, "team": None}
     for cells in report_cells(data):
-        rows = defaultdict(dict)
-        for y, x, value in cells:
+        rows = []
+        for y, x, value in sorted(cells):
             column = min(COLUMNS, key=lambda c: abs(c[0] - x))
             if abs(column[0] - x) > 12:
                 continue
-            rows[round(y, 1)][column[1]] = (rows[round(y, 1)].get(column[1], "") + " " + value).strip()
-        for y in sorted(rows):
-            row = rows[y]
+            # On some page breaks the first player's cells sit one point
+            # above the date and team cells for the same row.
+            if not rows or y - rows[-1][0] > 1.1:
+                rows.append((y, {}))
+            row = rows[-1][1]
+            row[column[1]] = (row.get(column[1], "") + " " + value).strip()
+        for _, row in rows:
             if row.get("date") == "Game Date" or "Page" in str(row.get("date") or ""):
                 continue
             if re.match(r"\d\d/\d\d/\d{4}", str(row.get("date") or "")):

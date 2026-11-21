@@ -60,10 +60,12 @@ class OpeningNightListTests(unittest.TestCase):
             return f"{x} {y} 50 20 re\nW* n\nBT\n/F0 -10 Tf\n{words}\nET\n"
         content = (cell(19.1, 100.4, "Game Date") + cell(421.0, 100.4, "Player Name")
                    + cell(19.1, 121.7, "10/20/2026") + cell(260.2, 121.7, "Boston Celtics")
-                   + cell(421.0, 121.7, "Carter, Devin") + cell(581.7, 121.7, "Out")
-                   + cell(662.1, 121.7, "Injury/Illness - Illness")
+                   + cell(421.0, 120.7, "Carter, Devin") + cell(581.7, 120.7, "Out")
+                   + cell(662.1, 120.7, "Injury/Illness - Illness")
                    + cell(421.0, 144.8, "Walsh, Jordan") + cell(581.7, 144.8, "Available") + cell(662.1, 144.8, "-"))
-        body = zlib.compress(content.encode("latin-1"))
+        # The PDF uses LF before endstream, but the compressed data ends in CR.
+        body = zlib.compress(content.encode("latin-1") + b"%" + b"a" * 128)
+        self.assertTrue(body.endswith(b"\r"))
         pdf = b"%PDF-1.4\n1 0 obj\n<</Length " + str(len(body)).encode() + b"/Filter/FlateDecode>>\nstream\n" + body + b"\nendstream\nendobj\n"
         rows = oni.report_rows(pdf)
         self.assertEqual([(r["date"], r["team"], r["player"], r["status"]) for r in rows],
