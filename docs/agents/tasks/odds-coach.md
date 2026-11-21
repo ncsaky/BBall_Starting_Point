@@ -84,8 +84,9 @@ What the numbers say:
 1. Decide how a new save's starting coordinators are rated: neutral, or evidence-based for real staff. That would be its own task touching `staff.py` and save creation. After it, rerun this test.
 2. Evidence-based ratings for coordinators and lead assistants would need a per-assistant source (team defense or offense under each coordinator, adjusted for roster). The named lead assistants in the staffs file are a starting point.
 3. The head-coach effect size could be revisited with more seasons. One season can't separate coach quality from team strength.
-4. Disk was nearly full during this task (as low as 117 MB free). Heavy jobs by other agents may fail until space is freed.
+4. Disk was nearly full during this task (as low as 117 MB free at one point; about 19 GB free after the crash and cleanup).
 
 ## Tests
-- Focused (odds coach, coaching effects, staff lifecycle, game-context margins, win-pick shooters, box score reconciliation, box star stats, box variation, forward tuning, game minutes, foundation, plus-minus, narrative simulation): see the commit message.
-- Core suite (`scripts/run_core_tests.sh`): see the commit message.
+- Focused (odds coach, coaching effects, staff lifecycle, game-context margins, win-pick shooters, box score reconciliation, box star stats, box variation, forward tuning, game minutes, foundation, plus-minus, narrative simulation): **312 OK** (14 skipped).
+- Core suite (`scripts/run_core_tests.sh`): **338 OK** (2 skipped).
+- Scratch kept small: `output/odds-coach/` holds the four odds summaries (`odds_summaries.json`), the term analyses, the identity check and the scripts. The full run files were deleted.
