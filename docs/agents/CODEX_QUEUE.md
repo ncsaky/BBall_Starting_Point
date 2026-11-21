@@ -6,6 +6,64 @@ Current priority (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE now, ODDS-COA
 
 ---
 
+## Ready now (2026-11-21, evening): HEADSHOT-GEN-LIBRARY batch 1 (fresh chat; image generation)
+
+### HEADSHOT-GEN-LIBRARY: the generated face library, batch 1
+
+Suggested settings: GPT-6.2 Sol, Medium, fresh chat. Repeatable: later batches use the same prompt with the next batch number.
+
+```
+Read AGENTS.md, docs/agents/BOARD.md and docs/agents/tasks/headshot-gen-pilot.md (your pilot: it worked; 29 of 30
+age steps were clearly the same person). You own HEADSHOT-GEN-LIBRARY; add a board row if missing, set "in progress
+(Codex), batch 1".
+
+Setup: reuse ../BBall_codex_headshots on a new branch from the current main:
+  cd ../BBall_codex_headshots && git fetch .. codex/immersive-franchise-journey && git checkout -b codex/headshot-gen-library FETCH_HEAD
+Commit on that branch; never push. Nothing under src/, gui/ or tests/.
+
+Same hard rules as the pilot: fictional adults only, no real person's name/photo/likeness in any prompt, no logos,
+numbers, text or team designs, no money or API keys.
+
+Batch 1 (in this order; commit after every 3 people so a usage limit loses nothing; stop cleanly at a limit and
+record where you stopped):
+1. 30 staff men, 3 stages (about 38, 50, 62).
+2. 12 staff women, 3 stages.
+3. 20 players (men), 4 stages.
+If the plan still has room, continue with more players.
+
+Fixes from the pilot:
+- Players' ages must read clearly apart: stage 1 youthful (19-20, softer face, lean), stage 2 (25-26), stage 3 (30-31)
+  with a visibly more mature face, stage 4 (34-35) with fine lines, some grey in beard or temples for some players,
+  a little weight for some. Rookie must not look mid-twenties.
+- Less passport-like: allow a slight head turn, relaxed or slight smile for some, varied but consistent framing
+  (head and upper chest, light-grey studio background, even light).
+- Variety like a real league: players about 70% Black (varied skin tones, face shapes, builds), and the rest white
+  American, European, Latino, mixed, a few Asian; builds from slim guards to broad centres. Staff a realistic mix of
+  ages, ethnicities and styles (suits, polos, quarter-zips, glasses).
+- Hair and facial-hair changes vary by person and stage (some barely change, some change a lot), as in the pilot.
+
+Output:
+- Full-size images in output/headshots-gen-library/<id>/stage<N>.png (git-ignored).
+- Game-size copies: output/headshots-gen-library/game/<group>/<NNNN>-s<N>.jpg, 320x320, centred on the face,
+  head and upper chest (sips can do this: sips -Z 320 then crop). Groups: staff-m, staff-f, player-m.
+- data/research/headshot_gen_library_manifest.json (committed), one entry per person, in the game's format:
+  {"id": "staff-m/0001", "gender": "male", "role": "staff",
+   "stages": [{"min_age": 0, "file": "staff-m/0001-s1.jpg", "age": 38, "changes": "..."},
+              {"min_age": 46, ...}, {"min_age": 58, ...}],
+   "prompts": [...], "tool": "...", "date": "..."}
+  min_age for stage 2+ is jittered per person (players: stage 2 at 23-26, stage 3 at 28-31, stage 4 at 32-34;
+  staff: stage 2 at 45-50, stage 3 at 56-61) so faces don't all change at the same age.
+- Update scripts/build_headshot_pilot_contact_sheet.py (or a copy) to build
+  output/headshots-gen-library/contact_sheet.html for the batch.
+- Self-review each person before moving on; redo a stage that shows text/logos/hands, the wrong age, or a different
+  person. Note redo counts.
+- docs/agents/tasks/headshot-gen-library.md: plain TL;DR first; per batch: people done, images, redo count, time,
+  where it stopped, anything odd.
+Set the board row to "review (batch 1)" and stop.
+```
+
+---
+
 ## Ready now (2026-11-21, afternoon): HEADSHOT-GEN-PILOT (fresh chat; needs image generation)
 
 ### HEADSHOT-GEN-PILOT: AI-generated fictional faces that age through a career
