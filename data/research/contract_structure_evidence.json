@@ -2348,7 +2348,8 @@
         "latest_decision_date": null,
         "sources": [
           "nba2022",
-          "historical_salary_snapshots"
+          "historical_salary_snapshots",
+          "boardroom2022"
         ],
         "known_by_recap_date": "2022-08-20",
         "prior_season_nba_stats": null,
@@ -2366,13 +2367,14 @@
         "kind": "player",
         "decision": "opted_in",
         "salary_season": 2022,
-        "option_salary": 38917057,
+        "option_salary": 36503300,
         "decision_report_date": "2022-06-27",
         "latest_decision_date": null,
         "sources": [
           "nba2022",
           "historical_salary_snapshots",
-          "https://www.washingtonpost.com/sports/2022/06/27/kyrie-irving-return-nets-player-option/"
+          "https://www.washingtonpost.com/sports/2022/06/27/kyrie-irving-return-nets-player-option/",
+          "boardroom2022"
         ],
         "known_by_recap_date": "2022-08-20",
         "prior_season_nba_stats": {
@@ -2433,7 +2435,8 @@
         "latest_decision_date": null,
         "sources": [
           "nba2022",
-          "historical_salary_snapshots"
+          "historical_salary_snapshots",
+          "boardroom2022"
         ],
         "known_by_recap_date": "2022-08-20",
         "prior_season_nba_stats": {
@@ -2458,12 +2461,13 @@
         "kind": "player",
         "decision": "opted_out",
         "salary_season": 2022,
-        "option_salary": 6182500,
+        "option_salary": 6184500,
         "decision_report_date": null,
         "latest_decision_date": null,
         "sources": [
           "nba2022",
-          "decline2022"
+          "decline2022",
+          "boardroom2022"
         ],
         "known_by_recap_date": "2022-08-20",
         "prior_season_nba_stats": {
@@ -2550,11 +2554,12 @@
         "kind": "player",
         "decision": "opted_in",
         "salary_season": 2022,
-        "option_salary": null,
+        "option_salary": 1878720,
         "decision_report_date": null,
         "latest_decision_date": null,
         "sources": [
-          "nba2022"
+          "nba2022",
+          "boardroom2022"
         ],
         "known_by_recap_date": "2022-08-20",
         "prior_season_nba_stats": {
@@ -2584,7 +2589,8 @@
         "latest_decision_date": null,
         "sources": [
           "nba2022",
-          "historical_salary_snapshots"
+          "historical_salary_snapshots",
+          "boardroom2022"
         ],
         "known_by_recap_date": "2022-08-20",
         "prior_season_nba_stats": {
@@ -2692,7 +2698,6 @@
           "bpm": -0.7,
           "ws": 2.8
         },
-        "game_on_court_value_2026_snapshot": 57.92,
         "prior_team_active_payroll": 145549077,
         "prior_team_total_cap_allocations": 153093665,
         "prior_season_cap": 123655000,
@@ -2704,7 +2709,6 @@
           "nba_stats2023",
           "espn_standings2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2891748,
         "age_on_june_29": 29,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -2749,7 +2753,6 @@
           "bpm": -0.5,
           "ws": 4.3
         },
-        "game_on_court_value_2026_snapshot": 47.93,
         "prior_team_active_payroll": 160688004,
         "prior_team_total_cap_allocations": 169601210,
         "prior_season_cap": 123655000,
@@ -2772,7 +2775,6 @@
           "widget2023",
           "https://www.hoopsrumors.com/2023/06/pacers-to-sign-bruce-brown-to-two-year-contract.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 13335638,
         "age_on_june_29": 26,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -2817,7 +2819,6 @@
           "bpm": -1.7,
           "ws": 1.2
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 92962689,
         "prior_team_total_cap_allocations": 147162541,
         "prior_season_cap": 123655000,
@@ -2828,7 +2829,6 @@
           "nba_stats2023",
           "espn_standings2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2710010,
         "age_on_june_29": null,
         "age_basis": "prior_season_age",
         "prior_season_nba_stats": {
@@ -2865,7 +2865,6 @@
           "nba2023"
         ],
         "prior_season_box_value": null,
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 176702907,
         "prior_team_total_cap_allocations": 176795764,
         "prior_season_cap": 123655000,
@@ -2876,7 +2875,6 @@
           "espn_standings2023",
           "nba_stats2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3196670,
         "age_on_june_29": null,
         "age_basis": "tracker_age",
         "prior_season_nba_stats": {
@@ -2921,7 +2919,6 @@
           "bpm": -2.9,
           "ws": 1.3
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 149166783,
         "prior_team_total_cap_allocations": 164391836,
         "prior_season_cap": 123655000,
@@ -2932,7 +2929,6 @@
           "nba_stats2023",
           "espn_standings2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2954791,
         "age_on_june_29": null,
         "age_basis": "prior_season_age",
         "prior_season_nba_stats": {
@@ -2975,7 +2971,6 @@
           "bpm": -0.4,
           "ws": 2.4
         },
-        "game_on_court_value_2026_snapshot": 56.74,
         "prior_team_active_payroll": 145549077,
         "prior_team_total_cap_allocations": 153093665,
         "prior_season_cap": 123655000,
@@ -2998,7 +2993,6 @@
           "widget2023",
           "https://www.hoopsrumors.com/2023/08/mavericks-to-sign-derrick-jones-jr.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3033595,
         "age_on_june_29": 26,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -3043,7 +3037,6 @@
           "bpm": 0.7,
           "ws": 4.2
         },
-        "game_on_court_value_2026_snapshot": 62.07,
         "prior_team_active_payroll": 188443947,
         "prior_team_total_cap_allocations": 199320856,
         "prior_season_cap": 123655000,
@@ -3066,7 +3059,6 @@
           "widget2023",
           "https://www.hoopsrumors.com/2023/07/knicks-donte-divincenzo-agree-to-four-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 7915820,
         "age_on_june_29": 26,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -3111,7 +3103,6 @@
           "bpm": 0.8,
           "ws": 4.7
         },
-        "game_on_court_value_2026_snapshot": 60.92,
         "prior_team_active_payroll": 188443947,
         "prior_team_total_cap_allocations": 199320856,
         "prior_season_cap": 123655000,
@@ -3134,7 +3125,6 @@
           "widget2023",
           "https://www.hoopsrumors.com/2023/06/draymond-green-to-re-sign-with-warriors-on-four-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 12714786,
         "age_on_june_29": 33,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -3179,7 +3169,6 @@
           "bpm": 2.5,
           "ws": 6.5
         },
-        "game_on_court_value_2026_snapshot": 61.59,
         "prior_team_active_payroll": 144096592,
         "prior_team_total_cap_allocations": 149260166,
         "prior_season_cap": 123655000,
@@ -3202,7 +3191,6 @@
           "widget2023",
           "https://www.hoopsrumors.com/2023/06/rockets-to-sign-fred-vanvleet-to-three-year-contract.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 29318599,
         "age_on_june_29": 29,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -3247,7 +3235,6 @@
           "bpm": 0.2,
           "ws": 4.5
         },
-        "game_on_court_value_2026_snapshot": 46.91,
         "prior_team_active_payroll": 144096592,
         "prior_team_total_cap_allocations": 149260166,
         "prior_season_cap": 123655000,
@@ -3259,7 +3246,6 @@
           "nba_stats2023",
           "espn_standings2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 11610180,
         "age_on_june_29": 24,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -3304,7 +3290,6 @@
           "bpm": 5.3,
           "ws": 8.4
         },
-        "game_on_court_value_2026_snapshot": 68.38,
         "prior_team_active_payroll": 149166783,
         "prior_team_total_cap_allocations": 164391836,
         "prior_season_cap": 123655000,
@@ -3316,7 +3301,6 @@
           "nba_stats2023",
           "espn_standings2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 23771844,
         "age_on_june_29": 33,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -3361,7 +3345,6 @@
           "bpm": -0.6,
           "ws": 3.5
         },
-        "game_on_court_value_2026_snapshot": 52.81,
         "prior_team_active_payroll": 179802121,
         "prior_team_total_cap_allocations": 181849255,
         "prior_season_cap": 123655000,
@@ -3384,7 +3367,6 @@
           "widget2023",
           "https://www.hoopsrumors.com/2023/06/jevon-carter-leaves-bucks-agrees-to-three-year-deal-with-bulls.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 7421081,
         "age_on_june_29": 27,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -3429,7 +3411,6 @@
           "bpm": -1.4,
           "ws": 1.7
         },
-        "game_on_court_value_2026_snapshot": 46.0,
         "prior_team_active_payroll": 92962689,
         "prior_team_total_cap_allocations": 147162541,
         "prior_season_cap": 123655000,
@@ -3441,7 +3422,6 @@
           "nba_stats2023",
           "espn_standings2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 4958508,
         "age_on_june_29": 31,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -3486,7 +3466,6 @@
           "bpm": 0.9,
           "ws": 6.0
         },
-        "game_on_court_value_2026_snapshot": 63.25,
         "prior_team_active_payroll": 149994034,
         "prior_team_total_cap_allocations": 150263571,
         "prior_season_cap": 123655000,
@@ -3498,7 +3477,6 @@
           "nba_stats2023",
           "espn_standings2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 18860496,
         "age_on_june_29": 28,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -3543,7 +3521,6 @@
           "bpm": 0.8,
           "ws": 1.9
         },
-        "game_on_court_value_2026_snapshot": 57.58,
         "prior_team_active_payroll": 179802121,
         "prior_team_total_cap_allocations": 181849255,
         "prior_season_cap": 123655000,
@@ -3566,7 +3543,6 @@
           "widget2023",
           "https://www.hoopsrumors.com/2023/07/bucks-officially-sign-middleton-lopez-beasley.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3196314,
         "age_on_june_29": 31,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -3611,7 +3587,6 @@
           "bpm": 4.3,
           "ws": 7.7
         },
-        "game_on_court_value_2026_snapshot": 72.88,
         "prior_team_active_payroll": 133790093,
         "prior_team_total_cap_allocations": 183801576,
         "prior_season_cap": 123655000,
@@ -3623,7 +3598,6 @@
           "nba_stats2023",
           "espn_standings2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 28057935,
         "age_on_june_29": 27,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -3668,7 +3642,6 @@
           "bpm": -1.7,
           "ws": 0.9
         },
-        "game_on_court_value_2026_snapshot": 49.96,
         "prior_team_active_payroll": 133790093,
         "prior_team_total_cap_allocations": 183801576,
         "prior_season_cap": 123655000,
@@ -3691,7 +3664,6 @@
           "widget2023",
           "https://www.hoopsrumors.com/2023/06/wizards-kyle-kuzma-agree-to-four-year-contract.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 7916692,
         "age_on_june_29": 27,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -3736,7 +3708,6 @@
           "bpm": -1.3,
           "ws": 2.2
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 149166783,
         "prior_team_total_cap_allocations": 164391836,
         "prior_season_cap": 123655000,
@@ -3758,7 +3729,6 @@
           "widget2023",
           "https://www.hoopsrumors.com/2023/07/montrezl-harrell-returning-to-sixers-on-one-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2891748,
         "age_on_june_29": null,
         "age_basis": "prior_season_age",
         "prior_season_nba_stats": {
@@ -3805,7 +3775,6 @@
           "bpm": 0.7,
           "ws": 0.4
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 144096592,
         "prior_team_total_cap_allocations": 149260166,
         "prior_season_cap": 123655000,
@@ -3816,7 +3785,6 @@
           "nba_stats2023",
           "espn_standings2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2660666,
         "age_on_june_29": null,
         "age_basis": "prior_season_age",
         "prior_season_nba_stats": {
@@ -3861,7 +3829,6 @@
           "bpm": -3.9,
           "ws": 0.3
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 92962689,
         "prior_team_total_cap_allocations": 147162541,
         "prior_season_cap": 123655000,
@@ -3872,7 +3839,6 @@
           "nba_stats2023",
           "espn_standings2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3196670,
         "age_on_june_29": null,
         "age_basis": "prior_season_age",
         "prior_season_nba_stats": {
@@ -3917,7 +3883,6 @@
           "bpm": -1.6,
           "ws": 0.8
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 92962689,
         "prior_team_total_cap_allocations": 147162541,
         "prior_season_cap": 123655000,
@@ -3928,7 +3893,6 @@
           "nba_stats2023",
           "espn_standings2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 4628674,
         "age_on_june_29": null,
         "age_basis": "prior_season_age",
         "prior_season_nba_stats": {
@@ -3974,7 +3938,6 @@
           "bpm": -2.1,
           "ws": 0.6
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 149035368,
         "prior_team_total_cap_allocations": 152766041,
         "prior_season_cap": 123655000,
@@ -3985,7 +3948,6 @@
           "nba_stats2023",
           "espn_standings2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3196837,
         "age_on_june_29": null,
         "age_basis": "prior_season_age",
         "prior_season_nba_stats": {
@@ -4030,7 +3992,6 @@
           "bpm": -2.0,
           "ws": 2.4
         },
-        "game_on_court_value_2026_snapshot": 52.1,
         "prior_team_active_payroll": 172894063,
         "prior_team_total_cap_allocations": 180754950,
         "prior_season_cap": 136021000,
@@ -4054,7 +4015,6 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/07/caleb-martin-finalizing-deal-with-sixers-will-waive-paul-reed.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 8785393,
         "age_on_june_29": 28,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -4099,7 +4059,6 @@
           "bpm": -3.1,
           "ws": 0.6
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 168055994,
         "prior_team_total_cap_allocations": 181975999,
         "prior_season_cap": 136021000,
@@ -4111,7 +4070,6 @@
           "espn_standings2024",
           "injury_snapshot2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2425503,
         "age_on_june_29": null,
         "age_basis": "prior_season_age",
         "prior_season_nba_stats": {
@@ -4156,7 +4114,6 @@
           "bpm": -2.8,
           "ws": 1.2
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 168055994,
         "prior_team_total_cap_allocations": 181975999,
         "prior_season_cap": 136021000,
@@ -4168,7 +4125,6 @@
           "espn_standings2024",
           "injury_snapshot2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2988067,
         "age_on_june_29": null,
         "age_basis": "prior_season_age",
         "prior_season_nba_stats": {
@@ -4207,7 +4163,6 @@
           "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2024-04-22_07PM.pdf"
         ],
         "prior_season_box_value": null,
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 188290459,
         "prior_team_total_cap_allocations": 195220617,
         "prior_season_cap": 136021000,
@@ -4230,7 +4185,6 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/07/suns-damion-lee-agree-to-one-year-contract.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3303308,
         "age_on_june_29": null,
         "age_basis": "tracker_age",
         "prior_season_nba_stats": {
@@ -4275,7 +4229,6 @@
           "bpm": 0.9,
           "ws": 5.1
         },
-        "game_on_court_value_2026_snapshot": 56.65,
         "prior_team_active_payroll": 168055994,
         "prior_team_total_cap_allocations": 181975999,
         "prior_season_cap": 136021000,
@@ -4288,7 +4241,6 @@
           "espn_standings2024",
           "injury_snapshot2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 19090398,
         "age_on_june_29": 28,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -4334,7 +4286,6 @@
           "bpm": -1.2,
           "ws": 3.1
         },
-        "game_on_court_value_2026_snapshot": 52.29,
         "prior_team_active_payroll": 188290459,
         "prior_team_total_cap_allocations": 195220617,
         "prior_season_cap": 136021000,
@@ -4358,7 +4309,6 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/07/drew-eubanks-to-sign-with-jazz.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 5167878,
         "age_on_june_29": 27,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -4404,7 +4354,6 @@
           "bpm": -1.7,
           "ws": 2.5
         },
-        "game_on_court_value_2026_snapshot": 45.57,
         "prior_team_active_payroll": 188290459,
         "prior_team_total_cap_allocations": 195220617,
         "prior_season_cap": 136021000,
@@ -4428,7 +4377,6 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/06/eric-gordon-sixers-agree-to-minimum-salary-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3303632,
         "age_on_june_29": 35,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -4473,7 +4421,6 @@
           "bpm": 0.9,
           "ws": 1.8
         },
-        "game_on_court_value_2026_snapshot": 64.44,
         "prior_team_active_payroll": 206814776,
         "prior_team_total_cap_allocations": 224848124,
         "prior_season_cap": 136021000,
@@ -4486,7 +4433,6 @@
           "espn_standings2024",
           "injury_snapshot2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3303632,
         "age_on_june_29": 31,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -4532,7 +4478,6 @@
           "bpm": 2.4,
           "ws": 4.0
         },
-        "game_on_court_value_2026_snapshot": 60.41,
         "prior_team_active_payroll": 127076533,
         "prior_team_total_cap_allocations": 146679278,
         "prior_season_cap": 136021000,
@@ -4556,7 +4501,6 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/07/jalen-smith-signing-with-bulls.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 5454538,
         "age_on_june_29": 24,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -4601,7 +4545,6 @@
           "bpm": -1.9,
           "ws": 2.5
         },
-        "game_on_court_value_2026_snapshot": 58.0,
         "prior_team_active_payroll": 168055994,
         "prior_team_total_cap_allocations": 181975999,
         "prior_season_cap": 136021000,
@@ -4614,7 +4557,6 @@
           "espn_standings2024",
           "injury_snapshot2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2425503,
         "age_on_june_29": 24,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -4660,7 +4602,6 @@
           "bpm": -0.5,
           "ws": 2.1
         },
-        "game_on_court_value_2026_snapshot": 55.44,
         "prior_team_active_payroll": 188290459,
         "prior_team_total_cap_allocations": 195220617,
         "prior_season_cap": 136021000,
@@ -4684,7 +4625,6 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/07/suns-re-signing-josh-okogie-to-two-year-contract.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3135450,
         "age_on_june_29": 25,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -4730,7 +4670,6 @@
           "bpm": -1.3,
           "ws": 2.1
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 172894063,
         "prior_team_total_cap_allocations": 180754950,
         "prior_season_cap": 136021000,
@@ -4742,7 +4681,6 @@
           "espn_standings2024",
           "injury_snapshot2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3303632,
         "age_on_june_29": null,
         "age_basis": "prior_season_age",
         "prior_season_nba_stats": {
@@ -4787,7 +4725,6 @@
           "bpm": -1.0,
           "ws": 1.3
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 139773430,
         "prior_team_total_cap_allocations": 157982129,
         "prior_season_cap": 136021000,
@@ -4799,7 +4736,6 @@
           "espn_standings2024",
           "injury_snapshot2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2800990,
         "age_on_june_29": null,
         "age_basis": "prior_season_age",
         "prior_season_nba_stats": {
@@ -4844,7 +4780,6 @@
           "bpm": -1.4,
           "ws": 4.8
         },
-        "game_on_court_value_2026_snapshot": 56.47,
         "prior_team_active_payroll": 176890198,
         "prior_team_total_cap_allocations": 184751085,
         "prior_season_cap": 136021000,
@@ -4868,7 +4803,6 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/06/magic-to-sign-kentavious-caldwell-pope-to-three-year-contract.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 5124993,
         "age_on_june_29": 31,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -4914,7 +4848,6 @@
           "bpm": 3.6,
           "ws": 3.3
         },
-        "game_on_court_value_2026_snapshot": 60.0,
         "prior_team_active_payroll": 172894063,
         "prior_team_total_cap_allocations": 180754950,
         "prior_season_cap": 136021000,
@@ -4938,7 +4871,6 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/06/heat-to-re-sign-kevin-love-to-two-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3361274,
         "age_on_june_29": 35,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -4984,7 +4916,6 @@
           "bpm": 6.4,
           "ws": 8.5
         },
-        "game_on_court_value_2026_snapshot": 75.26,
         "prior_team_active_payroll": 168055994,
         "prior_team_total_cap_allocations": 181975999,
         "prior_season_cap": 136021000,
@@ -5008,7 +4939,6 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/07/lakers-lebron-james-agree-to-two-year-max-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 27425403,
         "age_on_june_29": 39,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -5047,7 +4977,6 @@
           "lonzo_bio"
         ],
         "prior_season_box_value": null,
-        "game_on_court_value_2026_snapshot": 59.85,
         "prior_team_active_payroll": 162193482,
         "prior_team_total_cap_allocations": 166348969,
         "prior_season_cap": 136021000,
@@ -5060,7 +4989,6 @@
           "nba_stats2024",
           "injury_snapshot2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2612998,
         "age_on_option_decision": 26,
         "age_on_june_29": 26,
         "age_basis": "birth_date",
@@ -5107,7 +5035,6 @@
           "bpm": -0.5,
           "ws": 2.6
         },
-        "game_on_court_value_2026_snapshot": 67.1,
         "prior_team_active_payroll": 160343147,
         "prior_team_total_cap_allocations": 162956334,
         "prior_season_cap": 136021000,
@@ -5131,7 +5058,6 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/06/og-anunoby-to-sign-five-year-contract-with-knicks.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 5297266,
         "age_on_june_29": 26,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -5177,7 +5103,6 @@
           "bpm": -1.8,
           "ws": 1.7
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 184845028,
         "prior_team_total_cap_allocations": 188759360,
         "prior_season_cap": 136021000,
@@ -5194,7 +5119,6 @@
         "return_to_incumbent": null,
         "signing_sources": [],
         "no_same_team_return_by_opening": true,
-        "estimated_market_aav_leave_one_summer_out": 2425802,
         "age_on_june_29": null,
         "age_basis": "prior_season_age",
         "prior_season_nba_stats": {
@@ -5240,7 +5164,6 @@
           "bpm": 3.1,
           "ws": 7.3
         },
-        "game_on_court_value_2026_snapshot": 70.85,
         "prior_team_active_payroll": 198296474,
         "prior_team_total_cap_allocations": 202080521,
         "prior_season_cap": 136021000,
@@ -5264,7 +5187,6 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/07/paul-george-signs-max-contract-with-sixers.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 30302991,
         "age_on_june_29": 34,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -5309,7 +5231,6 @@
           "bpm": -3.5,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 198296474,
         "prior_team_total_cap_allocations": 202080521,
         "prior_season_cap": 136021000,
@@ -5321,7 +5242,6 @@
           "espn_standings2024",
           "injury_snapshot2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3303632,
         "age_on_june_29": null,
         "age_basis": "prior_season_age",
         "prior_season_nba_stats": {
@@ -5367,7 +5287,6 @@
           "bpm": -3.2,
           "ws": 2.1
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 176890198,
         "prior_team_total_cap_allocations": 184751085,
         "prior_season_cap": 136021000,
@@ -5379,7 +5298,6 @@
           "espn_standings2024",
           "injury_snapshot2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3386511,
         "age_on_june_29": null,
         "age_basis": "prior_season_age",
         "prior_season_nba_stats": {
@@ -5424,7 +5342,6 @@
           "bpm": -3.2,
           "ws": 1.3
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 132379717,
         "prior_team_total_cap_allocations": 189901033,
         "prior_season_cap": 136021000,
@@ -5444,7 +5361,6 @@
           "https://www.hoopsrumors.com/2024/06/richaun-holmes-declines-option-re-signs-with-wizards.html"
         ],
         "deal_mechanism": "extension",
-        "estimated_market_aav_leave_one_summer_out": 3003632,
         "age_on_june_29": null,
         "age_basis": "prior_season_age",
         "prior_season_nba_stats": {
@@ -5490,7 +5406,6 @@
           "bpm": 0.5,
           "ws": 2.1
         },
-        "game_on_court_value_2026_snapshot": 56.17,
         "prior_team_active_payroll": 198296474,
         "prior_team_total_cap_allocations": 202080521,
         "prior_season_cap": 136021000,
@@ -5503,7 +5418,6 @@
           "espn_standings2024",
           "injury_snapshot2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 4063503,
         "age_on_june_29": 35,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -5549,7 +5463,6 @@
           "bpm": -0.4,
           "ws": 1.6
         },
-        "game_on_court_value_2026_snapshot": 58.47,
         "prior_team_active_payroll": 172894063,
         "prior_team_total_cap_allocations": 180754950,
         "prior_season_cap": 136021000,
@@ -5573,7 +5486,6 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/07/heat-to-re-sign-thomas-bryant.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2800905,
         "age_on_june_29": 26,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -5618,7 +5530,6 @@
           "bpm": -2.0,
           "ws": 1.9
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 162193482,
         "prior_team_total_cap_allocations": 166348969,
         "prior_season_cap": 136021000,
@@ -5630,7 +5541,6 @@
           "espn_standings2024",
           "injury_snapshot2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3304173,
         "age_on_june_29": null,
         "age_basis": "prior_season_age",
         "prior_season_nba_stats": {
@@ -5676,7 +5586,6 @@
           "bpm": -6.4,
           "ws": -0.1
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 135440708,
         "prior_team_total_cap_allocations": 162996801,
         "prior_season_cap": 136021000,
@@ -5699,7 +5608,6 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/07/watanabe-signs-with-japans-chiba-jets.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2800905,
         "age_on_june_29": null,
         "age_basis": "prior_season_age",
         "prior_season_nba_stats": {
@@ -5745,7 +5653,6 @@
           "bpm": -3.2,
           "ws": 1.2
         },
-        "game_on_court_value_2026_snapshot": 57.92,
         "prior_team_active_payroll": 169548876,
         "prior_team_total_cap_allocations": 170340647,
         "prior_season_cap": 140588000,
@@ -5758,7 +5665,6 @@
           "espn_standings2025",
           "injury_snapshot2025"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3634405,
         "age_on_june_29": 31,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -5804,7 +5710,6 @@
           "bpm": 0.2,
           "ws": 2.7
         },
-        "game_on_court_value_2026_snapshot": 56.47,
         "prior_team_active_payroll": 183221333,
         "prior_team_total_cap_allocations": 195746447,
         "prior_season_cap": 140588000,
@@ -5828,7 +5733,6 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/06/bucks-bobby-portis-agree-to-three-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 5968974,
         "age_on_june_29": 30,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -5874,7 +5778,6 @@
           "bpm": -4.8,
           "ws": 0.0
         },
-        "game_on_court_value_2026_snapshot": 49.37,
         "prior_team_active_payroll": 182574315,
         "prior_team_total_cap_allocations": 192786656,
         "prior_season_cap": 140588000,
@@ -5887,7 +5790,6 @@
           "espn_standings2025",
           "injury_snapshot2025"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3633643,
         "age_on_june_29": 31,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -5933,7 +5835,6 @@
           "bpm": -1.0,
           "ws": 2.9
         },
-        "game_on_court_value_2026_snapshot": 47.02,
         "prior_team_active_payroll": 182745885,
         "prior_team_total_cap_allocations": 200785985,
         "prior_season_cap": 140588000,
@@ -5957,7 +5858,6 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/06/dorian-finney-smith-to-sign-four-year-contract-with-rockets.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3634595,
         "age_on_june_29": 32,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -6003,7 +5903,6 @@
           "bpm": 0.0,
           "ws": 1.7
         },
-        "game_on_court_value_2026_snapshot": 53.64,
         "prior_team_active_payroll": 172077663,
         "prior_team_total_cap_allocations": 187147472,
         "prior_season_cap": 140588000,
@@ -6016,7 +5915,6 @@
           "espn_standings2025",
           "injury_snapshot2025"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3634405,
         "age_on_june_29": 33,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -6062,7 +5960,6 @@
           "bpm": -1.6,
           "ws": 0.9
         },
-        "game_on_court_value_2026_snapshot": 45.57,
         "prior_team_active_payroll": 169548876,
         "prior_team_total_cap_allocations": 170340647,
         "prior_season_cap": 140588000,
@@ -6086,7 +5983,6 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/07/eric-gordon-re-signs-with-sixers-on-one-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3634405,
         "age_on_june_29": 36,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -6132,7 +6028,6 @@
           "bpm": 4.3,
           "ws": 8.3
         },
-        "game_on_court_value_2026_snapshot": 68.38,
         "prior_team_active_payroll": 166986734,
         "prior_team_total_cap_allocations": 174670238,
         "prior_season_cap": 140588000,
@@ -6156,7 +6051,6 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/06/james-harden-declining-option-signing-new-two-year-deal-with-clippers.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 45477390,
         "age_on_june_29": 35,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -6202,7 +6096,6 @@
           "bpm": -2.1,
           "ws": 0.3
         },
-        "game_on_court_value_2026_snapshot": 52.81,
         "prior_team_active_payroll": 157180244,
         "prior_team_total_cap_allocations": 168006873,
         "prior_season_cap": 140588000,
@@ -6215,7 +6108,6 @@
           "espn_standings2025",
           "injury_snapshot2025"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3633643,
         "age_on_june_29": 29,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -6261,7 +6153,6 @@
           "bpm": 1.0,
           "ws": 2.5
         },
-        "game_on_court_value_2026_snapshot": 65.29,
         "prior_team_active_payroll": 142648013,
         "prior_team_total_cap_allocations": 154114022,
         "prior_season_cap": 140588000,
@@ -6274,7 +6165,6 @@
           "espn_standings2025",
           "injury_snapshot2025"
         ],
-        "estimated_market_aav_leave_one_summer_out": 5765478,
         "age_on_june_29": 27,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -6320,7 +6210,6 @@
           "bpm": 1.3,
           "ws": 6.2
         },
-        "game_on_court_value_2026_snapshot": 60.21,
         "prior_team_active_payroll": 198847571,
         "prior_team_total_cap_allocations": 236725861,
         "prior_season_cap": 140588000,
@@ -6344,7 +6233,6 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/06/julius-randle-to-sign-three-year-contract-with-timberwolves.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 11108181,
         "age_on_june_29": 30,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -6390,7 +6278,6 @@
           "bpm": -2.3,
           "ws": 2.6
         },
-        "game_on_court_value_2026_snapshot": 58.9,
         "prior_team_active_payroll": 169548876,
         "prior_team_total_cap_allocations": 170340647,
         "prior_season_cap": 140588000,
@@ -6402,7 +6289,6 @@
           "nba_stats2025",
           "espn_standings2025"
         ],
-        "estimated_market_aav_leave_one_summer_out": 6600009,
         "age_on_june_29": 29,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -6445,7 +6331,6 @@
           "bpm": -0.6,
           "ws": 2.2
         },
-        "game_on_court_value_2026_snapshot": 61.02,
         "prior_team_active_payroll": 183221333,
         "prior_team_total_cap_allocations": 195746447,
         "prior_season_cap": 140588000,
@@ -6469,7 +6354,6 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/06/bucks-kevin-porter-jr-agree-to-two-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 6600009,
         "age_on_june_29": 25,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -6515,7 +6399,6 @@
           "bpm": 0.7,
           "ws": 2.0
         },
-        "game_on_court_value_2026_snapshot": 57.58,
         "prior_team_active_payroll": 162581956,
         "prior_team_total_cap_allocations": 211677970,
         "prior_season_cap": 140588000,
@@ -6528,7 +6411,6 @@
           "espn_standings2025",
           "injury_snapshot2025"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3634595,
         "age_on_june_29": 33,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -6574,7 +6456,6 @@
           "bpm": 3.4,
           "ws": 4.6
         },
-        "game_on_court_value_2026_snapshot": 70.25,
         "prior_team_active_payroll": 172077663,
         "prior_team_total_cap_allocations": 187147472,
         "prior_season_cap": 140588000,
@@ -6598,7 +6479,6 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/06/kyrie-irving-to-decline-option-re-sign-with-mavs-on-three-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 27286434,
         "age_on_june_29": 33,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -6644,7 +6524,6 @@
           "bpm": 5.6,
           "ws": 7.7
         },
-        "game_on_court_value_2026_snapshot": 75.26,
         "prior_team_active_payroll": 182745885,
         "prior_team_total_cap_allocations": 200785985,
         "prior_season_cap": 140588000,
@@ -6657,7 +6536,6 @@
           "espn_standings2025",
           "injury_snapshot2025"
         ],
-        "estimated_market_aav_leave_one_summer_out": 38500050,
         "age_on_june_29": 40,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -6703,7 +6581,6 @@
           "bpm": 5.0,
           "ws": 0.9
         },
-        "game_on_court_value_2026_snapshot": 56.14,
         "prior_team_active_payroll": 165518581,
         "prior_team_total_cap_allocations": 176848446,
         "prior_season_cap": 140588000,
@@ -6716,7 +6593,6 @@
           "espn_standings2025",
           "injury_snapshot2025"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3080547,
         "age_on_june_29": 28,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -6762,7 +6638,6 @@
           "bpm": 1.6,
           "ws": 5.7
         },
-        "game_on_court_value_2026_snapshot": 63.45,
         "prior_team_active_payroll": 198847571,
         "prior_team_total_cap_allocations": 236725861,
         "prior_season_cap": 140588000,
@@ -6786,7 +6661,6 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/06/timberwolves-naz-reid-agree-to-five-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 13322033,
         "age_on_june_29": 25,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -6832,7 +6706,6 @@
           "bpm": 0.8,
           "ws": 3.5
         },
-        "game_on_court_value_2026_snapshot": 50.57,
         "prior_team_active_payroll": 166986734,
         "prior_team_total_cap_allocations": 174670238,
         "prior_season_cap": 140588000,
@@ -6856,7 +6729,6 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/06/clippers-agree-to-two-year-deal-with-nicolas-batum.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3634595,
         "age_on_june_29": 36,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -6902,7 +6774,6 @@
           "bpm": -2.3,
           "ws": 1.2
         },
-        "game_on_court_value_2026_snapshot": 47.72,
         "prior_team_active_payroll": 183221333,
         "prior_team_total_cap_allocations": 195746447,
         "prior_season_cap": 140588000,
@@ -6915,7 +6786,6 @@
           "espn_standings2025",
           "injury_snapshot2025"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3633643,
         "age_on_june_29": 32,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -6961,7 +6831,6 @@
           "bpm": -1.1,
           "ws": 1.9
         },
-        "game_on_court_value_2026_snapshot": 56.17,
         "prior_team_active_payroll": 182574315,
         "prior_team_total_cap_allocations": 192786656,
         "prior_season_cap": 140588000,
@@ -6985,7 +6854,6 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/10/russell-westbrook-to-sign-with-kings.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3725167,
         "age_on_june_29": 36,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -7031,7 +6899,6 @@
           "bpm": 1.6,
           "ws": 2.1
         },
-        "game_on_court_value_2026_snapshot": 64.04,
         "prior_team_active_payroll": 204850563,
         "prior_team_total_cap_allocations": 234222725,
         "prior_season_cap": 154647000,
@@ -7055,7 +6922,6 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/06/al-horford-to-decline-option-sign-new-deal-with-warriors.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 4693459,
         "age_on_june_29": 40,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -7101,7 +6967,6 @@
           "bpm": 1.2,
           "ws": 4.6
         },
-        "game_on_court_value_2026_snapshot": 61.23,
         "prior_team_active_payroll": 159827661,
         "prior_team_total_cap_allocations": 197952062,
         "prior_season_cap": 154647000,
@@ -7114,7 +6979,6 @@
           "espn_standings2026",
           "injury_snapshot2026"
         ],
-        "estimated_market_aav_leave_one_summer_out": 26667346,
         "age_on_june_29": 31,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -7160,7 +7024,6 @@
           "bpm": 2.8,
           "ws": 5.6
         },
-        "game_on_court_value_2026_snapshot": 68.97,
         "prior_team_active_payroll": 194334002,
         "prior_team_total_cap_allocations": 211399497,
         "prior_season_cap": 154647000,
@@ -7184,7 +7047,6 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/06/lakers-austin-reaves-agree-to-four-year-max-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 23648845,
         "age_on_june_29": 28,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -7231,7 +7093,6 @@
           "bpm": -10.6,
           "ws": -0.2
         },
-        "game_on_court_value_2026_snapshot": 56.92,
         "prior_team_active_payroll": 189852974,
         "prior_team_total_cap_allocations": 199054230,
         "prior_season_cap": 154647000,
@@ -7255,7 +7116,6 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/08/bradley-beal-to-re-sign-with-clippers-on-two-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3875985,
         "age_on_june_29": 33,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -7301,7 +7161,6 @@
           "bpm": -2.3,
           "ws": 0.0
         },
-        "game_on_court_value_2026_snapshot": 56.65,
         "prior_team_active_payroll": 162858635,
         "prior_team_total_cap_allocations": 232033397,
         "prior_season_cap": 154647000,
@@ -7314,7 +7173,6 @@
           "espn_standings2026",
           "injury_snapshot2026"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3524356,
         "age_on_june_29": 30,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -7360,7 +7218,6 @@
           "bpm": -0.9,
           "ws": 6.2
         },
-        "game_on_court_value_2026_snapshot": 52.89,
         "prior_team_active_payroll": 194334002,
         "prior_team_total_cap_allocations": 211399497,
         "prior_season_cap": 154647000,
@@ -7373,7 +7230,6 @@
           "espn_standings2026",
           "injury_snapshot2026"
         ],
-        "estimated_market_aav_leave_one_summer_out": 11733647,
         "age_on_june_29": 27,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -7419,7 +7275,6 @@
           "bpm": -2.5,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": 59.72,
         "prior_team_active_payroll": 204850563,
         "prior_team_total_cap_allocations": 234222725,
         "prior_season_cap": 154647000,
@@ -7443,7 +7298,6 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/07/warriors-to-re-sign-deanthony-melton.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3286583,
         "age_on_june_29": 28,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -7489,7 +7343,6 @@
           "bpm": -1.4,
           "ws": 1.7
         },
-        "game_on_court_value_2026_snapshot": 60.92,
         "prior_team_active_payroll": 204850563,
         "prior_team_total_cap_allocations": 234222725,
         "prior_season_cap": 154647000,
@@ -7513,7 +7366,6 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/07/draymond-green-warriors-agree-to-one-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3876797,
         "age_on_june_29": 36,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -7553,7 +7405,6 @@
           "https://www.nba.com/news/rockets-fred-vanvleet-tears-acl"
         ],
         "prior_season_box_value": null,
-        "game_on_court_value_2026_snapshot": 61.59,
         "prior_team_active_payroll": 194771442,
         "prior_team_total_cap_allocations": 201412484,
         "prior_season_cap": 154647000,
@@ -7566,7 +7417,6 @@
           "nba_stats2026",
           "injury_snapshot2026"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3875985,
         "age_on_june_29": 32,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -7612,7 +7462,6 @@
           "bpm": -2.5,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": 46.14,
         "prior_team_active_payroll": 151771975,
         "prior_team_total_cap_allocations": 180894447,
         "prior_season_cap": 154647000,
@@ -7625,7 +7474,6 @@
           "espn_standings2026",
           "injury_snapshot2026"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3876797,
         "age_on_june_29": 31,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -7671,7 +7519,6 @@
           "bpm": -5.4,
           "ws": -0.1
         },
-        "game_on_court_value_2026_snapshot": 46.91,
         "prior_team_active_payroll": 151771975,
         "prior_team_total_cap_allocations": 180894447,
         "prior_season_cap": 154647000,
@@ -7695,7 +7542,6 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/07/bucks-re-signing-gary-trent-jr-to-four-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 5476830,
         "age_on_june_29": 27,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -7741,7 +7587,6 @@
           "bpm": 3.9,
           "ws": 7.7
         },
-        "game_on_court_value_2026_snapshot": 68.38,
         "prior_team_active_payroll": 211979654,
         "prior_team_total_cap_allocations": 226181970,
         "prior_season_cap": 154647000,
@@ -7765,7 +7610,6 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/09/cavaliers-officially-re-sign-james-harden.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 42125161,
         "age_on_june_29": 36,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -7811,7 +7655,6 @@
           "bpm": -3.1,
           "ws": 3.2
         },
-        "game_on_court_value_2026_snapshot": 41.68,
         "prior_team_active_payroll": 151771975,
         "prior_team_total_cap_allocations": 180894447,
         "prior_season_cap": 154647000,
@@ -7824,7 +7667,6 @@
           "espn_standings2026",
           "injury_snapshot2026"
         ],
-        "estimated_market_aav_leave_one_summer_out": 5613964,
         "age_on_june_29": 27,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -7870,7 +7712,6 @@
           "bpm": -1.0,
           "ws": 2.2
         },
-        "game_on_court_value_2026_snapshot": 56.57,
         "prior_team_active_payroll": 207454264,
         "prior_team_total_cap_allocations": 209750538,
         "prior_season_cap": 154647000,
@@ -7894,7 +7735,6 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/06/knicks-jose-alvarado-agree-to-three-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 5720153,
         "age_on_june_29": 28,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -7940,7 +7780,6 @@
           "bpm": -2.5,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": 56.47,
         "prior_team_active_payroll": 133187436,
         "prior_team_total_cap_allocations": 157723438,
         "prior_season_cap": 154647000,
@@ -7953,7 +7792,6 @@
           "espn_standings2026",
           "injury_snapshot2026"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3876365,
         "age_on_june_29": 33,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -7999,7 +7837,6 @@
           "bpm": 2.1,
           "ws": 2.8
         },
-        "game_on_court_value_2026_snapshot": 61.02,
         "prior_team_active_payroll": 151771975,
         "prior_team_total_cap_allocations": 180894447,
         "prior_season_cap": 154647000,
@@ -8012,7 +7849,6 @@
           "espn_standings2026",
           "injury_snapshot2026"
         ],
-        "estimated_market_aav_leave_one_summer_out": 9778039,
         "age_on_june_29": 26,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -8058,7 +7894,6 @@
           "bpm": -2.2,
           "ws": 2.0
         },
-        "game_on_court_value_2026_snapshot": 60.58,
         "prior_team_active_payroll": 194334002,
         "prior_team_total_cap_allocations": 211399497,
         "prior_season_cap": 154647000,
@@ -8082,7 +7917,6 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/07/rockets-marcus-smart-agree-to-two-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3876365,
         "age_on_june_29": 32,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -8128,7 +7962,6 @@
           "bpm": 2.8,
           "ws": 6.2
         },
-        "game_on_court_value_2026_snapshot": 65.77,
         "prior_team_active_payroll": 184295524,
         "prior_team_total_cap_allocations": 194966020,
         "prior_season_cap": 154647000,
@@ -8152,7 +7985,6 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/07/lakers-agree-to-four-year-deal-with-mamukelashvili.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 14210530,
         "age_on_june_29": 27,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -8198,7 +8030,6 @@
           "bpm": -3.1,
           "ws": 0.5
         },
-        "game_on_court_value_2026_snapshot": 43.24,
         "prior_team_active_payroll": 151771975,
         "prior_team_total_cap_allocations": 180894447,
         "prior_season_cap": 154647000,
@@ -8211,7 +8042,6 @@
           "espn_standings2026",
           "injury_snapshot2026"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3875985,
         "age_on_june_29": 32,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -8258,7 +8088,6 @@
           "bpm": 2.8,
           "ws": 1.4
         },
-        "game_on_court_value_2026_snapshot": 58.32,
         "prior_team_active_payroll": 162858635,
         "prior_team_total_cap_allocations": 232033397,
         "prior_season_cap": 154647000,
@@ -8282,7 +8111,6 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/06/trae-young-agrees-to-four-year-deal-with-wizards.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3286484,
         "age_on_june_29": 27,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -8328,7 +8156,6 @@
           "bpm": -1.5,
           "ws": 1.3
         },
-        "game_on_court_value_2026_snapshot": 57.32,
         "prior_team_active_payroll": 187271649,
         "prior_team_total_cap_allocations": 213853369,
         "prior_season_cap": 154647000,
@@ -8341,7 +8168,6 @@
           "espn_standings2026",
           "injury_snapshot2026"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3876365,
         "age_on_june_29": 31,
         "age_basis": "birth_date",
         "prior_season_nba_stats": {
@@ -9430,7 +9256,7 @@
         "context_sources": [
           "nba_stats2019",
           "espn_standings2019",
-          "https://www.nba.com/cavaliers/releases/zizic-options-181025"
+          "https://www.nba.com/stats/draft/history?Season=2016"
         ],
         "draft_class": 2016,
         "draft_pick": 23,
@@ -18214,7 +18040,6 @@
           "bpm": -0.8,
           "ws": 2.2
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 149028218,
         "prior_team_total_cap_allocations": 149133740,
         "prior_season_cap": 123655000,
@@ -18262,7 +18087,6 @@
           "bpm": -3.7,
           "ws": 1.8
         },
-        "game_on_court_value_2026_snapshot": 51.26,
         "prior_team_active_payroll": 110310554,
         "prior_team_total_cap_allocations": 122145349,
         "prior_season_cap": 123655000,
@@ -18310,7 +18134,6 @@
           "bpm": -9.6,
           "ws": -1.6
         },
-        "game_on_court_value_2026_snapshot": 52.54,
         "prior_team_active_payroll": 70878022,
         "prior_team_total_cap_allocations": 101649048,
         "prior_season_cap": 123655000,
@@ -18349,7 +18172,6 @@
           "rq2024"
         ],
         "prior_season_box_value": null,
-        "game_on_court_value_2026_snapshot": 73.07,
         "prior_team_active_payroll": 98156672,
         "prior_team_total_cap_allocations": 155437627,
         "prior_season_cap": 123655000,
@@ -18397,7 +18219,6 @@
           "bpm": -2.4,
           "ws": 1.9
         },
-        "game_on_court_value_2026_snapshot": 54.96,
         "prior_team_active_payroll": 160688004,
         "prior_team_total_cap_allocations": 169601210,
         "prior_season_cap": 123655000,
@@ -18445,7 +18266,6 @@
           "bpm": 0.1,
           "ws": 0.5
         },
-        "game_on_court_value_2026_snapshot": 48.59,
         "prior_team_active_payroll": 145549077,
         "prior_team_total_cap_allocations": 153093665,
         "prior_season_cap": 123655000,
@@ -18493,7 +18313,6 @@
           "bpm": -3.9,
           "ws": 1.1
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 123017190,
         "prior_team_total_cap_allocations": 127756781,
         "prior_season_cap": 123655000,
@@ -18541,7 +18360,6 @@
           "bpm": -1.8,
           "ws": 1.3
         },
-        "game_on_court_value_2026_snapshot": 61.0,
         "prior_team_active_payroll": 147340203,
         "prior_team_total_cap_allocations": 154090191,
         "prior_season_cap": 123655000,
@@ -18589,7 +18407,6 @@
           "bpm": -3.6,
           "ws": 1.9
         },
-        "game_on_court_value_2026_snapshot": 60.68,
         "prior_team_active_payroll": 48379407,
         "prior_team_total_cap_allocations": 138296534,
         "prior_season_cap": 123655000,
@@ -18635,7 +18452,6 @@
           "bpm": -3.3,
           "ws": 0.0
         },
-        "game_on_court_value_2026_snapshot": 54.61,
         "prior_team_active_payroll": 97376476,
         "prior_team_total_cap_allocations": 127673493,
         "prior_season_cap": 123655000,
@@ -18683,7 +18499,6 @@
           "bpm": -3.5,
           "ws": 0.5
         },
-        "game_on_court_value_2026_snapshot": 54.43,
         "prior_team_active_payroll": 123017190,
         "prior_team_total_cap_allocations": 127756781,
         "prior_season_cap": 123655000,
@@ -18731,7 +18546,6 @@
           "bpm": -0.8,
           "ws": 4.5
         },
-        "game_on_court_value_2026_snapshot": 67.81,
         "prior_team_active_payroll": 97376476,
         "prior_team_total_cap_allocations": 127673493,
         "prior_season_cap": 123655000,
@@ -18779,7 +18593,6 @@
           "bpm": 0.3,
           "ws": 5.6
         },
-        "game_on_court_value_2026_snapshot": 70.33,
         "prior_team_active_payroll": 98156672,
         "prior_team_total_cap_allocations": 155437627,
         "prior_season_cap": 123655000,
@@ -18827,7 +18640,6 @@
           "bpm": -3.9,
           "ws": 0.2
         },
-        "game_on_court_value_2026_snapshot": 51.38,
         "prior_team_active_payroll": 70878022,
         "prior_team_total_cap_allocations": 101649048,
         "prior_season_cap": 123655000,
@@ -18875,7 +18687,6 @@
           "bpm": -7.4,
           "ws": -0.3
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 133790093,
         "prior_team_total_cap_allocations": 183801576,
         "prior_season_cap": 123655000,
@@ -18923,7 +18734,6 @@
           "bpm": -0.6,
           "ws": 4.3
         },
-        "game_on_court_value_2026_snapshot": 60.94,
         "prior_team_active_payroll": 134310467,
         "prior_team_total_cap_allocations": 154815256,
         "prior_season_cap": 123655000,
@@ -18971,7 +18781,6 @@
           "bpm": -5.1,
           "ws": -0.1
         },
-        "game_on_court_value_2026_snapshot": 46.68,
         "prior_team_active_payroll": 70878022,
         "prior_team_total_cap_allocations": 101649048,
         "prior_season_cap": 123655000,
@@ -19019,7 +18828,6 @@
           "bpm": -4.7,
           "ws": 0.4
         },
-        "game_on_court_value_2026_snapshot": 57.88,
         "prior_team_active_payroll": 179802121,
         "prior_team_total_cap_allocations": 181849255,
         "prior_season_cap": 123655000,
@@ -19067,7 +18875,6 @@
           "bpm": 0.0,
           "ws": 2.8
         },
-        "game_on_court_value_2026_snapshot": 59.45,
         "prior_team_active_payroll": 104845190,
         "prior_team_total_cap_allocations": 146049640,
         "prior_season_cap": 123655000,
@@ -19115,7 +18922,6 @@
           "bpm": -3.4,
           "ws": 0.2
         },
-        "game_on_court_value_2026_snapshot": 52.46,
         "prior_team_active_payroll": 149035368,
         "prior_team_total_cap_allocations": 152766041,
         "prior_season_cap": 123655000,
@@ -19163,7 +18969,6 @@
           "bpm": -3.0,
           "ws": 1.3
         },
-        "game_on_court_value_2026_snapshot": 51.39,
         "prior_team_active_payroll": 92962689,
         "prior_team_total_cap_allocations": 147162541,
         "prior_season_cap": 123655000,
@@ -19211,7 +19016,6 @@
           "bpm": -3.6,
           "ws": 0.4
         },
-        "game_on_court_value_2026_snapshot": 50.84,
         "prior_team_active_payroll": 98156672,
         "prior_team_total_cap_allocations": 155437627,
         "prior_season_cap": 123655000,
@@ -19259,7 +19063,6 @@
           "bpm": -1.5,
           "ws": 2.4
         },
-        "game_on_court_value_2026_snapshot": 59.07,
         "prior_team_active_payroll": 99161703,
         "prior_team_total_cap_allocations": 139801010,
         "prior_season_cap": 123655000,
@@ -19307,7 +19110,6 @@
           "bpm": -2.1,
           "ws": 0.1
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 133790093,
         "prior_team_total_cap_allocations": 183801576,
         "prior_season_cap": 123655000,
@@ -19354,7 +19156,6 @@
           "bpm": -2.7,
           "ws": 0.3
         },
-        "game_on_court_value_2026_snapshot": 55.16,
         "prior_team_active_payroll": 160688004,
         "prior_team_total_cap_allocations": 169601210,
         "prior_season_cap": 123655000,
@@ -19402,7 +19203,6 @@
           "bpm": -3.3,
           "ws": 1.2
         },
-        "game_on_court_value_2026_snapshot": 57.17,
         "prior_team_active_payroll": 136161044,
         "prior_team_total_cap_allocations": 151480955,
         "prior_season_cap": 123655000,
@@ -19450,7 +19250,6 @@
           "bpm": -1.6,
           "ws": 2.6
         },
-        "game_on_court_value_2026_snapshot": 59.14,
         "prior_team_active_payroll": 48379407,
         "prior_team_total_cap_allocations": 138296534,
         "prior_season_cap": 123655000,
@@ -19498,7 +19297,6 @@
           "bpm": -6.3,
           "ws": -0.1
         },
-        "game_on_court_value_2026_snapshot": 51.35,
         "prior_team_active_payroll": 98156672,
         "prior_team_total_cap_allocations": 155437627,
         "prior_season_cap": 123655000,
@@ -19551,7 +19349,6 @@
           "bpm": 2.9,
           "ws": 7.1
         },
-        "game_on_court_value_2026_snapshot": 67.74,
         "prior_team_active_payroll": 92962689,
         "prior_team_total_cap_allocations": 147162541,
         "prior_season_cap": 123655000,
@@ -19599,7 +19396,6 @@
           "bpm": -2.4,
           "ws": 0.1
         },
-        "game_on_court_value_2026_snapshot": 46.26,
         "prior_team_active_payroll": 141488618,
         "prior_team_total_cap_allocations": 174906722,
         "prior_season_cap": 123655000,
@@ -19645,7 +19441,6 @@
           "bpm": 1.4,
           "ws": 5.2
         },
-        "game_on_court_value_2026_snapshot": 64.65,
         "prior_team_active_payroll": 48379407,
         "prior_team_total_cap_allocations": 138296534,
         "prior_season_cap": 123655000,
@@ -19693,7 +19488,6 @@
           "bpm": -0.9,
           "ws": 1.4
         },
-        "game_on_court_value_2026_snapshot": 59.53,
         "prior_team_active_payroll": 191189228,
         "prior_team_total_cap_allocations": 193025318,
         "prior_season_cap": 123655000,
@@ -19741,7 +19535,6 @@
           "bpm": -0.7,
           "ws": -0.1
         },
-        "game_on_court_value_2026_snapshot": 74.95,
         "prior_team_active_payroll": 97376476,
         "prior_team_total_cap_allocations": 127673493,
         "prior_season_cap": 123655000,
@@ -19789,7 +19582,6 @@
           "bpm": -2.7,
           "ws": 1.0
         },
-        "game_on_court_value_2026_snapshot": 52.91,
         "prior_team_active_payroll": 155025075,
         "prior_team_total_cap_allocations": 164774911,
         "prior_season_cap": 123655000,
@@ -19837,7 +19629,6 @@
           "bpm": -4.4,
           "ws": 0.0
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 134310467,
         "prior_team_total_cap_allocations": 154815256,
         "prior_season_cap": 123655000,
@@ -19885,7 +19676,6 @@
           "bpm": -1.5,
           "ws": 3.8
         },
-        "game_on_court_value_2026_snapshot": 49.35,
         "prior_team_active_payroll": 133790093,
         "prior_team_total_cap_allocations": 183801576,
         "prior_season_cap": 123655000,
@@ -19933,7 +19723,6 @@
           "bpm": -2.8,
           "ws": 1.5
         },
-        "game_on_court_value_2026_snapshot": 54.95,
         "prior_team_active_payroll": 134310467,
         "prior_team_total_cap_allocations": 154815256,
         "prior_season_cap": 123655000,
@@ -19981,7 +19770,6 @@
           "bpm": -2.3,
           "ws": 1.6
         },
-        "game_on_court_value_2026_snapshot": 66.43,
         "prior_team_active_payroll": 155025075,
         "prior_team_total_cap_allocations": 164774911,
         "prior_season_cap": 123655000,
@@ -20029,7 +19817,6 @@
           "bpm": 1.6,
           "ws": 8.5
         },
-        "game_on_court_value_2026_snapshot": 71.01,
         "prior_team_active_payroll": 121702948,
         "prior_team_total_cap_allocations": 154561446,
         "prior_season_cap": 123655000,
@@ -20077,7 +19864,6 @@
           "bpm": -0.1,
           "ws": 5.4
         },
-        "game_on_court_value_2026_snapshot": 66.72,
         "prior_team_active_payroll": 99161703,
         "prior_team_total_cap_allocations": 139801010,
         "prior_season_cap": 123655000,
@@ -20125,7 +19911,6 @@
           "bpm": -0.8,
           "ws": 2.7
         },
-        "game_on_court_value_2026_snapshot": 61.65,
         "prior_team_active_payroll": 110310554,
         "prior_team_total_cap_allocations": 122145349,
         "prior_season_cap": 123655000,
@@ -20173,7 +19958,6 @@
           "bpm": 0.3,
           "ws": 0.3
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 149166783,
         "prior_team_total_cap_allocations": 164391836,
         "prior_season_cap": 123655000,
@@ -20221,7 +20005,6 @@
           "bpm": -2.1,
           "ws": 1.8
         },
-        "game_on_court_value_2026_snapshot": 58.43,
         "prior_team_active_payroll": 48379407,
         "prior_team_total_cap_allocations": 138296534,
         "prior_season_cap": 123655000,
@@ -20269,7 +20052,6 @@
           "bpm": 0.3,
           "ws": 2.1
         },
-        "game_on_court_value_2026_snapshot": 67.93,
         "prior_team_active_payroll": 149028218,
         "prior_team_total_cap_allocations": 149133740,
         "prior_season_cap": 123655000,
@@ -20317,7 +20099,6 @@
           "bpm": -0.9,
           "ws": 1.4
         },
-        "game_on_court_value_2026_snapshot": 70.16,
         "prior_team_active_payroll": 99161703,
         "prior_team_total_cap_allocations": 139801010,
         "prior_season_cap": 123655000,
@@ -20365,7 +20146,6 @@
           "bpm": -6.4,
           "ws": -0.4
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 104845190,
         "prior_team_total_cap_allocations": 146049640,
         "prior_season_cap": 123655000,
@@ -20424,7 +20204,6 @@
           "bpm": -1.7,
           "ws": 2.4
         },
-        "game_on_court_value_2026_snapshot": 56.37,
         "prior_team_active_payroll": 188443947,
         "prior_team_total_cap_allocations": 199320856,
         "prior_season_cap": 123655000,
@@ -20472,7 +20251,6 @@
           "bpm": -4.3,
           "ws": 0.0
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 123017190,
         "prior_team_total_cap_allocations": 127756781,
         "prior_season_cap": 123655000,
@@ -20524,7 +20302,6 @@
           "bpm": 1.1,
           "ws": 4.0
         },
-        "game_on_court_value_2026_snapshot": 59.56,
         "prior_team_active_payroll": 98156672,
         "prior_team_total_cap_allocations": 155437627,
         "prior_season_cap": 123655000,
@@ -20572,7 +20349,6 @@
           "bpm": -4.0,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 104845190,
         "prior_team_total_cap_allocations": 146049640,
         "prior_season_cap": 123655000,
@@ -20631,7 +20407,6 @@
           "bpm": -5.3,
           "ws": -0.5
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 172121677,
         "prior_team_total_cap_allocations": 173970687,
         "prior_season_cap": 123655000,
@@ -20690,7 +20465,6 @@
           "bpm": -2.6,
           "ws": 1.3
         },
-        "game_on_court_value_2026_snapshot": 62.05,
         "prior_team_active_payroll": 188443947,
         "prior_team_total_cap_allocations": 199320856,
         "prior_season_cap": 123655000,
@@ -20738,7 +20512,6 @@
           "bpm": -0.1,
           "ws": 4.8
         },
-        "game_on_court_value_2026_snapshot": 58.92,
         "prior_team_active_payroll": 149994034,
         "prior_team_total_cap_allocations": 150263571,
         "prior_season_cap": 123655000,
@@ -20786,7 +20559,6 @@
           "bpm": 0.5,
           "ws": 4.6
         },
-        "game_on_court_value_2026_snapshot": 60.91,
         "prior_team_active_payroll": 123017190,
         "prior_team_total_cap_allocations": 127756781,
         "prior_season_cap": 123655000,
@@ -20834,7 +20606,6 @@
           "bpm": 0.4,
           "ws": 5.0
         },
-        "game_on_court_value_2026_snapshot": 72.29,
         "prior_team_active_payroll": 144096592,
         "prior_team_total_cap_allocations": 149260166,
         "prior_season_cap": 123655000,
@@ -20882,7 +20653,6 @@
           "bpm": -3.9,
           "ws": 0.5
         },
-        "game_on_court_value_2026_snapshot": 49.32,
         "prior_team_active_payroll": 98156672,
         "prior_team_total_cap_allocations": 155437627,
         "prior_season_cap": 123655000,
@@ -20930,7 +20700,6 @@
           "bpm": 1.8,
           "ws": 7.6
         },
-        "game_on_court_value_2026_snapshot": 64.19,
         "prior_team_active_payroll": 147340203,
         "prior_team_total_cap_allocations": 154090191,
         "prior_season_cap": 123655000,
@@ -20978,7 +20747,6 @@
           "bpm": -1.4,
           "ws": 1.8
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 98156672,
         "prior_team_total_cap_allocations": 155437627,
         "prior_season_cap": 123655000,
@@ -21037,7 +20805,6 @@
           "bpm": -5.5,
           "ws": 0.1
         },
-        "game_on_court_value_2026_snapshot": 52.99,
         "prior_team_active_payroll": 123017190,
         "prior_team_total_cap_allocations": 127756781,
         "prior_season_cap": 123655000,
@@ -21086,7 +20853,6 @@
           "bpm": -2.9,
           "ws": 0.8
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 99161703,
         "prior_team_total_cap_allocations": 139801010,
         "prior_season_cap": 123655000,
@@ -21139,7 +20905,6 @@
           "bpm": 1.2,
           "ws": 2.5
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 97376476,
         "prior_team_total_cap_allocations": 127673493,
         "prior_season_cap": 123655000,
@@ -21186,7 +20951,6 @@
           "bpm": -3.7,
           "ws": 0.0
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 149994034,
         "prior_team_total_cap_allocations": 150263571,
         "prior_season_cap": 123655000,
@@ -21244,7 +21008,6 @@
           "bpm": -4.4,
           "ws": 0.6
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 97376476,
         "prior_team_total_cap_allocations": 127673493,
         "prior_season_cap": 123655000,
@@ -21291,7 +21054,6 @@
           "bpm": 0.3,
           "ws": 1.3
         },
-        "game_on_court_value_2026_snapshot": 66.33,
         "prior_team_active_payroll": 99161703,
         "prior_team_total_cap_allocations": 139801010,
         "prior_season_cap": 123655000,
@@ -21338,7 +21100,6 @@
           "bpm": 0.3,
           "ws": 1.6
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 147340203,
         "prior_team_total_cap_allocations": 154090191,
         "prior_season_cap": 123655000,
@@ -21396,7 +21157,6 @@
           "bpm": -0.3,
           "ws": 4.2
         },
-        "game_on_court_value_2026_snapshot": 55.43,
         "prior_team_active_payroll": 147340203,
         "prior_team_total_cap_allocations": 154090191,
         "prior_season_cap": 123655000,
@@ -21454,7 +21214,6 @@
           "bpm": -2.4,
           "ws": 1.0
         },
-        "game_on_court_value_2026_snapshot": 40.67,
         "prior_team_active_payroll": 97376476,
         "prior_team_total_cap_allocations": 127673493,
         "prior_season_cap": 123655000,
@@ -21501,7 +21260,6 @@
           "bpm": -1.1,
           "ws": 1.7
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 172121677,
         "prior_team_total_cap_allocations": 173970687,
         "prior_season_cap": 123655000,
@@ -21548,7 +21306,6 @@
           "bpm": -0.7,
           "ws": 4.9
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 48379407,
         "prior_team_total_cap_allocations": 138296534,
         "prior_season_cap": 123655000,
@@ -21595,7 +21352,6 @@
           "bpm": -3.9,
           "ws": 0.4
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 134310467,
         "prior_team_total_cap_allocations": 154815256,
         "prior_season_cap": 123655000,
@@ -21642,7 +21398,6 @@
           "bpm": -3.5,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": 49.09,
         "prior_team_active_payroll": 136161044,
         "prior_team_total_cap_allocations": 151480955,
         "prior_season_cap": 123655000,
@@ -21700,7 +21455,6 @@
           "bpm": -2.8,
           "ws": 1.9
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 121702948,
         "prior_team_total_cap_allocations": 154561446,
         "prior_season_cap": 123655000,
@@ -21747,7 +21501,6 @@
           "bpm": 0.1,
           "ws": 1.1
         },
-        "game_on_court_value_2026_snapshot": 39.07,
         "prior_team_active_payroll": 98156672,
         "prior_team_total_cap_allocations": 155437627,
         "prior_season_cap": 123655000,
@@ -21800,7 +21553,6 @@
           "bpm": -2.0,
           "ws": 1.4
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 164962692,
         "prior_team_total_cap_allocations": 180067292,
         "prior_season_cap": 123655000,
@@ -21858,7 +21610,6 @@
           "bpm": -6.3,
           "ws": 0.0
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 99161703,
         "prior_team_total_cap_allocations": 139801010,
         "prior_season_cap": 123655000,
@@ -21909,7 +21660,6 @@
           "bpm": -0.4,
           "ws": 2.5
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 176702907,
         "prior_team_total_cap_allocations": 176795764,
         "prior_season_cap": 123655000,
@@ -21956,7 +21706,6 @@
           "bpm": -2.3,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": 56.43,
         "prior_team_active_payroll": 149994034,
         "prior_team_total_cap_allocations": 150263571,
         "prior_season_cap": 123655000,
@@ -22003,7 +21752,6 @@
           "bpm": -1.9,
           "ws": 2.5
         },
-        "game_on_court_value_2026_snapshot": 57.27,
         "prior_team_active_payroll": 147340203,
         "prior_team_total_cap_allocations": 154090191,
         "prior_season_cap": 123655000,
@@ -22050,7 +21798,6 @@
           "bpm": -3.2,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 141488618,
         "prior_team_total_cap_allocations": 174906722,
         "prior_season_cap": 123655000,
@@ -22103,7 +21850,6 @@
           "bpm": 1.9,
           "ws": 4.2
         },
-        "game_on_court_value_2026_snapshot": 51.75,
         "prior_team_active_payroll": 123017190,
         "prior_team_total_cap_allocations": 127756781,
         "prior_season_cap": 123655000,
@@ -22149,7 +21895,6 @@
           "bpm": 1.8,
           "ws": 4.3
         },
-        "game_on_court_value_2026_snapshot": 68.7,
         "prior_team_active_payroll": 143402009,
         "prior_team_total_cap_allocations": 145302009,
         "prior_season_cap": 136021000,
@@ -22199,7 +21944,6 @@
           "bpm": -2.9,
           "ws": 1.6
         },
-        "game_on_court_value_2026_snapshot": 56.97,
         "prior_team_active_payroll": 130964229,
         "prior_team_total_cap_allocations": 139355784,
         "prior_season_cap": 136021000,
@@ -22249,7 +21993,6 @@
           "bpm": -2.2,
           "ws": 1.8
         },
-        "game_on_court_value_2026_snapshot": 67.79,
         "prior_team_active_payroll": 84251419,
         "prior_team_total_cap_allocations": 136419412,
         "prior_season_cap": 136021000,
@@ -22299,7 +22042,6 @@
           "bpm": -3.4,
           "ws": 0.8
         },
-        "game_on_court_value_2026_snapshot": 44.37,
         "prior_team_active_payroll": 127076533,
         "prior_team_total_cap_allocations": 146679278,
         "prior_season_cap": 136021000,
@@ -22349,7 +22091,6 @@
           "bpm": -4.1,
           "ws": 0.4
         },
-        "game_on_court_value_2026_snapshot": 54.39,
         "prior_team_active_payroll": 132379717,
         "prior_team_total_cap_allocations": 189901033,
         "prior_season_cap": 136021000,
@@ -22399,7 +22140,6 @@
           "bpm": -0.1,
           "ws": 4.1
         },
-        "game_on_court_value_2026_snapshot": 61.6,
         "prior_team_active_payroll": 206814776,
         "prior_team_total_cap_allocations": 224848124,
         "prior_season_cap": 136021000,
@@ -22449,7 +22189,6 @@
           "bpm": -2.5,
           "ws": 0.8
         },
-        "game_on_court_value_2026_snapshot": 67.61,
         "prior_team_active_payroll": 97074991,
         "prior_team_total_cap_allocations": 141036011,
         "prior_season_cap": 136021000,
@@ -22499,7 +22238,6 @@
           "bpm": -5.4,
           "ws": -0.3
         },
-        "game_on_court_value_2026_snapshot": 54.8,
         "prior_team_active_payroll": 123547474,
         "prior_team_total_cap_allocations": 131757411,
         "prior_season_cap": 136021000,
@@ -22549,7 +22287,6 @@
           "bpm": 0.1,
           "ws": 1.5
         },
-        "game_on_court_value_2026_snapshot": 58.23,
         "prior_team_active_payroll": 143402009,
         "prior_team_total_cap_allocations": 145302009,
         "prior_season_cap": 136021000,
@@ -22599,7 +22336,6 @@
           "bpm": 0.1,
           "ws": 4.0
         },
-        "game_on_court_value_2026_snapshot": 59.69,
         "prior_team_active_payroll": 127645232,
         "prior_team_total_cap_allocations": 160502705,
         "prior_season_cap": 136021000,
@@ -22649,7 +22385,6 @@
           "bpm": -7.9,
           "ws": 0.0
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 139773430,
         "prior_team_total_cap_allocations": 157982129,
         "prior_season_cap": 136021000,
@@ -22699,7 +22434,6 @@
           "bpm": 0.5,
           "ws": 4.9
         },
-        "game_on_court_value_2026_snapshot": 58.87,
         "prior_team_active_payroll": 162282786,
         "prior_team_total_cap_allocations": 175321021,
         "prior_season_cap": 136021000,
@@ -22749,7 +22483,6 @@
           "bpm": -5.3,
           "ws": 0.3
         },
-        "game_on_court_value_2026_snapshot": 47.64,
         "prior_team_active_payroll": 138558316,
         "prior_team_total_cap_allocations": 161887358,
         "prior_season_cap": 136021000,
@@ -22799,7 +22532,6 @@
           "bpm": -1.9,
           "ws": 4.0
         },
-        "game_on_court_value_2026_snapshot": 54.33,
         "prior_team_active_payroll": 172894063,
         "prior_team_total_cap_allocations": 180754950,
         "prior_season_cap": 136021000,
@@ -22848,7 +22580,6 @@
           "bpm": -15.9,
           "ws": -0.5
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 168055994,
         "prior_team_total_cap_allocations": 181975999,
         "prior_season_cap": 136021000,
@@ -22902,7 +22633,6 @@
           "bpm": 0.2,
           "ws": 0.4
         },
-        "game_on_court_value_2026_snapshot": 50.84,
         "prior_team_active_payroll": 127076533,
         "prior_team_total_cap_allocations": 146679278,
         "prior_season_cap": 136021000,
@@ -22952,7 +22682,6 @@
           "bpm": -1.7,
           "ws": 0.0
         },
-        "game_on_court_value_2026_snapshot": 47.19,
         "prior_team_active_payroll": 130964229,
         "prior_team_total_cap_allocations": 139355784,
         "prior_season_cap": 136021000,
@@ -23002,7 +22731,6 @@
           "bpm": -3.0,
           "ws": 1.3
         },
-        "game_on_court_value_2026_snapshot": 34.51,
         "prior_team_active_payroll": 164656924,
         "prior_team_total_cap_allocations": 176969502,
         "prior_season_cap": 136021000,
@@ -23052,7 +22780,6 @@
           "bpm": -6.0,
           "ws": 0.2
         },
-        "game_on_court_value_2026_snapshot": 48.66,
         "prior_team_active_payroll": 176890198,
         "prior_team_total_cap_allocations": 184751085,
         "prior_season_cap": 136021000,
@@ -23102,7 +22829,6 @@
           "bpm": -4.4,
           "ws": -0.3
         },
-        "game_on_court_value_2026_snapshot": 54.18,
         "prior_team_active_payroll": 123547474,
         "prior_team_total_cap_allocations": 131757411,
         "prior_season_cap": 136021000,
@@ -23152,7 +22878,6 @@
           "bpm": -3.8,
           "ws": 0.5
         },
-        "game_on_court_value_2026_snapshot": 50.68,
         "prior_team_active_payroll": 198296474,
         "prior_team_total_cap_allocations": 202080521,
         "prior_season_cap": 136021000,
@@ -23202,7 +22927,6 @@
           "bpm": -4.4,
           "ws": -0.1
         },
-        "game_on_court_value_2026_snapshot": 52.49,
         "prior_team_active_payroll": 149336848,
         "prior_team_total_cap_allocations": 156139798,
         "prior_season_cap": 136021000,
@@ -23252,7 +22976,6 @@
           "bpm": -3.6,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": 52.25,
         "prior_team_active_payroll": 157605999,
         "prior_team_total_cap_allocations": 171538887,
         "prior_season_cap": 136021000,
@@ -23302,7 +23025,6 @@
           "bpm": -2.6,
           "ws": 0.9
         },
-        "game_on_court_value_2026_snapshot": 54.17,
         "prior_team_active_payroll": 84251419,
         "prior_team_total_cap_allocations": 136419412,
         "prior_season_cap": 136021000,
@@ -23352,7 +23074,6 @@
           "bpm": -5.9,
           "ws": -0.5
         },
-        "game_on_court_value_2026_snapshot": 43.88,
         "prior_team_active_payroll": 97074991,
         "prior_team_total_cap_allocations": 141036011,
         "prior_season_cap": 136021000,
@@ -23402,7 +23123,6 @@
           "bpm": -0.7,
           "ws": 0.9
         },
-        "game_on_court_value_2026_snapshot": 49.98,
         "prior_team_active_payroll": 139773430,
         "prior_team_total_cap_allocations": 157982129,
         "prior_season_cap": 136021000,
@@ -23452,7 +23172,6 @@
           "bpm": -2.9,
           "ws": 0.5
         },
-        "game_on_court_value_2026_snapshot": 52.27,
         "prior_team_active_payroll": 162282786,
         "prior_team_total_cap_allocations": 175321021,
         "prior_season_cap": 136021000,
@@ -23502,7 +23221,6 @@
           "bpm": -5.7,
           "ws": -1.7
         },
-        "game_on_court_value_2026_snapshot": 54.49,
         "prior_team_active_payroll": 157605999,
         "prior_team_total_cap_allocations": 171538887,
         "prior_season_cap": 136021000,
@@ -23552,7 +23270,6 @@
           "bpm": -1.6,
           "ws": 1.2
         },
-        "game_on_court_value_2026_snapshot": 53.3,
         "prior_team_active_payroll": 123547474,
         "prior_team_total_cap_allocations": 131757411,
         "prior_season_cap": 136021000,
@@ -23602,7 +23319,6 @@
           "bpm": 5.2,
           "ws": 3.7
         },
-        "game_on_court_value_2026_snapshot": 77.7,
         "prior_team_active_payroll": 94551623,
         "prior_team_total_cap_allocations": 140908582,
         "prior_season_cap": 136021000,
@@ -23652,7 +23368,6 @@
           "bpm": -9.4,
           "ws": -0.4
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 143402009,
         "prior_team_total_cap_allocations": 145302009,
         "prior_season_cap": 136021000,
@@ -23706,7 +23421,6 @@
           "bpm": -3.4,
           "ws": 1.4
         },
-        "game_on_court_value_2026_snapshot": 51.26,
         "prior_team_active_payroll": 127076533,
         "prior_team_total_cap_allocations": 146679278,
         "prior_season_cap": 136021000,
@@ -23756,7 +23470,6 @@
           "bpm": -3.9,
           "ws": 0.9
         },
-        "game_on_court_value_2026_snapshot": 52.54,
         "prior_team_active_payroll": 94551623,
         "prior_team_total_cap_allocations": 140908582,
         "prior_season_cap": 136021000,
@@ -23806,7 +23519,6 @@
           "bpm": 3.3,
           "ws": 8.9
         },
-        "game_on_court_value_2026_snapshot": 73.07,
         "prior_team_active_payroll": 127645232,
         "prior_team_total_cap_allocations": 160502705,
         "prior_season_cap": 136021000,
@@ -23856,7 +23568,6 @@
           "bpm": -1.8,
           "ws": 3.4
         },
-        "game_on_court_value_2026_snapshot": 54.96,
         "prior_team_active_payroll": 176890198,
         "prior_team_total_cap_allocations": 184751085,
         "prior_season_cap": 136021000,
@@ -23906,7 +23617,6 @@
           "bpm": -2.3,
           "ws": 0.8
         },
-        "game_on_court_value_2026_snapshot": 48.59,
         "prior_team_active_payroll": 162193482,
         "prior_team_total_cap_allocations": 166348969,
         "prior_season_cap": 136021000,
@@ -23956,7 +23666,6 @@
           "bpm": -5.0,
           "ws": 0.1
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 149336848,
         "prior_team_total_cap_allocations": 156139798,
         "prior_season_cap": 136021000,
@@ -24017,7 +23726,6 @@
           "bpm": 0.6,
           "ws": 2.9
         },
-        "game_on_court_value_2026_snapshot": 61.0,
         "prior_team_active_payroll": 149336848,
         "prior_team_total_cap_allocations": 156139798,
         "prior_season_cap": 136021000,
@@ -24067,7 +23775,6 @@
           "bpm": -0.4,
           "ws": 5.6
         },
-        "game_on_court_value_2026_snapshot": 60.68,
         "prior_team_active_payroll": 143402009,
         "prior_team_total_cap_allocations": 145302009,
         "prior_season_cap": 136021000,
@@ -24113,7 +23820,6 @@
           "bpm": -3.1,
           "ws": 0.5
         },
-        "game_on_court_value_2026_snapshot": 54.61,
         "prior_team_active_payroll": 84251419,
         "prior_team_total_cap_allocations": 136419412,
         "prior_season_cap": 136021000,
@@ -24163,7 +23869,6 @@
           "bpm": -2.5,
           "ws": 1.0
         },
-        "game_on_court_value_2026_snapshot": 54.43,
         "prior_team_active_payroll": 135440708,
         "prior_team_total_cap_allocations": 162996801,
         "prior_season_cap": 136021000,
@@ -24224,7 +23929,6 @@
           "bpm": -0.1,
           "ws": 4.8
         },
-        "game_on_court_value_2026_snapshot": 67.81,
         "prior_team_active_payroll": 84251419,
         "prior_team_total_cap_allocations": 136419412,
         "prior_season_cap": 136021000,
@@ -24274,7 +23978,6 @@
           "bpm": 2.3,
           "ws": 7.3
         },
-        "game_on_court_value_2026_snapshot": 70.33,
         "prior_team_active_payroll": 127645232,
         "prior_team_total_cap_allocations": 160502705,
         "prior_season_cap": 136021000,
@@ -24324,7 +24027,6 @@
           "bpm": -3.3,
           "ws": 1.4
         },
-        "game_on_court_value_2026_snapshot": 51.38,
         "prior_team_active_payroll": 94551623,
         "prior_team_total_cap_allocations": 140908582,
         "prior_season_cap": 136021000,
@@ -24374,7 +24076,6 @@
           "bpm": -6.5,
           "ws": -0.1
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 132379717,
         "prior_team_total_cap_allocations": 189901033,
         "prior_season_cap": 136021000,
@@ -24435,7 +24136,6 @@
           "bpm": -0.8,
           "ws": 5.2
         },
-        "game_on_court_value_2026_snapshot": 60.94,
         "prior_team_active_payroll": 145124481,
         "prior_team_total_cap_allocations": 148693550,
         "prior_season_cap": 136021000,
@@ -24485,7 +24185,6 @@
           "bpm": -5.6,
           "ws": -0.3
         },
-        "game_on_court_value_2026_snapshot": 46.68,
         "prior_team_active_payroll": 94551623,
         "prior_team_total_cap_allocations": 140908582,
         "prior_season_cap": 136021000,
@@ -24535,7 +24234,6 @@
           "bpm": -3.1,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": 57.88,
         "prior_team_active_payroll": 182226590,
         "prior_team_total_cap_allocations": 188285708,
         "prior_season_cap": 136021000,
@@ -24596,7 +24294,6 @@
           "bpm": 0.7,
           "ws": 2.1
         },
-        "game_on_court_value_2026_snapshot": 59.45,
         "prior_team_active_payroll": 97074991,
         "prior_team_total_cap_allocations": 141036011,
         "prior_season_cap": 136021000,
@@ -24646,7 +24343,6 @@
           "bpm": 0.4,
           "ws": 1.9
         },
-        "game_on_court_value_2026_snapshot": 52.46,
         "prior_team_active_payroll": 172894063,
         "prior_team_total_cap_allocations": 180754950,
         "prior_season_cap": 136021000,
@@ -24696,7 +24392,6 @@
           "bpm": -4.3,
           "ws": 0.1
         },
-        "game_on_court_value_2026_snapshot": 51.39,
         "prior_team_active_payroll": 138558316,
         "prior_team_total_cap_allocations": 161887358,
         "prior_season_cap": 136021000,
@@ -24746,7 +24441,6 @@
           "bpm": -3.0,
           "ws": 0.4
         },
-        "game_on_court_value_2026_snapshot": 50.84,
         "prior_team_active_payroll": 127645232,
         "prior_team_total_cap_allocations": 160502705,
         "prior_season_cap": 136021000,
@@ -24796,7 +24490,6 @@
           "bpm": 1.3,
           "ws": 5.3
         },
-        "game_on_court_value_2026_snapshot": 59.07,
         "prior_team_active_payroll": 130964229,
         "prior_team_total_cap_allocations": 139355784,
         "prior_season_cap": 136021000,
@@ -24846,7 +24539,6 @@
           "bpm": -4.5,
           "ws": 0.2
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 132379717,
         "prior_team_total_cap_allocations": 189901033,
         "prior_season_cap": 136021000,
@@ -24906,7 +24598,6 @@
           "bpm": -2.2,
           "ws": 2.5
         },
-        "game_on_court_value_2026_snapshot": 55.16,
         "prior_team_active_payroll": 176890198,
         "prior_team_total_cap_allocations": 184751085,
         "prior_season_cap": 136021000,
@@ -24956,7 +24647,6 @@
           "bpm": -2.8,
           "ws": 0.5
         },
-        "game_on_court_value_2026_snapshot": 57.17,
         "prior_team_active_payroll": 157605999,
         "prior_team_total_cap_allocations": 171538887,
         "prior_season_cap": 136021000,
@@ -25006,7 +24696,6 @@
           "bpm": 1.6,
           "ws": 1.3
         },
-        "game_on_court_value_2026_snapshot": 59.14,
         "prior_team_active_payroll": 143402009,
         "prior_team_total_cap_allocations": 145302009,
         "prior_season_cap": 136021000,
@@ -25056,7 +24745,6 @@
           "bpm": 0.9,
           "ws": 4.1
         },
-        "game_on_court_value_2026_snapshot": 67.74,
         "prior_team_active_payroll": 123547474,
         "prior_team_total_cap_allocations": 131757411,
         "prior_season_cap": 136021000,
@@ -25106,7 +24794,6 @@
           "bpm": -2.7,
           "ws": 0.1
         },
-        "game_on_court_value_2026_snapshot": 46.26,
         "prior_team_active_payroll": 84251419,
         "prior_team_total_cap_allocations": 136419412,
         "prior_season_cap": 136021000,
@@ -25164,7 +24851,6 @@
           "bpm": 0.7,
           "ws": 3.7
         },
-        "game_on_court_value_2026_snapshot": 57.12,
         "prior_team_active_payroll": 127645232,
         "prior_team_total_cap_allocations": 160502705,
         "prior_season_cap": 136021000,
@@ -25224,7 +24910,6 @@
           "bpm": -3.3,
           "ws": 2.2
         },
-        "game_on_court_value_2026_snapshot": 47.93,
         "prior_team_active_payroll": 138558316,
         "prior_team_total_cap_allocations": 161887358,
         "prior_season_cap": 136021000,
@@ -25273,7 +24958,6 @@
           "bpm": -1.3,
           "ws": 1.5
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 84251419,
         "prior_team_total_cap_allocations": 136419412,
         "prior_season_cap": 136021000,
@@ -25333,7 +25017,6 @@
           "bpm": -1.4,
           "ws": 0.5
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 157605999,
         "prior_team_total_cap_allocations": 171538887,
         "prior_season_cap": 136021000,
@@ -25382,7 +25065,6 @@
           "bpm": -8.0,
           "ws": -0.1
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 160343147,
         "prior_team_total_cap_allocations": 162956334,
         "prior_season_cap": 136021000,
@@ -25442,7 +25124,6 @@
           "bpm": -4.3,
           "ws": -0.1
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 84251419,
         "prior_team_total_cap_allocations": 136419412,
         "prior_season_cap": 136021000,
@@ -25502,7 +25183,6 @@
           "bpm": -2.9,
           "ws": 1.6
         },
-        "game_on_court_value_2026_snapshot": 45.79,
         "prior_team_active_payroll": 149336848,
         "prior_team_total_cap_allocations": 156139798,
         "prior_season_cap": 136021000,
@@ -25551,7 +25231,6 @@
           "bpm": 0.8,
           "ws": 3.5
         },
-        "game_on_court_value_2026_snapshot": 62.13,
         "prior_team_active_payroll": 127645232,
         "prior_team_total_cap_allocations": 160502705,
         "prior_season_cap": 136021000,
@@ -25611,7 +25290,6 @@
           "bpm": -2.2,
           "ws": 1.8
         },
-        "game_on_court_value_2026_snapshot": 49.1,
         "prior_team_active_payroll": 143402009,
         "prior_team_total_cap_allocations": 145302009,
         "prior_season_cap": 136021000,
@@ -25660,7 +25338,6 @@
           "bpm": 3.3,
           "ws": 0.6
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 161970318,
         "prior_team_total_cap_allocations": 181909301,
         "prior_season_cap": 136021000,
@@ -25711,7 +25388,6 @@
           "bpm": -2.0,
           "ws": 2.6
         },
-        "game_on_court_value_2026_snapshot": 43.5,
         "prior_team_active_payroll": 143402009,
         "prior_team_total_cap_allocations": 145302009,
         "prior_season_cap": 136021000,
@@ -25760,7 +25436,6 @@
           "bpm": -2.2,
           "ws": 0.6
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 164656924,
         "prior_team_total_cap_allocations": 176969502,
         "prior_season_cap": 136021000,
@@ -25809,7 +25484,6 @@
           "bpm": -1.8,
           "ws": 1.5
         },
-        "game_on_court_value_2026_snapshot": 41.68,
         "prior_team_active_payroll": 160343147,
         "prior_team_total_cap_allocations": 162956334,
         "prior_season_cap": 136021000,
@@ -25858,7 +25532,6 @@
           "bpm": -0.5,
           "ws": 2.6
         },
-        "game_on_court_value_2026_snapshot": 47.01,
         "prior_team_active_payroll": 130964229,
         "prior_team_total_cap_allocations": 139355784,
         "prior_season_cap": 136021000,
@@ -25918,7 +25591,6 @@
           "bpm": -0.1,
           "ws": 2.1
         },
-        "game_on_court_value_2026_snapshot": 56.57,
         "prior_team_active_payroll": 164656924,
         "prior_team_total_cap_allocations": 176969502,
         "prior_season_cap": 136021000,
@@ -25967,7 +25639,6 @@
           "bpm": -4.5,
           "ws": 0.6
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 97074991,
         "prior_team_total_cap_allocations": 141036011,
         "prior_season_cap": 136021000,
@@ -26009,10 +25680,10 @@
         "non_full_guarantee_at_exercise": true,
         "partial_guarantee_if_exercised": null,
         "sources": [
-          "to2024"
+          "to2024",
+          "https://www.nba.com/news/2024-free-agency-options-and-qualifying-offers"
         ],
         "prior_season_box_value": null,
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 198296474,
         "prior_team_total_cap_allocations": 202080521,
         "prior_season_cap": 136021000,
@@ -26043,7 +25714,8 @@
         },
         "prior_team_win_pct": 0.622,
         "prior_team_games": 82,
-        "prior_regular_injury_games": 4
+        "prior_regular_injury_games": 4,
+        "known_by_recap_date": "2024-06-30"
       },
       {
         "summer": 2024,
@@ -26071,7 +25743,6 @@
           "bpm": 1.9,
           "ws": 0.9
         },
-        "game_on_court_value_2026_snapshot": 39.07,
         "prior_team_active_payroll": 127645232,
         "prior_team_total_cap_allocations": 160502705,
         "prior_season_cap": 136021000,
@@ -26116,7 +25787,6 @@
           "bpm": -0.3,
           "ws": 2.1
         },
-        "game_on_court_value_2026_snapshot": 52.88,
         "prior_team_active_payroll": 135440708,
         "prior_team_total_cap_allocations": 162996801,
         "prior_season_cap": 136021000,
@@ -26176,7 +25846,6 @@
           "bpm": 1.9,
           "ws": 5.6
         },
-        "game_on_court_value_2026_snapshot": 60.79,
         "prior_team_active_payroll": 130964229,
         "prior_team_total_cap_allocations": 139355784,
         "prior_season_cap": 136021000,
@@ -26236,7 +25905,6 @@
           "bpm": 1.5,
           "ws": 1.8
         },
-        "game_on_court_value_2026_snapshot": 65.22,
         "prior_team_active_payroll": 184845028,
         "prior_team_total_cap_allocations": 188759360,
         "prior_season_cap": 136021000,
@@ -26296,7 +25964,6 @@
           "bpm": 1.2,
           "ws": 4.9
         },
-        "game_on_court_value_2026_snapshot": 57.74,
         "prior_team_active_payroll": 184845028,
         "prior_team_total_cap_allocations": 188759360,
         "prior_season_cap": 136021000,
@@ -26345,7 +26012,6 @@
           "bpm": -1.6,
           "ws": 0.5
         },
-        "game_on_court_value_2026_snapshot": 43.58,
         "prior_team_active_payroll": 84251419,
         "prior_team_total_cap_allocations": 136419412,
         "prior_season_cap": 136021000,
@@ -26400,7 +26066,6 @@
           "bpm": -3.5,
           "ws": 0.1
         },
-        "game_on_court_value_2026_snapshot": 55.87,
         "prior_team_active_payroll": 132379717,
         "prior_team_total_cap_allocations": 189901033,
         "prior_season_cap": 136021000,
@@ -26446,7 +26111,6 @@
           "https://www.hoopsrumors.com/2024/06/nuggets-to-decline-2024-25-team-option-on-vlatko-cancar.html"
         ],
         "prior_season_box_value": null,
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 176890198,
         "prior_team_total_cap_allocations": 184751085,
         "prior_season_cap": 136021000,
@@ -26505,7 +26169,6 @@
           "bpm": -8.1,
           "ws": -0.4
         },
-        "game_on_court_value_2026_snapshot": 35.84,
         "prior_team_active_payroll": 162581956,
         "prior_team_total_cap_allocations": 211677970,
         "prior_season_cap": 140588000,
@@ -26555,7 +26218,6 @@
           "bpm": -3.3,
           "ws": -0.3
         },
-        "game_on_court_value_2026_snapshot": 55.16,
         "prior_team_active_payroll": 162581956,
         "prior_team_total_cap_allocations": 211677970,
         "prior_season_cap": 140588000,
@@ -26605,7 +26267,6 @@
           "bpm": -1.7,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": 57.66,
         "prior_team_active_payroll": 193098445,
         "prior_team_total_cap_allocations": 197048229,
         "prior_season_cap": 140588000,
@@ -26655,7 +26316,6 @@
           "bpm": -4.6,
           "ws": 0.2
         },
-        "game_on_court_value_2026_snapshot": 46.1,
         "prior_team_active_payroll": 162581956,
         "prior_team_total_cap_allocations": 211677970,
         "prior_season_cap": 140588000,
@@ -26704,7 +26364,6 @@
           "bpm": -7.3,
           "ws": -1.2
         },
-        "game_on_court_value_2026_snapshot": 39.7,
         "prior_team_active_payroll": 142648013,
         "prior_team_total_cap_allocations": 154114022,
         "prior_season_cap": 140588000,
@@ -26754,7 +26413,6 @@
           "bpm": -1.8,
           "ws": 2.7
         },
-        "game_on_court_value_2026_snapshot": 49.18,
         "prior_team_active_payroll": 182745885,
         "prior_team_total_cap_allocations": 200785985,
         "prior_season_cap": 140588000,
@@ -26795,7 +26453,6 @@
           "rq2026"
         ],
         "prior_season_box_value": null,
-        "game_on_court_value_2026_snapshot": 48.09,
         "prior_team_active_payroll": 182574315,
         "prior_team_total_cap_allocations": 192786656,
         "prior_season_cap": 140588000,
@@ -26837,7 +26494,6 @@
           "bpm": -3.2,
           "ws": 0.4
         },
-        "game_on_court_value_2026_snapshot": 57.76,
         "prior_team_active_payroll": 166101303,
         "prior_team_total_cap_allocations": 171370782,
         "prior_season_cap": 140588000,
@@ -26887,7 +26543,6 @@
           "bpm": -4.0,
           "ws": 0.8
         },
-        "game_on_court_value_2026_snapshot": 44.51,
         "prior_team_active_payroll": 162581956,
         "prior_team_total_cap_allocations": 211677970,
         "prior_season_cap": 140588000,
@@ -26948,7 +26603,6 @@
           "bpm": -0.3,
           "ws": 4.0
         },
-        "game_on_court_value_2026_snapshot": 69.38,
         "prior_team_active_payroll": 165518581,
         "prior_team_total_cap_allocations": 176848446,
         "prior_season_cap": 140588000,
@@ -26998,7 +26652,6 @@
           "bpm": -5.3,
           "ws": -0.8
         },
-        "game_on_court_value_2026_snapshot": 48.88,
         "prior_team_active_payroll": 142648013,
         "prior_team_total_cap_allocations": 154114022,
         "prior_season_cap": 140588000,
@@ -27048,7 +26701,6 @@
           "bpm": -3.0,
           "ws": 1.2
         },
-        "game_on_court_value_2026_snapshot": 53.03,
         "prior_team_active_payroll": 154302912,
         "prior_team_total_cap_allocations": 178496026,
         "prior_season_cap": 140588000,
@@ -27098,7 +26750,6 @@
           "bpm": 0.2,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": 49.29,
         "prior_team_active_payroll": 169548876,
         "prior_team_total_cap_allocations": 170340647,
         "prior_season_cap": 140588000,
@@ -27148,7 +26799,6 @@
           "bpm": -2.7,
           "ws": 0.8
         },
-        "game_on_court_value_2026_snapshot": 54.58,
         "prior_team_active_payroll": 169371096,
         "prior_team_total_cap_allocations": 178212347,
         "prior_season_cap": 140588000,
@@ -27198,7 +26848,6 @@
           "bpm": -0.1,
           "ws": 4.1
         },
-        "game_on_court_value_2026_snapshot": 63.06,
         "prior_team_active_payroll": 173088172,
         "prior_team_total_cap_allocations": 179350729,
         "prior_season_cap": 140588000,
@@ -27248,7 +26897,6 @@
           "bpm": -4.1,
           "ws": 0.1
         },
-        "game_on_court_value_2026_snapshot": 57.17,
         "prior_team_active_payroll": 162581956,
         "prior_team_total_cap_allocations": 211677970,
         "prior_season_cap": 140588000,
@@ -27298,7 +26946,6 @@
           "bpm": -2.5,
           "ws": 1.9
         },
-        "game_on_court_value_2026_snapshot": 52.46,
         "prior_team_active_payroll": 157180244,
         "prior_team_total_cap_allocations": 168006873,
         "prior_season_cap": 140588000,
@@ -27339,7 +26986,6 @@
           "rq2026"
         ],
         "prior_season_box_value": null,
-        "game_on_court_value_2026_snapshot": 54.29,
         "prior_team_active_payroll": 162209242,
         "prior_team_total_cap_allocations": 166001694,
         "prior_season_cap": 140588000,
@@ -27389,7 +27035,6 @@
           "bpm": -6.5,
           "ws": 0.0
         },
-        "game_on_court_value_2026_snapshot": 47.83,
         "prior_team_active_payroll": 188001268,
         "prior_team_total_cap_allocations": 188877651,
         "prior_season_cap": 140588000,
@@ -27439,7 +27084,6 @@
           "bpm": -1.7,
           "ws": 0.8
         },
-        "game_on_court_value_2026_snapshot": 56.55,
         "prior_team_active_payroll": 161552948,
         "prior_team_total_cap_allocations": 173496349,
         "prior_season_cap": 140588000,
@@ -27489,7 +27133,6 @@
           "bpm": -4.2,
           "ws": 0.1
         },
-        "game_on_court_value_2026_snapshot": 45.79,
         "prior_team_active_payroll": 198847571,
         "prior_team_total_cap_allocations": 236725861,
         "prior_season_cap": 140588000,
@@ -27539,7 +27182,6 @@
           "bpm": -3.0,
           "ws": 1.8
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 133989678,
         "prior_team_total_cap_allocations": 141808220,
         "prior_season_cap": 140588000,
@@ -27585,7 +27227,6 @@
           "bpm": -4.1,
           "ws": 1.0
         },
-        "game_on_court_value_2026_snapshot": 56.71,
         "prior_team_active_payroll": 210557299,
         "prior_team_total_cap_allocations": 228464502,
         "prior_season_cap": 140588000,
@@ -27635,7 +27276,6 @@
           "bpm": -3.1,
           "ws": 1.1
         },
-        "game_on_court_value_2026_snapshot": 65.62,
         "prior_team_active_payroll": 155231927,
         "prior_team_total_cap_allocations": 162809380,
         "prior_season_cap": 140588000,
@@ -27685,7 +27325,6 @@
           "bpm": -2.1,
           "ws": 0.6
         },
-        "game_on_court_value_2026_snapshot": 50.11,
         "prior_team_active_payroll": 198847571,
         "prior_team_total_cap_allocations": 236725861,
         "prior_season_cap": 140588000,
@@ -27734,7 +27373,6 @@
           "bpm": -5.2,
           "ws": 0.0
         },
-        "game_on_court_value_2026_snapshot": 49.82,
         "prior_team_active_payroll": 152436862,
         "prior_team_total_cap_allocations": 167423486,
         "prior_season_cap": 140588000,
@@ -27784,7 +27422,6 @@
           "bpm": -2.6,
           "ws": 2.5
         },
-        "game_on_court_value_2026_snapshot": 51.72,
         "prior_team_active_payroll": 152959238,
         "prior_team_total_cap_allocations": 152959238,
         "prior_season_cap": 140588000,
@@ -27834,7 +27471,6 @@
           "bpm": -3.0,
           "ws": 3.6
         },
-        "game_on_court_value_2026_snapshot": 56.56,
         "prior_team_active_payroll": 167934095,
         "prior_team_total_cap_allocations": 182966321,
         "prior_season_cap": 140588000,
@@ -27884,7 +27520,6 @@
           "bpm": -3.5,
           "ws": 1.8
         },
-        "game_on_court_value_2026_snapshot": 50.09,
         "prior_team_active_payroll": 161255749,
         "prior_team_total_cap_allocations": 174418704,
         "prior_season_cap": 140588000,
@@ -27934,7 +27569,6 @@
           "bpm": -0.1,
           "ws": 4.9
         },
-        "game_on_court_value_2026_snapshot": 68.46,
         "prior_team_active_payroll": 155850296,
         "prior_team_total_cap_allocations": 167814933,
         "prior_season_cap": 140588000,
@@ -27984,7 +27618,6 @@
           "bpm": 4.1,
           "ws": 8.0
         },
-        "game_on_court_value_2026_snapshot": 68.7,
         "prior_team_active_payroll": 161552948,
         "prior_team_total_cap_allocations": 173496349,
         "prior_season_cap": 140588000,
@@ -28034,7 +27667,6 @@
           "bpm": -1.9,
           "ws": 2.4
         },
-        "game_on_court_value_2026_snapshot": 56.97,
         "prior_team_active_payroll": 152959238,
         "prior_team_total_cap_allocations": 152959238,
         "prior_season_cap": 140588000,
@@ -28084,7 +27716,6 @@
           "bpm": 1.7,
           "ws": 3.8
         },
-        "game_on_court_value_2026_snapshot": 67.79,
         "prior_team_active_payroll": 133989678,
         "prior_team_total_cap_allocations": 141808220,
         "prior_season_cap": 140588000,
@@ -28134,7 +27765,6 @@
           "bpm": -2.0,
           "ws": 2.1
         },
-        "game_on_court_value_2026_snapshot": 44.37,
         "prior_team_active_payroll": 166839774,
         "prior_team_total_cap_allocations": 171232577,
         "prior_season_cap": 140588000,
@@ -28184,7 +27814,6 @@
           "bpm": -3.7,
           "ws": 0.3
         },
-        "game_on_court_value_2026_snapshot": 54.39,
         "prior_team_active_payroll": 162581956,
         "prior_team_total_cap_allocations": 211677970,
         "prior_season_cap": 140588000,
@@ -28234,7 +27863,6 @@
           "bpm": 0.7,
           "ws": 4.2
         },
-        "game_on_court_value_2026_snapshot": 61.6,
         "prior_team_active_payroll": 176474440,
         "prior_team_total_cap_allocations": 199518342,
         "prior_season_cap": 140588000,
@@ -28284,7 +27912,6 @@
           "bpm": 0.0,
           "ws": 0.4
         },
-        "game_on_court_value_2026_snapshot": 67.61,
         "prior_team_active_payroll": 152436862,
         "prior_team_total_cap_allocations": 167423486,
         "prior_season_cap": 140588000,
@@ -28334,7 +27961,6 @@
           "bpm": -1.2,
           "ws": 1.2
         },
-        "game_on_court_value_2026_snapshot": 54.8,
         "prior_team_active_payroll": 142648013,
         "prior_team_total_cap_allocations": 154114022,
         "prior_season_cap": 140588000,
@@ -28384,7 +28010,6 @@
           "bpm": 0.3,
           "ws": 1.8
         },
-        "game_on_court_value_2026_snapshot": 58.23,
         "prior_team_active_payroll": 162581956,
         "prior_team_total_cap_allocations": 211677970,
         "prior_season_cap": 140588000,
@@ -28434,7 +28059,6 @@
           "bpm": 1.0,
           "ws": 5.2
         },
-        "game_on_court_value_2026_snapshot": 59.69,
         "prior_team_active_payroll": 162209242,
         "prior_team_total_cap_allocations": 166001694,
         "prior_season_cap": 140588000,
@@ -28484,7 +28108,6 @@
           "bpm": -3.7,
           "ws": 0.1
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 112190206,
         "prior_team_total_cap_allocations": 178949187,
         "prior_season_cap": 140588000,
@@ -28545,7 +28168,6 @@
           "bpm": 3.3,
           "ws": 3.4
         },
-        "game_on_court_value_2026_snapshot": 58.87,
         "prior_team_active_payroll": 172077663,
         "prior_team_total_cap_allocations": 187147472,
         "prior_season_cap": 140588000,
@@ -28595,7 +28217,6 @@
           "bpm": -3.2,
           "ws": 1.4
         },
-        "game_on_court_value_2026_snapshot": 47.64,
         "prior_team_active_payroll": 154302912,
         "prior_team_total_cap_allocations": 178496026,
         "prior_season_cap": 140588000,
@@ -28645,7 +28266,6 @@
           "bpm": -0.9,
           "ws": 2.3
         },
-        "game_on_court_value_2026_snapshot": 54.33,
         "prior_team_active_payroll": 173088172,
         "prior_team_total_cap_allocations": 179350729,
         "prior_season_cap": 140588000,
@@ -28695,7 +28315,6 @@
           "bpm": -0.9,
           "ws": 1.6
         },
-        "game_on_court_value_2026_snapshot": 50.84,
         "prior_team_active_payroll": 166839774,
         "prior_team_total_cap_allocations": 171232577,
         "prior_season_cap": 140588000,
@@ -28745,7 +28364,6 @@
           "bpm": -5.3,
           "ws": 0.1
         },
-        "game_on_court_value_2026_snapshot": 47.19,
         "prior_team_active_payroll": 152959238,
         "prior_team_total_cap_allocations": 152959238,
         "prior_season_cap": 140588000,
@@ -28801,7 +28419,6 @@
           "bpm": -5.4,
           "ws": -0.5
         },
-        "game_on_court_value_2026_snapshot": 34.51,
         "prior_team_active_payroll": 167934095,
         "prior_team_total_cap_allocations": 182966321,
         "prior_season_cap": 140588000,
@@ -28851,7 +28468,6 @@
           "bpm": -4.5,
           "ws": 1.3
         },
-        "game_on_court_value_2026_snapshot": 48.66,
         "prior_team_active_payroll": 182574315,
         "prior_team_total_cap_allocations": 192786656,
         "prior_season_cap": 140588000,
@@ -28901,7 +28517,6 @@
           "bpm": -2.7,
           "ws": 1.1
         },
-        "game_on_court_value_2026_snapshot": 54.18,
         "prior_team_active_payroll": 142648013,
         "prior_team_total_cap_allocations": 154114022,
         "prior_season_cap": 140588000,
@@ -28951,7 +28566,6 @@
           "bpm": -2.1,
           "ws": 0.5
         },
-        "game_on_court_value_2026_snapshot": 50.68,
         "prior_team_active_payroll": 166986734,
         "prior_team_total_cap_allocations": 174670238,
         "prior_season_cap": 140588000,
@@ -29007,7 +28621,6 @@
           "bpm": -4.0,
           "ws": 0.0
         },
-        "game_on_court_value_2026_snapshot": 52.49,
         "prior_team_active_payroll": 112190206,
         "prior_team_total_cap_allocations": 178949187,
         "prior_season_cap": 140588000,
@@ -29068,7 +28681,6 @@
           "bpm": -3.0,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": 52.25,
         "prior_team_active_payroll": 165518581,
         "prior_team_total_cap_allocations": 176848446,
         "prior_season_cap": 140588000,
@@ -29118,7 +28730,6 @@
           "bpm": -0.6,
           "ws": 1.8
         },
-        "game_on_court_value_2026_snapshot": 54.17,
         "prior_team_active_payroll": 133989678,
         "prior_team_total_cap_allocations": 141808220,
         "prior_season_cap": 140588000,
@@ -29168,7 +28779,6 @@
           "bpm": -5.7,
           "ws": -0.5
         },
-        "game_on_court_value_2026_snapshot": 43.88,
         "prior_team_active_payroll": 152436862,
         "prior_team_total_cap_allocations": 167423486,
         "prior_season_cap": 140588000,
@@ -29229,7 +28839,6 @@
           "bpm": -4.1,
           "ws": 0.5
         },
-        "game_on_court_value_2026_snapshot": 49.98,
         "prior_team_active_payroll": 112190206,
         "prior_team_total_cap_allocations": 178949187,
         "prior_season_cap": 140588000,
@@ -29279,7 +28888,6 @@
           "bpm": -2.1,
           "ws": 0.9
         },
-        "game_on_court_value_2026_snapshot": 52.27,
         "prior_team_active_payroll": 172077663,
         "prior_team_total_cap_allocations": 187147472,
         "prior_season_cap": 140588000,
@@ -29333,7 +28941,6 @@
           "bpm": -2.2,
           "ws": 1.8
         },
-        "game_on_court_value_2026_snapshot": 54.49,
         "prior_team_active_payroll": 165518581,
         "prior_team_total_cap_allocations": 176848446,
         "prior_season_cap": 140588000,
@@ -29383,7 +28990,6 @@
           "bpm": -3.5,
           "ws": 0.0
         },
-        "game_on_court_value_2026_snapshot": 53.3,
         "prior_team_active_payroll": 142648013,
         "prior_team_total_cap_allocations": 154114022,
         "prior_season_cap": 140588000,
@@ -29433,7 +29039,6 @@
           "bpm": 6.5,
           "ws": 3.8
         },
-        "game_on_court_value_2026_snapshot": 77.7,
         "prior_team_active_payroll": 155231927,
         "prior_team_total_cap_allocations": 162809380,
         "prior_season_cap": 140588000,
@@ -29484,7 +29089,6 @@
           "bpm": -0.2,
           "ws": 2.0
         },
-        "game_on_court_value_2026_snapshot": 49.68,
         "prior_team_active_payroll": 161552948,
         "prior_team_total_cap_allocations": 173496349,
         "prior_season_cap": 140588000,
@@ -29544,7 +29148,6 @@
           "bpm": -1.6,
           "ws": 1.5
         },
-        "game_on_court_value_2026_snapshot": 60.98,
         "prior_team_active_payroll": 162209242,
         "prior_team_total_cap_allocations": 166001694,
         "prior_season_cap": 140588000,
@@ -29604,7 +29207,6 @@
           "bpm": -5.6,
           "ws": 0.1
         },
-        "game_on_court_value_2026_snapshot": 46.55,
         "prior_team_active_payroll": 188001268,
         "prior_team_total_cap_allocations": 188877651,
         "prior_season_cap": 140588000,
@@ -29653,7 +29255,6 @@
           "bpm": -2.5,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": 56.0,
         "prior_team_active_payroll": 167934095,
         "prior_team_total_cap_allocations": 182966321,
         "prior_season_cap": 140588000,
@@ -29713,7 +29314,6 @@
           "bpm": -2.2,
           "ws": 1.8
         },
-        "game_on_court_value_2026_snapshot": 48.09,
         "prior_team_active_payroll": 152959238,
         "prior_team_total_cap_allocations": 152959238,
         "prior_season_cap": 140588000,
@@ -29773,7 +29373,6 @@
           "bpm": -0.2,
           "ws": 0.6
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 169371096,
         "prior_team_total_cap_allocations": 178212347,
         "prior_season_cap": 140588000,
@@ -29831,7 +29430,6 @@
           "bpm": -0.8,
           "ws": 1.5
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 152959238,
         "prior_team_total_cap_allocations": 152959238,
         "prior_season_cap": 140588000,
@@ -29884,7 +29482,6 @@
           "bpm": -2.2,
           "ws": 1.0
         },
-        "game_on_court_value_2026_snapshot": 51.88,
         "prior_team_active_payroll": 161255749,
         "prior_team_total_cap_allocations": 174418704,
         "prior_season_cap": 140588000,
@@ -29939,7 +29536,6 @@
           "bpm": -6.7,
           "ws": 0.0
         },
-        "game_on_court_value_2026_snapshot": 49.35,
         "prior_team_active_payroll": 112190206,
         "prior_team_total_cap_allocations": 178949187,
         "prior_season_cap": 140588000,
@@ -29986,7 +29582,6 @@
           "bpm": -6.4,
           "ws": -0.6
         },
-        "game_on_court_value_2026_snapshot": 55.72,
         "prior_team_active_payroll": 167934095,
         "prior_team_total_cap_allocations": 182966321,
         "prior_season_cap": 140588000,
@@ -30039,7 +29634,6 @@
           "bpm": 0.9,
           "ws": 5.2
         },
-        "game_on_court_value_2026_snapshot": 61.59,
         "prior_team_active_payroll": 161552948,
         "prior_team_total_cap_allocations": 173496349,
         "prior_season_cap": 140588000,
@@ -30099,7 +29693,6 @@
           "bpm": -2.7,
           "ws": 1.0
         },
-        "game_on_court_value_2026_snapshot": 46.14,
         "prior_team_active_payroll": 152959238,
         "prior_team_total_cap_allocations": 152959238,
         "prior_season_cap": 140588000,
@@ -30159,7 +29752,6 @@
           "bpm": -1.7,
           "ws": 1.7
         },
-        "game_on_court_value_2026_snapshot": 56.22,
         "prior_team_active_payroll": 176474440,
         "prior_team_total_cap_allocations": 199518342,
         "prior_season_cap": 140588000,
@@ -30208,7 +29800,6 @@
           "bpm": -1.7,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": 41.38,
         "prior_team_active_payroll": 166101303,
         "prior_team_total_cap_allocations": 171370782,
         "prior_season_cap": 140588000,
@@ -30257,7 +29848,6 @@
           "bpm": -3.9,
           "ws": 1.9
         },
-        "game_on_court_value_2026_snapshot": 34.85,
         "prior_team_active_payroll": 112190206,
         "prior_team_total_cap_allocations": 178949187,
         "prior_season_cap": 140588000,
@@ -30306,7 +29896,6 @@
           "bpm": -1.0,
           "ws": 1.4
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 169548876,
         "prior_team_total_cap_allocations": 170340647,
         "prior_season_cap": 140588000,
@@ -30366,7 +29955,6 @@
           "bpm": 4.3,
           "ws": 3.3
         },
-        "game_on_court_value_2026_snapshot": 62.43,
         "prior_team_active_payroll": 162209242,
         "prior_team_total_cap_allocations": 166001694,
         "prior_season_cap": 140588000,
@@ -30426,7 +30014,6 @@
           "bpm": -6.2,
           "ws": -0.2
         },
-        "game_on_court_value_2026_snapshot": 49.04,
         "prior_team_active_payroll": 193098445,
         "prior_team_total_cap_allocations": 197048229,
         "prior_season_cap": 140588000,
@@ -30475,7 +30062,6 @@
           "bpm": -0.8,
           "ws": 1.0
         },
-        "game_on_court_value_2026_snapshot": 57.23,
         "prior_team_active_payroll": 182745885,
         "prior_team_total_cap_allocations": 200785985,
         "prior_season_cap": 140588000,
@@ -30524,7 +30110,6 @@
           "bpm": 2.2,
           "ws": 0.9
         },
-        "game_on_court_value_2026_snapshot": 57.43,
         "prior_team_active_payroll": 198847571,
         "prior_team_total_cap_allocations": 236725861,
         "prior_season_cap": 140588000,
@@ -30584,7 +30169,6 @@
           "bpm": -3.7,
           "ws": 0.9
         },
-        "game_on_court_value_2026_snapshot": 48.61,
         "prior_team_active_payroll": 169548876,
         "prior_team_total_cap_allocations": 170340647,
         "prior_season_cap": 140588000,
@@ -30644,7 +30228,6 @@
           "bpm": 1.9,
           "ws": 5.0
         },
-        "game_on_court_value_2026_snapshot": 58.61,
         "prior_team_active_payroll": 166101303,
         "prior_team_total_cap_allocations": 171370782,
         "prior_season_cap": 140588000,
@@ -30693,7 +30276,6 @@
           "bpm": -3.3,
           "ws": 0.5
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 112190206,
         "prior_team_total_cap_allocations": 178949187,
         "prior_season_cap": 140588000,
@@ -30742,7 +30324,6 @@
           "bpm": -0.1,
           "ws": 0.4
         },
-        "game_on_court_value_2026_snapshot": 43.34,
         "prior_team_active_payroll": 173088172,
         "prior_team_total_cap_allocations": 179350729,
         "prior_season_cap": 140588000,
@@ -30791,7 +30372,6 @@
           "bpm": -2.4,
           "ws": 0.3
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 169548876,
         "prior_team_total_cap_allocations": 170340647,
         "prior_season_cap": 140588000,
@@ -30851,7 +30431,6 @@
           "bpm": -2.3,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": 59.3,
         "prior_team_active_payroll": 198847571,
         "prior_team_total_cap_allocations": 236725861,
         "prior_season_cap": 140588000,
@@ -30911,7 +30490,6 @@
           "bpm": 4.0,
           "ws": 2.0
         },
-        "game_on_court_value_2026_snapshot": 60.79,
         "prior_team_active_payroll": 152959238,
         "prior_team_total_cap_allocations": 152959238,
         "prior_season_cap": 140588000,
@@ -30971,7 +30549,6 @@
           "bpm": -7.2,
           "ws": 0.1
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 188001268,
         "prior_team_total_cap_allocations": 188877651,
         "prior_season_cap": 140588000,
@@ -31022,7 +30599,6 @@
           "bpm": 0.1,
           "ws": 1.7
         },
-        "game_on_court_value_2026_snapshot": 60.08,
         "prior_team_active_payroll": 176474440,
         "prior_team_total_cap_allocations": 199518342,
         "prior_season_cap": 140588000,
@@ -31071,7 +30647,6 @@
           "bpm": -4.7,
           "ws": 0.1
         },
-        "game_on_court_value_2026_snapshot": 38.84,
         "prior_team_active_payroll": 165518581,
         "prior_team_total_cap_allocations": 176848446,
         "prior_season_cap": 140588000,
@@ -31120,7 +30695,6 @@
           "bpm": 1.2,
           "ws": 0.4
         },
-        "game_on_court_value_2026_snapshot": 41.93,
         "prior_team_active_payroll": 166839774,
         "prior_team_total_cap_allocations": 171232577,
         "prior_season_cap": 140588000,
@@ -31169,7 +30743,6 @@
           "bpm": -2.6,
           "ws": 0.9
         },
-        "game_on_court_value_2026_snapshot": 48.84,
         "prior_team_active_payroll": 112190206,
         "prior_team_total_cap_allocations": 178949187,
         "prior_season_cap": 140588000,
@@ -31218,7 +30791,6 @@
           "bpm": -7.0,
           "ws": -1.0
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 210557299,
         "prior_team_total_cap_allocations": 228464502,
         "prior_season_cap": 140588000,
@@ -31266,7 +30838,6 @@
           "bpm": -4.4,
           "ws": -0.1
         },
-        "game_on_court_value_2026_snapshot": 53.39,
         "prior_team_active_payroll": 147149062,
         "prior_team_total_cap_allocations": 173117343,
         "prior_season_cap": 154647000,
@@ -31316,7 +30887,6 @@
           "bpm": -1.5,
           "ws": 1.2
         },
-        "game_on_court_value_2026_snapshot": 50.19,
         "prior_team_active_payroll": 180372060,
         "prior_team_total_cap_allocations": 193255583,
         "prior_season_cap": 154647000,
@@ -31366,7 +30936,6 @@
           "bpm": -7.3,
           "ws": -1.1
         },
-        "game_on_court_value_2026_snapshot": 46.59,
         "prior_team_active_payroll": 126082200,
         "prior_team_total_cap_allocations": 150960352,
         "prior_season_cap": 154647000,
@@ -31416,7 +30985,6 @@
           "bpm": -3.0,
           "ws": 1.3
         },
-        "game_on_court_value_2026_snapshot": 50.29,
         "prior_team_active_payroll": 176732468,
         "prior_team_total_cap_allocations": 183990669,
         "prior_season_cap": 154647000,
@@ -31466,7 +31034,6 @@
           "bpm": -0.2,
           "ws": 2.5
         },
-        "game_on_court_value_2026_snapshot": 63.57,
         "prior_team_active_payroll": 133187436,
         "prior_team_total_cap_allocations": 157723438,
         "prior_season_cap": 154647000,
@@ -31516,7 +31083,6 @@
           "bpm": 1.0,
           "ws": 4.0
         },
-        "game_on_court_value_2026_snapshot": 62.05,
         "prior_team_active_payroll": 184295524,
         "prior_team_total_cap_allocations": 194966020,
         "prior_season_cap": 154647000,
@@ -31566,7 +31132,6 @@
           "bpm": 1.4,
           "ws": 3.8
         },
-        "game_on_court_value_2026_snapshot": 61.68,
         "prior_team_active_payroll": 174224556,
         "prior_team_total_cap_allocations": 200372430,
         "prior_season_cap": 154647000,
@@ -31616,7 +31181,6 @@
           "bpm": -2.5,
           "ws": 0.8
         },
-        "game_on_court_value_2026_snapshot": 52.29,
         "prior_team_active_payroll": 126082200,
         "prior_team_total_cap_allocations": 150960352,
         "prior_season_cap": 154647000,
@@ -31666,7 +31230,6 @@
           "bpm": -0.8,
           "ws": 2.7
         },
-        "game_on_court_value_2026_snapshot": 55.21,
         "prior_team_active_payroll": 182257822,
         "prior_team_total_cap_allocations": 207453274,
         "prior_season_cap": 154647000,
@@ -31716,7 +31279,6 @@
           "bpm": -6.0,
           "ws": -0.1
         },
-        "game_on_court_value_2026_snapshot": 43.53,
         "prior_team_active_payroll": 126082200,
         "prior_team_total_cap_allocations": 150960352,
         "prior_season_cap": 154647000,
@@ -31766,7 +31328,6 @@
           "bpm": 1.4,
           "ws": 4.2
         },
-        "game_on_court_value_2026_snapshot": 66.33,
         "prior_team_active_payroll": 176732468,
         "prior_team_total_cap_allocations": 183990669,
         "prior_season_cap": 154647000,
@@ -31816,7 +31377,6 @@
           "bpm": -1.6,
           "ws": 0.9
         },
-        "game_on_court_value_2026_snapshot": 55.16,
         "prior_team_active_payroll": 126082200,
         "prior_team_total_cap_allocations": 150960352,
         "prior_season_cap": 154647000,
@@ -31866,7 +31426,6 @@
           "bpm": -1.5,
           "ws": 2.2
         },
-        "game_on_court_value_2026_snapshot": 54.85,
         "prior_team_active_payroll": 187416191,
         "prior_team_total_cap_allocations": 194526296,
         "prior_season_cap": 154647000,
@@ -31916,7 +31475,6 @@
           "bpm": -2.5,
           "ws": 1.0
         },
-        "game_on_court_value_2026_snapshot": 50.88,
         "prior_team_active_payroll": 187670352,
         "prior_team_total_cap_allocations": 194063614,
         "prior_season_cap": 154647000,
@@ -31966,7 +31524,6 @@
           "bpm": -2.7,
           "ws": 0.6
         },
-        "game_on_court_value_2026_snapshot": 52.27,
         "prior_team_active_payroll": 182257822,
         "prior_team_total_cap_allocations": 207453274,
         "prior_season_cap": 154647000,
@@ -32016,7 +31573,6 @@
           "bpm": 0.4,
           "ws": 1.5
         },
-        "game_on_court_value_2026_snapshot": 43.79,
         "prior_team_active_payroll": 194042641,
         "prior_team_total_cap_allocations": 228841297,
         "prior_season_cap": 154647000,
@@ -32066,7 +31622,6 @@
           "bpm": -0.4,
           "ws": 2.3
         },
-        "game_on_court_value_2026_snapshot": 53.86,
         "prior_team_active_payroll": 151771975,
         "prior_team_total_cap_allocations": 180894447,
         "prior_season_cap": 154647000,
@@ -32116,7 +31671,6 @@
           "bpm": -3.7,
           "ws": 0.8
         },
-        "game_on_court_value_2026_snapshot": 52.02,
         "prior_team_active_payroll": 162373811,
         "prior_team_total_cap_allocations": 207796989,
         "prior_season_cap": 154647000,
@@ -32166,7 +31720,6 @@
           "bpm": 2.8,
           "ws": 8.0
         },
-        "game_on_court_value_2026_snapshot": 63.67,
         "prior_team_active_payroll": 154497268,
         "prior_team_total_cap_allocations": 183806358,
         "prior_season_cap": 154647000,
@@ -32216,7 +31769,6 @@
           "bpm": -1.3,
           "ws": 0.9
         },
-        "game_on_court_value_2026_snapshot": 44.52,
         "prior_team_active_payroll": 183713089,
         "prior_team_total_cap_allocations": 188057857,
         "prior_season_cap": 154647000,
@@ -32266,7 +31818,6 @@
           "bpm": -4.9,
           "ws": -0.6
         },
-        "game_on_court_value_2026_snapshot": 47.5,
         "prior_team_active_payroll": 187271649,
         "prior_team_total_cap_allocations": 213853369,
         "prior_season_cap": 154647000,
@@ -32316,7 +31867,6 @@
           "bpm": -23.7,
           "ws": -0.1
         },
-        "game_on_court_value_2026_snapshot": 55.36,
         "prior_team_active_payroll": 166164036,
         "prior_team_total_cap_allocations": 187673271,
         "prior_season_cap": 154647000,
@@ -32366,7 +31916,6 @@
           "bpm": -6.8,
           "ws": -1.6
         },
-        "game_on_court_value_2026_snapshot": 46.38,
         "prior_team_active_payroll": 126082200,
         "prior_team_total_cap_allocations": 150960352,
         "prior_season_cap": 154647000,
@@ -32407,7 +31956,6 @@
           "rq2027"
         ],
         "prior_season_box_value": null,
-        "game_on_court_value_2026_snapshot": 58.15,
         "prior_team_active_payroll": 183713089,
         "prior_team_total_cap_allocations": 188057857,
         "prior_season_cap": 154647000,
@@ -32457,7 +32005,6 @@
           "bpm": -5.0,
           "ws": -0.7
         },
-        "game_on_court_value_2026_snapshot": 50.85,
         "prior_team_active_payroll": 162858635,
         "prior_team_total_cap_allocations": 232033397,
         "prior_season_cap": 154647000,
@@ -32507,7 +32054,6 @@
           "bpm": -0.5,
           "ws": 4.4
         },
-        "game_on_court_value_2026_snapshot": 61.62,
         "prior_team_active_payroll": 192381622,
         "prior_team_total_cap_allocations": 199898431,
         "prior_season_cap": 154647000,
@@ -32557,7 +32103,6 @@
           "bpm": -4.3,
           "ws": 0.3
         },
-        "game_on_court_value_2026_snapshot": 47.18,
         "prior_team_active_payroll": 133187436,
         "prior_team_total_cap_allocations": 157723438,
         "prior_season_cap": 154647000,
@@ -32606,7 +32151,6 @@
           "bpm": -4.5,
           "ws": 0.4
         },
-        "game_on_court_value_2026_snapshot": 45.98,
         "prior_team_active_payroll": 162858635,
         "prior_team_total_cap_allocations": 232033397,
         "prior_season_cap": 154647000,
@@ -32656,7 +32200,6 @@
           "bpm": -9.5,
           "ws": -0.5
         },
-        "game_on_court_value_2026_snapshot": 48.82,
         "prior_team_active_payroll": 159149269,
         "prior_team_total_cap_allocations": 197927822,
         "prior_season_cap": 154647000,
@@ -32705,7 +32248,6 @@
           "bpm": -2.2,
           "ws": 1.3
         },
-        "game_on_court_value_2026_snapshot": 50.25,
         "prior_team_active_payroll": 189852974,
         "prior_team_total_cap_allocations": 199054230,
         "prior_season_cap": 154647000,
@@ -32755,7 +32297,6 @@
           "bpm": -8.9,
           "ws": -0.9
         },
-        "game_on_court_value_2026_snapshot": 35.84,
         "prior_team_active_payroll": 182257822,
         "prior_team_total_cap_allocations": 207453274,
         "prior_season_cap": 154647000,
@@ -32805,7 +32346,6 @@
           "bpm": 0.7,
           "ws": 1.6
         },
-        "game_on_court_value_2026_snapshot": 55.16,
         "prior_team_active_payroll": 162858635,
         "prior_team_total_cap_allocations": 232033397,
         "prior_season_cap": 154647000,
@@ -32855,7 +32395,6 @@
           "bpm": 0.6,
           "ws": 3.8
         },
-        "game_on_court_value_2026_snapshot": 57.66,
         "prior_team_active_payroll": 187416191,
         "prior_team_total_cap_allocations": 194526296,
         "prior_season_cap": 154647000,
@@ -32905,7 +32444,6 @@
           "bpm": -4.7,
           "ws": -0.4
         },
-        "game_on_court_value_2026_snapshot": 46.1,
         "prior_team_active_payroll": 162858635,
         "prior_team_total_cap_allocations": 232033397,
         "prior_season_cap": 154647000,
@@ -32954,7 +32492,6 @@
           "bpm": -5.5,
           "ws": 0.1
         },
-        "game_on_court_value_2026_snapshot": 39.7,
         "prior_team_active_payroll": 194042641,
         "prior_team_total_cap_allocations": 228841297,
         "prior_season_cap": 154647000,
@@ -33004,7 +32541,6 @@
           "bpm": -3.6,
           "ws": 0.4
         },
-        "game_on_court_value_2026_snapshot": 49.18,
         "prior_team_active_payroll": 194334002,
         "prior_team_total_cap_allocations": 211399497,
         "prior_season_cap": 154647000,
@@ -33054,7 +32590,6 @@
           "bpm": -0.5,
           "ws": 0.4
         },
-        "game_on_court_value_2026_snapshot": 48.09,
         "prior_team_active_payroll": 187214031,
         "prior_team_total_cap_allocations": 200743895,
         "prior_season_cap": 154647000,
@@ -33100,7 +32635,6 @@
           "bpm": -2.6,
           "ws": 0.2
         },
-        "game_on_court_value_2026_snapshot": 57.76,
         "prior_team_active_payroll": 180372060,
         "prior_team_total_cap_allocations": 193255583,
         "prior_season_cap": 154647000,
@@ -33150,7 +32684,6 @@
           "bpm": 3.0,
           "ws": 8.6
         },
-        "game_on_court_value_2026_snapshot": 69.38,
         "prior_team_active_payroll": 159149269,
         "prior_team_total_cap_allocations": 197927822,
         "prior_season_cap": 154647000,
@@ -33200,7 +32733,6 @@
           "bpm": -2.4,
           "ws": 1.7
         },
-        "game_on_court_value_2026_snapshot": 48.88,
         "prior_team_active_payroll": 147149062,
         "prior_team_total_cap_allocations": 173117343,
         "prior_season_cap": 154647000,
@@ -33250,7 +32782,6 @@
           "bpm": -0.3,
           "ws": 3.7
         },
-        "game_on_court_value_2026_snapshot": 53.03,
         "prior_team_active_payroll": 184295524,
         "prior_team_total_cap_allocations": 194966020,
         "prior_season_cap": 154647000,
@@ -33300,7 +32831,6 @@
           "bpm": -2.4,
           "ws": 1.5
         },
-        "game_on_court_value_2026_snapshot": 49.29,
         "prior_team_active_payroll": 183713089,
         "prior_team_total_cap_allocations": 188057857,
         "prior_season_cap": 154647000,
@@ -33350,7 +32880,6 @@
           "bpm": 0.1,
           "ws": 4.0
         },
-        "game_on_court_value_2026_snapshot": 54.58,
         "prior_team_active_payroll": 211979654,
         "prior_team_total_cap_allocations": 226181970,
         "prior_season_cap": 154647000,
@@ -33400,7 +32929,6 @@
           "bpm": 2.1,
           "ws": 6.2
         },
-        "game_on_court_value_2026_snapshot": 63.06,
         "prior_team_active_payroll": 151771975,
         "prior_team_total_cap_allocations": 180894447,
         "prior_season_cap": 154647000,
@@ -33450,7 +32978,6 @@
           "bpm": -1.2,
           "ws": 0.6
         },
-        "game_on_court_value_2026_snapshot": 57.17,
         "prior_team_active_payroll": 162858635,
         "prior_team_total_cap_allocations": 232033397,
         "prior_season_cap": 154647000,
@@ -33500,7 +33027,6 @@
           "bpm": -1.0,
           "ws": 2.6
         },
-        "game_on_court_value_2026_snapshot": 52.46,
         "prior_team_active_payroll": 166164036,
         "prior_team_total_cap_allocations": 187673271,
         "prior_season_cap": 154647000,
@@ -33550,7 +33076,6 @@
           "bpm": -8.4,
           "ws": 0.0
         },
-        "game_on_court_value_2026_snapshot": 54.29,
         "prior_team_active_payroll": 183713089,
         "prior_team_total_cap_allocations": 188057857,
         "prior_season_cap": 154647000,
@@ -33600,7 +33125,6 @@
           "bpm": -3.3,
           "ws": 0.2
         },
-        "game_on_court_value_2026_snapshot": 47.83,
         "prior_team_active_payroll": 207454264,
         "prior_team_total_cap_allocations": 209750538,
         "prior_season_cap": 154647000,
@@ -33650,7 +33174,6 @@
           "bpm": 2.7,
           "ws": 5.9
         },
-        "game_on_court_value_2026_snapshot": 56.55,
         "prior_team_active_payroll": 194771442,
         "prior_team_total_cap_allocations": 201412484,
         "prior_season_cap": 154647000,
@@ -33700,7 +33223,6 @@
           "bpm": -7.3,
           "ws": -1.1
         },
-        "game_on_court_value_2026_snapshot": 45.79,
         "prior_team_active_payroll": 154497268,
         "prior_team_total_cap_allocations": 183806358,
         "prior_season_cap": 154647000,
@@ -33750,7 +33272,6 @@
           "bpm": -2.0,
           "ws": 2.8
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 176545353,
         "prior_team_total_cap_allocations": 193082507,
         "prior_season_cap": 154647000,
@@ -33796,7 +33317,6 @@
           "bpm": -0.9,
           "ws": 2.6
         },
-        "game_on_court_value_2026_snapshot": 56.71,
         "prior_team_active_payroll": 162373811,
         "prior_team_total_cap_allocations": 207796989,
         "prior_season_cap": 154647000,
@@ -33846,7 +33366,6 @@
           "bpm": 1.9,
           "ws": 5.8
         },
-        "game_on_court_value_2026_snapshot": 65.62,
         "prior_team_active_payroll": 176732468,
         "prior_team_total_cap_allocations": 183990669,
         "prior_season_cap": 154647000,
@@ -33896,7 +33415,6 @@
           "bpm": -3.6,
           "ws": 1.0
         },
-        "game_on_court_value_2026_snapshot": 50.11,
         "prior_team_active_payroll": 194042641,
         "prior_team_total_cap_allocations": 228841297,
         "prior_season_cap": 154647000,
@@ -33945,7 +33463,6 @@
           "bpm": -0.8,
           "ws": 1.4
         },
-        "game_on_court_value_2026_snapshot": 49.82,
         "prior_team_active_payroll": 154497268,
         "prior_team_total_cap_allocations": 183806358,
         "prior_season_cap": 154647000,
@@ -33995,7 +33512,6 @@
           "bpm": -0.6,
           "ws": 3.3
         },
-        "game_on_court_value_2026_snapshot": 51.72,
         "prior_team_active_payroll": 187670352,
         "prior_team_total_cap_allocations": 194063614,
         "prior_season_cap": 154647000,
@@ -34045,7 +33561,6 @@
           "bpm": -1.7,
           "ws": 2.7
         },
-        "game_on_court_value_2026_snapshot": 56.56,
         "prior_team_active_payroll": 182257822,
         "prior_team_total_cap_allocations": 207453274,
         "prior_season_cap": 154647000,
@@ -34095,7 +33610,6 @@
           "bpm": -2.5,
           "ws": 2.3
         },
-        "game_on_court_value_2026_snapshot": 50.09,
         "prior_team_active_payroll": 174224556,
         "prior_team_total_cap_allocations": 200372430,
         "prior_season_cap": 154647000,
@@ -34145,7 +33659,6 @@
           "bpm": 0.5,
           "ws": 0.8
         },
-        "game_on_court_value_2026_snapshot": 68.46,
         "prior_team_active_payroll": 133187436,
         "prior_team_total_cap_allocations": 157723438,
         "prior_season_cap": 154647000,
@@ -34196,7 +33709,6 @@
           "bpm": -2.1,
           "ws": 0.2
         },
-        "game_on_court_value_2026_snapshot": 38.92,
         "prior_team_active_payroll": 187416191,
         "prior_team_total_cap_allocations": 194526296,
         "prior_season_cap": 154647000,
@@ -34251,7 +33763,6 @@
           "bpm": -7.1,
           "ws": -0.4
         },
-        "game_on_court_value_2026_snapshot": 47.44,
         "prior_team_active_payroll": 151771975,
         "prior_team_total_cap_allocations": 180894447,
         "prior_season_cap": 154647000,
@@ -34311,7 +33822,6 @@
           "bpm": -4.9,
           "ws": 0.5
         },
-        "game_on_court_value_2026_snapshot": 51.01,
         "prior_team_active_payroll": 147149062,
         "prior_team_total_cap_allocations": 173117343,
         "prior_season_cap": 154647000,
@@ -34371,7 +33881,6 @@
           "bpm": -3.1,
           "ws": 0.2
         },
-        "game_on_court_value_2026_snapshot": 55.27,
         "prior_team_active_payroll": 189852974,
         "prior_team_total_cap_allocations": 199054230,
         "prior_season_cap": 154647000,
@@ -34431,7 +33940,6 @@
           "bpm": -0.9,
           "ws": 2.3
         },
-        "game_on_court_value_2026_snapshot": 61.46,
         "prior_team_active_payroll": 189852974,
         "prior_team_total_cap_allocations": 199054230,
         "prior_season_cap": 154647000,
@@ -34480,7 +33988,6 @@
           "bpm": 2.0,
           "ws": 2.8
         },
-        "game_on_court_value_2026_snapshot": 59.66,
         "prior_team_active_payroll": 211979654,
         "prior_team_total_cap_allocations": 226181970,
         "prior_season_cap": 154647000,
@@ -34529,7 +34036,6 @@
           "bpm": -4.0,
           "ws": -0.1
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 187416191,
         "prior_team_total_cap_allocations": 194526296,
         "prior_season_cap": 154647000,
@@ -34576,7 +34082,6 @@
           "bpm": -1.7,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": 48.59,
         "prior_team_active_payroll": 192381622,
         "prior_team_total_cap_allocations": 199898431,
         "prior_season_cap": 154647000,
@@ -34625,7 +34130,6 @@
           "bpm": -0.7,
           "ws": 2.9
         },
-        "game_on_court_value_2026_snapshot": 51.2,
         "prior_team_active_payroll": 176545353,
         "prior_team_total_cap_allocations": 193082507,
         "prior_season_cap": 154647000,
@@ -34674,7 +34178,6 @@
           "bpm": 1.4,
           "ws": 3.5
         },
-        "game_on_court_value_2026_snapshot": 66.43,
         "prior_team_active_payroll": 126082200,
         "prior_team_total_cap_allocations": 150960352,
         "prior_season_cap": 154647000,
@@ -34734,7 +34237,6 @@
           "bpm": -1.1,
           "ws": 3.9
         },
-        "game_on_court_value_2026_snapshot": 51.88,
         "prior_team_active_payroll": 192381622,
         "prior_team_total_cap_allocations": 199898431,
         "prior_season_cap": 154647000,
@@ -34783,7 +34285,6 @@
           "bpm": -1.2,
           "ws": 1.3
         },
-        "game_on_court_value_2026_snapshot": 54.34,
         "prior_team_active_payroll": 133187436,
         "prior_team_total_cap_allocations": 157723438,
         "prior_season_cap": 154647000,
@@ -34828,7 +34329,6 @@
           "bpm": -5.3,
           "ws": 0.0
         },
-        "game_on_court_value_2026_snapshot": 57.05,
         "prior_team_active_payroll": 147149062,
         "prior_team_total_cap_allocations": 173117343,
         "prior_season_cap": 154647000,
@@ -34886,7 +34386,6 @@
           "bpm": 4.2,
           "ws": 5.3
         },
-        "game_on_court_value_2026_snapshot": 70.21,
         "prior_team_active_payroll": 183713089,
         "prior_team_total_cap_allocations": 188057857,
         "prior_season_cap": 154647000,
@@ -34946,7 +34445,6 @@
           "bpm": -6.7,
           "ws": 0.0
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 159827661,
         "prior_team_total_cap_allocations": 197952062,
         "prior_season_cap": 154647000,
@@ -35006,7 +34504,6 @@
           "bpm": -2.3,
           "ws": 1.0
         },
-        "game_on_court_value_2026_snapshot": 48.97,
         "prior_team_active_payroll": 187214031,
         "prior_team_total_cap_allocations": 200743895,
         "prior_season_cap": 154647000,
@@ -35059,7 +34556,6 @@
           "bpm": -1.4,
           "ws": 1.2
         },
-        "game_on_court_value_2026_snapshot": 44.25,
         "prior_team_active_payroll": 187670352,
         "prior_team_total_cap_allocations": 194063614,
         "prior_season_cap": 154647000,
@@ -35108,7 +34604,6 @@
           "bpm": -2.3,
           "ws": 2.7
         },
-        "game_on_court_value_2026_snapshot": 48.61,
         "prior_team_active_payroll": 184295524,
         "prior_team_total_cap_allocations": 194966020,
         "prior_season_cap": 154647000,
@@ -35157,7 +34652,6 @@
           "bpm": -0.4,
           "ws": 1.1
         },
-        "game_on_court_value_2026_snapshot": 55.62,
         "prior_team_active_payroll": 162373811,
         "prior_team_total_cap_allocations": 207796989,
         "prior_season_cap": 154647000,
@@ -35206,7 +34700,6 @@
           "bpm": -3.3,
           "ws": 1.1
         },
-        "game_on_court_value_2026_snapshot": 54.16,
         "prior_team_active_payroll": 162858635,
         "prior_team_total_cap_allocations": 232033397,
         "prior_season_cap": 154647000,
@@ -35261,7 +34754,6 @@
           "bpm": -1.1,
           "ws": 0.5
         },
-        "game_on_court_value_2026_snapshot": 49.04,
         "prior_team_active_payroll": 194771442,
         "prior_team_total_cap_allocations": 201412484,
         "prior_season_cap": 154647000,
@@ -35310,7 +34802,6 @@
           "bpm": -2.0,
           "ws": 1.0
         },
-        "game_on_court_value_2026_snapshot": 56.37,
         "prior_team_active_payroll": 180372060,
         "prior_team_total_cap_allocations": 193255583,
         "prior_season_cap": 154647000,
@@ -35370,7 +34861,6 @@
           "bpm": -0.7,
           "ws": 0.6
         },
-        "game_on_court_value_2026_snapshot": 48.53,
         "prior_team_active_payroll": 184295524,
         "prior_team_total_cap_allocations": 194966020,
         "prior_season_cap": 154647000,
@@ -35425,7 +34915,6 @@
           "bpm": 0.2,
           "ws": 3.5
         },
-        "game_on_court_value_2026_snapshot": 51.38,
         "prior_team_active_payroll": 189852974,
         "prior_team_total_cap_allocations": 199054230,
         "prior_season_cap": 154647000,
@@ -35485,7 +34974,6 @@
           "bpm": 0.2,
           "ws": 3.8
         },
-        "game_on_court_value_2026_snapshot": 54.72,
         "prior_team_active_payroll": 187416191,
         "prior_team_total_cap_allocations": 194526296,
         "prior_season_cap": 154647000,
@@ -35534,7 +35022,6 @@
           "bpm": 2.5,
           "ws": 2.4
         },
-        "game_on_court_value_2026_snapshot": 57.43,
         "prior_team_active_payroll": 126082200,
         "prior_team_total_cap_allocations": 150960352,
         "prior_season_cap": 154647000,
@@ -35594,7 +35081,6 @@
           "bpm": 1.4,
           "ws": 6.2
         },
-        "game_on_court_value_2026_snapshot": 55.63,
         "prior_team_active_payroll": 176732468,
         "prior_team_total_cap_allocations": 183990669,
         "prior_season_cap": 154647000,
@@ -35649,7 +35135,6 @@
           "bpm": -3.6,
           "ws": 0.5
         },
-        "game_on_court_value_2026_snapshot": 48.2,
         "prior_team_active_payroll": 194042641,
         "prior_team_total_cap_allocations": 228841297,
         "prior_season_cap": 154647000,
@@ -35709,7 +35194,6 @@
           "bpm": 0.7,
           "ws": 2.7
         },
-        "game_on_court_value_2026_snapshot": 58.36,
         "prior_team_active_payroll": 182257822,
         "prior_team_total_cap_allocations": 207453274,
         "prior_season_cap": 154647000,
@@ -35758,7 +35242,6 @@
           "bpm": 0.2,
           "ws": 2.3
         },
-        "game_on_court_value_2026_snapshot": 58.48,
         "prior_team_active_payroll": 183713089,
         "prior_team_total_cap_allocations": 188057857,
         "prior_season_cap": 154647000,
@@ -35818,7 +35301,6 @@
           "bpm": -1.8,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": 56.69,
         "prior_team_active_payroll": 182257822,
         "prior_team_total_cap_allocations": 207453274,
         "prior_season_cap": 154647000,
@@ -35878,7 +35360,6 @@
           "bpm": -6.0,
           "ws": -0.3
         },
-        "game_on_court_value_2026_snapshot": 48.01,
         "prior_team_active_payroll": 187271649,
         "prior_team_total_cap_allocations": 213853369,
         "prior_season_cap": 154647000,
@@ -35931,7 +35412,6 @@
           "bpm": -2.9,
           "ws": 1.4
         },
-        "game_on_court_value_2026_snapshot": 49.97,
         "prior_team_active_payroll": 189852974,
         "prior_team_total_cap_allocations": 199054230,
         "prior_season_cap": 154647000,
@@ -35991,7 +35471,6 @@
           "bpm": -1.3,
           "ws": 1.6
         },
-        "game_on_court_value_2026_snapshot": 52.68,
         "prior_team_active_payroll": 166164036,
         "prior_team_total_cap_allocations": 187673271,
         "prior_season_cap": 154647000,
@@ -36040,7 +35519,6 @@
           "bpm": -2.0,
           "ws": 3.0
         },
-        "game_on_court_value_2026_snapshot": 55.87,
         "prior_team_active_payroll": 183713089,
         "prior_team_total_cap_allocations": 188057857,
         "prior_season_cap": 154647000,
@@ -36089,7 +35567,6 @@
           "bpm": -0.8,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": 53.21,
         "prior_team_active_payroll": 126082200,
         "prior_team_total_cap_allocations": 150960352,
         "prior_season_cap": 154647000,
@@ -36138,7 +35615,6 @@
           "bpm": -11.5,
           "ws": 0.0
         },
-        "game_on_court_value_2026_snapshot": 41.66,
         "prior_team_active_payroll": 187416191,
         "prior_team_total_cap_allocations": 194526296,
         "prior_season_cap": 154647000,
@@ -36198,7 +35674,6 @@
           "bpm": 0.7,
           "ws": 2.6
         },
-        "game_on_court_value_2026_snapshot": 52.43,
         "prior_team_active_payroll": 183115307,
         "prior_team_total_cap_allocations": 191900207,
         "prior_season_cap": 154647000,
@@ -36247,7 +35722,6 @@
           "bpm": -3.9,
           "ws": 0.1
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 166164036,
         "prior_team_total_cap_allocations": 187673271,
         "prior_season_cap": 154647000,
@@ -36294,7 +35768,6 @@
           "bpm": -1.3,
           "ws": 2.7
         },
-        "game_on_court_value_2026_snapshot": 61.55,
         "prior_team_active_payroll": 180372060,
         "prior_team_total_cap_allocations": 193255583,
         "prior_season_cap": 154647000,
@@ -36343,7 +35816,6 @@
           "bpm": 2.8,
           "ws": 9.0
         },
-        "game_on_court_value_2026_snapshot": 65.22,
         "prior_team_active_payroll": 187416191,
         "prior_team_total_cap_allocations": 194526296,
         "prior_season_cap": 154647000,
@@ -36392,7 +35864,6 @@
           "bpm": -4.7,
           "ws": 0.1
         },
-        "game_on_court_value_2026_snapshot": 43.88,
         "prior_team_active_payroll": 194334002,
         "prior_team_total_cap_allocations": 211399497,
         "prior_season_cap": 154647000,
@@ -36452,7 +35923,6 @@
           "bpm": -1.0,
           "ws": 1.8
         },
-        "game_on_court_value_2026_snapshot": 50.57,
         "prior_team_active_payroll": 189852974,
         "prior_team_total_cap_allocations": 199054230,
         "prior_season_cap": 154647000,
@@ -36512,7 +35982,6 @@
           "bpm": -0.1,
           "ws": 2.4
         },
-        "game_on_court_value_2026_snapshot": 52.27,
         "prior_team_active_payroll": 133187436,
         "prior_team_total_cap_allocations": 157723438,
         "prior_season_cap": 154647000,
@@ -36561,7 +36030,6 @@
           "bpm": 0.1,
           "ws": 0.7
         },
-        "game_on_court_value_2026_snapshot": 47.72,
         "prior_team_active_payroll": 154497268,
         "prior_team_total_cap_allocations": 183806358,
         "prior_season_cap": 154647000,
@@ -36610,7 +36078,6 @@
           "bpm": -1.2,
           "ws": 4.1
         },
-        "game_on_court_value_2026_snapshot": 52.1,
         "prior_team_active_payroll": 159827661,
         "prior_team_total_cap_allocations": 197952062,
         "prior_season_cap": 154647000,
@@ -36659,7 +36126,6 @@
           "bpm": 1.1,
           "ws": 0.8
         },
-        "game_on_court_value_2026_snapshot": 43.78,
         "prior_team_active_payroll": 187416191,
         "prior_team_total_cap_allocations": 194526296,
         "prior_season_cap": 154647000,
@@ -36719,7 +36185,6 @@
           "bpm": -4.1,
           "ws": 0.8
         },
-        "game_on_court_value_2026_snapshot": 35.18,
         "prior_team_active_payroll": 174224556,
         "prior_team_total_cap_allocations": 200372430,
         "prior_season_cap": 154647000,
@@ -36768,7 +36233,6 @@
           "bpm": 0.0,
           "ws": 0.5
         },
-        "game_on_court_value_2026_snapshot": 47.43,
         "prior_team_active_payroll": 176545353,
         "prior_team_total_cap_allocations": 193082507,
         "prior_season_cap": 154647000,
@@ -36817,7 +36281,6 @@
           "bpm": -0.4,
           "ws": 1.4
         },
-        "game_on_court_value_2026_snapshot": 56.55,
         "prior_team_active_payroll": 184295524,
         "prior_team_total_cap_allocations": 194966020,
         "prior_season_cap": 154647000,
@@ -36866,7 +36329,6 @@
           "bpm": -1.9,
           "ws": 1.4
         },
-        "game_on_court_value_2026_snapshot": 52.49,
         "prior_team_active_payroll": 192381622,
         "prior_team_total_cap_allocations": 199898431,
         "prior_season_cap": 154647000,
@@ -36926,7 +36388,6 @@
           "bpm": -1.7,
           "ws": 1.6
         },
-        "game_on_court_value_2026_snapshot": 52.99,
         "prior_team_active_payroll": 126082200,
         "prior_team_total_cap_allocations": 150960352,
         "prior_season_cap": 154647000,
@@ -37025,7 +36486,6 @@
           "bpm": -1.4,
           "ws": 0.9
         },
-        "game_on_court_value_2026_snapshot": null,
         "prior_team_active_payroll": 97074991,
         "prior_team_total_cap_allocations": 141036011,
         "prior_season_cap": 136021000,
@@ -37087,7 +36547,6 @@
           "bpm": -1.7,
           "ws": 2.7
         },
-        "game_on_court_value_2026_snapshot": 53.24,
         "prior_team_active_payroll": 173088172,
         "prior_team_total_cap_allocations": 179350729,
         "prior_season_cap": 140588000,
@@ -37142,7 +36601,10 @@
         "sources": [
           "yabusele_amendment",
           "yabusele_trade"
-        ]
+        ],
+        "player_key": "guerschonyabusele",
+        "kind": "player",
+        "salary_season": 2026
       }
     ]
   },
@@ -38059,7 +37521,7 @@
         "https://www.hoopsrumors.com/2019/10/joe-ingles-agrees-to-one-year-extension-with-jazz.html",
         "nba_stats2019"
       ],
-      "option_evidence": "one_year_standard_deal",
+      "option_evidence": "one_added_year_no_option_reported",
       "options": [],
       "annual_salaries": [
         12436364
@@ -38094,7 +37556,7 @@
         "https://www.hoopsrumors.com/2019/10/raptors-kyle-lowry-agree-to-one-year-extension.html",
         "nba_stats2019"
       ],
-      "option_evidence": "one_year_standard_deal",
+      "option_evidence": "one_added_year_no_option_reported",
       "options": [],
       "annual_salaries": [
         30000000
@@ -40823,13 +40285,8 @@
       "explicit_resign": false,
       "max_salary": false,
       "contract_kind": "minimum",
-      "option_evidence": "matched_decision_salary",
-      "options": [
-        {
-          "kind": "player",
-          "year": 1
-        }
-      ],
+      "option_evidence": "one_year_standard_deal",
+      "options": [],
       "annual_salaries": [
         2331593
       ],
@@ -51559,7 +51016,7 @@
         "historical_salary_snapshots",
         "nba_stats2021"
       ],
-      "option_evidence": "one_year_standard_deal",
+      "option_evidence": "one_added_year_no_option_reported",
       "options": [],
       "annual_salaries": [
         12196094
@@ -59654,7 +59111,7 @@
         "historical_salary_snapshots",
         "nba_stats2022"
       ],
-      "option_evidence": "one_year_standard_deal",
+      "option_evidence": "one_added_year_no_option_reported",
       "options": [],
       "annual_salaries": [
         13000000
@@ -73392,7 +72849,7 @@
         "historical_salary_snapshots",
         "nba_stats2024"
       ],
-      "option_evidence": "one_year_standard_deal",
+      "option_evidence": "one_added_year_no_option_reported",
       "options": [],
       "annual_salaries": [
         62587158
@@ -85572,7 +85029,7 @@
         "historical_salary_snapshots",
         "nba_stats2026"
       ],
-      "option_evidence": "one_year_standard_deal",
+      "option_evidence": "one_added_year_no_option_reported",
       "options": [],
       "annual_salaries": [
         21000000
@@ -85734,7 +85191,7 @@
         "bref_ledger_2026",
         "nba_stats2026"
       ],
-      "option_evidence": "one_year_standard_deal",
+      "option_evidence": "one_added_year_no_option_reported",
       "options": [],
       "annual_salaries": [
         40000000
@@ -89029,13 +88486,8 @@
       "explicit_resign": false,
       "max_salary": false,
       "contract_kind": "other_or_unverified",
-      "option_evidence": "matched_decision_salary",
-      "options": [
-        {
-          "kind": "player",
-          "year": 1
-        }
-      ],
+      "option_evidence": "one_year_standard_deal",
+      "options": [],
       "annual_salaries": [
         27678571
       ],
@@ -106412,7 +105864,7 @@
     "boardroom2022": {
       "url": "https://boardroom.tv/2022-nba-player-option-tracker/",
       "date": "2022-06-29",
-      "date_kind": "accessed_archive"
+      "date_kind": "published"
     },
     "injury_snapshot2024": {
       "repo_path": "data/research/injury_history_2023_24.json",
@@ -107300,8 +106752,9 @@
       "date_kind": "published"
     },
     "beal2022_option": {
-      "url": "https://www.nba.com/news/suns-waive-bradley-beal",
-      "date_kind": "team_or_league_report"
+      "url": "https://www.hoopsrumors.com/2023/10/trade-breakdown-bradley-beal-to-the-suns.html",
+      "date_kind": "published",
+      "date": "2023-10"
     }
   },
   "signing_summary": {
@@ -107439,6 +106892,10 @@
             "team:2": 2
           }
         }
+      },
+      "declining_by_step": {
+        "declining_other": 3,
+        "declining_8": 3
       }
     },
     "extension": {
@@ -107652,6 +107109,11 @@
             "player:2": 2
           }
         }
+      },
+      "declining_by_step": {
+        "declining_5": 3,
+        "declining_other": 6,
+        "declining_8": 4
       }
     },
     "incumbent_funding_unverified": {
@@ -107795,6 +107257,10 @@
           },
           "option_year_counts": {}
         }
+      },
+      "declining_by_step": {
+        "declining_other": 2,
+        "declining_8": 1
       }
     },
     "max": {
@@ -107890,7 +107356,8 @@
             "team:3": 1
           }
         }
-      }
+      },
+      "declining_by_step": {}
     },
     "mid_level_or_bi_annual": {
       "all": {
@@ -108035,6 +107502,10 @@
             "player:2": 1
           }
         }
+      },
+      "declining_by_step": {
+        "declining_5": 3,
+        "declining_other": 1
       }
     },
     "minimum": {
@@ -108046,15 +107517,14 @@
           "rising_5": 11
         },
         "option_contract_counts": {
-          "none_documented": 309,
-          "player": 33,
+          "none_documented": 310,
+          "player": 32,
           "team": 9,
           "unknown": 1
         },
         "option_year_counts": {
           "player:2": 32,
-          "team:2": 9,
-          "player:1": 1
+          "team:2": 9
         }
       },
       "multi_year": {
@@ -108127,14 +107597,13 @@
             "rising_5": 2
           },
           "option_contract_counts": {
-            "none_documented": 120,
+            "none_documented": 121,
             "team": 3,
-            "player": 12,
+            "player": 11,
             "unknown": 1
           },
           "option_year_counts": {
             "team:2": 3,
-            "player:1": 1,
             "player:2": 11
           }
         },
@@ -108152,7 +107621,8 @@
             "player:2": 1
           }
         }
-      }
+      },
+      "declining_by_step": {}
     },
     "other_or_unverified": {
       "all": {
@@ -108168,10 +107638,10 @@
           "mixed": 8
         },
         "option_contract_counts": {
-          "none_documented": 98,
+          "none_documented": 99,
           "team": 30,
           "unknown": 116,
-          "player": 44,
+          "player": 43,
           "early_termination": 1
         },
         "option_year_counts": {
@@ -108182,8 +107652,7 @@
           "player:3": 7,
           "early_termination:5": 1,
           "player:5": 7,
-          "player:4": 9,
-          "player:1": 1
+          "player:4": 9
         }
       },
       "multi_year": {
@@ -108274,10 +107743,10 @@
             "mixed": 6
           },
           "option_contract_counts": {
-            "none_documented": 61,
+            "none_documented": 62,
             "team": 10,
             "unknown": 41,
-            "player": 33,
+            "player": 32,
             "early_termination": 1
           },
           "option_year_counts": {
@@ -108288,8 +107757,7 @@
             "team:4": 4,
             "team:3": 3,
             "player:5": 5,
-            "player:4": 8,
-            "player:1": 1
+            "player:4": 8
           }
         },
         "rotation": {
@@ -108338,6 +107806,11 @@
             "player:2": 1
           }
         }
+      },
+      "declining_by_step": {
+        "declining_other": 9,
+        "declining_5": 3,
+        "declining_8": 8
       }
     },
     "rookie_scale": {
@@ -108381,7 +107854,8 @@
             "team:4": 240
           }
         }
-      }
+      },
+      "declining_by_step": {}
     }
   },
   "measurement_notes": {
@@ -108392,6 +107866,1050 @@
     "bird_resigning": "Probable or confirmed Bird/Early Bird re-signings. Five-year signing, or a reported return and two same-team salary seasons. This catches some cap-room returns and misses rights carried through trades. Shapes are excluded from the funding classification.",
     "options": "None documented means no identified option in the sources used for the row. Some endings were observed through an incomplete decision list. Unknown means the original clause cannot be classified with the available terms. Salary guarantees are separate.",
     "decision_time": "An exact day is the day reported by the cited source. For undated decisions the file gives a documented deadline or a latest-by recap date when available.",
-    "injuries": "Recent injury counts use the repository public NBA/ESPN injury research for 2023–24 through 2025–26; zero means no missed regular-season game in that source. Earlier injury data are spot examples; availability includes all absences."
+    "injuries": "Recent injury counts use the repository public NBA/ESPN injury research for 2023–24 through 2025–26; zero means no missed regular-season game in that source. Earlier injury data are spot examples; availability includes all absences.",
+    "fit": "The fitted results in decision_fit use only frozen 2019–2024 comparables and measurements at the decision. The script reproduces scoring and named predictions."
+  },
+  "decision_summary": {
+    "player_options": {
+      "2019": {
+        "player": {
+          "counts": {
+            "opted_out": 11,
+            "opted_in": 13
+          },
+          "report_day_count": 3,
+          "waivers_at_decision": 0
+        }
+      },
+      "2020": {
+        "player": {
+          "counts": {
+            "opted_in": 15,
+            "opted_out": 13
+          },
+          "report_day_count": 28,
+          "waivers_at_decision": 0
+        }
+      },
+      "2021": {
+        "player": {
+          "counts": {
+            "opted_in": 7,
+            "opted_out": 9
+          },
+          "report_day_count": 16,
+          "waivers_at_decision": 0
+        }
+      },
+      "2022": {
+        "player": {
+          "counts": {
+            "opted_out": 6,
+            "opted_in": 13
+          },
+          "report_day_count": 4,
+          "waivers_at_decision": 0
+        }
+      },
+      "2023": {
+        "player": {
+          "counts": {
+            "opted_in": 13,
+            "opted_out": 9
+          },
+          "report_day_count": 22,
+          "waivers_at_decision": 0
+        }
+      },
+      "2024": {
+        "player": {
+          "counts": {
+            "opted_out": 15,
+            "opted_in": 12
+          },
+          "report_day_count": 27,
+          "waivers_at_decision": 0
+        }
+      },
+      "2025": {
+        "player": {
+          "counts": {
+            "opted_in": 10,
+            "opted_out": 10
+          },
+          "report_day_count": 20,
+          "waivers_at_decision": 0
+        }
+      },
+      "2026": {
+        "player": {
+          "counts": {
+            "opted_out": 11,
+            "opted_in": 10
+          },
+          "report_day_count": 21,
+          "waivers_at_decision": 0
+        }
+      }
+    },
+    "team_options": {
+      "2019": {
+        "rookie_year_3": {
+          "counts": {
+            "exercised": 30
+          },
+          "report_day_count": 30,
+          "waivers_at_decision": 0
+        },
+        "rookie_year_4": {
+          "counts": {
+            "declined": 4,
+            "exercised": 24
+          },
+          "report_day_count": 28,
+          "waivers_at_decision": 0
+        },
+        "veteran_team": {
+          "counts": {
+            "exercised": 4,
+            "declined": 7
+          },
+          "report_day_count": 0,
+          "waivers_at_decision": 0
+        }
+      },
+      "2020": {
+        "rookie_year_3": {
+          "counts": {
+            "exercised": 28,
+            "declined": 1
+          },
+          "report_day_count": 29,
+          "waivers_at_decision": 0
+        },
+        "rookie_year_4": {
+          "counts": {
+            "exercised": 24,
+            "declined": 6
+          },
+          "report_day_count": 29,
+          "waivers_at_decision": 3
+        },
+        "veteran_team": {
+          "counts": {
+            "exercised": 6,
+            "declined": 8
+          },
+          "report_day_count": 14,
+          "waivers_at_decision": 0
+        }
+      },
+      "2021": {
+        "rookie_year_3": {
+          "counts": {
+            "exercised": 29,
+            "declined": 1
+          },
+          "report_day_count": 30,
+          "waivers_at_decision": 0
+        },
+        "rookie_year_4": {
+          "counts": {
+            "exercised": 25,
+            "declined": 3
+          },
+          "report_day_count": 28,
+          "waivers_at_decision": 2
+        },
+        "veteran_team": {
+          "counts": {
+            "declined": 5,
+            "exercised": 4
+          },
+          "report_day_count": 0,
+          "waivers_at_decision": 0
+        }
+      },
+      "2022": {
+        "rookie_year_3": {
+          "counts": {
+            "exercised": 30,
+            "declined": 1
+          },
+          "report_day_count": 31,
+          "waivers_at_decision": 3
+        },
+        "rookie_year_4": {
+          "counts": {
+            "exercised": 27,
+            "declined": 2
+          },
+          "report_day_count": 29,
+          "waivers_at_decision": 2
+        },
+        "veteran_team": {
+          "counts": {
+            "declined": 9,
+            "exercised": 12
+          },
+          "report_day_count": 0,
+          "waivers_at_decision": 0
+        }
+      },
+      "2023": {
+        "rookie_year_3": {
+          "counts": {
+            "exercised": 29,
+            "declined": 1
+          },
+          "report_day_count": 0,
+          "waivers_at_decision": 1
+        },
+        "rookie_year_4": {
+          "counts": {
+            "exercised": 24,
+            "declined": 5
+          },
+          "report_day_count": 0,
+          "waivers_at_decision": 4
+        },
+        "veteran_team": {
+          "counts": {
+            "declined": 9,
+            "exercised": 12
+          },
+          "report_day_count": 21,
+          "waivers_at_decision": 0
+        }
+      },
+      "2024": {
+        "rookie_year_3": {
+          "counts": {
+            "exercised": 29,
+            "declined": 1
+          },
+          "report_day_count": 0,
+          "waivers_at_decision": 0
+        },
+        "rookie_year_4": {
+          "counts": {
+            "declined": 7,
+            "exercised": 22
+          },
+          "report_day_count": 0,
+          "waivers_at_decision": 1
+        },
+        "veteran_team": {
+          "counts": {
+            "declined": 15,
+            "exercised": 10
+          },
+          "report_day_count": 24,
+          "waivers_at_decision": 0
+        }
+      },
+      "2025": {
+        "rookie_year_3": {
+          "counts": {
+            "exercised": 29,
+            "declined": 1
+          },
+          "report_day_count": 0,
+          "waivers_at_decision": 1
+        },
+        "rookie_year_4": {
+          "counts": {
+            "exercised": 23,
+            "declined": 6
+          },
+          "report_day_count": 0,
+          "waivers_at_decision": 4
+        },
+        "veteran_team": {
+          "counts": {
+            "declined": 18,
+            "exercised": 15
+          },
+          "report_day_count": 33,
+          "waivers_at_decision": 0
+        }
+      },
+      "2026": {
+        "rookie_year_3": {
+          "counts": {
+            "exercised": 29,
+            "declined": 1
+          },
+          "report_day_count": 0,
+          "waivers_at_decision": 1
+        },
+        "rookie_year_4": {
+          "counts": {
+            "declined": 10,
+            "exercised": 19
+          },
+          "report_day_count": 0,
+          "waivers_at_decision": 3
+        },
+        "veteran_team": {
+          "counts": {
+            "declined": 26,
+            "exercised": 26
+          },
+          "report_day_count": 52,
+          "waivers_at_decision": 0
+        }
+      }
+    },
+    "early_termination_options": {
+      "2020": {
+        "early_termination": {
+          "counts": {
+            "unused_stayed": 1
+          },
+          "report_day_count": 1,
+          "waivers_at_decision": 0
+        }
+      },
+      "2024": {
+        "early_termination": {
+          "counts": {
+            "unused_stayed": 1
+          },
+          "report_day_count": 1,
+          "waivers_at_decision": 0
+        }
+      },
+      "2025": {
+        "early_termination": {
+          "counts": {
+            "used_to_exit": 1
+          },
+          "report_day_count": 1,
+          "waivers_at_decision": 0
+        }
+      }
+    }
+  },
+  "decision_fit": {
+    "training_years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "holdout_years": [
+      2025,
+      2026
+    ],
+    "training_comparables": 551,
+    "player_opt_out": {
+      "baseline": {
+        "rule": "train majority",
+        "train": {
+          "n": 136,
+          "correct": 73,
+          "true_positive": 0,
+          "false_positive": 0,
+          "true_negative": 73,
+          "false_negative": 63,
+          "balanced_accuracy": 0.5,
+          "has_inputs": 136
+        },
+        "holdouts": {
+          "2025": {
+            "n": 20,
+            "correct": 10,
+            "true_positive": 0,
+            "false_positive": 0,
+            "true_negative": 10,
+            "false_negative": 10,
+            "balanced_accuracy": 0.5,
+            "has_inputs": 20
+          },
+          "2026": {
+            "n": 21,
+            "correct": 10,
+            "true_positive": 0,
+            "false_positive": 0,
+            "true_negative": 10,
+            "false_negative": 11,
+            "balanced_accuracy": 0.5,
+            "has_inputs": 21
+          }
+        }
+      },
+      "market only": {
+        "rule": "market_ratio >= 1.3",
+        "train": {
+          "n": 136,
+          "correct": 87,
+          "true_positive": 21,
+          "false_positive": 7,
+          "true_negative": 66,
+          "false_negative": 42,
+          "balanced_accuracy": 0.6187214611872146,
+          "has_inputs": 130
+        },
+        "holdouts": {
+          "2025": {
+            "n": 20,
+            "correct": 11,
+            "true_positive": 2,
+            "false_positive": 1,
+            "true_negative": 9,
+            "false_negative": 8,
+            "balanced_accuracy": 0.55,
+            "has_inputs": 20
+          },
+          "2026": {
+            "n": 21,
+            "correct": 10,
+            "true_positive": 3,
+            "false_positive": 3,
+            "true_negative": 7,
+            "false_negative": 8,
+            "balanced_accuracy": 0.48636363636363633,
+            "has_inputs": 21
+          }
+        }
+      },
+      "market plus age": {
+        "rule": "market >= 1.15 with +0.25 at age >= 28",
+        "train": {
+          "n": 136,
+          "correct": 89,
+          "true_positive": 22,
+          "false_positive": 6,
+          "true_negative": 67,
+          "false_negative": 41,
+          "balanced_accuracy": 0.6335072841922157,
+          "has_inputs": 130
+        },
+        "holdouts": {
+          "2025": {
+            "n": 20,
+            "correct": 11,
+            "true_positive": 2,
+            "false_positive": 1,
+            "true_negative": 9,
+            "false_negative": 8,
+            "balanced_accuracy": 0.55,
+            "has_inputs": 20
+          },
+          "2026": {
+            "n": 21,
+            "correct": 10,
+            "true_positive": 3,
+            "false_positive": 3,
+            "true_negative": 7,
+            "false_negative": 8,
+            "balanced_accuracy": 0.48636363636363633,
+            "has_inputs": 21
+          }
+        }
+      },
+      "market plus availability": {
+        "rule": "market >= 1.15 with +0.25 at availability >= 0.35",
+        "train": {
+          "n": 136,
+          "correct": 88,
+          "true_positive": 20,
+          "false_positive": 5,
+          "true_negative": 68,
+          "false_negative": 43,
+          "balanced_accuracy": 0.6244835833876929,
+          "has_inputs": 130
+        },
+        "holdouts": {
+          "2025": {
+            "n": 20,
+            "correct": 11,
+            "true_positive": 2,
+            "false_positive": 1,
+            "true_negative": 9,
+            "false_negative": 8,
+            "balanced_accuracy": 0.55,
+            "has_inputs": 20
+          },
+          "2026": {
+            "n": 21,
+            "correct": 10,
+            "true_positive": 3,
+            "false_positive": 3,
+            "true_negative": 7,
+            "false_negative": 8,
+            "balanced_accuracy": 0.48636363636363633,
+            "has_inputs": 21
+          }
+        }
+      },
+      "market plus minutes_82": {
+        "rule": "market >= 1.15 with +0.25 at minutes_82 >= 500",
+        "train": {
+          "n": 136,
+          "correct": 88,
+          "true_positive": 21,
+          "false_positive": 6,
+          "true_negative": 67,
+          "false_negative": 42,
+          "balanced_accuracy": 0.6255707762557078,
+          "has_inputs": 130
+        },
+        "holdouts": {
+          "2025": {
+            "n": 20,
+            "correct": 11,
+            "true_positive": 2,
+            "false_positive": 1,
+            "true_negative": 9,
+            "false_negative": 8,
+            "balanced_accuracy": 0.55,
+            "has_inputs": 20
+          },
+          "2026": {
+            "n": 21,
+            "correct": 10,
+            "true_positive": 3,
+            "false_positive": 3,
+            "true_negative": 7,
+            "false_negative": 8,
+            "balanced_accuracy": 0.48636363636363633,
+            "has_inputs": 21
+          }
+        }
+      },
+      "market plus team_win_pct": {
+        "rule": "market >= 1.15 with +0.25 at team_win_pct >= 0.4",
+        "train": {
+          "n": 136,
+          "correct": 89,
+          "true_positive": 21,
+          "false_positive": 5,
+          "true_negative": 68,
+          "false_negative": 42,
+          "balanced_accuracy": 0.6324200913242009,
+          "has_inputs": 130
+        },
+        "holdouts": {
+          "2025": {
+            "n": 20,
+            "correct": 11,
+            "true_positive": 2,
+            "false_positive": 1,
+            "true_negative": 9,
+            "false_negative": 8,
+            "balanced_accuracy": 0.55,
+            "has_inputs": 20
+          },
+          "2026": {
+            "n": 21,
+            "correct": 10,
+            "true_positive": 3,
+            "false_positive": 3,
+            "true_negative": 7,
+            "false_negative": 8,
+            "balanced_accuracy": 0.48636363636363633,
+            "has_inputs": 21
+          }
+        }
+      },
+      "market plus injury_games": {
+        "rule": "market >= 1.3 with -0.25 at injury_games >= 10",
+        "train": {
+          "n": 136,
+          "correct": 88,
+          "true_positive": 23,
+          "false_positive": 8,
+          "true_negative": 65,
+          "false_negative": 40,
+          "balanced_accuracy": 0.6277451619917374,
+          "has_inputs": 130
+        },
+        "holdouts": {
+          "2025": {
+            "n": 20,
+            "correct": 12,
+            "true_positive": 3,
+            "false_positive": 1,
+            "true_negative": 9,
+            "false_negative": 7,
+            "balanced_accuracy": 0.6,
+            "has_inputs": 20
+          },
+          "2026": {
+            "n": 21,
+            "correct": 10,
+            "true_positive": 3,
+            "false_positive": 3,
+            "true_negative": 7,
+            "false_negative": 8,
+            "balanced_accuracy": 0.48636363636363633,
+            "has_inputs": 21
+          }
+        }
+      },
+      "production only": {
+        "rule": "minutes_82 >= 1000",
+        "train": {
+          "n": 136,
+          "correct": 83,
+          "true_positive": 49,
+          "false_positive": 39,
+          "true_negative": 34,
+          "false_negative": 14,
+          "balanced_accuracy": 0.621765601217656,
+          "has_inputs": 135
+        },
+        "holdouts": {
+          "2025": {
+            "n": 20,
+            "correct": 16,
+            "true_positive": 9,
+            "false_positive": 3,
+            "true_negative": 7,
+            "false_negative": 1,
+            "balanced_accuracy": 0.8,
+            "has_inputs": 20
+          },
+          "2026": {
+            "n": 21,
+            "correct": 12,
+            "true_positive": 8,
+            "false_positive": 6,
+            "true_negative": 4,
+            "false_negative": 3,
+            "balanced_accuracy": 0.5636363636363637,
+            "has_inputs": 21
+          }
+        }
+      }
+    },
+    "standard_team_exercise": {
+      "baseline": {
+        "rule": "train majority",
+        "train": {
+          "n": 101,
+          "correct": 53,
+          "true_positive": 0,
+          "false_positive": 0,
+          "true_negative": 53,
+          "false_negative": 48,
+          "balanced_accuracy": 0.5,
+          "has_inputs": 101
+        },
+        "holdouts": {
+          "2025": {
+            "n": 33,
+            "correct": 18,
+            "true_positive": 0,
+            "false_positive": 0,
+            "true_negative": 18,
+            "false_negative": 15,
+            "balanced_accuracy": 0.5,
+            "has_inputs": 33
+          },
+          "2026": {
+            "n": 52,
+            "correct": 26,
+            "true_positive": 0,
+            "false_positive": 0,
+            "true_negative": 26,
+            "false_negative": 26,
+            "balanced_accuracy": 0.5,
+            "has_inputs": 52
+          }
+        }
+      },
+      "market only": {
+        "rule": "market_ratio >= 0.9",
+        "train": {
+          "n": 101,
+          "correct": 67,
+          "true_positive": 35,
+          "false_positive": 21,
+          "true_negative": 32,
+          "false_negative": 13,
+          "balanced_accuracy": 0.6664701257861635,
+          "has_inputs": 82
+        },
+        "holdouts": {
+          "2025": {
+            "n": 33,
+            "correct": 19,
+            "true_positive": 14,
+            "false_positive": 13,
+            "true_negative": 5,
+            "false_negative": 1,
+            "balanced_accuracy": 0.6055555555555556,
+            "has_inputs": 33
+          },
+          "2026": {
+            "n": 52,
+            "correct": 31,
+            "true_positive": 24,
+            "false_positive": 19,
+            "true_negative": 7,
+            "false_negative": 2,
+            "balanced_accuracy": 0.5961538461538461,
+            "has_inputs": 52
+          }
+        }
+      },
+      "market or flexible guarantee": {
+        "rule": "market >= 0.9 or flexible guarantee",
+        "train": {
+          "n": 101,
+          "correct": 67,
+          "true_positive": 36,
+          "false_positive": 22,
+          "true_negative": 31,
+          "false_negative": 12,
+          "balanced_accuracy": 0.6674528301886793,
+          "has_inputs": 83
+        },
+        "holdouts": {
+          "2025": {
+            "n": 33,
+            "correct": 18,
+            "true_positive": 14,
+            "false_positive": 14,
+            "true_negative": 4,
+            "false_negative": 1,
+            "balanced_accuracy": 0.5777777777777777,
+            "has_inputs": 33
+          },
+          "2026": {
+            "n": 52,
+            "correct": 31,
+            "true_positive": 24,
+            "false_positive": 19,
+            "true_negative": 7,
+            "false_negative": 2,
+            "balanced_accuracy": 0.5961538461538461,
+            "has_inputs": 52
+          }
+        }
+      },
+      "market plus age": {
+        "rule": "market >= 1 with +0.25 at age >= 28",
+        "train": {
+          "n": 101,
+          "correct": 69,
+          "true_positive": 34,
+          "false_positive": 18,
+          "true_negative": 35,
+          "false_negative": 14,
+          "balanced_accuracy": 0.6843553459119497,
+          "has_inputs": 82
+        },
+        "holdouts": {
+          "2025": {
+            "n": 33,
+            "correct": 21,
+            "true_positive": 13,
+            "false_positive": 10,
+            "true_negative": 8,
+            "false_negative": 2,
+            "balanced_accuracy": 0.6555555555555556,
+            "has_inputs": 33
+          },
+          "2026": {
+            "n": 52,
+            "correct": 30,
+            "true_positive": 23,
+            "false_positive": 19,
+            "true_negative": 7,
+            "false_negative": 3,
+            "balanced_accuracy": 0.5769230769230769,
+            "has_inputs": 52
+          }
+        }
+      },
+      "market plus availability": {
+        "rule": "market >= 1.3 with -0.25 at availability >= 0.35",
+        "train": {
+          "n": 101,
+          "correct": 72,
+          "true_positive": 31,
+          "false_positive": 12,
+          "true_negative": 41,
+          "false_negative": 17,
+          "balanced_accuracy": 0.7097091194968554,
+          "has_inputs": 82
+        },
+        "holdouts": {
+          "2025": {
+            "n": 33,
+            "correct": 20,
+            "true_positive": 11,
+            "false_positive": 9,
+            "true_negative": 9,
+            "false_negative": 4,
+            "balanced_accuracy": 0.6166666666666667,
+            "has_inputs": 33
+          },
+          "2026": {
+            "n": 52,
+            "correct": 31,
+            "true_positive": 19,
+            "false_positive": 14,
+            "true_negative": 12,
+            "false_negative": 7,
+            "balanced_accuracy": 0.5961538461538461,
+            "has_inputs": 52
+          }
+        }
+      },
+      "market plus minutes_82": {
+        "rule": "market >= 1.3 with -0.25 at minutes_82 >= 500",
+        "train": {
+          "n": 101,
+          "correct": 74,
+          "true_positive": 28,
+          "false_positive": 7,
+          "true_negative": 46,
+          "false_negative": 20,
+          "balanced_accuracy": 0.72562893081761,
+          "has_inputs": 82
+        },
+        "holdouts": {
+          "2025": {
+            "n": 33,
+            "correct": 20,
+            "true_positive": 9,
+            "false_positive": 7,
+            "true_negative": 11,
+            "false_negative": 6,
+            "balanced_accuracy": 0.6055555555555556,
+            "has_inputs": 33
+          },
+          "2026": {
+            "n": 52,
+            "correct": 34,
+            "true_positive": 17,
+            "false_positive": 9,
+            "true_negative": 17,
+            "false_negative": 9,
+            "balanced_accuracy": 0.6538461538461539,
+            "has_inputs": 52
+          }
+        }
+      },
+      "market plus team_win_pct": {
+        "rule": "market >= 1.15 with -0.25 at team_win_pct >= 0.4",
+        "train": {
+          "n": 101,
+          "correct": 71,
+          "true_positive": 35,
+          "false_positive": 17,
+          "true_negative": 36,
+          "false_negative": 13,
+          "balanced_accuracy": 0.7042059748427673,
+          "has_inputs": 82
+        },
+        "holdouts": {
+          "2025": {
+            "n": 33,
+            "correct": 20,
+            "true_positive": 14,
+            "false_positive": 12,
+            "true_negative": 6,
+            "false_negative": 1,
+            "balanced_accuracy": 0.6333333333333333,
+            "has_inputs": 33
+          },
+          "2026": {
+            "n": 52,
+            "correct": 32,
+            "true_positive": 23,
+            "false_positive": 17,
+            "true_negative": 9,
+            "false_negative": 3,
+            "balanced_accuracy": 0.6153846153846154,
+            "has_inputs": 52
+          }
+        }
+      },
+      "market plus injury_games": {
+        "rule": "market >= 0.9 with +0.25 at injury_games >= 10",
+        "train": {
+          "n": 101,
+          "correct": 68,
+          "true_positive": 35,
+          "false_positive": 20,
+          "true_negative": 33,
+          "false_negative": 13,
+          "balanced_accuracy": 0.6759040880503144,
+          "has_inputs": 82
+        },
+        "holdouts": {
+          "2025": {
+            "n": 33,
+            "correct": 19,
+            "true_positive": 14,
+            "false_positive": 13,
+            "true_negative": 5,
+            "false_negative": 1,
+            "balanced_accuracy": 0.6055555555555556,
+            "has_inputs": 33
+          },
+          "2026": {
+            "n": 52,
+            "correct": 32,
+            "true_positive": 23,
+            "false_positive": 17,
+            "true_negative": 9,
+            "false_negative": 3,
+            "balanced_accuracy": 0.6153846153846154,
+            "has_inputs": 52
+          }
+        }
+      },
+      "production only": {
+        "rule": "minutes_82 >= 750",
+        "train": {
+          "n": 101,
+          "correct": 71,
+          "true_positive": 38,
+          "false_positive": 20,
+          "true_negative": 33,
+          "false_negative": 10,
+          "balanced_accuracy": 0.7071540880503144,
+          "has_inputs": 100
+        },
+        "holdouts": {
+          "2025": {
+            "n": 33,
+            "correct": 17,
+            "true_positive": 6,
+            "false_positive": 7,
+            "true_negative": 11,
+            "false_negative": 9,
+            "balanced_accuracy": 0.5055555555555555,
+            "has_inputs": 33
+          },
+          "2026": {
+            "n": 52,
+            "correct": 28,
+            "true_positive": 15,
+            "false_positive": 13,
+            "true_negative": 13,
+            "false_negative": 11,
+            "balanced_accuracy": 0.5384615384615384,
+            "has_inputs": 52
+          }
+        }
+      }
+    },
+    "live_rookie_year_four_exercise": {
+      "baseline": {
+        "rule": "train majority",
+        "train": {
+          "n": 161,
+          "correct": 144,
+          "true_positive": 144,
+          "false_positive": 17,
+          "true_negative": 0,
+          "false_negative": 0,
+          "balanced_accuracy": 0.5,
+          "has_inputs": 161
+        },
+        "holdouts": {
+          "2025": {
+            "n": 25,
+            "correct": 23,
+            "true_positive": 23,
+            "false_positive": 2,
+            "true_negative": 0,
+            "false_negative": 0,
+            "balanced_accuracy": 0.5,
+            "has_inputs": 25
+          },
+          "2026": {
+            "n": 26,
+            "correct": 19,
+            "true_positive": 19,
+            "false_positive": 7,
+            "true_negative": 0,
+            "false_negative": 0,
+            "balanced_accuracy": 0.5,
+            "has_inputs": 26
+          }
+        }
+      },
+      "production only": {
+        "rule": "minutes_82 >= 1500",
+        "train": {
+          "n": 161,
+          "correct": 93,
+          "true_positive": 77,
+          "false_positive": 1,
+          "true_negative": 16,
+          "false_negative": 67,
+          "balanced_accuracy": 0.7379493464052287,
+          "has_inputs": 161
+        },
+        "holdouts": {
+          "2025": {
+            "n": 25,
+            "correct": 11,
+            "true_positive": 9,
+            "false_positive": 0,
+            "true_negative": 2,
+            "false_negative": 14,
+            "balanced_accuracy": 0.6956521739130435,
+            "has_inputs": 25
+          },
+          "2026": {
+            "n": 26,
+            "correct": 15,
+            "true_positive": 10,
+            "false_positive": 2,
+            "true_negative": 5,
+            "false_negative": 9,
+            "balanced_accuracy": 0.6203007518796992,
+            "has_inputs": 26
+          }
+        }
+      },
+      "production or draft slot": {
+        "rule": "minutes_82 >= 1500 or pick <= 5",
+        "train": {
+          "n": 161,
+          "correct": 102,
+          "true_positive": 86,
+          "false_positive": 1,
+          "true_negative": 16,
+          "false_negative": 58,
+          "balanced_accuracy": 0.7691993464052287,
+          "has_inputs": 161
+        },
+        "holdouts": {
+          "2025": {
+            "n": 25,
+            "correct": 13,
+            "true_positive": 11,
+            "false_positive": 0,
+            "true_negative": 2,
+            "false_negative": 12,
+            "balanced_accuracy": 0.7391304347826086,
+            "has_inputs": 25
+          },
+          "2026": {
+            "n": 26,
+            "correct": 16,
+            "true_positive": 11,
+            "false_positive": 2,
+            "true_negative": 5,
+            "false_negative": 8,
+            "balanced_accuracy": 0.6466165413533835,
+            "has_inputs": 26
+          }
+        }
+      }
+    }
   }
 }
