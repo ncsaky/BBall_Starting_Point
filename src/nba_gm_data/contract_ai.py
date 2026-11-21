@@ -658,6 +658,8 @@ def apply_contract_to_save_state(
                 commit(save, team_id, player_id, payment, date)
             save.setdefault("contract_overrides", {})[player_id] = accepted_offer
             if team_id and negotiation_payload.get("negotiation_type") in {"free_agency", "free_agent_signing"}:
+                from .offseason_decisions import mark_signed
+                mark_signed(save, player_id, team_id)   # FA-REAL slice 2: a restricted free agent's offer is settled
                 save.setdefault("roster_overrides", {})[player_id] = team_id
                 save.setdefault("rotation_snapshots", {}).pop(team_id, None)
                 if player_id in set(save.get("free_agent_player_ids", [])):

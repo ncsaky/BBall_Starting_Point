@@ -3013,7 +3013,8 @@ def finish_draft_phase(canonical: dict[str, Any], save_path: Path, year: str) ->
     state = save.get("draft_state") or {}
     if state.get("year") == str(year):
         state["status"] = "completed"
-    advance_lifecycle_to(canonical, save, f"{year}-06-27", int(save.get("meta", {}).get("seed", 1)))
+    from .offseason_calendar import offseason_dates
+    advance_lifecycle_to(canonical, save, offseason_dates(int(year))["after_draft"], int(save.get("meta", {}).get("seed", 1)))
     prepare_free_agency_pool(canonical, save)
     write_save(save_path, save)
 
@@ -5163,8 +5164,14 @@ def user_re_signing_window_active(canonical: dict[str, Any], save: dict[str, Any
     )
 
 
-def open_free_agency_from_re_signing(save: dict[str, Any], team_id: str, canonical: dict[str, Any]) -> None:
-    """Close exclusive rights and move the save to the July open market."""
+def open_free_agency_from_re_signing(save: dict[str, Any], team_id: str, canonical: dict[str, Any]) -> list[str]:
+    """Close stop 1 and move the save to the market (June 30). The user's undecided options and qualifying offers take
+    their defaults (offseason_decisions.finalize_stop_one); returns those plain sentences."""
+    from .offseason_calendar import offseason_dates
+    from .offseason_decisions import finalize_stop_one
+    notes = finalize_stop_one(canonical, save)
+    for note in notes:
+        add_news(save, "free_agency", note, date_value=(save.get("state") or {}).get("current_date"))
     state = save.setdefault("free_agency_state", {})
     state["re_signing_status"] = "completed"
     state["re_signing_day"] = int(state.get("re_signing_day_count") or 2)
@@ -5172,7 +5179,8 @@ def open_free_agency_from_re_signing(save: dict[str, Any], team_id: str, canonic
         if right.get("team_id") == team_id and right.get("status") == "exclusive_review_window":
             right["status"] = "entered_open_market"
     end_year = int(str(save.get("meta", {}).get("season") or CANONICAL_SEASON).split("-")[0]) + 1
-    advance_lifecycle_to(canonical, save, f"{end_year}-07-01", int(save.get("meta", {}).get("seed", 1)))
+    advance_lifecycle_to(canonical, save, offseason_dates(end_year)["market_opens"], int(save.get("meta", {}).get("seed", 1)))
+    return notes
 
 
 def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int, forced: bool = False) -> str | None:
@@ -5411,6 +5419,8 @@ def process_ai_free_agency_offers_for_day_state(
     pool.sort(key=lambda player: free_agency_player_priority(active, save, player), reverse=True)
     created = 0
     target_count = min(len(pool), 18 + day * 8)
+    from .offseason_decisions import restricted_player_ids
+    restricted = restricted_player_ids(save)   # FA-REAL slice 2: interim rule, only the team holding him bids
     for player in pool[:target_count]:
         market = report_by_id.get(player["id"]) or {}
         ask = (state.get("player_asks_millions") or {}).get(player["id"])
@@ -5423,6 +5433,8 @@ def process_ai_free_agency_offers_for_day_state(
             quality=float(player_attribute_summary(active, player["id"]).get("overall") or 0),
         )
         suitors = ai_free_agency_suitors(active, save, player, teams, market, seed, day)
+        if player["id"] in restricted:
+            suitors = [t for t in suitors if t["id"] == restricted[player["id"]]]
         # KEEP-STARS: a team that still holds a regular's rights bids for him first (it knows him and has Bird rights).
         if display_minutes_projection(player) >= 24.0:
             own = {r.get("team_id") for r in save.get("re_signing_rights", []) or []
@@ -6825,6 +6837,9 @@ def finish_free_agency_phase(canonical: dict[str, Any], save_path: Path, *, root
     if str(save.get("state", {}).get("current_date") or "") < f"{end_year}-08-01":
         advance_lifecycle_to(canonical, save, f"{end_year}-08-01", seed, root)
         run_late_summer_ai_trades(canonical, save, seed, end_year)
+        # FA-REAL slice 2: unsigned restricted free agents settle with their teams, or take the qualifying offer.
+        from .offseason_decisions import restricted_summer_pass
+        restricted_summer_pass(canonical, save, final=False)
     advance_lifecycle_to(canonical, save, f"{end_year}-09-01", seed, root)
     save.setdefault("free_agency_state", {})["status"] = "completed"
     add_news(save, "free_agency", "Free agency period closed. Training camp is next.", date_value=f"{end_year}-09-01")
@@ -7524,6 +7539,13 @@ def signing_cap_check(
     if player is None:
         # Planning callers without a player (roster_space, release_planning): a generic veteran.
         player = {"id": None, "age": 30.0}
+    if player.get("id"):
+        # FA-REAL slice 2 (interim restricted rule): only his own team can sign a restricted free agent.
+        from .offseason_decisions import blocked_for_team
+        blocked = blocked_for_team(save, str(player["id"]), team["id"])
+        if blocked:
+            return {"ok": False, "message": blocked, "reason": "restricted_free_agent", "quote": {"ok": False,
+                    "message": blocked, "routes": []}, "payment": None, "route": None, "locks": None}
     quote = cap_ledger.quote(active, save, team["id"], player, float(aav_millions) * 1_000_000, int(years or 1),
                              season=season, route=route, raise_rate=raise_rate, bird=bird,
                              include_reservations=include_reservations, team_abbrev=team.get("abbrev"))
@@ -7563,8 +7585,8 @@ def drafted_by_team(save: dict[str, Any], player: dict[str, Any]) -> str | None:
 
 
 def contract_start_season_for_signing(save: dict[str, Any]) -> str:
-    """The season a contract signed today starts in: the cap year (cap_ledger.cap_year). From June 22 to rollover
-    that is next season, also in late summer and camp (before, an August signing started in the season just ended)."""
+    """The season a contract signed today starts in: the cap year (cap_ledger.cap_year, the one contract-season
+    switch). From the day the offseason opens (June 17) to rollover that is next season."""
     from .cap_ledger import cap_year
     return cap_year(save)
 

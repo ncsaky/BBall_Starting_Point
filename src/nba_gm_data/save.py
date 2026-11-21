@@ -80,6 +80,7 @@ ROSTER_MINIMUM = 14
 ROSTER_SEASON_MAXIMUM = 15
 ROSTER_CUTDOWN_PHASES = frozenset({"training_camp", "preseason", "regular_season", "play_in", "playoffs"})
 ROSTER_TEMPORARY_HARD_MAXIMUM = 21
+ROOKIE_OPTION_WINDOW = frozenset({"10-31", "11-01", "11-02", "11-03", "11-04", "11-05"})  # deadline days (weekday rule)
 AI_DIFFICULTIES = {"easy", "normal", "hard"}
 SOCIAL_INJURY_GAMES_THRESHOLD = 10
 MAJOR_FREE_AGENT_AAV_THRESHOLD = 25_000_000
@@ -1465,12 +1466,11 @@ def set_save_date_phase(save: dict[str, Any], date_value: str) -> None:
 
 
 def save_active_contract_season(save: dict[str, Any]) -> str:
-    season = str(save.get("meta", {}).get("season") or CANONICAL_SEASON)
-    current = str(save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
-    end_year = season_end_year(season)
-    if current >= f"{end_year}-06-22":
-        return season_label_from_start(season_start_year(season) + 1)
-    return season
+    """The contract season rosters, payrolls, signings and trades count today: one switch date for everything
+    (offseason_calendar.contract_season, the day the offseason opens)."""
+    from .offseason_calendar import contract_season
+    return contract_season({"meta": {"season": str(save.get("meta", {}).get("season") or CANONICAL_SEASON)},
+                            "state": {"current_date": str(save.get("state", {}).get("current_date") or CANONICAL_START_DATE)}})
 
 
 def _copy_runtime_tree(value: Any) -> Any:
@@ -1663,6 +1663,9 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
         canonical["gameplay_staff_slots"] = copy_plain(save["staff_slots"])
     from .contract_protection import apply_imported_protection
     apply_imported_protection(canonical, save)
+    # FA-REAL slice 2: option years from the contract data and the decisions taken on them (offseason_decisions).
+    from .offseason_decisions import apply_contract_options
+    apply_contract_options(canonical, save)
     if save.get("health_states"):
         canonical["player_health_states"] = copy_plain(save["health_states"])
     if save.get("injury_events"):
@@ -1957,7 +1960,8 @@ def advance_save(
     if save.get("state", {}).get("phase") in {"play_in", "playoffs"}:
         # A month can finish the postseason, but must hand control back before
         # lottery/draft decisions rather than crossing them and rolling back.
-        offseason_gate = f"{season_end_year(save.get('meta', {}).get('season') or CANONICAL_SEASON)}-06-22"
+        from .offseason_calendar import offseason_dates
+        offseason_gate = offseason_dates(season_end_year(save.get('meta', {}).get('season') or CANONICAL_SEASON))["offseason_opens"]
         if current < offseason_gate < target:
             target = offseason_gate
     guard_target = min(target, next_date_str(current, 1)) if save.get("state", {}).get("phase") in {"play_in", "playoffs"} else target
@@ -2073,6 +2077,8 @@ def advance_lifecycle_to(
         set_save_date_phase(save, day)
         from .waivers import process_waivers
         if process_waivers(canonical, save, day):
+            active = None
+        if day[5:7] in {"05", "06"} and maybe_run_spring_lottery(canonical, save, day) is not None:
             active = None
         active = canonical_with_save(canonical, save) if active is None else refresh_active_runtime_state(active, save)
         if carried_active:
@@ -2289,6 +2295,11 @@ def advance_save_day(
     roster_overrides_before = dict(save.get("roster_overrides") or {})
     contract_overrides_before = deepcopy(save.get("contract_overrides") or {})
     free_agents_before = tuple(save.get("free_agent_player_ids") or [])
+    if save["state"]["phase"] in {"regular_season", "preseason"} and target[5:] in ROOKIE_OPTION_WINDOW:
+        # FA-REAL slice 2: AI teams decide rookie-scale options on their deadline (October 31 or the next weekday);
+        # the user's undecided ones lapse the day after it.
+        from .offseason_decisions import decide_rookie_options
+        decide_rookie_options(canonical, save, target)
     if save["state"]["phase"] in {"re_signing", "free_agency"}:
         prepare_free_agency_pool(canonical, save)
     elif save["state"]["phase"] in {"preseason", "regular_season", "training_camp"}:
@@ -3635,7 +3646,7 @@ def complete_playoff_champion(canonical: dict[str, Any], save: dict[str, Any], s
         save.setdefault("pending_press_events", []).append(
             {
                 "id": stable_id("press_event", "season_end", headline, state.get("year")),
-                "date": f"{int(state.get('year') or season_end_year(save.get('meta', {}).get('season') or CANONICAL_SEASON))}-06-22",
+                "date": offseason_opening_date(save, state),
                 "kind": "season_end",
                 "headline": headline,
                 "question": "The season is over. What is your honest read on where this organization stands now?",
@@ -3643,7 +3654,14 @@ def complete_playoff_champion(canonical: dict[str, Any], save: dict[str, Any], s
             }
         )
     if advance_to_offseason:
-        advance_lifecycle_to(canonical, save, f"{int(state.get('year') or season_end_year(save.get('meta', {}).get('season') or CANONICAL_SEASON))}-06-22", int(state.get("seed", 1)), root)
+        advance_lifecycle_to(canonical, save, offseason_opening_date(save, state), int(state.get("seed", 1)), root)
+
+
+def offseason_opening_date(save: dict[str, Any], playoff_state: dict[str, Any] | None = None) -> str:
+    """The day stop 1 opens after these playoffs (offseason_calendar: June 17)."""
+    from .offseason_calendar import offseason_dates
+    year = int((playoff_state or {}).get("year") or season_end_year(save.get("meta", {}).get("season") or CANONICAL_SEASON))
+    return offseason_dates(year)["offseason_opens"]
 
 
 def simulate_next_playoff_game(canonical: dict[str, Any] | Any, save_path: str | Path, seed: int = 1, root: str | Path | None = None, *, advance_to_offseason: bool = True) -> dict[str, Any]:
@@ -3768,13 +3786,21 @@ def lottery_seed(seed: int | None = None) -> int:
 
 
 def run_draft_lottery(canonical: dict[str, Any] | Any, save_path: str | Path, year: str = "2026", seed: int | None = None, *, advance_to_draft: bool = True) -> dict[str, Any]:
+    del advance_to_draft   # FA-REAL slice 2: the lottery runs in May; the draft keeps its own dates
     canonical = to_plain(canonical)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
+    order = run_draft_lottery_state(canonical, save, str(year), lottery_seed(seed))
+    write_save(save_path, save)
+    return order
+
+
+def run_draft_lottery_state(canonical: dict[str, Any], save: dict[str, Any], year: str, seed: int,
+                            date_value: str | None = None) -> dict[str, Any]:
+    """Draw the lottery and save the year's draft order on an in-memory save."""
     from .draft import generate_draft_order
 
-    effective_seed = lottery_seed(seed)
     standings = save_standings_for_draft(canonical, save)
-    order = generate_draft_order(canonical_with_save(canonical, save), year, seed=effective_seed, standings=standings)
+    order = generate_draft_order(canonical_with_save(canonical, save), year, seed=int(seed), standings=standings)
     annotate_lottery_odds_context(canonical, save, order)
     from .pick_presentation import materialize_nested_inputs
     nested_context = canonical_with_save(canonical, save)
@@ -3784,11 +3810,29 @@ def run_draft_lottery(canonical: dict[str, Any] | Any, save_path: str | Path, ye
     refresh_draft_order_from_save(order, save)
     materialize_draft_order_pick_assets(canonical, save, order)
     save.setdefault("draft_orders", {})[str(year)] = order
-    add_news(save, "draft_lottery", f"{year} draft order generated.")
-    current_phase = save.get("state", {}).get("phase")
-    if current_phase == "draft_lottery" and advance_to_draft:
-        advance_lifecycle_to(canonical, save, f"{year}-06-25", int(save.get("meta", {}).get("seed", 1)))
-    write_save(save_path, save)
+    add_news(save, "draft_lottery", f"{year} draft order generated.", date_value=date_value)
+    return order
+
+
+def maybe_run_spring_lottery(canonical: dict[str, Any], save: dict[str, Any], day: str) -> dict[str, Any] | None:
+    """FA-REAL slice 2: the draft lottery runs on its May date (offseason_calendar.lottery_date), during the playoffs,
+    with the save's seed (a fixed draw for a given career). The draft screen shows the order; nobody has to stop."""
+    from .offseason_calendar import lottery_date
+    season = str(save.get("meta", {}).get("season") or CANONICAL_SEASON)
+    year = season_end_year(season)
+    if str(year) in (save.get("draft_orders") or {}) or str(day) < lottery_date(year).isoformat():
+        return None
+    if str(day) >= f"{year}-07-01" or draft_completed_for_year(save, year):
+        return None
+    if not save.get("team_records"):
+        return None
+    seed = int(hashlib.sha256(f"{(save.get('meta') or {}).get('seed') or 1}:{year}:spring-lottery".encode()).hexdigest()[:8], 16)
+    order = run_draft_lottery_state(canonical, save, str(year), seed, date_value=str(day))
+    winner = next((row for row in order.get("draft_order") or [] if int(row.get("overall_pick") or row.get("pick") or 0) == 1), None)
+    owner = (winner or {}).get("current_owner_team_id") or (winner or {}).get("owner_team_id")
+    if owner:
+        add_news(save, "draft_lottery", f"Draft lottery: {team_id_to_abbrev(owner)} wins the No. 1 pick in the {year} draft.",
+                 date_value=str(day))
     return order
 
 
@@ -4528,6 +4572,10 @@ def complete_offseason_and_rollover(
     if simulation_stop_requested():
         write_save(save_path, save)
         return {"status": "stopped", "current_date": save.get("state", {}).get("current_date")}
+    # FA-REAL slice 2: October 1 is the last day to accept a qualifying offer; an unsigned restricted free agent
+    # takes his one-year offer (interim rule until offer sheets arrive).
+    from .offseason_decisions import restricted_summer_pass
+    restricted_summer_pass(canonical, save, final=True)
     draft_result = ensure_draft_processed(canonical, save, str(season_end_year(current_season)), seed)
     awards = generate_league_awards(canonical, save, current_season, seed)
     from .season_slides import slideshow_store
@@ -5048,19 +5096,14 @@ def phase_for_date(value: str) -> str:
         return "regular_season"
     if "04-13" <= month_day <= "04-17":
         return "play_in"
-    if "04-18" <= month_day <= "06-21":
-        return "playoffs"
-    if "06-22" <= month_day <= "06-24":
-        return "draft_lottery"
-    if "06-25" <= month_day <= "06-26":
-        return "draft"
-    if "06-27" <= month_day <= "06-30":
-        return "re_signing"
-    if "07-01" <= month_day <= "07-15":
-        return "free_agency"
-    if month_day >= "09-01":
-        return "training_camp"
-    return "offseason"
+    # FA-REAL slice 2: the real offseason order (offseason_calendar): the lottery runs in May during the playoffs;
+    # stop 1 (deciding who to keep) opens June 17 with the draft in the middle; the market June 30.
+    from .offseason_calendar import phase_for_month_day
+    try:
+        phase = phase_for_month_day(value)
+    except ValueError:
+        return "offseason"
+    return phase or "offseason"
 
 
 def legal_actions_for_phase(phase: str) -> list[str]:
@@ -5169,7 +5212,12 @@ def next_event_date(root: str | Path, canonical: dict[str, Any], save: dict[str,
         if game.get("gameDate", "") > current and str(game.get("externalGameId")) not in set(save.get("schedule_state", {}).get("simulated_game_ids", [])):
             return game.get("gameDate")
     end_year = season_end_year(save.get("meta", {}).get("season") or CANONICAL_SEASON)
-    for date_value in [f"{end_year}-04-13", f"{end_year}-06-22", f"{end_year}-06-25", f"{end_year}-06-27", f"{end_year}-07-01", f"{end_year}-09-01"]:
+    # FA-REAL slice 2: the offseason's stops (offseason_calendar): stop 1 opens, the draft, back to stop 1 after the
+    # draft, the market (stop 2), then camp.
+    from .offseason_calendar import offseason_dates
+    dates = offseason_dates(end_year, save)
+    for date_value in [f"{end_year}-04-13", dates["offseason_opens"], dates["draft_round_one"], dates["after_draft"],
+                       dates["market_opens"], dates["camp"]]:
         if date_value > current:
             return date_value
     return None
@@ -5182,6 +5230,11 @@ def draft_completed_for_year(save: dict[str, Any], year: str | int) -> bool:
             and state.get("status") in {"completed", "skipped"})
 
 
+def rookie_option_deadline_for(save: dict[str, Any]) -> str:
+    from .offseason_calendar import rookie_option_deadline
+    return rookie_option_deadline(season_start_year(save.get("meta", {}).get("season") or CANONICAL_SEASON)).isoformat()
+
+
 def guard_required_phase_actions(save: dict[str, Any], current: str, target: str) -> None:
     end_year = season_end_year(save.get("meta", {}).get("season") or CANONICAL_SEASON)
     start_year = season_start_year(save.get("meta", {}).get("season") or CANONICAL_SEASON)
@@ -5189,9 +5242,11 @@ def guard_required_phase_actions(save: dict[str, Any], current: str, target: str
     entry = str(save.get('meta', {}).get('gameplay_start_date') or '')
     if entry[:4] == str(start_year):
         regular_start_gate = next_date_str(entry, 1)
-    playoff_gate = f"{end_year}-06-22"
-    draft_gate = f"{end_year}-06-27"
-    free_agency_gate = f"{end_year}-07-01"
+    from .offseason_calendar import offseason_dates
+    calendar = offseason_dates(end_year, save)
+    playoff_gate = calendar["offseason_opens"]
+    draft_gate = calendar["after_draft"]
+    free_agency_gate = calendar["market_opens"]
     phase = save.get("state", {}).get("phase")
     if target > current and target >= regular_start_gate and phase in {"preseason", "regular_season"} and save.get("pending_roster_cutdowns"):
         team = save.get("pending_roster_cutdowns", [{}])[0]
@@ -5202,17 +5257,17 @@ def guard_required_phase_actions(save: dict[str, Any], current: str, target: str
     if current < playoff_gate <= target:
         state = save.get("playoff_state") or {}
         if phase in {"play_in", "playoffs"} and state.get("status") != "completed":
-            raise ValueError("The playoffs are active. Use Sim to finish postseason games before advancing to the draft lottery.")
+            raise ValueError("The playoffs are active. Use Sim to finish postseason games before the offseason opens.")
     if current < draft_gate <= target:
         pending = save.get("pending_draft_selections") or []
-        if phase == "draft" and (not draft_completed_for_year(save, end_year) or pending):
-            raise ValueError("The draft is active. Finish or sim the draft before advancing to re-signing.")
+        if phase in {"draft", "re_signing"} and (not draft_completed_for_year(save, end_year) or pending):
+            raise ValueError("The draft is active. Finish or sim the draft before going on.")
         if target > draft_gate:
-            raise ValueError("Advance into the exclusive re-signing window before opening free agency.")
+            raise ValueError("Stop at the after-draft checklist (decide who to keep) before free agency opens.")
     if current < free_agency_gate <= target:
         re_signing_state = save.get("free_agency_state") or {}
         if phase == "re_signing" and re_signing_state.get("re_signing_status") != "completed":
-            raise ValueError("Resolve or leave the exclusive re-signing window before opening free agency.")
+            raise ValueError("Finish deciding who to keep before free agency opens.")
 
 
 def record_game_result(save: dict[str, Any], canonical: dict[str, Any], game: dict[str, Any], result: dict[str, Any]) -> None:
@@ -9615,8 +9670,16 @@ def prepare_free_agency_pool(canonical: dict[str, Any], save: dict[str, Any]) ->
     seed = int(save.get("meta", {}).get("seed") or 1)
     next_season = season_label_from_start(season_start_year(current_season) + 1)
     retirement_count = prepare_offseason_retirements(canonical, save, current_season, next_season, seed)
+    # FA-REAL slice 2: options for next season are decided first (players decide theirs, AI teams theirs; the user's
+    # wait for the user), so a player who opts out is a free agent like any expiring contract.
+    from .offseason_decisions import decide_veteran_options, prepare_qualifying_offers
+    decide_veteran_options(canonical, save, next_season)
     active = canonical_with_save(canonical, save)
     contracts = {contract.get("player_id"): contract for contract in active.get("contracts", [])}
+    expiring_players = [p for p in active.get("players", []) if p.get("id") and p.get("team_id")
+                        and (contract_last_season(contracts.get(p["id"])) or "9999") <= current_season]
+    # Qualifying offers: who can be made a restricted free agent, and AI teams' choices (the user's by June 29).
+    prepare_qualifying_offers(canonical, save, active, expiring_players, next_season)
     annotate_star_asks(active, contracts, next_season, save, canonical.get("free_agent_candidates"))
     free_agents = set(save.get("free_agent_player_ids", []))
     expired: list[str] = []
@@ -9628,7 +9691,8 @@ def prepare_free_agency_pool(canonical: dict[str, Any], save: dict[str, Any]) ->
         contract = contracts.get(player_id)
         last = contract_last_season(contract) if contract else None
         if last and last <= current_season:
-            if should_ai_retain_expiring_player(save, player, current_season, seed) and ai_re_signing_allowed(
+            if should_ai_retain_expiring_player(save, player, current_season, seed) and restricted_player_agrees(
+                save, player) and ai_re_signing_allowed(
                 canonical,
                 save,
                 player,
@@ -9655,7 +9719,7 @@ def prepare_free_agency_pool(canonical: dict[str, Any], save: dict[str, Any]) ->
         add_news(
             save,
             "free_agency",
-            f"The re-signing period opened with {len(expired)} expired contracts entering the offseason player pool.",
+            f"The offseason opened with {len(expired)} expired contracts: teams may now talk to their own free agents.",
             date_value=save.get("state", {}).get("current_date"),
         )
     return {
@@ -9938,13 +10002,15 @@ def annotate_star_asks(active: dict[str, Any], contracts: dict[str, dict[str, An
         except (KeyError, ValueError, TypeError):
             ask = None
         service = years_of_service(player, next_season)
-        restricted = service <= YOUNG_STAR_MAX_SERVICE and float(player.get("age") or 99) <= RESTRICTED_MAX_AGE
+        # FA-REAL slice 2: a restricted free agent is one his team sent a qualifying offer (offseason_decisions), not an
+        # age/minutes/service proxy. A tendered regular is kept like a franchise player (KEEP-STARS budget).
+        restricted = restricted_regular(save, player, next_season)
         if ask:
             player["_star_ask_millions"] = ask
             player["_star_rank"] = rank.get(player["id"])
         if restricted:
-            # KEEP-STARS: a regular coming off his rookie deal would be a restricted free agent; his team keeps him
-            # at the better of his star price and his researched market price.
+            # KEEP-STARS / FA-REAL: his team sent a regular a qualifying offer; it keeps him at the better of his star
+            # price and his researched market price, if he agrees (restricted_player_agrees).
             player["_restricted"] = True
             player["_market_ask_millions"] = max(float(ask or 0.0), research.get(str(player["id"]), 0.0)) or None
         if ask or restricted:
@@ -9954,7 +10020,32 @@ def annotate_star_asks(active: dict[str, Any], contracts: dict[str, dict[str, An
 
 
 YOUNG_STAR_MAX_SERVICE = 4   # a player coming off his rookie-scale deal (four seasons): a restricted free agent
-RESTRICTED_MAX_AGE = 25.0
+RESTRICTED_MAX_AGE = 25.0    # (KEEP-STARS proxy; FA-REAL slice 2 uses real qualifying offers, restricted_regular)
+
+
+def restricted_regular(save: dict[str, Any], player: dict[str, Any], next_season: str) -> bool:
+    """A regular (24+ minutes) whose team sent him a qualifying offer for ``next_season``."""
+    from .offseason_decisions import RULES, qo_record
+    record = qo_record(save, next_season, str(player.get("id") or ""))
+    return (bool(record) and record.get("status") == "tendered"
+            and display_minutes_projection(player) >= RULES["qualifying_offer"]["regular_minutes"])
+
+
+def restricted_player_agrees(save: dict[str, Any], player: dict[str, Any]) -> bool:
+    """The player's side of an AI team keeping its expiring player in June. An unrestricted player re-signs when his
+    team offers his market price (as before). A restricted free agent may wait instead: he holds out for his price plus
+    his belief in himself (offseason_decisions.rfa_reservation), and his team offers a little less (it has the right to
+    keep him and no outside team can bid yet)."""
+    from .offseason_decisions import RULES, qo_record, rfa_reservation
+    next_season = season_label_from_start(season_start_year(save.get("meta", {}).get("season") or CANONICAL_SEASON) + 1)
+    record = qo_record(save, next_season, str(player.get("id") or ""))
+    if not record or record.get("status") != "tendered":
+        return True
+    market = float(record.get("market_millions") or 0.0) * 1e6
+    if market <= 0:
+        return True
+    offer = market * RULES["qualifying_offer"]["team_offer_share"]
+    return offer >= rfa_reservation(save, player, market, 0.0)
 
 
 def is_franchise_star(player: dict[str, Any]) -> bool:
@@ -10144,10 +10235,12 @@ def retain_expiring_player(save: dict[str, Any], player: dict[str, Any], team_id
         salary = int(override["seasons"][0]["salary"])
         commit(save, str(team_id), player["id"], payment)
     save.setdefault("contract_overrides", {})[player["id"]] = override
+    from .offseason_decisions import mark_signed
+    mark_signed(save, player["id"], team_id)
     save.setdefault("transaction_logs", []).append(
         {
             "id": stable_id("transaction_log", "ai_re_signing", current_season, team_id, player["id"]),
-            "date": f"{season_start_year(next_season)}-07-01",
+            "date": str(save.get("state", {}).get("current_date") or f"{season_start_year(next_season)}-07-01"),
             "transaction_type": "ai_re_signing",
             "proposal_id": stable_id("ai_re_signing", next_season, team_id, player["id"]),
             "status": "applied_to_save_ledger",
@@ -10295,7 +10388,8 @@ def contract_last_season(contract: dict[str, Any] | None) -> str | None:
 def strategic_free_agent_signings(canonical: dict[str, Any], save: dict[str, Any], free_agents: list[str], next_season: str, seed: int) -> set[str]:
     from .waivers import pending_ids
     from .release_planning import reacquisition_blocked
-    free_agents = list(set(free_agents) - pending_ids(save))
+    from .offseason_decisions import restricted_player_ids
+    free_agents = list(set(free_agents) - pending_ids(save) - set(restricted_player_ids(save)))
     active = canonical_with_save(canonical, save)
     teams = sorted(canonical.get("teams", []), key=lambda item: item["abbrev"])
     roster_by_team: dict[str, list[dict[str, Any]]] = {
@@ -10768,7 +10862,8 @@ def strategic_signing_salary(player: dict[str, Any], score: float) -> int:
 def auto_fill_rosters(canonical: dict[str, Any], save: dict[str, Any], free_agents: list[str], next_season: str, seed: int) -> set[str]:
     from .waivers import pending_ids
     from .release_planning import reacquisition_blocked
-    free_agents = list(set(free_agents) - pending_ids(save))
+    from .offseason_decisions import restricted_player_ids
+    free_agents = list(set(free_agents) - pending_ids(save) - set(restricted_player_ids(save)))
     active = canonical_with_save(canonical, save)
     teams = sorted(canonical.get("teams", []), key=lambda item: item["abbrev"])
     roster_by_team: dict[str, list[dict[str, Any]]] = {
