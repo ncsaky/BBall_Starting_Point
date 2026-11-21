@@ -1,7 +1,7 @@
 # FA-REAL slice 2: the calendar and the four stops, options and qualifying offers
 
 _Claude (Opus agent), branch `worktree-agent-a246e3c04237da68c` (from main at eab27ac; rules from
-OFFSEASON-DECISIONS-EVIDENCE, main c19849b). Status: **review** (slice 2). Committed on the branch only._
+OFFSEASON-DECISIONS-EVIDENCE, main c19849b). Status: **review** (slice 2). Committed on the branch only; not pushed._
 
 ## TL;DR
 - The summer now runs in the real order with four stops: decide who to keep (from June 17, the draft in the middle),
@@ -137,10 +137,15 @@ How to read it:
 - Updated because the rules changed (each says so): `test_postseason_calendar`, `test_simulation_consistency` (new
   dates), `test_keep_stars` (a regular's Bird re-signing no longer keeps room), `free_agency_room.test.cjs` (a fourth
   window; new stop commands).
-- `bash scripts/run_core_tests.sh`: MODULES_RESULT
-- MODULES_LINE
+- `bash scripts/run_core_tests.sh`: 338 tests; one failure (a calendar test with the old draft dates) updated, then OK.
+- 59 more modules touching free agency, the calendar, phases, draft, waivers, extensions, trades and saves (list in
+  `output/fa-real-slice2/run_modules.txt`, including `test_foundation`): 794 tests; 3 modules had old-calendar
+  expectations (`test_draft_year_gate`, `test_foundation` x2, `test_fitted_free_agent_salary` relied on the phase
+  name for the signing season); updated and rerun OK. The audit runner `scripts/league_health_audit.py` follows the
+  new dates.
 - Node: all pass except `startup_video.test.cjs` (needs the ignored movie file, as on main).
-- CALIBRATION_LINE
+- Real-stat scorecard (`calibration_report.py --games 1230 --mode replay-real-minutes`): **18/18** league metrics in
+  band. Game simulation is untouched, so the betting-odds check was not rerun.
 
 ## What's left
 - Qualifying-offer acceptances run high (4-5 a summer, real 0-2) for over-tax rebuilding teams; offer sheets (slice 3)
