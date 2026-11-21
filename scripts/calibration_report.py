@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from nba_gm_data.calibration_targets import aggregate_from_results, compare, format_report, load_targets  # noqa: E402
 from nba_gm_data.schema import to_plain  # noqa: E402
-from nba_gm_data.sim import build_sim_indices, load_sim_context, sim_game_with_context  # noqa: E402
+from nba_gm_data.sim import DEFAULT_ENGINE, ENGINES, build_sim_indices, load_sim_context, sim_game_with_context  # noqa: E402
 
 
 def main() -> int:
@@ -25,6 +25,8 @@ def main() -> int:
     ap.add_argument("--mode", default="sandbox-sim", choices=["sandbox-sim", "replay-real-minutes"],
                     help="sandbox-sim: projected rotations, every team healthy (default). replay-real-minutes: each "
                          "game's real availability and minutes (injuries and absences included), like the odds test.")
+    ap.add_argument("--engine", default=DEFAULT_ENGINE, choices=list(ENGINES),
+                    help="current: today's engine (default). stage2: the Stage 2 engine under construction.")
     args = ap.parse_args()
     targets = load_targets(args.targets)
     context = load_sim_context(ROOT)
@@ -34,11 +36,11 @@ def main() -> int:
     step = max(1, len(games) // args.games)
     picked = games[::step][: args.games]
     t0 = time.time()
-    results = [to_plain(sim_game_with_context(context, str(g["externalGameId"]), mode=args.mode, seed=args.seed)) for g in picked]
+    results = [to_plain(sim_game_with_context(context, str(g["externalGameId"]), mode=args.mode, seed=args.seed, engine=args.engine)) for g in picked]
     elapsed = time.time() - t0
     agg = aggregate_from_results(results)
     report = compare(agg["league_totals"], agg["player_lines"], targets, min_sim_games=3)
-    print(f"{len(results)} games in {elapsed:.1f}s (seed {args.seed}, mode {args.mode})")
+    print(f"{len(results)} games in {elapsed:.1f}s (seed {args.seed}, mode {args.mode}, engine {args.engine})")
     print(format_report(report))
     if args.json_out:
         Path(args.json_out).write_text(json.dumps(report, indent=1, default=str))

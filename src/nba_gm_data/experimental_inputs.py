@@ -114,11 +114,31 @@ for _key,_metric,_unit in (('P01','scenario_height','cm'),('P02','scenario_wings
     ALIASES[_key].add((_metric,_unit,SCENARIO_GEOMETRY))
 ALIASES['P03'].update({('historical_standing_reach','cm','2013 NBA combine historical report; proposed geometry anchor, not measured2026 current reach'),
     ('historical_standing_reach','cm','2021 reported historical reach alternative; not measured 2026 current reach')})
+# --- Stage 2 league bridge (S2-SEAM-SHOOTING, 2026-11-21) ---------------------------------------------------
+# The league's estimated inputs (data/canonical/player_inputs_2026_27.json, built by input_estimator) use their own
+# scale and protocol labels. These entries accept those labels as the SAME named quantities; nothing is converted
+# here except the declared technique index (grade/100, as for the native index). Unit conversions the league file
+# does not carry (P05 acceleration) are added by stage2.league_inputs with their own explicit protocol label.
+LEAGUE_TECHNIQUE='e2_technique_reference_v1_50_functional_75_strong_90_exceptional'
+LEAGUE_REPORTED='listed report; measurement date/protocol unverified'
+LEAGUE_PRIOR='uncertain positional/anthropometric prior; not a measurement'
+LEAGUE_JUMP_COMBINE='NBA Draft Combine standing vertical, age-adjusted, blended with in-game proxies'
+LEAGUE_JUMP_PROXY='size, position and in-game proxy estimate; no jump test'
+LEAGUE_ACCELERATION='stage2 bridge: league rank of the P05 grade on the 2000-2025 combine three-quarter sprint times; a = 2d/t^2; not a test of this player'
+LEAGUE_T02_REGIONS='rim <4ft; short_paint 4-14ft; midrange 14ft to arc; three beyond arc; coarse regions, no measured heatmap'
+ALIASES['P01'].add(('standing_height','cm',LEAGUE_REPORTED))
+ALIASES['P02'].update({('arm_span','cm',LEAGUE_REPORTED),('arm_span','cm',LEAGUE_PRIOR)})
+ALIASES['P03'].add(('standing_reach','cm',LEAGUE_PRIOR))
+ALIASES['P04'].update({('body_mass','kg',LEAGUE_REPORTED),('body_mass','kg',LEAGUE_PRIOR)})
+ALIASES['P05'].add(('acceleration','m/s2',LEAGUE_ACCELERATION))
+ALIASES['P10'].update({('jump_height','cm',LEAGUE_JUMP_COMBINE),('jump_height','cm',LEAGUE_JUMP_PROXY)})
+# --- end Stage 2 league bridge aliases ----------------------------------------------------------------------
 CONDITIONS={
  'T01':{'available_opportunity','reference_opportunity'},'T02':{'available_opportunity','reference_opportunity'},
  'T03':{'available_opportunity','reference_shot'},'T16':{'available_interior_contest','reference_opportunity'},
  'T11':{'on_ball_screen','screen_followup_trial'},
 }
+CONDITIONS['T03'].add('reference_opportunity')  # Stage 2 league bridge: the league's one shot-mode condition
 
 
 class InputReader:
@@ -137,6 +157,7 @@ class InputReader:
             if scale not in (FT_PROXY,NATIVE_TECHNIQUE):raise ValueError('S07: FT percentage proxy or explicit native FT technique required')
             rule='FT proxy probability' if scale==FT_PROXY else 'native FT technique index'
         elif scale==NATIVE_TECHNIQUE:rule='historical native index grade/100'
+        elif scale==LEAGUE_TECHNIQUE:rule='Stage 2 league bridge: league e2 reference grade/100 (same index rule as native)'
         elif scale==RESEARCH_TECHNIQUE:
             index=max(0,min(1,self.contract.research_anchor+self.contract.research_gain*(index-self.contract.research_anchor)))
             rule=self.contract.technique_mapping
@@ -172,7 +193,8 @@ class InputReader:
             from_measure=number/(number+self.contract.force_reference_n) if key=='P08' else self.contract.balance_reference_s/(number+self.contract.balance_reference_s)
         from_display=None
         if display is not None:
-            if display['scale']!=CAPACITY_SCALE:raise ValueError(f'{key}: unsupported capacity response scale')
+            # Stage 2 league bridge: the league's capacity grades use the e2 reference scale, read as grade/100.
+            if display['scale'] not in (CAPACITY_SCALE,LEAGUE_TECHNIQUE):raise ValueError(f'{key}: unsupported capacity response scale')
             from_display=display['grade']/100
         if from_measure is None and from_display is None:raise ValueError(f'{key}: explicit capacity representation required')
         if from_measure is not None and from_display is not None and not math.isclose(from_measure,from_display,rel_tol=1e-12,abs_tol=1e-9):raise ValueError(f'{key}: force/time and display response disagree')
@@ -188,6 +210,12 @@ class InputReader:
             if v.get('spatial_reference')!='two_bin_experimental_2pt_3pt_v1':raise ValueError('T02: unsupported two-bin spatial reference')
             q=probabilities['two_point'];r=self.contract.two_point_rim_fraction
             probabilities={'rim':q*r,'short_paint':q*(1-r),'perimeter':probabilities['three_point']};rule='explicit controlled rim split within two-point opportunity'
+        elif key=='T02' and set(probabilities)=={'rim','short_paint','midrange','three'}:
+            # Stage 2 league bridge: the league's four observed regions onto the kernel's three. The kernel's
+            # short_paint zone resolves both floaters and two-point jumpers (4-14 ft and 14 ft to the arc).
+            if v.get('spatial_reference')!=LEAGUE_T02_REGIONS:raise ValueError('T02: unsupported four-region spatial reference')
+            probabilities={'rim':probabilities['rim'],'short_paint':probabilities['short_paint']+probabilities['midrange'],'perimeter':probabilities['three']}
+            rule='league four regions: short_paint+midrange -> kernel short_paint; three -> perimeter'
         if key=='T11' and not allow_pop:
             excluded=probabilities['pop']
             if excluded and self.contract.screen_action_policy!='condition_on_supported':raise ValueError('T11: nonzero pop requires explicit supported-action conditioning')

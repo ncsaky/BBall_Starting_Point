@@ -77,7 +77,7 @@ from .save import (
 )
 from .play import new_save_seed, resolve_chosen_team, run_play_session
 from .schema import to_plain
-from .sim import calibrate_market, coach_ratings, explain_game_probability, player_feature_vector, print_json, sim_game, team_feature_vector, validate, validate_game_probabilities, validate_season_probabilities
+from .sim import DEFAULT_ENGINE, ENGINES, calibrate_market, coach_ratings, explain_game_probability, player_feature_vector, print_json, sim_game, team_feature_vector, validate, validate_game_probabilities, validate_season_probabilities
 from .staff import evaluate_staff_hire, fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, resolve_team as resolve_staff_team, staff_market_report, staff_team_report
 from .storage import JSON_FILENAME, load_universe_json, write_outputs
 from .transactions import (
@@ -320,6 +320,8 @@ def main(argv: list[str] | None = None) -> int:
     game_probs_parser.add_argument("--runs", type=int, default=1000)
     game_probs_parser.add_argument("--seed", type=int, default=1)
     game_probs_parser.add_argument("--mode", choices=["replay-real-minutes", "sandbox-sim"], default="replay-real-minutes")
+    game_probs_parser.add_argument("--engine", choices=list(ENGINES), default=DEFAULT_ENGINE,
+                                   help="Game engine: current (today's engine, default) or stage2 (Stage 2 engine under construction; scorecards only).")
 
     explain_parser = subparsers.add_parser("explain-game-probabilities", help="Explain a game's market-aware sim disagreement.", parents=[common])
     explain_parser.add_argument("game_id")
@@ -333,6 +335,8 @@ def main(argv: list[str] | None = None) -> int:
     season_probs_parser.add_argument("--seed", type=int, default=1)
     season_probs_parser.add_argument("--limit", type=int, default=None)
     season_probs_parser.add_argument("--playoffs", action="store_true")
+    season_probs_parser.add_argument("--engine", choices=list(ENGINES), default=DEFAULT_ENGINE,
+                                     help="Game engine: current (today's engine, default) or stage2 (Stage 2 engine under construction; scorecards only).")
 
     calibrate_parser = subparsers.add_parser("calibrate-market", help="Run holdout-aware market calibration diagnostics.", parents=[common])
     calibrate_parser.add_argument("--through", default=None)
@@ -833,13 +837,13 @@ def main(argv: list[str] | None = None) -> int:
         print_json(validate(root, through_date=args.through, playoffs=True, seed=args.seed))
         return 0
     if args.command == "validate-game-probabilities":
-        print_json(validate_game_probabilities(root, args.game_id, runs=args.runs, seed=args.seed, mode=args.mode))
+        print_json(validate_game_probabilities(root, args.game_id, runs=args.runs, seed=args.seed, mode=args.mode, engine=args.engine))
         return 0
     if args.command == "explain-game-probabilities":
         print_json(explain_game_probability(root, args.game_id, runs=args.runs, seed=args.seed, mode=args.mode))
         return 0
     if args.command == "validate-season-probabilities":
-        print_json(validate_season_probabilities(root, through_date=args.through, runs=args.runs, seed=args.seed, playoffs=args.playoffs, limit=args.limit))
+        print_json(validate_season_probabilities(root, through_date=args.through, runs=args.runs, seed=args.seed, playoffs=args.playoffs, limit=args.limit, engine=args.engine))
         return 0
     if args.command == "calibrate-market":
         print_json(calibrate_market(root, through_date=args.through, holdout_start=args.holdout_start, runs=args.runs, seed=args.seed, playoffs=args.playoffs, limit=args.limit, scored_only=args.scored_only))

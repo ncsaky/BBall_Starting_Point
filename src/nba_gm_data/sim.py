@@ -573,14 +573,24 @@ def coaches_on_date(context: dict[str, Any], coach_by_team: dict[str, CoachRatin
     return current
 
 
+# Game engines the scorecards can choose between (Stage 2 seam). Normal gameplay always runs DEFAULT_ENGINE.
+DEFAULT_ENGINE = "current"
+ENGINES = ("current", "stage2")
+
+
 def sim_game(root: str | Path, game_id: str, mode: str = "replay-real-minutes", seed: int = 1) -> SimGameResult:
     return sim_game_with_context(load_sim_context(root), game_id, mode=mode, seed=seed)
 
 
-def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "replay-real-minutes", seed: int = 1, *, interior_experiment: Any = None) -> SimGameResult:
-    """Simulate one game from preloaded context using a domain-scoped seed."""
+def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "replay-real-minutes", seed: int = 1, *, interior_experiment: Any = None, engine: str = DEFAULT_ENGINE) -> SimGameResult:
+    """Simulate one game from preloaded context using a domain-scoped seed.
+
+    engine: "current" (today's engine, the default and the only one normal gameplay uses) or "stage2" (the Stage 2
+    possession engine under construction; scorecards and research scripts only, never saves or the GUI)."""
     if mode not in SIM_MODES:
         raise ValueError(f"Unknown sim mode {mode!r}")
+    if engine not in ENGINES:
+        raise ValueError(f"Unknown engine {engine!r}; choose one of {', '.join(ENGINES)}")
     canonical = context["canonical"]
     game = context.get("indices", {}).get("schedule_by_game_id", {}).get(str(game_id))
     if game is None:
@@ -603,6 +613,13 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
     game_date = game.get("gameDate") or game.get("date")
     home_players = game_player_pool(context, game_id, home_team, mode, game_date=game_date)
     away_players = game_player_pool(context, game_id, away_team, mode, game_date=game_date)
+    if engine == "stage2":
+        # Stage 2 seam (S2-SEAM-SHOOTING): the new possession engine gets the same game, teams and tonight's player
+        # pools. Explicit scorecard/research choice only; saves and the GUI never pass it.
+        from .stage2.engine import simulate_stage2_game
+
+        return simulate_stage2_game(context, game, home_team, away_team, home_players, away_players,
+                                    game_id=str(game_id), mode=mode, seed=seed)
     if interior_experiment is not None:
         # Explicit isolated mechanism experiment; saves/settings never enable it.
         # Ordinary preparation/scoring/RNG and response schemas remain unchanged.
@@ -2748,15 +2765,15 @@ def validate(root: str | Path, through_date: str | None = None, playoffs: bool =
     )
 
 
-def validate_game_probabilities(root: str | Path, game_id: str, runs: int = 1000, seed: int = 1, mode: str = "replay-real-minutes") -> dict[str, Any]:
+def validate_game_probabilities(root: str | Path, game_id: str, runs: int = 1000, seed: int = 1, mode: str = "replay-real-minutes", engine: str = DEFAULT_ENGINE) -> dict[str, Any]:
     context = load_sim_context(root)
-    return validate_game_probabilities_with_context(context, game_id, runs=runs, seed=seed, mode=mode)
+    return validate_game_probabilities_with_context(context, game_id, runs=runs, seed=seed, mode=mode, engine=engine)
 
 
-def validate_game_probabilities_with_context(context: dict[str, Any], game_id: str, runs: int = 1000, seed: int = 1, mode: str = "replay-real-minutes", include_player_stats: bool = True) -> dict[str, Any]:
+def validate_game_probabilities_with_context(context: dict[str, Any], game_id: str, runs: int = 1000, seed: int = 1, mode: str = "replay-real-minutes", include_player_stats: bool = True, engine: str = DEFAULT_ENGINE) -> dict[str, Any]:
     actual = actual_score_for_game(context, game_id)
     odds = context["odds"].get(str(game_id))
-    results = [sim_game_with_context(context, game_id, mode=mode, seed=seed + run) for run in range(runs)]
+    results = [sim_game_with_context(context, game_id, mode=mode, seed=seed + run, engine=engine) for run in range(runs)]
     home_team_id = results[0].home_team_id
     away_team_id = results[0].away_team_id
     home_wins = [1 if result.home_score > result.away_score else 0 for result in results]
@@ -2770,6 +2787,7 @@ def validate_game_probabilities_with_context(context: dict[str, Any], game_id: s
     report = {
         "game_id": str(game_id),
         "mode": mode,
+        "engine": engine,
         "runs": runs,
         "seed": seed,
         "home_team_id": home_team_id,
@@ -2794,15 +2812,16 @@ def validate_game_probabilities_with_context(context: dict[str, Any], game_id: s
     return report
 
 
-def validate_season_probabilities(root: str | Path, through_date: str | None = None, runs: int = 1000, seed: int = 1, playoffs: bool = False, limit: int | None = None) -> dict[str, Any]:
+def validate_season_probabilities(root: str | Path, through_date: str | None = None, runs: int = 1000, seed: int = 1, playoffs: bool = False, limit: int | None = None, engine: str = DEFAULT_ENGINE) -> dict[str, Any]:
     context = load_sim_context(root)
     games = validation_game_ids(context, through_date=through_date, playoffs=playoffs)
     if limit is not None:
         games = games[:limit]
-    reports = [validate_game_probabilities_with_context(context, game_id, runs=runs, seed=seed, mode="replay-real-minutes") for game_id in games]
+    reports = [validate_game_probabilities_with_context(context, game_id, runs=runs, seed=seed, mode="replay-real-minutes", engine=engine) for game_id in games]
     summary = summarize_market_reports(reports)
     return {
         "mode": "replay-real-minutes",
+        "engine": engine,
         "runs_per_game": runs,
         "seed": seed,
         "through_date": through_date,
