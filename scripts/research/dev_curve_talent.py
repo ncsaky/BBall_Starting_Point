@@ -128,7 +128,17 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--classes", default="2027")
     parser.add_argument("--class-seeds", default="1,2")
+    parser.add_argument("--params", help="JSON object of health/ratings_model constants to override (tuning)")
     args = parser.parse_args()
+    if args.params:
+        from nba_gm_data import health, ratings_model
+        for key, value in json.loads(args.params).items():
+            module = ratings_model if hasattr(ratings_model, key) else health
+            if key == "INPUTS_AGE_FACTOR":
+                value = tuple(tuple(p) for p in value)
+            elif key == "INPUTS_DECLINE":
+                value = {**health.INPUTS_DECLINE, **{k: tuple(v) for k, v in value.items()}}
+            setattr(module, key, value)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     result = run(args.seasons, args.seed, [int(y) for y in args.classes.split(",") if y],

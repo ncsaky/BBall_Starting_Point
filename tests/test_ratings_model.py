@@ -36,6 +36,10 @@ class PlaceholderTraitTests(unittest.TestCase):
         self.assertEqual(rm._trait_values(canonical, skip_placeholders=True), {"b": {"t": 61.0}})
 
 
+def step(input_id):
+    return rm._development_steps().get(input_id, rm.GRADE_POINTS_PER_TRAIT_POINT)
+
+
 class RoutingTests(unittest.TestCase):
     def test_trait_delta_moves_each_input_by_its_share_of_all_traits_using_it(self):
         inputs = {"S08": grade(50), "S03": grade(50), "S02": grade(50), "S01": grade(50)}
@@ -44,16 +48,18 @@ class RoutingTests(unittest.TestCase):
         totals = rm._input_trait_weight_totals()
         for input_id in inputs:
             share = trait_input_weights("release_speed")[input_id] / totals[input_id]
-            self.assertAlmostEqual(deltas[input_id], 4.0 * rm.GRADE_POINTS_PER_TRAIT_POINT * share)
-        # S08 (release technique) is used only by release_speed, so it takes the full step.
-        self.assertAlmostEqual(deltas["S08"], 4.0 * rm.GRADE_POINTS_PER_TRAIT_POINT)
+            self.assertAlmostEqual(deltas[input_id], 4.0 * step(input_id) * share)
+        # S08 (release technique) is used only by release_speed, so it takes its full step.
+        self.assertAlmostEqual(deltas["S08"], 4.0 * step("S08"))
 
-    def test_uniform_gain_moves_every_movable_input_by_the_same_amount(self):
+    def test_uniform_gain_moves_every_movable_input_by_its_own_step(self):
+        # Each input's step is the common step scaled by its league spread (DEV-CURVE 2026-11-21), so a uniform
+        # gain moves every input by the same share of its own spread.
         from nba_gm_data.trait_adapter import LEGACY_TRAITS
         inputs = {i: grade(50) for i in ("S01", "S08", "S17", "S33", "S37", "F01.recognition")}
         deltas = rm.route_trait_deltas(inputs, {t: 1.0 for t in LEGACY_TRAITS})
         for input_id in inputs:
-            self.assertAlmostEqual(deltas[input_id], rm.GRADE_POINTS_PER_TRAIT_POINT)
+            self.assertAlmostEqual(deltas[input_id], step(input_id))
 
     def test_physical_capacities_develop_but_body_dimensions_do_not(self):
         def physical(v):
@@ -84,9 +90,11 @@ class RoutingTests(unittest.TestCase):
         deltas = rm.route_trait_deltas({"P01": height, "S37": grade(60)}, {"playoff_translation": 3.0})
         self.assertNotIn("P01", deltas)
 
-    def test_grades_stay_inside_the_schema_range(self):
-        out = rm.apply_input_deltas({"S08": grade(99)}, {"S08": 5})
-        self.assertEqual(out["S08"]["value"]["grade"], 100.0)
+    def test_grades_have_a_floor_but_no_top(self):
+        # DEV-CURVE (2026-11-21): no clipping at 100 (AGENTS.md rule 3).
+        out = rm.apply_input_deltas({"S08": grade(99), "S09": grade(2)}, {"S08": 5, "S09": -5})
+        self.assertEqual(out["S08"]["value"]["grade"], 104.0)
+        self.assertEqual(out["S09"]["value"]["grade"], 0.0)
 
     def test_unknown_mode_is_rejected(self):
         with self.assertRaises(ValueError):
