@@ -6,6 +6,25 @@ Current priority (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE now, ODDS-COA
 
 ---
 
+## Ready now (2026-11-21, evening): HEADSHOT-GEN-LIBRARY batch 2 and later (fresh chat each; image generation)
+
+Batch 1 was approved (66 people, 222 portraits; the ages read clearly). Paste the batch 1 prompt below into a fresh
+chat with these changes at the top:
+
+```
+This is batch 2 of HEADSHOT-GEN-LIBRARY (batch 1 is merged; read docs/agents/tasks/headshot-gen-library.md and
+continue its numbering: players from player-m/0025, staff men from staff-m/0031, staff women from staff-f/0013).
+Reuse ../BBall_codex_headshots on branch codex/headshot-gen-library after: git fetch .. codex/immersive-franchise-journey
+&& git merge FETCH_HEAD. Order for this batch: 40 players (4 stages), then 10 staff women, then staff men if the plan
+still has room. Everything else exactly as the batch 1 prompt below: rules, fixes, outputs, manifest format (append to
+data/research/headshot_gen_library_manifest.json), contact sheet, report section "Batch 2". Board row: "in progress
+(Codex), batch 2", then "review (batch 2)".
+```
+For batch 3 and later, change the batch number, the starting IDs and the order (players first until about 200, then
+staff to about 120 men and 60 women).
+
+---
+
 ## Ready now (2026-11-21, evening): HEADSHOT-GEN-LIBRARY batch 1 (fresh chat; image generation)
 
 ### HEADSHOT-GEN-LIBRARY: the generated face library, batch 1
