@@ -973,7 +973,7 @@ def stop_one_checklist(canonical: dict[str, Any], save: dict[str, Any], team_id:
                       "maximum": bool(record.get("maximum")),
                       "default": "No offer if you do nothing: he becomes unrestricted."})
     meta_season = str((save.get("meta") or {}).get("season") or "")
-    qo_ids = {i["player_id"] for i in items if i["kind"] == "qualifying_offer"}
+    qo_ids = {i["player_id"] for i in items if i["kind"] == "qualifying_offer" and i.get("status") == "tendered"}
     payroll = team_payroll(active, save, team_id, season)
     holds = {h["player_id"]: h for h in payroll.get("holds") or []}
     for right in save.get("re_signing_rights", []) or []:

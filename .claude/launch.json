@@ -20,6 +20,27 @@
       "port": 8765
     },
     {
+      "name": "fa2-gui",
+      "runtimeExecutable": "nice",
+      "runtimeArgs": [
+        "-n",
+        "10",
+        "/Users/noahtyler/Documents/BBall_data/BBall_Starting_Point/.claude/worktrees/agent-a246e3c04237da68c/.venv/bin/python",
+        "-m",
+        "nba_gm_data.app_server",
+        "--root",
+        ".",
+        "--save-dir",
+        "/Users/noahtyler/Documents/BBall_data/BBall_Starting_Point/.claude/worktrees/agent-a246e3c04237da68c/output/fa-real-slice2/gui/saves",
+        "--port",
+        "8766"
+      ],
+      "env": {
+        "PYTHONPATH": "src"
+      },
+      "port": 8766
+    },
+    {
       "name": "card-mockup",
       "runtimeExecutable": "/Users/noahtyler/Documents/BBall_data/BBall_Starting_Point/.venv/bin/python",
       "runtimeArgs": [
