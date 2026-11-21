@@ -71,9 +71,14 @@ class StaffIdentityTests(unittest.TestCase):
         staff = save["staff_slots"]
         market = [candidate for slot in STAFF_SLOTS for candidate in generated_staff_candidates(5, slot)]
         apply_market_faces(save, 5, market)
-        held = {person["face_id"] for person in staff}
-        self.assertFalse(held & {candidate["face_id"] for candidate in market})
-        self.assertEqual(len({candidate["face_id"] for candidate in market}), len(market))
+        # A face repeats only once every photo of that gender is in use (the stock library is modest until the
+        # generated-face library arrives): extra uses = people beyond the photos available, women none.
+        everyone = [*staff, *market]
+        for gender, group in (("male", "staff-m"), ("female", "staff-f")):
+            people = [person for person in everyone if person["gender"] == gender]
+            available = faces.library_manifest()["groups"][group]["count"]
+            extra = len(people) - len({person["face_id"] for person in people})
+            self.assertEqual(extra, max(0, len(people) - available), gender)
         # The same candidate keeps the same face whether the market is listed for one role or all of them.
         one_role = [candidate for candidate in generated_staff_candidates(5, "scouting_lead")]
         apply_market_faces(save, 5, one_role)
@@ -213,7 +218,7 @@ class StockLibraryTests(unittest.TestCase):
                     self.assertTrue((GUI / stage["file"].lstrip("/")).exists(), stage["file"])
         self.assertEqual(groups["staff-m"]["gender"], "male")
         self.assertEqual(groups["staff-f"]["gender"], "female")
-        self.assertGreaterEqual(groups["staff-m"]["count"] + groups["staff-f"]["count"], 400)
+        self.assertGreaterEqual(groups["staff-m"]["count"] + groups["staff-f"]["count"], 300)  # Commons only (Openverse dropped: robots.txt)
         self.assertGreaterEqual(groups["staff-f"]["count"], 50)
         self.assertGreaterEqual(len(groups["staff-m"]["senior"]), 20)
         self.assertGreaterEqual(groups["prospect-m"]["count"], 60)  # a generated draft class has 60 prospects

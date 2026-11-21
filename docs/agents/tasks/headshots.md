@@ -145,8 +145,8 @@ Size: 2,000 SVGs, 18.8 MB. With the real photos, about 24 MB in all (29 MB on di
 Owner: Claude (Opus agent), branch `worktree-agent-a1049d23b312b874f` (merged the HEADSHOTS branch first). Board row: HEADSHOTS-V2. Status: **review**.
 
 ## TL;DR
-- Every face in the game is now a photo of a real person: the cartoon library is gone. All 30 head coaches show their real photo, and 595 of 655 real prospects do (was 528).
-- Made-up staff and made-up prospects use a stock library of 479 openly licensed photos of real, non-famous adults (239 men, 168 women, 72 young men for prospects), each one credited; Settings now has a Photo credits view.
+- Every face in the game is now a photo of a real person: the cartoon library is gone. All 30 head coaches show their real photo, and 594 of 655 real prospects do (was 528).
+- Made-up staff and made-up prospects use a stock library of 393 openly licensed photos of real, non-famous adults from Wikimedia Commons (192 men, 139 women, 62 young men for prospects), each one credited; Settings now has a Photo credits view.
 - Faces can hold several images per person by age ("stages"), ready for the planned generated faces; the stock library is kept modest because it may be replaced.
 
 ## Coaches: 30 of 30 real photos
@@ -156,12 +156,12 @@ Owner: Claude (Opus agent), branch `worktree-agent-a1049d23b312b874f` (merged th
 - Recorded in `real/manifest.json` with source page, image URL, date and `reference_only_not_cleared` (the same status as the NBA player headshots). `scripts/fetch_real_headshots.py --nbca-coaches`.
 - Free Commons photos also exist for Adelman, Atkinson and Nurse, but they are game or event shots. The association's studio headshots match the other coaches better.
 
-## Prospects: 595 of 655 real photos (was 528); 60 fall back to stock
+## Prospects: 594 of 655 real photos (was 528); 61 fall back to stock
 | Kind | Before | After |
 |---|---|---|
 | College | 528 of 535 | 535 of 535 |
 | High school | 0 of 90 | 37 of 90 |
-| International | 0 of 30 | 23 of 30 |
+| International | 0 of 30 | 22 of 30 |
 
 - **Research:** three research agents, one page per player, with the identity checked against school, club or commitment. The records are in `data/overrides/prospect_photos/found_*.json`.
 - **Sources:**
@@ -170,43 +170,45 @@ Owner: Claude (Opus agent), branch `worktree-agent-a1049d23b312b874f` (merged th
   - MaxPreps: 6;
   - school athletics rosters (Temple, McNeese, UConn, Wright State, Houston, Illinois): 7;
   - ABA League: 2;
-  - ACB, Paris Basketball, NKL / Zalgiris and South East Melbourne Phoenix: 1 each.
+  - Paris Basketball, NKL / Zalgiris and South East Melbourne Phoenix: 1 each.
+  - Removed in review: Diego Niebla's photo came from acb.com, whose robots.txt blocks Claude-User and ClaudeBot. He falls back to a stock face, with the reason in the manifest. `fetch_real_headshots.py` now skips robots-blocked hosts (`ROBOTS_BLOCKED_HOSTS`).
 - **Look:** each photo is cut out from its background, greyscale, and framed like ESPN's headshots (`scripts/stock_headshot.swift`), so it matches the college photos.
 - **Rights:** non-Commons photos are marked `reference_only_not_cleared`.
-- **Not found (60):**
+- **Not found (61):**
   - 53 high-school players, with no photo page that names them (On3, Rivals and 247Sports block scripted access);
-  - 5 international players;
+  - 5 international players, plus Diego Niebla (photo dropped, see above);
   - 2 whose only photo had no usable face (Cheickh Niang, Marc-Owen Fodzo Dada).
-  - All 60 fall back to the stock library, recorded as `fallback_stock` with the reason.
+  - All 61 fall back to the stock library, recorded as `fallback_stock` with the reason.
 - **Notes:**
   - Some high-school players are minors. Their photos are public recruiting and USA Basketball headshots, used as the user asked.
   - A few photos are action shots: Spratt with a trophy, Karutasu and Djako with another player at the edge.
 
 ## Stock library (`gui/assets/headshots/stock/`)
-- **Contents:** 479 photos, 3.0 MB.
-  - staff, men: 239 (46 tagged older);
-  - staff, women: 168 (12 tagged older);
-  - prospects: 72 young men.
+- **Contents:** 393 photos, 2.5 MB, all from Wikimedia Commons.
+  - staff, men: 192 (37 tagged older);
+  - staff, women: 139 (8 tagged older);
+  - prospects: 62 young men.
 - **Format:** each photo is cut out, greyscale and 260 px AVIF in ESPN framing, about 6 KB.
-- **Sources:**
-  - 393 from the Wikimedia Commons API: professional headshots, the "Portrait photographs of men / women" categories, and Unsplash / Pexels / Pixabay imports;
-  - 86 from the Openverse API (Flickr).
-- **Licences:** CC BY-SA 293, CC BY 105, CC0 63, public domain 18. Author, licence, licence link and source page for each photo are in `credits.json`.
+- **Sources:** the Wikimedia Commons API: professional headshots, the "Portrait photographs of men / women" categories, and Unsplash / Pexels / Pixabay imports.
+- **Licences:** CC BY-SA 270, CC0 59, CC BY 49, public domain 15. Author, licence, licence link and source page for each photo are in `credits.json`.
+- **Openverse removed (robots.txt decision):** an earlier run also used the Openverse API.
+  - Its robots.txt disallows `/v1/images/` for every user agent and the whole site for `anthropic-ai`, and the project rule is to respect robots.txt.
+  - All 86 Openverse photos were removed: 42 staff men, 29 staff women and 15 prospects; their files, manifest entries and credits are gone.
+  - The Openverse search code is gone from `scripts/build_stock_faces.py`, and publish skips any candidate found through it (`EXCLUDED_SOURCES`).
+  - Wikimedia Commons stays: its API is meant for scripted use under its User-Agent policy.
+  - After the removal the groups were renumbered (no gaps).
 - **How the photos were chosen:**
-  - Machine checks in `scripts/build_stock_faces.py`: exactly one clear face, head not turned or tilted, enough resolution, and a clean cut-out with the shoulders reaching the bottom edge. 1,077 of 3,578 downloads passed.
-  - Human review of numbered contact sheets: one code per face for gender and age band. Rejected were minors, famous people, costumes and glamour shots, watermarks, vintage photos, uniforms, and repeat photos of one person. Of 1,077, 479 were kept. The review is in `data/overrides/stock_face_review.json`.
-  - Notable-person check: a name in the title with a person article on English Wikipedia, or a photo from a political or official account, is rejected (70 caught). Examples: Lee Iacocca, two campaign headshots, a senator's office.
+  - Machine checks in `scripts/build_stock_faces.py`: exactly one clear face, head not turned or tilted, enough resolution, and a clean cut-out with the shoulders reaching the bottom edge.
+  - Human review of numbered contact sheets: one code per face for gender and age band. Rejected were minors, famous people, costumes and glamour shots, watermarks, vintage photos, uniforms, and repeat photos of one person. The review is in `data/overrides/stock_face_review.json`.
+  - Notable-person check: a name in the title with a person article on English Wikipedia, or a photo from a political or official account, is rejected.
   - Commons photos of named people that any Wikipedia article uses are skipped at search time.
 - **Gender:** tagged by eye on the sheets. Names are drawn from the face's gender list, as before, and the tests check that names and faces always agree.
-- **Prospect faces:** young athletes were scarce. 45 photos came from the search directly (some in team or athletic wear). Another 27 are young adult men moved from the staff pool in a second pass.
-- **Size:** modest on purpose, per the coordinator (it may be replaced by generated faces). It is still enough for no repeated face in a new league:
-  - about 132 made-up men on staff, plus about 88 men in the market, against 239 men's photos;
-  - 60 generated prospects in a class, against 72 photos.
-- **Fetching:**
-  - One request at a time per host, everything cached in `output/headshots-v2/`.
-  - Wikimedia's standard thumbnail sizes, every 2 s.
-  - Openverse at about 10 requests a minute, within its anonymous limits; it was slow all day (frequent timeouts).
-  - Note: the robots.txt files of both Openverse and Wikimedia disallow their API paths for crawlers, and Openverse's also names Anthropic's crawler. I treated these as rules for crawlers and followed each API's published usage terms (rate limits, identifying user agent), since the task named these APIs. Worth a look if that reading is wrong.
+- **Prospect faces:** young athletes were scarce. The 62 prospect photos include 26 young adult men moved from the staff pool (in two passes) so that a 60-player generated class has no repeated face.
+- **Size and repeats:** modest on purpose, per the coordinator (it may be replaced by generated faces).
+  - In a new league the employed staff never share a face.
+  - Women never repeat: 34 women in the league and market, against 139 photos.
+  - With the staff market listed, there are 216 made-up men against 192 men's photos, so 22 photos appear twice (one three times). The repeats are between employed staff and market candidates. The coordinator accepted this until the generated faces arrive.
+- **Fetching:** one request at a time per host, everything cached in `output/headshots-v2/`, Wikimedia's standard thumbnail sizes, every 2 s.
 
 ## Career stages (coordinator request)
 - `stock/manifest.json` has `faces`: each face is one fictional person, `{"gender", "stages": [{"min_age", "file"}, ...]}`.
@@ -218,7 +220,7 @@ Owner: Claude (Opus agent), branch `worktree-agent-a1049d23b312b874f` (merged th
 
 ## GUI
 - **Settings > Photo credits:** a new view in the house table style (double-rule header, alternating rows, row hover, sorted-column shading, bottom-aligned headshot filling the row).
-  - It lists all 479 stock photos and the freely licensed real photos (22 coaches, 17 prospects), each with photographer, licence and source links. It is sortable by use, photo, author and licence.
+  - It lists all 393 stock photos and the freely licensed real photos (22 coaches, 17 prospects), each with photographer, licence and source links. It is sortable by use, photo, author and licence.
   - Reference-only real photos are counted by source in one line.
   - The CC BY / CC BY-SA "changes made" note (cut out, cropped, greyscale) is in `credits.json`.
 - **Staff faces** use cover / bottom framing, so the landscape cut-outs fill the near-square portrait slots.
@@ -232,30 +234,32 @@ Owner: Claude (Opus agent), branch `worktree-agent-a1049d23b312b874f` (merged th
   - `screens/draft_board_upcoming_prospects_1440.jpg` and `screens/draft_board_zoom.png`: the Upcoming Prospects board, with Stefan Joksimovic and Hugo Yimga-Moukouri on their new photos.
   - `screens/prospect_card_1440.jpg`: Hugo Yimga-Moukouri.
   - `screens/photo_credits_1440.jpg`.
+  - These screenshots predate the Openverse removal: some faces shown there are no longer in the library.
 - `contact_sheet.jpg`: 48 random library faces, labelled with their id.
 
 ## Tests
 - **`tests/test_headshots.py`: 18 OK.** New and changed tests check that:
   - every face is a photo (only AVIF or JPEG under `headshots/`, no `generated/` folder, no cartoon build script);
   - names and faces always share a gender;
-  - no face repeats in a league's made-up staff plus market (the 30 head coaches are real, as in a new save);
+  - in a league's made-up staff plus market (the 30 head coaches are real, as in a new save), a face repeats only once every photo of that gender is in use;
   - every real coach has a real photo;
   - every stock photo has a credit with an allowed licence and its file;
   - the library manifest matches its files and stages;
   - career stages pick by age;
   - retired cartoon faces in old saves are replaced;
-  - at least 580 real prospects have their own photo.
+  - at least 580 real prospects have their own photo;
+  - the library holds at least 300 staff photos (Commons only).
 - **`tests/photo_credits.test.cjs` (new):** the credits view lists every stock photo and every freely licensed real photo, and uses the house table style.
 - **JS:** all 44 `tests/*.test.cjs` pass. `startup_video.test.cjs` needs the git-ignored movie symlinked into the worktree.
 - **Core suite:** `bash scripts/run_core_tests.sh`: 338 OK (2 skipped). **GUI and focused:** `test_gui_concept71`, `test_gui_concept74`, `test_staff_lifecycle`, `test_real_prospects`, `test_draft_boards`, `test_prospect_identifiers`, `test_headshots`: 87 OK.
 
 ## What's left
-- **60 prospects without a real photo:**
+- **61 prospects without a real photo:**
   - 53 high-school players. 247Sports and On3 have photos but block scripted access; adding them by hand in a browser would cover most.
-  - 7 international players.
+  - 8 international players.
 - **Reference-only photos:** the 8 association coach photos and the non-Commons prospect photos are not cleared for redistribution. This is fine for the private beta; recheck before any public release.
 - **Re-staging drafted players** by age (the hook is above).
-- **Stock library size:** modest, with little headroom for men (239 photos against about 220 needed at once). Faces repeat only after every photo of that gender is in use. If the generated-face trial is not adopted, more photos can be added with `build_stock_faces.py` (download, process, sheet, review, notable, publish).
+- **Stock library size:** modest. A few made-up men repeat once the staff market is listed (192 men's photos against about 216 men). If the generated-face trial is not adopted, more photos can be added with `build_stock_faces.py` (download, process, sheet, review, notable, publish).
 - **Old `scripts/fetch_real_headshots.py --coaches`:** a rerun would not undo the 8 association photos (it skips coaches that already have a real photo).
 
 ## Resume state

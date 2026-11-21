@@ -4,17 +4,19 @@
 Every face shown in the game is a photo of a real human. Real people (head coaches, real prospects) use their own
 photo (scripts/fetch_real_headshots.py). Made-up staff and made-up prospects get a photo from this library.
 
-Sources (no account needed, polite: one request at a time with a delay, every response cached on disk):
-- Openverse API (api.openverse.org), anonymous use within its published limits (20 requests a minute, 200 a day),
-  licences CC0, public domain mark, CC BY and CC BY-SA only. The images themselves come from where Openverse found
-  them (mostly Flickr's static image servers and Wikimedia Commons).
-- Wikimedia Commons API: stock-photo imports (Unsplash, Pixabay, Pexels files released under CC0 or similar),
-  professional headshots and portrait-photograph categories. Photos of named people are kept only when no
-  Wikipedia article uses them (an article means a notable, possibly famous, person); public-figure words in a
-  title (senator, actor, ...) and non-free licences are skipped.
+Source: the Wikimedia Commons API (no account needed; scripted use is what it is for, under Wikimedia's
+User-Agent policy), one request at a time with a delay, every response cached on disk: stock-photo imports
+(Unsplash, Pixabay, Pexels files released under CC0 or similar), professional headshots and portrait-photograph
+categories. Photos of named people are kept only when no Wikipedia article uses them (an article means a notable,
+possibly famous, person); public-figure words in a title (senator, actor, ...) and non-free licences are skipped.
+Licences kept: CC0, public domain, CC BY, CC BY-SA.
+
+Not used: the Openverse API. Its robots.txt disallows /v1/images/ for every user agent and disallows the whole site
+for "anthropic-ai", and this project respects robots.txt. An earlier run used it; those photos were removed from the
+library (2026-11-21) and publish skips any candidate found through it (EXCLUDED_SOURCES).
 
 Steps (each one resumable; everything intermediate lives in output/headshots-v2/):
-  search     run the query list against Openverse and Commons, store candidates (licence, author, tags)
+  search     run the query list against Commons, store candidates (licence, author, tags)
   download   fetch each candidate photo once (about 1024-1280 px), one request at a time per image host
   process    cut the person out, greyscale, ESPN-style head-and-shoulders framing (scripts/stock_headshot.swift);
              reject photos with no face, several faces, a turned or tilted head, low resolution or a bad frame
@@ -64,7 +66,10 @@ UA = "NBA-GM-Sandbox-headshots/2.0 (private non-commercial hobby game; low reque
 TODAY = date.today().isoformat()
 _last: dict[str, float] = {}
 
-LICENCES = {  # Openverse licence code -> (display name prefix, allowed)
+# Sources whose photos are never published (see the docstring: Openverse's robots.txt blocks us).
+EXCLUDED_SOURCES = {"openverse"}
+_lock = threading.Lock()
+LICENCES = {  # licence codes of earlier Openverse candidates (kept to read old candidate files)
     "cc0": "CC0", "pdm": "Public Domain Mark", "by": "CC BY", "by-sa": "CC BY-SA",
 }
 # Words in a title or tags that point to a public figure, a minor, a group or a non-photo: skipped outright.
@@ -80,20 +85,6 @@ SKIP_WORDS = re.compile(
     re.I,
 )
 
-# Openverse queries: (query, pages of 10). Openverse times out on pages of 20 at the moment, so pages of 10; about
-# 170 requests in all, under the anonymous 200-a-day limit.
-OPENVERSE_QUERIES = [
-    # Young men for the generated prospects, athletic where possible (the scarcest group).
-    ("young man headshot", 8), ("student headshot", 8), ("athlete headshot", 6), ("rugby player portrait", 5),
-    ("soccer player portrait", 5), ("young athlete portrait", 5), ("guy portrait", 6), ("young male portrait", 6),
-    ("track and field athlete portrait", 4), ("volleyball player portrait", 4),
-    ("professional headshot", 14), ("corporate headshot", 12), ("headshot", 14),
-    ("basketball player portrait", 12), ("young man portrait", 12), ("businesswoman portrait", 10),
-    ("young black man portrait", 10), ("athlete portrait", 8), ("woman headshot", 12),
-    ("businessman portrait", 10), ("older man portrait", 10), ("african american man portrait", 10),
-    ("college student portrait", 6), ("black woman portrait", 6), ("man headshot", 10),
-    ("asian man portrait", 6), ("hispanic man portrait", 6),
-]
 # Wikimedia Commons: stock-photo imports (Unsplash and Pexels files, mostly CC0). (search, most results)
 COMMONS_QUERIES = [
     ('incategory:"Images_from_Unsplash" portrait', 600), ('incategory:"Images_from_Unsplash" man', 1100),
@@ -168,64 +159,6 @@ def skip_reason(title: str, tags: list[str]) -> str | None:
 
 
 # --------------------------------------------------------------------------------------------- search
-OPENVERSE_BUDGET = 185  # live requests in one run: under the anonymous 200 a day
-_openverse_live = [0]
-_lock = threading.Lock()
-
-
-def search_openverse(candidates: dict) -> None:
-    """Three queries at a time (Openverse answers slowly, about 15 s a page): about 10 requests a minute in all,
-    under the anonymous 20 a minute; each worker waits out any Retry-After the server sends."""
-    with ThreadPoolExecutor(max_workers=3) as pool:
-        list(pool.map(lambda item: search_openverse_query(candidates, *item[1], worker=item[0] % 3),
-                      enumerate(OPENVERSE_QUERIES)))
-
-
-def search_openverse_query(candidates: dict, query: str, pages: int, worker: int) -> None:
-    base = "https://api.openverse.org/v1/images/"
-    for page in range(1, pages + 1):
-        params = {"q": query, "license": "cc0,pdm,by,by-sa", "page_size": 10, "page": page}
-        url = base + "?" + urllib.parse.urlencode(params)
-        cached = (CACHE / hashlib.sha1(url.encode()).hexdigest()).exists()
-        with _lock:
-            if not cached and _openverse_live[0] >= OPENVERSE_BUDGET:
-                print("Openverse request budget for this run used: stopping", file=sys.stderr, flush=True)
-                return
-            _openverse_live[0] += 0 if cached else 1
-        headers: dict = {}
-        data = fetch(url, delay=3.5, host_key=f"openverse-{worker}", headers_out=headers)
-        left = headers.get("x-ratelimit-available-anon_sustained")
-        if left is not None and int(left) < 8:
-            print("Openverse daily allowance nearly used: stopping", file=sys.stderr)
-            return
-        with _lock:
-            try:
-                body = json.loads(data) if data else {}
-            except ValueError:
-                body = {}
-            results = body.get("results") or []
-            for row in results:
-                cid = f"ov:{row['id']}"
-                if cid in candidates:
-                    candidates[cid]["queries"] = sorted({*candidates[cid]["queries"], query})
-                    continue
-                tags = [t.get("name", "") for t in row.get("tags") or []]
-                machine = {t["name"]: t.get("accuracy") for t in row.get("tags") or [] if t.get("accuracy")}
-                candidates[cid] = {
-                    "id": cid, "source": "openverse", "provider": row.get("provider"), "title": row.get("title") or "",
-                    "image_url": row.get("url"), "landing_url": row.get("foreign_landing_url"),
-                    "author": row.get("creator") or "Unknown", "author_url": row.get("creator_url"),
-                    "licence_code": row.get("license"), "licence_version": row.get("license_version"),
-                    "licence_url": row.get("license_url"), "tags": tags, "machine_tags": machine,
-                    "queries": [query], "width": row.get("width"), "height": row.get("height"),
-                    "skip": skip_reason(row.get("title") or "", tags),
-                }
-            print(f"openverse {query!r} p{page}: {len(results)} (allowance left {left}); {len(candidates)} candidates", flush=True)
-            save_json(OV_CANDIDATES, candidates)
-        if data and page >= int(body.get("page_count") or 0):
-            break
-
-
 COMMONS_OK = re.compile(r"^(cc0|public domain|pd|cc[- ]by(-sa)?[- ][0-9.]+|cc by(-sa)? [0-9.]+)", re.I)
 
 
@@ -302,7 +235,9 @@ PERSON_WORDS = re.compile(
 
 def likely_person(row: dict) -> bool:
     """Stock-photo imports (Unsplash, Pexels, Pixabay) are mostly landscapes and objects: only titles that name a
-    person are worth downloading. Openverse results and named headshot uploads are all of people."""
+    person are worth downloading. Named headshot uploads are all of people."""
+    if row.get("source") in EXCLUDED_SOURCES:
+        return False
     if row.get("source") != "commons" or set(row.get("queries") or []) & NAMED_PEOPLE_QUERIES:
         return True
     return bool(PERSON_WORDS.search(row.get("title") or ""))
@@ -324,7 +259,7 @@ def download(candidates: dict, limit: int | None, source: str | None = None) -> 
     todo = [row for row in candidates.values() if not row.get("skip") and row.get("image_url")
             and not photo_path(row).exists() and not row.get("download_failed") and likely_person(row)
             and (source is None or row.get("source") == source)]
-    # Most promising first: professional headshots, then Openverse portraits, then stock-photo imports.
+    # Most promising first: professional headshots, then other portraits, then stock-photo imports.
     # Wikimedia throttles full-size originals hard (upload.wikimedia.org): those last.
     todo.sort(key=lambda row: ("upload.wikimedia.org" in download_url(row),
                                not (set(row.get("queries") or []) & NAMED_PEOPLE_QUERIES), row.get("source") != "openverse"))
@@ -415,10 +350,10 @@ def process(candidates: dict) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("step", choices=["search", "search-openverse", "search-commons", "download", "process", "sheet",
+    parser.add_argument("step", choices=["search", "search-commons", "download", "process", "sheet",
                                          "review", "publish", "contact", "notable"])
     parser.add_argument("--limit", type=int, default=None)
-    parser.add_argument("--source", choices=["openverse", "commons"], help="download: only this source")
+    parser.add_argument("--source", choices=["commons"], help="download: only this source")
     parser.add_argument("--sheet", type=int, help="review: the sheet number")
     parser.add_argument("--codes", help="review: one code letter per face on the sheet")
     args = parser.parse_args()
@@ -433,8 +368,6 @@ def main() -> None:
         return
     if args.step in ("search", "search-commons"):
         search_commons(load_json(WC_CANDIDATES, {}))
-    if args.step in ("search", "search-openverse"):
-        search_openverse(load_json(OV_CANDIDATES, {}))
     candidates = load_json(CANDIDATES, {})
     for part in (load_json(WC_CANDIDATES, {}), load_json(OV_CANDIDATES, {})):
         for cid, row in part.items():
@@ -588,7 +521,7 @@ def publish(candidates: dict) -> None:
     review = load_json(REVIEW, {}).get("codes", {})
     chosen: dict[str, list[tuple[str, bool]]] = {group: [] for group in GROUPS}
     for cid in sorted(review, key=lambda c: hashlib.sha1(c.encode()).hexdigest()):
-        if review[cid] in CODES and cut_path(cid).exists():
+        if review[cid] in CODES and cut_path(cid).exists() and candidates.get(cid, {}).get("source") not in EXCLUDED_SOURCES:
             group, senior = CODES[review[cid]]
             chosen[group].append((cid, senior))
     if OUT.exists():

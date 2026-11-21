@@ -9129,16 +9129,11 @@
   },
   "international_diego_niebla": {
    "fetched": "2026-11-21",
-   "file": "/assets/headshots/real/prospects/international-diego-niebla.avif",
    "gender": "male",
    "kind": "international",
    "name": "Diego Niebla",
-   "rights": "reference_only_not_cleared",
-   "source": "researched_public_page",
-   "source_name": "ACB",
-   "source_page": "https://acb.com/es/liga/jugadores/diego-niebla-30001494",
-   "source_url": "https://acb.com/es/liga/jugadores/diego-niebla-30001494/opengraph-image",
-   "status": "real_photo"
+   "reason": "photo found on acb.com, whose robots.txt blocks Claude-User and ClaudeBot: not used",
+   "status": "fallback_stock"
   },
   "international_gabrielius_buivydas": {
    "author": "User:Zafer",

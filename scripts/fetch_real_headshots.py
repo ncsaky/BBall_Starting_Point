@@ -402,6 +402,8 @@ def fetch_prospects(manifest: dict, limit: int | None = None) -> None:
 
 STOCK_TOOL = ROOT / "output" / "headshots-v2" / "bin" / "stock_headshot"
 REFRESH_FOUND = False  # --refresh-found: redo the cut-outs of researched photos (downloads stay cached)
+# Sites whose robots.txt blocks Claude's user agents (Claude-User, ClaudeBot, anthropic-ai): never used.
+ROBOTS_BLOCKED_HOSTS = {"acb.com"}
 
 
 def cutout(source: Path, target: Path) -> dict | None:
@@ -436,10 +438,17 @@ def fetch_found_prospects(manifest: dict, path: Path) -> None:
         record = out.get(row["id"]) or {"name": row["name"], "gender": "male"}
         if not row.get("found") or not row.get("image_url"):
             continue
-        if record.get("status") == "real_photo" and not (REFRESH_FOUND and record.get("source") != "espn_college_roster"):
+        host = urllib.parse.urlparse(str(row.get("image_url"))).netloc.removeprefix("www.")
+        if host in ROBOTS_BLOCKED_HOSTS and not row.get("reject"):
+            row["reject"] = f"{host} robots.txt blocks our user agents"
+        if not row.get("reject") and record.get("status") == "real_photo" and not (
+                REFRESH_FOUND and record.get("source") != "espn_college_roster"):
             continue
         if row.get("reject"):
-            record["reason"] = f"photo found but not used: {row['reject']}"
+            for key in ("file", "source", "source_name", "source_page", "source_url", "rights"):
+                record.pop(key, None)
+            record.update(status="fallback_stock", reason=f"photo found but not used: {row['reject']}")
+            (OUT / "prospects" / f"{slug(row['id'])}.avif").unlink(missing_ok=True)
             out[row["id"]] = record
             continue
         image_url = commons_thumb(row["image_url"])

@@ -39,7 +39,7 @@ test('every stock photo is listed with its author, licence and source', async ()
   const freeReal = [...Object.values(real.coaches), ...Object.values(real.prospects)].filter((row) => row.status === 'real_photo' && row.licence);
   const rows = modal.body.match(/<tr data-credit-row/g) || [];
   assert.equal(rows.length, credits.photos.length + freeReal.length);
-  assert.ok(credits.photos.length >= 400);
+  assert.ok(credits.photos.length >= 300);
   for (const photo of credits.photos.slice(0, 40)) {
     assert.ok(modal.body.includes(photo.file), photo.face_id);
     assert.ok(modal.body.includes(String(photo.source_url).replace(/&/g, '&amp;')), photo.face_id);
