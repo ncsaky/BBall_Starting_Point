@@ -63,7 +63,7 @@ LOOP = {
     "trans_dreb": .20, "trans_steal": .60, "trans_made": .04, "trans_dead": .06, "k_trans": 1.5,
     # Turnovers: the defense's ball pressure (log-odds per index unit); transition and offensive-foul shares.
     # k_press is FITTED with the other team-strength terms below.
-    "k_press": .52, "trans_to": -.15, "off_foul_share": .08, "steal_share": .62, "k_steal_level": 1.0,
+    "k_press": .442, "trans_to": -.15, "off_foul_share": .08, "steal_share": .62, "k_steal_level": 1.0,
     "to_shift": .11,   # FITTED: league turnovers per 100 (S2-TOTALS-MATCHUPS: .13 -> .11 with the matchups on) (the card fit is per used possession; the loop's are per chance)
     # Non-shooting fouls per possession (league level, then the defenders' own multipliers); technicals etc.
     "ns_per_poss": .064, "other_ft_per_poss": .005, "loose_ball_per_chance": .025,
@@ -81,9 +81,9 @@ LOOP = {
     # FITTED together (coordinate search, scratch strength_fit) so the engine's expected margins follow the betting
     # market's spreads on the first half of 2025-26 (correlation .42 -> .57 at 3 runs a game, slope 1.04); checked on
     # the second half (.67, slope 1.24). They decide how much the ratings move results; no rating was changed.
-    # S2-TOTALS-MATCHUPS refit with the matchups on (k_perim .36 -> .336, k_rim .45 -> .408, k_press .80 -> .52; see the
+    # S2-TOTALS-MATCHUPS refit with the matchups on (k_perim .36 -> .286, k_rim .45 -> .347, k_press .80 -> .442; see the
     # matchup numbers below for how).
-    "k_perim": .336, "k_rim": .408, "perim_own": .5, "k_create": .44, "k_space": .29,
+    "k_perim": .286, "k_rim": .347, "perim_own": .5, "k_create": .44, "k_space": .29,
     # Blocks per missed shot by zone (at the league-average block weight); share credited to the help (rim) defender.
     "blk_rim": .277, "blk_short": .21, "blk_mid": .065, "blk_three": .02,
     # Assisted share of made shots by action (scaled to the league assist rate). FITTED scale.
@@ -97,8 +97,8 @@ LOOP = {
     # (Basketball Index 2025-26: rim 67.4, short mid 44.8, long mid 41.7, three 36.1).
     "zone_make": (-.19, -.18, 0.0, -.03),
     # League scoring level on every shot (make log-odds; S2-TOTALS-MATCHUPS: set so expected totals match the market on
-    # the first half of 2025-26 once pace and recent form are in).
-    "make_level": 0.0,
+    # the first half of 2025-26 with pace, recent form and the matchups in: the league scored 0.9 per 100 low).
+    "make_level": .012,
     # After an offensive rebound: chance of an immediate putback by the rebounder (rim / short misses vs others).
     "putback_close": .50, "putback_far": .20,
     # Points per 100 -> make log-odds (home court, coaches, rest).
@@ -128,20 +128,22 @@ LOOP = {
     # The defense numbers below and k_perim / k_rim / k_press above are FITTED together (scripts/research/
     # s2_matchups_tune.py strength): a coordinate search on the first half of 2025-26 (correlation of the engine's
     # expected margins with the market's spreads), then one common scale (0.8) chosen by the first half's mean miss
-    # against the spreads, since the search left the engine's margins 1.2x as spread out as the market's. All games,
-    # 4 runs: first half corr .673 -> .690, miss 6.81 -> 6.76; second half corr .743 -> .776, slope 1.13.
+    # against the spreads, since the search left the engine's margins 1.2x as spread out as the market's (all games,
+    # 4 runs: first half corr .673 -> .690, miss 6.81 -> 6.76; second half corr .743 -> .776, slope 1.13). Then the
+    # defense alone x0.85: teams' defensive ratings spread 4.9 points per 100 against a real 3.4 (offense 3.3 vs 3.2),
+    # and the softer defense also missed the first half's spreads less (7.0 -> 6.7) and totals a little less.
     "matchups": 1.0,
-    "k_close": .384,      # catch-and-shoot jumpers: his defender's closeout
+    "k_close": .326,      # catch-and-shoot jumpers: his defender's closeout
     "k_rot": .08,         # ... and the five's rotation (help recognition, off-ball positioning)
-    "k_onball": .336,      # pull-ups and short jumpers: his defender's on-ball contest
+    "k_onball": .286,      # pull-ups and short jumpers: his defender's on-ball contest
     "k_len": .10,         # ... his defender's length (wingspan beyond height, and height over the shooter), per 10 cm
     "beat0": -.40,        # drives: log-odds he gets past his man at even burst and containment
     "k_beat": 1.20,       # ... per unit of (his burst/handle/separation - his man's containment)
-    "k_beat_make": .16,   # ... make log-odds per unit of (chance he is past his man - the league chance)
+    "k_beat_make": .136,   # ... make log-odds per unit of (chance he is past his man - the league chance)
     "k_beat_foul": 1.23,  # ... shooting-foul log-odds per unit of the same (recovering defenders and late help foul); FITTED
                           #     with the foul-by-action numbers (s2_foul_fit.py)
     "k_fctrl": .15,       # ... his man's foul control (S45)
-    "k_post": .42,        # post-ups: his defender's post defense and height
+    "k_post": .357,       # post-ups: his defender's post defense and height
     "press_own": .5,      # turnovers: share of the ball pressure that is his own man's (the rest the five's average)
     "k_lanes": .20,       # ... the five's passing-lane defense
     # Foul-drawing craft (S24) by action, on top of the foul kernel's own shooter terms (which apply to every shot):
