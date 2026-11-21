@@ -153,9 +153,12 @@ def select_action(save, endpoint):
         return "draft_reveal_lottery", {"year": str(end_year), "team": "GSW"}
     if phase == "draft":
         if draft_completed_for_year(save, end_year):
-            return "advance_save", {"to_date": f"{end_year}-06-27"}
+            # FA-REAL slice 2: back to the after-draft checklist (stop 1), the day after the draft.
+            from nba_gm_data.offseason_calendar import offseason_dates
+            return "advance_save", {"to_date": offseason_dates(end_year)["after_draft"]}
         return "draft_sim_all", {"year": str(end_year), "team": "GSW"}
     if phase == "re_signing":
+        # Stop 1 (decide who to keep): before the draft this goes to draft night; after it, to the market.
         return "advance_re_signing", {"mode": "open_market", "team": "GSW"}
     if phase == "free_agency":
         mode = "end" if save.get("free_agency_state", {}).get("status") == "completed" else "day"

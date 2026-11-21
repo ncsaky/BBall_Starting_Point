@@ -31,6 +31,20 @@ The rule, for AI teams only (the user's team is never changed):
   fix it): the Atlanta case.
 - **Franchise stars** (KEEP-STARS): re-signing one of the league's 15 best players skips the room-below-the-line rule
   and is worth up to ``STAR_RETENTION_TAX_BUDGET`` of tax and lost payout (divided by the owner's money factor).
+
+FA-REAL slice 2 (the thin market): the room-below-the-line rule refused most AI bids in the 2027 replay, including
+teams' Bird bids for their own regulars (Minnesota and Donte DiVincenzo, Milwaukee and Kyle Kuzma) and mid-level
+signings for rotation needs: 502 of the day-one team-player pairs with a legal way to pay (86 got through). Real
+front offices keep their regulars with Bird rights when they're worth the tax and use the mid-level when they have one
+and a need; the tax itself is the owner's constraint. So:
+- **Keeping a regular** (a Bird re-signing of a player of ``REGULAR_MINUTES``+) never keeps room below the line; only
+  the tax bill against the owner's budget decides.
+- **Room below the line** applies to rotation additions only for rebuilding teams (trade room for absorbing
+  contracts), and to fringe additions (under ``REGULAR_MINUTES``) for every team that isn't contending.
+- **Personality** (TRADE-MARKET's front-office traits, ``front_office``): an office known to work hard to stay under
+  the tax keeps ``TAX_AVERSE_CUSHION`` below the line whatever the move and accepts half the tax; one known to pay the
+  tax to win accepts ``SPENDS_TAX_FACTOR`` times as much and keeps no room; an urgent contender or rising team accepts up
+  to ``URGENCY_TAX_SHARE`` more (urgency trait), a patient one a little less.
 """
 from __future__ import annotations
 
@@ -58,6 +72,12 @@ CEILING_KINDS = {"free_agency", "re_signing"}
 # about $170M).
 STAR_RETENTION_TAX_BUDGET = 100_000_000
 YOUNG_PLAYER_AGE = 25.0
+# FA-REAL slice 2 (see the module notes).
+REGULAR_MINUTES = 18.0          # a regular: Bird re-signings keep no room below the line; additions above it are "needs"
+TAX_AVERSE_CUSHION = 3_000_000  # an office known to avoid the tax keeps this much below the line on any addition
+TAX_AVERSE_FACTOR = 0.5
+SPENDS_TAX_FACTOR = 1.6
+URGENCY_TAX_SHARE = 0.4         # +/- share of the owner's budget at full urgency (contending and rising teams only)
 
 
 def _save():
@@ -140,8 +160,34 @@ def importance(minutes: float, kind: str) -> float:
     return value * (RE_SIGNING_IMPORTANCE if kind == "re_signing" else 1.0)
 
 
+def office_row(active: dict[str, Any], team_id: str) -> dict[str, Any] | None:
+    """The team's front-office traits (TRADE-MARKET), or None (human teams, leagues without traits)."""
+    from .front_office import office
+    try:
+        return office(active, team_id)
+    except Exception:   # pragma: no cover - a league without the trade-market context
+        return None
+
+
+def personality_tax_factor(active: dict[str, Any], save: dict[str, Any], team_id: str) -> float:
+    """How the office's known habits and urgency scale what the owner will pay in tax for one addition."""
+    from .front_office import has_bias, urgency_level
+    row = office_row(active, team_id)
+    if not row:
+        return 1.0
+    factor = 1.0
+    if has_bias(row, "spends_tax"):
+        factor *= SPENDS_TAX_FACTOR
+    if has_bias(row, "tax_averse"):
+        factor *= TAX_AVERSE_FACTOR
+    if team_phase(active, save, team_id) in {"peak", "entering"}:
+        factor *= 1.0 + URGENCY_TAX_SHARE * urgency_level(row)
+    return max(0.2, factor)
+
+
 def owner_tax_budget(active: dict[str, Any], save: dict[str, Any], team_id: str, minutes: float, kind: str) -> float:
-    return PHASE_TAX_BUDGET[team_phase(active, save, team_id)] / owner_money_factor(active, team_id) * importance(minutes, kind)
+    return (PHASE_TAX_BUDGET[team_phase(active, save, team_id)] / owner_money_factor(active, team_id)
+            * importance(minutes, kind) * personality_tax_factor(active, save, team_id))
 
 
 def phase_payroll_ceiling(active: dict[str, Any], save: dict[str, Any], team_id: str, season: str, kind: str,
@@ -154,15 +200,29 @@ def phase_payroll_ceiling(active: dict[str, Any], save: dict[str, Any], team_id:
     $66M of free agents (Cason Wallace $26.4M among them) up to the line."""
     if kind not in CEILING_KINDS:
         return None
-    room = PHASE_KEEP_ROOM[team_phase(active, save, team_id)]
+    from .cap_rules import cap_lines_for_season
+    from .front_office import has_bias
+    row = office_row(active, team_id)
+    line = cap_lines_for_season(season)["tax_line"]
+    if has_bias(row, "tax_averse"):
+        # FA-REAL slice 2: an office known to avoid the tax stays under it on any addition.
+        return line - TAX_AVERSE_CUSHION
+    if has_bias(row, "spends_tax"):
+        return None
+    phase = team_phase(active, save, team_id)
+    room = PHASE_KEEP_ROOM[phase]
     if room <= 0:
         return None
+    regular = float(minutes) >= REGULAR_MINUTES
+    if kind == "re_signing" and regular:
+        return None    # FA-REAL slice 2: a team keeps its regulars with Bird rights; only the tax bill decides
+    if regular and phase != "rebuilding":
+        return None    # FA-REAL slice 2: a rotation need (the mid-level's use), up to the line
     if age is not None and float(age) <= YOUNG_PLAYER_AGE:
         room *= 0.5
     if kind == "re_signing" and float(minutes) >= STARTER_MINUTES:
         room *= 0.5
-    from .cap_rules import cap_lines_for_season
-    return cap_lines_for_season(season)["tax_line"] - room
+    return line - room
 
 
 # TRADE-VOLUME-2: a rebuilding team does not spend free-agent money on veterans. Room by phase limits how close to

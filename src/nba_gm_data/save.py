@@ -2402,7 +2402,7 @@ def postseason_exit_required(save: dict[str, Any]) -> bool:
     state = save.get("playoff_state") or {}
     year = str(state.get("year") or season_end_year(save.get("meta", {}).get("season") or CANONICAL_SEASON))
     return (state.get("status") == "completed"
-            and save.get("state", {}).get("phase") in {"play_in", "playoffs", "draft_lottery"}
+            and save.get("state", {}).get("phase") in {"play_in", "playoffs", "draft_lottery", "re_signing"}
             and str(save.get("postseason_exit_confirmed") or "") != year)
 
 
@@ -5173,6 +5173,28 @@ def season_start_year_from_date(value: str) -> int:
     return parsed.year if parsed.month >= 7 else parsed.year - 1
 
 
+def player_extension_deadline(save: dict[str, Any], player: dict[str, Any], start_year: int,
+                              contract: dict[str, Any] | None = None) -> str:
+    """FA-REAL slice 2: a first-round pick entering the last year of his rookie deal can be extended until the day
+    before opening night (CBA Art. XI, the rookie-scale extension window); others keep the game's January window."""
+    from .offseason_decisions import is_rookie_scale_final_year
+    from .offseason_calendar import roster_deadline
+    if contract is None:
+        contract = (save.get("contract_overrides") or {}).get(str(player.get("id") or ""))
+    if is_rookie_scale_final_year(player, contract, int(start_year)):
+        return roster_deadline(int(start_year), save).isoformat()
+    return extension_deadline_date(start_year)
+
+
+def rookie_extension_window_closed(save: dict[str, Any], active: dict[str, Any], player: dict[str, Any], day: str) -> bool:
+    from .offseason_decisions import is_rookie_scale_final_year
+    from .offseason_calendar import roster_deadline
+    start = season_start_year_from_date(str(day))
+    contract = next((c for c in active.get("contracts", []) if c.get("player_id") == player.get("id")), None)
+    return (is_rookie_scale_final_year(player, contract, start)
+            and str(day) > roster_deadline(start, save).isoformat())
+
+
 def extension_deadline_date(start_year: int) -> str:
     return f"{start_year + 1}-01-15"
 
@@ -6530,8 +6552,11 @@ def process_ai_extensions(
         team = teams.get(team_id)
         if not player or not team:
             continue
+        if rookie_extension_window_closed(save, active, player, through_date):
+            continue   # FA-REAL slice 2: rookie-scale extensions close the day before opening night
         priority = ai_extension_priority(save, candidate, player, team_id, seed)
-        due_date = ai_extension_due_date(save, candidate, player, priority, seed)
+        due_date = ai_extension_due_date(save, candidate, player, priority, seed,
+                                         next((c for c in active.get("contracts", []) if c.get("player_id") == player_id), None))
         if through_date < due_date:
             continue
         team_pass = ai_extension_team_pass_outlook(save, candidate, player, team_id, priority)
@@ -6718,7 +6743,8 @@ def ai_extension_priority(save: dict[str, Any], candidate: dict[str, Any], playe
     return clamp(score, 0.0, 100.0)
 
 
-def ai_extension_due_date(save: dict[str, Any], candidate: dict[str, Any], player: dict[str, Any], priority: float, seed: int) -> str:
+def ai_extension_due_date(save: dict[str, Any], candidate: dict[str, Any], player: dict[str, Any], priority: float, seed: int,
+                          contract: dict[str, Any] | None = None) -> str:
     current = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
     start_year = season_start_year_from_date(str(current))
     if priority >= 82.0:
@@ -6733,7 +6759,7 @@ def ai_extension_due_date(save: dict[str, Any], candidate: dict[str, Any], playe
     try:
         due_year = start_year + 1 if month_day.startswith("01-") else start_year
         base = parse_date(f"{due_year}-{month_day}") + timedelta(days=jitter)
-        deadline = parse_date(extension_deadline_date(start_year))
+        deadline = parse_date(player_extension_deadline(save, player, start_year, contract))
         return min(base, deadline).isoformat()
     except (TypeError, ValueError):
         return f"{start_year}-{month_day}"

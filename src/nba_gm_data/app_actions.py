@@ -3008,6 +3008,14 @@ def extension_room_payload(
         current_year = season_start_year_for_app(save_active_contract_season(save))
         cap_rows = extension_cap_projection(active, save, team["id"], season_label_for_app(current_year), 4)
         eligible = bool(candidate.get("eligible")) and not bool(candidate.get("manual_review_required")) and safe_years > 0 and legal
+        # FA-REAL slice 2: rookie-scale extensions close the day before opening night.
+        from .save import player_extension_deadline, rookie_extension_window_closed
+        player_deadline = player_extension_deadline(save, player, season_start_year_from_date(current),
+                                                    next((c for c in active.get("contracts", []) if c.get("player_id") == candidate_id), None))
+        if eligible and rookie_extension_window_closed(save, active, player, current):
+            eligible = False
+            candidate = {**candidate, "eligibility_status": f"Rookie-scale extensions closed on {player_deadline}: he "
+                                                            "will be a restricted free agent next summer."}
         contract_seasons = list((contract_for_player(active, candidate_id) or {}).get("seasons") or [])
         # Offer-builder facts (additive), all from the rule submit_extension_offer_action applies:
         # his price from you, the market ask it starts from, and the multi-season cap table with the tax rule.
@@ -3028,6 +3036,7 @@ def extension_room_payload(
                 **candidate_terms,
                 "cap_table": cap_table,
                 "eligibility_reason": extension_eligibility_reason(candidate, legal, safe_years),
+                "extension_deadline": player_deadline,
                 "player_id": candidate_id,
                 "name": player.get("name") or candidate.get("name"),
                 "position": player.get("position") or candidate.get("position"),
@@ -3750,6 +3759,13 @@ def free_agency_room_payload(
     roster_count = sum(1 for player in active.get("players", []) if player.get("team_id") == team["id"])
     shown_candidates = (own_candidates if phase == "re_signing" else candidates)[:80]
     shown_ids = {id(candidate) for candidate in shown_candidates}
+    # FA-REAL slice 2: restricted free agents (a live qualifying offer) negotiate only with their own team for now.
+    from .offseason_decisions import restricted_player_ids
+    restricted = restricted_player_ids(save)
+    for candidate in shown_candidates:
+        holder = restricted.get(str(candidate.get("id")))
+        candidate["restricted"] = ({"team_id": holder, "team_abbrev": team_id_to_abbrev(holder),
+                                    "yours": holder == team["id"]} if holder else None)
     for candidate in candidates:
         floors = candidate.pop("_floors", None)
         if floors is not None and id(candidate) in shown_ids:
@@ -3804,7 +3820,19 @@ def free_agency_room_payload(
         "user_offers": [offer for offer in active_offers if offer.get("source") == "user"],
         "bidding_wars": free_agency_bidding_wars(canonical, save, limit=6),
         "recent_signings": recent_signings,
+        # FA-REAL slice 2: the stop's checklist (options, qualifying offers, own free agents, holds) and the dates.
+        "offseason_checklist": offseason_checklist_payload(canonical, save, team["abbrev"], active=active),
+        "stop": offseason_stop_name(phase, state),
     }
+
+
+def offseason_stop_name(phase: str, state: dict[str, Any]) -> str:
+    """Which of the four offseason stops the free-agency room is (plain words for the screens)."""
+    if phase == "re_signing":
+        return "decide_who_to_keep"
+    if phase == "free_agency":
+        return "finalize" if state.get("status") == "completed" else "make_offers"
+    return phase
 
 
 def submit_free_agent_offer_action(canonical: dict[str, Any], save_path: Path, payload: dict[str, Any]) -> dict[str, Any]:
