@@ -71,3 +71,14 @@ _Plan written 2026-11-20 by Claude (coordinator). Builds on TRADE-DEADLINE (merg
 
 ## Files
 `trade_counters.py`, `trade_targets.py`, `transactions.py`, `multi_team_trades.py`, `trade_wants.py`, `trade_roster.py`, `trade_calendar.py`, new `front_office.py` (traits) and `trade_market.py` (the ledger, shopping, bidding), `data/overrides/front_office_overrides.json` (real reputations with sources), `team_planning.py`, `save.py` (market hooks only), `app_actions.py` (trade actions), `gui/app.js` (trade window, Trade Market board, team-page hints), `gui/assistant-phone.js` (texts), CSS, tests, `scripts/trade_probe_metrics.py`.
+
+## Results and follow-ups (merged 2026-11-21; report `trade-market.md`)
+- **Built:** front-office traits from real reputations (sources in `data/research/front_office_reputations_2026_11.json`), multi-day negotiations, shopping and bidding wars, final offers, a Trade Market board and assistant texts. There's no random roll in trade decisions now.
+- **Two-season probe:** 104 trades (was 101). Deadline week 2027: 29 (real 23–28). 2028: 18, where the market ran out of deals: the two textbook rules the user kept still block the rest. Grade gaps of 1.5+ letters match real (22% against 21%); a full letter or more is 40% (real 59%).
+- **Follow-ups:**
+  1. Agreed market sales are sometimes not executed and get re-agreed later (Josh Hart was "sold" to the Lakers on 7 market days before Houston got him). Check the re-check that runs when agreed market deals are applied.
+  2. The young-starter guard misses players projected under 24 minutes (Memphis sold Javon Small, 24, for two seconds).
+  3. Front-office hints show in the trade window and on the board, not yet on team pages.
+  4. Summer markets use the traits but not multi-day negotiations.
+  5. The old front-office profile fields still nudge each team's acceptance threshold (about ±2 points) and aren't shown; fold them into the traits or retire them (rule 4).
+  6. The second deadline is still short (18 against 23–28). The next levers are the multi-day market on summer days, and more bidders for shopped players.
