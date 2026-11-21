@@ -6694,6 +6694,11 @@ def process_ai_extensions(
             continue
         if rookie_extension_window_closed(save, active, player, through_date):
             continue   # FA-REAL slice 2: rookie-scale extensions close the day before opening night
+        if (season == CANONICAL_SEASON and candidate.get("extension_kind") != "rookie_scale"
+                and int(candidate.get("years_remaining") or 0) > 1):
+            # CONTRACT-TERMS: a new career opens on the opening-roster deadline with the real October contracts: real
+            # teams already had the whole 2026 summer to extend these players (deadline-day rookie-scale deals stay).
+            continue
         priority = ai_extension_priority(save, candidate, player, team_id, seed)
         due_date = ai_extension_due_date(save, candidate, player, priority, seed,
                                          next((c for c in active.get("contracts", []) if c.get("player_id") == player_id), None))
@@ -6767,6 +6772,15 @@ def process_ai_extensions(
             first = float(offer.get("annual_salary") or 0.0) * len(steps) / sum(steps)
             if limit:
                 first = min(first, float(limit))
+            # CONTRACT-TERMS: a player doesn't extend for a pay cut while he can still earn more: under 31 the new deal
+            # must average at least 95% of his current salary, from 31 on 80% (he waits for free agency instead).
+            current_pay = max([float(r.get("salary") or 0.0) for r in (current_contract or {}).get("seasons") or []
+                               if str(r.get("season") or "") <= str(offer.get("start_season") or "")] or [0.0])
+            age_now = float(player.get("display_age", player.get("age")) or 27.0)
+            average = first * sum(steps) / len(steps)
+            if current_pay and average < current_pay * (0.95 if age_now < 31 else 0.80):
+                processed.add(key)
+                continue
             offer = {**offer, "annual_salary": round(first, 2), "salary_path": shape["path"], "option": shape["option"],
                      "max_raise": EXTENSION_MAX_RAISE}
             offer = merge_extension_offer_with_existing_contract(offer, negotiation)
