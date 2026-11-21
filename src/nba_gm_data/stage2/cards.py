@@ -105,6 +105,9 @@ BLOCKS = {"constant": 1.24321, "S37": 0.02144, "S36": 0.0011, "P03": 0.0002, "lo
 PERIMETER_D = ("S33", "S37", "S40", "S35")
 RIM_D = ("S36", "S37")
 PRESSURE_D = ("S41", "S42", "S43")
+# Offensive lineup indices: creation (dribble manipulation, separation, attack recognition, passing delivery) and
+# spacing (three-point shooting as he shoots it, times how often he is out there: T02 three).
+CREATION = ("S16", "S18", "S20", "F.execution")
 
 _CARD_CACHE: dict[tuple, "Card"] = {}
 _LEAGUE: dict[str, Any] = {}
@@ -268,7 +271,7 @@ def transition_menu(flat: Mapping[str, float]) -> list[float]:
 
 
 def league_means(flats: Mapping[str, Mapping[str, float]]) -> dict[str, float]:
-    keys = set(PERIMETER_D) | set(RIM_D) | set(PRESSURE_D) | {"P03"}
+    keys = set(PERIMETER_D) | set(RIM_D) | set(PRESSURE_D) | set(CREATION) | {"P03"}
     out = {}
     for k in keys:
         vals = [float(f[k]) for f in flats.values() if k in f]
@@ -284,7 +287,8 @@ class Card:
     """Precomputed numbers for one player (plain attributes; the loop reads them in tight code)."""
     __slots__ = ("pid", "name", "group", "height", "usage", "to_logit", "menu", "menu_cum", "trans_cum", "make_logit",
                  "ft", "ast_w", "foul", "foul_s", "and1", "ns_draw", "off_foul_w", "d_foul", "ns_mult", "stl_w",
-                 "blk_w", "perim_d", "rim_d", "press_d", "reb", "pace", "trans_pref", "penalty", "flat", "points36")
+                 "blk_w", "perim_d", "rim_d", "press_d", "reb", "pace", "trans_pref", "penalty", "flat", "create",
+                 "space")
 
     def actions(self) -> dict[str, float]:
         out = {a: 0.0 for a in ACTIONS}
@@ -336,8 +340,8 @@ def build_card(pid: str, name: str, flat: Mapping[str, float], means: Mapping[st
     c.reb = R.prepare(R.profile_from_flat(pid, flat), R.FITTED)
     c.pace = float(flat.get("T05", .5))
     c.trans_pref = float(flat.get("T17.transition", .2))
-    from ..box_rates import points_per36_from_inputs  # noqa: F401  (kept for reports)
-    c.points36 = None
+    c.create = _index(flat, CREATION, means)
+    c.space = float(flat.get("T02.three", .4)) * float(flat.get("S.three_mode", 50.0)) / 100.0
     return c
 
 

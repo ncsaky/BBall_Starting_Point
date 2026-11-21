@@ -49,7 +49,8 @@ LOOP = {
     # Transition chance by how the possession started, times the lineup's transition habit.
     "trans_dreb": .20, "trans_steal": .60, "trans_made": .04, "trans_dead": .06, "k_trans": 1.5,
     # Turnovers: the defense's ball pressure (log-odds per index unit); transition and offensive-foul shares.
-    "k_press": .25, "trans_to": -.15, "off_foul_share": .08, "steal_share": .62, "k_steal_level": 1.0,
+    # k_press is FITTED with the other team-strength terms below.
+    "k_press": .80, "trans_to": -.15, "off_foul_share": .08, "steal_share": .62, "k_steal_level": 1.0,
     "to_shift": .13,   # FITTED: league turnovers per 100 (the card fit is per used possession; the loop's are per chance)
     # Non-shooting fouls per possession (league level, then the defenders' own multipliers); technicals etc.
     "ns_per_poss": .068, "other_ft_per_poss": .005, "loose_ball_per_chance": .032,
@@ -57,8 +58,13 @@ LOOP = {
     # rolls, cuts and putbacks less, catch jumpers least. Stand-ins checked against FTA per FGA.
     "foul_drive": .30, "foul_roll_cut": -.35, "foul_post": .25, "foul_putback": -.30, "foul_transition": .10,
     "foul_jumper": -.15, "foul_pull_up": .05,
-    # Defense on makes (log-odds per index unit): perimeter contest on jumpers; rim protection on rim and short shots.
-    "k_perim": .10, "k_rim": .16, "perim_own": .5,
+    # Team-strength terms (make log-odds per index unit; each index is centred on the league's average lineup):
+    # defense: perimeter contest on jumpers (half the shooter's own defender, half the lineup), rim protection on rim
+    # and short shots, ball pressure on turnovers (k_press above); offense: the lineup's creation and spacing.
+    # FITTED together (coordinate search, scratch strength_fit) so the engine's expected margins follow the betting
+    # market's spreads on the first half of 2025-26 (correlation .42 -> .57 at 3 runs a game, slope 1.04); checked on
+    # the second half (.67, slope 1.24). They decide how much the ratings move results; no rating was changed.
+    "k_perim": .36, "k_rim": .45, "perim_own": .5, "k_create": .44, "k_space": .29,
     # Blocks per missed shot by zone (at the league-average block weight); share credited to the help (rim) defender.
     "blk_rim": .277, "blk_short": .21, "blk_mid": .065, "blk_three": .02,
     # Assisted share of made shots by action (scaled to the league assist rate). FITTED scale.
@@ -73,6 +79,10 @@ LOOP = {
     "putback_close": .50, "putback_far": .20,
     # Points per 100 -> make log-odds (home court, coaches, rest).
     "k_eff": .02,
+    # Score effects: per point of lead (capped at 25), the leading team's shots lose this much make log-odds (effort,
+    # garbage-time lineups, the trailing team's urgency). Without it the margin around the engine's own expectation
+    # varied 17.4 points (today's engine 13.1; real margins vary about 14.1 around the market spread). FITTED to that.
+    "k_lead": .008,
     # Heave chance when under 3 s remain at the start of a possession.
     "heave": .45,
 }
@@ -115,6 +125,7 @@ class TeamState:
         self.points = 0
         self.possessions = 0
         self.league = league
+        self.loop: dict | None = None     # the game's loop numbers (set by Game)
         self.lineup_dirty = True
 
     # ---- lineup aggregates (recomputed when the five change) ------------------------------------------------------
@@ -133,7 +144,14 @@ class TeamState:
         self.reb_prof = [c.reb.profile for c in cs]
         self.pace = sum(c.pace for c in cs) / 5.0
         self.trans_pref = sum(c.trans_pref for c in cs) / 5.0
-        self.perim = sum(c.perim_d for c in cs) / 5.0
+        self.perim = sum(c.perim_d for c in cs) / 5.0 - lg["perim_mean"]
+        self.perim_center = lg["perim_mean"]
+        # Offense: the lineup's creation (handling, separation, attack reads, passing delivery) and spacing (three-point
+        # threat) make every teammate's shot a little easier (log-odds; centred on the league's average lineup).
+        self.create = sum(c.create for c in cs) / 5.0 - lg["create_center"]
+        self.space = sum(c.space for c in cs) / 5.0 - lg["space_center"]
+        L = LOOP if self.loop is None else self.loop
+        self.off_shift = L["k_create"] * self.create + L["k_space"] * self.space
         rims = sorted((c.rim_d for c in cs), reverse=True)
         self.rim = .6 * rims[0] + .4 * sum(rims) / 5.0 - lg["rim_center"]
         self.press = sum(c.press_d for c in cs) / 5.0 - lg["press_center"]
@@ -182,6 +200,7 @@ class Game:
         self.rc = reb_c
         self.L = dict(LOOP, **(loop or {}))
         L = self.L
+        home.loop = away.loop = L
         self.foul_action = [(L[FOUL_ACTION[a]] if FOUL_ACTION.get(a) else 0.0) + (L["foul_level"] if KZONE[i] < 3 else 0.0)
                             for i, a in enumerate(KACTION)]
         self.assist = [a * L["ast_scale"] for a in ASSIST_BY_KIND]
@@ -434,9 +453,11 @@ class Game:
         j = off.defender_of[slot]
         dcard = de.cards[de.on[j]]
         # Make chance: his conversion for this shot, the defense's contest or rim protection, team terms.
-        z = card.make_logit[kind] + self.zone_make[kind] + off.eff - de.eff_def
+        lead = off.points - de.points
+        z = (card.make_logit[kind] + self.zone_make[kind] + off.eff + off.off_shift - de.eff_def
+             - L["k_lead"] * (25 if lead > 25 else -25 if lead < -25 else lead))
         if kind in JUMPER_KINDS:
-            z -= L["k_perim"] * (L["perim_own"] * dcard.perim_d + (1 - L["perim_own"]) * de.perim)
+            z -= L["k_perim"] * (L["perim_own"] * (dcard.perim_d - de.perim_center) + (1 - L["perim_own"]) * de.perim)
         elif zone <= 1:
             z -= L["k_rim"] * de.rim
         p_make = _sig(z)

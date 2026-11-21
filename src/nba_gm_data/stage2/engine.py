@@ -74,7 +74,8 @@ def league_constants(root) -> dict[str, float]:
     out = {"rim_center": sum(rims) / len(rims), "press_center": sum(press) / len(press),
            "stl_mean": wmean(lambda c: c.stl_w), "blk_mean": wmean(lambda c: c.blk_w), "ns_mean": wmean(lambda c: c.ns_mult),
            "pace_mean": wmean(lambda c: c.pace), "trans_mean": wmean(lambda c: c.trans_pref),
-           "perim_mean": wmean(lambda c: c.perim_d)}
+           "perim_mean": wmean(lambda c: c.perim_d), "create_center": wmean(lambda c: c.create),
+           "space_center": wmean(lambda c: c.space)}
     _LEAGUE_CONSTANTS[key] = out
     return out
 
