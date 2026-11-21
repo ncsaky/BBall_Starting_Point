@@ -95,6 +95,102 @@
       ],
       "tool": "Built-in Codex image generation",
       "date": "2026-11-21"
+    },
+    {
+      "id": "staff-m/0004",
+      "gender": "male",
+      "role": "staff",
+      "stages": [
+        {
+          "min_age": 0,
+          "file": "staff-m/0004-s1.jpg",
+          "age": 38,
+          "changes": "A 38-year-old Puerto Rican male basketball scout, warm medium tan sun-freckled complexion, very thick brows, a high slightly crooked nose bridge, broad dimpled chin, short dark wavy hair with a low part, and a dark short boxed beard. Plain grey-green polo. Shoulders slightly left, head gently back toward camera, observant expression."
+        },
+        {
+          "min_age": 50,
+          "file": "staff-m/0004-s2.jpg",
+          "age": 50,
+          "changes": "At 50. Same freckles, nose bridge and thick brows. Two white wisps at the chin, hair brushed straight back, natural midlife crease between brows and out from eyes, a faint smile. Plain grey-green sweater over a dark tee."
+        },
+        {
+          "min_age": 60,
+          "file": "staff-m/0004-s3.jpg",
+          "age": 62,
+          "changes": "At 62. Same broad chin, nose and eyes. Receded soft side part with grey temples, fuller neatly trimmed salt-and-pepper beard, visible forehead lines and undereye creases. Dark muted brown blazer over a plain crew neck, slightly tilted head facing lens."
+        }
+      ],
+      "prompts": [
+        "A 38-year-old Puerto Rican male basketball scout, warm medium tan sun-freckled complexion, very thick brows, a high slightly crooked nose bridge, broad dimpled chin, short dark wavy hair with a low part, and a dark short boxed beard. Plain grey-green polo. Shoulders slightly left, head gently back toward camera, observant expression. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 50. Same freckles, nose bridge and thick brows. Two white wisps at the chin, hair brushed straight back, natural midlife crease between brows and out from eyes, a faint smile. Plain grey-green sweater over a dark tee. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 62. Same broad chin, nose and eyes. Receded soft side part with grey temples, fuller neatly trimmed salt-and-pepper beard, visible forehead lines and undereye creases. Dark muted brown blazer over a plain crew neck, slightly tilted head facing lens. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark."
+      ],
+      "tool": "Built-in Codex image generation",
+      "date": "2026-11-21"
+    },
+    {
+      "id": "staff-m/0005",
+      "gender": "male",
+      "role": "staff",
+      "stages": [
+        {
+          "min_age": 0,
+          "file": "staff-m/0005-s1.jpg",
+          "age": 38,
+          "changes": "A 38-year-old Black male director of basketball operations. Cool dark skin, broad rounded face, a flat nose bridge and slightly raised left brow. Close-cropped hair, clean-shaven jaw, broad closed-mouth smile, thick rectangular brown glasses and an understated burgundy knit pullover over a pale blue oxford shirt. Shoulders slightly away from camera."
+        },
+        {
+          "min_age": 47,
+          "file": "staff-m/0005-s2.jpg",
+          "age": 50,
+          "changes": "At 50. Clearly around fifty with mild under-eye bags, forehead lines, a bit of grey around the temples and a close moustache. Keep the broad round face and the raised brow. Same glasses, plain dark teal polo, relaxed smile."
+        },
+        {
+          "min_age": 59,
+          "file": "staff-m/0005-s3.jpg",
+          "age": 62,
+          "changes": "At 62. Distinguishable from age fifty with more visible cheek folds and loose skin under the jaw. Close-shaved scalp now and a narrow grey moustache. Recognizable asymmetrical brows, smile, nose and brown glasses. Solid charcoal quarter-zip."
+        }
+      ],
+      "prompts": [
+        "A 38-year-old Black male director of basketball operations. Cool dark skin, broad rounded face, a flat nose bridge and slightly raised left brow. Close-cropped hair, clean-shaven jaw, broad closed-mouth smile, thick rectangular brown glasses and an understated burgundy knit pullover over a pale blue oxford shirt. Shoulders slightly away from camera. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 50. Clearly around fifty with mild under-eye bags, forehead lines, a bit of grey around the temples and a close moustache. Keep the broad round face and the raised brow. Same glasses, plain dark teal polo, relaxed smile. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 62. Distinguishable from age fifty with more visible cheek folds and loose skin under the jaw. Close-shaved scalp now and a narrow grey moustache. Recognizable asymmetrical brows, smile, nose and brown glasses. Solid charcoal quarter-zip. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark."
+      ],
+      "tool": "Built-in Codex image generation",
+      "date": "2026-11-21"
+    },
+    {
+      "id": "staff-m/0006",
+      "gender": "male",
+      "role": "staff",
+      "stages": [
+        {
+          "min_age": 0,
+          "file": "staff-m/0006-s1.jpg",
+          "age": 38,
+          "changes": "A 38-year-old Egyptian American male basketball medical staff director with a lean diamond-shaped face, olive skin, wide-set dark eyes, a slightly aquiline nose, curly dark hair high on top, clean-shaven with a shadow, strong cheekbones and a small mole below one lower cheek. Plain soft blue shirt, top button open. Easy half smile with a slight head turn."
+        },
+        {
+          "min_age": 48,
+          "file": "staff-m/0006-s2.jpg",
+          "age": 50,
+          "changes": "At 50. Same aquiline nose, eyes and mole. Brisk shorter curls with a few grey strands on the sides, a carefully maintained close dark beard with a grey fleck, recognizable cheekbones with mild midlife cheek folds and eye lines. Plain steel-blue polo."
+        },
+        {
+          "min_age": 57,
+          "file": "staff-m/0006-s3.jpg",
+          "age": 62,
+          "changes": "At 62. Preserve the same prominent aquiline nose, cheekbones, eyes, and tiny lower-cheek mole. Visibly early sixties with clear forehead creases, lower eyelid bags, crow's feet at rest and a noticeably softer jaw and neck. Very short naturally silver curls, short grey stubble. Plain light brown sport coat over a soft blue shirt. Relaxed eyes and subtle half smile with shoulders gently angled."
+        }
+      ],
+      "prompts": [
+        "A 38-year-old Egyptian American male basketball medical staff director with a lean diamond-shaped face, olive skin, wide-set dark eyes, a slightly aquiline nose, curly dark hair high on top, clean-shaven with a shadow, strong cheekbones and a small mole below one lower cheek. Plain soft blue shirt, top button open. Easy half smile with a slight head turn. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 50. Same aquiline nose, eyes and mole. Brisk shorter curls with a few grey strands on the sides, a carefully maintained close dark beard with a grey fleck, recognizable cheekbones with mild midlife cheek folds and eye lines. Plain steel-blue polo. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 62. Preserve the same prominent aquiline nose, cheekbones, eyes, and tiny lower-cheek mole. Visibly early sixties with clear forehead creases, lower eyelid bags, crow's feet at rest and a noticeably softer jaw and neck. Very short naturally silver curls, short grey stubble. Plain light brown sport coat over a soft blue shirt. Relaxed eyes and subtle half smile with shoulders gently angled. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark."
+      ],
+      "tool": "Built-in Codex image generation",
+      "date": "2026-11-21"
     }
   ]
 }
