@@ -189,7 +189,11 @@ class Restricted(unittest.TestCase):
         belief = od.rfa_belief(save, young)
         self.assertGreaterEqual(belief, od.RULES["qualifying_offer"]["belief_young_bonus"])
         self.assertGreater(od.rfa_reservation(save, young, 10e6, 0.0), od.rfa_reservation(save, young, 10e6, 1.0))
-        self.assertAlmostEqual(od.rfa_reservation(save, young, 10e6, 1.0), 9e6)
+        self.assertAlmostEqual(od.rfa_reservation(save, young, 10e6, 1.0), 10e6 * (1 + belief - 0.2))
+        # By October 1 everyone takes his team's offer of his market price (the belief is at most 16%).
+        self.assertLessEqual(od.rfa_reservation(save, young, 10e6, od.RFA_STAGES["deadline"]), 10e6)
+        # In June only the players who believe in themselves least sign at once.
+        self.assertGreater(od.rfa_reservation(save, young, 10e6, od.RFA_STAGES["june"]), 10e6)
 
     def test_ai_tender_rule(self):
         p = player("p", draft_year=2023, minutes=8)

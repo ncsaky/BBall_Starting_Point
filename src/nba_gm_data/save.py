@@ -10062,7 +10062,7 @@ def restricted_player_agrees(save: dict[str, Any], player: dict[str, Any]) -> bo
     team offers his market price (as before). A restricted free agent may wait instead: he holds out for his price plus
     his belief in himself (offseason_decisions.rfa_reservation), and his team offers a little less (it has the right to
     keep him and no outside team can bid yet)."""
-    from .offseason_decisions import RULES, qo_record, rfa_reservation
+    from .offseason_decisions import RFA_STAGES, RULES, qo_record, rfa_reservation
     next_season = season_label_from_start(season_start_year(save.get("meta", {}).get("season") or CANONICAL_SEASON) + 1)
     record = qo_record(save, next_season, str(player.get("id") or ""))
     if not record or record.get("status") != "tendered":
@@ -10071,7 +10071,7 @@ def restricted_player_agrees(save: dict[str, Any], player: dict[str, Any]) -> bo
     if market <= 0:
         return True
     offer = market * RULES["qualifying_offer"]["team_offer_share"]
-    return offer >= rfa_reservation(save, player, market, 0.0)
+    return offer >= rfa_reservation(save, player, market, RFA_STAGES["june"])
 
 
 def is_franchise_star(player: dict[str, Any]) -> bool:

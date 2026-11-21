@@ -5426,6 +5426,8 @@ def process_ai_free_agency_offers_for_day_state(
     from .offseason_decisions import restricted_player_ids
     restricted = restricted_player_ids(save)   # FA-REAL slice 2: interim rule, only the team holding him bids
     for player in pool[:target_count]:
+        if player["id"] in restricted and restricted[player["id"]] not in human_team_ids:
+            continue   # an AI team talks to its restricted free agent each day (offseason_decisions.restricted_market_day)
         market = report_by_id.get(player["id"]) or {}
         ask = (state.get("player_asks_millions") or {}).get(player["id"])
         if ask is None:
@@ -6119,6 +6121,8 @@ def advance_free_agency_day(canonical: dict[str, Any], save_path: Path, user_tea
         phase="pre_resolution",
     )
     accepted = resolve_free_agency_day_state(canonical, save, seed)
+    from .offseason_decisions import restricted_market_day
+    restricted_market_day(canonical, save, int((save.get("free_agency_state") or {}).get("day") or 1))
     post_trades = maybe_run_free_agency_ai_trades_state(
         canonical,
         save,

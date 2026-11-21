@@ -69,12 +69,14 @@ RULES: dict[str, dict[str, float]] = {
         "tender_rotation_minutes": 18.0,
         "tender_rotation_overpay": 1.5,
         "regular_minutes": 24.0,          # a tendered regular is kept like a franchise player (KEEP-STARS budget)
-        # The player's side: the own team offers his market price less a little leverage (no outside offers in the
-        # interim); the player holds out for his market price plus his belief in himself, which fades over the summer.
-        "team_offer_share": 0.95,
+        # The talks: his team offers his market price; he holds out for his price plus his belief in himself
+        # (0 to 16%, more for 23 and younger), and gives up ``belief_fade`` of his price as the summer goes
+        # (``RFA_STAGES``). Real restricted summers are slow (Kuminga and Giddey 2025 signed in late September;
+        # Duren 2026 in October) and few take the one-year offer (0-2 a summer).
+        "team_offer_share": 1.0,
         "belief_max": 0.12,
         "belief_young_bonus": 0.04,       # 23 or younger
-        "reservation_floor": 0.90,        # by late summer he takes 90% of his price
+        "belief_fade": 0.20,
     },
 }
 
@@ -747,13 +749,50 @@ def rfa_belief(save: dict[str, Any], player: dict[str, Any]) -> float:
     return belief
 
 
+# How far the summer has gone for a restricted free agent's talks (0 at the Finals, 1 on October 1).
+RFA_STAGES = {"june": 0.25, "market_day": 0.05, "late_summer": 0.8, "deadline": 1.0}
+
+
 def rfa_reservation(save: dict[str, Any], player: dict[str, Any], market: float, stage: float) -> float:
-    """What he will take from his team: his market price plus his belief, fading to ``reservation_floor`` of his
-    price as the summer goes (``stage`` 0 in June to 1 by late August)."""
+    """What he will take from his team: his market price plus his belief, less ``belief_fade`` of it as the summer
+    goes (``stage`` from 0 to 1, ``RFA_STAGES``)."""
     rules = RULES["qualifying_offer"]
-    high = market * (1.0 + rfa_belief(save, player))
-    low = market * rules["reservation_floor"]
-    return high + (low - high) * max(0.0, min(1.0, stage))
+    return market * (1.0 + rfa_belief(save, player) - rules["belief_fade"] * max(0.0, min(1.0, stage)))
+
+
+def rfa_market_price(save: dict[str, Any], player_id: str) -> float:
+    """His price in dollars: today's ask in the free-agency room, else the market value recorded with his offer."""
+    asks = (save.get("free_agency_state") or {}).get("player_asks_millions") or {}
+    if asks.get(player_id):
+        return float(asks[player_id]) * 1e6
+    from .cap_ledger import cap_year
+    record = qo_record(save, cap_year(save), player_id) or {}
+    return float(record.get("market_millions") or 0.0) * 1e6
+
+
+def restricted_market_day(canonical: dict[str, Any], save: dict[str, Any], day: int) -> int:
+    """Each first-wave market day, AI teams and their unsigned restricted free agents talk again: the team offers his
+    price, and he signs when it meets what he will take that day. Returns the number signed."""
+    from .save import canonical_with_save
+    held = {pid: team for pid, team in restricted_player_ids(save).items() if team not in _user_team_ids(save)}
+    if not held:
+        return 0
+    stage = RFA_STAGES["june"] + RFA_STAGES["market_day"] * max(1, int(day))
+    active = canonical_with_save(canonical, save)
+    players = {p["id"]: p for p in active.get("players", [])}
+    signed = 0
+    for player_id, team_id in sorted(held.items()):
+        player = players.get(player_id)
+        market = rfa_market_price(save, player_id)
+        if not player or not market:
+            continue
+        offer = market * RULES["qualifying_offer"]["team_offer_share"]
+        if offer >= rfa_reservation(save, player, market, stage) and rfa_team_signs(canonical, save, active, player,
+                                                                                   team_id, offer):
+            signed += 1
+            active = canonical_with_save(canonical, save)
+            players = {p["id"]: p for p in active.get("players", [])}
+    return signed
 
 
 def restricted_summer_pass(canonical: dict[str, Any], save: dict[str, Any], *, final: bool) -> dict[str, int]:
@@ -770,27 +809,26 @@ def restricted_summer_pass(canonical: dict[str, Any], save: dict[str, Any], *, f
     users = _user_team_ids(save)
     active = canonical_with_save(canonical, save)
     players = {p["id"]: p for p in active.get("players", [])}
-    asks = (save.get("free_agency_state") or {}).get("player_asks_millions") or {}
+    stage = RFA_STAGES["deadline" if final else "late_summer"]
     signed = accepted = 0
     for player_id, team_id in sorted(held.items()):
         player = players.get(player_id) or {"id": player_id}
+        market = rfa_market_price(save, player_id)
+        offer = market * RULES["qualifying_offer"]["team_offer_share"]
+        if (team_id not in users and market and offer >= rfa_reservation(save, player, market, stage)
+                and rfa_team_signs(canonical, save, active, player, team_id, offer)):
+            signed += 1
+            active = canonical_with_save(canonical, save)
+            players = {p["id"]: p for p in active.get("players", [])}
+            continue
         if final:
             if accept_qualifying_offer(canonical, save, player_id,
                                        "No long-term deal by October 1: he takes the one-year qualifying offer."):
                 accepted += 1
             continue
-        if team_id in users:
+        if team_id in users or not market:
             continue
-        market = float(asks.get(player_id) or 0.0) * 1e6
-        if not market:
-            continue
-        offer = market * RULES["qualifying_offer"]["team_offer_share"]
-        if offer >= rfa_reservation(save, player, market, 0.75) and rfa_team_signs(canonical, save, active, player,
-                                                                                  team_id, offer):
-            signed += 1
-            active = canonical_with_save(canonical, save)
-            players = {p["id"]: p for p in active.get("players", [])}
-        elif not rfa_team_can_pay(active, save, player, team_id, offer):
+        if not rfa_team_can_pay(active, save, player, team_id, offer):
             if accept_qualifying_offer(canonical, save, player_id,
                                        "His team could not fit a long-term deal: he takes the one-year qualifying "
                                        "offer and bets on himself."):
