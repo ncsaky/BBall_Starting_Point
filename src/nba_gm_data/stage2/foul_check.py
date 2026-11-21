@@ -30,10 +30,21 @@ ZONES = ("rim", "short", "mid", "three")
 MIN_FGA = 150.0
 # (key, lower bound, upper bound, step). Signs follow the mechanism: drawing craft, contact seeking, strength and
 # jumping at shots can only add fouls; foul control can only remove them.
-FTA_SPEC = (("base[0]", -6, 0, .25), ("base[1]", -6, 0, .25), ("base[2]", -7, 0, .25), ("base[3]", -8, 0, .25),
+FTA_SPEC = (("base[0]", -6, 0, .25), ("base[1]", -6, 0, .25), ("base[2]", -7, 0, .25),
             ("k_craft", 0, 2, .1), ("k_seek", 0, 3, .1), ("k_finish", -1, 1, .1), ("k_strength", 0, 1, .1),
-            ("k_drive", -1, 1.5, .1), ("k_ns_involvement", 0, 3, .2), ("k_ns_craft", 0, 1.5, .1), ("k_ns_seek", 0, 2, .1),
-            ("bonus_share", 0, 1, .05))
+            ("k_drive", -1, 1.5, .1), ("k_ns_involvement", 0, 3, .2), ("k_ns_craft", 0, 1.5, .1), ("k_ns_seek", 0, 2, .1))
+# Basketball Index 2025-26: shooting fouls are 51.9% of all personal fouls (1.54 of 2.97 per 75); offensive fouls 5.8%.
+SHOOTING_FOUL_SHARE = .519
+OFFENSIVE_FOUL_SHARE = .058
+
+
+def rule_bonus_share(env: dict) -> float:
+    """The bonus share the NBA rule gives at the league's foul rate (offensive fouls do not count toward the penalty).
+    The kernel uses this instead of a fitted share: a first fit left it free and it drifted to .59, trading shooting
+    fouls (7.4 per 100 against a real ~10) for bonus free throws."""
+    from .fouls import bonus_share_from_rule
+    per_quarter = env["fouls_per100"] * (1 - OFFENSIVE_FOUL_SHARE) / 100.0 * env["possessions_per48"] / 4.0
+    return bonus_share_from_rule(per_quarter)
 PF_SPEC = (("k_control", 0, 2, .1), ("k_contest", -1, 1, .1), ("k_jump", 0, 1.5, .1), ("help_share[0]", 0, 1, .05),
            ("help_share[1]", 0, 1, .05), ("k_ns_control", 0, 2, .1), ("k_ns_gamble", 0, 2, .1), ("k_off_seek", -1, 2, .1),
            ("k_off_screen", 0, 5, .25))
@@ -268,7 +279,9 @@ def refit(setup: FoulSetup, start: FoulCoefficients, players: list[str], context
                 if p is not None:
                     total += r["fga"] * (p - r["fta"] / r["fga"]) ** 2
                     w += r["fga"]
-            return total / w + ((res["league"]["fta_per100"] - setup.env["fta_per100"]) / 100.0) ** 2
+            shooting = SHOOTING_FOUL_SHARE * setup.env["fouls_per100"]
+            return (total / w + ((res["league"]["fta_per100"] - setup.env["fta_per100"]) / 100.0) ** 2
+                    + ((res["league"]["shooting_fouls_per100"] - shooting) / 50.0) ** 2)
         for pid, r in real.items():
             p = res["pf36"].get(pid)
             if p is not None:

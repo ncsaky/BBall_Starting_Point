@@ -182,4 +182,15 @@ def bonus_share_from_rule(team_fouls_per_quarter: float, steps: int = 240) -> fl
     return total / steps
 
 
-FITTED = FoulCoefficients()  # placeholder, replaced by the conversion refit below
+# Conversion refit (2026-11-21, S2-REBOUND-FOULS): bounded coordinate search on the kernel's own numbers, in stages
+# (the free-throw side against half the 2025-26 rotation players' FTA per FGA, the league free throws per 100 and
+# Basketball Index's shooting-foul share; then the fouls side against their fouls per 36 and the league fouls per 100);
+# checked on the other half and on 2022-23. No player input was changed. Pinned from data rather than fitted: the bonus
+# share (the NBA rule at the league foul rate, .274) and the three-point foul chance (BBI 3PT foul rate, 1.1%: logit
+# -4.5). Fitted to zero: help-defender share at the rim, jump-contest effect, strength, screen offensive fouls.
+FITTED = with_values(FoulCoefficients(), {
+    "base[0]": -.9375, "base[1]": -1.56875, "base[2]": -2.06875, "base[3]": -4.5,
+    "k_craft": .175, "k_seek": 1.225, "k_finish": -.2875, "k_strength": 0.0, "k_drive": -.0625,
+    "k_control": .8875, "k_contest": .20, "k_jump": 0.0, "help_share[0]": 0.0, "help_share[1]": 0.0,
+    "k_ns_involvement": 2.275, "k_ns_craft": 1.3875, "k_ns_seek": 0.0, "k_ns_control": .20, "k_ns_gamble": 1.5375,
+    "bonus_share": .27375, "k_off_seek": -.2625, "k_off_screen": 0.0})

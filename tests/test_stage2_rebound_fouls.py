@@ -93,8 +93,12 @@ class FoulKernelTest(unittest.TestCase):
             self.assertAlmostEqual(out["fga"], 1 - out["foul"] * (1 - and1))
             self.assertAlmostEqual(out["fta"], out["foul"] * (and1 + (1 - and1) * (3 if zone == 3 else 2)))
             self.assertAlmostEqual(sum(out["by"].values()), out["foul"])
-        # rim attempts: part of the foul risk goes to the help defender (best interior positioning: index 4)
-        self.assertIn(4, FK.shot_outcome(fp("s"), defense, 0, 0, self.c)["by"])
+        # with a help share, part of the rim foul risk goes to the help defender (best interior positioning: index 4)
+        # (the refit set the share to zero; the mechanism stays available)
+        helped = FK.with_values(self.c, {"help_share[0]": .4})
+        out = FK.shot_outcome(fp("s"), defense, 0, 0, helped)
+        self.assertIn(4, out["by"])
+        self.assertAlmostEqual(sum(out["by"].values()), out["foul"])
 
     def test_weights_sum_to_one(self):
         off = [fp(f"o{i}", involvement=.1 + .05 * i, seek=-1 + .4 * i) for i in range(5)]
