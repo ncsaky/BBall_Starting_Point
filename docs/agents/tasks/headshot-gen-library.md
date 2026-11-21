@@ -2,17 +2,21 @@
 
 ## TL;DR
 
-- Batch 1 has reached a checkpoint with 63 fictional people and 210 approved portraits.
-- Each approved portrait has a full-size PNG and a 320 × 320 game JPEG.
-- The next person is player-m/0022.
+- Batch 1 is ready for review. It has 30 staff men, 12 staff women and 24 players, including four extras.
+- Each of the 222 approved portraits has a full-size PNG and a 320 × 320 game JPEG.
+- Finished after player 0024 at a three-person checkpoint. Generation hit no usage limit.
 
 ## Batch 1 · November 21, 2026
 
-| Staff men | Staff women | Players | Accepted portraits | Redone stages | Elapsed wall time |
+| Staff men | Staff women | Players | Approved portraits | Redone stages | Elapsed wall time |
 |---:|---:|---:|---:|---:|---:|
-| 30 / 30 | 12 / 12 | 21 / 20 | 210 | 11 | About 103 min |
+| 30 | 12 | 24 | 222 | 12 | About 108 min |
 
-The approved portraits use the built-in Codex image tool and fictional reference images only. The JPEG conversion initially cropped too tightly. The six affected files were rebuilt and visually rechecked. The game-size contact sheet shows each age in colour and greyscale and links to the full-size original.
+The 17 Black player profiles account for 71% of the group. The other profiles include white American and European, Latino, mixed and Asian players. Every subject and reference was fictional and adult. Generation used the built-in Codex image tool, with no paid API calls. All 12 redos addressed portraits that needed clearer age differences.
+
+I reviewed each person at game size before starting the next. I checked the likeness across ages, the apparent aging, the crop and the clothes and backdrop for stray marks. Some player portraits at 31 and 35 still have a quieter age difference because the stages are only four years apart. Six early JPEGs initially cropped too tightly. I rebuilt and rechecked them during the first checkpoint.
+
+The manifest passed checks for paths, stage counts and cutover ages. All 222 PNGs and 222 JPEGs were unique, all game copies were 320 × 320, and all 888 image references and links in the colour and greyscale contact sheet resolved.
 
 ### Visual review
 
@@ -79,7 +83,10 @@ The approved portraits use the built-in Codex image tool and fictional reference
 - player-m/0019. Heavy-lidded eyes and wide mouth are distinctive. A short beard and later chin grey strengthen the age progression.
 - player-m/0020. Eyes, expression and broad nose stay distinctive. The last change adds beard grey and a more mature lower face.
 - player-m/0021. Crooked nose, eyes and angular chin carry through. Stage 3 kept the longer locs. At 35 the short waves and eye lines distinguish the portrait.
+- player-m/0022. Nose, hooded eyes and jaw remain recognizable. Later beard and receding crop make the stages distinct.
+- player-m/0023. Hooded eyes, nose and brows remain distinct across the short undercut and wavy later styles. Eye and brow lines are visible at 35.
+- player-m/0024. Redid the final age for a clearer buzz cut, silver chin hairs and stronger eye lines. The dimple and eye spacing stay recognizable.
 
 ## Resume
 
-Continue at `player-m/0022`. Work in order through 30 staff men, 12 staff women and 20 male players. Review each person before starting the next. Commit every three accepted people. The manifest records the exact accepted prompts and cutover ages. Rebuild the contact sheet with `python3 scripts/build_headshot_library_contact_sheet.py`. PNGs, JPEGs and the HTML stay in the ignored output directory.
+The last accepted player is `player-m/0024`. The next player ID is `player-m/0025`. The manifest records the exact accepted prompts and cutover ages. Rebuild the contact sheet with `python3 scripts/build_headshot_library_contact_sheet.py`. The portraits and HTML are in the ignored `output/headshots-gen-library/` directory in this worktree.
