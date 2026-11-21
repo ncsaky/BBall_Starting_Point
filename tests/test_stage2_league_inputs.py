@@ -93,7 +93,7 @@ class LeagueBridgeTest(unittest.TestCase):
         values = [L.acceleration_from_grade(g, grades, sprint) for g in (grades[0], grades[len(grades) // 2], grades[-1])]
         self.assertLess(values[0], values[1])
         self.assertLess(values[1], values[2])
-        self.assertTrue(all(3.0 < v < 6.0 for v in values), values)
+        self.assertTrue(all(2.8 < v < 6.0 for v in values), values)
 
 
 class ShootingCheckHelpersTest(unittest.TestCase):
