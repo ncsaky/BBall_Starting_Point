@@ -96,8 +96,16 @@ How to read it:
   (`payroll_plan`, "keep room below the tax line for its phase") refuses most of the rest, including incumbents' Bird
   bids for their own regulars (Minnesota and DiVincenzo, Oklahoma City and Cason Wallace). Kyle Kuzma (28 minutes)
   drew no bid in five days and was signed by roster repair at the minimum, on main as well. Next free-agency task.
-- **Stars kept**: <STARS>
-- **Speed**: <SPEED>
+- **Stars kept (KEEP-STARS holds)**: of the 60 best players by on-court value, three had expiring contracts.
+  Brandon Miller (31st) stays in Charlotte at $28.8M x 5 in both runs. Jimmy Butler (29th) belongs to the hands-off
+  user team, which never re-signs, and lands in Boston at the minimum in both (now his true veteran minimum, $4.0M, not
+  a flat $2.25M). Paul Reed (45th) is out of the league in both. The KEEP-STARS unit tests pass on the new rules
+  (Bird re-signings past both aprons; refused above the Bird limit without room or an exception).
+- **Speed**: the offseason from the draft's end to October 1 (re-signing, five market days, sim to end, camp and
+  rollover) took 157 s on main and 146 s on the final branch (the first branch run took 171 s before the team index was
+  cached; the profiler showed the ledger at about 7% of the market's time, mostly rebuilding that index). The laptop
+  is shared, so differences of about 10% are noise: not slower. Simulated months are untouched (the calculator only
+  runs on signings, claims and the free-agency room).
 
 ## Screenshots (`output/fa-real-slice1/screenshots/`)
 - `1440-resigning-room.jpg`: the re-signing window. Chips: cap room -$80.5M (Golden State's seven holds, $128.4M),
@@ -128,7 +136,27 @@ How to read it:
   `cap_charge` (lower). Use `cap_ledger.cap_charge(row)` for tax and apron math when convenient.
 
 ## Tests and checks
-<TESTS>
+- `bash scripts/run_core_tests.sh`: 338 OK (2 skipped), on the final code.
+- New `tests/test_cap_ledger.py` (22 tests, scenarios above) and 31 related modules (keep_stars, fitted salary,
+  free-agency bids, extension builder, trade_volume and trade_volume_2, foundation, room payload, waivers, contract
+  protection, roster space and retention, multiplayer, soak runner, lifecycle and more): 580 tests; the 3 failures
+  (exact lines, a Bird re-signing test, an AI waiver claim) were fixed as below and those modules rerun green.
+- Tests changed because the rules changed (each says so in a comment): the exact lines (no rounding); AI bids are
+  checked through `ai_bid_payment` (the old ones mocked `signing_cap_check`); the price-floor tests take legality as
+  given (legality has its own tests); a 2-year offer below a player's minimum is now paid at his minimum schedule;
+  Bird re-signings may pass the aprons (two KEEP-STARS / TRADE-VOLUME tests now build a real payroll instead of mocking
+  `team_cap_summary`); the browser's cap verdict test now checks it mirrors the engine's quote; a test stub takes the
+  new `payment` keyword.
+- One behaviour kept on purpose: AI waiver claims still need room or a minimum contract (the rules also allow the full
+  or room mid-level or bi-annual since 2024-25, which the user can use; letting the AI do it changed claim outcomes in
+  `test_foundation`).
+- `node` tests: all pass except `startup_video.test.cjs`, which needs the git-ignored movie file (as on main).
+- Real-stat scorecard (`calibration_report.py --games 1230 --mode replay-real-minutes`): **18/18** league metrics in
+  band. Game simulation is untouched; the betting-odds check was not rerun (no game-sim change).
+- Determinism: same seeds give the same results (run1 and run2 identical). RNG streams are unchanged; outcomes change
+  where the rules now refuse or reroute a deal, and the trade AI sees unrounded lines.
+- GUI checked in a running app at 1440 and 1024 wide (screenshots above): quote, cap table, cap sheet and Renounce
+  work; no console errors seen.
 
 ## What's left (slice 2 and later)
 - Calendar and options (slice 2): holds and the rights window still follow today's phase dates (June 27 re-signing,
