@@ -1034,7 +1034,7 @@ def ai_renounce_for_room(active: dict[str, Any], save: dict[str, Any], team_id: 
 # Taking on an existing contract (waiver claims)
 
 def absorb_route(active: dict[str, Any], save: dict[str, Any], team_id: str, salary: float, added: float, years: int,
-                 *, minimum: bool = False, season: str | None = None) -> dict[str, Any]:
+                 *, minimum: bool = False, season: str | None = None, exceptions: bool = True) -> dict[str, Any]:
     """How a team can take on an existing contract by waiver claim (CBA Art. VII §6 and Exhibit A): cap room, the
     minimum exception for a minimum contract, or (since 2024-25) the full or room mid-level or the bi-annual when the
     remaining years fit the exception, never past a hard cap it has triggered. ``salary`` is the contract's salary
@@ -1057,7 +1057,7 @@ def absorb_route(active: dict[str, Any], save: dict[str, Any], team_id: str, sal
         return done("minimum")
     if p["cap_payroll"] + float(added) <= lines["salary_cap"] + 1 and not p["used"]:
         return done("cap_room")
-    for route in ("room_mle", "non_taxpayer_mle", "bi_annual"):
+    for route in ("room_mle", "non_taxpayer_mle", "bi_annual") if exceptions else ():
         status = p["exceptions"][route]
         level = ROUTE_HARD_CAP.get(route)
         if (status["available"] and float(salary) <= status["balance"] + 1 and int(years) <= status["max_years"]

@@ -166,8 +166,10 @@ def claim_plan(active, save, entry, team_id, *, cut_id=None, ai=False):
             # full or room mid-level or the bi-annual, never past a hard cap the team has triggered. Only this
             # season's books decide (later seasons are the owner's concern, below).
             from .cap_ledger import absorb_route
+            # AI front offices keep their mid-level for free agents (claims by room or the minimum, as before);
+            # the user may spend an exception on a claim, as the rules allow.
             paid = absorb_route(active, save, team_id, float(row['salary']), total - cap['salary_total'], len(rows),
-                                minimum=minimum_claim_contract(entry['contract']), season=season)
+                                minimum=minimum_claim_contract(entry['contract']), season=season, exceptions=not ai)
             if not paid['ok']:
                 return {'ok': False, 'reason': paid['reason']}
             payment = paid['payment']
