@@ -1055,6 +1055,102 @@
       ],
       "tool": "Built-in Codex image generation",
       "date": "2026-11-21"
+    },
+    {
+      "id": "staff-f/0004",
+      "gender": "female",
+      "role": "staff",
+      "stages": [
+        {
+          "min_age": 0,
+          "file": "staff-f/0004-s1.jpg",
+          "age": 38,
+          "changes": "A 38-year-old Latina female basketball scout of Central American heritage, bronze olive skin, full round cheeks, strong square jaw, downturned dark eyes, low straight brows, a few freckles on a rounded nose. Long wavy dark brown hair partially tied back. Plain muted orange collared knit polo. Slight broad smile, shoulders gently angled."
+        },
+        {
+          "min_age": 47,
+          "file": "staff-f/0004-s2.jpg",
+          "age": 50,
+          "changes": "At 50. Same eyes, jaw, nose freckles and grin. Dark wavy hair now in a smooth chin-length bob with a small grey temple streak. Natural crow's feet and smile creases. Plain chocolate crew neck under a taupe blazer."
+        },
+        {
+          "min_age": 61,
+          "file": "staff-f/0004-s3.jpg",
+          "age": 62,
+          "changes": "At 62. Same full cheeks and dark eyes, clear cheek creases, upper eyelid folds and some grey in brows. Grey-brown wavy shoulder-length hair with a wide silver streak near the face, warm expression. Solid forest-green quarter-zip."
+        }
+      ],
+      "prompts": [
+        "A 38-year-old Latina female basketball scout of Central American heritage, bronze olive skin, full round cheeks, strong square jaw, downturned dark eyes, low straight brows, a few freckles on a rounded nose. Long wavy dark brown hair partially tied back. Plain muted orange collared knit polo. Slight broad smile, shoulders gently angled. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 50. Same eyes, jaw, nose freckles and grin. Dark wavy hair now in a smooth chin-length bob with a small grey temple streak. Natural crow's feet and smile creases. Plain chocolate crew neck under a taupe blazer. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 62. Same full cheeks and dark eyes, clear cheek creases, upper eyelid folds and some grey in brows. Grey-brown wavy shoulder-length hair with a wide silver streak near the face, warm expression. Solid forest-green quarter-zip. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark."
+      ],
+      "tool": "Built-in Codex image generation",
+      "date": "2026-11-21"
+    },
+    {
+      "id": "staff-f/0005",
+      "gender": "female",
+      "role": "staff",
+      "stages": [
+        {
+          "min_age": 0,
+          "file": "staff-f/0005-s1.jpg",
+          "age": 38,
+          "changes": "A 38-year-old Indian American female basketball medical lead with warm medium-brown skin, a long oval face, wide expressive dark eyes, strong curved eyebrows, a slightly round nose and faint dimple on one side. Long dark straight hair pulled into a loose low bun. Plain sky-blue blouse beneath a navy cardigan. Slight turn and relaxed expression."
+        },
+        {
+          "min_age": 45,
+          "file": "staff-f/0005-s2.jpg",
+          "age": 50,
+          "changes": "At 50. Retain her curved brows, dimple and eyes. Same loosely tied-back hair with two narrow silver streaks at the temple. Plain brown reading glasses, natural crow's feet, some forehead and subtle cheek lines. Plain olive sport coat."
+        },
+        {
+          "min_age": 57,
+          "file": "staff-f/0005-s3.jpg",
+          "age": 62,
+          "changes": "At 62. Same dark eyes, eyebrow curve and dimple. Silver shoulders-length straight hair with dark ends, soft fullness at lower cheek, natural deeper smile creases and fine forehead and neck lines. Brown glasses and plain muted plum half-zip. Slight smile."
+        }
+      ],
+      "prompts": [
+        "A 38-year-old Indian American female basketball medical lead with warm medium-brown skin, a long oval face, wide expressive dark eyes, strong curved eyebrows, a slightly round nose and faint dimple on one side. Long dark straight hair pulled into a loose low bun. Plain sky-blue blouse beneath a navy cardigan. Slight turn and relaxed expression. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 50. Retain her curved brows, dimple and eyes. Same loosely tied-back hair with two narrow silver streaks at the temple. Plain brown reading glasses, natural crow's feet, some forehead and subtle cheek lines. Plain olive sport coat. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 62. Same dark eyes, eyebrow curve and dimple. Silver shoulders-length straight hair with dark ends, soft fullness at lower cheek, natural deeper smile creases and fine forehead and neck lines. Brown glasses and plain muted plum half-zip. Slight smile. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark."
+      ],
+      "tool": "Built-in Codex image generation",
+      "date": "2026-11-21"
+    },
+    {
+      "id": "staff-f/0006",
+      "gender": "female",
+      "role": "staff",
+      "stages": [
+        {
+          "min_age": 0,
+          "file": "staff-f/0006-s1.jpg",
+          "age": 38,
+          "changes": "A 38-year-old Black female basketball player-development director with chestnut brown skin, very round cheeks, wide nose, close-set smiling eyes, a small mark beneath her left cheekbone and full lips. Neat shoulder-length twists pulled half back. Plain charcoal polo. Friendly grin and a faint shoulder angle."
+        },
+        {
+          "min_age": 48,
+          "file": "staff-f/0006-s2.jpg",
+          "age": 50,
+          "changes": "At 50. Preserve nose width, cheek mark, shape of eyes and warm grin. Shoulder-length twists pinned into a loose updo with a little grey near the hairline. Natural fine creases near eyes and mouth, plain dusty wine jacket."
+        },
+        {
+          "min_age": 60,
+          "file": "staff-f/0006-s3.jpg",
+          "age": 62,
+          "changes": "At 62. Same nose, eyes, mark and grin. Short silver twists flat near temples, medium thin round glasses and deeper smile lines, fuller lower cheeks and visible natural neck texture. Plain slate-blue knit polo, head turned slightly the other way."
+        }
+      ],
+      "prompts": [
+        "A 38-year-old Black female basketball player-development director with chestnut brown skin, very round cheeks, wide nose, close-set smiling eyes, a small mark beneath her left cheekbone and full lips. Neat shoulder-length twists pulled half back. Plain charcoal polo. Friendly grin and a faint shoulder angle. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 50. Preserve nose width, cheek mark, shape of eyes and warm grin. Shoulder-length twists pinned into a loose updo with a little grey near the hairline. Natural fine creases near eyes and mouth, plain dusty wine jacket. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 62. Same nose, eyes, mark and grin. Short silver twists flat near temples, medium thin round glasses and deeper smile lines, fuller lower cheeks and visible natural neck texture. Plain slate-blue knit polo, head turned slightly the other way. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark."
+      ],
+      "tool": "Built-in Codex image generation",
+      "date": "2026-11-21"
     }
   ]
 }
