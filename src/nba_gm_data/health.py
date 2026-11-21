@@ -830,8 +830,8 @@ def v2_injury_draw(root, model, canonical, player, traits, state, profile, minut
     pid = player["id"]
     if pid not in history_cache:
         history_cache[pid] = im.player_history(model, pid, canonical.get("injury_events", []))
-    history = history_cache[pid] + [(parse_date(e["start_date"]), e["body_part"]) for e in new_events
-                                    if e.get("player_id") == pid and e.get("body_part") != "illness"]
+    history = history_cache[pid] + [im.history_entry(parse_date(e["start_date"]), e["body_part"], im.simulated_event(e))
+                                    for e in new_events if e.get("player_id") == pid and e.get("body_part") != "illness"]
     player_traits = {key: traits.get((pid, key), 50.0) for key in ("rim_pressure", "offensive_rebounding", "stamina_cardio")}
     hazards = im.part_hazards(model, player, player_traits, minutes, history, game_date)
     scale = im.LEAGUE_RATE_SCALE * float(staff.get("injury_risk_multiplier", 1.0))
@@ -855,7 +855,7 @@ def v2_injury_draw(root, model, canonical, player, traits, state, profile, minut
     label = str(case.get("label") or f"{part} injury")
     area = im.PART_AREA.get(part, "head_illness")
     lasting = im.lasting_effect(model, label, part)
-    recurrence = any(p == part and (game_date - d).days <= 548 for d, p in history)
+    recurrence = any(p == part and (game_date - d).days <= 548 for d, p, *_ in history)
     event = to_plain(InjuryEvent(
         id=stable_id("injury", "v2", pid, date_to_str(game_date), part, label, seed),
         player_id=pid, team_id=player["team_id"], start_date=date_to_str(game_date), return_date=date_to_str(return_day),
@@ -1075,7 +1075,7 @@ def opening_night_injuries(root: str | Path, canonical: dict[str, Any], states: 
         # Still out with an injury from his real record (last season's surgery, say): date it there, so his injury
         # history counts it once.
         start_day = opener_day - timedelta(days=1)
-        for when, past_part in im.player_history(injury, player["id"], []):
+        for when, past_part, *_ in im.player_history(injury, player["id"], []):
             if past_part == part and 0 <= (opener_day - when).days <= OPENING_NIGHT_HISTORY_DAYS:
                 start_day = when
         games_total = len(team_days) if whole_season else games_out

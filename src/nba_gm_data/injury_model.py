@@ -27,9 +27,27 @@ MIN_MINUTES_FOR_EXPOSURE = 4.0    # deep reserves who barely play still get hurt
 # The builder anchors the built-in per-part rates to 2021-22 through 2024-25 tracker coverage.
 # This multiplier defaults to neutral and remains available for the injury season research script.
 LEAGUE_RATE_SCALE = 1.0
-# Basketball Index logs one real injury as several entries ("out", then "day-to-day"), so a player's recorded history
-# overstates how much it predicts new injuries. Calibrated against Basketball Index's own 2026-27 per-player forecasts.
-HISTORY_WEIGHT = 0.55
+# How much a real player's recorded injury history counts, against the strength the fit found (1.0). Measured on a
+# season the model was not fitted on (STAR-INJURIES, 2026-11-21, scripts/research/injury_history_foldin_check.py): over
+# 2025-26, with history from the tracker plus the public 2025-26 stretches, the weight that best predicts who got hurt
+# next is 0.65-0.80 depending on the cut date (90% ranges 0.50-0.75, 0.60-0.75, 0.75-0.85); with the tracker alone over
+# the whole season it is 0.80 (0.75-0.85). 0.75 sits inside every range. In the seasons the slopes were fitted on
+# (2021-22 to 2024-25) the best weight is 0.95-1.0 (TOP30-GAMES, scripts/research/injury_history_weight.py), which is
+# partly the fit grading itself. The old 0.55 under-predicted the best players' injuries by 18-23% in both checks.
+# The model file's league rates are anchored with this weight (rate_fit.history_weight); rebuild it when this changes.
+HISTORY_WEIGHT = 0.75
+# How much injuries the game itself draws count. Set so the league's injury rate stays steady over four seasons back
+# to back (scripts/research/injury_multiseason_check.py, fixed rosters, spells costing a game per team, seasons 1-4,
+# seeds 17 / 29): 0.75 -> 41.5/41.6/39.8/41.7 and 42.9/44.4/44.1/42.9; 0.65 -> 40.1 to 37.7 and 41.9 to 39.7;
+# 0.55 -> 39.6 to 35.3 and 41.1 to 37.6. With the 2025-26 history complete the game's own draws need no discount; the
+# rate climb that once argued for one (TOP30-GAMES) came from starting the game on the thin 2025-26 tracker season.
+# The split stays so the two can be set apart if a persistent frailty trait is added.
+SIMULATED_HISTORY_WEIGHT = 0.75
+# Events that are real injuries (the real opening-night list) count as real history.
+REAL_EVENT_SOURCES = ("src_opening_night_injuries_2026_27",)
+# Manual startup scaffolds that mirror a real injury already in the recorded history (Tatum's, Haliburton's and
+# Lillard's 2025 Achilles tears, entered as season-long "ankle/foot" absences on 2025-10-21): not counted again.
+DUPLICATE_EVENT_SOURCES = ("src_player_health_overrides_v1",)
 # Severity labels kept for the existing consumers (GUI, news, AI), now derived from the real duration.
 SEVERITY_BY_DAYS = ((3, "day_to_day"), (14, "short"), (42, "medium"), (90, "long"))
 # Legacy six-area labels (older saves, prospect medicals, profile tags) -> the closest body parts.
@@ -52,7 +70,10 @@ def _load(path: str) -> dict[str, Any] | None:
     return json.loads(p.read_text()) if p.exists() else None
 
 
-EVIDENCE_FILE = "data/canonical/injury_player_evidence_v2.json"   # local only (per-player Basketball Index evidence)
+# Local only (per-player Basketball Index evidence, plus the public 2025-26 stretches the tracker lacks; built by
+# scripts/build_injury_model.py). v2 is the older tracker-only file, used when v3 has not been built yet.
+EVIDENCE_FILE = "data/canonical/injury_player_evidence_v3.json"
+FALLBACK_EVIDENCE_FILE = "data/canonical/injury_player_evidence_v2.json"
 
 
 @lru_cache(maxsize=4)
@@ -61,13 +82,16 @@ def _load_with_evidence(path: str, evidence_path: str) -> dict[str, Any] | None:
     if model is None:
         return None
     evidence = _load(evidence_path) or {}
-    return {**model, **{k: v for k, v in evidence.items() if k != "version"}}
+    return {**model, **{k: v for k, v in evidence.items() if k not in ("version", "public_history_2025_26")}}
 
 
 def load_model(root: str | Path | None = None) -> dict[str, Any] | None:
     """The fitted model, plus real players' injury history/forecasts/recovery speed when the local evidence file exists."""
     root = Path(root) if root is not None else _PACKAGE_ROOT
-    return _load_with_evidence(str(root / MODEL_FILE), str(root / EVIDENCE_FILE))
+    evidence = root / EVIDENCE_FILE
+    if not evidence.exists() and FALLBACK_EVIDENCE_FILE:
+        evidence = root / FALLBACK_EVIDENCE_FILE
+    return _load_with_evidence(str(root / MODEL_FILE), str(evidence))
 
 
 def _parse(value: Any) -> date | None:
@@ -86,8 +110,19 @@ def event_part(event: Mapping[str, Any]) -> str:
     return area if area in PART_LABELS else (LEGACY_AREA_PARTS.get(area, ("",))[0] or "other")
 
 
-def player_history(model: Mapping[str, Any], player_id: str, events: Iterable[Mapping[str, Any]]) -> list[tuple[date, str]]:
-    """(start date, part) of the player's known injuries: real recent history plus the save's own events."""
+def simulated_event(event: Mapping[str, Any]) -> bool:
+    """True for an injury the game drew itself (not a real recorded one)."""
+    return not any(source in REAL_EVENT_SOURCES for source in (event.get("source_ids") or []))
+
+
+def history_entry(d: date, part: str, simulated: bool) -> tuple:
+    """A history entry: (date, part) for a real injury, (date, part, True) for one the game drew, which counts
+    SIMULATED_HISTORY_WEIGHT / HISTORY_WEIGHT as much (prior_terms)."""
+    return (d, part, True) if simulated else (d, part)
+
+
+def player_history(model: Mapping[str, Any], player_id: str, events: Iterable[Mapping[str, Any]]) -> list[tuple]:
+    """(start date, part[, simulated]) of the player's known injuries: real recent history plus the save's own events."""
     out = []
     for start, part, *_ in (model.get("player_history") or {}).get(player_id, []):
         d = _parse(start)
@@ -97,18 +132,23 @@ def player_history(model: Mapping[str, Any], player_id: str, events: Iterable[Ma
     for event in events:
         if event.get("player_id") != player_id:
             continue
+        if any(source in DUPLICATE_EVENT_SOURCES for source in (event.get("source_ids") or [])):
+            continue
         d, part = _parse(event.get("start_date")), event_part(event)
         if d and part and part != "illness" and (d, part) not in seen:
-            out.append((d, part))
+            out.append(history_entry(d, part, simulated_event(event)))
             seen.add((d, part))
     return sorted(out)
 
 
-def prior_terms(history: list[tuple[date, str]], on: date, decay_years: float) -> dict[str, float]:
+def prior_terms(history: list[tuple], on: date, decay_years: float) -> dict[str, float]:
+    """Time-decayed history counts per part; the game's own draws count SIMULATED_HISTORY_WEIGHT / HISTORY_WEIGHT."""
+    share = SIMULATED_HISTORY_WEIGHT / HISTORY_WEIGHT if HISTORY_WEIGHT else 1.0
     terms: dict[str, float] = {}
-    for d, part in history:
+    for d, part, *simulated in history:
         if d < on:
-            terms[part] = terms.get(part, 0.0) + math.exp(-((on - d).days / 365.25) / decay_years)
+            terms[part] = terms.get(part, 0.0) + (share if simulated and simulated[0] else 1.0) * math.exp(
+                -((on - d).days / 365.25) / decay_years)
     return terms
 
 
@@ -452,7 +492,7 @@ def body_risk_map(canonical: Mapping[str, Any], player: Mapping[str, Any], healt
             event = next((e for e in events_by_player.get(pid, []) if e.get("id") == state.get("current_injury_id")), None)
             current = event_part(event) if event else ""
     recent = {}
-    for d, part in history:
+    for d, part, *_ in history:
         if d <= on and (on - d).days <= 3 * 365:
             recent[part] = recent.get(part, 0) + 1
     parts = []

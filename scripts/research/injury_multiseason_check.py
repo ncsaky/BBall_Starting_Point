@@ -3,9 +3,11 @@ his later risk. Checks that the league rate stays steady from season to season a
 risk moves (TOP30-GAMES, 2026-11-20).
 
     PYTHONPATH=src .venv/bin/python scripts/research/injury_multiseason_check.py [--seed 17] [--model PATH --weight W]
+        [--sim-weight W] [--evidence PATH]
 
---model/--weight compare another model file and history weight. --sim-weight (a separate weight for the game's own
-draws) needs the split-weight patch tried in TOP30-GAMES (output/top30-games/tried_model.diff); it was not kept.
+--model/--weight compare another model file and real-history weight (a model file is anchored to one weight, so pass
+the matching file). --sim-weight sets the weight for the game's own draws (injury_model.SIMULATED_HISTORY_WEIGHT,
+STAR-INJURIES); --evidence another per-player evidence file.
 """
 from __future__ import annotations
 
@@ -32,13 +34,18 @@ def main() -> None:
     ap.add_argument("--weight", type=float, help="history weight for real recorded injuries")
     ap.add_argument("--sim-weight", type=float, help="history weight for the game's own draws (default: --weight)")
     ap.add_argument("--seasons", type=int, default=4)
+    ap.add_argument("--evidence", help="per-player evidence file (default: the engine's)")
     a = ap.parse_args()
     if a.model:
         im.MODEL_FILE = str(Path(a.model).resolve().relative_to(ROOT))
+    if a.evidence:
+        im.EVIDENCE_FILE = str(Path(a.evidence).resolve().relative_to(ROOT))
     if a.weight is not None:
         im.HISTORY_WEIGHT = a.weight
-        if hasattr(im, "SIMULATED_HISTORY_SHARE"):   # only with the split-weight patch (output/top30-games/tried_model.diff)
-            im.SIMULATED_HISTORY_SHARE = (a.sim_weight if a.sim_weight is not None else a.weight) / a.weight
+        if a.sim_weight is None:
+            im.SIMULATED_HISTORY_WEIGHT = a.weight
+    if a.sim_weight is not None:
+        im.SIMULATED_HISTORY_WEIGHT = a.sim_weight
     canonical = load_app_canonical(ROOT)
     canonical["player_health_states"] = []
     canonical["injury_events"] = []
@@ -50,8 +57,8 @@ def main() -> None:
     teams = len({p["team_id"] for p in players.values() if p.get("team_id")})
     model = im.load_model(ROOT)
     events_all: list[dict] = []
-    print(f"history weight {im.HISTORY_WEIGHT} (game's own draws x{getattr(im, 'SIMULATED_HISTORY_SHARE', 1.0):.2f}), "
-          f"model {im.MODEL_FILE}")
+    print(f"history weight {im.HISTORY_WEIGHT}, game's own draws {im.SIMULATED_HISTORY_WEIGHT}, model {im.MODEL_FILE}, "
+          f"evidence {im.EVIDENCE_FILE}")
     for k in range(a.seasons):
         year = 2026 + k
         season = f"{year}-{str(year + 1)[2:]}"
