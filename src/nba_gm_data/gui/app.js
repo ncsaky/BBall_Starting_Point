@@ -4078,8 +4078,8 @@ function coachPortraitMarkup(portraitId, extraClass = "") {
   return `<span class="coach-portrait-art ${escapeAttr(extraClass)}" aria-hidden="true"><img class="coach-portrait-silver" src="${path}-silver.webp" alt="" decoding="async" draggable="false"><img class="coach-portrait-ink" src="${path}-ink.webp" alt="" decoding="async" draggable="false"></span>`;
 }
 
-// A staff member's own face: the real photo for a real head coach, otherwise a stock photo of a real person (same
-// gender as the name; faces.py). Saves made before faces existed fall back to the old shared coach art.
+// A staff member's own face: the real photo for a real head coach, otherwise a generated face of a fictional person
+// or a stock photo (same gender as the name, the image for his or her age; faces.py). Saves made before faces existed fall back to the old shared coach art.
 function staffPortraitMarkup(row, portraitId, extraClass = "") {
   const source = String(row?.headshot_url || "").trim();
   if (!source) return coachPortraitMarkup(portraitId, extraClass);
@@ -11411,16 +11411,24 @@ function openSettingsModal() {
 // Photo credits (required by CC BY and CC BY-SA): every stock photo used for made-up staff and prospects, and every
 // real photo used under a free licence, with author, licence and source. Real photos shown for reference only (ESPN
 // college rosters, the coaches' association, USA Basketball, club sites) are counted by source, like NBA headshots.
+// The AI-generated faces of fictional people (generated/manifest.json) are credited as one group.
 const PHOTO_CREDIT_COLUMNS = [["photo", "", "Photo"], ["use", "Used for", "Sort by what the photo is used for"], ["subject", "Photo", "Sort by photo title"], ["author", "Author", "Sort by author"], ["licence", "Licence", "Sort by licence"]];
 
 async function openPhotoCreditsModal() {
-  let stock = {}, real = {};
+  let stock = {}, real = {}, generated = {};
   try {
     [stock, real] = await Promise.all(["/assets/headshots/stock/credits.json", "/assets/headshots/real/manifest.json"].map(url => fetch(url, {cache: "no-cache"}).then(response => response.json())));
   } catch (error) {
     showToast("Could not load the photo credits.", true);
     return;
   }
+  try {
+    generated = (await fetch("/assets/headshots/generated/manifest.json", {cache: "no-cache"}).then(response => response.json())) || {};
+  } catch (error) {
+    generated = {};
+  }
+  const generatedPeople = Object.keys(generated.faces || {}).length;
+  const generatedImages = Object.values(generated.faces || {}).reduce((total, face) => total + (face.stages || []).length, 0);
   const rows = (stock.photos || []).map(photo => ({file: photo.file, use: photo.use, subject: photo.title, author: photo.author, authorUrl: photo.author_url, licence: photo.licence, licenceUrl: photo.licence_url, source: photo.source_url}));
   const reference = {};
   for (const [kind, entries] of [["Real head coach", real.coaches], ["Real prospect", real.prospects]]) {
@@ -11448,7 +11456,8 @@ async function openPhotoCreditsModal() {
     title: "Photo credits",
     subtitle: "",
     body: `<div class="photo-credits">
-      <p>Every face in the game is a photo of a real person. Made-up coaches, staff and draft prospects use openly licensed photos of real people (CC0, public domain, CC BY, CC BY-SA), cut out and shown in greyscale; the photographers and licences are listed below. Real coaches and prospects use their own photos: the freely licensed ones are listed below too.</p>
+      ${generatedPeople ? `<p class="photo-credits-generated">Made-up coaches, staff, draft prospects and the players they become get AI-generated faces of fictional people first: no real person is depicted. They were made with OpenAI's image tool, with older photos of each person for later in their career (${generatedPeople} fictional people, ${generatedImages} portraits).</p>` : ""}
+      <p>${generatedPeople ? "When those run out, made-up people get" : "Made-up coaches, staff and draft prospects use"} openly licensed photos of real people (CC0, public domain, CC BY, CC BY-SA), cut out and shown in greyscale; the photographers and licences are listed below. Real coaches and prospects use their own photos: the freely licensed ones are listed below too.</p>
       ${referenceText ? `<p class="photo-credits-reference">Shown for reference only, like the NBA player headshots: ${referenceText}.</p>` : ""}
       <p class="photo-credits-count">${rows.length} credited photos.</p>
       <div class="photo-credits-scroll"><table class="photo-credits-table" aria-label="Photo credits"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
@@ -12863,7 +12872,7 @@ function modalWindowMark(kind) {
 }
 
 function playerHeadshotMarkup(row, className = "player-headshot") {
-  // Prospects show their real photo or a stock photo of a real person (faces.py) when the server sends one; blank portrait otherwise.
+  // Prospects show their real photo, a generated face or a stock photo (faces.py) when the server sends one; blank portrait otherwise.
   if (row.is_prospect && !String(row.headshot_url || "").trim()) return `<span class="player-headshot-frame prospect-profile-placeholder" aria-label="Blank profile portrait"><svg class="${escapeAttr(className)}" viewBox="0 0 220 160" role="img" aria-label="Blank profile portrait"><rect width="220" height="160" fill="#e4e8eb"/><circle cx="110" cy="57" r="32" fill="#a9b3bc"/><path d="M43 160v-10c0-39 30-61 67-61s67 22 67 61v10" fill="#a9b3bc"/></svg></span>`;
   const source = String(row.headshot_url || "").trim();
   if (!source) return "";

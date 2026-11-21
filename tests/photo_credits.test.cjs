@@ -11,10 +11,12 @@ const app = fs.readFileSync(path.join(gui, 'app.js'), 'utf8');
 const css = fs.readFileSync(path.join(gui, 'card-board.css'), 'utf8');
 const credits = JSON.parse(fs.readFileSync(path.join(gui, 'assets/headshots/stock/credits.json'), 'utf8'));
 const real = JSON.parse(fs.readFileSync(path.join(gui, 'assets/headshots/real/manifest.json'), 'utf8'));
+const generated = JSON.parse(fs.readFileSync(path.join(gui, 'assets/headshots/generated/manifest.json'), 'utf8'));
 
-async function openCredits() {
+async function openCredits(withGenerated = true) {
   const escape = (value) => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const files = {'/assets/headshots/stock/credits.json': credits, '/assets/headshots/real/manifest.json': real};
+  if (withGenerated) files['/assets/headshots/generated/manifest.json'] = generated;
   const scope = {
     state: {}, escapeHtml: escape, escapeAttr: escape, renderModal: () => {}, showToast: () => {},
     fetch: async (url) => ({json: async () => files[url]}),
@@ -52,4 +54,20 @@ test('the credits table follows the house table style', () => {
   assert.match(css, /\.photo-credits-table tbody tr:nth-child\(even\)/);
   assert.match(css, /\.photo-credits-table tbody tr:hover/);
   assert.match(css, /\.photo-credits-table \.is-sorted/);
+});
+
+test('the AI-generated faces of fictional people are credited as one group', async () => {
+  const modal = await openCredits();
+  const people = Object.keys(generated.faces).length;
+  const portraits = Object.values(generated.faces).reduce((total, face) => total + face.stages.length, 0);
+  assert.ok(people >= 60);
+  assert.match(modal.body, /AI-generated faces of fictional people/);
+  assert.match(modal.body, /no real person is depicted/);
+  assert.match(modal.body, /OpenAI's image tool/);
+  assert.ok(modal.body.includes(`${people} fictional people, ${portraits} portraits`));
+  assert.ok(!modal.body.includes('/assets/headshots/generated/'), 'no per-image rows for generated faces');
+  // Without the generated library the view still lists the stock photos.
+  const plain = await openCredits(false);
+  assert.doesNotMatch(plain.body, /AI-generated/);
+  assert.equal((plain.body.match(/<tr data-credit-row/g) || []).length, (modal.body.match(/<tr data-credit-row/g) || []).length);
 });

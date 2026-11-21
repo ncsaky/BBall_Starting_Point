@@ -13,7 +13,7 @@ nba-gm-data-gui = "nba_gm_data.app_server:main"
 package-dir = {"" = "src"}
 packages = ["nba_gm_data", "nba_gm_data.stage2"]
 [tool.setuptools.package-data]
-nba_gm_data = ["gui/*", "gui/assets/team_logos/*.png", "gui/assets/game-art/*.webp", "gui/assets/game-art/*.json", "gui/assets/game-art/*.md", "gui/assets/dot-press/ATTRIBUTION.md", "gui/assets/startup/press/*.png", "gui/assets/startup/press/*.json", "gui/assets/startup/ATTRIBUTION.md", "gui/assets/startup/VIDEO_SOURCES.md", "gui/assets/startup/video/*.mp4", "gui/assets/startup/video/*.jpg", "gui/assets/startup/video/*.json", "gui/assets/headshots/real/*.json", "gui/assets/headshots/real/coaches/*.jpg", "gui/assets/headshots/real/prospects/*.avif", "gui/assets/headshots/stock/*.json", "gui/assets/headshots/stock/*/*.avif"]
+nba_gm_data = ["gui/*", "gui/assets/team_logos/*.png", "gui/assets/game-art/*.webp", "gui/assets/game-art/*.json", "gui/assets/game-art/*.md", "gui/assets/dot-press/ATTRIBUTION.md", "gui/assets/startup/press/*.png", "gui/assets/startup/press/*.json", "gui/assets/startup/ATTRIBUTION.md", "gui/assets/startup/VIDEO_SOURCES.md", "gui/assets/startup/video/*.mp4", "gui/assets/startup/video/*.jpg", "gui/assets/startup/video/*.json", "gui/assets/headshots/real/*.json", "gui/assets/headshots/real/coaches/*.jpg", "gui/assets/headshots/real/prospects/*.avif", "gui/assets/headshots/stock/*.json", "gui/assets/headshots/stock/*/*.avif", "gui/assets/headshots/generated/*.json", "gui/assets/headshots/generated/*/*.avif"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

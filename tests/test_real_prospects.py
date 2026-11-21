@@ -271,7 +271,8 @@ class ClassAssemblyTests(unittest.TestCase):
             self.assertEqual({p["name"] for p in real}, {e["name"] for e in rp.class_entries(year, 1)})
             generated = generated_class(year)["draft_prospects"]
             kept = {p["id"]: p for p in prospects if not is_real(p)}
-            ignore = {"rank", "rank_range", "rookie_contract_value", "scouting_prior"}
+            # The face is picked again within the real class (generated faces first, none repeated in the class).
+            ignore = {"rank", "rank_range", "rookie_contract_value", "scouting_prior", "headshot_url"}
             for original in generated:
                 if original["id"] in kept:
                     self.assertEqual({k: v for k, v in kept[original["id"]].items() if k not in ignore},
