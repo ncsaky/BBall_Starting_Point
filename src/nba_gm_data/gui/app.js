@@ -6648,7 +6648,7 @@ function freeAgencySignAndTradeMarkup(player, room) {
   const picked = new Set(st.outgoing || []);
   const bench = options.bench || [];
   return `<div class="fa-snt"><p class="fa-muted">${escapeHtml(options.sender_abbrev || "")} re-signs him for ${money(options.ask_millions)} × ${options.years} years and trades him to you. Over the cap, you send salary back:</p>
-    <div class="fa-snt-players">${bench.map((row) => `<label><input type="checkbox" data-fa-snt-out="${escapeAttr(row.player_id)}" ${picked.has(String(row.player_id)) ? "checked" : ""}> ${escapeHtml(row.name || "")} <small>${money(row.salary_millions)} · ${Number(row.minutes || 0).toFixed(0)} mpg</small></label>`).join("") || "<small>No player you can trade.</small>"}</div>
+    <div class="fa-snt-players">${bench.map((row) => `<label><input type="checkbox" data-fa-snt-out="${escapeAttr(row.player_id)}" ${picked.has(String(row.player_id)) ? "checked" : ""}> ${escapeHtml(row.name || "")} <small>${money(row.salary_millions)}</small></label>`).join("") || "<small>No player you can trade.</small>"}</div>
     ${options.pick_id ? `<label class="fa-snt-pick"><input type="checkbox" data-fa-snt-pick ${st.pick ? "checked" : ""}> Add our next second-round pick</label>` : ""}
     <span class="fa-edge-buttons"><button type="button" class="ui-command" data-fa-snt-check>Check the rules</button><button type="button" class="ui-command" data-fa-snt-submit ${st.terms?.ok && st.answer?.ok ? "" : "disabled"}>Make the deal</button></span>
     ${verdict(st.terms, st.answer)}</div>`;

@@ -221,17 +221,38 @@ def priority(active, save, stamp):
     return [t['id'] for t in sorted(active.get('teams', []), key=key)]
 
 
+def camp_claim_plausible(active, save, player_id, team_id, depth):
+    """A quick look before the full claim plan: is this camp-deal player better than the team's 8th best player (a clear rotation upgrade)?"""
+    from .two_way import overall, standard_roster_ids
+    if team_id not in depth:
+        ratings = sorted((overall(active, pid) for pid in standard_roster_ids(active, save, team_id)), reverse=True)
+        depth[team_id] = ratings[7] if len(ratings) >= 8 else 0.0
+    if ('player', player_id) not in depth:
+        depth[('player', player_id)] = overall(active, player_id)
+    return depth[('player', player_id)] > depth[team_id]
+
+
 def process_waivers(canonical, save, stamp):
     from .save import canonical_with_save, human_controlled_team_ids, add_news
     resolved = []
     due = sorted((r for r in save.get('waiver_wire', []) if r['status'] == 'pending' and r['clearance_date'] <= stamp), key=lambda r: (r['clearance_date'], r['id']))
+    # FA-REAL slice 4: camp cuts clear in batches (about 150 a camp). The league view is rebuilt only after a claim
+    # moves a player (a cleared waiver changes no roster), and a camp-deal player is worth a claim only for a team
+    # whose 8th best player he beats (6 camp claims in 2023-2026); other waivers are judged as before.
+    active = None
+    depth: dict[str, float] = {}
     for entry in due:
-        active = canonical_with_save(canonical, save)
+        if active is None:
+            active = canonical_with_save(canonical, save)
+            depth = {}
         day = entry['clearance_date']
         human = human_controlled_team_ids(save)
         claims = {c['team_id']: c for c in entry['claims']}
+        camp_deal = bool(((save.get('contract_overrides') or {}).get(entry['player_id']) or {}).get('exhibit_10'))
         for tid in priority(active, save, day):
             if tid in human or tid in claims:
+                continue
+            if camp_deal and not camp_claim_plausible(active, save, entry['player_id'], tid, depth):
                 continue
             plan = claim_plan(active, save, entry, tid, ai=True)
             if plan['ok']:
@@ -271,6 +292,7 @@ def process_waivers(canonical, save, stamp):
             save.setdefault('rotation_snapshots', {}).pop(tid, None)
             save.setdefault('starting_lineups', {}).pop(tid, None)
             headline = f"{entry['player_name']} claimed on waivers. Existing contract transferred."
+            active = None   # rosters changed
         else:
             if entry['buyout']:
                 for row in debt['seasons']:

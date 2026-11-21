@@ -39,8 +39,12 @@ GUARANTEE_DATE_MONTH_DAY = "01-10"      # standard contracts become guaranteed o
 RULES = {
     # Waves of AI camp invites (month-day, the roster total to fill to, how many camp deals to waive first). The waived
     # ones join the affiliate (their rights are what many camp deals are for). Together: about 7-8 deals a team.
-    # Each wave keeps a team's best two camp deals and waives the rest to the affiliate first, then signs new ones.
-    "invite_waves": (("07-16", 21, None), ("08-01", 21, 2), ("08-25", 21, 2), ("09-15", 21, 2), ("09-28", 21, None)),
+    # Waves of invites (month-day, roster total to fill to, weakest camp deals waived to the affiliate first). Teams
+    # sign in turn, one at a time, so no club takes the whole pool. Together about 7 deals a team.
+    "invite_waves": (("07-16", 20, 0), ("08-15", 21, 1), ("09-15", 21, 1), ("09-28", 21, 1)),
+    # Undrafted rookies who join the free-agent pool after each draft (the real summer's undrafted signings: 89-108
+    # undrafted players signed two-way deals each year, and most camp deals went to undrafted or G League players).
+    "undrafted_class_size": 60,
     # Candidates: fringe free agents (a rotation player waits for a real offer).
     "invite_max_minutes": 15.0,
     "invite_max_age": 30.0,
@@ -131,8 +135,18 @@ def roster_deadline(save: dict[str, Any]) -> str:
 
 
 def clear_by(save: dict[str, Any]) -> str:
-    """The last day to waive a player so he clears waivers (48 hours) before opening night."""
-    return (date.fromisoformat(opening_night(save)) - timedelta(days=2)).isoformat()
+    """The last day to waive a player so he clears waivers (48 hours) the day before opening night, so nothing of a
+    non-guaranteed salary is owed (the real 2026 practical cut date: October 17 for an October 20 opener)."""
+    return (date.fromisoformat(opening_night(save)) - timedelta(days=3)).isoformat()
+
+
+def words_date(value: str) -> str:
+    """'2026-10-18' -> 'October 18' (plain words for the screens)."""
+    try:
+        day = date.fromisoformat(str(value)[:10])
+    except ValueError:
+        return str(value)
+    return f"{day.strftime('%B')} {day.day}"
 
 
 def camp_open(save: dict[str, Any], when: str | None = None) -> bool:
@@ -336,51 +350,76 @@ def invite_score(active: dict[str, Any], save: dict[str, Any], player: dict[str,
     return rating + nba + youth + _hash(seed, team_id, player["id"], "camp-taste") * 3.0
 
 
-def ai_invites(active: dict[str, Any], save: dict[str, Any], day: str, fill_to: int, keep: int | None, *,
+def ai_invites(active: dict[str, Any], save: dict[str, Any], day: str, fill_to: int, waive_count: int | None, *,
                seed: int = 1) -> dict[str, int]:
-    """One wave of AI camp invites: keep the best ``keep`` camp deals and waive the others (they join the affiliate;
-    None: waive nobody), then sign camp deals until the roster reaches ``fill_to`` players (two-ways counted) or six
-    camp deals."""
+    """One wave of AI camp invites: each team waives its ``waive_count`` weakest camp deals (they join the affiliate),
+    then teams take turns signing camp deals (one each per turn, in an order drawn for the day) until their roster
+    reaches ``fill_to`` players (two-ways counted) or six camp deals."""
     from .save import human_controlled_team_ids
     from . import two_way
     humans = human_controlled_team_ids(save)
     signed = waived = 0
-    pool = None
-    taken: set[str] = set()
-    for team in sorted(active.get("teams", []), key=lambda t: t["id"]):
-        tid = team["id"]
-        if tid in humans:
-            continue
+    teams = sorted((t["id"] for t in active.get("teams", []) if t["id"] not in humans),
+                   key=lambda tid: _hash(seed, day, tid, "camp-order"))
+    for tid in teams:
         camp = camp_deal_ids(save, tid)
-        if keep is not None and len(camp) > int(keep):
-            weakest = sorted(camp, key=lambda pid: (_value(active, pid), pid))[:len(camp) - int(keep)]
-            for pid in weakest:
+        if waive_count and camp:
+            for pid in sorted(camp, key=lambda pid: (_value(active, pid), pid))[:int(waive_count)]:
                 if waive(active, save, pid, tid, day, reason="assigned to the affiliate before camp cuts"):
                     waived += 1
-        while True:
+    pool = invite_candidates(active, save)
+    base = {p["id"]: invite_score(active, save, p, "", seed) for p in pool}
+    taken: set[str] = set()
+    open_teams = list(teams)
+    while open_teams:
+        still = []
+        for tid in open_teams:
             room = two_way.standard_room(active, save, tid, day)
-            total = room["standard"] + room["two_way"]
-            if total >= int(fill_to) or len(camp_deal_ids(save, tid)) >= EXHIBIT_10_MAXIMUM:
-                break
-            if pool is None:
-                pool = invite_candidates(active, save)
+            if room["standard"] + room["two_way"] >= int(fill_to) or len(camp_deal_ids(save, tid)) >= EXHIBIT_10_MAXIMUM:
+                continue
             best = None
             for player in pool:
                 if player["id"] in taken:
                     continue
-                score = invite_score(active, save, player, tid, seed)
+                score = base[player["id"]] + _hash(seed, tid, player["id"], "camp-taste") * 3.0
                 if best is None or score > best[0]:
                     best = (score, player)
             if best is None:
-                break
-            player = best[1]
-            taken.add(player["id"])
+                continue
+            taken.add(best[1]["id"])
             try:
-                invite(active, save, player, tid, when=day, by="ai")
+                invite(active, save, best[1], tid, when=day, by="ai")
                 signed += 1
             except ValueError:
-                continue
+                pass
+            still.append(tid)
+        open_teams = still
     return {"signed": signed, "waived": waived}
+
+
+def add_undrafted_class(save: dict[str, Any], day: str, *, seed: int = 1) -> list[str]:
+    """After the draft, the best undrafted rookies join the free-agent pool (G League hopefuls: camp deals and two-way
+    contracts go to players like these). Generated with the game's replacement-player generator: age 21-23, no NBA
+    service, a few minutes of projected NBA value."""
+    from .save import create_replacement_player, generated_replacement_traits, upsert_by_id
+    import random
+    season = _season(save)
+    start = season_start(season)
+    ids = []
+    rng = random.Random(f"{seed}:{start}:undrafted-class")
+    for index in range(int(RULES["undrafted_class_size"])):
+        stub = {"id": None, "abbrev": f"UD{index:02d}"}
+        player = create_replacement_player(stub, season, seed, 50_000 + start * 100 + index)
+        player.update(team_id=None, team_abbrev="FA", age=round(21.0 + rng.random() * 2.5, 1),
+                      draft_year=start, draft_status="undrafted", minutes_projection=round(2 + rng.random() * 5, 1),
+                      rotation_priority="undrafted_rookie")
+        save.setdefault("generated_players", []).append(player)
+        for trait in generated_replacement_traits(player, seed):
+            upsert_by_id(save, "generated_traits", trait)
+        ids.append(player["id"])
+    save["free_agent_player_ids"] = sorted(set(save.get("free_agent_player_ids") or []) | set(ids))
+    store(save).setdefault("undrafted", {})[str(start)] = len(ids)
+    return ids
 
 
 def waive(active: dict[str, Any], save: dict[str, Any], player_id: str, team_id: str, day: str, *,
@@ -543,9 +582,12 @@ def daily(canonical: dict[str, Any], save: dict[str, Any], day: str, active_fact
     if record_affiliate_bonuses(save, day):
         pass
     if phase in {"free_agency", "offseason", "training_camp"} and day[:4] == str(start + 1):
-        for month_day, fill_to, keep in RULES["invite_waves"]:
+        if md >= "07-02" and once(f"undrafted:{start + 1}"):
+            add_undrafted_class(save, day, seed=seed)
+            changed = True
+        for month_day, fill_to, waive_count in RULES["invite_waves"]:
             if md >= month_day and once(f"invite:{start + 1}:{month_day}"):
-                result = ai_invites(active_factory(), save, day, fill_to, keep, seed=seed)
+                result = ai_invites(active_factory(), save, day, fill_to, waive_count, seed=seed)
                 changed |= bool(result["signed"] or result["waived"])
         for month_day in RULES["overseas_passes"]:
             if md >= month_day and once(f"overseas:{start + 1}:{month_day}"):
@@ -610,9 +652,9 @@ def guarantee_words(contract_seasons: list[dict[str, Any]], season: str, *, camp
     if protected is None and row.get("guarantee_status") in {"non_guaranteed", "not_guaranteed", "exhibit_10"}:
         protected = 0.0
     if camp_deal:
-        return {"kind": "camp", "words": "Camp deal: not guaranteed", "guaranteed": 0.0}
+        return {"kind": "camp", "words": "Not guaranteed", "guaranteed": 0.0}
     if protected is None:
-        return {"kind": "unknown", "words": "Guarantee unverified (counted in full)", "guaranteed": salary}
+        return {"kind": "unknown", "words": "Guaranteed (assumed)", "guaranteed": salary}
     protected = float(protected)
     if protected >= salary - 1:
         return {"kind": "full", "words": "Fully guaranteed", "guaranteed": salary}

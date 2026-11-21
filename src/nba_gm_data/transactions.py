@@ -5922,6 +5922,11 @@ def salary_matching_issue(canonical: dict[str, Any], proposal: TradeProposal, co
         hard_cap = cap_lines_for_season(active_season)["hard_cap"]
         if after_total > hard_cap and after_total > current_total + 250_000:
             return f"{team_by_id(canonical, team_id)['abbrev']} would move above the hard-cap/apron guardrail."
+        # FA-REAL slice 4 (minimal hook): a hard cap the team triggered this season (the mid-level, the bi-annual,
+        # receiving a sign-and-trade; cap_ledger via save.canonical_with_save) is a ceiling a trade can't add past.
+        triggered = (canonical.get("triggered_hard_caps") or {}).get(team_id)
+        if triggered and after_total > float(triggered) + 1 and after_total > current_total + 1:
+            return f"{team_by_id(canonical, team_id)['abbrev']} is hard-capped at ${float(triggered) / 1e6:.1f}M this season."
     active_start = season_start_from_label(active_season)
     for offset in range(1, 4):
         start = active_start + offset

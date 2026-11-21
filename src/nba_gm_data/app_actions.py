@@ -3985,6 +3985,14 @@ def free_agency_room_payload(
     user_offer_history.sort(key=lambda row: str(row.get("date") or ""), reverse=True)
     roster_count = sum(1 for player in active.get("players", []) if player.get("team_id") == team["id"])
     shown_candidates = (own_candidates if phase == "re_signing" else candidates)[:80]
+    if phase != "re_signing":
+        # FA-REAL slice 4: young players who could take a two-way or camp deal are listed too (the 80 above are the
+        # players with the biggest roles; two-way candidates rarely make that list).
+        from .two_way import SERVICE_LIMIT, years_of_service as tw_service
+        extra = [c for c in candidates[80:] if float(c.get("age") or 99) <= 26
+                 and tw_service(players_by_id.get(c["id"]) or {}, signing_season) < SERVICE_LIMIT]
+        shown_candidates = shown_candidates + sorted(
+            extra, key=lambda c: -float((c.get("ratings") or {}).get("overall") or 0.0))[:30]
     shown_ids = {id(candidate) for candidate in shown_candidates}
     # FA-REAL slice 4: the other ways to add a player (a two-way contract, a camp deal, a sign-and-trade), each with
     # the engine's own eligibility answer (two_way, camp, sign_and_trade).

@@ -1541,6 +1541,10 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
     canonical['team_plans'] = copy_plain(save.get('team_plans', {}))
     canonical['team_trade_wants'] = copy_plain(save.get('team_trade_wants', {}))
     canonical['team_payroll_history'] = save.get('team_payroll_history') or {}  # read-only: repeat taxpayers (trade step 4)
+    # FA-REAL slice 4: hard caps triggered this cap year (cap_ledger), for the trade code's salary check (read-only).
+    ledger_year = (((save.get("cap_ledger") or {}).get("seasons") or {}).get(str(active_season)) or {})
+    canonical['triggered_hard_caps'] = {tid: float(row["hard_cap"]["amount"]) for tid, row in ledger_year.items()
+                               if (row or {}).get("hard_cap")}
     from .trade_ownership import LEDGER_KEY, tenure_ledger_view
     canonical[LEDGER_KEY] = tenure_ledger_view(save)  # read-only for trade code; never written back from here
     attach_trade_market(canonical, save)

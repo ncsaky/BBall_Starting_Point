@@ -1082,8 +1082,9 @@ def stop_four_checklist(canonical: dict[str, Any], save: dict[str, Any], team_id
     items.append({"kind": "roster", "deadline": deadline, "count": len(roster), "target": ROSTER_SEASON_MAXIMUM,
                   "status": "pending" if len(roster) > ROSTER_SEASON_MAXIMUM else ("done" if submitted else "open"),
                   "text": (f"{len(roster)} standard players{f' ({len(camp_deals)} on camp deals)' if camp_deals else ''}: "
-                           f"cut to {ROSTER_SEASON_MAXIMUM} by {deadline}, then submit your opening roster. "
-                           f"Waive by {camp.clear_by(save)} so a cut player clears waivers before opening night.")})
+                           f"cut to {ROSTER_SEASON_MAXIMUM} by {camp.words_date(deadline)}, then submit your opening "
+                           f"roster. Waive by {camp.words_date(camp.clear_by(save))} so a cut player clears waivers "
+                           "before opening night.")})
     places = two_way.team_two_ways(save, team_id)
     items.append({"kind": "two_way_places", "deadline": deadline, "count": len(places), "target": two_way.TWO_WAY_SLOTS,
                   "status": "done" if len(places) >= two_way.TWO_WAY_SLOTS else "open",
