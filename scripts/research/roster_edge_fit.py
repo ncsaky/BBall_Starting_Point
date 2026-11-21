@@ -91,7 +91,7 @@ def two_way(decisions):
         "prior_g_league": {
             y: sum(r["summer"] == y and r["prior_g_league"] is not None for r in signings) for y in YEARS
         },
-        "first_trio_date_known": by_year(
+        "opening_trio_completion_month": by_year(
             [r for r in snapshots if r["stage"] == "opening" and r["two_way_count"] == 3],
             lambda r: r["date_opening_trio_completed"][:7] if r["date_opening_trio_completed"] else "unknown",
         ),
@@ -132,10 +132,13 @@ def exhibit_10(rows, teams):
                 if y < 2026 else None)
             for y in YEARS
         },
-        "publicly_verified_bonus_payments": {
-            y: sum(r["summer"] == y and r["affiliate_bonus_paid"] is True for r in rows)
-            for y in YEARS
-        },
+        "same_affiliate_appearance_in_either_phase": by_year(
+            [r for r in rows if r["affiliate_tip_off_games"] or r["affiliate_regular_season"]],
+            lambda _: "appeared",
+        ),
+        "publicly_reported_bonuses_earned": by_year(
+            [r for r in rows if r.get("affiliate_bonus_earned_usd") is not None], lambda _: "earned",
+        ),
         "conversion_holdout": binary_holdouts(
             rows, "converted_before_open",
             [
@@ -167,6 +170,12 @@ def camp(decisions):
                                          lambda _: "teams"),
         "opening_standard_slots": by_year(checkpoints, lambda r: r["opening_standard"]),
         "waivers": by_year(cuts, lambda r: r["contract_type_at_cut"] or "other_or_unknown"),
+        "guarantee_at_cut": by_year(cuts, lambda r: r["guarantee_at_cut"] or "unknown"),
+        "draft_status_at_cut": by_year(cuts, lambda r: r["draft_status"]),
+        "median_age_at_cut": {
+            y: median(r["season_age"] for r in cuts if r["summer"] == y and r["season_age"] is not None)
+            for y in YEARS
+        },
         "claims": by_year(decisions["camp_waiver_claims"], lambda _: "claims"),
         "retention_holdout": binary_holdouts(
             players, "retained_by_opening",
