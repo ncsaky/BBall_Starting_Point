@@ -53,7 +53,7 @@ LOOP = {
     "k_press": .80, "trans_to": -.15, "off_foul_share": .08, "steal_share": .62, "k_steal_level": 1.0,
     "to_shift": .13,   # FITTED: league turnovers per 100 (the card fit is per used possession; the loop's are per chance)
     # Non-shooting fouls per possession (league level, then the defenders' own multipliers); technicals etc.
-    "ns_per_poss": .068, "other_ft_per_poss": .005, "loose_ball_per_chance": .032,
+    "ns_per_poss": .064, "other_ft_per_poss": .005, "loose_ball_per_chance": .025,
     # Shooting fouls: action terms on top of the foul kernel's zone base (log-odds). Drives draw the most contact,
     # rolls, cuts and putbacks less, catch jumpers least. Stand-ins checked against FTA per FGA.
     "foul_drive": .30, "foul_roll_cut": -.35, "foul_post": .25, "foul_putback": -.30, "foul_transition": .10,
@@ -74,7 +74,7 @@ LOOP = {
     # Game-level contest by zone (rim, short, mid, three), make log-odds: the shooting conversion was fitted at the
     # kernel's fixed reference contest; this sets the in-game average. FITTED to the league make rates by zone
     # (Basketball Index 2025-26: rim 67.4, short mid 44.8, long mid 41.7, three 36.1).
-    "zone_make": (-.19, -.18, 0.0, 0.0),
+    "zone_make": (-.19, -.18, 0.0, -.03),
     # After an offensive rebound: chance of an immediate putback by the rebounder (rim / short misses vs others).
     "putback_close": .50, "putback_far": .20,
     # Points per 100 -> make log-odds (home court, coaches, rest).
@@ -82,12 +82,15 @@ LOOP = {
     # Score effects: per point of lead (capped at 25), the leading team's shots lose this much make log-odds (effort,
     # garbage-time lineups, the trailing team's urgency). Without it the margin around the engine's own expectation
     # varied 17.4 points (today's engine 13.1; real margins vary about 14.1 around the market spread). FITTED to that.
-    "k_lead": .008,
+    "k_lead": .007,
     # Heave chance when under 3 s remain at the start of a possession.
     "heave": .45,
     # Share of rebounds credited to no player (team rebounds). FITTED: rotation players' rebounds per 36 ran 1.0 high
     # (about 13%) with every rebound credited.
     "team_rebound": .11,
+    # End-game tactics (stand-ins): chance a leading team runs out the last <24 s; chance a team trailing by 1-8 in the
+    # last 45 s fouls immediately (two free throws, clock stopped).
+    "end_hold": .75, "end_foul": .75,
     # The finisher is drawn by usage weight to this power: the weight is fitted to each player's usage on its own, but
     # a share among five teammates (plus the possessions that end on putbacks and drawn fouls) flattens it. FITTED to
     # real per-player shot volume (stars' and bench players' FGA per 36 in replayed games).
@@ -392,7 +395,21 @@ class Game:
         if rng.random() < L["other_ft_per_poss"]:
             slot = max(range(5), key=lambda s: off.cards[off.on[s]].ft)
             self._free_throws(off, de, slot, 1)
-        p_trans = {"dreb": L["trans_dreb"], "steal": L["trans_steal"], "made": L["trans_made"]}.get(start, L["trans_dead"])
+        # End of the game (4th quarter or overtime): a team ahead by one or two possessions with the shot clock off
+        # runs the clock out; a team behind by 1-8 in the last 45 seconds fouls at once to stop the clock.
+        if self.period >= 4:
+            lead = off.points - de.points
+            if 0 < lead and self.t_left <= 24.0 and rng.random() < L["end_hold"]:
+                self._run_clock(self.t_left)
+                return "end"
+            if 1 <= lead <= 8 and self.t_left <= 45.0 and rng.random() < L["end_foul"]:
+                self._run_clock(min(self.t_left, 1.0 + 3.0 * rng.random()))
+                slot = _pick(off.usage_cum, rng.random())
+                fouler = rng.randrange(5)
+                self._foul(de, fouler)
+                made = self._free_throws(off, de, slot, 2)
+                return "made" if made else self._after_miss(off, de, "ft", slot)
+        p_trans ={"dreb": L["trans_dreb"], "steal": L["trans_steal"], "made": L["trans_made"]}.get(start, L["trans_dead"])
         p_trans *= math.exp(L["k_trans"] * (off.trans_pref - self.lg_trans))
         trans = rng.random() < p_trans
         seg = self._duration("trans" if trans else "half", off)

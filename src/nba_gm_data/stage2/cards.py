@@ -108,6 +108,10 @@ BLOCKS = {"constant": 1.24321, "S37": 0.02144, "S36": 0.0011, "P03": 0.0002, "lo
 PERIMETER_D = ("S33", "S37", "S40", "S35")
 RIM_D = ("S36", "S37")
 PRESSURE_D = ("S41", "S42", "S43")
+# Extra weight on the shooter's foul-drawing craft (S24) and contact seeking (T18) on top of the foul kernel's own
+# shooter terms, in the loop's shot-by-shot context (the kernel's per-player spread was fitted with a coarser shot
+# context). Log-odds per 25 grade points and per unit of log-odds of T18.
+FOUL_EXTRA = {"k_craft": 0.0, "k_seek": 0.0}
 # Offensive lineup indices: creation (dribble manipulation, separation, attack recognition, passing delivery) and
 # spacing (three-point shooting as he shoots it, times how often he is out there: T02 three).
 CREATION = ("S16", "S18", "S20", "F.execution")
@@ -330,7 +334,8 @@ def build_card(pid: str, name: str, flat: Mapping[str, float], means: Mapping[st
     c.foul = prof
     fc = F.FITTED
     c.foul_s = (fc.k_craft * (prof.craft - 50) / 25 + fc.k_seek * prof.seek + fc.k_finish * (prof.contact_finish - 50) / 25
-                + fc.k_strength * (prof.strength - 50) / 25)
+                + fc.k_strength * (prof.strength - 50) / 25
+                + FOUL_EXTRA["k_craft"] * (prof.craft - 50) / 25 + FOUL_EXTRA["k_seek"] * (prof.seek - _logit(.45)))
     c.and1 = [F.and_one_probability(prof, z, fc) for z in range(4)]
     c.ns_draw = max(1e-3, prof.involvement) ** fc.k_ns_involvement * math.exp(fc.k_ns_craft * (prof.craft - 50) / 25 + fc.k_ns_seek * prof.seek)
     c.off_foul_w = max(1e-3, prof.involvement) * math.exp(fc.k_off_seek * prof.seek) + fc.k_off_screen * prof.screen * .2
@@ -365,7 +370,8 @@ def _settings_key() -> tuple:
     """Cards depend on the module's conversion settings; research fits change them, so the cache keys on them."""
     return (tuple(sorted(USAGE.items())), tuple(sorted(TURNOVER.items())), tuple(sorted(HOOK.items())),
             tuple(sorted(DUNK.items())), tuple(sorted(MENU.items())), tuple(sorted(BLOCKS.items())),
-            tuple(sorted(DUNK_BY_KIND.items())), TRANSITION_MAKE_LOGIT)
+            tuple(sorted(DUNK_BY_KIND.items())), TRANSITION_MAKE_LOGIT, tuple(sorted(FOUL_EXTRA.items())),
+            tuple(sorted(TRANS.items())))
 
 
 def flat_for_player(canonical: Mapping[str, Any], player: Mapping[str, Any]) -> dict[str, float] | None:

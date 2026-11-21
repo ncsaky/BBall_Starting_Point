@@ -19,10 +19,14 @@ run next to today's engine. Speed target ~0.2-0.4 ms per possession (~0.02-0.04 
 
 ## Resume state
 - [x] Worktree set up (symlinks, inputs gunzipped). Board row set to in progress.
-- [ ] `stage2/cards.py` (per-player numbers), `stage2/game.py` (possession loop, clock, rotation), engine hook.
-- [ ] Fits: usage, turnover share, hook family, dunk share, blocks, defense slopes; turnover/steal spot-check.
-- [ ] League calibration (calibration_report --engine stage2), odds runs (20 runs, seeds 1001/2001), speed.
-- [ ] Tests, core tests, report, board row -> review, commit.
+- [x] `stage2/cards.py` (per-player numbers), `stage2/game.py` (possession loop, clock, rotation), engine hook.
+- [x] Fits: usage, turnover share, hook family, dunk share, blocks (`stage2/loop_fit.py`); team-strength terms
+  against market spreads (scratch `output/stage2/scratch/strength_fit.py`); score effects; usage power 1.3.
+- [x] Calibration report stage2 sandbox 150 games: 18/18 in band. Replay spot-check script
+  `scripts/research/s2_possession_loop_check.py` (600 games, both engines).
+- [x] Tests: `tests/test_stage2_possession_loop.py` (new), `tests/test_stage2_seam.py` (stub tests replaced). Pass.
+- [ ] Odds runs (20 runs, seeds 1001/2001, both engines): waiting for load < 20 and swap > 2 GB.
+- [ ] Core tests, report, board row -> review, final commit.
 
 Notes:
 - Load at start was ~240 (other jobs); code work first.
