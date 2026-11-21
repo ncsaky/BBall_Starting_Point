@@ -141,12 +141,11 @@
         return `<li class="${row.is_user ? "ss-user" : ""}" title="${attr(tip)}" tabindex="0" aria-label="${attr(`${row.team.name}: ${row.continuity_pct}% of last season's minutes kept. ${tip}`)}">
           <span class="ss-team">${logo(row.team.abbrev)}<b>${esc(row.team.abbrev)}</b></span>
           <span class="ss-bar"><i class="ss-kept" style="width:${row.kept_pct}%"></i><i class="ss-injured" style="width:${row.injured_pct}%"></i><i class="ss-gone" style="width:${row.gone_pct}%"></i></span>
-          <span class="ss-arrivals"><i style="width:${Math.min(100, row.arrivals_pct)}%"></i></span>
           <span class="ss-pct"><b>${num(row.continuity_pct, 0)}%</b> kept${arrivals.length ? ` · +${arrivals.length} new` : ""}${unplayed ? `<small>${unplayed} had no NBA minutes</small>` : ""}</span></li>`;
       }).join("");
       const legend = slide.legend || {};
       return `<p class="ss-source">${esc(slide.note)}</p>
-        <div class="ss-legend"><span><i class="ss-kept"></i>${esc(legend.kept)}</span><span><i class="ss-injured"></i>${esc(legend.injured)}</span><span><i class="ss-gone"></i>${esc(legend.gone)}</span><span><i class="ss-arrival-key"></i>${esc(legend.arrivals)}</span></div>
+        <div class="ss-legend"><span><i class="ss-kept"></i>${esc(legend.kept)}</span><span><i class="ss-injured"></i>${esc(legend.injured)}</span><span><i class="ss-gone"></i>${esc(legend.gone)}</span></div>
         <ol class="ss-continuity">${rows}</ol>`;
     },
     leaders_revisited(slide) {

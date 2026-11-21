@@ -182,7 +182,7 @@
 .ss-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .ss-legend i { display: inline-block; width: 14px; height: 10px; }
 .ss-continuity { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 18px; }
-.ss-continuity li { break-inside: avoid; display: grid; grid-template-columns: 62px minmax(100px, 1fr) 50px 160px; gap: 8px; align-items: center; min-height: 32px; padding: 1px 6px; background: var(--house-row, #fff); }
+.ss-continuity li { break-inside: avoid; display: grid; grid-template-columns: 62px minmax(100px, 1fr) 160px; gap: 8px; align-items: center; min-height: 32px; padding: 1px 6px; background: var(--house-row, #fff); }
 .ss-continuity .ss-logo { width: 16px; height: 16px; }
 .ss-pct small { display: block; color: #52616e; font-size: 10.5px; }
 .ss-compact .ss-table td { padding-top: 2px; padding-bottom: 2px; }
@@ -191,13 +191,10 @@
 .ss-continuity li:hover { background: var(--house-row-hover, #dce8f2); }
 .ss-continuity li.ss-user { background: var(--house-row-active, #cfe1f1); box-shadow: inset 3px 0 0 var(--house-active-mark, #3d82c5); font-weight: 700; }
 .ss-bar { display: flex; height: 12px; background: #172228; }
-.ss-bar i, .ss-arrivals i { display: block; height: 100%; }
+.ss-bar i { display: block; height: 100%; }
 .ss-kept { background: #2f9a55; }
 .ss-injured { background: #9aa4ad; }
 .ss-gone { background: #c2414b; }
-.ss-arrival-key { background: #9cc6e8; }
-.ss-arrivals { display: flex; height: 6px; background: rgba(23, 34, 40, .12); }
-.ss-arrivals i { background: #9cc6e8; }
 .ss-pct { font-size: 12px; white-space: nowrap; }
 
 /* Settings menu entry */

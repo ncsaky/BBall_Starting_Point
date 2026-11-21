@@ -717,6 +717,11 @@ def previous_season_label(season: str) -> str:
     return f"{start - 1}-{str(start)[-2:]}"
 
 
+def _name_key(name: Any) -> str:
+    """Name match key: lower case, letters and digits only ("Ja'Kobe Walter" and "jakobe walter" match)."""
+    return " ".join("".join(ch for ch in word if ch.isalnum()) for word in str(name or "").lower().replace("-", " ").split())
+
+
 def last_season_context(active: dict[str, Any], save: dict[str, Any], save_path: str | Path | None, season: str) -> dict[str, Any]:
     """Last season, as stints, records, totals and awards: the save's own history when it has one, otherwise the
     real 2025-26 season (a new career)."""
@@ -735,17 +740,18 @@ def last_season_context(active: dict[str, Any], save: dict[str, Any], save_path:
                 "totals": entry.get("player_season_stats") or {}, "awards": entry.get("awards") or [],
                 "note": f"Minutes from your league's {previous} season, counted per team stint."}
     real = real_season_summary()
-    by_name = {row.get("normalized_name"): row["id"] for row in active.get("players", []) if row.get("normalized_name")}
+    by_name = {_name_key(row.get("normalized_name") or row.get("name")): row["id"] for row in active.get("players", [])
+               if row.get("normalized_name") or row.get("name")}
     stints = []
     for row in real.get("stints") or []:
         team_id = by_abbrev.get(row["team"])
         if team_id:
-            stints.append({"player_id": by_name.get(row["key"]) or f"real:{row['key']}", "team_id": team_id, "name": row["name"],
+            stints.append({"player_id": by_name.get(_name_key(row["key"])) or f"real:{row['key']}", "team_id": team_id, "name": row["name"],
                            "minutes": float(row["minutes"]), "games": int(row["games"])})
     records = {by_abbrev[abbrev]: rec for abbrev, rec in (real.get("teams") or {}).items() if abbrev in by_abbrev}
     totals = {}
     for key, row in (real.get("players") or {}).items():
-        pid = by_name.get(key) or f"real:{key}"
+        pid = by_name.get(_name_key(key)) or f"real:{key}"
         totals[pid] = {**row, "player_name": row["name"], "team_abbrev": row.get("team")}
     return {"season": real.get("season") or previous, "source": "real", "stints": stints, "records": records, "totals": totals,
             "awards": [], "note": "A new league: these are the real 2025-26 NBA minutes (ESPN box scores), counted per team stint."}
@@ -801,9 +807,10 @@ def continuity_rows(active: dict[str, Any], last: dict[str, Any], injured: dict[
                 part = "injured" if stint["player_id"] in injured else "kept"
             else:
                 part = "gone"
-            segments[part].append({"name": stint.get("name") or names.get(stint["player_id"]), "minutes": round(float(stint["minutes"]))})
+            segments[part].append({"id": stint["player_id"], "name": names.get(stint["player_id"]) or stint.get("name"),
+                                   "minutes": round(float(stint["minutes"]))})
         prior_ids = {stint["player_id"] for stint in stints}
-        arrivals = sorted(({"name": names.get(pid), "minutes_last_season": round(minutes_anywhere.get(pid, 0.0)),
+        arrivals = sorted(({"id": pid, "name": names.get(pid), "minutes_last_season": round(minutes_anywhere.get(pid, 0.0)),
                             "rookie": minutes_anywhere.get(pid, 0.0) <= 0}
                            for pid, tid in current_team.items() if tid == team_id and pid not in prior_ids),
                           key=lambda row: (-row["minutes_last_season"], str(row["name"])))
@@ -844,7 +851,7 @@ def build_preseason_outlook(canonical: dict[str, Any], save: dict[str, Any], sav
 
 
 def outlook_power_slide(ctx: dict[str, Any]) -> dict[str, Any]:
-    from .save import team_identity_report
+    from .save import player_attribute_summary, team_identity_report
 
     active, save, teams = ctx["active"], ctx["save"], ctx["teams"]
     identity = team_identity_report(active, save)
@@ -852,31 +859,93 @@ def outlook_power_slide(ctx: dict[str, Any]) -> dict[str, Any]:
     last_rows = _rank_by_record(_record_rows(active, ctx["last"]["records"]), teams)
     last_rank = {row["team_id"]: index + 1 for index, row in enumerate(last_rows)}
     continuity = {row["team"]["id"]: row for row in ctx["continuity"]}
+    players = {row["id"]: row for row in active.get("players", [])}
+    values: dict[str, float] = {}
+
+    def value(player_id: str) -> float:
+        if player_id not in values:
+            values[player_id] = float(player_attribute_summary(active, player_id).get("overall") or 0.0) if player_id in players else 0.0
+        return values[player_id]
+
+    def draft_year(player_id: str) -> int | None:
+        year = (players.get(player_id) or {}).get("draft_year")
+        return int(year) if str(year or "").isdigit() else None
+
+    season_start = _season_years(ctx["season"])[0] if ctx["season"] else None
     rows = []
     for index, team_id in enumerate(order, start=1):
         before = last_rank.get(team_id)
         rows.append({"rank": index, "team": _team_ref(teams, team_id), "overall": identity[team_id]["metrics"].get("overall"),
                      "last_finish": before, "change": (before - index) if before else None,
-                     "note": roster_note(continuity.get(team_id)), "is_user": team_id == ctx["user"]})
+                     "note": roster_note(continuity.get(team_id), value, draft_year, season_start),
+                     "is_user": team_id == ctx["user"]})
     ctx["power_rows"] = rows
     return {"key": "power", "title": "Power rankings", "kicker": "Team Signals' overall strength",
             "rows": rows, "note": f"Change compares with each team's {ctx['last']['season']} finish (league-wide record rank)."}
 
 
-def roster_note(row: dict[str, Any] | None) -> str:
+# A move's weight is how far the player's value sits above a fringe-rotation level, growing faster than linearly so
+# one star outweighs several role players (Kawhi Leonard in > Brandon Ingram out). Values are the engine's own player
+# value (team "Overall" is built from the same scale); 58 is about a rotation regular.
+NOTE_VALUE_FLOOR = 55.0
+NOTE_NOTABLE_VALUE = 58.0
+NOTE_SECOND_SHARE = 0.35      # a second kind of move is named when its total weight is this share of the lead move
+
+
+def _move_weight(value: float) -> float:
+    return max(0.0, value - NOTE_VALUE_FLOOR) ** 1.5
+
+
+def roster_note(row: dict[str, Any] | None, value: Callable[[str], float] | None = None,
+                draft_year: Callable[[str], int | None] | None = None, season_start: int | None = None) -> str:
+    """One line on a team's biggest change since last season, by player value: arrivals, departures, players back
+    after missing last season, and players starting the season out long. The biggest move leads; a different kind of
+    move follows when it is comparable ("Added Kawhi Leonard; lost Brandon Ingram and 1 more")."""
     if not row:
         return ""
-    gone_big = [item for item in row["gone"] if item["minutes"] >= 1500]
-    added_big = [item for item in row["arrivals"] if item["minutes_last_season"] >= 1500]
-    if added_big and (not gone_big or added_big[0]["minutes_last_season"] >= gone_big[0]["minutes"]):
-        return f"Added {added_big[0]['name']}" + (f" and {len(added_big) - 1} more rotation players" if len(added_big) > 1 else "")
-    if len(gone_big) >= 2:
-        return f"Lost {len(gone_big)} rotation players, led by {gone_big[0]['name']}"
-    if gone_big:
-        return f"Lost {gone_big[0]['name']}"
-    if row["continuity_pct"] >= 85:
-        return "Running it back"
-    return ""
+    value = value or (lambda _pid: 0.0)
+    draft_year = draft_year or (lambda _pid: None)
+    moves: dict[str, list[tuple[float, str]]] = {"added": [], "drafted": [], "back": [], "lost": [], "out": []}
+    for item in row.get("arrivals") or []:
+        pid = item.get("id")
+        drafted = draft_year(pid) if pid else None
+        if season_start and drafted is not None and drafted >= season_start:
+            kind = "drafted"
+        elif drafted is not None and not item.get("minutes_last_season"):  # on no team's court last season
+            kind = "back"
+        else:
+            kind = "added"
+        moves[kind].append((value(pid) if pid else 0.0, item["name"]))
+    for item in row.get("gone") or []:
+        moves["lost"].append((value(item["id"]) if item.get("id") else 0.0, item["name"]))
+    for item in row.get("injured") or []:
+        moves["out"].append((value(item["id"]) if item.get("id") else 0.0, item["name"]))
+    for kind in moves:
+        moves[kind] = sorted((m for m in moves[kind] if m[0] >= NOTE_NOTABLE_VALUE and m[1]), key=lambda m: (-m[0], m[1]))
+    if not any(moves.values()):
+        return "Running it back" if row.get("continuity_pct", 0) >= 85 else ""
+    weight = {kind: sum(_move_weight(v) for v, _ in items) for kind, items in moves.items()}
+    lead = max((kind for kind in moves if moves[kind]), key=lambda kind: (_move_weight(moves[kind][0][0]), weight[kind]))
+
+    def phrase(kind: str, first: bool) -> str:
+        items = moves[kind]
+        names = [items[0][1]]
+        if len(items) > 1 and _move_weight(items[1][0]) >= 0.5 * _move_weight(items[0][0]):
+            names.append(items[1][1])
+        rest = len(items) - len(names)
+        who = " and ".join(names) if not rest else ", ".join(names) + f" and {rest} more"
+        text = {"added": f"added {who}", "drafted": f"drafted {who}", "lost": f"lost {who}",
+                "back": f"{who} back after missing last season", "out": f"{who} out injured"}[kind]
+        return text[0].upper() + text[1:] if first else text
+
+    opposite = {"added": ("lost", "out"), "drafted": ("lost", "out"), "back": ("lost", "out"),
+                "lost": ("added", "back", "drafted"), "out": ("added", "back", "drafted")}[lead]
+    others = [kind for kind in moves if kind != lead and moves[kind]]
+    others.sort(key=lambda kind: (kind not in opposite, -weight[kind]))
+    text = phrase(lead, True)
+    if others and weight[others[0]] >= NOTE_SECOND_SHARE * _move_weight(moves[lead][0][0]):
+        text += "; " + phrase(others[0], False)
+    return text
 
 
 def outlook_continuity_slide(ctx: dict[str, Any]) -> dict[str, Any]:
@@ -884,7 +953,7 @@ def outlook_continuity_slide(ctx: dict[str, Any]) -> dict[str, Any]:
             "rows": [{**row, "is_user": row["team"]["id"] == ctx["user"]} for row in ctx["continuity"]],
             "source": ctx["last"]["source"], "note": ctx["last"]["note"],
             "legend": {"kept": "Still on the team", "injured": f"Still on the team, out more than {INJURY_SLIDE_MIN_GAMES} games",
-                       "gone": "Left the team", "arrivals": "New arrivals (their minutes elsewhere last season)"}}
+                       "gone": "Left the team"}}
 
 
 def outlook_leaders_slide(ctx: dict[str, Any]) -> dict[str, Any]:

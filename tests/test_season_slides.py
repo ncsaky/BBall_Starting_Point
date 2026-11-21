@@ -23,6 +23,7 @@ from nba_gm_data.season_slides import (
     available_slideshows,
     coaching_changes,
     continuity_rows,
+    roster_note,
     last_season_context,
     mark_seen,
     outlook_due,
@@ -268,6 +269,36 @@ class ContinuityTests(unittest.TestCase):
         rows = continuity_rows(active, last, {})
         self.assertGreater(rows[0]["kept_pct"], 0)
         self.assertGreater(rows[0]["gone_pct"], 0)  # unmatched (retired, departed) players count as gone
+
+
+class RosterNoteTests(unittest.TestCase):
+    """The power-ranking note names the biggest change by player value, not by minutes (playtest 2026-11-21)."""
+
+    VALUES = {"kawhi": 74.0, "ingram": 61.5, "mamu": 61.0, "grimes": 57.7, "kessler": 66.3, "lebron": 73.2,
+              "hali": 72.5, "oubre": 57.0, "rook": 59.0, "bench": 50.0}
+    DRAFTED = {"kawhi": 2011, "ingram": 2016, "grimes": 2021, "kessler": 2022, "lebron": 2003, "hali": 2020,
+               "oubre": 2015, "rook": 2026}
+
+    def note(self, gone=(), arrivals=(), injured=(), continuity=60.0):
+        row = {"gone": [{"id": pid, "name": pid.title(), "minutes": 2000} for pid in gone],
+               "arrivals": [{"id": pid, "name": pid.title(), "minutes_last_season": mins, "rookie": not mins} for pid, mins in arrivals],
+               "injured": [{"id": pid, "name": pid.title(), "minutes": 1500} for pid in injured], "continuity_pct": continuity}
+        return roster_note(row, self.VALUES.get, self.DRAFTED.get, 2026)
+
+    def test_star_arrival_leads_over_more_minutes_lost(self):
+        self.assertEqual(self.note(gone=["ingram", "mamu"], arrivals=[("kawhi", 2087)]), "Added Kawhi; lost Ingram and Mamu")
+
+    def test_big_add_named_even_with_few_minutes_last_season(self):
+        note = self.note(gone=["lebron"], arrivals=[("grimes", 2212), ("kessler", 155)])
+        self.assertEqual(note, "Lost Lebron; added Kessler")
+
+    def test_player_back_from_a_missed_season(self):
+        self.assertEqual(self.note(arrivals=[("oubre", 1575), ("hali", 0)]), "Hali back after missing last season")
+
+    def test_rookies_and_quiet_summers(self):
+        self.assertEqual(self.note(arrivals=[("rook", 0)]), "Drafted Rook")
+        self.assertEqual(self.note(arrivals=[("bench", 900)], continuity=90.0), "Running it back")
+        self.assertEqual(self.note(injured=["kawhi"]), "Kawhi out injured")
 
 
 class OpensOnceTests(unittest.TestCase):
