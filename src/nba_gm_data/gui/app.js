@@ -11416,7 +11416,7 @@ const PHOTO_CREDIT_COLUMNS = [["photo", "", "Photo"], ["use", "Used for", "Sort 
 async function openPhotoCreditsModal() {
   let stock = {}, real = {};
   try {
-    [stock, real] = await Promise.all(["/assets/headshots/stock/credits.json", "/assets/headshots/real/manifest.json"].map(url => fetch(url).then(response => response.json())));
+    [stock, real] = await Promise.all(["/assets/headshots/stock/credits.json", "/assets/headshots/real/manifest.json"].map(url => fetch(url, {cache: "no-cache"}).then(response => response.json())));
   } catch (error) {
     showToast("Could not load the photo credits.", true);
     return;

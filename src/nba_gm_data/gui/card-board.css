@@ -5276,12 +5276,16 @@ body.unified-terminal-ui .modal-shell.modal-settings.modal-photo-credits { width
 .photo-credits p { margin:0; line-height:1.4; }
 .photo-credits-reference, .photo-credits-count { color:var(--muted, #5d6a77); font-size:11px; }
 .photo-credits-scroll { flex:1 1 auto; min-height:0; overflow:auto; border:1px solid var(--ui-line, #b9c3cc); }
-.photo-credits-table { border-collapse:collapse; width:100%; font-size:11px; }
+.photo-credits-table { border-collapse:collapse; width:100%; font-size:11px; table-layout:fixed; }
+.photo-credits-table th.photo-credit-face-col { width:50px; }
+.photo-credits-table th[data-credit-col="use"] { width:150px; }
+.photo-credits-table th[data-credit-col="author"] { width:26%; }
+.photo-credits-table th[data-credit-col="licence"] { width:120px; }
 .photo-credits-table thead th { position:sticky; top:0; z-index:1; background:var(--ui-panel, #f4f6f8); border-bottom:3px double var(--ui-line, #9aa7b3); font-size:10px; font-weight:700; padding:3px 6px; text-align:left; }
 .photo-credits-table thead th button { all:unset; cursor:pointer; font:inherit; }
 .photo-credits-table tbody tr:nth-child(even) { background:color-mix(in srgb, var(--ui-soft, #dde3e8) 45%, transparent); }
 .photo-credits-table tbody tr:hover { background:color-mix(in srgb, var(--ui-soft, #dde3e8) 95%, transparent); }
-.photo-credits-table td { padding:0 6px; height:34px; vertical-align:middle; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.photo-credits-table td { padding:0 6px; height:34px; vertical-align:middle; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .photo-credits-table .is-sorted { background:color-mix(in srgb, #8fb0cc 16%, transparent); }
 .photo-credits-table a { color:inherit; text-underline-offset:2px; }
 .photo-credits-table td.photo-credit-face, .photo-credits-table th.photo-credit-face-col { width:46px; padding:0 2px; vertical-align:bottom; }

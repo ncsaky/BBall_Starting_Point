@@ -8,18 +8,25 @@ Sources (no account needed, polite: one request at a time with a delay, every re
 - Openverse API (api.openverse.org), anonymous use within its published limits (20 requests a minute, 200 a day),
   licences CC0, public domain mark, CC BY and CC BY-SA only. The images themselves come from where Openverse found
   them (mostly Flickr's static image servers and Wikimedia Commons).
-- Wikimedia Commons API: stock-photo imports (Unsplash, Pixabay, Pexels files released under CC0 or similar).
+- Wikimedia Commons API: stock-photo imports (Unsplash, Pixabay, Pexels files released under CC0 or similar),
+  professional headshots and portrait-photograph categories. Photos of named people are kept only when no
+  Wikipedia article uses them (an article means a notable, possibly famous, person); public-figure words in a
+  title (senator, actor, ...) and non-free licences are skipped.
 
 Steps (each one resumable; everything intermediate lives in output/headshots-v2/):
   search     run the query list against Openverse and Commons, store candidates (licence, author, tags)
-  download   fetch each candidate photo once (about 1024 px)
+  download   fetch each candidate photo once (about 1024-1280 px), one request at a time per image host
   process    cut the person out, greyscale, ESPN-style head-and-shoulders framing (scripts/stock_headshot.swift);
              reject photos with no face, several faces, a turned or tilted head, low resolution or a bad frame
-  sheet      numbered contact sheets of the accepted faces for the human review (gender, age band, rejects)
+  sheet      numbered contact sheets of the accepted faces for the human review
+  review     record one code per face of a sheet (gender, age band, or reject: minors, famous people,
+             watermarks, costumes, glamour shots, duplicates of one person) in data/overrides/stock_face_review.json
   publish    copy the reviewed faces into gui/assets/headshots/stock/ with manifest.json and credits.json
+  contact    48 random library faces as output/headshots-v2/contact_sheet.jpg
 
 Usage:
-  python3 scripts/build_stock_faces.py search|download|process|sheet|publish [--limit N]
+  python3 scripts/build_stock_faces.py search|download|process|sheet|publish|contact [--limit N]
+  python3 scripts/build_stock_faces.py review --sheet N --codes "mmfx..."
 """
 
 from __future__ import annotations
@@ -230,8 +237,16 @@ def search_commons(candidates: dict) -> None:
                 # Headshots uploaded under a person's name: keep only photos that no Wikipedia article uses
                 # (an article means a notable, possibly famous, person).
                 params.update(prop="imageinfo|globalusage", gunamespace=0, gulimit="max")
-            data = fetch(api + "?" + urllib.parse.urlencode(params), delay=2.5)
-            body = json.loads(data) if data else {}
+            url = api + "?" + urllib.parse.urlencode(params)
+            for _ in range(4):
+                data = fetch(url, delay=2.5)
+                body = json.loads(data) if data else {}
+                if "error" not in body:
+                    break
+                # "Search is too busy" and similar answers: forget them and try again a little later.
+                (CACHE / hashlib.sha1(url.encode()).hexdigest()).unlink(missing_ok=True)
+                print(f"  commons busy ({body['error'].get('code')}): waiting 30s", file=sys.stderr, flush=True)
+                time.sleep(30)
             pages = (body.get("query") or {}).get("pages") or {}
             for page in pages.values():
                 info = (page.get("imageinfo") or [{}])[0]
@@ -384,13 +399,19 @@ def process(candidates: dict) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("step", choices=["search", "search-openverse", "search-commons", "download", "process", "sheet",
-                                         "review", "publish"])
+                                         "review", "publish", "contact", "notable"])
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--sheet", type=int, help="review: the sheet number")
     parser.add_argument("--codes", help="review: one code letter per face on the sheet")
     args = parser.parse_args()
     if args.step == "review":
         record_review(args.sheet, args.codes)
+        return
+    if args.step == "contact":
+        contact_sheet()
+        return
+    if args.step == "notable":
+        check_notable()
         return
     if args.step in ("search", "search-commons"):
         search_commons(load_json(WC_CANDIDATES, {}))
@@ -469,6 +490,78 @@ def record_review(sheet: int, codes: str) -> None:
             raise SystemExit(f"unknown code {letter!r}")
         review["codes"][cid] = letter
     save_json(REVIEW, review)
+
+
+NAME_NOISE = re.compile(
+    r"\b(professional|corporate|business|official|headshots?|head shot|portraits?|photos?|photograph\w*|pictures?|"
+    r"image|cropped|crop|edit\w*|final|new|color|colour|bw|b&w|unsplash|pexels|pixabay|by|of|the|and|for|with|"
+    r"in|at|jpg|jpeg|png|img|dsc\w*|mr|mrs|ms|dr|jr|sr)\b|\(.*?\)|[0-9_#@:,.!?\-–]+", re.I)
+PUBLIC_AUTHOR = re.compile(r"(politic|senat|congress|governor|campaign|for[A-Z ]?[a-z]*colorado|\bfor\b.*\b(senate|"
+                           r"congress|mayor|governor|president)|white house|embassy|parliament|ministry|department of|"
+                           r"office of|gop|democrat|republican|press office)", re.I)
+PERSON_DESCRIPTION = re.compile(r"\(born|\b\d{4}\s*[–-]\s*\d{4}\b|\(\d{4}|\b(politician|actor|actress|singer|"
+                                r"businessman|businesswoman|executive|journalist|athlete|player|coach|author|writer|"
+                                r"musician|presenter|model|entrepreneur|lawyer|judge|official|activist)\b", re.I)
+
+
+def name_in_title(title: str) -> str | None:
+    """The person's name a photo title seems to give ("Lee Iacocca", "Joe O'Dea Headshot"), if any."""
+    words = [w for w in NAME_NOISE.sub(" ", title).split() if w[:1].isupper() and len(w) > 1]
+    return " ".join(words[:3]) if 2 <= len(words) <= 4 else None
+
+
+def check_notable() -> None:
+    """Rejects reviewed photos of notable people: the name in the title has a Wikipedia article about a person,
+    or the photo comes from a political or official account. Run after each review round."""
+    review = load_json(REVIEW, {"codes": {}})
+    candidates = load_json(CANDIDATES, {})
+    kept = [cid for cid, code in review["codes"].items() if code != "x" and cid in candidates]
+    notable = review.setdefault("notable", {})
+    names: dict[str, list[str]] = {}
+    for cid in kept:
+        row = candidates[cid]
+        if PUBLIC_AUTHOR.search(str(row.get("author"))):
+            notable[cid] = f"public or political account: {row.get('author')}"
+            continue
+        name = name_in_title(row.get("title") or "")
+        if name:
+            names.setdefault(name, []).append(cid)
+    found = list(names)
+    for start in range(0, len(found), 50):
+        batch = found[start:start + 50]
+        params = {"action": "query", "format": "json", "redirects": 1, "prop": "description|pageprops",
+                  "titles": "|".join(batch)}
+        data = fetch("https://en.wikipedia.org/w/api.php?" + urllib.parse.urlencode(params), delay=1.5)
+        body = json.loads(data) if data else {}
+        query = body.get("query") or {}
+        to_title = {item["from"]: item["to"] for key in ("normalized", "redirects") for item in query.get(key, [])}
+        pages = {page.get("title"): page for page in (query.get("pages") or {}).values()}
+        for name in batch:
+            title = to_title.get(to_title.get(name, name), to_title.get(name, name))
+            page = pages.get(title) or {}
+            if "missing" in page or "disambiguation" in (page.get("pageprops") or {}):
+                continue
+            description = page.get("description") or ""
+            if PERSON_DESCRIPTION.search(description):
+                for cid in names[name]:
+                    notable[cid] = f"Wikipedia article: {title} ({description})"
+    for cid in notable:
+        if cid in review["codes"]:
+            review["codes"][cid] = "x"
+    save_json(REVIEW, review)
+    print(f"{len(notable)} photos of notable people or official accounts rejected")
+    for cid, why in sorted(notable.items()):
+        print(f"  {candidates.get(cid, {}).get('title', '')[:50]!r}: {why}")
+
+
+def contact_sheet() -> None:
+    """48 random faces of the published library (seeded) as output/headshots-v2/contact_sheet.jpg."""
+    ensure_tools()
+    files = sorted(OUT.glob("*/*.avif"))
+    picks = random.Random(48).sample(files, min(48, len(files)))
+    listing = WORK / "contact_sheet.txt"
+    listing.write_text("".join(f"{path}\t{path.parent.name}/{path.stem}\n" for path in picks))
+    subprocess.run([str(SHEET_TOOL), str(WORK / "contact_sheet.jpg"), "8", "156", "114", str(listing)], check=True)
 
 
 def publish(candidates: dict) -> None:
