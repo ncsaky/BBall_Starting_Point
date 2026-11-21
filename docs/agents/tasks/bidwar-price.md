@@ -22,5 +22,10 @@ every once in a while. But rarely."
   `output/bidwar-price/base-src`, run `output/bidwar-price/base-src/output/probe` (with snapshots), log
   `output/bidwar-price/base.log`. Make a runnable copy with the scratch script `root_copy.sh <name>`
   (copies src and scripts, links everything else).
+- Base run done (98 trades; 11 war days, 2 winners below the second-best price). Results:
+  `output/bidwar-price/results/trade_metrics_base.json`, `output/bidwar-price/wars_base.json` (`analyze.py`).
+- Final run: `output/bidwar-price/final-src/output/probe` (code at 8a7ca9f), log `output/bidwar-price/final.log`.
+  Then: `analyze.py <probe> final`, `trade_probe_metrics.py --label final`, tests, scorecard, report.
+- Snapshot tools: `output/bidwar-price/replay.py` (one market day's wars), `exercise_floor.py` (asset additions).
 - Design: rounds and the floor use the seller's textbook price (its net minus its personality terms, minus its
   threshold). The seller's stated preferences decide only between bids, and a lower bid wins only within a slight gap.
