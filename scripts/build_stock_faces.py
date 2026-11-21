@@ -76,11 +76,12 @@ SKIP_WORDS = re.compile(
 # Openverse queries: (query, pages of 10). Openverse times out on pages of 20 at the moment, so pages of 10; about
 # 170 requests in all, under the anonymous 200-a-day limit.
 OPENVERSE_QUERIES = [
-    ("professional headshot", 14), ("corporate headshot", 12), ("headshot", 14), ("businessman portrait", 10),
-    ("man headshot", 10), ("older man portrait", 10), ("african american man portrait", 10),
-    ("asian man portrait", 6), ("hispanic man portrait", 6), ("businesswoman portrait", 10), ("woman headshot", 12),
-    ("black woman portrait", 6), ("basketball player portrait", 12), ("young man portrait", 12),
-    ("young black man portrait", 10), ("athlete portrait", 8), ("college student portrait", 6),
+    ("professional headshot", 14), ("corporate headshot", 12), ("headshot", 14),
+    ("basketball player portrait", 12), ("young man portrait", 12), ("businesswoman portrait", 10),
+    ("young black man portrait", 10), ("athlete portrait", 8), ("woman headshot", 12),
+    ("businessman portrait", 10), ("older man portrait", 10), ("african american man portrait", 10),
+    ("college student portrait", 6), ("black woman portrait", 6), ("man headshot", 10),
+    ("asian man portrait", 6), ("hispanic man portrait", 6),
 ]
 # Wikimedia Commons: stock-photo imports (Unsplash and Pexels files, mostly CC0). (search, most results)
 COMMONS_QUERIES = [
@@ -92,8 +93,9 @@ COMMONS_QUERIES = [
     # Professional headshots uploaded to Commons (mostly by the people themselves); only those no article uses.
     ("intitle:headshot filetype:bitmap", 3000), ("professional headshot filetype:bitmap", 1500),
     ('incategory:"Portrait_photographs_of_women" -painting', 1500),
+    ('incategory:"Portrait_photographs_of_men" -painting', 3000),
 ]
-NAMED_PEOPLE_QUERIES = {query for query, _ in COMMONS_QUERIES[-3:]}
+NAMED_PEOPLE_QUERIES = {query for query, _ in COMMONS_QUERIES[-4:]}
 
 
 # --------------------------------------------------------------------------------------------- fetching
@@ -290,8 +292,10 @@ def likely_person(row: dict) -> bool:
 def download(candidates: dict, limit: int | None) -> None:
     todo = [row for row in candidates.values() if not row.get("skip") and row.get("image_url")
             and not photo_path(row).exists() and not row.get("download_failed") and likely_person(row)]
-    # Wikimedia throttles full-size originals hard (upload.wikimedia.org); its standard thumbnails come first.
-    todo.sort(key=lambda row: "upload.wikimedia.org" in str(row["image_url"]))
+    # Most promising first: professional headshots, then Openverse portraits, then stock-photo imports.
+    # Wikimedia throttles full-size originals hard (upload.wikimedia.org): those last.
+    todo.sort(key=lambda row: ("upload.wikimedia.org" in str(row["image_url"]),
+                               not (set(row.get("queries") or []) & NAMED_PEOPLE_QUERIES), row.get("source") != "openverse"))
     todo = todo[:limit] if limit else todo
     print(f"{len(todo)} photos to download", flush=True)
     # One worker per image host, each one request at a time with a pause (hosts are independent).
@@ -302,7 +306,8 @@ def download(candidates: dict, limit: int | None) -> None:
 
     def run(rows: list[dict]) -> None:
         for row in rows:
-            data = fetch(row["image_url"], delay=1.0)
+            # Wikimedia's media servers throttle scripted clients: one request every 2 s there.
+            data = fetch(row["image_url"], delay=2.0 if "wikimedia.org" in row["image_url"] else 1.0)
             with _lock:
                 done[0] += 1
                 if not data or len(data) < 8000:

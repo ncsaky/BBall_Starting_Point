@@ -72,7 +72,13 @@ if measure {
 }
 
 // Output frame in source pixels: face width = FACE_WIDTH_SHARE of the frame, face centred, face top at FACE_TOP_SHARE.
-let frameW = fw / FACE_WIDTH_SHARE
+// A tightly cropped photo (shoulders running off the bottom or sides) is framed a little closer instead, so the
+// shoulders still reach the bottom edge: the face may then fill up to MAX_FACE_SHARE of the width.
+let MAX_FACE_SHARE: CGFloat = 0.40
+var frameW = fw / FACE_WIDTH_SHARE
+let bottomRoom = (H - fy) / (1 - FACE_TOP_SHARE)            // tallest frame whose bottom stays inside the photo
+let sideRoom = 2 * min(fx + fw / 2, W - fx - fw / 2)        // widest frame centred on the face inside the photo
+frameW = min(frameW, max(fw / MAX_FACE_SHARE, min(bottomRoom / FRAME_ASPECT, sideRoom)))
 let frameH = frameW * FRAME_ASPECT
 let frameX = fx + fw / 2 - frameW / 2
 let frameY = fy - FACE_TOP_SHARE * frameH
