@@ -63,8 +63,11 @@ GROUP_OF.update({f"{f}.{k}": "Passing" for f in PASS_FAMILIES for k in ("recogni
 DEF_PHYS = ["P01", "P02", "P03", "P07", "P08", "P10"]
 DIST_IDS = ["T01", "T02", "T03", "T11", "T13", "T16", "T17"]
 LEFT_GROUPS = ("Shooting", "Finishing", "Creation & handle", "Post", "Off-ball & screens")
-SCALE_NOTE = ("The game's own value of this player, the same one its AI uses, on a straight line: 50 is the league's "
-              "middle player and the best is about 98, with no cap. Gaps between players are real gaps in value.")
+SCALE_NOTE = ("The game's own value of this player, the same one its AI uses, and the same numbers every table shows. "
+              "It is a straight line, so gaps between players are real gaps in value, and there is no cap. 90+ is the "
+              "MVP tier (a handful of players), most rotation players are in the 70s and 80s, the end of the bench in "
+              "the high 60s.")
+FALLBACK_SCALE_NOTE = "Estimated from the player's inputs (the game's own value is not available for this universe)."
 
 
 def layer_of(input_id: str) -> int:
@@ -250,100 +253,30 @@ def header_for(ref: Mapping[str, Any], current: Mapping[str, Mapping[str, Any]])
     return {"ovr": c["ovr"](ovr), "off": c["off"](off), "def": c["def"](dfn)}
 
 
-_ENGINE_CURVES: dict[tuple, dict[str, Any]] = {}
-
-
-def _engine_triplet(summary: Mapping[str, float]) -> tuple[float, float, float]:
-    offense = summary.get("offense", summary.get("creation", 50.0))
-    return float(summary.get("overall", 50.0)), float(offense), float(summary.get("defense", 50.0))
-
-
-class _ImpactLine:
-    """Engine impact (points per 100 possessions) -> card rating on one straight line, fixed at the baseline league.
-
-    Two anchors: the league's median player shows 50, and the league's best player shows what a rank-based
-    50 + 15z display would give the best of N players (about 97.8 for ~700). Everything else sits on the line through
-    them, so a one-point impact gap is the same number of rating points everywhere, and a player who develops past
-    the baseline best keeps rising past it (no cap, no clipping)."""
-
-    def __init__(self, values: list[float]):
-        ordered = sorted(values)
-        n = len(ordered)
-        self.median = ordered[n // 2] if n % 2 else 0.5 * (ordered[n // 2 - 1] + ordered[n // 2])
-        best_display = 50.0 + 15.0 * NormalDist().inv_cdf(1.0 - 0.5 / n)
-        self.slope = (best_display - 50.0) / max(1e-9, ordered[-1] - self.median)
-        self.max_display = best_display
-        self.min_display = self(ordered[0])
-
-    def __call__(self, x: float) -> float:
-        return 50.0 + self.slope * (x - self.median)
-
-
-def _impact_triplet(active: Mapping[str, Any], player: Mapping[str, Any]) -> tuple[float, float, float] | None:
-    """The engine's fitted impact (overall, offense, defense; Basketball Index LEBRON units) for one player, or None
-    outside the new-ratings mode. This is the value that orders players for the AI (save.player_attribute_summary
-    maps it by rank onto the older summary scale)."""
-    from . import impact_value
-    from .save import trait_values_by_player
-
-    if impact_value._model(active) is None or not (active.get(ratings_model.MODEL_KEY) or {}).get("impact_tables_key"):
-        return None
-    fit = impact_value.load_fit()
-    pid = str(player.get("id") or "")
-    traits = trait_values_by_player(active).get(pid)
-    if fit is None or not traits:
-        return None
-    prediction = impact_value.predict(fit, traits, player, impact_value._profile(active, player, traits),
-                                      ratings_model.effective_inputs(active, pid))
-    return prediction["overall"], prediction["offense"], prediction["defense"]
-
-
 def engine_header(active: Mapping[str, Any], player_id: str) -> dict[str, float] | None:
-    """OVR/OFF/DEF from the game's own value of the player, on an open-ended display scale.
+    """OVR/OFF/DEF on the card: the same numbers every table, list and message shows for this player.
 
-    New-ratings mode: the front office (trades, contracts, rotations, free agency) orders players by the engine's
-    fitted impact per 100 possessions (impact_value.predict, fitted to Basketball Index multi-year LEBRON blended with
-    the analysts' consensus order) and reads it
-    through save.player_attribute_summary. The card shows that same impact on a straight line (_ImpactLine: league
-    median 50, league best ~98, no cap), so card and AI agree on order AND the gaps between players are the engine's
-    real value gaps. (Until 2026-11-19 the card re-ranked the summary onto 50 + 15z, which put the top three at
-    97.8 / 92.9 / 90.3 by rank alone, however close their value; ratings-consensus task.)
-    Other modes: the summary itself, re-ranked onto 50 + 15z as before.
-    The tables show the summary number itself (`engine_raw`), a different scale for the same order.
+    One display scale everywhere (OVERALL-SCALE, user decision 2026-11-21): save.player_display_attribute_summary,
+    a straight line in the engine's fitted impact per 100 possessions (impact_value.DISPLAY_LINES; the value the AI
+    orders players by), so card, tables and AI agree on order AND gaps. Until 2026-11-21 the card drew its own line
+    (league median 50, best ~98) while tables showed the AI's summary number: same order, different numbers.
+    `impact` carries the underlying value (points per 100 possessions) where the new ratings are installed.
     """
-    from .save import player_attribute_summary
+    from .impact_value import player_impact
+    from .save import player_display_attribute_summary
 
-    model = active.get(ratings_model.MODEL_KEY) or {}
-    if not model:
+    if not active.get(ratings_model.MODEL_KEY):
         return None
     player = next((p for p in active.get("players", []) if str(p.get("id")) == player_id), None)
     if player is None:
         return None
-    key = (model.get("inputs_key"), tuple(model.get("fitted_key") or ()), tuple(model.get("impact_tables_key") or ()))
-    if key not in _ENGINE_CURVES:
-        triplets, impacts = [], []
-        for p in active.get("players", []):
-            pid = str(p.get("id") or "")
-            if pid and ratings_model.effective_inputs(active, pid) is not None:
-                triplets.append(_engine_triplet(player_attribute_summary(active, pid)))
-                impact = _impact_triplet(active, p)
-                if impact is not None:
-                    impacts.append(impact)
-        if len(triplets) < 50:
-            return None
-        names = ("ovr", "off", "def")
-        if len(impacts) == len(triplets):
-            _ENGINE_CURVES[key] = {"kind": "impact", **{n: _ImpactLine([t[i] for t in impacts]) for i, n in enumerate(names)}}
-        else:
-            _ENGINE_CURVES[key] = {"kind": "rank", **{n: _Curve([t[i] for t in triplets]) for i, n in enumerate(names)}}
-    curves = _ENGINE_CURVES[key]
-    ovr, off, dfn = _engine_triplet(player_attribute_summary(active, player_id))
-    shown = _impact_triplet(active, player) if curves["kind"] == "impact" else None
-    values = shown or (ovr, off, dfn)
-    out = {"ovr": curves["ovr"](values[0]), "off": curves["off"](values[1]), "def": curves["def"](values[2]),
-           "engine_raw": {"ovr": ovr, "off": off, "def": dfn}}
-    if shown:
-        out["impact"] = {"ovr": round(shown[0], 2), "off": round(shown[1], 2), "def": round(shown[2], 2)}
+    shown = player_display_attribute_summary(active, player_id)
+    offense = shown.get("offense", shown.get("creation", 50.0))
+    out = {"ovr": float(shown.get("overall", 50.0)), "off": float(offense), "def": float(shown.get("defense", 50.0))}
+    impact = player_impact(active, player)
+    if impact is not None:
+        out["impact"] = {"ovr": round(impact["overall"], 2), "off": round(impact["offense"], 2),
+                         "def": round(impact["defense"], 2)}
     return out
 
 
@@ -437,14 +370,15 @@ def player_profile(active: Mapping[str, Any], player_id: str) -> dict[str, Any] 
         total, from_player = count(glist)
         layers.append({"key": key, "title": title, "subtitle": sub, "groups": glist,
                        "total": total, "from_player_data": from_player})
-    head = engine_header(active, player_id) or header_for(ref, current)
+    engine = engine_header(active, player_id)
+    head = engine or header_for(ref, current)
     return {
         "player_id": player_id,
         "position": position,
         "header": {"ovr": round(head["ovr"], 1), "off": round(head["off"], 1), "def": round(head["def"], 1),
-                   "source": "engine" if "engine_raw" in head else "inputs_composite",
-                   "engine_raw": head.get("engine_raw"), "impact": head.get("impact"),
-                   "scale_note": SCALE_NOTE, "league_players": ref["league"]["players"]},
+                   "source": "engine" if engine else "inputs_composite", "impact": head.get("impact"),
+                   "scale_note": SCALE_NOTE if engine and "impact" in engine else FALLBACK_SCALE_NOTE,
+                   "league_players": ref["league"]["players"]},
         "layers": layers,
         "coach": {
             "position": position,

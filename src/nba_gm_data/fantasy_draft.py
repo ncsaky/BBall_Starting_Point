@@ -193,7 +193,8 @@ def fantasy_player_display_details(
             **profile,
             "engine_overall": float(engine_attrs.get("overall") or 50.0),
             "display_overall": float(display_attrs.get("overall") or 50.0),
-        }
+        },
+        canonical,
     )
     return {
         "profile_version": FANTASY_PLAYER_PROFILE_VERSION,
@@ -228,7 +229,7 @@ def ensure_fantasy_profile_details(canonical: dict[str, Any], save: dict[str, An
         profile.update(fantasy_player_display_details(canonical, player, contracts.get(str(player_id)) or {}, profile))
 
 
-def fantasy_growth_outlook(profile: dict[str, Any]) -> dict[str, Any]:
+def fantasy_growth_outlook(profile: dict[str, Any], canonical: dict[str, Any] | None = None) -> dict[str, Any]:
     """Translate value upside into an intelligible good-situation OVR range.
 
     ``development_upside`` remains the engine's 0-22 asset-value signal. The
@@ -243,7 +244,8 @@ def fantasy_growth_outlook(profile: dict[str, Any]) -> dict[str, Any]:
         1.0,
         99.0,
     )
-    display_overall = clamp(float(profile.get("display_overall") or engine_overall), 1.0, 99.0)
+    # The one display scale has no cap (OVERALL-SCALE, 2026-11-21); only the engine-scale number above is bounded.
+    display_overall = max(1.0, float(profile.get("display_overall") or engine_overall))
     minutes = clamp(float(profile.get("minutes_projection") or 0.0), 0.0, 36.0)
     value_signal = clamp(float(profile.get("development_upside") or 0.0), 0.0, 22.0)
     age_runway = {
@@ -264,12 +266,17 @@ def fantasy_growth_outlook(profile: dict[str, Any]) -> dict[str, Any]:
     likely_growth = high_end_growth * (0.48 + min(minutes, 30.0) / 250.0)
     engine_ceiling = clamp(engine_overall + high_end_growth, engine_overall, 99.0)
     if has_engine_rating:
-        from .save import presentation_rating_value
+        from .save import display_rating_from_summary
 
-        ceiling = presentation_rating_value(engine_ceiling)
-        displayed_high_end_growth = max(0.0, ceiling - display_overall)
+        # Growth is worked out on the engine's scale, then shown as the matching change on the display scale, starting
+        # from the player's own displayed OVR (the same number as his card).
+        def shown(value: float) -> float:
+            return display_rating_from_summary(canonical, "overall", value)
+
+        displayed_high_end_growth = max(0.0, shown(engine_ceiling) - shown(engine_overall))
+        ceiling = display_overall + displayed_high_end_growth
         likely_engine_overall = clamp(engine_overall + likely_growth, engine_overall, 99.0)
-        displayed_likely_growth = max(0.0, presentation_rating_value(likely_engine_overall) - display_overall)
+        displayed_likely_growth = max(0.0, shown(likely_engine_overall) - shown(engine_overall))
     else:
         ceiling = engine_ceiling
         displayed_high_end_growth = high_end_growth

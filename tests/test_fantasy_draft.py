@@ -351,7 +351,13 @@ class FantasyDraftTests(unittest.TestCase):
             self.assertIn("rim_deterrence", player["ratings"])
             self.assertIn("ceiling_overall", player["growth_outlook"])
             self.assertEqual(player["display_overall"], player["ratings"]["overall"])
-            self.assertEqual(player["display_overall"], player["engine_overall"])
+            # OVERALL-SCALE (2026-11-21): the shown OVR is the one display scale; the engine's own number stays
+            # alongside for the fantasy AI. They used to be equal; now the display is the engine value's straight line.
+            # Same order as the engine's number: a player the engine rates clearly higher never shows lower.
+            rows = sorted(room["available_players"], key=lambda row: row["engine_overall"])
+            for low, high in zip(rows, rows[1:]):
+                if high["engine_overall"] > low["engine_overall"] + 0.1:
+                    self.assertGreaterEqual(high["display_overall"], low["display_overall"])
 
     def test_presentation_ratings_are_fixed_monotonic_and_engine_neutral(self):
         self.assertEqual(presentation_rating_value(80), 80.0)

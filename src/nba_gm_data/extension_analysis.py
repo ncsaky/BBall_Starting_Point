@@ -9,7 +9,7 @@ from .health import (
     DEVELOPMENT_TRAITS, coach_development_by_team, development_staff_modifiers,
     development_trait_focus, monthly_trait_delta, should_generate_development_event,
 )
-from .save import RATING_SCALE, cap_lines_for_season, display_minutes_projection, player_display_attribute_summary, trait_values_by_player
+from .save import RATING_SCALE, cap_lines_for_season, display_minutes_projection, display_ratings_for_traits, player_display_attribute_summary, trait_values_by_player
 
 
 def season_label(year: int) -> str:
@@ -66,8 +66,14 @@ def ability_projection(active: dict[str, Any], player: dict[str, Any], current_y
                         traits[key] = {"value": max(1, min(99, current + round(delta, 3)))}
             # Hold the presentation minutes adjustment fixed: this graph shows
             # ability development, not an artificial OVR jump from a new role.
-            snapshot = {"meta": active.get("meta", {}), "players": [player], "_trait_values_by_player": {player_id: {key: value["value"] for key, value in traits.items()}}}
-            path.append(player_display_attribute_summary(snapshot, player_id)["overall"])
+            projected_traits = {key: value["value"] for key, value in traits.items()}
+            # Valued exactly like the card (one OVR display scale; OVERALL-SCALE, 2026-11-21), so the path starts at
+            # the player's displayed OVR. Outside new-ratings mode, the summary formula as before.
+            shown = display_ratings_for_traits(active, player, projected_traits)
+            if shown is None:
+                snapshot = {"meta": active.get("meta", {}), "players": [player], "_trait_values_by_player": {player_id: projected_traits}}
+                shown = player_display_attribute_summary(snapshot, player_id)
+            path.append(shown["overall"])
         paths.append(path)
     return [{"season": season_label(year), "age": round(age + year - current_year),
              "overall": round(median(path[index] for path in paths), 1),

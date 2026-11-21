@@ -68,11 +68,13 @@ class PlayerProfileTests(unittest.TestCase):
 
     def test_header_shows_the_ai_ratings_on_the_display_scale(self):
         """The card header is the front office's own OVR/OFF/DEF, so card and AI always agree on order."""
-        from nba_gm_data.save import player_attribute_summary
+        from nba_gm_data.save import player_attribute_summary, player_display_attribute_summary
         header = self.profile["header"]
         self.assertEqual(header["source"], "engine")
-        summary = player_attribute_summary(self.active, self.pid)
-        self.assertAlmostEqual(header["engine_raw"]["ovr"], summary["overall"])
+        # OVERALL-SCALE (2026-11-21): the card used to carry the AI's summary as `engine_raw`, a second scale for the
+        # same player. It now shows exactly what every table shows.
+        shown = player_display_attribute_summary(self.active, self.pid)
+        self.assertEqual((header["ovr"], header["off"], header["def"]), (shown["overall"], shown["offense"], shown["defense"]))
         ids = [p["id"] for p in self.active["players"] if rm.effective_inputs(self.active, p["id"]) is not None][:40]
         raw = {i: player_attribute_summary(self.active, i)["overall"] for i in ids}
         shown = {i: pp.engine_header(self.active, i)["ovr"] for i in ids}
@@ -83,23 +85,19 @@ class PlayerProfileTests(unittest.TestCase):
         self.assertTrue(all(0 < v < 100 for v in shown.values()))
 
     def test_header_gaps_are_the_engines_value_gaps(self):
-        """New ratings: the card is a straight line through the engine's fitted impact (median 50, best ~98),
-        so equal value gaps show as equal rating gaps and the top players are not spread apart by rank alone."""
+        """New ratings: the card is a straight line through the engine's fitted impact, so equal value gaps show as
+        equal rating gaps and the top players are not spread apart by rank alone. OVERALL-SCALE (2026-11-21) replaced
+        the old line (median 50, best ~98) with the user's anchors; tests/test_overall_scale.py checks the bands."""
+        from nba_gm_data.impact_value import DISPLAY_LINES
         heads = {}
-        for p in self.active["players"]:
+        for p in self.active["players"][::7]:
             if rm.effective_inputs(self.active, p["id"]) is not None:
                 heads[p["id"]] = pp.engine_header(self.active, p["id"])
         self.assertTrue(all("impact" in h for h in heads.values()))
-        pairs = sorted(((h["impact"]["ovr"], h["ovr"]) for h in heads.values()))
-        (x0, y0), (x1, y1) = pairs[0], pairs[-1]
-        slope = (y1 - y0) / (x1 - x0)
-        for x, y in pairs[:: max(1, len(pairs) // 50)]:
-            self.assertAlmostEqual(y, y0 + slope * (x - x0), delta=0.01 * slope + 1e-6)  # impact is rounded to 0.01
-        from statistics import NormalDist
-        best = 50 + 15 * NormalDist().inv_cdf(1 - 0.5 / len(heads))   # what a rank display gives the best player
-        self.assertAlmostEqual(max(h["ovr"] for h in heads.values()), best, delta=0.01)
-        shown = sorted(h["ovr"] for h in heads.values())
-        self.assertAlmostEqual(shown[len(shown) // 2], 50.0, delta=0.5)
+        for h in heads.values():
+            for key, side in (("ovr", "overall"), ("off", "offense"), ("def", "defense")):
+                a, b = DISPLAY_LINES[side]
+                self.assertAlmostEqual(h[key], a + b * h["impact"][key], delta=0.005 * b + 0.051)  # both rounded
 
     def test_development_changes_technique_values_and_header(self):
         ref = pp.league_reference(self.active[rm.MODEL_KEY]["inputs_key"])

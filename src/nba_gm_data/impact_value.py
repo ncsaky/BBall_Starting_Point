@@ -313,3 +313,106 @@ def remap_on_court(canonical: Mapping[str, Any], players: list[Mapping[str, Any]
                    for p in players if p["id"] in legacy_on_court}
     tables = build_tables(predictions, {"on_court": list(legacy_on_court.values())})
     return {pid: round(mapped(tables, prediction, "on_court"), 4) for pid, prediction in predictions.items()}
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Display scale for OVR / OFF / DEF (OVERALL-SCALE, user decision 2026-11-21). Display only: the AI keeps reading the
+# rank-mapped summary above; these numbers never feed a decision.
+#
+# Each rating is a straight line in the engine's own value (fitted impact, points per 100 possessions in Basketball
+# Index LEBRON units), so a gap of N rating points is the same value gap anywhere on the scale, and nothing is capped.
+# Anchors were chosen from the real 2026-27 league (docs/agents/tasks/overall-scale.md):
+#   overall: 0.0 -> 71.5 and +6.17 -> 90 (between the analysts' clear top five and the next player): 3 rating points
+#            per point of net impact. Rotation players sit in the 70s and 80s, the end of the bench in the high 60s.
+#   offense: 3 points per point of offensive impact, 0.0 -> 75 (90 at +5.0).
+#   defense: 6 points per point of defensive impact, 0.0 -> 72 (90 at +3.0). Real defensive impact varies about half as
+#            much between players as offensive impact, so its line is twice as steep to keep elite defenders as visible.
+# Because overall impact = offensive + defensive impact, OVR = OFF + DEF / 2 - 39.5 exactly (before rounding).
+DISPLAY_LINES = {"overall": (71.5, 3.0), "offense": (75.0, 3.0), "defense": (72.0, 6.0)}
+DISPLAY_KEYS = tuple(DISPLAY_LINES)
+
+
+def display_rating(key: str, impact: float) -> float:
+    """One display number from the engine's fitted impact: a + b * impact (no clipping, no compression)."""
+    intercept, slope = DISPLAY_LINES[key]
+    return intercept + slope * float(impact)
+
+
+def impact_for_display(key: str, rating: float) -> float:
+    """Inverse of display_rating."""
+    intercept, slope = DISPLAY_LINES[key]
+    return (float(rating) - intercept) / slope
+
+
+def installed_tables(canonical: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    """The league rank tables behind the AI's summary scale, or None outside new-ratings mode."""
+    model = _model(canonical) if isinstance(canonical, Mapping) else None
+    if model is None or not model.get("impact_tables_key"):
+        return None
+    key_list = model["impact_tables_key"]
+    return _TABLE_CACHE.get((tuple(key_list[:-1]), key_list[-1]))
+
+
+def player_impact(canonical: Mapping[str, Any], player: Mapping[str, Any], traits: Mapping[str, float] | None = None,
+                  profile: Mapping[str, float] | None = None) -> dict[str, float] | None:
+    """The engine's fitted impact (overall / offense / defense) for one player, or None outside new-ratings mode.
+
+    `traits` defaults to the player's current hidden ratings; pass projected ratings to value a projection the same way."""
+    if _BUILDING or installed_tables(canonical) is None:
+        return None
+    fit = load_fit()
+    if fit is None:
+        return None
+    if traits is None:
+        from .save import trait_values_by_player
+        traits = trait_values_by_player(canonical).get(str(player.get("id") or ""))
+    if not traits:
+        return None
+    return predict(fit, traits, player, profile if profile is not None else _profile(canonical, player, traits),
+                   _inputs(canonical, player))
+
+
+def _fractional_index(values: list[float], x: float) -> float:
+    """Position of x in a sorted list, interpolated between neighbours (ties: the middle of the tied run)."""
+    lo, hi = bisect.bisect_left(values, x), bisect.bisect_right(values, x)
+    if hi > lo:
+        return (lo + hi - 1) / 2.0
+    return lo - 1 + (x - values[lo - 1]) / (values[lo] - values[lo - 1])
+
+
+EXTENSION_SPAN = 25   # players whose spread sets the slope beyond the ends of the league table
+
+
+def _carry(xs: list[float], ys: list[float], x: float) -> float:
+    """Piecewise-linear map from sorted xs to sorted ys at x; past either end the line through the last
+    EXTENSION_SPAN points continues, so nothing is capped."""
+    n = len(xs)
+    k = min(EXTENSION_SPAN, n - 1)
+    if x > xs[-1]:
+        return ys[-1] + (ys[-1] - ys[-1 - k]) / max(1e-9, xs[-1] - xs[-1 - k]) * (x - xs[-1])
+    if x < xs[0]:
+        return ys[0] + (ys[k] - ys[0]) / max(1e-9, xs[k] - xs[0]) * (x - xs[0])
+    pos = _fractional_index(xs, x)
+    lo = int(pos)
+    hi = min(lo + 1, n - 1)
+    return ys[lo] + (ys[hi] - ys[lo]) * (pos - lo)
+
+
+def impact_from_summary(canonical: Mapping[str, Any] | None, key: str, value: float) -> float | None:
+    """The fitted impact that a number on the AI's summary scale stands for (the inverse of the rank mapping), or None
+    outside new-ratings mode. For numbers that exist only on that scale: potentials, ceilings, projections."""
+    tables = installed_tables(canonical)
+    table = (tables or {}).get(key)
+    if not table or len(table["target"]) < 2 or len(table["target"]) != len(table["source"]):
+        return None
+    return _carry(table["target"], table["source"], float(value))
+
+
+def summary_for_impact(canonical: Mapping[str, Any] | None, key: str, impact: float) -> float | None:
+    """The AI's summary-scale number for a fitted impact (inverse of impact_from_summary). Turns a display number the
+    user types (a trade-want threshold) into the scale the AI compares against."""
+    tables = installed_tables(canonical)
+    table = (tables or {}).get(key)
+    if not table or len(table["target"]) < 2 or len(table["target"]) != len(table["source"]):
+        return None
+    return _carry(table["source"], table["target"], float(impact))

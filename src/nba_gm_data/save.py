@@ -2186,7 +2186,9 @@ def simulation_live_card_progress(root: str | Path, active: dict[str, Any], save
     rotation = []
     for player in roster:
         player_id = str(player.get("id") or "")
-        attributes = player_attribute_summary(active, player_id)
+        # What the user sees: the one display scale for OVR/OFF/DEF (OVERALL-SCALE, 2026-11-21). The AI's own summary
+        # is not sent: the browser would otherwise have two different OVR numbers for the same player.
+        shown = player_display_attribute_summary(active, player_id)
         totals = season_stats.get(player_id, {})
         rotation.append({
             "id": player_id,
@@ -2194,12 +2196,12 @@ def simulation_live_card_progress(root: str | Path, active: dict[str, Any], save
             "age": player.get("display_age", player.get("age")),
             "position": player.get("position"),
             "minutes_projection": float(projection.get(player_id, display_minutes_projection(player))),
-            "overall": attributes.get("overall"),
-            "attributes": attributes,
+            "overall": shown.get("overall"),
+            "attributes": shown,
             # Explicit display values also cover newly acquired/generated
             # players absent from the browser's pre-action Finder cache.
             # This prevents the old browser fallback curve from being applied.
-            "display_ratings": {key: presentation_rating_value(value) for key, value in attributes.items()},
+            "display_ratings": shown,
             "rating_scale": RATING_SCALE,
             "points_per_game": per_game_stat(totals, "points"),
             "rebounds_per_game": per_game_stat(totals, "rebounds"),
@@ -8109,12 +8111,65 @@ def presentation_rating_value(value: float | int | None) -> float:
     return round(DISPLAY_KNEE + (100.0 - DISPLAY_KNEE) * (1.0 - math.exp(-(value - DISPLAY_KNEE) / DISPLAY_SCALE)), 1)
 
 
-def player_display_attribute_summary(canonical: dict[str, Any], player_id: str) -> dict[str, float]:
-    """Use the same direct grade scale for OFF, DEF, OVR and subratings."""
+def player_engine_attribute_summary(canonical: dict[str, Any], player_id: str) -> dict[str, float]:
+    """The summary exactly as the AI compares it (its own OVR/OFF/DEF scale, graded like the subratings).
+
+    For AI matching only (trade wants, trade targets): their thresholds are written on this scale. Never shown to the
+    user for OVR/OFF/DEF; player_display_attribute_summary is what the user sees (OVERALL-SCALE, 2026-11-21)."""
     return {
         key: presentation_rating_value(value)
         for key, value in player_attribute_summary(canonical, player_id).items()
     }
+
+
+def display_rating_from_summary(canonical: dict[str, Any] | None, key: str, value: float | int | None) -> float:
+    """A number on the AI's summary scale (OVR/OFF/DEF, or a potential, ceiling or projection written on it) on the one
+    display scale. New-ratings mode: through the fitted impact it stands for (impact_value.impact_from_summary), then
+    the display line. Otherwise the grade itself."""
+    from .impact_value import display_rating, impact_from_summary
+    impact = impact_from_summary(canonical, key, float(value or 0.0)) if value is not None else None
+    if impact is None:
+        return presentation_rating_value(value)
+    return round(display_rating(key, impact), 1)
+
+
+def display_rating_to_summary(canonical: dict[str, Any] | None, key: str, value: float) -> float:
+    """Inverse of display_rating_from_summary: a display number the user typed, on the scale the AI compares against."""
+    from .impact_value import impact_for_display, summary_for_impact
+    summary = summary_for_impact(canonical, key, impact_for_display(key, value))
+    return float(value) if summary is None else round(summary, 2)
+
+
+def display_ratings_for_traits(canonical: dict[str, Any], player: dict[str, Any],
+                               traits: dict[str, float]) -> dict[str, float] | None:
+    """OVR/OFF/DEF on the display scale for a player with projected hidden ratings (development paths, extension
+    projections), valued exactly like his card. None outside new-ratings mode."""
+    from .impact_value import DISPLAY_KEYS, display_rating, player_impact
+    impact = player_impact(canonical, player, traits)
+    if impact is None:
+        return None
+    return {key: round(display_rating(key, impact[key]), 1) for key in DISPLAY_KEYS}
+
+
+def player_display_attribute_summary(canonical: dict[str, Any], player_id: str,
+                                     reference: dict[str, Any] | None = None) -> dict[str, float]:
+    """What the user sees for a player: every table, list, card, comparison and message.
+
+    Subratings: their direct grade. OVR / OFF / DEF: one display scale everywhere (OVERALL-SCALE, user decision
+    2026-11-21), a straight line in the engine's fitted impact (impact_value.DISPLAY_LINES): same order and the same
+    gaps as the value the AI uses, 90+ rare, rotation players in the 70s and 80s, no cap. `reference` is the league
+    universe for a stand-alone preview context (a draft prospect), whose summary-scale numbers are converted through it.
+    Outside new-ratings mode OVR/OFF/DEF keep their grade, as before."""
+    from .impact_value import DISPLAY_KEYS, display_rating, player_impact
+    summary = player_attribute_summary(canonical, player_id)
+    shown = {key: presentation_rating_value(value) for key, value in summary.items()}
+    player = players_by_id_index(canonical).get(player_id)
+    impact = player_impact(canonical, player) if player else None
+    if impact is not None:
+        shown.update({key: round(display_rating(key, impact[key]), 1) for key in DISPLAY_KEYS if key in summary})
+    elif reference is not None:
+        shown.update({key: display_rating_from_summary(reference, key, summary[key]) for key in DISPLAY_KEYS if key in summary})
+    return shown
 
 
 DISPLAY_RATING_TERTILE_KEYS = (

@@ -8,7 +8,7 @@ from .career_stats import season_summary
 
 def prospect_rating_projection(canonical, prospect, report, coverage, save=None):
     from .draft import draft_traits_for_prospect, generated_class_for_context, primary_position_label, rookie_rotation_projection, rookie_trait_records
-    from .save import player_display_attribute_summary, presentation_rating_value
+    from .save import display_rating_from_summary, player_display_attribute_summary
     from .real_prospects import real_entry_for
     from .talent import modeled
 
@@ -60,16 +60,22 @@ def prospect_rating_projection(canonical, prospect, report, coverage, save=None)
               'minutes_projection': minutes, 'source_ids': projected.get('source_ids', [])}
     context = {'meta': canonical.get('meta', {}), 'players': [player],
                'traits': rookie_trait_records(player, projected, traits)}
-    ratings = player_display_attribute_summary(context, player['id'])
+    # OVR / OFF / DEF and the now / potential / floor / ceiling estimates all on the one display scale the league's
+    # players use (OVERALL-SCALE, 2026-11-21): the preview's summary-scale numbers go through the league universe.
+    ratings = player_display_attribute_summary(context, player['id'], reference=canonical)
     signed = next((row for row in canonical.get('players', []) if row.get('id') == selected.get('player_id')), None)
     if signed:
         ratings = player_display_attribute_summary(canonical, signed['id'])
     ability = float(projected.get('current_ability') or 0)
     potential = float(projected.get('potential') or ability)
+
+    def shown(value):
+        return display_rating_from_summary(canonical, 'overall', value)
+
     return {'now': ratings['overall'], 'ratings': ratings,
-            'potential': presentation_rating_value(potential),
-            'floor': presentation_rating_value(projected.get('floor') if projected.get('floor') is not None else max(20, ability - 8)),
-            'ceiling': presentation_rating_value(projected.get('ceiling') if projected.get('ceiling') is not None else potential + 7)}
+            'potential': shown(potential),
+            'floor': shown(projected.get('floor') if projected.get('floor') is not None else max(20, ability - 8)),
+            'ceiling': shown(projected.get('ceiling') if projected.get('ceiling') is not None else potential + 7)}
 
 
 def college_production(prospect):

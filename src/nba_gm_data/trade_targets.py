@@ -129,7 +129,8 @@ def player_rows(canonical: dict[str, Any]) -> dict[str, dict[str, Any]]:
     if "rows" in memo:
         return memo["rows"]
     tx = _tx()
-    from .save import player_display_attribute_summary
+    # Skill matching is an AI decision, so it reads the AI's own scale, not the display scale (OVERALL-SCALE).
+    from .save import player_engine_attribute_summary
     values = tx.player_asset_values_by_id(canonical)
     season = _season(canonical)
     rows = {}
@@ -143,7 +144,7 @@ def player_rows(canonical: dict[str, Any]) -> dict[str, dict[str, Any]]:
                    and str(s.get("season") or "") >= season]
         salary = tx.current_salary(contract) or 0.0
         try:
-            attrs = player_display_attribute_summary(canonical, player["id"])
+            attrs = player_engine_attribute_summary(canonical, player["id"])
         except Exception:  # a player without inputs still trades on value; he just matches no skill target
             attrs = {}
         rows[player["id"]] = {
