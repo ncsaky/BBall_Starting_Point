@@ -260,3 +260,37 @@ body.unified-terminal-ui .fa-builder-foot .fa-submit.is-ready:not(:disabled) { b
 .fa-offer-pair > .fa-offer-field + .fa-offer-field { border-left:1px solid var(--season-soft-line, #d5dde3); }
 .fa-offer-options { padding:5px 8px 7px; border-top:1px solid var(--season-soft-line, #d5dde3); }
 .fa-builder-season > div { padding:2px 6px; }
+
+/* ---- FA-REAL: how an offer is paid, and the cap sheet (holds, exceptions, hard cap) ---- */
+.fa-cap-chips { grid-template-columns:none; grid-auto-flow:column; }
+body.unified-terminal-ui .fa-builder select[data-fa-offer-route] {
+  box-sizing:border-box; height:22px; min-height:22px; padding:0 4px; border:1px solid #8d99a5; border-radius:0; background:#fff;
+  color:var(--season-text, #1d2a33); font:11px Tahoma,Arial,sans-serif; box-shadow:inset 1px 1px #c7cdd3; max-width:100%;
+}
+.fa-offer-pay .fa-pay-terms { margin:0; display:grid; }
+.fa-offer-pay .fa-pay-terms > div { display:grid; grid-template-columns:96px minmax(0,1fr); gap:8px; align-items:baseline; padding:4px 8px; border-top:1px solid var(--season-soft-line, #d5dde3); }
+.fa-offer-pay .fa-pay-terms > div:first-child { border-top:0; }
+.fa-offer-pay dt { font-size:11px; color:var(--season-muted, #5d6b77); }
+.fa-offer-pay dd { margin:0; font-size:11px; display:flex; flex-wrap:wrap; gap:2px 6px; align-items:baseline; }
+.fa-offer-pay dd small { font-size:10px; color:var(--season-muted, #5d6b77); }
+.fa-offer-pay dd.fa-pay-lock { color:#8a5d00; font-weight:700; }
+.fa-offer-pay .fa-pay-pending, .fa-offer-pay .fa-pay-blocked { margin:0; padding:6px 8px; font-size:11px; }
+.fa-offer-pay .fa-pay-blocked { color:#a8434b; font-weight:700; border-left:4px solid #c4585f; background:#fff4f4; }
+.fa-pay-routes { margin:0; padding:2px 8px 6px 22px; font-size:10px; color:var(--season-muted, #5d6b77); }
+.fa-pay-routes li.is-ok { color:#2f8a57; }
+.fa-cap-sheet .fa-cap-lines { margin:0; display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); }
+.fa-cap-sheet .fa-cap-lines > div { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px; align-items:baseline; padding:3px 8px; border-top:1px solid var(--season-soft-line, #d5dde3); }
+.fa-cap-sheet .fa-cap-lines > div:nth-child(odd) { border-right:1px solid var(--season-soft-line, #d5dde3); }
+.fa-cap-sheet dt { font-size:10px; color:var(--season-muted, #5d6b77); }
+.fa-cap-sheet dd { margin:0; font-size:11px; text-align:right; white-space:nowrap; }
+.fa-cap-sheet dd small { font-size:9px; color:var(--season-muted, #5d6b77); }
+.fa-cap-sheet .is-negative { color:#a8434b; }
+.fa-cap-sheet .fa-cap-table { border-top:1px solid var(--season-line, #b7c2cb); }
+.fa-cap-sheet .fa-cap-table tbody th { font-weight:700; }
+.fa-cap-sheet .fa-cap-table td:last-child { text-align:left; }
+.fa-exception-table tr.is-off td, .fa-exception-table tr.is-off th { color:#8d99a5; }
+body.unified-terminal-ui .fa-hold-table .ui-command { min-height:18px; padding:0 6px; font-size:10px; }
+@media (max-width: 1100px) {
+  .fa-cap-sheet .fa-cap-lines { grid-template-columns:minmax(0,1fr); }
+  .fa-cap-sheet .fa-cap-lines > div:nth-child(odd) { border-right:0; }
+}

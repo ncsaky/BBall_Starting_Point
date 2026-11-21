@@ -218,13 +218,17 @@ class ContractProtectionActionTests(unittest.TestCase):
                 self.assertEqual(offered.get('apply_result', {}).get('status'), 'applied', offered)
                 with patch('nba_gm_data.app_actions.home_payload', return_value={}):
                     waived = action('waive_player', player_id=player['id'])
-                self.assertEqual(waived['waiver']['remaining_cost_millions'], 4.5 if guaranteed else 0)
+                # FA-REAL: the contract is his legal minimum schedule (an offer below his minimum is paid at it).
+                signed = sv.load_save(path)['contract_overrides'][player['id']]
+                owed = sum(r['salary'] for r in signed['seasons']) / 1e6
+                self.assertEqual(signed.get('payment_route'), 'minimum')
+                self.assertAlmostEqual(waived['waiver']['remaining_cost_millions'], round(owed, 4) if guaranteed else 0, places=3)
                 saved = sv.load_save(path)
                 active = sv.canonical_with_save(self.canonical, saved)
                 self.assertEqual(len(saved['waived_salary_obligations']), len(initial_debt) + 1)
                 self.assertEqual([r for r in saved['waived_salary_obligations'] if r.get('player_id') != player['id']], initial_debt)
                 self.assertIsNone(next(p for p in active['players'] if p['id'] == player['id'])['team_id'])
-                expected = cap_before + (2_250_000 if guaranteed else 0)
+                expected = cap_before + (signed['seasons'][0]['salary'] if guaranteed else 0)
                 self.assertEqual(sv.team_cap_summary(active, saved, team_id, '2027-28')['salary_total'], expected)
                 from nba_gm_data.save_recovery import create_export, restore_export
                 debt = deepcopy(saved['waived_salary_obligations'])

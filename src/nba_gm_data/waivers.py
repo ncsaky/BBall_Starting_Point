@@ -147,6 +147,7 @@ def claim_plan(active, save, entry, team_id, *, cut_id=None, ai=False):
         return {'ok': False, 'reason': 'Resolve existing roster overflow before claiming.'}
     cut_projection = waiver_projection(active, save, cut, team_id) if cut else None
     contracts = {c['player_id']: c for c in active.get('contracts', [])}
+    payment = None
     for row in rows:
         if row['season'] > season and row.get('option_type') == 'team_option' and not row.get('option_exercised'):
             continue
@@ -160,9 +161,18 @@ def claim_plan(active, save, entry, team_id, *, cut_id=None, ai=False):
             if old is None or debt is None:
                 return {'ok': False, 'reason': 'Replacement salary requires review.'}
             total += debt - old
-        base_cap = cap_lines_for_season(row["season"])["salary_cap"]
-        if total > base_cap + 1 and not minimum_claim_contract(entry['contract']):
-            return {'ok': False, 'reason': 'Not enough salary-cap room to assume the existing contract.'}
+        if row['season'] == season:
+            # FA-REAL: a claim is paid like a signing (cap_ledger): room, the minimum for a minimum contract, or the
+            # full or room mid-level or the bi-annual, never past a hard cap the team has triggered. Only this
+            # season's books decide (later seasons are the owner's concern, below).
+            from .cap_ledger import absorb_route
+            # AI front offices keep their mid-level for free agents (claims by room or the minimum, as before);
+            # the user may spend an exception on a claim, as the rules allow.
+            paid = absorb_route(active, save, team_id, float(row['salary']), total - cap['salary_total'], len(rows),
+                                minimum=minimum_claim_contract(entry['contract']), season=season, exceptions=not ai)
+            if not paid['ok']:
+                return {'ok': False, 'reason': paid['reason']}
+            payment = paid['payment']
         if ai and row['season'] == season:
             # Payroll discipline (TRADE-VOLUME): an AI claim must fit the owner's tax plan for this season, and a team
             # under the line never claims its way over it after the trade deadline (Atlanta, Feb 2028).
@@ -173,7 +183,7 @@ def claim_plan(active, save, entry, team_id, *, cut_id=None, ai=False):
                                   kind='waiver_claim')
             if not check['ok']:
                 return {'ok': False, 'reason': plain_words(check), 'tax_plan': check}
-    return {'ok': True, 'cut_player_id': cut_id, 'contract': entry['contract'],
+    return {'ok': True, 'cut_player_id': cut_id, 'contract': entry['contract'], 'payment': payment,
             'cut_cost_millions': (cut_projection or {}).get('remaining_cost_millions', 0)}
 
 
@@ -228,10 +238,14 @@ def process_waivers(canonical, save, stamp):
                 claims[tid] = {'team_id': tid, 'date': day, 'cut_player_id': plan['cut_player_id'], 'source': 'ai'}
         entry['claims'] = sorted(claims.values(), key=lambda c: c['team_id'])
         winner = None
+        winning_plan = None
         for tid in priority(active, save, day):
             claim = claims.get(tid)
-            if claim and claim_plan(active, save, entry, tid, cut_id=claim.get('cut_player_id'))['ok']:
-                winner = claim
+            if not claim:
+                continue
+            plan = claim_plan(active, save, entry, tid, cut_id=claim.get('cut_player_id'))
+            if plan['ok']:
+                winner, winning_plan = claim, plan
                 break
         debt = next(r for r in save['waived_salary_obligations'] if r['id'] == entry['id'])
         if winner:
@@ -243,6 +257,9 @@ def process_waivers(canonical, save, stamp):
             contract = deepcopy(entry['contract'])
             contract['team_id'] = tid
             save.setdefault('contract_overrides', {})[entry['player_id']] = contract
+            if (winning_plan or {}).get('payment'):
+                from .cap_ledger import commit
+                commit(save, tid, entry['player_id'], winning_plan['payment'], day)
             for row in debt['seasons']:
                 row['salary_before_claim'] = row['salary']
                 row['salary'] = 0

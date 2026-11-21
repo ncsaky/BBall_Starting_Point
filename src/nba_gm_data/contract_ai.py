@@ -646,6 +646,16 @@ def apply_contract_to_save_state(
             ):
                 keep_bird_clock(save, {"id": player_id, "name": negotiation_payload.get("player_name")}, team_id,
                                 str(accepted_offer.get("signed_season") or ""))
+            payment = accepted_offer.get("payment") if accepted_offer else None
+            if payment and team_id and negotiation_payload.get("negotiation_type") in {"free_agency", "free_agent_signing"}:
+                # FA-REAL: the contract is written year by year from its legal schedule, its payment (route, cap
+                # charge, the hard cap it triggers) goes on the team's cap ledger, and it records when he can be
+                # traded. One source for the offer screen, the save and the signing wire.
+                from .cap_ledger import commit, contract_terms
+                from .save import offer_to_contract_seasons
+                accepted_offer.update(contract_terms(payment))
+                accepted_offer["seasons"] = offer_to_contract_seasons(accepted_offer)
+                commit(save, team_id, player_id, payment, date)
             save.setdefault("contract_overrides", {})[player_id] = accepted_offer
             if team_id and negotiation_payload.get("negotiation_type") in {"free_agency", "free_agent_signing"}:
                 save.setdefault("roster_overrides", {})[player_id] = team_id

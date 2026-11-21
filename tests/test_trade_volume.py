@@ -46,10 +46,11 @@ def save_for(today: str, phase: str = "rebuilding", **extra):
 class SharedTaxLineTests(unittest.TestCase):
     def test_every_part_of_the_game_uses_the_same_real_lines(self):
         lines = cap_rules.cap_lines_for_season(SEASON)
-        self.assertEqual(lines["tax_line"], 200_400_000)      # $200.428M, NBA 2026-27 (rounded to $0.1M as shown)
-        self.assertEqual(lines["first_apron"], 209_000_000)
-        self.assertEqual(lines["hard_cap"], 221_700_000)      # second apron $221.686M
-        self.assertEqual(lines["salary_cap"], 165_000_000)    # $164.961M
+        # FA-REAL: exact lines, no longer rounded to $0.1M.
+        self.assertEqual(lines["tax_line"], 200_428_000)
+        self.assertEqual(lines["first_apron"], 209_015_000)
+        self.assertEqual(lines["hard_cap"], 221_686_000)      # second apron
+        self.assertEqual(lines["salary_cap"], 164_961_000)
         for season in ("2026-27", "2027-28", "2028-29", "2030-31"):
             shared = cap_rules.cap_lines_for_season(season)
             for name, lookup in (("trade code", tx.cap_lines_for_season), ("screens", sv.cap_lines_for_season),
@@ -142,7 +143,10 @@ class WaiverClaimTests(unittest.TestCase):
 class ReSigningTaxTests(unittest.TestCase):
     def test_re_signing_checks_the_tax_as_well_as_the_hard_cap(self):
         data = league(payroll_a=195_000_000, players_a=13)
-        player = {"id": "a_star", "name": "Expiring Starter", "team_id": "a", "age": 27, "minutes_projection": 30}
+        player = {"id": "a_star", "name": "Expiring Starter", "team_id": "a", "age": 27, "minutes_projection": 30,
+                  # FA-REAL: his own team re-signs him over the cap with his Bird rights (legal), so the owner's tax
+                  # plan decides.
+                  "_bird": {"level": "full", "limit": 60e6, "max_years": 5, "raise": 0.08, "previous_salary": 10e6}}
         save = save_for("2027-06-28", "rebuilding")
         terms = sv.ai_re_signing_contract_terms(save, player, NEXT)
         self.assertGreater(195_000_000 + terms["salary"], cap_rules.cap_lines_for_season(NEXT)["tax_line"])
@@ -151,10 +155,13 @@ class ReSigningTaxTests(unittest.TestCase):
         self.assertFalse(sv.ai_re_signing_allowed(data, save, player, "a", NEXT, prepared_active=data))
         contender = save_for("2027-06-28", "peak")
         self.assertTrue(sv.ai_re_signing_allowed(data, contender, player, "a", NEXT, prepared_active=data))
-        # Earlier re-signings in the same pass count against the line.
+        # Earlier re-signings in the same pass count against the owner's line (a rebuilding team says no); with Bird
+        # rights a contender may still go past the aprons (FA-REAL: no blanket hard cap on Bird re-signings).
         crowded = {("a", NEXT): 20_000_000, ("a", sv.RE_SIGNING_PLAYER_COUNT_KEY): 1}
-        self.assertFalse(sv.ai_re_signing_allowed(data, contender, player, "a", NEXT, prepared_active=data,
+        self.assertFalse(sv.ai_re_signing_allowed(data, save, player, "a", NEXT, prepared_active=data,
                                                   committed_salary_by_team_season=crowded))
+        self.assertTrue(sv.ai_re_signing_allowed(data, contender, player, "a", NEXT, prepared_active=data,
+                                                 committed_salary_by_team_season=crowded))
         # A team with room keeps him.
         roomy = league(payroll_a=150_000_000, players_a=13)
         self.assertTrue(sv.ai_re_signing_allowed(roomy, save, player, "a", NEXT, prepared_active=roomy))

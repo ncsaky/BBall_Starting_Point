@@ -132,6 +132,7 @@ const MULTIPLAYER_MUTATIONS = new Set([
   "set_team_wants",
   "acknowledge_team_wants",
   "submit_free_agent_offer",
+  "renounce_cap_hold",
   "waive_player",
 ]);
 const DEVELOPMENT_LINE_LIMIT = 9;
@@ -5785,10 +5786,23 @@ function freeAgencyOpenRosterSpots(room = state.data.freeagency || {}) {
   return room.roster_count != null && Number.isFinite(count) ? Math.max(0, freeAgencyRosterMaximum(room) - count) : Infinity;
 }
 
+// His legal salary range from your team (cap_ledger via the room payload: his minimum by years of service, and the most
+// any legal way to pay lets you offer him: Bird rights, cap room or an exception's remaining budget).
+function freeAgencyPlayerMinimum(player, room = state.data.freeagency || {}) {
+  const value = Number(player?.legal?.min_millions);
+  return Number.isFinite(value) && value > 0 ? value : freeAgencyMinimum(room);
+}
+
+function freeAgencyPlayerMaximum(player, room = state.data.freeagency || {}) {
+  const value = Number(player?.legal?.most_you_can_pay_millions);
+  const top = Number.isFinite(value) && value > 0 ? value : Math.max(freeAgencyMaxOffer(room), Number(player?.bird_rights?.limit_millions || 0));
+  return Math.max(freeAgencyPlayerMinimum(player, room), top);
+}
+
 // "Fits our room": he would sign a guaranteed offer you can legally make, and you have an open roster spot.
 function freeAgencyPlayerFitsRoom(player, room) {
   const floor = Number(player.accept_floor_offer_millions?.guaranteed);
-  return Number.isFinite(floor) && floor <= freeAgencyMaxOffer(room) + 1e-9 && freeAgencyOpenRosterSpots(room) > 0;
+  return Number.isFinite(floor) && floor <= freeAgencyPlayerMaximum(player, room) + 1e-9 && freeAgencyOpenRosterSpots(room) > 0;
 }
 
 function phaseFreeAgencyMarketCard(room = state.data.freeagency || {}) {
@@ -5796,6 +5810,7 @@ function phaseFreeAgencyMarketCard(room = state.data.freeagency || {}) {
   const rows = freeAgencyMarketRows(room);
   const total = (room.candidates || []).length;
   const cap = room.cap || {};
+  const ledger = room.cap_ledger?.current || {};
   const logo = teamLogoSrc(userTeam());
   const title = exclusive ? "Re-Signing" : phase === "free_agency" ? "Free Agency" : "Current Free Agents";
   const day = exclusive
@@ -5823,12 +5838,13 @@ function phaseFreeAgencyMarketCard(room = state.data.freeagency || {}) {
         ${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(userTeam())} logo" />` : ""}
         <div><p>${escapeHtml(day)} · ${escapeHtml(rows.length)} of ${escapeHtml(total)} players</p><h3>${escapeHtml(title)}</h3><span>${escapeHtml(note)}</span></div>
       </div>
-      <div class="fa-cap-chips" aria-label="${escapeAttr(`${room.signing_season || "Next season"} cap position`)}" title="${escapeAttr(`Your ${room.signing_season || "next-season"} payroll, the season a new contract starts. The hard cap is the second apron.`)}">
+      <div class="fa-cap-chips" aria-label="${escapeAttr(`${room.signing_season || "Next season"} cap position`)}" title="${escapeAttr(`Your ${room.signing_season || "next-season"} books, the season a new contract starts. Cap room counts cap holds and empty roster spots; the tax and the aprons count signed salaries only.`)}">
         ${chip("Roster", room.roster_count == null ? "—" : `${room.roster_count} / ${freeAgencyRosterMaximum(room)}`, Number(room.roster_count) >= freeAgencyRosterMaximum(room) ? "over" : "")}
         ${chip("Payroll", money(cap.salary_total_millions) || "—")}
+        ${chip("Cap room", signedMoney(ledger.cap_room_millions ?? cap.cap_room_millions) || "—", Number(ledger.cap_room_millions) < 0 ? "over" : "")}
         ${chip("Under tax", signedMoney(cap.tax_space_millions) || "—", Number(cap.tax_space_millions) < 0 ? "over" : "")}
-        ${chip("Under hard cap", signedMoney(cap.hard_cap_space_millions) || "—", Number(cap.hard_cap_space_millions) < 0 ? "over" : "")}
-        ${chip("Largest offer", money(freeAgencyMaxOffer(room)))}
+        ${chip("Under 1st apron", signedMoney(ledger.room_under_first_apron_millions) || "—", Number(ledger.room_under_first_apron_millions) < 0 ? "over" : "")}
+        ${ledger.hard_cap ? chip("Hard-capped", `${ledger.hard_cap.level === "first_apron" ? "1st" : "2nd"} apron`, "over") : chip("Largest offer", money(freeAgencyMaxOffer(room)))}
         ${cap.tax_payout ? chip(`Tax ${cap.tax_payout.tax_bill_millions > 0 ? "bill" : "payout"} ${shortSeasonLabel(cap.tax_payout.season)}`, cap.tax_payout.tax_bill_millions > 0 ? signedMoney(-cap.tax_payout.tax_bill_millions) : signedMoney(cap.tax_payout.payout_millions), cap.tax_payout.tax_bill_millions > 0 ? "over" : "") : ""}
       </div>
     </header>
@@ -6009,33 +6025,59 @@ function freeAgencyOfferDraft(player, room = state.data.freeagency || {}) {
   state.freeAgentOfferDrafts ||= {};
   const key = `${state.currentSave || ""}:${room.phase || ""}:${player.id}`;
   if (!state.freeAgentOfferDrafts[key]) {
-    const minimum = freeAgencyMinimum(room);
+    const minimum = freeAgencyPlayerMinimum(player, room);
     const safe = Number.isFinite(Number(player.safe_years)) ? Number(player.safe_years) : 5;
     state.freeAgentOfferDrafts[key] = {
-      aav: roundOfferTenth(clampNumber(Number(player.ask_millions || minimum), minimum, freeAgencyMaxOffer(room))),
-      years: Math.max(1, Math.min(4, safe || 1)),
+      aav: roundOfferTenth(clampNumber(Number(player.ask_millions || minimum), minimum, freeAgencyPlayerMaximum(player, room))),
+      years: Math.max(player.bird_rights?.level === "early" ? 2 : 1, Math.min(4, safe || 1)),
       guaranteed: true,
+      route: "",       // "" = the best legal way to pay (cap_ledger.quote picks it)
+      raise: "max",    // "max" = the largest legal raise; "0" = the same salary every season
     };
   }
   return state.freeAgentOfferDrafts[key];
 }
 
-// The same decision play.signing_cap_check makes for this salary (the engine checks the season the contract starts).
-function freeAgencyCapCheck(rules = {}, cap = {}, aav = 0, bird = null) {
-  const minimum = Number(rules.minimum_aav_millions ?? 1.9);
-  const hard = Number(cap.hard_cap_space_millions || 0);
-  const tax = Number(cap.tax_space_millions || 0);
-  if (rules.blocked_reason) return { ok: false, limit: "review", message: rules.blocked_reason };
-  // Bird rights (play.signing_cap_check): your own free agent may be re-signed over the tax and the hard cap up to his limit.
-  if (bird && aav > minimum + 0.05 && aav <= Number(bird.limit_millions || 0) + 0.05) {
-    return { ok: true, limit: "bird", message: aav > tax ? `Allowed over the tax and the hard cap with his Bird rights (up to ${money(bird.limit_millions)}).` : "" };
-  }
-  if (aav <= minimum + 0.05) {
-    return { ok: true, limit: "minimum", message: tax < aav ? `League-minimum exception: allowed even though you have ${money(tax)} of room under the tax.` : "" };
-  }
-  if (aav > hard) return { ok: false, limit: "hard", message: `Over the hard cap: you have ${money(hard)} under it. Lower the salary, or offer the league minimum (${money(minimum)}).` };
-  if (!rules.allow_tax_exceed && aav > tax) return { ok: false, limit: "tax", message: `Over the tax: free-agent offers must fit in your ${money(tax)} of room under the luxury tax. Lower the salary, or offer the league minimum (${money(minimum)}).` };
-  return { ok: true, limit: aav > tax ? "over-tax" : "", message: aav > tax ? `Puts you ${money(aav - tax)} over the tax (allowed when re-signing your own player).` : "" };
+// FA-REAL: legality comes from the engine's money calculator (action free_agent_offer_quote -> cap_ledger.quote), the
+// same call submit_free_agent_offer makes, so the screen and the save agree. The room caches one quote per offer.
+function freeAgencyQuoteKey(player, draft = {}) {
+  return [state.currentSave || "", player?.id || "", roundOfferTenth(draft.aav).toFixed(1), Number(draft.years || 1), draft.route || "", draft.raise || "max"].join("|");
+}
+
+function freeAgencyQuote(player, draft = {}) {
+  return state.freeAgentQuotes?.[freeAgencyQuoteKey(player, draft)] || null;
+}
+
+function freeAgencyRaisePct(player, draft = {}) {
+  return draft.raise === "0" ? 0 : null;
+}
+
+function freeAgencyCapVerdict(quote, rules = {}) {
+  if (rules.blocked_reason) return { ok: false, pending: false, limit: "review", message: rules.blocked_reason };
+  if (!quote) return { ok: true, pending: true, limit: "", message: "" };
+  return {
+    ok: Boolean(quote.ok), pending: false, limit: quote.route || "", quote,
+    message: quote.ok ? `Paid with ${quote.label || "a legal route"}.` : (quote.message || "Your team has no legal way to pay this."),
+  };
+}
+
+function requestFreeAgencyQuote(player, draft, done) {
+  if (!player || freeAgencyQuote(player, draft)) return;
+  const key = freeAgencyQuoteKey(player, draft);
+  clearTimeout(state.freeAgentQuoteTimer);
+  state.freeAgentQuoteTimer = setTimeout(async () => {
+    try {
+      const result = await action("free_agent_offer_quote", {
+        ...savePayload(), team: userTeam(), player_id: player.id, years: Number(draft.years || 1),
+        aav_millions: roundOfferTenth(draft.aav), route: draft.route || "", raise_pct: freeAgencyRaisePct(player, draft),
+      });
+      state.freeAgentQuotes ||= {};
+      state.freeAgentQuotes[key] = result.quote || null;
+      if (freeAgencyQuoteKey(player, draft) === key) done?.();
+    } catch (error) {
+      console.warn("free_agent_offer_quote failed", error);
+    }
+  }, 160);
 }
 
 function freeAgencyCapSeasons(room = {}) {
@@ -6064,19 +6106,28 @@ function freeAgencyOfferPreview(player, room = {}, draft = {}) {
   const floor = freeAgencyAcceptFloor(player, years, key);
   const floorOffer = floor;
   const safe = Number.isFinite(Number(player?.safe_years)) ? Number(player.safe_years) : 5;
-  const cap = freeAgencyCapCheck(rules, room.cap || {}, aav, player?.bird_rights || null);
+  const quote = freeAgencyQuote(player, { ...draft, aav, years });
+  const cap = freeAgencyCapVerdict(quote, rules);
   const retires = years > safe;
   const accepts = Number.isFinite(floor) && aav >= floor && !retires;
   const ratio = Number.isFinite(floor) && floor > 0 ? aav / floor : 0;
-  const seasons = freeAgencyCapSeasons(room).map(([season, row], index) => {
-    const salary = index < years ? aav : 0;
-    const payroll = Number(row.salary_total_millions || 0);
+  const schedule = quote?.schedule || [];
+  // The ledger's books by season (cap_ledger.cap_table): this season's cap payroll counts holds and empty-spot charges.
+  const seasons = (room.cap_ledger?.by_year || []).map((row, index) => {
+    const year = schedule[index];
+    const salary = index < years ? Number(year ? year.salary_millions : aav) : 0;
+    const charge = index < years ? Number(year ? year.cap_charge_millions : aav) : 0;
+    const capRoom = index === 0 && quote?.ok && quote.cap_room_after_millions != null
+      ? Number(quote.cap_room_after_millions) : Number(row.cap_room_millions || 0) - charge;
     return {
-      season, salary, payroll, after: payroll + salary,
-      taxLine: Number(row.tax_line_millions || 0), hardCap: Number(row.hard_cap_millions || 0),
-      taxRoom: Number(row.tax_space_millions || 0) - salary, hardRoom: Number(row.hard_cap_space_millions || 0) - salary,
+      season: row.season, salary, charge, payroll: Number(row.cap_payroll_millions || 0),
+      after: Number(row.tax_payroll_millions || 0) + charge, capRoom,
+      taxRoom: Number(row.room_under_tax_millions || 0) - charge,
+      apronRoom: Number(row.room_under_first_apron_millions || 0) - charge,
+      holds: Number(row.holds_millions || 0), hardCap: row.hard_cap,
     };
   });
+  const total = schedule.length ? schedule.reduce((sum, row) => sum + Number(row.salary_millions || 0), 0) : aav * years;
   let verdict;
   if (player?.signing_blocked_reason) verdict = { tone: "blocked", headline: "Can't sign him", detail: player.signing_blocked_reason };
   else if (!cap.ok) verdict = { tone: "blocked", headline: "Blocked by the cap", detail: cap.message };
@@ -6086,7 +6137,7 @@ function freeAgencyOfferPreview(player, room = {}, draft = {}) {
   else if (!accepts && !Number.isFinite(floor)) verdict = { tone: "no", headline: "He turns this down", detail: `No salary wins him from you today${player?.offer_rule?.best_rival ? `: ${player.offer_rule.best_rival.team_abbrev || "a rival"}'s bid interests him more` : ""}. His bar drops each day.` };
   else if (!accepts) verdict = { tone: "no", headline: "He turns this down", detail: `He signs with you from ${money(floorOffer)} a season${guaranteed ? "" : " non-guaranteed"}. You are ${money(Math.max(0, floorOffer - aav))} short.` };
   else verdict = { tone: "yes", headline: "He signs", detail: `${money(aav)} a season meets the ${money(floorOffer)} he needs from you${guaranteed ? "" : " without a guarantee"}.${cap.message ? ` ${cap.message}` : ""}` };
-  return { aav, years, maxYears, guaranteed, total: aav * years, floor, floorOffer, safe, cap, retires, accepts, ratio, seasons, verdict, canSubmit: cap.ok && !player?.signing_blocked_reason };
+  return { aav, years, maxYears, guaranteed, total, floor, floorOffer, safe, cap, quote, retires, accepts, ratio, seasons, verdict, canSubmit: cap.ok && !player?.signing_blocked_reason };
 }
 
 // Only a team with full Bird rights may offer a fifth year (submit_free_agent_offer_action); everyone else offers four.
@@ -6104,8 +6155,9 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
   const draft = freeAgencyOfferDraft(player, room);
   const preview = freeAgencyOfferPreview(player, room, draft);
   const ratings = player.ratings || {};
-  const minimum = freeAgencyMinimum(room);
-  const maximum = Math.max(freeAgencyMaxOffer(room), Number(player.bird_rights?.limit_millions || 0));
+  const minimum = freeAgencyPlayerMinimum(player, room);
+  const maximum = freeAgencyPlayerMaximum(player, room);
+  const routes = (room.offer_rules?.routes || []).filter((row) => row.route !== "bird" || player.bird_rights);
   const legal = clipboardLegalActions().has("free_agent_signings");
   const shortlisted = state.freeAgentShortlistIds.includes(player.id);
   const safe = preview.safe;
@@ -6139,20 +6191,23 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
           <label for="faOfferAav"><small>Salary per season</small></label>
           <span class="money-input"><b>$</b><input id="faOfferAav" type="number" inputmode="decimal" min="${minimum.toFixed(1)}" max="${maximum.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-fa-offer-aav aria-describedby="faOfferAavHelp"><b>M</b></span>
           <input type="range" min="${minimum.toFixed(1)}" max="${maximum.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-fa-offer-range aria-label="Salary per season, in millions" />
-          <small id="faOfferAavHelp">${money(minimum)} league minimum to ${money(maximum)} (${player.bird_rights ? "his Bird rights limit" : exclusive ? "room under the hard cap" : "room under the tax"})</small>
+          <small id="faOfferAavHelp">${money(minimum)} his minimum (${escapeHtml(player.legal?.years_of_service ?? "?")} years in the league) to ${money(maximum)}, the most a legal way to pay lets you offer${Number(player.legal?.max_millions) > maximum + 0.05 ? ` (his maximum is ${money(player.legal.max_millions)})` : ""}</small>
           ${player.bird_rights ? `<p class="fa-offer-note fa-offer-bird">${escapeHtml(player.bird_rights.text)}</p>` : ""}
           <div class="fa-offer-quick" role="group" aria-label="Quick salary">
             <button type="button" class="ui-command" data-fa-offer-set="${escapeAttr(preview.floorOffer)}" ${Number.isFinite(preview.floorOffer) ? "" : "disabled"}>His price from you</button>
             <button type="button" class="ui-command" data-fa-offer-set="${escapeAttr(player.ask_millions)}">Market ask</button>
-            <button type="button" class="ui-command" data-fa-offer-set="${escapeAttr(minimum)}">League minimum</button>
+            <button type="button" class="ui-command" data-fa-offer-set="${escapeAttr(minimum)}">His minimum</button>
           </div>
         </div>
         <div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferYearsLabel">Years</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferYearsLabel">${[1, 2, 3, 4, 5].map((years) => radio("years", years, String(years), preview.years === years, years > preview.maxYears, years > preview.maxYears ? "Only a team with full Bird rights can offer a fifth year" : years > safe ? `He plans to retire after ${safe} season${safe === 1 ? "" : "s"}; he refuses ${years} years` : "")).join("")}</div></div>
         <div class="fa-offer-field"><small id="faOfferGuaranteeLabel">Guarantee</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferGuaranteeLabel">${radio("guarantee", "true", "Guaranteed", preview.guaranteed)}${radio("guarantee", "false", "Non-guaranteed", !preview.guaranteed)}</div>
           <p class="fa-offer-note">${preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on ${escapeHtml(room.offer_rules?.non_guaranteed_until || "January 10")}; release him before then and you owe nothing. He asks more for this.`}</p></div></div>
-        <p class="fa-offer-note fa-offer-options"><b>Options:</b> none. Free-agent contracts in this game have no player or team options, and the salary is the same every season.</p>
+        <div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferRaiseLabel">Raises</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferRaiseLabel">${radio("raise", "max", "Largest legal", (draft.raise || "max") === "max", false, player.bird_rights && ["full", "early"].includes(player.bird_rights.level) ? "8% of the first year added each season (Bird rights)" : "5% of the first year added each season")}${radio("raise", "0", "None", draft.raise === "0")}</div></div>
+        <div class="fa-offer-field"><label for="faOfferRoute"><small>How you pay</small></label><select id="faOfferRoute" data-fa-offer-route aria-describedby="faOfferRouteHelp"><option value="">Best legal way</option>${routes.map((row) => `<option value="${escapeAttr(row.route)}" ${draft.route === row.route ? "selected" : ""}>${escapeHtml(row.short)}</option>`).join("")}</select><p id="faOfferRouteHelp" class="fa-offer-note">Bird rights, cap room, the minimum, the mid-level or the bi-annual. The engine picks the first legal one unless you choose.</p></div></div>
+        <p class="fa-offer-note fa-offer-options"><b>Options:</b> none. Each season adds the raise to the first year's salary (up to 5%, or 8% with Bird rights); the contract is saved year by year.</p>
       </section>
       <div data-fa-offer-preview>${freeAgencyOfferPreviewMarkup(preview)}</div>
+      ${freeAgencyCapSheetMarkup(room)}
       <section class="approved-card-panel fa-builder-bids"><header>${exclusive ? "Rival Bids" : `Rival Bids · ${bids.length}`}</header>${exclusive
         ? `<p class="fa-muted">Exclusive window: no other team may bid until free agency opens.</p>`
         : bids.length ? `<ol>${bids.map((offer, index) => {
@@ -6175,36 +6230,88 @@ function freeAgencyOfferPreviewMarkup(preview) {
   const verdict = preview.verdict;
   const meter = clampNumber(preview.ratio * 100, 0, 150);
   const rows = preview.seasons.map((row, index) => {
-    const tone = row.hardRoom < 0 ? "is-hard" : row.taxRoom < 0 ? "is-tax" : "";
+    const tone = row.apronRoom < 0 ? "is-hard" : row.taxRoom < 0 ? "is-tax" : "";
     return `<tr class="${row.salary ? "has-offer" : ""} ${tone}">
-      <th scope="row"${index === 0 ? ` title="The cap rule checks this season"` : ""}>${escapeHtml(shortSeasonLabel(row.season))}${index === 0 ? "*" : ""}</th>
+      <th scope="row"${index === 0 ? ` title="The signing is checked against this season; its cap payroll includes ${escapeAttr(money(row.holds))} of cap holds"` : ""}>${escapeHtml(shortSeasonLabel(row.season))}${index === 0 ? "*" : ""}</th>
       <td>${money(row.payroll)}</td>
-      <td>${row.salary ? `+${money(row.salary)}` : `<span class="fa-muted">—</span>`}</td>
+      <td>${row.salary ? `+${money(row.charge)}` : `<span class="fa-muted">—</span>`}</td>
       <td><strong>${money(row.after)}</strong></td>
+      <td class="${row.capRoom < 0 ? "is-negative" : ""}">${signedMoney(row.capRoom)}</td>
       <td class="${row.taxRoom < 0 ? "is-negative" : ""}">${signedMoney(row.taxRoom)}</td>
-      <td class="${row.hardRoom < 0 ? "is-negative" : ""}">${signedMoney(row.hardRoom)}</td>
+      <td class="${row.apronRoom < 0 ? "is-negative" : ""}">${signedMoney(row.apronRoom)}</td>
     </tr>`;
   }).join("");
+  const quote = preview.quote;
+  const paidWith = !quote ? `<p class="fa-muted fa-pay-pending">Checking how you can pay…</p>` : quote.ok
+    ? `<dl class="fa-pay-terms">
+        <div><dt>Paid with</dt><dd><strong>${escapeHtml(quote.label || "")}</strong></dd></div>
+        <div><dt>Salary by year</dt><dd>${quote.schedule.map((row) => `<span title="${escapeAttr(row.cap_charge_millions !== row.salary_millions ? `Counts ${money(row.cap_charge_millions)} on the cap: the league pays the rest of a veteran's one-year minimum` : "")}">${escapeHtml(shortSeasonLabel(row.season))} ${money(row.salary_millions)}</span>`).join(" · ")}<small>${escapeHtml(money(quote.total_millions))} total${quote.raise_pct ? `, ${quote.raise_pct}% raises` : ""}</small></dd></div>
+        ${quote.locks ? `<div><dt>Locks in</dt><dd class="${quote.hard_cap ? "fa-pay-lock" : ""}">${escapeHtml(quote.locks)}</dd></div>` : ""}
+        <div><dt>Tradable from</dt><dd>${escapeHtml(quote.trade_eligible_date || "—")}</dd></div>
+      </dl>`
+    : `<p class="fa-pay-blocked">${escapeHtml(quote.message || "No legal way to pay this.")}</p><ul class="fa-pay-routes">${(quote.routes || []).filter((row) => row.reason && row.route !== "bird" || row.ok).map((row) => `<li class="${row.ok ? "is-ok" : ""}"><b>${escapeHtml(row.short)}</b> ${escapeHtml(row.ok ? "would work" : row.reason)}</li>`).join("")}</ul>`;
   return `<section class="approved-card-panel fa-offer-verdict fa-verdict-${verdict.tone}" role="status" aria-live="polite">
       <header>Will He Sign?</header>
       <div class="fa-verdict-line"><strong>${escapeHtml(verdict.headline)}</strong><span>${escapeHtml(verdict.detail)}</span></div>
       ${Number.isFinite(preview.floor) ? `<div class="fa-verdict-meter" title="Your salary against the salary he needs from you (100% signs)"><i><b style="width:${meter / 1.5}%"></b><u style="left:${100 / 1.5}%"></u></i><em>${Math.round(preview.ratio * 100)}% of his price</em></div>` : ""}
     </section>
+    <section class="approved-card-panel fa-offer-pay" role="status" aria-live="polite"><header>How It's Paid</header>${paidWith}</section>
     <section class="approved-card-panel fa-offer-cap"><header>Cap Position With This Offer</header>
       <table class="fa-cap-table" aria-label="Payroll by season with this offer">
-        <colgroup><col style="width:15%"><col style="width:17%"><col style="width:16%"><col style="width:17%"><col style="width:17%"><col style="width:18%"></colgroup>
-        <thead><tr><th scope="col">Season</th><th scope="col">Payroll</th><th scope="col">Offer</th><th scope="col">After</th><th scope="col" title="Room under the luxury tax after this offer">Tax room</th><th scope="col" title="Room under the hard cap (the second apron) after this offer">Hard-cap room</th></tr></thead>
-        <tbody>${rows || `<tr><td colspan="6" class="fa-empty">No cap seasons available.</td></tr>`}</tbody>
+        <colgroup><col style="width:12%"><col style="width:15%"><col style="width:13%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:15%"></colgroup>
+        <thead><tr><th scope="col">Season</th><th scope="col" title="Cap payroll: signed salaries, dead money and, this season, cap holds and empty-spot charges">Payroll</th><th scope="col" title="What this contract counts on the cap that season">Offer</th><th scope="col" title="Tax payroll after this offer (signed salaries and dead money)">After</th><th scope="col" title="Cap room after this offer">Cap room</th><th scope="col" title="Room under the luxury tax after this offer">Tax room</th><th scope="col" title="Room under the first apron after this offer">1st apron</th></tr></thead>
+        <tbody>${rows || `<tr><td colspan="7" class="fa-empty">No cap seasons available.</td></tr>`}</tbody>
       </table>
-      <p class="fa-muted">* The signing is checked against ${escapeHtml(preview.seasons[0] ? shortSeasonLabel(preview.seasons[0].season) : "next season")} room. Later seasons count today's contracts only.</p>
+      <p class="fa-muted">* ${escapeHtml(preview.seasons[0] ? shortSeasonLabel(preview.seasons[0].season) : "Next season")} payroll counts cap holds for your unsigned free agents and a minimum charge for each empty spot below 12; later seasons count signed contracts only.</p>
     </section>`;
+}
+
+// FA-REAL: your books as the cap ledger sees them, with the holds you can renounce (before/after room shown).
+function freeAgencyCapSheetMarkup(room = state.data.freeagency || {}) {
+  const ledger = room.cap_ledger || {};
+  const now = ledger.current;
+  if (!now) return "";
+  const line = (label, value, title = "") => `<div${title ? ` title="${escapeAttr(title)}"` : ""}><dt>${escapeHtml(label)}</dt><dd>${value}</dd></div>`;
+  const order = ["non_taxpayer_mle", "taxpayer_mle", "room_mle", "bi_annual"];
+  const exceptions = Object.entries(now.exceptions || {}).sort(([a], [b]) => order.indexOf(a) - order.indexOf(b)).map(([key, row]) => `<tr class="${row.available ? "" : "is-off"}">
+      <th scope="row">${escapeHtml(row.short)}</th><td>${money(row.amount_millions)}</td><td><strong>${money(row.balance_millions)}</strong></td><td>${escapeHtml(row.max_years)} yr</td>
+      <td title="${escapeAttr(row.reason || (row.hard_cap ? `Using it hard-caps you at the ${row.hard_cap === "first_apron" ? "first" : "second"} apron for the season` : "No hard cap"))}">${escapeHtml(row.available ? (row.hard_cap ? `Hard-caps at ${row.hard_cap === "first_apron" ? "1st" : "2nd"} apron` : "Available") : (row.reason || "Not available"))}</td></tr>`).join("");
+  const holds = (now.holds || []).map((hold) => `<tr>
+      <th scope="row">${escapeHtml(hold.name || hold.player_id)}</th><td>${escapeHtml(String(hold.kind || "").replace("_bird", " Bird").replace(/^./, (c) => c.toUpperCase()))}</td>
+      <td>${money(hold.amount_millions)}</td>
+      <td>${hold.renounce ? signedMoney(hold.renounce.cap_room_after_millions) : "—"}</td>
+      <td>${hold.renounce ? `<button type="button" class="ui-command" data-fa-renounce="${escapeAttr(hold.player_id)}" title="${escapeAttr(hold.renounce.loses)}">Renounce</button>` : ""}</td></tr>`).join("");
+  return `<section class="approved-card-panel fa-cap-sheet" data-fa-cap-sheet><header>Your Cap Sheet · ${escapeHtml(shortSeasonLabel(ledger.season))}</header>
+    <dl class="fa-cap-lines">
+      ${line("Signed salaries", money(now.signed_millions))}
+      ${line("Dead money", money(now.dead_millions))}
+      ${line("Cap holds", money(now.holds_millions), ledger.words?.hold || "")}
+      ${line("Empty-spot charges", `${money(now.roster_charge_millions)}${now.empty_roster_spots ? ` <small>${escapeHtml(now.empty_roster_spots)} spot${now.empty_roster_spots === 1 ? "" : "s"}</small>` : ""}`)}
+      ${line("Cap payroll", `<strong>${money(now.cap_payroll_millions)}</strong> <small>cap ${money(now.salary_cap_millions)}</small>`)}
+      ${line("Cap room", `<strong class="${Number(now.cap_room_millions) < 0 ? "is-negative" : ""}">${signedMoney(now.cap_room_millions)}</strong>`, ledger.words?.cap_room || "")}
+      ${line("Under the tax", signedMoney(now.room_under_tax_millions), `Tax line ${money(now.tax_line_millions)}`)}
+      ${line("Under 1st / 2nd apron", `${signedMoney(now.room_under_first_apron_millions)} / ${signedMoney(now.room_under_second_apron_millions)}`, `Aprons ${money(now.first_apron_millions)} and ${money(now.second_apron_millions)}`)}
+      ${line("Hard cap", now.hard_cap ? `<strong class="is-negative">${escapeHtml(now.hard_cap.words)} (${money(now.hard_cap.amount_millions)})</strong> <small>after ${escapeHtml(now.hard_cap.trigger || "an earlier move")}</small>` : "None this season", ledger.words?.hard_cap || "")}
+    </dl>
+    <table class="fa-cap-table fa-exception-table" aria-label="Exceptions this season">
+      <colgroup><col style="width:28%"><col style="width:14%"><col style="width:14%"><col style="width:10%"><col style="width:34%"></colgroup>
+      <thead><tr><th scope="col" title="${escapeAttr(ledger.words?.mid_level || "")}">Exception</th><th scope="col">Budget</th><th scope="col">Left</th><th scope="col">Years</th><th scope="col">Status</th></tr></thead>
+      <tbody>${exceptions}</tbody>
+    </table>
+    <table class="fa-cap-table fa-hold-table" aria-label="Cap holds">
+      <colgroup><col style="width:32%"><col style="width:18%"><col style="width:15%"><col style="width:17%"><col style="width:18%"></colgroup>
+      <thead><tr><th scope="col">Cap hold</th><th scope="col">Rights</th><th scope="col">Hold</th><th scope="col" title="Your cap room if you renounce this hold">Room after</th><th scope="col"></th></tr></thead>
+      <tbody>${holds || `<tr><td colspan="5" class="fa-empty">No cap holds: you hold no unsigned free agents' rights.</td></tr>`}</tbody>
+    </table>
+  </section>`;
 }
 
 function freeAgencyOfferFootMarkup(player, preview, { legal = true, open = true, exclusive = false } = {}) {
   const reason = !legal || !open ? (exclusive ? "" : "Signings are closed right now.") : "";
   const disabled = !legal || !open || !preview.canSubmit;
   const label = preview.accepts ? `${exclusive ? "Re-sign" : "Sign"} for ${money(preview.aav)} × ${preview.years}` : "Make Offer";
-  return `<div><strong>${escapeHtml(money(preview.aav))} × ${escapeHtml(preview.years)} yr${preview.years === 1 ? "" : "s"} · ${escapeHtml(money(preview.total))} total</strong><span>${escapeHtml(reason || `${preview.guaranteed ? "Guaranteed" : "Non-guaranteed"} · same salary every season · ${preview.verdict.headline.toLowerCase()}`)}</span></div>
+  const paid = preview.quote?.ok ? `paid with ${preview.quote.label}` : preview.quote ? "no legal way to pay" : "checking how you pay";
+  return `<div><strong>${escapeHtml(money(preview.aav))} first year × ${escapeHtml(preview.years)} yr${preview.years === 1 ? "" : "s"} · ${escapeHtml(money(preview.total))} total</strong><span>${escapeHtml(reason || `${preview.guaranteed ? "Guaranteed" : "Non-guaranteed"} · ${paid} · ${preview.verdict.headline.toLowerCase()}`)}</span></div>
     <button type="button" class="ui-command fa-submit${preview.accepts && !disabled ? " is-ready" : ""}" data-fa-submit-offer="${escapeAttr(player.id)}" ${disabled ? "disabled" : ""}>${escapeHtml(label)}</button>`;
 }
 
@@ -8355,12 +8462,13 @@ function wireFreeAgencyBuilderPanel(panel) {
   wireFreeAgencyShortlistButtons(panel);
   if (!player) return;
   const draft = freeAgencyOfferDraft(player, room);
-  const minimum = freeAgencyMinimum(room);
-  const maximum = freeAgencyMaxOffer(room);
+  const minimum = freeAgencyPlayerMinimum(player, room);
+  const maximum = freeAgencyPlayerMaximum(player, room);
   const number = panel.querySelector("[data-fa-offer-aav]");
   const range = panel.querySelector("[data-fa-offer-range]");
   const update = () => {
     const preview = freeAgencyOfferPreview(player, room, draft);
+    if (!preview.quote) requestFreeAgencyQuote(player, { ...draft, aav: preview.aav, years: preview.years }, update);
     const slot = panel.querySelector("[data-fa-offer-preview]");
     if (slot) slot.innerHTML = freeAgencyOfferPreviewMarkup(preview);
     const foot = panel.querySelector("[data-fa-offer-foot]");
@@ -8375,6 +8483,10 @@ function wireFreeAgencyBuilderPanel(panel) {
     });
     panel.querySelectorAll("[data-fa-offer-guarantee]").forEach((button) => {
       const active = (button.dataset.faOfferGuarantee === "true") === preview.guaranteed;
+      button.classList.toggle("is-active", active); button.setAttribute("aria-checked", String(active)); button.tabIndex = active ? 0 : -1;
+    });
+    panel.querySelectorAll("[data-fa-offer-raise]").forEach((button) => {
+      const active = button.dataset.faOfferRaise === (draft.raise || "max");
       button.classList.toggle("is-active", active); button.setAttribute("aria-checked", String(active)); button.tabIndex = active ? 0 : -1;
     });
     const note = panel.querySelector("[data-fa-offer-guarantee]")?.closest(".fa-offer-field")?.querySelector(".fa-offer-note");
@@ -8408,7 +8520,29 @@ function wireFreeAgencyBuilderPanel(panel) {
   };
   wireRadios("[data-fa-offer-years]", (button) => { draft.years = Number(button.dataset.faOfferYears || 1); });
   wireRadios("[data-fa-offer-guarantee]", (button) => { draft.guaranteed = button.dataset.faOfferGuarantee === "true"; });
+  wireRadios("[data-fa-offer-raise]", (button) => { draft.raise = button.dataset.faOfferRaise || "max"; });
+  panel.querySelector("[data-fa-offer-route]")?.addEventListener("change", (event) => { draft.route = event.target.value || ""; update(); });
+  panel.querySelectorAll("[data-fa-renounce]").forEach((button) => button.addEventListener("click", () => renounceCapHold(button.dataset.faRenounce || "")));
   panel.querySelector("[data-fa-submit-offer]")?.addEventListener("click", () => submitFreeAgentOffer(player.id));
+  update();
+}
+
+// FA-REAL: give up a free agent's rights to clear his cap hold, after showing the before/after cap room.
+async function renounceCapHold(playerId) {
+  const room = state.data.freeagency || {};
+  const hold = (room.cap_ledger?.current?.holds || []).find((row) => String(row.player_id) === String(playerId));
+  if (!hold?.renounce) return;
+  const preview = hold.renounce;
+  const question = `Renounce ${hold.name}? His ${money(preview.hold_millions)} cap hold comes off your books: cap room goes from ${signedMoney(preview.cap_room_before_millions)} to ${signedMoney(preview.cap_room_after_millions)}.\n\n${preview.loses}\n\nThis cannot be undone.`;
+  if (!window.confirm(question)) return;
+  const result = await action("renounce_cap_hold", { ...savePayload(), team: userTeam(), player_id: playerId, seed: 7 });
+  if (result.status !== "renounced") {
+    showToast(result.reason || "Could not renounce.", true);
+    return;
+  }
+  state.freeAgentQuotes = {};
+  showToast(`Renounced ${hold.name}: cap room now ${signedMoney(preview.cap_room_after_millions)}.`);
+  await refreshDashboardAfterPhaseMutation("freeagency", result.room);
 }
 
 async function openWaiverRoom() {
@@ -9374,12 +9508,17 @@ async function submitFreeAgentOffer(playerId = state.selectedFreeAgent) {
     return;
   }
   const { exclusive } = freeAgencyRoomState(room);
-  const terms = `${money(preview.aav)} a season for ${preview.years} season${preview.years === 1 ? "" : "s"} (${money(preview.total)} total, ${preview.guaranteed ? "guaranteed" : "non-guaranteed"})`;
+  const draft = freeAgencyOfferDraft(player, room);
+  const quote = preview.quote;
+  const byYear = quote?.schedule?.length ? quote.schedule.map((row) => money(row.salary_millions)).join(", ") : `${money(preview.aav)} a season`;
+  const terms = `${byYear} over ${preview.years} season${preview.years === 1 ? "" : "s"} (${money(preview.total)} total, ${preview.guaranteed ? "guaranteed" : "non-guaranteed"})`;
+  const paid = quote?.ok ? `\n\nPaid with ${quote.label}.${quote.locks ? ` ${quote.locks}` : ""}` : "";
   const question = preview.accepts
-    ? `${exclusive ? "Re-sign" : "Sign"} ${player.name}: ${terms}? This cannot be undone.`
-    : `Offer ${player.name} ${terms}?\n\n${preview.verdict.detail}`;
+    ? `${exclusive ? "Re-sign" : "Sign"} ${player.name}: ${terms}?${paid}\n\nThis cannot be undone.`
+    : `Offer ${player.name} ${terms}?${paid}\n\n${preview.verdict.detail}`;
   if (!window.confirm(question)) return;
-  const result = await action("submit_free_agent_offer", { ...savePayload(), player_id: player.id, team: userTeam(), years: preview.years, guaranteed: preview.guaranteed, aav_millions: preview.aav, allow_tax_exceed: exclusive, auto_apply: true, seed: 7 });
+  const result = await action("submit_free_agent_offer", { ...savePayload(), player_id: player.id, team: userTeam(), years: preview.years, guaranteed: preview.guaranteed, aav_millions: preview.aav, route: draft.route || "", raise_pct: freeAgencyRaisePct(player, draft), auto_apply: true, seed: 7 });
+  state.freeAgentQuotes = {};
   const decision = result.negotiation?.decision || {};
   const signed = result.apply_result?.status === "applied";
   state.freeAgentOfferResults ||= {};

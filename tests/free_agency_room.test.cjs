@@ -64,23 +64,30 @@ function builderScope() {
   return scope;
 }
 
-test('cap check mirrors the engine rule: minimum always allowed, tax room binds in free agency, hard cap always', () => {
-  const {freeAgencyCapCheck} = builderScope();
-  const rules = {minimum_aav_millions: 1.9, allow_tax_exceed: false};
-  const cap = {tax_space_millions: 10, hard_cap_space_millions: 30};
-  assert.equal(freeAgencyCapCheck(rules, cap, 10).ok, true);
-  const overTax = freeAgencyCapCheck(rules, cap, 10.1);
-  assert.equal(overTax.ok, false);
-  assert.equal(overTax.limit, 'tax');
-  assert.equal(freeAgencyCapCheck({...rules, allow_tax_exceed: true}, cap, 25).ok, true, 're-signing may exceed the tax');
-  assert.equal(freeAgencyCapCheck({...rules, allow_tax_exceed: true}, cap, 30.1).limit, 'hard');
-  // League minimum (with the engine's 0.05 tolerance) is allowed even with no room at all.
-  const broke = {tax_space_millions: -5, hard_cap_space_millions: -2};
-  assert.equal(freeAgencyCapCheck(rules, broke, 1.9).ok, true);
-  assert.equal(freeAgencyCapCheck(rules, broke, 1.95).ok, true);
-  assert.equal(freeAgencyCapCheck(rules, broke, 2.0).ok, false);
-  // Unreviewed waived salary blocks every signing, the minimum included.
-  assert.equal(freeAgencyCapCheck({...rules, blocked_reason: 'Waived salary requires review.'}, cap, 1.9).ok, false);
+// FA-REAL: legality is the engine's quote (free_agent_offer_quote -> cap_ledger.quote); the builder only shows it.
+function quoteFor(scope, player, draft, quote) {
+  scope.state.freeAgentQuotes ||= {};
+  scope.state.freeAgentQuotes[scope.freeAgencyQuoteKey(player, draft)] = quote;
+}
+
+test('the cap verdict is the engine quote: pending until it arrives, blocked with its reason, paid with its route', () => {
+  const scope = builderScope();
+  const {freeAgencyCapVerdict} = scope;
+  assert.deepEqual({...freeAgencyCapVerdict(null, {})}, {ok: true, pending: true, limit: '', message: ''});
+  const blocked = freeAgencyCapVerdict({ok: false, message: 'CHA has no legal way to pay this.'}, {});
+  assert.equal(blocked.ok, false);
+  assert.match(blocked.message, /no legal way/);
+  const paid = freeAgencyCapVerdict({ok: true, route: 'non_taxpayer_mle', label: 'the full mid-level exception'}, {});
+  assert.equal(paid.ok, true);
+  assert.equal(paid.limit, 'non_taxpayer_mle');
+  assert.match(paid.message, /full mid-level/);
+  // Unreviewed waived salary blocks every signing.
+  assert.equal(freeAgencyCapVerdict({ok: true}, {blocked_reason: 'Waived salary requires review.'}).ok, false);
+  // One cached quote per offer: salary, years, route and raise all change the key.
+  const key = scope.freeAgencyQuoteKey(miller, {aav: 20, years: 3});
+  assert.notEqual(key, scope.freeAgencyQuoteKey(miller, {aav: 20.1, years: 3}));
+  assert.notEqual(key, scope.freeAgencyQuoteKey(miller, {aav: 20, years: 3, route: 'cap_room'}));
+  assert.notEqual(key, scope.freeAgencyQuoteKey(miller, {aav: 20, years: 3, raise: '0'}));
 });
 
 test('the verdict uses the salary he needs from you today (the rival bids\' rule), the length, the guarantee and his retirement', () => {
@@ -103,22 +110,37 @@ test('the verdict uses the salary he needs from you today (the rival bids\' rule
   assert.equal(long.accepts, false);
   assert.match(long.verdict.detail, /retire after 2 seasons/);
   assert.equal(freeAgencyOfferPreview(veteran, r, {aav: 33, years: 2, guaranteed: true}).accepts, true);
-  const blocked = at(70);
+  const scope = builderScope();
+  quoteFor(scope, miller, {aav: 70, years: 4}, {ok: false, message: 'Above his maximum salary ($42.7M).', routes: []});
+  const blocked = scope.freeAgencyOfferPreview(miller, r, {aav: 70, years: 4, guaranteed: true});
   assert.equal(blocked.cap.ok, false);
   assert.equal(blocked.canSubmit, false);
   assert.equal(blocked.verdict.tone, 'blocked');
   assert.equal(freeAgencyOfferPreview({...miller, signing_blocked_reason: 'stretched'}, r, {aav: 20, years: 1}).canSubmit, false);
 });
 
-test('cap preview starts at the signing season and adds a flat salary for the contract years only', () => {
-  const {freeAgencyOfferPreview} = builderScope();
-  const preview = freeAgencyOfferPreview(miller, room(), {aav: 20, years: 2, guaranteed: true});
-  assert.deepEqual(Array.from(preview.seasons, (row) => row.season), ['2027-28', '2028-29', '2029-30'], 'the finished season is not charged');
-  assert.deepEqual(Array.from(preview.seasons, (row) => row.salary), [20, 20, 0]);
-  assert.equal(preview.seasons[0].after, 160.1);
+test('cap preview uses the ledger by season and the engine schedule (raises off year one) for the contract years', () => {
+  const scope = builderScope();
+  const r = room({cap_ledger: {season: '2027-28', by_year: [
+    {season: '2027-28', cap_payroll_millions: 180.0, tax_payroll_millions: 140.1, holds_millions: 39.9, cap_room_millions: -9.3,
+     room_under_tax_millions: 67.3, room_under_first_apron_millions: 75.9},
+    {season: '2028-29', cap_payroll_millions: 150, tax_payroll_millions: 150, holds_millions: 0, cap_room_millions: 20.7,
+     room_under_tax_millions: 64.7, room_under_first_apron_millions: 73.6},
+    {season: '2029-30', cap_payroll_millions: 100, tax_payroll_millions: 100, holds_millions: 0, cap_room_millions: 76.7,
+     room_under_tax_millions: 122.2, room_under_first_apron_millions: 131.2},
+  ]}});
+  quoteFor(scope, miller, {aav: 20, years: 2}, {ok: true, route: 'non_taxpayer_mle', label: 'the full mid-level exception',
+    cap_room_after_millions: -29.3, schedule: [
+      {season: '2027-28', salary_millions: 20, cap_charge_millions: 20},
+      {season: '2028-29', salary_millions: 21, cap_charge_millions: 21}]});
+  const preview = scope.freeAgencyOfferPreview(miller, r, {aav: 20, years: 2, guaranteed: true});
+  assert.deepEqual(Array.from(preview.seasons, (row) => row.season), ['2027-28', '2028-29', '2029-30']);
+  assert.deepEqual(Array.from(preview.seasons, (row) => row.salary), [20, 21, 0], 'the saved schedule: 5% of year one added');
+  assert.equal(Math.round(preview.seasons[0].after * 10) / 10, 160.1, 'tax payroll after');
+  assert.equal(preview.seasons[0].capRoom, -29.3, 'this season: the engine room after (holds counted)');
   assert.equal(Math.round(preview.seasons[0].taxRoom * 10) / 10, 47.3);
-  assert.equal(Math.round(preview.seasons[1].hardRoom * 10) / 10, 67.4);
-  assert.equal(preview.total, 40);
+  assert.equal(Math.round(preview.seasons[1].apronRoom * 10) / 10, 52.6);
+  assert.equal(preview.total, 41);
   assert.ok(Math.abs(preview.ratio - 20 / 33.0) < 1e-9, 'meter = salary / his price for this length');
 });
 

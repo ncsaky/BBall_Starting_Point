@@ -43,8 +43,15 @@ class AcceptFloorParityTests(unittest.TestCase):
     """The price the builder shows is the price manual_save_pool_signing applies (TRADE-VOLUME: the rival bids' rule)."""
 
     def sign(self, save: dict, candidate: dict, years: int, aav: float, guaranteed: bool) -> dict:
+        # Legality (how the team pays) is the cap ledger's job and is tested in test_cap_ledger; here every offer is
+        # payable so the test isolates the price rule.
+        from nba_gm_data import cap_ledger
+        payment = {"route": "cap_room", "season": "2027-28", "salary": aav * 1e6, "amount": aav * 1e6,
+                   "schedule": [{"season": f"{2027 + k}-{str(2028 + k)[-2:]}", "salary": s, "cap_charge": s}
+                                for k, s in enumerate(cap_ledger.raise_schedule(aav * 1e6, years, 0.05))]}
         with patch.object(play, "load_save", return_value=save), patch.object(play, "write_save"), \
                 patch.object(play, "resolve_team", return_value=CHA), \
+                patch.object(play, "signing_cap_check", return_value={"ok": True, "payment": payment}), \
                 patch.object(play, "extension_retirement_blocked", return_value=False):
             return play.manual_save_pool_signing({}, Path("unused"), candidate, "CHA", years, aav, 7, guaranteed=guaranteed)
 
@@ -109,43 +116,50 @@ class AcceptFloorParityTests(unittest.TestCase):
 
 @unittest.skipUnless(shutil.which("node"), "node is needed to run the browser preview")
 class CapPreviewParityTests(unittest.TestCase):
-    """The builder's live cap verdict (JavaScript) agrees with play.signing_cap_check on a grid of offers."""
+    """FA-REAL: the builder's cap verdict (JavaScript) is the engine's quote (cap_ledger via play.signing_cap_check,
+    sent by free_agent_offer_quote): on a grid of payrolls and offers the browser says yes exactly when the engine does."""
 
-    def js_checks(self, cases: list[dict]) -> list[dict]:
+    def js_verdicts(self, quotes: list[dict], rules: dict | None = None) -> list[dict]:
         source = APP_JS.read_text()
-        start = source.index("function freeAgencyCapCheck(")
-        end = source.index("function freeAgencyCapSeasons(", start)
-        script = (
-            "const money=v=>`$${Number(v).toFixed(1)}M`;\n" + source[start:end]
-            + "\nconst cases=JSON.parse(require('fs').readFileSync(0,'utf8'));"
-            + "process.stdout.write(JSON.stringify(cases.map(c=>freeAgencyCapCheck(c.rules,c.cap,c.aav))));"
-        )
-        result = subprocess.run(["node", "-e", script], input=json.dumps(cases), capture_output=True, text=True, check=True)
+        start = source.index("function freeAgencyCapVerdict(")
+        end = source.index("function requestFreeAgencyQuote(", start)
+        script = (source[start:end]
+                  + "\nconst input=JSON.parse(require('fs').readFileSync(0,'utf8'));"
+                  + "process.stdout.write(JSON.stringify(input.quotes.map(q=>freeAgencyCapVerdict(q,input.rules))));")
+        result = subprocess.run(["node", "-e", script], input=json.dumps({"quotes": quotes, "rules": rules or {}}),
+                                capture_output=True, text=True, check=True)
         return json.loads(result.stdout)
 
+    @staticmethod
+    def league(payroll: float) -> dict:
+        players = [{"id": f"cha_{i}", "team_id": "team_cha", "age": 28, "draft_year": 2018} for i in range(13)]
+        contracts = [{"player_id": p["id"], "seasons": [{"season": "2027-28", "salary": payroll / 13}]} for p in players]
+        return {"players": players + [{"id": "fa", "age": 27, "draft_year": 2020, "team_id": None}], "contracts": contracts,
+                "teams": [{"id": "team_cha", "abbrev": "CHA"}]}
+
     def test_cap_verdict_matches_engine(self):
-        cases, expected = [], []
-        for tax_room, hard_room in ((67.3, 89.3), (10.0, 30.0), (-5.0, 12.0), (-8.0, -2.0)):
-            for allow in (False, True):
-                for aav in (1.9, 1.95, 2.0, 9.9, 10.0, 10.1, 12.0, 29.9, 30.0, 30.1, 67.3, 67.4, 89.3, 90.0):
-                    cap = {"tax_space_millions": tax_room, "hard_cap_space_millions": hard_room, "unresolved_waived_contract_count": 0}
-                    with patch.object(play, "resolve_team", return_value={"id": "team_cha", "abbrev": "CHA"}), \
-                            patch.object(play, "team_cap_summary", return_value=cap):
-                        engine = play.signing_cap_check({}, {"meta": {"season": "2026-27"}, "state": {"phase": "free_agency"}}, "CHA", aav, allow_tax_exceed=allow)
-                    cases.append({"rules": {"minimum_aav_millions": play.league_minimum_aav_millions(), "allow_tax_exceed": allow, "blocked_reason": None},
-                                  "cap": cap, "aav": aav})
-                    expected.append(bool(engine["ok"]))
-        got = [bool(row["ok"]) for row in self.js_checks(cases)]
-        mismatches = [(case["cap"]["tax_space_millions"], case["cap"]["hard_cap_space_millions"], case["rules"]["allow_tax_exceed"], case["aav"])
-                      for case, a, b in zip(cases, got, expected) if a != b]
-        self.assertEqual(mismatches, [])
+        from nba_gm_data.app_actions import quote_view
+        save = {"meta": {"season": "2026-27"}, "state": {"phase": "free_agency", "current_date": "2027-07-03"}}
+        views, expected = [], []
+        for payroll in (120e6, 160e6, 205e6, 215e6, 225e6):
+            active = self.league(payroll)
+            for aav in (1.9, 2.4, 6.0, 6.1, 9.0, 15.0, 15.1, 30.0, 45.0, 60.0):
+                with patch.object(play, "resolve_team", return_value={"id": "team_cha", "abbrev": "CHA"}):
+                    check = play.signing_cap_check(active, save, "CHA", aav, player=active["players"][-1], years=2)
+                views.append(quote_view(check))
+                expected.append(bool(check["ok"]))
+        self.assertIn(True, expected)
+        self.assertIn(False, expected)
+        got = [bool(row["ok"]) for row in self.js_verdicts(views)]
+        self.assertEqual(got, expected)
 
     def test_unreviewed_waived_salary_blocks_everything_in_both(self):
-        cap = {"tax_space_millions": 50.0, "hard_cap_space_millions": 70.0, "unresolved_waived_contract_count": 1}
-        with patch.object(play, "resolve_team", return_value={"id": "team_cha", "abbrev": "CHA"}), \
-                patch.object(play, "team_cap_summary", return_value=cap):
-            self.assertFalse(play.signing_cap_check({}, {"meta": {}, "state": {}}, "CHA", 1.9)["ok"])
-        got = self.js_checks([{"rules": {"minimum_aav_millions": 1.9, "blocked_reason": "Waived salary requires review."}, "cap": cap, "aav": 1.9}])
+        save = {"meta": {"season": "2026-27"}, "state": {"phase": "free_agency", "current_date": "2027-07-03"},
+                "waived_salary_obligations": [{"team_id": "team_cha", "seasons": [{"season": "2027-28", "salary": None}]}]}
+        active = self.league(120e6)
+        with patch.object(play, "resolve_team", return_value={"id": "team_cha", "abbrev": "CHA"}):
+            self.assertFalse(play.signing_cap_check(active, save, "CHA", 1.9, player=active["players"][-1])["ok"])
+        got = self.js_verdicts([{"ok": True}], {"blocked_reason": "Waived salary requires review."})
         self.assertFalse(got[0]["ok"])
 
 

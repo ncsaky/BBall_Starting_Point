@@ -308,7 +308,7 @@ class RosterRetentionTests(unittest.TestCase):
                         return {"team": canonical["teams"][0], "cut_player": None, "score": 50}
                     return None
 
-                def sign(state, player, team, *args):
+                def sign(state, player, team, *args, payment=None):   # FA-REAL: the ledger's payment
                     state["roster_overrides"][player["id"]] = team["id"]
                     state["free_agent_player_ids"].remove(player["id"])
 

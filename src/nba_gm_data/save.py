@@ -1634,6 +1634,9 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
                 "original_contract_years": int(override.get("original_contract_years") or override.get("years") or override.get("term_years") or len(seasons)),
                 "signed_season": override.get("signed_season") or override.get("start_season"),
                 "extension_eligibility": dict(override.get("extension_eligibility") or {}),
+                # FA-REAL: how the deal was paid for and when he can first be traded (cap_ledger).
+                "payment_route": override.get("payment_route"),
+                "trade_eligible_date": override.get("trade_eligible_date"),
                 "_active_season": active_season,
             }
             backfill_contract_metadata(record, active_season)
@@ -8348,24 +8351,19 @@ def cap_lines_for_season(season: str | None) -> dict[str, float]:
 
 
 def team_cap_summary(canonical: dict[str, Any], save: dict[str, Any], team_id: str, season: str | None = None) -> dict[str, Any]:
+    """The team's payroll for a season (FA-REAL: from the cap ledger). ``salary_total`` is the tax and apron payroll
+    (signed cap charges plus dead money); the ``cap_*`` fields add cap holds and empty-roster charges for cap room."""
     from .trade_tax import team_tax_payout_summary
+    from .cap_ledger import summary_millions, team_payroll
     season = season or save.get("meta", {}).get("season") or CANONICAL_SEASON
     lines = cap_lines_for_season(season)
-    total = 0.0
-    unresolved = 0
-    active_player_ids = {player["id"] for player in canonical.get("players", []) if player.get("team_id") == team_id}
-    for contract in canonical.get("contracts", []):
-        if contract.get("player_id") not in active_player_ids:
-            continue
-        salary = contract_salary_for_season(contract, season)
-        if salary is None:
-            unresolved += 1
-        else:
-            total += salary
-    from .contract_protection import waived_total
-    dead = waived_total(save, team_id, season)
-    active_salary = total
-    total += dead
+    ledger = team_payroll(canonical, save, team_id, season, fresh=False)
+    on_roster = {p["player_id"] for p in ledger["players"]}
+    unresolved = sum(1 for p in canonical.get("players", []) if p.get("team_id") == team_id
+                     and not p.get("_inactive_player") and p.get("id") not in on_roster)
+    dead = ledger["dead_money"]
+    active_salary = ledger["signed_cap_charge"]
+    total = active_salary + dead
     unresolved_dead = sum(s.get('salary') is None for r in save.get('waived_salary_obligations', [])
                           if r['team_id'] == team_id for s in r['seasons'] if s['season'] == season)
     tax_line = float(lines["tax_line"])
@@ -8391,6 +8389,16 @@ def team_cap_summary(canonical: dict[str, Any], save: dict[str, Any], team_id: s
         "cap_growth_factor": lines["growth_factor"],
         "unresolved_contract_count": unresolved + unresolved_dead,
         "tax_payout": team_tax_payout_summary(save, team_id),  # TRADE-TAXPOOL: last season's payout or tax bill
+        # FA-REAL: the cap ledger's numbers (cap room counts holds; aprons and the floor; any triggered hard cap).
+        "ledger": summary_millions(ledger),
+        "salary_cap_millions": round(float(lines["salary_cap"]) / 1_000_000, 3),
+        "cap_room_millions": round(float(ledger["cap_room"]) / 1_000_000, 2),
+        "cap_payroll_millions": round(float(ledger["cap_payroll"]) / 1_000_000, 2),
+        "holds_millions": round(float(ledger["hold_total"]) / 1_000_000, 2),
+        "first_apron_millions": round(float(lines["first_apron"]) / 1_000_000, 3),
+        "second_apron_millions": round(float(lines["second_apron"]) / 1_000_000, 3),
+        "salary_floor_millions": round(float(lines["salary_floor"]) / 1_000_000, 3),
+        "triggered_hard_cap": ledger["hard_cap"],
     }
 
 
@@ -8407,16 +8415,22 @@ def offer_to_contract_seasons(offer: dict[str, Any]) -> list[dict[str, Any]]:
     if annual and annual < 1_000_000:
         annual *= 1_000_000
     start = int(str(offer.get("start_season") or offer.get("season") or CANONICAL_SEASON).split("-")[0])
+    # FA-REAL: a legal salary schedule (raises off year one) and cap charges (a veteran's one-year minimum counts at
+    # the two-year minimum) when the offer carries them (cap_ledger.contract_terms); flat salaries otherwise.
+    schedule = list(offer.get("salary_schedule") or [])
+    charges = list(offer.get("cap_charges") or [])
     seasons = []
     for offset in range(max(1, years)):
-        seasons.append(
-            {
-                "season": season_label_from_start(start + offset),
-                "salary": int(round(annual)),
-                "option_type": None,
-                "guarantee_status": "save_state_offer",
-            }
-        )
+        salary = int(round(float(schedule[offset]))) if offset < len(schedule) else int(round(annual))
+        row = {
+            "season": season_label_from_start(start + offset),
+            "salary": salary,
+            "option_type": None,
+            "guarantee_status": "save_state_offer",
+        }
+        if offset < len(charges) and int(round(float(charges[offset]))) != salary:
+            row["cap_charge"] = int(round(float(charges[offset])))
+        seasons.append(row)
     from .contract_protection import negotiated_seasons
     return negotiated_seasons(offer, seasons)
 
@@ -9989,18 +10003,24 @@ def ai_re_signing_contract_terms(save: dict[str, Any], player: dict[str, Any], n
         bird_level = (player.get("_bird") or {}).get("level")
         years = star_re_signing_years(age, bird_level, years)
         raise_rate = bird_raise(bird_level)
+    # FA-REAL: never below his minimum; Early Bird rights need at least two years; raises are a share of year one
+    # added each year (8% of $30M: $30M, $32.4M, $34.8M), not compounded ($34.99M in year three before).
+    from .cap_ledger import minimum_salary, raise_schedule, years_of_service as service_years
+    salary = max(salary, minimum_salary(next_season, service_years(player, next_season)))
+    if (player.get("_bird") or {}).get("level") == "early":
+        years = max(2, years)
     seasons = [
         {
             "season": season_label_from_start(season_start_year(next_season) + offset),
-            "salary": int(round(salary * ((1.0 + raise_rate) ** offset))),
+            "salary": amount,
             "option_type": None,
             "guarantee_status": "ai_re_signing",
-            "guaranteed_salary": int(round(salary * ((1.0 + raise_rate) ** offset))),
+            "guaranteed_salary": amount,
             "protection_basis": "negotiated",
         }
-        for offset in range(years)
+        for offset, amount in enumerate(raise_schedule(salary, years, raise_rate))
     ]
-    return {"salary": salary, "years": years, "seasons": seasons, "score": score}
+    return {"salary": salary, "years": years, "seasons": seasons, "score": score, "raise_rate": raise_rate}
 
 
 def re_signing_within_bird_rights(player: dict[str, Any], salary: float) -> bool:
@@ -10021,21 +10041,16 @@ def ai_re_signing_fits_hard_cap(
 ) -> bool:
     if not team_id:
         return False
+    del committed_salary_by_team_season   # the ledger reads earlier re-signings from the save itself
     terms = ai_re_signing_contract_terms(save, player, next_season)
-    # KEEP-STARS: re-signing your own free agent within his Bird rights never meets the hard cap (real CBA: Bird
-    # re-signings do not trigger a hard cap). Above the limit the team needs room like any other signing.
-    if re_signing_within_bird_rights(player, terms["salary"]):
-        return True
+    # FA-REAL: the cap ledger decides how the team can pay. Within his Bird rights it may go over the cap and both
+    # aprons (KEEP-STARS), unless it has triggered a hard cap; above them it needs room, an exception or the minimum.
     active = prepared_active if prepared_active is not None else canonical_with_save(canonical, save)
-    commitments = committed_salary_by_team_season or {}
-    for season_row in terms["seasons"]:
-        season = str(season_row["season"])
-        cap = team_cap_summary(active, save, team_id, season)
-        available = float(cap.get("hard_cap_space_millions") or 0.0) * 1_000_000
-        available -= float(commitments.get((str(team_id), season), 0.0))
-        if float(season_row["salary"]) > available + 10_000:
-            return False
-    return True
+    from .cap_ledger import quote
+    result = quote(active, save, str(team_id), player, float(terms["salary"]), int(terms["years"]), season=next_season,
+                   bird=player.get("_bird") or None, raise_rate=terms.get("raise_rate"), include_reservations=False)
+    player["_re_signing_payment"] = result.get("payment")
+    return bool(result["ok"])
 
 
 RE_SIGNING_PLAYER_COUNT_KEY = "_players"   # commitments[(team_id, this)]: players re-signed earlier in the same pass
@@ -10086,13 +10101,22 @@ def retain_expiring_player(save: dict[str, Any], player: dict[str, Any], team_id
     score = float(terms["score"])
     from .contract_ai import keep_bird_clock
     keep_bird_clock(save, player, team_id, next_season)   # a re-signing keeps his Bird clock (KEEP-STARS)
-    save.setdefault("contract_overrides", {})[player["id"]] = {
+    override = {
         "team_id": team_id,
         "seasons": seasons,
         "status": "ai_re_signing",
         "original_contract_years": years,
         "signed_season": next_season,
     }
+    payment = player.pop("_re_signing_payment", None)
+    if payment:
+        # FA-REAL: the schedule and payment the ledger approved; recorded on the team's cap year.
+        from .cap_ledger import commit, contract_seasons, contract_terms
+        override["seasons"] = contract_seasons(payment, status="ai_re_signing")
+        override.update(contract_terms(payment))
+        salary = int(override["seasons"][0]["salary"])
+        commit(save, str(team_id), player["id"], payment)
+    save.setdefault("contract_overrides", {})[player["id"]] = override
     save.setdefault("transaction_logs", []).append(
         {
             "id": stable_id("transaction_log", "ai_re_signing", current_season, team_id, player["id"]),
@@ -10282,17 +10306,18 @@ def strategic_free_agent_signings(canonical: dict[str, Any], save: dict[str, Any
             salary = strategic_signing_salary(player, score)
             cap_room = cap_room_by_team.setdefault(team["id"], {"tax": 0.0, "hard": 0.0})
             tax_space = cap_room["tax"]
-            hard_space = cap_room["hard"]
-            minimum_salary = 2_250_000
-            if salary > hard_space:
-                if len(roster) < ROSTER_MINIMUM:
-                    salary = minimum_salary
-                else:
-                    continue
-            if salary > tax_space and len(roster) >= ROSTER_MINIMUM:
+            # FA-REAL: a legal way to pay (room, an exception, the minimum); a short roster takes the minimum.
+            from . import cap_ledger
+            paid = cap_ledger.quote(active, save, team["id"], player, salary, 1, season=next_season)
+            if paid["ok"] and salary > tax_space and len(roster) >= ROSTER_MINIMUM:
                 continue
-            if salary > tax_space and len(roster) < ROSTER_MINIMUM:
-                salary = minimum_salary
+            if not paid["ok"] or (salary > tax_space and len(roster) < ROSTER_MINIMUM):
+                if len(roster) >= ROSTER_MINIMUM:
+                    continue
+                paid = cap_ledger.quote(active, save, team["id"], player, 0, 1, season=next_season, route="minimum")
+                if not paid["ok"]:
+                    continue
+            salary = int(paid["payment"]["salary"])
             # Payroll discipline (TRADE-VOLUME): count the minimum contracts still needed and the owner's tax plan.
             from .payroll_plan import payroll_check
             signed_here = pass_signed.setdefault(team["id"], [0.0, 0])
@@ -10305,20 +10330,13 @@ def strategic_free_agent_signings(canonical: dict[str, Any], save: dict[str, Any
             save.setdefault("roster_overrides", {})[player["id"]] = team["id"]
             save.setdefault("contract_overrides", {})[player["id"]] = {
                 "team_id": team["id"],
-                "seasons": [
-                    {
-                        "season": next_season,
-                        "salary": salary,
-                        "option_type": None,
-                        "guarantee_status": "ai_offseason_signing",
-                        "guaranteed_salary": salary,
-                        "protection_basis": "negotiated",
-                    }
-                ],
+                "seasons": cap_ledger.contract_seasons(paid["payment"], status="ai_offseason_signing"),
                 "status": "ai_offseason_signing",
                 "original_contract_years": 1,
                 "signed_season": next_season,
+                **cap_ledger.contract_terms(paid["payment"]),
             }
+            cap_ledger.commit(save, team["id"], player["id"], paid["payment"])
             signed.add(player["id"])
             save.setdefault("transaction_logs", []).append(
                 {
@@ -10423,9 +10441,14 @@ def process_inseason_released_free_agent_signings(canonical: dict[str, Any], sav
             continue
         team = destination["team"]
         cut_player = destination.get("cut_player")
+        from .cap_ledger import quote as cap_quote
+        paid = cap_quote(active, save, team["id"], player, float(salary), 1, season=save_active_contract_season(save))
+        if not paid["ok"]:
+            continue
         if cut_player:
             waive_ai_depth_player_for_released_free_agent(save, cut_player, team, date_value, player, canonical=active)
-        apply_inseason_released_free_agent_signing(save, player, team, salary, date_value, destination["score"])
+        apply_inseason_released_free_agent_signing(save, player, team, int(paid["payment"]["salary"]), date_value,
+                                                   destination["score"], payment=paid["payment"])
         signed.add(player["id"])
         active, retention_context = None, None
     return signed
@@ -10481,7 +10504,7 @@ def released_free_agent_destination(
         team_id = team.get("id")
         if team_id in human_team_ids or team_id == waived_by:
             continue
-        if not ai_team_can_absorb_released_free_agent(canonical, save, team_id, salary, season):
+        if not ai_team_can_absorb_released_free_agent(canonical, save, team_id, salary, season, player):
             continue
         roster = [item for item in canonical.get("players", []) if item.get("team_id") == team_id]
         cut_player = None
@@ -10559,16 +10582,19 @@ def released_free_agent_timeline_fit(age: float, phase: str, ceiling: float) -> 
     return 5.5 if ceiling >= 62 else -3.0
 
 
-def ai_team_can_absorb_released_free_agent(canonical: dict[str, Any], save: dict[str, Any], team_id: str | None, salary: int, season: str) -> bool:
+def ai_team_can_absorb_released_free_agent(canonical: dict[str, Any], save: dict[str, Any], team_id: str | None, salary: int, season: str,
+                                           player: dict[str, Any] | None = None) -> bool:
+    """A legal way to pay (FA-REAL cap ledger) and, above the minimum, no new tax (the owner's preference)."""
     if not team_id:
         return False
+    from .cap_ledger import quote
+    paid = quote(canonical, save, team_id, player or {"id": None, "age": 30.0}, float(salary), 1, season=season)
+    if not paid["ok"]:
+        return False
+    if paid["route"] == "minimum":
+        return True
     cap = team_cap_summary(canonical, save, team_id, season=season)
-    salary_m = salary / 1_000_000
-    hard_space = float(cap.get("hard_cap_space_millions") or 0.0)
-    tax_space = float(cap.get("tax_space_millions") or 0.0)
-    if salary_m <= 1.95:
-        return hard_space >= -0.05
-    return salary_m <= hard_space + 0.05 and salary_m <= tax_space + 0.05
+    return salary / 1_000_000 <= float(cap.get("tax_space_millions") or 0.0) + 0.05
 
 
 def waive_ai_depth_player_for_released_free_agent(save: dict[str, Any], cut_player: dict[str, Any], team: dict[str, Any], date_value: str, incoming_player: dict[str, Any], canonical: dict[str, Any] | None = None) -> None:
@@ -10608,11 +10634,25 @@ def waive_ai_depth_player_for_released_free_agent(save: dict[str, Any], cut_play
     )
 
 
-def apply_inseason_released_free_agent_signing(save: dict[str, Any], player: dict[str, Any], team: dict[str, Any], salary: int, date_value: str, score: float) -> None:
+def apply_inseason_released_free_agent_signing(save: dict[str, Any], player: dict[str, Any], team: dict[str, Any], salary: int, date_value: str, score: float,
+                                               payment: dict[str, Any] | None = None) -> None:
     season = save_active_contract_season(save)
     player_id = player["id"]
     save.setdefault("roster_overrides", {})[player_id] = team["id"]
-    save.setdefault("contract_overrides", {})[player_id] = {
+    if payment:
+        # FA-REAL: written from the ledger's payment (route, cap charge, trade date) and recorded on the cap year.
+        from .cap_ledger import commit, contract_seasons, contract_terms
+        save.setdefault("contract_overrides", {})[player_id] = {
+            "team_id": team["id"],
+            "seasons": contract_seasons(payment, status="ai_inseason_released_free_agent_signing"),
+            "status": "ai_inseason_released_free_agent_signing",
+            "original_contract_years": 1,
+            "signed_season": season,
+            **contract_terms(payment),
+        }
+        commit(save, team["id"], player_id, payment, date_value)
+    else:
+        save.setdefault("contract_overrides", {})[player_id] = {
         "team_id": team["id"],
         "seasons": [
             {
@@ -10627,7 +10667,7 @@ def apply_inseason_released_free_agent_signing(save: dict[str, Any], player: dic
         "status": "ai_inseason_released_free_agent_signing",
         "original_contract_years": 1,
         "signed_season": season,
-    }
+        }
     save["free_agent_player_ids"] = sorted(pid for pid in set(save.get("free_agent_player_ids", [])) if pid != player_id)
     save.setdefault("released_free_agents", {}).setdefault(player_id, {})["status"] = "signed"
     save["released_free_agents"][player_id]["signed_team_id"] = team["id"]
@@ -10725,22 +10765,19 @@ def auto_fill_rosters(canonical: dict[str, Any], save: dict[str, Any], free_agen
                 for trait in generated_replacement_traits(candidate, seed):
                     upsert_by_id(save, "generated_traits", trait)
             save.setdefault("roster_overrides", {})[candidate["id"]] = team["id"]
+            # FA-REAL: a one-year minimum by his years of service (a veteran's counts at the two-year minimum), not a
+            # flat $2.25M. Roster minimums are required, so it is written even past a hard cap (noted on the ledger).
+            payment = minimum_contract_payment(candidate, next_season)
+            from .cap_ledger import commit, contract_seasons, contract_terms
             save.setdefault("contract_overrides", {})[candidate["id"]] = {
                 "team_id": team["id"],
-                "seasons": [
-                    {
-                        "season": next_season,
-                        "salary": 2_250_000,
-                        "option_type": None,
-                        "guarantee_status": "minimum_depth_signing",
-                        "guaranteed_salary": 2_250_000,
-                        "protection_basis": "negotiated",
-                    }
-                ],
+                "seasons": contract_seasons(payment, status="minimum_depth_signing"),
                 "status": "auto_depth_signing",
                 "original_contract_years": 1,
                 "signed_season": next_season,
+                **contract_terms(payment),
             }
+            commit(save, team["id"], candidate["id"], payment)
             signed.add(candidate["id"])
             roster.append(candidate)
             save.setdefault("transaction_logs", []).append(
@@ -10758,6 +10795,22 @@ def auto_fill_rosters(canonical: dict[str, Any], save: dict[str, Any], free_agen
                 }
             )
     return signed
+
+
+def minimum_contract_payment(player: dict[str, Any], season: str, years: int = 1) -> dict[str, Any]:
+    """A minimum contract's payment (cap_ledger) without a team check: salary by years of service, cap charge."""
+    from .cap_ledger import (minimum_cap_charge, minimum_schedule, season_start, trade_eligible_date,
+                             years_of_service as service_years, _label)
+    service = service_years(player, season)
+    salaries = minimum_schedule(season, service, years)
+    charges = list(salaries)
+    charges[0] = minimum_cap_charge(season, service, years)
+    seasons = [_label(season_start(season) + k) for k in range(years)]
+    today = f"{season_start(season)}-09-01"
+    return {"route": "minimum", "bird_level": None, "label": "a minimum contract", "season": season, "years": years,
+            "salary": salaries[0], "amount": charges[0], "raise_rate": 0.0, "hard_cap": None,
+            "schedule": [{"season": s, "salary": a, "cap_charge": c} for s, a, c in zip(seasons, salaries, charges)],
+            "trade_eligible_date": trade_eligible_date(today, season, route="minimum")}
 
 
 def ensure_roster_minimums(canonical: dict[str, Any], save: dict[str, Any], seed: int,

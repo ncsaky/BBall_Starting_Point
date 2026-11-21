@@ -5244,7 +5244,7 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
                 print(bird_rights_text(bird))
             max_years = int(bird["max_years"]) if bird else 4
             years = pick_number("Years", 1, max_years, default=min(3, int(market.get("max_years") or 3)))
-            cap_check = signing_cap_check(active, save, user_team, aav, allow_tax_exceed=True, bird=bird)
+            cap_check = signing_cap_check(active, save, user_team, aav, bird=bird, player=player, years=years)
             if not cap_check.get("ok"):
                 pause(cap_check.get("message") or "Offer blocked by hard-cap posture.")
                 continue
@@ -5399,6 +5399,10 @@ def process_ai_free_agency_offers_for_day_state(
         ):
             offer["status"] = "withdrawn_retirement_risk"
     report_by_id = canonical_free_agent_market_by_id(canonical)
+    if not state.get("ai_renounce_checked"):
+        # FA-REAL: before the first bids, front offices that can open real room give up holds they don't need.
+        state["ai_renounce_checked"] = True
+        ai_renounce_cap_holds(active, save, teams, players)
     pool = [
         players[player_id]
         for player_id in save.get("free_agent_player_ids", [])
@@ -5452,12 +5456,16 @@ def process_ai_free_agency_offers_for_day_state(
             team_years = years
             if bird and bird["max_years"] > 4 and years == 4 and float(player.get("age") or 27) <= 30:
                 team_years = max(years, extension_safe_year_limit(player, start_season, bird["max_years"]))
-            cap = signing_cap_check(active, save, team["abbrev"], aav, reserved_millions=reserved, bird=bird)
+            # FA-REAL: how the team can legally pay (Bird rights, room, the minimum, a mid-level or the bi-annual). A team
+            # whose route can't reach the price offers the most that route allows (a "full mid-level offer").
+            paid = ai_bid_payment(active, save, team, player, aav, team_years, lower, bird)
+            if paid is not None:
+                aav, team_years = paid["aav"], paid["years"]
             from .contract_protection import roster_signing_plan
             plan = roster_signing_plan(active, save, player, team['id'], aav, team_years)
             from .roster_space import remember_target
             remember_target(save, team['id'], player['id'], aav, years, plan)
-            if not cap.get('ok') or roster_full or not plan['ok']:
+            if paid is None or roster_full or not plan['ok']:
                 continue
             # Payroll discipline (TRADE-VOLUME): the bid must fit the owner's plan for the tax, counting live bids.
             from .payroll_plan import payroll_check
@@ -5472,6 +5480,8 @@ def process_ai_free_agency_offers_for_day_state(
                 continue
             offer = build_free_agency_offer_record(active, save, player, team, team_years, aav, ask, seed, "ai")
             offer['roster_plan'] = plan
+            from .cap_ledger import reserve
+            reserve(offer, paid["quote"]["payment"])
             save.setdefault("free_agent_offers", []).append(offer)
             created += 1
             existing += 1
@@ -5479,6 +5489,74 @@ def process_ai_free_agency_offers_for_day_state(
         state["ai_days_processed"].append(day_key)
     state.setdefault("ai_bid_model_versions", {})[day_key] = FREE_AGENCY_BID_MODEL_VERSION
     return {"created_count": created, "_changed": True}
+
+
+AI_KEEP_HOLD_MINUTES = 18.0   # an AI team keeps the rights (and hold) of a rotation player it may re-sign
+
+
+def ai_renounce_cap_holds(active: dict[str, Any], save: dict[str, Any], teams: list[dict[str, Any]],
+                          players: dict[str, dict[str, Any]]) -> dict[str, list[str]]:
+    """AI teams renounce holds on players outside their rotation when that opens at least the full mid-level's worth
+    of cap room (cap_ledger.ai_renounce_for_room). Over-the-cap teams keep their holds and their exceptions."""
+    from .cap_ledger import ai_renounce_for_room, cap_year, team_holds
+    season = cap_year(save)
+    done: dict[str, list[str]] = {}
+    for team in teams:
+        holds = team_holds(active, save, team["id"], season)
+        if not holds:
+            continue
+        keep = {h["player_id"] for h in holds
+                if display_minutes_projection(players.get(h["player_id"], {})) >= AI_KEEP_HOLD_MINUTES}
+        renounced = ai_renounce_for_room(active, save, team["id"], keep, season=season)
+        if renounced:
+            done[team["id"]] = renounced
+            names = ", ".join(str(players.get(pid, {}).get("name") or pid) for pid in renounced[:3])
+            add_news(save, "free_agency", f"{team.get('abbrev')} renounced its rights to {names}"
+                     f"{' and others' if len(renounced) > 3 else ''} to open cap room.",
+                     date_value=(save.get("state") or {}).get("current_date"))
+    return done
+
+
+def ai_bid_payment(active: dict[str, Any], save: dict[str, Any], team: dict[str, Any], player: dict[str, Any],
+                   aav: float, years: int, lower: float, bird: dict[str, Any] | None) -> dict[str, Any] | None:
+    """The salary, years and legal payment an AI team can offer (FA-REAL), or None.
+
+    First the price itself by the first legal route (Bird rights, room, the minimum, the exceptions). If no route
+    reaches it, the most a route allows when that is still at least 80% of the price and above his minimum: real teams
+    make "full mid-level" or "all our room" offers to players asking more. Years are cut to the route's limit."""
+    from . import cap_ledger
+    season = contract_start_season_for_signing(save)
+    payroll = cap_ledger.team_payroll(active, save, team["id"], season, include_reservations=True,
+                                      exclude_player_id=player.get("id"))
+    def ask(salary_m: float, yrs: int, route: str | None = None) -> dict[str, Any]:
+        return cap_ledger.quote(active, save, team["id"], player, salary_m * 1_000_000, yrs, season=season,
+                                route=route, bird=bird, payroll=payroll, team_abbrev=team.get("abbrev"))
+    first = ask(aav, years)
+    if first["ok"]:
+        return {"aav": aav, "years": years, "quote": first}
+    floor = max(float(lower or 0.0), aav * 0.8)
+    for row in first["routes"]:
+        route = row["route"]
+        if route == "minimum":
+            continue
+        if route == "bird":
+            if not bird:
+                continue
+            cap_m = float(bird.get("limit") or 0.0) / 1_000_000
+        elif route == "cap_room":
+            cap_m = (float(payroll["cap_room"]) - float((payroll.get("reserved") or {}).get("cap_room") or 0.0)) / 1_000_000
+        else:
+            cap_m = float(payroll["exceptions"][route]["balance"]) / 1_000_000
+        capacity = math.floor(min(cap_m, aav) * 10) / 10
+        if capacity < floor or capacity <= 0:
+            continue
+        yrs = min(years, cap_ledger._route_years_limit(route, bird))
+        if route == "bird" and (bird or {}).get("level") == "early":
+            yrs = max(2, yrs)
+        retry = ask(capacity, yrs, route)
+        if retry["ok"]:
+            return {"aav": capacity, "years": yrs, "quote": retry}
+    return None
 
 
 def player_already_has_accepted_offer(save: dict[str, Any], player_id: str) -> bool:
@@ -5837,11 +5915,13 @@ def inspect_free_agent_and_maybe_offer(canonical: dict[str, Any], save_path: Pat
         return
     years = pick_number("Years", 1, 4, default=min(3, int(market.get("max_years") or 3)))
     reserved = user_active_bid_commitment(save, team["id"], exclude_player_id=player["id"])
-    cap_check = signing_cap_check(active, save, user_team, aav, reserved_millions=reserved)
+    cap_check = signing_cap_check(active, save, user_team, aav, player=player, years=years)
     if not cap_check.get("ok"):
         pause(cap_check["message"])
         return
     offer = build_free_agency_offer_record(active, save, player, team, years, aav, ask, seed, "user")
+    from .cap_ledger import reserve
+    reserve(offer, cap_check["payment"])   # FA-REAL: the bid holds its room or exception until it resolves
     save.setdefault("free_agent_offers", [])
     if replacing_offer_id:
         for old_offer in save.get("free_agent_offers", []):
@@ -6308,9 +6388,13 @@ def upgrade_free_agency_offer_after_dump_state(
     if bounds:
         bumped = clamp(bumped, *bounds)
     reserved = active_bid_commitment(save, team["id"], exclude_player_id=offer.get("player_id"))
-    if not signing_cap_check(active, save, team["abbrev"], bumped, reserved_millions=reserved).get("ok"):
+    bumped_check = signing_cap_check(active, save, team["abbrev"], bumped, player=player,
+                                     years=int(offer.get("years") or 1))
+    if not bumped_check.get("ok"):
         return False
     offer["aav_millions"] = bumped
+    from .cap_ledger import reserve
+    reserve(offer, bumped_check["payment"])
     context_score = float((offer.get("interest_context") or {}).get("context_score") or 55.0)
     offer["interest_score"] = offer_interest_score(bumped, ask, int(offer.get("years") or 1), int(offer.get("years") or 1), context_score)
     offer.setdefault("notes", "AI cleared salary and improved this free-agency offer.")
@@ -6475,11 +6559,21 @@ def apply_free_agency_offer_state(
     team_id = str(team.get("id") or offer.get("team_id") or "")
     reserved = float((committed_aav_by_team or {}).get(team_id) or 0.0)
     bird = incumbent_bird_rights(active, save, player, team_id)   # KEEP-STARS
-    cap = signing_cap_check(active, save, team.get("abbrev"), float(offer.get("aav_millions") or 0),
-                            reserved_millions=reserved, bird=bird)
+    # FA-REAL: re-check legality against the books as they are now (earlier signings today are in the save); the
+    # bid's planned route first, else any legal route. Other outstanding bids don't block a signing being completed.
+    years = int(offer.get("years") or 1)
+    planned = (offer.get("payment") or {}).get("route")
+    cap = signing_cap_check(active, save, team.get("abbrev"), float(offer.get("aav_millions") or 0), bird=bird,
+                            player=player, years=years, route=planned, include_reservations=False,
+                            raise_rate=offer.get("raise_rate"))
+    if not cap.get("ok") and planned:
+        cap = signing_cap_check(active, save, team.get("abbrev"), float(offer.get("aav_millions") or 0), bird=bird,
+                                player=player, years=years, include_reservations=False,
+                                raise_rate=offer.get("raise_rate"))
     if not cap.get("ok"):
         offer["status"] = "withdrawn_cap_blocked"
         return {"status": "blocked", "notes": cap.get("message")}
+    offer["payment"] = cap["payment"]
     if offer.get('source') == 'ai':
         from .contract_protection import roster_signing_plan
         plan = roster_signing_plan(active, save, player, team_id, float(offer.get('aav_millions') or 0), int(offer.get('years') or 1))
@@ -6502,6 +6596,10 @@ def apply_free_agency_offer_state(
             return {'status': 'blocked', 'notes': plain_words(tax_plan)}
     negotiation = negotiation_from_free_agency_offer(save, offer, player, team, seed)
     save.setdefault("pending_contract_negotiations", []).append(negotiation)
+    from .cap_ledger import release
+    for item in save.get("free_agent_offers", []):
+        if item.get("player_id") == offer.get("player_id") and item.get("status") == "active" and item.get("id") != offer_id:
+            release(item)   # rival bids for him free their money
     for item in save.get("free_agent_offers", []):
         if item.get("player_id") == offer.get("player_id") and item.get("status") == "active":
             item["status"] = "accepted" if item.get("id") == offer_id else "rejected_player_chose_other_offer"
@@ -6530,6 +6628,7 @@ def negotiation_from_free_agency_offer(save: dict[str, Any], offer: dict[str, An
     annual = float(offer.get("aav_millions") or 0.0) * 1_000_000
     start_season = contract_start_season_for_signing(save)
     negotiation_id = stable_id("contract_negotiation", "fa_day", offer.get("id"), seed)
+    payment = offer.get("payment") or {}
     contract_offer = {
         "id": stable_id("contract_offer", negotiation_id, offer.get("id")),
         "negotiation_id": negotiation_id,
@@ -6545,6 +6644,10 @@ def negotiation_from_free_agency_offer(save: dict[str, Any], offer: dict[str, An
         "status": "accepted",
         "notes": "Accepted free-agency day-market offer.",
     }
+    if payment.get("schedule"):
+        from .cap_ledger import contract_terms
+        contract_offer.update(contract_terms(payment), payment=payment)
+        contract_offer["total_salary"] = float(sum(contract_offer["salary_schedule"]))
     if 'guaranteed' in offer:
         from .contract_protection import guarantee_choice
         contract_offer['guaranteed'] = guarantee_choice(offer['guaranteed'])
@@ -6795,7 +6898,7 @@ def current_free_agents_room(canonical: dict[str, Any], save_path: Path, user_te
             aav = float(input(f"AAV in millions [{default_aav}]: ").strip() or default_aav)
         except ValueError:
             aav = default_aav
-        cap_check = signing_cap_check(active, save, user_team, aav)
+        cap_check = signing_cap_check(active, save, user_team, aav, player=player, years=years)
         if not cap_check.get("ok"):
             pause(cap_check.get("message") or "Signing blocked by cap posture.")
             continue
@@ -6841,7 +6944,9 @@ def user_free_agent_signing(canonical: dict[str, Any], save_path: Path, user_tea
     years = pick_number("Years", 1, 5, default=min(3, int(player.get("max_years") or 3)))
     default_aav = max(2.0, float(player.get("projected_aav_millions") or 0))
     aav = float(input(f"AAV in millions [{default_aav}]: ").strip() or default_aav)
-    cap_check = signing_cap_check(active, save, user_team, aav)
+    cap_check = signing_cap_check(active, save, user_team, aav,
+                                  player=player_by_id(active, player.get("id") or player.get("player_id")) or player,
+                                  years=years)
     if not cap_check["ok"]:
         pause(cap_check["message"])
         return
@@ -6964,7 +7069,8 @@ def save_pool_free_agent_signing(
             flexibility = round(max(5.0, flexibility - 6.0 + min(8.0, final_offer / max(ask, 1.0) * 4.0)), 1)
             print(f"Camp response: they are not there yet. New ask is around ${ask:.1f}M.")
     aav = final_offer
-    cap_check = signing_cap_check(canonical_with_save(canonical, load_save(save_path)), load_save(save_path), user_team, aav)
+    cap_check = signing_cap_check(canonical_with_save(canonical, load_save(save_path)), load_save(save_path), user_team, aav,
+                                  player=player, years=years)
     if not cap_check["ok"]:
         pause(cap_check["message"])
         return
@@ -7260,7 +7366,11 @@ def user_offer_decision(canonical: dict[str, Any], save: dict[str, Any], player:
             "floor_millions": user_offer_floor(player, years, guaranteed, terms, context)}
 
 
-def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player: dict[str, Any], team_abbrev: str, years: int, aav_millions: float, seed: int, *, guaranteed: bool = True) -> dict[str, Any]:
+def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player: dict[str, Any], team_abbrev: str, years: int, aav_millions: float, seed: int, *, guaranteed: bool = True,
+                             route: str | None = None, raise_rate: float | None = None) -> dict[str, Any]:
+    """The user's offer to a free agent (``aav_millions`` is the first-year salary). FA-REAL: it must be legal for the
+    team (cap_ledger: Bird rights, room, the minimum, an exception; ``route`` picks one), and the accepted offer carries
+    its year-by-year schedule and payment so the save writes exactly what the offer screen showed."""
     from .contract_protection import guarantee_choice
     guaranteed = guarantee_choice(guaranteed)
     team = resolve_team(canonical, team_abbrev)
@@ -7270,8 +7380,13 @@ def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player:
     floor = judged["floor_millions"]
     ask_threshold = floor if floor is not None else float("inf")
     retirement_blocked = extension_retirement_blocked(player, contract_start_season_for_signing(save_for_start), years)
-    accepted = judged["verdict"] == "accept" and not retirement_blocked
+    legal = signing_cap_check(canonical, save_for_start, team_abbrev, float(aav_millions), player=player, years=years,
+                              route=route, raise_rate=raise_rate)
+    payment = legal.get("payment") if legal.get("ok") else None
+    accepted = judged["verdict"] == "accept" and not retirement_blocked and payment is not None
     rejection = ("retirement_risk" if retirement_blocked
+                 else "outside_salary_bounds" if judged["verdict"] == "outside_salary_bounds"
+                 else "no_legal_way_to_pay" if payment is None
                  else "reject_below_market" if judged["verdict"] == "below_todays_bar" else judged["verdict"])
     negotiation_id = stable_id("contract_negotiation", "save_pool_fa", team["id"], player["id"], years, round(annual), seed, guaranteed, save_for_start.get('state', {}).get('current_date'))
     offer = {
@@ -7290,6 +7405,10 @@ def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player:
         "status": "accepted" if accepted else "rejected",
         "notes": "Interactive save-pool free-agent offer.",
     }
+    if payment:
+        from .cap_ledger import contract_terms
+        offer.update(contract_terms(payment), payment=payment)
+        offer["total_salary"] = float(sum(offer["salary_schedule"]))
     decision = {
         "id": stable_id("signing_decision", negotiation_id, player["id"]),
         "negotiation_id": negotiation_id,
@@ -7303,6 +7422,8 @@ def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player:
         "competing_offers": [judged["terms"]["best_rival"]] if judged["terms"].get("best_rival") else [],
         "reasons": ["meets_market_rule" if accepted else (
             "retirement_before_contract_end" if retirement_blocked
+            else "outside_salary_bounds" if rejection == "outside_salary_bounds"
+            else "no_legal_way_to_pay" if payment is None
             else "a_rival_bid_interests_him_more" if rejection == "prefers_rival_bid"
             else "outside_salary_bounds" if rejection == "outside_salary_bounds" else "below_todays_bar")],
         # The smallest salary he takes from you today for these years and guarantee (None: no salary wins him today).
@@ -7313,6 +7434,7 @@ def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player:
         "market_mode": judged["terms"]["mode"],
         "source_ids": ["src_contract_market_config_v1"],
         "notes": "The user's offer is judged by the AI bids' rule: interest against today's bar and the best rival bid.",
+        "cap_message": None if payment else legal.get("message"),
     }
     negotiation = {
         "negotiation": {
@@ -7349,45 +7471,41 @@ def signing_cap_check(
     aav_millions: float,
     allow_tax_exceed: bool = False,
     reserved_millions: float = 0.0,
-    bird: dict[str, Any] | None = None,
+    bird: dict[str, Any] | None | str = "auto",
+    *,
+    player: dict[str, Any] | None = None,
+    years: int = 1,
+    route: str | None = None,
+    raise_rate: float | None = None,
+    include_reservations: bool = True,
 ) -> dict[str, Any]:
+    """Is this signing legal, and how is it paid for (FA-REAL: the cap ledger, one answer for every caller)?
+
+    ``aav_millions`` is the first-year salary. The league's rules decide legality: Bird rights, cap room, the minimum,
+    the mid-level exceptions and the bi-annual, the player's true maximum and minimum, and any hard cap the team has
+    triggered. The tax is the owner's choice (payroll_plan), not a league rule, so ``allow_tax_exceed`` no longer
+    matters. Outstanding offers hold their money (``include_reservations``); ``reserved_millions`` is ignored (the
+    ledger reads the offers themselves). Returns ``ok``, a plain ``message``, the ``quote`` and its ``payment``."""
+    del allow_tax_exceed, reserved_millions
+    from . import cap_ledger
     team = resolve_team(active, team_abbrev)
-    cap_season = contract_start_season_for_signing(save)
-    cap = team_cap_summary(active, save, team["id"], season=cap_season)
-    if cap.get('unresolved_waived_contract_count'):
-        return {'ok': False, 'message': 'Waived salary requires review before spending more salary room.', 'cap': cap}
-    # KEEP-STARS: re-signing your own free agent within his Bird rights may go over the tax line and the hard cap
-    # (contract_ai.bird_rights; real CBA: Bird re-signings never trigger a hard cap).
-    if bird and aav_millions * 1_000_000 <= float(bird.get("limit") or 0.0) + 1.0:
-        return {"ok": True, "message": "", "bird_rights": bird.get("level")}
-    hard_space = float(cap.get("hard_cap_space_millions") or 0.0) - float(reserved_millions or 0.0)
-    tax_space = float(cap.get("tax_space_millions") or 0.0) - float(reserved_millions or 0.0)
-    minimum = league_minimum_aav_millions()
-    if aav_millions <= minimum + 0.05:
-        warning = ""
-        if tax_space < aav_millions:
-            warning = f" League-minimum exception used; tax room before offer is ${tax_space:.1f}M."
-        return {"ok": True, "message": warning}
-    if aav_millions > hard_space:
-        return {
-            "ok": False,
-            "message": (
-                f"Signing blocked: {team['abbrev']} has about ${hard_space:.1f}M under the hard cap "
-                f"after active bids and this offer is ${aav_millions:.1f}M AAV. Clear salary or type {minimum:.1f} for the league minimum."
-            ),
-        }
-    if not allow_tax_exceed and aav_millions > tax_space:
-        return {
-            "ok": False,
-            "message": (
-                f"Signing blocked: {team['abbrev']} has about ${tax_space:.1f}M below the tax after active bids, "
-                f"and outside free-agent offers cannot exceed that room in this v1 ruleset. Type {minimum:.1f} for the league minimum."
-            ),
-        }
-    warning = ""
-    if aav_millions > tax_space:
-        warning = f" This would move the team deeper into tax territory ({tax_space:+.1f}M tax room before offer)."
-    return {"ok": True, "message": warning}
+    season = contract_start_season_for_signing(save)
+    payroll = cap_ledger.team_payroll(active, save, team["id"], season)
+    if payroll.get("unresolved_contract_count") or any(
+            s.get("salary") is None for r in save.get("waived_salary_obligations", []) if r.get("team_id") == team["id"]
+            for s in r.get("seasons", []) if s.get("season") == season):
+        return {"ok": False, "message": "Waived salary requires review before spending more salary room."}
+    if player is None:
+        # Planning callers without a player (roster_space, release_planning): a generic veteran.
+        player = {"id": None, "age": 30.0}
+    quote = cap_ledger.quote(active, save, team["id"], player, float(aav_millions) * 1_000_000, int(years or 1),
+                             season=season, route=route, raise_rate=raise_rate, bird=bird,
+                             include_reservations=include_reservations, team_abbrev=team.get("abbrev"))
+    out = {"ok": bool(quote["ok"]), "message": "" if quote["ok"] else quote.get("message") or "Signing blocked.",
+           "quote": quote, "payment": quote.get("payment"), "route": quote.get("route"), "locks": quote.get("locks")}
+    if quote.get("route") == "bird" and quote.get("bird"):
+        out["bird_rights"] = quote["bird"].get("level")
+    return out
 
 
 def league_minimum_aav_millions() -> float:
@@ -7396,15 +7514,12 @@ def league_minimum_aav_millions() -> float:
 
 def incumbent_bird_rights(active: dict[str, Any], save: dict[str, Any], player: dict[str, Any],
                           team_id: str | None) -> dict[str, Any] | None:
-    """The team's Bird rights for its own free agent (it holds his re-signing rights this offseason), else None."""
-    if not team_id or not player.get("id"):
+    """The team's Bird rights for its own free agent (it holds his re-signing rights this offseason and hasn't
+    renounced them), else None."""
+    if not team_id:
         return None
-    season = str((save.get("meta") or {}).get("season") or CANONICAL_SEASON)
-    if not any(r.get("player_id") == player["id"] and r.get("team_id") == team_id and r.get("season") == season
-               for r in save.get("re_signing_rights", []) or []):
-        return None
-    from .contract_ai import bird_rights
-    return bird_rights(save, player, team_id, season, contract_for_player(active, player["id"]))
+    from .cap_ledger import incumbent_bird
+    return incumbent_bird(active, save, player, team_id)
 
 
 def drafted_by_team(save: dict[str, Any], player: dict[str, Any]) -> str | None:
@@ -7422,12 +7537,10 @@ def drafted_by_team(save: dict[str, Any], player: dict[str, Any]) -> str | None:
 
 
 def contract_start_season_for_signing(save: dict[str, Any]) -> str:
-    season = str(save.get("meta", {}).get("season") or CANONICAL_SEASON)
-    phase = str(save.get("state", {}).get("phase") or "")
-    start = int(season.split("-")[0])
-    if phase in {"draft_lottery", "draft", "re_signing", "free_agency"}:
-        start += 1
-    return f"{start}-{str(start + 1)[-2:]}"
+    """The season a contract signed today starts in: the cap year (cap_ledger.cap_year). From June 22 to rollover
+    that is next season, also in late summer and camp (before, an August signing started in the season just ended)."""
+    from .cap_ledger import cap_year
+    return cap_year(save)
 
 
 def press_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int, event: dict[str, Any] | None = None) -> None:
