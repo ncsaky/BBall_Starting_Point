@@ -1,0 +1,690 @@
+{
+  "schema_version": 1,
+  "as_of": "2026-11-21",
+  "sources": {
+    "cba": {
+      "url": "https://nbpa.com/cba/",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "trades2023": {
+      "url": "https://www.hoopsrumors.com/2023/06/2023-nba-offseason-trades.html",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "nbatrades2023": {
+      "url": "https://www.nba.com/news/2023-offseason-trade-tracker",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "trades2024": {
+      "url": "https://www.hoopsrumors.com/2024/06/2024-nba-offseason-trades.html",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "nbatrades2024": {
+      "url": "https://www.nba.com/news/2024-offseason-trade-tracker",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "trades2025": {
+      "url": "https://www.hoopsrumors.com/2025/06/2025-nba-offseason-trades.html",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "nbatrades2025": {
+      "url": "https://www.nba.com/news/2025-offseason-trade-tracker",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "trades2026": {
+      "url": "https://www.hoopsrumors.com/2026/06/2026-nba-offseason-trades.html",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "nbatrades2026": {
+      "url": "https://www.nba.com/news/2026-offseason-trade-tracker",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "byc": {
+      "url": "https://www.hoopsrumors.com/hoops-rumors-glossary/page/4",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "2024glossary": {
+      "url": "https://www.hoopsrumors.com/2024/08/hoops-rumors-glossary-sign-and-trade.html",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "gswterms": {
+      "url": "https://www.hoopsrumors.com/2024/08/nba-2024-offseason-check-in-golden-state-warriors.html",
+      "date": "2024-08-15",
+      "date_kind": "published"
+    },
+    "lac24terms": {
+      "url": "https://www.hoopsrumors.com/2024/08/nba-2024-offseason-check-in-los-angeles-clippers.html",
+      "date": "2024-08-20",
+      "date_kind": "published"
+    },
+    "snt24terms": {
+      "url": "https://www.hoopsrumors.com/2024/07/contract-details-george-martin-wiseman-isaac-hield-more.html",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "six24": {
+      "url": "https://www.hoopsrumors.com/2024/07/klay-thompson-sign-and-trade-completed-as-six-team-deal.html",
+      "date": "2024-07-06",
+      "date_kind": "published"
+    },
+    "townsterms": {
+      "url": "https://as.com/baloncesto/nba/ida-y-vuelta-con-premio-gordo-para-duane-washington-jr-n/",
+      "date": "2024-10-29",
+      "date_kind": "published"
+    },
+    "snt25terms": {
+      "url": "https://www.hoopsrumors.com/2025/07/contract-details-turner-robinson-mitchell-naw-kyrie-jones.html",
+      "date": "2025-07-08",
+      "date_kind": "published"
+    },
+    "schroderterms": {
+      "url": "https://www.hoopsrumors.com/2025/07/contract-details-kpj-j-smith-wiseman-schroder-stevens.html",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "hard25": {
+      "url": "https://www.hoopsrumors.com/2025/07/nba-teams-with-hard-caps-for-2025-26.html",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "brooks23": {
+      "url": "https://www.hoopsrumors.com/2023/07/contract-details-brooks-bane-divincenzo-ball-clarkson.html",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "strus23": {
+      "url": "https://www.nba.com/news/nba-fantasy-implications-of-free-agency-trades-for-2023-24",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "grant23": {
+      "url": "https://www.hoopsrumors.com/2023/07/mavs-landing-grant-williams-in-three-team-sign-and-trade.html",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "derozan24": {
+      "url": "https://www.hoopsrumors.com/2024/07/pacific-notes-derozan-porter-kawhi-morris-suns.html",
+      "date": "2024-07-10",
+      "date_kind": "published"
+    },
+    "capelaterms": {
+      "url": "https://www.hoopsrumors.com/2025/09/nba-2025-offseason-check-in-houston-rockets.html",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "robinsondeal": {
+      "url": "https://www.hoopsrumors.com/2025/07/duncan-robinson-signing-with-pistons-on-three-year-deal.html",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "collinsterms": {
+      "url": "https://www.nba.com/news/john-collins-free-agency-2026",
+      "date": "2026-07-09",
+      "date_kind": "published"
+    },
+    "middletonterms": {
+      "url": "https://hoopswire.com/khris-middleton-wizards-nba-rumors-news/",
+      "date": "2026-07-08",
+      "date_kind": "published"
+    },
+    "kesslerterms": {
+      "url": "https://as.com/baloncesto/nba/kessler-en-el-reino-de-luka-doncic-f202610-n/",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "watsonterms": {
+      "url": "https://sports.yahoo.com/articles/cleveland-cavaliers-acquire-peyton-watson-000947743.html",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    },
+    "mannprior": {
+      "url": "https://cdn.nba.com/teams/uploads/sites/1610612766/2026/04/2025-26_CHA_MediaGuide_NEW.pdf",
+      "date": "2026-11-21",
+      "date_kind": "accessed"
+    }
+  },
+  "decisions": {
+    "sign_and_trades": [
+      {
+        "summer": 2023,
+        "date": "2023-07-06",
+        "player": "Max Strus",
+        "sender": "MIA",
+        "receiver": "CLE",
+        "years": 4,
+        "reported_total_usd": 63000000,
+        "first_year_usd": null,
+        "terms": "Reported headline total.",
+        "receiver_mechanism": "salary_match",
+        "receiver_reason": "Acquire a starting shooter above available signing exception. Routed outgoing salary through San Antonio.",
+        "sender_reason": "Miami fetched two second-round picks for its departing wing.",
+        "base_year_compensation": "inferred_yes",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2023",
+          "nbatrades2023",
+          "cba",
+          "strus23"
+        ]
+      },
+      {
+        "summer": 2023,
+        "date": "2023-07-12",
+        "player": "Grant Williams",
+        "sender": "BOS",
+        "receiver": "DAL",
+        "years": 4,
+        "reported_total_usd": 53340000,
+        "first_year_usd": 12405000,
+        "terms": "Four years; reported base with separate incentives.",
+        "receiver_mechanism": "salary_match",
+        "receiver_reason": "Add a forward beyond available room, routing Reggie Bullock to San Antonio.",
+        "sender_reason": "Boston received second-round pick consideration and a trade exception.",
+        "base_year_compensation": "confirmed_yes",
+        "outgoing_matching_salary_usd": 6202500,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2023",
+          "nbatrades2023",
+          "cba",
+          "byc",
+          "grant23"
+        ]
+      },
+      {
+        "summer": 2023,
+        "date": "2023-07-08",
+        "player": "Dillon Brooks",
+        "sender": "MEM",
+        "receiver": "HOU",
+        "years": 4,
+        "reported_total_usd": 86000000,
+        "first_year_usd": 22600000,
+        "terms": "Reported base; incentives could increase the total.",
+        "receiver_mechanism": "cap_room_package",
+        "receiver_reason": "Add a starting wing as part of a wider trade while operating with cap room.",
+        "sender_reason": "Memphis obtained a trade exception and issued or received other small assets as part of the package.",
+        "base_year_compensation": "unresolved",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2023",
+          "nbatrades2023",
+          "cba",
+          "brooks23"
+        ]
+      },
+      {
+        "summer": 2024,
+        "date": "2024-07-06",
+        "player": "Klay Thompson",
+        "sender": "GSW",
+        "receiver": "DAL",
+        "years": 3,
+        "reported_total_usd": 50000000,
+        "first_year_usd": 15873016,
+        "terms": "Three-year deal.",
+        "receiver_mechanism": "salary_match",
+        "receiver_reason": "Add shooting at a salary above the signing exception without cap room.",
+        "sender_reason": "Golden State used outgoing salary to help add Anderson and Hield in the same deal.",
+        "base_year_compensation": "no_pay_cut",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2024",
+          "nbatrades2024",
+          "cba",
+          "six24",
+          "2024glossary",
+          "snt24terms"
+        ]
+      },
+      {
+        "summer": 2024,
+        "date": "2024-07-06",
+        "player": "Kyle Anderson",
+        "sender": "MIN",
+        "receiver": "GSW",
+        "years": 3,
+        "reported_total_usd": 27658536,
+        "first_year_usd": null,
+        "terms": "Third year non-guaranteed.",
+        "receiver_mechanism": "salary_match",
+        "receiver_reason": "Add a rotation forward after using its signing exception. Folded into the Thompson trade.",
+        "sender_reason": "Minnesota received second-round consideration and cash.",
+        "base_year_compensation": "no_pay_cut",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2024",
+          "nbatrades2024",
+          "cba",
+          "six24",
+          "gswterms"
+        ]
+      },
+      {
+        "summer": 2024,
+        "date": "2024-07-06",
+        "player": "Buddy Hield",
+        "sender": "PHI",
+        "receiver": "GSW",
+        "years": 4,
+        "reported_total_usd": 37756096,
+        "first_year_usd": null,
+        "terms": "Year three partly protected. Fourth year player option with partial protection if exercised.",
+        "receiver_mechanism": "salary_match",
+        "receiver_reason": "Add shooting after using its signing exception. Folded into the Thompson trade.",
+        "sender_reason": "Philadelphia received a future second-round pick.",
+        "base_year_compensation": "no_pay_cut",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2024",
+          "nbatrades2024",
+          "cba",
+          "six24",
+          "gswterms"
+        ]
+      },
+      {
+        "summer": 2024,
+        "date": "2024-07-08",
+        "player": "DeMar DeRozan",
+        "sender": "CHI",
+        "receiver": "SAC",
+        "years": 3,
+        "reported_total_usd": 73710000,
+        "first_year_usd": null,
+        "terms": "Reported base of about $73.7M and up to about $76.7M with incentives. Last year partly protected.",
+        "receiver_mechanism": "salary_match",
+        "receiver_reason": "Acquire a starter whose pay exceeded available cap room and the signing exception.",
+        "sender_reason": "Chicago received Chris Duarte, two seconds and cash. San Antonio absorbed Harrison Barnes for a swap.",
+        "base_year_compensation": "no_pay_cut",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2024",
+          "nbatrades2024",
+          "cba",
+          "2024glossary",
+          "derozan24"
+        ]
+      },
+      {
+        "summer": 2024,
+        "date": "2024-07-06",
+        "player": "Jonas Valančiūnas",
+        "sender": "NOP",
+        "receiver": "WAS",
+        "years": 3,
+        "reported_total_usd": 30295000,
+        "first_year_usd": 9900000,
+        "terms": "First two years protected. Third year non-guaranteed.",
+        "receiver_mechanism": "preserve_exception",
+        "receiver_reason": "Use a trade exception and save the full mid-level signing budget.",
+        "sender_reason": "New Orleans received a heavily protected second and a trade exception.",
+        "base_year_compensation": "no_pay_cut",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2024",
+          "nbatrades2024",
+          "cba",
+          "2024glossary",
+          "snt24terms"
+        ]
+      },
+      {
+        "summer": 2024,
+        "date": "2024-07-18",
+        "player": "Kris Dunn",
+        "sender": "UTA",
+        "receiver": "LAC",
+        "years": 3,
+        "reported_total_usd": 16279200,
+        "first_year_usd": 5168000,
+        "terms": "Third year non-guaranteed.",
+        "receiver_mechanism": "salary_match",
+        "receiver_reason": "Use Russell Westbrook in the trade to fit a larger offer after spending the mid-level signing budget.",
+        "sender_reason": "Utah received cash, a second-round swap and draft rights and subsequently bought out Westbrook.",
+        "base_year_compensation": "unresolved_sender_cap",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2024",
+          "nbatrades2024",
+          "cba",
+          "2024glossary",
+          "lac24terms"
+        ]
+      },
+      {
+        "summer": 2024,
+        "date": "2024-07-06",
+        "player": "Cody Zeller",
+        "sender": "NOP",
+        "receiver": "ATL",
+        "years": 3,
+        "reported_total_usd": 11025000,
+        "first_year_usd": 3500000,
+        "terms": "Only the first year protected.",
+        "receiver_mechanism": "salary_filler",
+        "receiver_reason": "Accept contract needed to make salary matching work in the Murray trade.",
+        "sender_reason": "New Orleans created enough outgoing salary to acquire Dejounte Murray.",
+        "base_year_compensation": "no_bird_raise",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2024",
+          "nbatrades2024",
+          "cba",
+          "snt24terms"
+        ]
+      },
+      {
+        "summer": 2024,
+        "date": "2024-07-06",
+        "player": "Shake Milton",
+        "sender": "NYK",
+        "receiver": "BKN",
+        "years": 3,
+        "reported_total_usd": 9162405,
+        "first_year_usd": 2875000,
+        "terms": "Only the first year protected.",
+        "receiver_mechanism": "salary_filler",
+        "receiver_reason": "Take matching salary in the Bridges deal while receiving a large pick package.",
+        "sender_reason": "New York matched incoming Mikal Bridges salary to avoid a first-apron cap on its own side.",
+        "base_year_compensation": "no_qualifying_raise",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2024",
+          "nbatrades2024",
+          "cba",
+          "snt24terms"
+        ]
+      },
+      {
+        "summer": 2024,
+        "date": "2024-10-02",
+        "player": "DaQuan Jeffries",
+        "sender": "NYK",
+        "receiver": "CHA",
+        "years": 3,
+        "reported_total_usd": 8200000,
+        "first_year_usd": null,
+        "terms": "Rounded nominal amount. First year protected. Later years unprotected.",
+        "receiver_mechanism": "salary_filler",
+        "receiver_reason": "Charlotte took three small contracts with picks and cash to facilitate the Towns trade.",
+        "sender_reason": "New York raised its outgoing matching salary to make the Towns trade work.",
+        "base_year_compensation": "unresolved_rights_and_salary",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2024",
+          "nbatrades2024",
+          "cba",
+          "townsterms"
+        ]
+      },
+      {
+        "summer": 2024,
+        "date": "2024-10-02",
+        "player": "Charlie Brown Jr.",
+        "sender": "NYK",
+        "receiver": "CHA",
+        "years": 3,
+        "reported_total_usd": 7700000,
+        "first_year_usd": null,
+        "terms": "Rounded nominal amount. First year protected. Later years unprotected.",
+        "receiver_mechanism": "salary_filler",
+        "receiver_reason": "Charlotte took three small contracts with picks and cash to facilitate the Towns trade.",
+        "sender_reason": "New York raised its outgoing matching salary to make the Towns trade work.",
+        "base_year_compensation": "unresolved_rights_and_salary",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2024",
+          "nbatrades2024",
+          "cba",
+          "townsterms"
+        ]
+      },
+      {
+        "summer": 2024,
+        "date": "2024-10-02",
+        "player": "Duane Washington Jr.",
+        "sender": "NYK",
+        "receiver": "CHA",
+        "years": 3,
+        "reported_total_usd": 7200000,
+        "first_year_usd": null,
+        "terms": "Rounded nominal amount. First year protected. Later years unprotected.",
+        "receiver_mechanism": "salary_filler",
+        "receiver_reason": "Charlotte took three small contracts with picks and cash to facilitate the Towns trade.",
+        "sender_reason": "New York raised its outgoing matching salary to make the Towns trade work.",
+        "base_year_compensation": "unresolved_rights_and_salary",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2024",
+          "nbatrades2024",
+          "cba",
+          "townsterms"
+        ]
+      },
+      {
+        "summer": 2025,
+        "date": "2025-07-06",
+        "player": "Nickeil Alexander-Walker",
+        "sender": "MIN",
+        "receiver": "ATL",
+        "years": 4,
+        "reported_total_usd": 60647200,
+        "first_year_usd": 15161800,
+        "terms": "Year-four player option and 7.5% trade bonus.",
+        "receiver_mechanism": "trade_exception",
+        "receiver_reason": "Use the existing Dejounte Murray trade exception for a starting-caliber wing.",
+        "sender_reason": "Minnesota received second-round consideration and cash for the departing player.",
+        "base_year_compensation": "inferred_yes",
+        "outgoing_matching_salary_usd": 7580900,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2025",
+          "nbatrades2025",
+          "cba",
+          "snt25terms",
+          "hard25"
+        ]
+      },
+      {
+        "summer": 2025,
+        "date": "2025-07-06",
+        "player": "Clint Capela",
+        "sender": "ATL",
+        "receiver": "HOU",
+        "years": 3,
+        "reported_total_usd": 21500000,
+        "first_year_usd": null,
+        "terms": "Reported three-year contract.",
+        "receiver_mechanism": "salary_match",
+        "receiver_reason": "Add a center using flexibility in the combined Kevin Durant trade.",
+        "sender_reason": "Atlanta received draft and/or cash consideration through the combined package.",
+        "base_year_compensation": "no_pay_cut",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2025",
+          "nbatrades2025",
+          "cba",
+          "capelaterms",
+          "hard25"
+        ]
+      },
+      {
+        "summer": 2025,
+        "date": "2025-07-07",
+        "player": "Dennis Schröder",
+        "sender": "DET",
+        "receiver": "SAC",
+        "years": 3,
+        "reported_total_usd": 44400000,
+        "first_year_usd": null,
+        "terms": "Rounded total. Later protection is limited.",
+        "receiver_mechanism": "trade_exception",
+        "receiver_reason": "Use the Kevin Huerter trade exception and preserve the mid-level signing budget.",
+        "sender_reason": "Detroit coordinated departures and replacement signings while receiving pick consideration.",
+        "base_year_compensation": "no_qualifying_raise",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2025",
+          "nbatrades2025",
+          "cba",
+          "schroderterms",
+          "hard25"
+        ]
+      },
+      {
+        "summer": 2025,
+        "date": "2025-07-07",
+        "player": "Duncan Robinson",
+        "sender": "MIA",
+        "receiver": "DET",
+        "years": 3,
+        "reported_total_usd": 48000000,
+        "first_year_usd": 16800000,
+        "terms": "Rounded reported total. Declines annually; $2M protected in year two, none in year three.",
+        "receiver_mechanism": "salary_match",
+        "receiver_reason": "Replace shooting lost in free agency by sending Simone Fontecchio as matching salary.",
+        "sender_reason": "Miami gained Fontecchio and a trade exception.",
+        "base_year_compensation": "no_pay_cut",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2025",
+          "nbatrades2025",
+          "cba",
+          "robinsondeal",
+          "snt25terms",
+          "hard25"
+        ]
+      },
+      {
+        "summer": 2026,
+        "date": "2026-07-08",
+        "player": "Walker Kessler",
+        "sender": "UTA",
+        "receiver": "LAL",
+        "years": 4,
+        "reported_total_usd": 130000000,
+        "first_year_usd": null,
+        "terms": "Reported four-year contract.",
+        "receiver_mechanism": "rights_access",
+        "receiver_reason": "Secure a restricted free agent with cooperation from Utah. Exact salary-routing ledger unverified.",
+        "sender_reason": "Utah received two firsts and two first-round swaps.",
+        "base_year_compensation": "unresolved_sender_cap",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2026",
+          "nbatrades2026",
+          "cba",
+          "kesslerterms"
+        ]
+      },
+      {
+        "summer": 2026,
+        "date": "2026-07-08",
+        "player": "Khris Middleton",
+        "sender": "DAL",
+        "receiver": "WAS",
+        "years": 3,
+        "reported_total_usd": 17610000,
+        "first_year_usd": 5590000,
+        "terms": "Rounded amounts. Year one protected, about $909,000 protected in year two, and year three unprotected.",
+        "receiver_mechanism": "multi_team",
+        "receiver_reason": "Add a veteran and a future second in a wider six-team deal. Stand-alone cap room unverified.",
+        "sender_reason": "Dallas used the contract to help complete the wider deal involving roster changes and picks.",
+        "base_year_compensation": "no_pay_cut",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2026",
+          "nbatrades2026",
+          "cba",
+          "middletonterms"
+        ]
+      },
+      {
+        "summer": 2026,
+        "date": "2026-07-08",
+        "player": "John Collins",
+        "sender": "LAC",
+        "receiver": "DET",
+        "years": 3,
+        "reported_total_usd": 51000000,
+        "first_year_usd": null,
+        "terms": "Reported three years and $51M.",
+        "receiver_mechanism": "multi_team",
+        "receiver_reason": "Add a starting-caliber frontcourt scorer through the larger six-team exchange.",
+        "sender_reason": "The Clippers participated in a wider roster and salary exchange rather than losing Collins for no return.",
+        "base_year_compensation": "no_pay_cut",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2026",
+          "nbatrades2026",
+          "cba",
+          "collinsterms"
+        ]
+      },
+      {
+        "summer": 2026,
+        "date": "2026-08-20",
+        "player": "Peyton Watson",
+        "sender": "DEN",
+        "receiver": "CLE",
+        "years": 4,
+        "reported_total_usd": 88000000,
+        "first_year_usd": null,
+        "terms": "Reported final-year player option and trade bonus.",
+        "receiver_mechanism": "salary_match",
+        "receiver_reason": "Add a young restricted free agent using a multi-team route that moved Max Strus and Dennis Schröder.",
+        "sender_reason": "Denver took draft picks and Julian Reese in place of a richer Watson contract.",
+        "base_year_compensation": "inferred_yes",
+        "outgoing_matching_salary_usd": null,
+        "receiver_hard_cap": "first_apron",
+        "sources": [
+          "trades2026",
+          "nbatrades2026",
+          "cba",
+          "watsonterms"
+        ]
+      }
+    ]
+  },
+  "exclusions": [
+    {
+      "summer": 2026,
+      "player": "Tre Mann",
+      "reason": "Traded on Charlotte’s existing 2025 contract in the Watson deal.",
+      "sources": [
+        "nbatrades2026",
+        "mannprior"
+      ]
+    }
+  ]
+}
