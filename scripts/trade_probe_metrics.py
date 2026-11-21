@@ -461,7 +461,8 @@ def market_metrics(save, trades):
     out["head_scratchers_detail"] = lopsided
     book = save.get("trade_market") or {}
     wars = [w for w in book.get("wars") or [] if len(w.get("bidders") or []) >= 2]
-    out["bidding_wars"] = len(wars)
+    out["bidding_wars"] = len({(w.get("player_id"), str(w.get("date"))[:4]) for w in wars})
+    out["bidding_war_days"] = len(wars)
     out["bidding_wars_detail"] = [{"date": w.get("date"), "player": w.get("player_name"), "seller": w.get("seller_id"),
                                    "bidders": w.get("bidders"), "rounds": len(w.get("rounds") or []),
                                    "winner": w.get("winner"), "winning_margin_over_price": w.get("winning_margin"),

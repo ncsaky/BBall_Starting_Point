@@ -233,8 +233,14 @@ class LedgerTests(unittest.TestCase):
         self.assertEqual(term["key"], "final_offer")
         self.assertIn("deadline day", term["text"])
         # A side giving a player it has no reason to move, getting no player back, makes no concession.
-        with patch("nba_gm_data.trade_targets.team_sell_reasons", return_value={}):
+        with patch("nba_gm_data.trade_targets.team_sell_reasons", return_value={}), \
+                patch("nba_gm_data.trade_targets.salary_filler", return_value={}):
             self.assertIsNone(tm.concession_term(canonical, "b", None, [{"kind": "pick", "id": "x"}], [player("b1")]))
+            # Getting players back does not make a team that had no plan to move its player concede.
+            self.assertIsNone(tm.concession_term(canonical, "b", None, [player("a2"), player("a3")], [player("b1")]))
+        with patch("nba_gm_data.trade_targets.team_sell_reasons", return_value={"b1": ["gm_listed"]}), \
+                patch("nba_gm_data.trade_targets.salary_filler", return_value={}):
+            self.assertEqual(tm.concession_term(canonical, "b", None, [player("a2")], [player("b1")])["key"], "final_offer")
         self.assertIsNone(tm.concession_term(league(date="2027-02-04"), "a", None, [player("b1")], []))
 
 

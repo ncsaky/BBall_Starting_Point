@@ -1292,8 +1292,8 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
             continue
         if len(proposals) >= limit:
             break
-        finalize(bid['candidate'], bid['pairing'], bid['order'], bid['evaluation_canonical'],
-                 war=war if len(war.get('bidders') or []) >= 2 else None)
+        finalize(bid['candidate'], bid['pairing'], -1 if len(war.get('bidders') or []) >= 2 else bid['order'],
+                 bid['evaluation_canonical'], war=war if len(war.get('bidders') or []) >= 2 else None)
     # Salary dumps (trade 2b): teams over the luxury tax shed salary to teams with room, paying picks if needed.
     dump_limit = max(1, -(-limit // 3))
     dumps_done, dump_teams = 0, set()

@@ -178,13 +178,16 @@ def concession_size(canonical: dict[str, Any], team_id: str, neg: dict[str, Any]
 
 def _motivated(canonical: dict[str, Any], team_id: str, incoming: list[dict[str, Any]],
                outgoing: list[dict[str, Any]]) -> bool:
-    """A side with its own reason to deal: it is getting a player (a buyer pursuing a target), or it is moving a
-    player it has a stated reason to move."""
-    if any(a.get("kind") == "player" for a in incoming):
-        return True
-    from .trade_targets import team_sell_reasons
+    """A side with its own reason to deal: every player it sends is one it has a stated reason to move (a buyer
+    paying in picks and salary it would move, or a seller moving a player it wants to move), and it gets or sends
+    at least one player. A team giving up a player it had no plan to move is never in a hurry, whatever it gets."""
+    players_out = [a for a in outgoing if a.get("kind") == "player"]
+    if not players_out:
+        return any(a.get("kind") == "player" for a in incoming)
+    from .trade_targets import salary_filler, team_sell_reasons
     reasons = team_sell_reasons(canonical, team_id)
-    return any(a.get("kind") == "player" and reasons.get(a.get("id")) for a in outgoing)
+    filler = salary_filler(canonical, team_id)
+    return all(reasons.get(a.get("id")) or a.get("id") in filler for a in players_out)
 
 
 def concession_term(canonical: dict[str, Any], team_id: str, proposal: Any, incoming: list[dict[str, Any]],
@@ -609,7 +612,7 @@ def apply_market_updates(save: dict[str, Any], updates: dict[str, Any] | None, a
             stats["final_offers_refused"] = int(stats.get("final_offers_refused") or 0) + 1
     for row in updates.get("shopping") or []:
         entry = book["shopping"].get(row["player_id"])
-        if entry is None or entry.get("status") in {"sold", "lapsed"}:
+        if entry is None or entry.get("status") in {"sold", "lapsed", "moved"}:
             entry = {"player_id": row["player_id"], "player_name": row.get("player_name"), "seller_id": row["seller_id"],
                      "started": day, "decide_by": row["decide_by"], "reasons": row["reasons"], "status": "shopping",
                      "interested": [], "bids": [], "rounds": 0}
@@ -631,14 +634,15 @@ def apply_market_updates(save: dict[str, Any], updates: dict[str, Any] | None, a
                           "offer": war.get("winning_offer"), "bidders": war.get("bidders")}] + list(entry.get("bids") or [])[:4]
         entry["interested"] = sorted(set(entry.get("interested") or []) | set(war.get("bidders") or []))
         if war.get("status") == "sold":
-            entry["status"] = "sold"
+            entry["status"] = "agreed"
             entry["winner"] = war.get("winner")
-            entry["sold_date"] = day
+            entry["agreed_date"] = day
             book.setdefault("wars", []).append(war)
-            if len(war.get("bidders") or []) >= 2:
-                stats["bidding_wars"] = int(stats.get("bidding_wars") or 0) + 1
-            else:
-                stats["shopped_single_bidder_sales"] = int(stats.get("shopped_single_bidder_sales") or 0) + 1
+            counted = "war_counted" if len(war.get("bidders") or []) >= 2 else "sale_counted"
+            if not entry.get(counted):
+                entry[counted] = True
+                key = "bidding_wars" if counted == "war_counted" else "shopped_single_bidder_sales"
+                stats[key] = int(stats.get(key) or 0) + 1
         elif war.get("status") == "user_leads":
             entry["status"] = "bidding"
             entry["user_leads"] = day
@@ -674,8 +678,11 @@ def refresh_ledger(save: dict[str, Any], active: dict[str, Any], today: str) -> 
         if entry.get("status") in {"sold", "lapsed", "moved"}:
             continue
         if teams.get(entry.get("player_id")) != entry.get("seller_id"):
-            entry["status"] = "moved"
             entry["moved_to"] = teams.get(entry.get("player_id"))
+            entry["status"] = "sold" if entry["moved_to"] == entry.get("winner") else "moved"
+            entry["sold_date"] = today
+        elif entry.get("status") == "agreed":
+            entry["status"] = "bidding"  # the agreed deal did not go through; the seller is still listening
         elif entry.get("decide_by") and today > entry["decide_by"]:
             entry["status"] = "lapsed"
 
@@ -852,9 +859,9 @@ def market_board(active: dict[str, Any], save: dict[str, Any]) -> dict[str, Any]
     for entry in (book.get("shopping") or {}).values():
         status = entry.get("status")
         recent = str(entry.get("sold_date") or entry.get("last_date") or "") >= cutoff
-        if status not in {"shopping", "bidding"} and not (status == "sold" and recent):
+        if status not in {"shopping", "bidding", "agreed"} and not (status == "sold" and recent):
             continue
-        if status in {"shopping", "bidding"} and str(entry.get("last_date") or "") < cutoff:
+        if status in {"shopping", "bidding", "agreed"} and str(entry.get("last_date") or "") < cutoff:
             continue
         pid = entry.get("player_id")
         player = players.get(pid) or {}
@@ -869,8 +876,8 @@ def market_board(active: dict[str, Any], save: dict[str, Any]) -> dict[str, Any]
         if user_bid:
             user_state = ("leading" if best is None or float(user_bid.get("margin") or -99) >= best + BID_RAISE_MIN
                           else "outbid")
-        stage = ("sold" if status == "sold" else "bidding war" if status == "bidding" and len(interested) >= 2
-                 else "taking offers")
+        stage = ("sold" if status == "sold" else "deal agreed" if status == "agreed"
+                 else "bidding war" if status == "bidding" and len(interested) >= 2 else "taking offers")
         shopped.append({
             "player_id": pid, "player_name": entry.get("player_name") or player.get("name"),
             "headshot_url": player.get("headshot_url"), "age": player.get("display_age", player.get("age")),
