@@ -33,7 +33,16 @@ deadlines.
 - **Qualifying offers**: CBA formulas; AI tenders valuable eligible players; interim restricted rule (own team only;
   accept the qualifying offer or wait to October 1).
 
-## Resume state
-- Baseline probe on main code: `output/fa-real-slice2/basecode` (copy of src+scripts at eab27ac), run in
-  `output/fa-real-slice2/basecode/output/base_probe` (log `output/fa-real-slice2/base_probe.log`, pid file next to it).
-- Next: calendar module and phase map.
+## Resume state (2026-11-21, after the laptop crash)
+- Committed: calendar, options, qualifying offers, interim restricted rule, rookie options and their deadline stop,
+  rookie-scale extension deadline, market fix (`payroll_plan`), checklist payload, actions `offseason_checklist`,
+  `decide_option`, `qualifying_offer`. Tests: `tests/test_offseason_calendar.py`, `tests/test_offseason_decisions.py`.
+- Load rule (coordinator): one heavy job at a time, `nice -n 10`, wait on own PID.
+- Probe: `output/fa-real-slice2/lean_probe.py` (disk-light: JSON copies at the end of the Finals, market day 1,
+  preseason) run from a code copy (`codecopy.sh branchcode`), output `branchcode/output/run1`, log `run1.log`,
+  pid `run1.pid`. Resume with `--resume`. Main baseline: copy main's code with `codecopy.sh basecode <main checkout
+  copy>` and run the same script (not yet run; the first attempt died when the disk filled).
+- Diagnostics: `bid_funnel.py` (why AI teams don't bid on day one); slice-1 save before the fix: 86 OK pairs, 502
+  refused by the room-below-the-line rule; after: 128 OK, 360.
+- Next: GUI (stop-1 checklist window, stop 3 recap, stop 4 set-roster card, commands), CSS, screenshots, metrics
+  script, report.
