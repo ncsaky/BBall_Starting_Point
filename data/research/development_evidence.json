@@ -4152,7 +4152,8 @@
           },
           "brier_group": 0.02843,
           "brier_pooled": 0.02885,
-          "mean_predicted": 0.04381
+          "mean_predicted": 0.04381,
+          "brier_age_only": 0.02926
         },
         "top_25": {
           "n": 475,
@@ -4182,7 +4183,8 @@
           },
           "brier_group": 0.06911,
           "brier_pooled": 0.08043,
-          "mean_predicted": 0.10951
+          "mean_predicted": 0.10951,
+          "brier_age_only": 0.07974
         },
         "top_50": {
           "n": 463,
@@ -4212,7 +4214,8 @@
           },
           "brier_group": 0.12321,
           "brier_pooled": 0.14982,
-          "mean_predicted": 0.19527
+          "mean_predicted": 0.19527,
+          "brier_age_only": 0.1434
         }
       },
       "test_by_group": {
@@ -7142,15 +7145,15 @@
           "training_prediction": 1.125,
           "test_observed_mean": 0.6667,
           "test_mae": 0.4583,
-          "baseline": 0,
-          "baseline_test_mae": 0.6667
+          "baseline": 1,
+          "baseline_test_mae": 0.3333
         },
         "new_or_returning_slots": {
           "training_prediction": 2.0625,
           "test_observed_mean": 1.3333,
           "test_mae": 1.0417,
-          "baseline": 0,
-          "baseline_test_mae": 1.3333
+          "baseline": 2,
+          "baseline_test_mae": 1.0
         }
       }
     }

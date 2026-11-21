@@ -422,7 +422,7 @@ def group_summary(rows):
             for group, group_rows in group_by(rows, lambda row: row.group).items()}
 
 
-def probability_fit(rows, last_train):
+def probability_fit(rows, last_train, compare_age_only=False):
     training = [row for row in rows if row.baseline <= last_train]
     testing = [row for row in rows if row.baseline >= last_train + HORIZON]
     scores = {}
@@ -444,6 +444,15 @@ def probability_fit(rows, last_train):
             "brier_pooled": round(fmean((base - y) ** 2 for y in outcomes), 5),
             "mean_predicted": round(fmean(forecasts), 5),
         }
+        if compare_age_only:
+            def age(row):
+                return row.group.split(" ", 1)[0]
+
+            age_groups = {key: hit_summary(group, k) for key, group in group_by(training, age).items()}
+            estimates = {key: (stats["hits"] + 10 * base) / (stats["n"] + 10)
+                         for key, stats in age_groups.items()}
+            scores[f"top_{k}"]["brier_age_only"] = round(fmean(
+                (estimates.get(age(row), base) - y) ** 2 for row, y in zip(actual, outcomes)), 5)
     return {"last_train_baseline": last_train, "first_test_baseline": last_train + HORIZON,
             "last_train_outcome": last_train + HORIZON,
             "first_test_outcome": last_train + HORIZON + 1, "scores": scores,
@@ -489,7 +498,7 @@ def formation(panel, drafts):
         "follow_up_seasons": HORIZON,
         "young_by_age_and_level": group_summary(young),
         "draft_by_pick": group_summary(draft),
-        "young_holdout": probability_fit(young, last_train=2010),
+        "young_holdout": probability_fit(young, last_train=2010, compare_age_only=True),
         "draft_holdout": probability_fit(draft, last_train=2010),
     }
 
@@ -563,8 +572,8 @@ def superstars(panel):
     validation = {}
     for key, values, baseline in (
         ("fixed_threshold_count", [r["at_or_above_fixed_bpm"] for r in years[16:]], 5),
-        ("confirmed_first_count", [len(r["first_top_five_with_full_history"]) for r in years[16:]], 0),
-        ("new_or_returning_slots", [r["new_to_last_years_top_five"] for r in years[16:]], 0),
+        ("confirmed_first_count", [len(r["first_top_five_with_full_history"]) for r in years[16:]], 1),
+        ("new_or_returning_slots", [r["new_to_last_years_top_five"] for r in years[16:]], 2),
     ):
         prediction = training[key]["mean"]
         validation[key] = {

@@ -63,6 +63,60 @@ The middle-80% band estimated from the fitting sample covered 75.9% of held-out 
 
 **Basketball Index check.** LEBRON blends box-score evidence with how teams perform with and without a player. The 2010–2026 dashboard matched 8,731 of 8,733 rows to the public panel. Two same-name Chris Johnson rows could not be assigned confidently. The progression capture agreed with the overlapping LEBRON values within the dashboard's rounding for the middle 80% of rows. Using the same matched pairs, both measures put the smoothed peak at 26. In LEBRON, average gains at 19, 20 and 21 were +1.02, +0.79 and +0.52. The dashboard and progression capture are two views of the same Basketball Index statistic. [LEBRON methodology](https://www.bball-index.com/lebron-introduction/) · [Basketball Index dashboard](https://fanspo.com/bbi-role-explorer/lebron) · [Progression tool](https://www.bball-index.com/data-tools-package/)
 
+## 2. Where stars come from
+
+The age table follows players from each age for **seven full seasons**, starting with NBA seasons ending in 2005–2019. For each rank, players who've already reached it by the starting season are counted in the JSON and left out of that rank's denominator. For example, 65 age-23 players in the top third had already made the top 50, and 24 of the other 50 then made it by age 30. Players who left the league stayed in the denominator. The same player can appear at more than one age. Each cell gives the number who reached the rank, the percentage, and the median age of the first hit when there was one.
+
+| Starting age | Starting level | Top 10, median age | Top 25, median age | Top 50, median age |
+|---:|---|---|---|---|
+| 19 | Below minutes cut | 0/46 (0%) | 1/46 (2.2%), 25 | 5/46 (10.9%), 24 |
+| 19 | Bottom | 1/14 (7.1%), 21 | 2/14 (14.3%), 22.5 | 4/14 (28.6%), 22 |
+| 19 | Middle | 2/17 (11.8%), 23 | 5/17 (29.4%), 23 | 9/17 (52.9%), 23 |
+| 19 | Top | 4/14 (28.6%), 23 | 4/12 (33.3%), 22 | 7/10 (70.0%), 22 |
+| 20 | Below minutes cut | 0/111 (0%) | 7/111 (6.3%), 25 | 20/111 (18.0%), 24 |
+| 20 | Bottom | 3/41 (7.3%), 23 | 5/41 (12.2%), 23 | 9/41 (22.0%), 24 |
+| 20 | Middle | 6/42 (14.3%), 24.5 | 14/42 (33.3%), 22.5 | 18/42 (42.9%), 22 |
+| 20 | Top | 9/40 (22.5%), 22 | 12/33 (36.4%), 22.5 | 25/30 (83.3%), 22 |
+| 21 | Below minutes cut | 1/170 (0.6%), 24 | 11/170 (6.5%), 25 | 21/170 (12.4%), 24 |
+| 21 | Bottom | 1/68 (1.5%), 28 | 6/68 (8.8%), 25.5 | 14/68 (20.6%), 24 |
+| 21 | Middle | 2/61 (3.3%), 25 | 9/61 (14.8%), 25 | 21/61 (34.4%), 24 |
+| 21 | Top | 15/64 (23.4%), 24 | 28/58 (48.3%), 24 | 32/45 (71.1%), 23 |
+| 22 | Below minutes cut | 2/314 (0.6%), 26.5 | 9/314 (2.9%), 25 | 26/314 (8.3%), 25 |
+| 22 | Bottom | 4/91 (4.4%), 27.5 | 6/91 (6.6%), 27 | 17/91 (18.7%), 25 |
+| 22 | Middle | 4/83 (4.8%), 26.5 | 14/83 (16.9%), 26 | 30/82 (36.6%), 24 |
+| 22 | Top | 15/82 (18.3%), 25 | 24/68 (35.3%), 24 | 25/47 (53.2%), 24 |
+| 23 | Below minutes cut | 2/380 (0.5%), 24.5 | 8/379 (2.1%), 27 | 19/375 (5.1%), 25 |
+| 23 | Bottom | 0/115 (0%) | 0/115 (0%) | 3/114 (2.6%), 26 |
+| 23 | Middle | 3/112 (2.7%), 28 | 12/112 (10.7%), 26 | 33/110 (30.0%), 25 |
+| 23 | Top | 16/103 (15.5%), 25 | 25/82 (30.5%), 25 | 24/50 (48.0%), 25 |
+
+Young players in the top third often reached the top 50 by ages 22–25. Low-minute seasons leave room for late chances. For example, 20 of 111 age-20 players below the cut made the top 50 within seven years. Small groups, especially at age 19, can swing by several percentage points with one player. A zero means no observed hits in that sample.
+
+The draft table includes all 900 picks from 2005–2019, including players who never appeared in the NBA. Its clock starts with the first NBA season after the draft. For undrafted players it starts with their NBA debut season, for a comparable 2005–06 through 2019–20 entry window. Undrafted rates apply to players who made an NBA appearance, since public draft records do not enumerate the full pool of undrafted candidates. Each cell gives hits, percentage, and the median numbered season in the seven-year window among players who reached that rank. [2005 draft](https://www.basketball-reference.com/draft/NBA_2005.html) · [2019 draft](https://www.basketball-reference.com/draft/NBA_2019.html)
+
+| Pick | Top 10, median season | Top 25, median season | Top 50, median season |
+|---|---|---|---|
+| 1–3 | 9/45 (20.0%), 3 | 19/45 (42.2%), 3 | 27/45 (60.0%), 3 |
+| 4–10 | 9/105 (8.6%), 4 | 16/105 (15.2%), 3.5 | 36/105 (34.3%), 4 |
+| 11–30 | 8/300 (2.7%), 4.5 | 27/300 (9.0%), 4 | 61/300 (20.3%), 4 |
+| Second round | 4/450 (0.9%), 5 | 14/450 (3.1%), 5.5 | 26/450 (5.8%), 4 |
+| Undrafted | 0/444 (0%) | 2/444 (0.4%), 2.5 | 12/444 (2.7%), 4 |
+
+Four second-rounders made the top 10 in that window. Nikola Jokić, pick 41 in 2014, made it in year three after the draft at age 21. Jalen Brunson, pick 33 in 2018, made it in year six at 27. Undrafted José Calderón and Jeremy Lin each had a qualifying top-25 BPM season. These are first hits on a season metric, and the table counts a one-year breakout the same as the first year of a long run. [2014 draft](https://www.basketball-reference.com/draft/NBA_2014.html) · [2018 draft](https://www.basketball-reference.com/draft/NBA_2018.html) · [Calderón](https://www.basketball-reference.com/players/c/caldejo01.html) · [Lin](https://www.basketball-reference.com/players/l/linje01.html)
+
+**Held-out test.** Fit one probability per group with small groups pulled toward the pooled rate. The 2005–2010 starting cohorts fit the rules using outcomes through 2017. The 2017–2019 starting cohorts test them using outcomes from 2018 through 2026. The gap keeps the outcome years separate. The score is the average squared difference between a forecast probability and the observed outcome, also called the Brier score. Lower is better.
+
+| Inputs | Goal | Held-out hits | Group rule | Age only | Pooled rate |
+|---|---|---:|---:|---:|---:|
+| Age and starting level | Top 10 | 14/482 | 0.0284 | 0.0293 | 0.0289 |
+| Age and starting level | Top 25 | 41/475 | 0.0691 | 0.0797 | 0.0804 |
+| Age and starting level | Top 50 | 84/463 | 0.1232 | 0.1434 | 0.1498 |
+| Draft slot | Top 10 | 6/345 | 0.0177 | — | 0.0172 |
+| Draft slot | Top 25 | 17/345 | 0.0430 | — | 0.0478 |
+| Draft slot | Top 50 | 35/345 | 0.0764 | — | 0.0924 |
+
+Age and starting level forecast top-25 and top-50 outcomes better than age alone. The top-10 gains were small, and the draft-slot rule scored slightly worse than the pooled rate for that outcome. Draft slot gives a broad starting probability, with fewer data to support precise superstar odds. Neither rule estimates a player's ceiling.
+
 ## Resume state
 
-Research only on `codex/development-evidence`. The frozen public panel, Basketball Index comparison and fits are in `data/research/development_evidence.json`. Age curves are documented. The remaining report sections cover star odds, turnover and named examples.
+Research only on `codex/development-evidence`. The frozen public panel, Basketball Index comparison and fits are in `data/research/development_evidence.json`. Age curves and star odds are documented. The remaining report sections cover turnover and named examples.
