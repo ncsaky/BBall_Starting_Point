@@ -50,8 +50,9 @@ class OvernightMarketHealthTests(unittest.TestCase):
     def test_free_agency_is_observed_daily_then_final_cleanup(self):
         saved = self.save("free_agency", "2027-07-01")
         saved["free_agency_state"] = {"status": "active"}
+        # FA-REAL slice 3 (rule changed): hands-off, the GM takes the assistant's advice on a rival's offer sheet.
         self.assertEqual(audit.select_action(saved, "2036-10-01"),
-                         ("advance_free_agency", {"mode": "day", "team": "GSW"}))
+                         ("advance_free_agency", {"mode": "day", "team": "GSW", "follow_advice": True}))
         saved["free_agency_state"]["status"] = "completed"
         self.assertEqual(audit.select_action(saved, "2036-10-01")[1]["mode"], "end")
 

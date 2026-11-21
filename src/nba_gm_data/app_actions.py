@@ -8,6 +8,7 @@ serialize cooperating local processes as well as requests in this process.
 from __future__ import annotations
 
 import base64
+import math
 import binascii
 import random
 import threading
@@ -328,6 +329,7 @@ MUTATING_ACTIONS = {
     "renounce_cap_hold",
     "decide_option",
     "qualifying_offer",
+    "offer_sheet_decision",
     "update_game_settings",
     "season_slideshow",
     "season_slideshow_seen",
@@ -385,6 +387,7 @@ def runtime_status(root: Path, save_dir: Path) -> dict[str, Any]:
                 "offseason_checklist",
                 "decide_option",
                 "qualifying_offer",
+                "offer_sheet_decision",
                 "advance_free_agency",
                 "staff_market",
                 "staff_room",
@@ -757,6 +760,8 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return decide_option_action(canonical, save_path, payload)
     if action == "qualifying_offer":
         return qualifying_offer_action(canonical, save_path, payload)
+    if action == "offer_sheet_decision":
+        return offer_sheet_decision_action(canonical, save_path, payload)
     if action == "advance_re_signing":
         return advance_re_signing_action(canonical, save_path, payload, root)
     if action == "advance_free_agency":
@@ -1233,6 +1238,17 @@ def assistant_gm_messages(active: dict[str, Any], save: dict[str, Any], feed: di
         else:
             continue
         messages.append({"id": f"league:{event['id']}", "date": event_day.isoformat(), "kind": kind, "title": title, "text": text, "target": "league-wire", "event_id": event["id"]})
+    # FA-REAL slice 3: a rival signed one of your restricted free agents to an offer sheet (your Match or Pass).
+    from .offer_sheets import pending_sheets
+    for sheet in pending_sheets(save):
+        if sheet.get("rights_team_id") != team.get("id"):
+            continue
+        messages.insert(0, {"id": f"offer-sheet:{sheet['id']}", "date": sheet["signed_date"], "kind": "offer_sheet",
+                            "title": "Offer sheet: match or pass",
+                            "text": (f"{sheet.get('name')} signed an offer sheet with {team_id_to_abbrev(sheet['bidder_team_id'])}: "
+                                     f"{len(sheet['salaries'])} years, ${sum(sheet['salaries']) / 1e6:.1f}M. We have until "
+                                     f"the end of {sheet['match_deadline']} to match."),
+                            "target": "offer-sheet", "player_id": sheet["player_id"], "sheet_id": sheet["id"]})
     # TRADE-MARKET: final offers waiting for you, notable players being shopped and bidding wars (capped per day).
     from .trade_market import assistant_texts
     messages = assistant_texts(active, save, today.isoformat()) + messages
@@ -3809,13 +3825,52 @@ def free_agency_room_payload(
     roster_count = sum(1 for player in active.get("players", []) if player.get("team_id") == team["id"])
     shown_candidates = (own_candidates if phase == "re_signing" else candidates)[:80]
     shown_ids = {id(candidate) for candidate in shown_candidates}
-    # FA-REAL slice 2: restricted free agents (a live qualifying offer) negotiate only with their own team for now.
+    # FA-REAL slices 2-3: restricted free agents (a live qualifying offer). Another team's restricted free agent signs
+    # with you only on an offer sheet: the builder shows the sheet's terms, and what he needs from you is his price now
+    # (offer_sheets.player_takes_sheet), the same rule the save applies.
     from .offseason_decisions import restricted_player_ids
+    from . import offer_sheets as sheets_rules
     restricted = restricted_player_ids(save)
+    sheet_stage = sheets_rules.summer_stage(save)
     for candidate in shown_candidates:
         holder = restricted.get(str(candidate.get("id")))
         candidate["restricted"] = ({"team_id": holder, "team_abbrev": team_id_to_abbrev(holder),
                                     "yours": holder == team["id"]} if holder else None)
+        pending = sheets_rules.pending_sheet(save, str(candidate.get("id")))
+        if pending:
+            candidate["offer_sheet_pending"] = {"bidder_abbrev": team_id_to_abbrev(pending["bidder_team_id"]),
+                                                "match_deadline": pending["match_deadline"],
+                                                "rights_abbrev": team_id_to_abbrev(pending["rights_team_id"])}
+        if holder and holder != team["id"]:
+            player_row = players_by_id.get(candidate["id"], {})
+            blocked = sheets_rules.can_receive_sheet(save, candidate["id"], team["id"])
+            from .offseason_decisions import qo_record, rfa_market_price, rfa_reservation
+            market_dollars = rfa_market_price(save, candidate["id"], active=active)
+            qo_amount = float((qo_record(save, signing_season, candidate["id"]) or {}).get("amount") or 0.0)
+            want = max(qo_amount, rfa_reservation(save, player_row, market_dollars, sheet_stage) if market_dollars else qo_amount)
+            service = sheets_rules.credited_service(save, player_row, signing_season)
+            record = qo_record(save, signing_season, candidate["id"]) or {}
+            least = sheets_rules.MAX_QO_MIN_YEARS if record.get("maximum") else sheets_rules.MIN_YEARS
+            floor = round(math.ceil(want / 100_000) / 10, 1)
+            candidate["offer_sheet"] = {
+                "blocked_reason": blocked, "min_years": least, "max_years": sheets_rules.MAX_YEARS,
+                "max_raise_pct": round(sheets_rules.SHEET_RAISE * 100), "want_millions": floor,
+                "qualifying_offer_millions": round(qo_amount / 1e6, 2), "years_of_service": service,
+                "arenas": service in sheets_rules.ARENAS_SERVICE,
+                "first_year_limit_millions": (round(cap_ledger.exception_amount("non_taxpayer_mle", signing_season) / 1e6, 3)
+                                              if service in sheets_rules.ARENAS_SERVICE else None),
+                "routes": list(sheets_rules.SHEET_ROUTES),
+                "words": (f"Restricted free agent of {team_id_to_abbrev(holder)}: you can only sign him to an offer "
+                          f"sheet ({least}-{sheets_rules.MAX_YEARS} years, raises up to 5%). {team_id_to_abbrev(holder)} "
+                          "then has until the end of the next day to match. Your payment stays reserved until it "
+                          "decides."),
+            }
+            # He signs a sheet whose first-year salary reaches his price now (any length the rules allow).
+            by_years = {str(y): (floor if least <= y <= sheets_rules.MAX_YEARS else None) for y in range(1, 6)}
+            candidate["accept_floor_by_years"] = {"guaranteed": by_years, "non_guaranteed": {str(y): None for y in range(1, 6)}}
+            default_years = str(max(least, min(sheets_rules.MAX_YEARS, int(candidate.get("safe_years") or 3))))
+            candidate["accept_floor_millions"] = candidate["accept_floor_offer_millions"] = {
+                "guaranteed": by_years.get(default_years), "non_guaranteed": None}
     for candidate in candidates:
         floors = candidate.pop("_floors", None)
         if floors is not None and id(candidate) in shown_ids:
@@ -3873,6 +3928,8 @@ def free_agency_room_payload(
         # FA-REAL slice 2: the stop's checklist (options, qualifying offers, own free agents, holds) and the dates.
         "offseason_checklist": offseason_checklist_payload(canonical, save, team["abbrev"], active=active),
         "stop": offseason_stop_name(phase, state),
+        # FA-REAL slice 3: offer sheets waiting for your Match or Pass, yours as the bidder, and the league's.
+        "offer_sheets": sheets_rules.room_view(active, save, team["id"]),
     }
 
 
@@ -3898,6 +3955,20 @@ def submit_free_agent_offer_action(canonical: dict[str, Any], save_path: Path, p
         raise AppActionError(f"No free agent found with id {player_id!r}.")
     years = max(1, min(5, int(payload.get("years") or 1)))
     aav = float(payload.get("aav_millions") or payload.get("aav") or 0.0)
+    sheet = offer_sheet_request(active, save, team, player, payload, years, aav)
+    if sheet is not None:
+        if not sheet["check"]["ok"] or not sheet["takes"]:
+            reason = sheet["check"]["message"] if not sheet["check"]["ok"] else sheet["takes_reason"]
+            return {"status": "blocked" if not sheet["check"]["ok"] else "offered", "reason": reason,
+                    "cap_check": quote_view(sheet["check"]), "offer_sheet": sheet["view"],
+                    "negotiation": {"accepted": False, "decision": {"accepted": False, "decision": "offer_sheet_declined",
+                                                                    "ask_threshold_millions": sheet["view"]["want_millions"]}}}
+        from .offer_sheets import sign_sheet
+        record = sign_sheet(save, player, team["id"], sheet["terms"], sheet["check"]["quote"], by="user",
+                            reason="Your offer sheet.")
+        write_save(save_path, save)
+        return {"status": "offer_sheet_signed", "cap_check": quote_view(sheet["check"]), "offer_sheet": sheet["view"],
+                "sheet": record, "negotiation": {"accepted": True, "decision": {"accepted": True, "decision": "offer_sheet"}}}
     re_signing_phase = str((save.get("state") or {}).get("phase") or "") == "re_signing"
     if re_signing_phase and not any(
         right.get("team_id") == team["id"]
@@ -4039,10 +4110,98 @@ def free_agent_offer_quote_action(canonical: dict[str, Any], save_path: Path, pa
         raise AppActionError(f"No free agent found with id {player_id!r}.")
     years = max(1, min(5, int(payload.get("years") or 1)))
     aav = float(payload.get("aav_millions") or payload.get("aav") or 0.0)
+    sheet = offer_sheet_request(active, save, team, player, payload, years, aav)
+    if sheet is not None:
+        return {"status": "ok", "player_id": player_id, "years": years, "aav_millions": aav,
+                "quote": quote_view(sheet["check"]), "offer_sheet": sheet["view"]}
     bird = incumbent_bird_rights(active, save, player, team["id"])
     check = signing_cap_check(active, save, team_query, aav, bird=bird, player=player, years=years,
                               route=payload.get("route") or None, raise_rate=offer_raise_rate(payload))
     return {"status": "ok", "player_id": player_id, "years": years, "aav_millions": aav, "quote": quote_view(check)}
+
+
+def offer_sheet_request(active: dict[str, Any], save: dict[str, Any], team: dict[str, Any], player: dict[str, Any],
+                        payload: dict[str, Any], years: int, aav_millions: float) -> dict[str, Any] | None:
+    """FA-REAL slice 3: an offer to another team's restricted free agent is an offer sheet. Returns None for anyone
+    else; otherwise the legal terms, how you pay (reserved until his team decides) and whether he signs it. The same
+    calls sign_sheet and the AI bidders use (rule 4)."""
+    from . import offer_sheets as rules
+    from .offseason_decisions import restricted_rights_team
+    holder = restricted_rights_team(save, str(player.get("id") or ""))
+    if not holder or holder == team["id"]:
+        return None
+    season = cap_ledger_year(save)
+    raise_rate = offer_raise_rate(payload)
+    terms = rules.sheet_terms(save, player, aav_millions * 1e6, years, season=season,
+                              raise_rate=rules.SHEET_RAISE if raise_rate is None else raise_rate,
+                              backload=bool(payload.get("backload")))
+    blocked = rules.can_receive_sheet(save, str(player["id"]), team["id"])
+    if blocked or not terms["ok"]:
+        message = blocked or terms["reason"]
+        check = {"ok": False, "message": message, "quote": {"ok": False, "message": message, "routes": []}}
+    else:
+        route = payload.get("route") or None
+        quote = rules.bidder_quote(active, save, team["id"], player, terms, route=route,
+                                   team_abbrev=team.get("abbrev"))
+        quote["routes"] = [row for row in quote.get("routes") or [] if row.get("route") in rules.SHEET_ROUTES]
+        if quote.get("ok"):
+            quote["locks"] = ((quote.get("locks") or "") + f" Reserved until {team_id_to_abbrev(holder)} decides "
+                              "(by the end of the day after you sign).").strip()
+        check = {"ok": bool(quote.get("ok")), "message": "" if quote.get("ok") else quote.get("message") or "",
+                 "quote": quote, "payment": quote.get("payment")}
+    first = float((terms.get("bidder_charges") or [aav_millions * 1e6])[0]) if terms.get("ok") else aav_millions * 1e6
+    takes, takes_reason = rules.player_takes_sheet(save, player, float((terms.get("salaries") or [first])[0]),
+                                                   rules.summer_stage(save), active)
+    view = {"is_offer_sheet": True, "rights_abbrev": team_id_to_abbrev(holder), "legal": bool(terms.get("ok")),
+            "reason": terms.get("reason") or blocked or "", "player_signs": takes, "player_reason": takes_reason,
+            "backloaded": bool(terms.get("backloaded")), "arenas": bool(terms.get("arenas")),
+            "min_years": terms.get("min_years"), "max_years": rules.MAX_YEARS,
+            "salaries_millions": [round(v / 1e6, 3) for v in terms.get("salaries") or []],
+            "bidder_charges_millions": [round(v / 1e6, 3) for v in terms.get("bidder_charges") or []],
+            "want_millions": None}
+    from .offseason_decisions import qo_record, rfa_market_price, rfa_reservation
+    market = rfa_market_price(save, str(player["id"]), active=active)
+    qo = float((qo_record(save, season, str(player["id"])) or {}).get("amount") or 0.0)
+    view["want_millions"] = round(max(qo, rfa_reservation(save, player, market, rules.summer_stage(save)) if market else qo) / 1e6, 2)
+    return {"terms": terms, "check": check, "takes": takes, "takes_reason": takes_reason, "view": view}
+
+
+def follow_offer_sheet_advice(canonical: dict[str, Any], save_path: Path, *, everything: bool = False) -> list[dict[str, Any]]:
+    """Decide the user's offer sheets the way the assistant GM advises (offer_sheets.incumbent_choice): those due
+    today, or all pending ones (``everything``). For hands-off play only; the screens always ask."""
+    from .offer_sheets import incumbent_choice, user_decide, user_decisions_due, user_pending
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    waiting = user_pending(save) if everything else user_decisions_due(save)
+    done = []
+    for sheet in waiting:
+        active = canonical_with_save(canonical, save)
+        choice = incumbent_choice(active, save, sheet)
+        result = user_decide(canonical, save, sheet["id"], bool(choice["match"]))
+        if result.get("ok"):
+            done.append(result["sheet"])
+    if done:
+        write_save(save_path, save)
+    return done
+
+
+def cap_ledger_year(save: dict[str, Any]) -> str:
+    from .cap_ledger import cap_year
+    return cap_year(save)
+
+
+def offer_sheet_decision_action(canonical: dict[str, Any], save_path: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    """Match or pass on a rival's offer sheet for one of your restricted free agents (FA-REAL slice 3)."""
+    from .offer_sheets import user_decide
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    sheet_id = str(payload.get("sheet_id") or payload.get("player_id") or "")
+    result = user_decide(canonical, save, sheet_id, bool(payload.get("match")))
+    if not result.get("ok"):
+        return {"status": "blocked", "reason": result.get("reason")}
+    write_save(save_path, save)
+    team = str(payload.get("team") or user_team_abbrev(canonical, save_path))
+    seed = int(payload.get("seed") or 1)
+    return {"status": result["sheet"]["status"], "headline": result["headline"], "sheet": result["sheet"],
+            "room": free_agency_room_payload(canonical, save_path, team, seed)}
 
 
 def renounce_cap_hold_action(canonical: dict[str, Any], save_path: Path, payload: dict[str, Any]) -> dict[str, Any]:
@@ -4166,18 +4325,29 @@ def advance_free_agency_action(canonical: dict[str, Any], save_path: Path, paylo
     seed = int(payload.get("seed") or 1)
     mode = str(payload.get("mode") or "day")
     initialize_free_agency_market(canonical, save_path, team, seed)
+    # FA-REAL slice 3: a rival's offer sheet for one of your restricted free agents stops the clock for your Match or
+    # Pass (``let_sheets_expire``: let it run out instead, as a multiplayer round timer does; he then leaves).
+    expire = bool(payload.get("let_sheets_expire"))
+    if payload.get("follow_advice"):
+        # Hands-off play (the automated GM in the probes): take the assistant GM's advice on sheets that are due.
+        follow_offer_sheet_advice(canonical, save_path, everything=(mode == "end"))
     if mode == "end":
         # FA-REAL slice 2: "end" first finishes the first wave and stops on signing day (stop 3); from signing day it
         # closes the market and runs late summer in the background to camp.
         completed = ((load_save(save_path).get("free_agency_state") or {}).get("status") == "completed")
         if completed:
-            result = {"status": "late_summer"}
-            finish_free_agency_phase(canonical, save_path, root=root)
+            result = finish_free_agency_phase(canonical, save_path, root=root, let_sheets_expire=expire) or {}
+            result = {**result, "status": result.get("status") if result.get("status") == "decision_needed" else "late_summer"}
         else:
             result = simulate_free_agency_to_end(canonical, save_path, team, seed, root=root)
     else:
-        result = advance_free_agency_day(canonical, save_path, team, seed, root=root)
-    return {"status": "advanced", "result": result, "room": free_agency_room_payload(canonical, save_path, team, seed)}
+        result = advance_free_agency_day(canonical, save_path, team, seed, root=root, let_sheets_expire=expire)
+    room = free_agency_room_payload(canonical, save_path, team, seed)
+    if result.get("status") == "decision_needed":
+        names = ", ".join(v.get("name") or "" for v in (room.get("offer_sheets") or {}).get("for_you") or [])
+        return {"status": "decision_needed", "result": result, "room": room,
+                "reason": f"Match or pass first: {names} signed an offer sheet with another team."}
+    return {"status": "advanced", "result": result, "room": room}
 
 
 def staff_room_payload(canonical: dict[str, Any], save_path: Path, team_query: str, slot: str | None = None, limit: int | None = None) -> dict[str, Any]:

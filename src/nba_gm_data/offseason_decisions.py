@@ -9,8 +9,10 @@ Plain words:
   **restricted free agent**: the team keeps the right to keep him. He may sign it (a one-year bet on himself, then he
   is unrestricted), negotiate a longer deal, or wait until October 1.
 
-Interim rule until offer sheets arrive (slice 3): a restricted free agent negotiates only with his own team, accepts
-the qualifying offer, or waits; on October 1 an unsigned one accepts it. Other teams can't sign him.
+Restricted free agency (slice 3, ``offer_sheets``): other teams may sign a restricted free agent to an offer sheet,
+which his team matches or passes on by the end of the next day. Otherwise he negotiates with his own team, accepts the
+qualifying offer, or waits; on October 1 an unsigned one accepts it. Other teams can't sign him to an ordinary
+contract.
 
 Where the data comes from:
 - Options are read from the contract data: the Basketball-Reference contract table already in the save
@@ -673,12 +675,18 @@ def restricted_player_ids(save: dict[str, Any]) -> dict[str, str]:
 
 
 def blocked_for_team(save: dict[str, Any], player_id: str, team_id: str | None) -> str | None:
-    """Why ``team_id`` can't sign this player now (the interim restricted rule), else None."""
+    """Why ``team_id`` can't sign this player to an ordinary contract now, else None. A restricted free agent signs
+    with another team only through an offer sheet (``offer_sheets``); while a sheet is pending nobody can sign him."""
+    from .save import team_id_to_abbrev
+    from .offer_sheets import pending_sheet
+    sheet = pending_sheet(save, player_id)
+    if sheet:
+        return (f"He signed an offer sheet with {team_id_to_abbrev(sheet['bidder_team_id'])}; "
+                f"{team_id_to_abbrev(sheet['rights_team_id'])} has until {sheet['match_deadline']} to match.")
     holder = restricted_rights_team(save, player_id)
     if holder and holder != team_id:
-        from .save import team_id_to_abbrev
-        return (f"He is a restricted free agent: only {team_id_to_abbrev(holder)} can sign him (it sent him a qualifying "
-                "offer). Offer sheets from other teams come later.")
+        return (f"He is a restricted free agent of {team_id_to_abbrev(holder)} (it sent him a qualifying offer): sign "
+                f"him to an offer sheet, which {team_id_to_abbrev(holder)} may match.")
     return None
 
 
@@ -729,8 +737,9 @@ def accept_qualifying_offer(canonical: dict[str, Any], save: dict[str, Any], pla
     season = cap_year(save)
     record = qo_record(save, season, player_id)
     team_id = restricted_rights_team(save, player_id, season)
-    if not record or not team_id:
-        return False
+    from .offer_sheets import pending_sheet
+    if not record or not team_id or pending_sheet(save, player_id):
+        return False      # a signed offer sheet binds him until his team matches or passes
     amount = int(record.get("amount") or 0)
     years = 1
     salaries = [amount]
@@ -792,21 +801,31 @@ def rfa_reservation(save: dict[str, Any], player: dict[str, Any], market: float,
     return market * (1.0 + rfa_belief(save, player) - rules["belief_fade"] * max(0.0, min(1.0, stage)))
 
 
-def rfa_market_price(save: dict[str, Any], player_id: str) -> float:
-    """His price in dollars: today's ask in the free-agency room, else the market value recorded with his offer."""
+def rfa_market_price(save: dict[str, Any], player_id: str, active: dict[str, Any] | None = None) -> float:
+    """His price in dollars: today's ask in the free-agency room, else the market value recorded with his offer.
+    From the market's opening (``active`` given, slice 3) no more than the most another team could pay him in an offer
+    sheet today (offer_sheets.leverage_price): above that he has no outside leverage."""
     asks = (save.get("free_agency_state") or {}).get("player_asks_millions") or {}
-    if asks.get(player_id):
-        return float(asks[player_id]) * 1e6
     from .cap_ledger import cap_year
-    record = qo_record(save, cap_year(save), player_id) or {}
-    return float(record.get("market_millions") or 0.0) * 1e6
+    if asks.get(player_id):
+        price = float(asks[player_id]) * 1e6
+    else:
+        record = qo_record(save, cap_year(save), player_id) or {}
+        price = float(record.get("market_millions") or 0.0) * 1e6
+    if active is not None and price:
+        from .offer_sheets import leverage_price, sheets_open
+        if sheets_open(save) or str((save.get("state") or {}).get("phase") or "") == "free_agency":
+            price = leverage_price(active, save, player_id, price)
+    return price
 
 
 def restricted_market_day(canonical: dict[str, Any], save: dict[str, Any], day: int) -> int:
     """Each first-wave market day, AI teams and their unsigned restricted free agents talk again: the team offers his
     price, and he signs when it meets what he will take that day. Returns the number signed."""
     from .save import canonical_with_save
-    held = {pid: team for pid, team in restricted_player_ids(save).items() if team not in _user_team_ids(save)}
+    from .offer_sheets import pending_sheet
+    held = {pid: team for pid, team in restricted_player_ids(save).items()
+            if team not in _user_team_ids(save) and not pending_sheet(save, pid)}
     if not held:
         return 0
     stage = RFA_STAGES["june"] + RFA_STAGES["market_day"] * max(1, int(day))
@@ -815,7 +834,7 @@ def restricted_market_day(canonical: dict[str, Any], save: dict[str, Any], day: 
     signed = 0
     for player_id, team_id in sorted(held.items()):
         player = players.get(player_id)
-        market = rfa_market_price(save, player_id)
+        market = rfa_market_price(save, player_id, active=active)
         if not player or not market:
             continue
         if rfa_negotiate(canonical, save, active, player, team_id, market, stage):
@@ -833,7 +852,12 @@ def restricted_summer_pass(canonical: dict[str, Any], save: dict[str, Any], *, f
     - On October 1 (``final``) anyone still unsigned accepts his qualifying offer.
     - Before that, a player whose team has made no offer at all and won't (it can't fit him) accepts it too."""
     from .save import canonical_with_save
-    held = restricted_player_ids(save)
+    from .offer_sheets import pending_sheet, resolve_due
+    if final:
+        # FA-REAL slice 3: sheets still pending on October 1 are settled first (AI teams decide; a user's sheet whose
+        # deadline passed goes to the bidder, the real rule when time runs out).
+        resolve_due(canonical, save, force_ai=True, expire_user=True)
+    held = {pid: team for pid, team in restricted_player_ids(save).items() if not pending_sheet(save, pid)}
     if not held:
         return {"signed": 0, "accepted_qualifying_offers": 0}
     users = _user_team_ids(save)
@@ -843,7 +867,7 @@ def restricted_summer_pass(canonical: dict[str, Any], save: dict[str, Any], *, f
     signed = accepted = 0
     for player_id, team_id in sorted(held.items()):
         player = players.get(player_id) or {"id": player_id}
-        market = rfa_market_price(save, player_id)
+        market = rfa_market_price(save, player_id, active=active)
         offer = market * RULES["qualifying_offer"]["team_offer_share"]
         if team_id not in users and market and rfa_negotiate(canonical, save, active, player, team_id, market, stage,
                                                               final=final):

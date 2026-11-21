@@ -5900,8 +5900,90 @@ function signingDayRecap(room) {
   return `<div class="offseason-recap">
     <section><h4>Your signings</h4>${mine.length ? `<ul>${mine.slice(0, 8).map(line).join("")}</ul>` : "<p>None yet.</p>"}</section>
     <section><h4>Your free agents who left</h4>${departed.length ? `<ul>${departed.slice(0, 8).map(line).join("")}</ul>` : "<p>None.</p>"}</section>
-    <section><h4>Still open</h4><p>Offer sheets from other teams for your restricted free agents arrive in a later update; until then a restricted free agent talks only to you, signs his qualifying offer, or waits (it expires October 1).</p></section>
+    <section><h4>Still open</h4>${offerSheetStillOpen(room)}</section>
   </div>`;
+}
+
+// FA-REAL slice 3: offer sheets. A rival's sheet for one of your restricted free agents waits for your Match or Pass
+// (the day does not end until you decide). Every number is the engine's (offer_sheets.sheet_view).
+function offerSheetStillOpen(room) {
+  const sheets = room.offer_sheets || {};
+  const waiting = sheets.for_you || [];
+  const yours = (sheets.yours || []).filter((row) => row.status === "pending");
+  const decided = (sheets.league || []).filter((row) => row.status !== "pending");
+  const line = (row) => `<li>${escapeHtml(row.name || "")} <small>${escapeHtml(row.bidder_abbrev)} sheet · ${money(row.total_millions)} over ${row.years.length} years · ${escapeHtml(offerSheetStatusWords(row))}</small></li>`;
+  const parts = [];
+  if (waiting.length) parts.push(`<p><b>Your decision:</b> ${waiting.map((row) => `${escapeHtml(row.name)} (${escapeHtml(row.bidder_abbrev)} sheet, decide by ${escapeHtml(shortDate(row.match_deadline))})`).join("; ")}.</p>`);
+  if (yours.length) parts.push(`<p><b>Your sheets:</b> ${yours.map((row) => `${escapeHtml(row.name)} (${escapeHtml(row.rights_abbrev)} decides by ${escapeHtml(shortDate(row.match_deadline))}; your ${escapeHtml(row.paid_with || "payment")} stays reserved)`).join("; ")}.</p>`);
+  if (decided.length) parts.push(`<ul>${decided.slice(0, 6).map(line).join("")}</ul>`);
+  if (!parts.length) parts.push("<p>No offer sheets this summer yet. Other teams may still sign your restricted free agents to one; you then get a day to match. A restricted free agent can also sign his qualifying offer or wait (it expires October 1).</p>");
+  return parts.join("");
+}
+
+function offerSheetStatusWords(row) {
+  if (row.status === "matched") return `${row.rights_abbrev} matched`;
+  if (row.status === "passed") return `${row.rights_abbrev} passed: he joins ${row.bidder_abbrev}`;
+  return `${row.rights_abbrev} decides by ${shortDate(row.match_deadline)}`;
+}
+
+function offerSheetDecisionMarkup(room = state.data.freeagency || {}) {
+  const waiting = room.offer_sheets?.for_you || [];
+  if (!waiting.length) return "";
+  const editable = !state.hydrating;
+  return waiting.map((sheet) => {
+    const due = Number(sheet.days_left || 0);
+    const countdown = due <= 0 ? "Decide today" : `${due} day${due === 1 ? "" : "s"} left`;
+    const cell = (value) => (value == null ? `<td class="fa-muted">—</td>` : `<td class="${Number(value) < 0 ? "is-negative" : ""}">${signedMoney(value)}</td>`);
+    const effect = (sheet.years || []).map((year, index) => {
+      const row = (sheet.cap_effect || [])[index] || {};
+      return `<tr>
+        <th scope="row">${escapeHtml(shortSeasonLabel(year.season))}</th>
+        <td><strong>${money(year.salary_millions)}</strong></td>
+        <td>${row.payroll_millions == null ? "—" : money(row.payroll_millions)}</td>
+        <td>${row.after_millions == null ? "—" : money(row.after_millions)}</td>
+        ${cell(row.cap_room_after_millions)}${cell(row.tax_room_after_millions)}${cell(row.first_apron_room_after_millions)}
+      </tr>`;
+    }).join("");
+    const hardCap = sheet.hard_cap ? `You are hard-capped at ${escapeHtml(sheet.hard_cap.words || "an apron")} (${money(sheet.hard_cap.amount_millions)}) this season.` : "No hard cap this season.";
+    return `<section class="offer-sheet-decision" data-offer-sheet="${escapeAttr(sheet.id)}" aria-label="Offer sheet for ${escapeAttr(sheet.name)}: match or pass">
+      <header>
+        <div><p>Offer sheet · ${escapeHtml(sheet.bidder_abbrev)} · signed ${escapeHtml(shortDate(sheet.signed_date))}</p>
+          <h4><button type="button" class="fa-player-name" data-fa-player-card="${escapeAttr(sheet.player_id)}">${escapeHtml(sheet.name)}</button></h4>
+          <span>${money(sheet.total_millions)} over ${sheet.years.length} years${sheet.backloaded ? " · back-loaded (year-3 jump)" : ""}</span></div>
+        <div class="offer-sheet-clock${due <= 0 ? " is-due" : ""}" role="timer" aria-label="Match deadline"><strong>${escapeHtml(countdown)}</strong><small>by the end of ${escapeHtml(shortDate(sheet.match_deadline))}</small></div>
+      </header>
+      <table class="fa-cap-table offer-sheet-table" aria-label="What matching does to your cap, year by year">
+        <colgroup><col style="width:12%"><col style="width:14%"><col style="width:14%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:15%"></colgroup>
+        <thead><tr><th scope="col">Season</th><th scope="col" title="His salary that season under the sheet">Salary</th><th scope="col" title="Your payroll now (signed salaries and dead money)">Payroll</th><th scope="col" title="Your payroll if you match">If matched</th><th scope="col">Cap room</th><th scope="col">Tax room</th><th scope="col">1st apron</th></tr></thead>
+        <tbody>${effect}</tbody>
+      </table>
+      <dl class="offer-sheet-facts">
+        <div><dt>Matching</dt><dd>${sheet.can_match ? `Paid with <strong>${escapeHtml(sheet.match_route || "Bird rights")}</strong>. ${escapeHtml(hardCap)}` : `<strong class="is-negative">You can't match:</strong> ${escapeHtml(sheet.match_blocked || "")}`}</dd></div>
+        ${Number(sheet.tax_cost_millions) > 0 ? `<div><dt>Luxury tax</dt><dd>About ${money(sheet.tax_cost_millions)} more this season if you match.</dd></div>` : ""}
+        <div><dt>If you match</dt><dd>${escapeHtml(sheet.if_matched || "")}</dd></div>
+        <div><dt>If you pass</dt><dd>${escapeHtml(sheet.if_passed || "")}</dd></div>
+        <div><dt>Assistant GM</dt><dd>${escapeHtml(sheet.advice?.reason || "")}</dd></div>
+      </dl>
+      <footer>${editable ? `<button type="button" class="ui-command is-ready" data-offer-sheet-match="${escapeAttr(sheet.id)}" ${sheet.can_match ? "" : "disabled"}>Match</button>
+        <button type="button" class="ui-command" data-offer-sheet-pass="${escapeAttr(sheet.id)}">Pass</button>` : ""}</footer>
+    </section>`;
+  }).join("");
+}
+
+async function decideOfferSheet(sheetId, match) {
+  const sheet = (state.data.freeagency?.offer_sheets?.for_you || []).find((row) => row.id === sheetId);
+  const name = sheet?.name || "him";
+  const question = match
+    ? `Match ${sheet?.bidder_abbrev || "the"} offer sheet and keep ${name}: ${money(sheet?.total_millions)} over ${sheet?.years?.length || ""} years? He can't be traded for a year. This cannot be undone.`
+    : `Pass and let ${name} join ${sheet?.bidder_abbrev || "the other team"}? You get nothing back. This cannot be undone.`;
+  if (!window.confirm(question)) return;
+  const result = await action("offer_sheet_decision", { ...savePayload(), team: userTeam(), sheet_id: sheetId, match, seed: 7 });
+  if (result.status === "blocked") {
+    showToast(result.reason || "That decision could not be made.", true);
+    return;
+  }
+  showToast(result.headline || (match ? "Matched." : "Passed."));
+  await refreshDashboardAfterPhaseMutation("freeagency", result.room);
 }
 
 function offseasonChecklistPanel(room = state.data.freeagency || {}) {
@@ -5913,17 +5995,18 @@ function offseasonChecklistPanel(room = state.data.freeagency || {}) {
   const titles = {decide_who_to_keep: "Decide Who To Keep", make_offers: "Your Offseason Decisions", finalize: "Signing Day"};
   const notes = {
     decide_who_to_keep: `Teams may talk to their own free agents now; deals are official the moment both sides agree. Options and qualifying offers are due ${shortDate(dates.decisions_deadline)}. Other teams' free agents open ${shortDate(dates.market_opens)}.`,
-    make_offers: "Talk to anyone. A restricted free agent (one sent a qualifying offer) can only sign with his own team for now.",
+    make_offers: "Talk to anyone. Another team's restricted free agent (one sent a qualifying offer) signs with you only on an offer sheet, which his team may match by the end of the next day.",
     finalize: "The first wave is over. Late summer runs in the background; the game stops only for your decisions.",
   };
-  const pending = items.filter((item) => item.status === "pending").length;
+  // FA-REAL slice 3: a rival's offer sheet waiting for your Match or Pass is a decision too.
+  const pending = items.filter((item) => item.status === "pending").length + (room.offer_sheets?.for_you || []).length;
   return `<section class="fa-panel offseason-checklist" data-offseason-checklist aria-label="Offseason checklist">
     <header class="offseason-head">
       <div><p>${escapeHtml(list.season || room.signing_season || "")} · ${pending ? `${pending} decision${pending === 1 ? "" : "s"} waiting` : "No decision waiting"}</p><h3>${escapeHtml(titles[stop] || "Offseason")}</h3><span>${escapeHtml(notes[stop] || "")}</span></div>
       <div class="offseason-cap">${list.cap_room_millions != null ? `<span class="fa-cap-chip${Number(list.cap_room_millions) < 0 ? " is-over" : ""}"><small>Cap room</small><strong>${escapeHtml(signedMoney(list.cap_room_millions))}</strong></span>` : ""}${list.holds_millions ? `<span class="fa-cap-chip"><small>Cap holds</small><strong>${escapeHtml(money(list.holds_millions))}</strong></span>` : ""}</div>
     </header>
     ${offseasonStopTimeline(stop, dates)}
-    <div class="offseason-scroll">${stop === "finalize" ? signingDayRecap(room) : ""}${offseasonChecklistTable(items, editable)}</div>
+    <div class="offseason-scroll">${offerSheetDecisionMarkup(room)}${stop === "finalize" ? signingDayRecap(room) : ""}${offseasonChecklistTable(items, editable)}</div>
   </section>`;
 }
 
@@ -5946,6 +6029,8 @@ function wireOffseasonChecklist(panel) {
     decideOffseasonOption(button.dataset.playerId || "", button.dataset.offseasonOption === "exercise")));
   panel.querySelectorAll("[data-offseason-qo]").forEach((button) => button.addEventListener("click", () =>
     decideQualifyingOffer(button.dataset.playerId || "", button.dataset.offseasonQo || "")));
+  panel.querySelectorAll("[data-offer-sheet-match]").forEach((button) => button.addEventListener("click", () => decideOfferSheet(button.dataset.offerSheetMatch || "", true)));
+  panel.querySelectorAll("[data-offer-sheet-pass]").forEach((button) => button.addEventListener("click", () => decideOfferSheet(button.dataset.offerSheetPass || "", false)));
   panel.querySelectorAll("[data-offseason-negotiate]").forEach((button) => button.addEventListener("click", () => {
     state.selectedFreeAgent = button.dataset.offseasonNegotiate || null;
     refreshFreeAgencyPanels({ market: true, builder: true });
@@ -6167,10 +6252,14 @@ function freeAgencyMoodCell(player, exclusive = false) {
 function freeAgencyBidsCell(player, exclusive = false) {
   const offer = player.highest_offer;
   const count = Number(player.offer_count || 0);
-  // FA-REAL slice 2: a restricted free agent can only sign with the team that sent him a qualifying offer (for now).
+  // FA-REAL slices 2-3: a restricted free agent signs elsewhere only on an offer sheet his team may match.
+  if (player.offer_sheet_pending) {
+    const sheet = player.offer_sheet_pending;
+    return `<span class="fa-sheet-chip" title="${escapeAttr(`He signed an offer sheet with ${sheet.bidder_abbrev}; ${sheet.rights_abbrev} has until the end of ${sheet.match_deadline} to match.`)}">Sheet · ${escapeHtml(sheet.bidder_abbrev)}</span>`;
+  }
   if (player.restricted && (!offer || !count)) {
     const holder = player.restricted.yours ? "you" : player.restricted.team_abbrev;
-    return `<span class="fa-muted" title="${escapeAttr(`Restricted free agent: only ${holder === "you" ? "you" : holder} can sign him for now (offer sheets come later).`)}">Restricted · ${escapeHtml(holder === "you" ? "yours" : holder)}</span>`;
+    return `<span class="fa-muted" title="${escapeAttr(holder === "you" ? "Your restricted free agent: other teams can sign him only to an offer sheet, which you may match." : `Restricted free agent of ${holder}: sign him to an offer sheet, which ${holder} may match.`)}">Restricted · ${escapeHtml(holder === "you" ? "yours" : holder)}</span>`;
   }
   if (!offer || !count) return `<span class="fa-muted">${exclusive ? "Exclusive" : "—"}</span>`;
   const logo = teamLogoSrc(offer.team_abbrev);
@@ -6274,9 +6363,11 @@ function freeAgencyOfferDraft(player, room = state.data.freeagency || {}) {
   if (!state.freeAgentOfferDrafts[key]) {
     const minimum = freeAgencyPlayerMinimum(player, room);
     const safe = Number.isFinite(Number(player.safe_years)) ? Number(player.safe_years) : 5;
+    const sheet = player.offer_sheet;
     state.freeAgentOfferDrafts[key] = {
-      aav: roundOfferTenth(clampNumber(Number(player.ask_millions || minimum), minimum, freeAgencyPlayerMaximum(player, room))),
-      years: Math.max(player.bird_rights?.level === "early" ? 2 : 1, Math.min(4, safe || 1)),
+      aav: roundOfferTenth(clampNumber(Number((sheet ? sheet.want_millions : 0) || player.ask_millions || minimum), minimum, freeAgencyPlayerMaximum(player, room))),
+      years: Math.max(sheet ? Number(sheet.min_years || 2) : player.bird_rights?.level === "early" ? 2 : 1, Math.min(4, safe || 1)),
+      backload: false,  // FA-REAL slice 3: the Arenas year-3 jump (offer sheets to players with 1-2 years in the league)
       guaranteed: true,
       route: "",       // "" = the best legal way to pay (cap_ledger.quote picks it)
       raise: "max",    // "max" = the largest legal raise; "0" = the same salary every season
@@ -6288,7 +6379,7 @@ function freeAgencyOfferDraft(player, room = state.data.freeagency || {}) {
 // FA-REAL: legality comes from the engine's money calculator (action free_agent_offer_quote -> cap_ledger.quote), the
 // same call submit_free_agent_offer makes, so the screen and the save agree. The room caches one quote per offer.
 function freeAgencyQuoteKey(player, draft = {}) {
-  return [state.currentSave || "", player?.id || "", roundOfferTenth(draft.aav).toFixed(1), Number(draft.years || 1), draft.route || "", draft.raise || "max"].join("|");
+  return [state.currentSave || "", player?.id || "", roundOfferTenth(draft.aav).toFixed(1), Number(draft.years || 1), draft.route || "", draft.raise || "max", draft.backload ? "b" : ""].join("|");
 }
 
 function freeAgencyQuote(player, draft = {}) {
@@ -6317,9 +6408,10 @@ function requestFreeAgencyQuote(player, draft, done) {
       const result = await action("free_agent_offer_quote", {
         ...savePayload(), team: userTeam(), player_id: player.id, years: Number(draft.years || 1),
         aav_millions: roundOfferTenth(draft.aav), route: draft.route || "", raise_pct: freeAgencyRaisePct(player, draft),
+        backload: Boolean(draft.backload),
       });
       state.freeAgentQuotes ||= {};
-      state.freeAgentQuotes[key] = result.quote || null;
+      state.freeAgentQuotes[key] = result.quote ? { ...result.quote, offer_sheet: result.offer_sheet || null } : null;
       if (freeAgencyQuoteKey(player, draft) === key) done?.();
     } catch (error) {
       console.warn("free_agent_offer_quote failed", error);
@@ -6345,8 +6437,10 @@ function freeAgencyOfferPreview(player, room = {}, draft = {}) {
   const rules = room.offer_rules || {};
   const aav = roundOfferTenth(draft.aav);
   const maxYears = freeAgencyMaxYears(player, rules);
-  const years = Math.max(1, Math.min(maxYears, Math.round(Number(draft.years || 1))));
-  const guaranteed = draft.guaranteed !== false;
+  const sheetTerms = player?.offer_sheet || null;
+  const minYears = sheetTerms ? Number(sheetTerms.min_years || 2) : 1;
+  const years = Math.max(minYears, Math.min(maxYears, Math.round(Number(draft.years || 1))));
+  const guaranteed = sheetTerms ? true : draft.guaranteed !== false;
   const key = guaranteed ? "guaranteed" : "non_guaranteed";
   // The engine's floor for this length and guarantee (the AI bids' rule: today's bar and the best rival bid); null means
   // no salary wins him from you today.
@@ -6376,6 +6470,17 @@ function freeAgencyOfferPreview(player, room = {}, draft = {}) {
   });
   const total = schedule.length ? schedule.reduce((sum, row) => sum + Number(row.salary_millions || 0), 0) : aav * years;
   let verdict;
+  const sheetQuote = quote?.offer_sheet || null;
+  if (sheetTerms) {
+    // FA-REAL slice 3: another team's restricted free agent signs only an offer sheet (offer_sheets.player_takes_sheet).
+    const signs = sheetQuote ? sheetQuote.player_signs : aav >= Number(sheetTerms.want_millions || 0);
+    if (sheetTerms.blocked_reason) verdict = { tone: "blocked", headline: "No offer sheet now", detail: sheetTerms.blocked_reason };
+    else if (!cap.ok) verdict = { tone: "blocked", headline: sheetQuote && !sheetQuote.legal ? "Not a legal offer sheet" : "Blocked by the cap", detail: cap.message };
+    else if (!signs) verdict = { tone: "no", headline: "He won't sign this sheet", detail: sheetQuote?.player_reason || `He wants at least ${money(sheetTerms.want_millions)} a year now.` };
+    else verdict = { tone: "yes", headline: "He signs the offer sheet", detail: `${player.restricted?.team_abbrev || "His team"} then has until the end of the next day to match. ${cap.message || ""}`.trim() };
+    return { aav, years, maxYears, minYears, guaranteed, total, floor, floorOffer, safe, cap, quote, retires: false, accepts: signs && cap.ok, ratio, seasons, verdict,
+      canSubmit: cap.ok && !sheetTerms.blocked_reason, offerSheet: sheetTerms };
+  }
   if (player?.signing_blocked_reason) verdict = { tone: "blocked", headline: "Can't sign him", detail: player.signing_blocked_reason };
   else if (!cap.ok) verdict = { tone: "blocked", headline: "Blocked by the cap", detail: cap.message };
   else if (retires) verdict = safe < 1
@@ -6389,6 +6494,7 @@ function freeAgencyOfferPreview(player, room = {}, draft = {}) {
 
 // Only a team with full Bird rights may offer a fifth year (submit_free_agent_offer_action); everyone else offers four.
 function freeAgencyMaxYears(player, rules = {}) {
+  if (player?.offer_sheet) return Number(player.offer_sheet.max_years || 4);
   return Math.min(Number(rules.max_years || 5), Number(player?.bird_rights?.max_years || rules.outside_max_years || 4));
 }
 
@@ -6404,7 +6510,8 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
   const ratings = player.ratings || {};
   const minimum = freeAgencyPlayerMinimum(player, room);
   const maximum = freeAgencyPlayerMaximum(player, room);
-  const routes = (room.offer_rules?.routes || []).filter((row) => row.route !== "bird" || player.bird_rights);
+  const sheet = player.offer_sheet || null;
+  const routes = (room.offer_rules?.routes || []).filter((row) => sheet ? (sheet.routes || []).includes(row.route) : (row.route !== "bird" || player.bird_rights));
   const legal = clipboardLegalActions().has("free_agent_signings");
   const shortlisted = state.freeAgentShortlistIds.includes(player.id);
   const safe = preview.safe;
@@ -6446,12 +6553,13 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
             <button type="button" class="ui-command" data-fa-offer-set="${escapeAttr(minimum)}">His minimum</button>
           </div>
         </div>
-        <div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferYearsLabel">Years</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferYearsLabel">${[1, 2, 3, 4, 5].map((years) => radio("years", years, String(years), preview.years === years, years > preview.maxYears, years > preview.maxYears ? "Only a team with full Bird rights can offer a fifth year" : years > safe ? `He plans to retire after ${safe} season${safe === 1 ? "" : "s"}; he refuses ${years} years` : "")).join("")}</div></div>
-        <div class="fa-offer-field"><small id="faOfferGuaranteeLabel">Guarantee</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferGuaranteeLabel">${radio("guarantee", "true", "Guaranteed", preview.guaranteed)}${radio("guarantee", "false", "Non-guaranteed", !preview.guaranteed)}</div>
+        <div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferYearsLabel">Years</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferYearsLabel">${[1, 2, 3, 4, 5].map((years) => radio("years", years, String(years), preview.years === years, years > preview.maxYears || years < (preview.minYears || 1), sheet && (years > preview.maxYears || years < preview.minYears) ? `An offer sheet runs ${preview.minYears} to ${preview.maxYears} seasons` : years > preview.maxYears ? "Only a team with full Bird rights can offer a fifth year" : years > safe ? `He plans to retire after ${safe} season${safe === 1 ? "" : "s"}; he refuses ${years} years` : "")).join("")}</div></div>
+        <div class="fa-offer-field"><small id="faOfferGuaranteeLabel">Guarantee</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferGuaranteeLabel">${radio("guarantee", "true", "Guaranteed", preview.guaranteed)}${radio("guarantee", "false", "Non-guaranteed", !preview.guaranteed, Boolean(sheet), sheet ? "Offer sheets are fully guaranteed" : "")}</div>
           <p class="fa-offer-note">${preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on ${escapeHtml(room.offer_rules?.non_guaranteed_until || "January 10")}; release him before then and you owe nothing. He asks more for this.`}</p></div></div>
         <div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferRaiseLabel">Raises</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferRaiseLabel">${radio("raise", "max", "Largest legal", (draft.raise || "max") === "max", false, player.bird_rights && ["full", "early"].includes(player.bird_rights.level) ? "8% of the first year added each season (Bird rights)" : "5% of the first year added each season")}${radio("raise", "0", "None", draft.raise === "0")}</div></div>
         <div class="fa-offer-field"><label for="faOfferRoute"><small>How you pay</small></label><select id="faOfferRoute" data-fa-offer-route aria-describedby="faOfferRouteHelp"><option value="">Best legal way</option>${routes.map((row) => `<option value="${escapeAttr(row.route)}" ${draft.route === row.route ? "selected" : ""}>${escapeHtml(row.short)}</option>`).join("")}</select><p id="faOfferRouteHelp" class="fa-offer-note">Bird rights, cap room, the minimum, the mid-level or the bi-annual. The engine picks the first legal one unless you choose.</p></div></div>
         <p class="fa-offer-note fa-offer-options"><b>Options:</b> none. Each season adds the raise to the first year's salary (up to 5%, or 8% with Bird rights); the contract is saved year by year.</p>
+        ${sheet ? freeAgencyOfferSheetMarkup(player, draft, preview) : ""}
       </section>
       <div data-fa-offer-preview>${freeAgencyOfferPreviewMarkup(preview)}</div>
       ${freeAgencyCapSheetMarkup(room)}
@@ -6471,6 +6579,23 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
     </div>
     <footer class="fa-builder-foot" data-fa-offer-foot>${freeAgencyOfferFootMarkup(player, preview, { legal, open, exclusive })}</footer>
   </section>`;
+}
+
+// FA-REAL slice 3: the offer-sheet terms for another team's restricted free agent (offer_sheets.sheet_terms).
+function freeAgencyOfferSheetMarkup(player, draft, preview) {
+  const sheet = player.offer_sheet || {};
+  const quoted = preview.quote?.offer_sheet;
+  const backload = sheet.arenas ? `<div class="fa-offer-field"><small id="faOfferShapeLabel">Shape</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferShapeLabel">
+      <button type="button" role="radio" aria-checked="${!draft.backload}" class="${draft.backload ? "" : "is-active"}" data-fa-offer-backload="0">Even raises</button>
+      <button type="button" role="radio" aria-checked="${Boolean(draft.backload)}" class="${draft.backload ? "is-active" : ""}" data-fa-offer-backload="1" title="Year one at the full mid-level, year two 5% more, then a jump in year three (needs cap room for the average)">Year-3 jump</button></div>
+      <p class="fa-offer-note">He has ${escapeHtml(sheet.years_of_service)} year${Number(sheet.years_of_service) === 1 ? "" : "s"} in the league: year one can't pass ${money(sheet.first_year_limit_millions)} (the Arenas rule). With the jump you count the average each year; ${escapeHtml(player.restricted?.team_abbrev || "his team")} would count the real salaries.</p></div>` : "";
+  const schedule = quoted?.salaries_millions?.length ? `<p class="fa-offer-note"><b>Salary by year:</b> ${quoted.salaries_millions.map((v) => money(v)).join(" · ")}${quoted.backloaded ? ` · you count ${money(quoted.bidder_charges_millions[0])} each year` : ""}</p>` : "";
+  return `<div class="fa-offer-sheet" data-fa-offer-sheet>
+      <p class="fa-offer-note fa-offer-sheet-words"><b>Offer sheet.</b> ${escapeHtml(sheet.words || "")}</p>
+      <p class="fa-offer-note">His qualifying offer: ${money(sheet.qualifying_offer_millions)}. He signs a sheet from ${money(sheet.want_millions)} a year today.</p>
+      ${backload}${schedule}
+      ${sheet.blocked_reason ? `<p class="fa-offer-note fa-pay-blocked">${escapeHtml(sheet.blocked_reason)}</p>` : ""}
+    </div>`;
 }
 
 function freeAgencyOfferPreviewMarkup(preview) {
@@ -6556,7 +6681,7 @@ function freeAgencyCapSheetMarkup(room = state.data.freeagency || {}) {
 function freeAgencyOfferFootMarkup(player, preview, { legal = true, open = true, exclusive = false } = {}) {
   const reason = !legal || !open ? (exclusive ? "" : "Signings are closed right now.") : "";
   const disabled = !legal || !open || !preview.canSubmit;
-  const label = preview.accepts ? `${exclusive ? "Re-sign" : "Sign"} for ${money(preview.aav)} × ${preview.years}` : "Make Offer";
+  const label = preview.offerSheet ? "Sign Offer Sheet" : preview.accepts ? `${exclusive ? "Re-sign" : "Sign"} for ${money(preview.aav)} × ${preview.years}` : "Make Offer";
   const paid = preview.quote?.ok ? `paid with ${preview.quote.label}` : preview.quote ? "no legal way to pay" : "checking how you pay";
   return `<div><strong>${escapeHtml(money(preview.aav))} first year × ${escapeHtml(preview.years)} yr${preview.years === 1 ? "" : "s"} · ${escapeHtml(money(preview.total))} total</strong><span>${escapeHtml(reason || `${preview.guaranteed ? "Guaranteed" : "Non-guaranteed"} · ${paid} · ${preview.verdict.headline.toLowerCase()}`)}</span></div>
     <button type="button" class="ui-command fa-submit${preview.accepts && !disabled ? " is-ready" : ""}" data-fa-submit-offer="${escapeAttr(player.id)}" ${disabled ? "disabled" : ""}>${escapeHtml(label)}</button>`;
@@ -8299,7 +8424,8 @@ function clipboardEntryLayout() {
   // Re-signing and free agency: the market, the offer builder and the signing wire open together, once per phase.
   if (kind === "free_agency" && state.data.freeagency) {
     // Stop 1 opens on its checklist (options, qualifying offers, your free agents); the market below it.
-    if (state.data.freeagency.phase === "re_signing" && state.data.freeagency.offseason_checklist) {
+    if ((state.data.freeagency.phase === "re_signing" || (state.data.freeagency.offer_sheets?.for_you || []).length)
+        && state.data.freeagency.offseason_checklist) {
       // Side by side with the offer builder ("Negotiate" fills it); the market and wire are one click away (a second
       // row of tall cards does not fit the window, so the board would leave it closed anyway).
       return {rows: [["phase-free_agency-checklist", "phase-free_agency-selected"]]};
@@ -8899,6 +9025,19 @@ function wireFreeAgencyBuilderPanel(panel) {
   wireRadios("[data-fa-offer-years]", (button) => { draft.years = Number(button.dataset.faOfferYears || 1); });
   wireRadios("[data-fa-offer-guarantee]", (button) => { draft.guaranteed = button.dataset.faOfferGuarantee === "true"; });
   wireRadios("[data-fa-offer-raise]", (button) => { draft.raise = button.dataset.faOfferRaise || "max"; });
+  wireRadios("[data-fa-offer-backload]", (button) => {
+    draft.backload = button.dataset.faOfferBackload === "1";
+    if (draft.backload && player.offer_sheet?.first_year_limit_millions) {
+      draft.aav = roundOfferTenth(Number(player.offer_sheet.first_year_limit_millions));
+      draft.years = Math.max(3, Number(draft.years || 3));
+      if (number) number.value = draft.aav.toFixed(1);
+      if (range) range.value = String(draft.aav);
+    }
+    panel.querySelectorAll("[data-fa-offer-backload]").forEach((other) => {
+      const active = (other.dataset.faOfferBackload === "1") === Boolean(draft.backload);
+      other.classList.toggle("is-active", active); other.setAttribute("aria-checked", String(active));
+    });
+  });
   panel.querySelector("[data-fa-offer-route]")?.addEventListener("change", (event) => { draft.route = event.target.value || ""; update(); });
   panel.querySelectorAll("[data-fa-renounce]").forEach((button) => button.addEventListener("click", () => renounceCapHold(button.dataset.faRenounce || "")));
   panel.querySelector("[data-fa-submit-offer]")?.addEventListener("click", () => submitFreeAgentOffer(player.id));
@@ -9891,12 +10030,22 @@ async function submitFreeAgentOffer(playerId = state.selectedFreeAgent) {
   const byYear = quote?.schedule?.length ? quote.schedule.map((row) => money(row.salary_millions)).join(", ") : `${money(preview.aav)} a season`;
   const terms = `${byYear} over ${preview.years} season${preview.years === 1 ? "" : "s"} (${money(preview.total)} total, ${preview.guaranteed ? "guaranteed" : "non-guaranteed"})`;
   const paid = quote?.ok ? `\n\nPaid with ${quote.label}.${quote.locks ? ` ${quote.locks}` : ""}` : "";
-  const question = preview.accepts
+  const question = preview.offerSheet
+    ? `Sign ${player.name} to an offer sheet: ${terms}?${paid}\n\n${player.restricted?.team_abbrev || "His team"} can match it by the end of the next day. If it does, he stays there; if not, he joins you. This cannot be undone.`
+    : preview.accepts
     ? `${exclusive ? "Re-sign" : "Sign"} ${player.name}: ${terms}?${paid}\n\nThis cannot be undone.`
     : `Offer ${player.name} ${terms}?${paid}\n\n${preview.verdict.detail}`;
   if (!window.confirm(question)) return;
-  const result = await action("submit_free_agent_offer", { ...savePayload(), player_id: player.id, team: userTeam(), years: preview.years, guaranteed: preview.guaranteed, aav_millions: preview.aav, route: draft.route || "", raise_pct: freeAgencyRaisePct(player, draft), auto_apply: true, seed: 7 });
+  const result = await action("submit_free_agent_offer", { ...savePayload(), player_id: player.id, team: userTeam(), years: preview.years, guaranteed: preview.guaranteed, aav_millions: preview.aav, route: draft.route || "", raise_pct: freeAgencyRaisePct(player, draft), backload: Boolean(draft.backload), auto_apply: true, seed: 7 });
   state.freeAgentQuotes = {};
+  if (result.offer_sheet) {
+    // FA-REAL slice 3: an offer sheet is signed when he agrees; his team then has a day to match.
+    if (result.status === "offer_sheet_signed") showToast(`${player.name} signed your offer sheet: ${terms}. ${player.restricted?.team_abbrev || "His team"} has until the end of ${result.sheet?.match_deadline || "tomorrow"} to match.`);
+    else showToast(result.reason || result.offer_sheet.player_reason || "He did not sign the sheet.", true);
+    const nextRoom = await action("free_agency_room", { ...savePayload(), team: userTeam(), seed: 7 });
+    await refreshDashboardAfterPhaseMutation("freeagency", nextRoom);
+    return;
+  }
   const decision = result.negotiation?.decision || {};
   const signed = result.apply_result?.status === "applied";
   state.freeAgentOfferResults ||= {};
@@ -9926,6 +10075,13 @@ async function advanceReSigning(mode) {
 
 async function advanceFreeAgency(mode) {
   const result = await action("advance_free_agency", { ...savePayload(), team: userTeam(), mode, seed: 7 });
+  if (result.status === "decision_needed") {
+    // FA-REAL slice 3: a rival's offer sheet for one of your players: Match or Pass before the day ends.
+    showToast(result.reason || "Match or pass on the offer sheet first.", true);
+    await refreshDashboardAfterPhaseMutation("freeagency", result.room);
+    window.CardBoard?.open("phase-free_agency-checklist");
+    return;
+  }
   const done = result.room?.state?.status === "completed";
   showToast(done ? "The first wave is over: signing day recap." : `Market day ${result.room?.state?.day || ""}: ${Number(result.result?.accepted_count || 0)} signing(s).`);
   await refreshDashboardAfterPhaseMutation("freeagency", result.room);
@@ -14938,6 +15094,12 @@ function syncAssistantGMPhone() {
         showTradeDeadlinePrompt();
       } else if (message.target === "trade-market") {
         await openTradeMarketBoard();
+      } else if (message.target === "offer-sheet") {
+        // FA-REAL slice 3: open the room on the Match or Pass decision.
+        state.view = "dashboard";
+        await loadDashboardSnapshot(userTeam());
+        render();
+        window.CardBoard?.open("phase-free_agency-checklist");
       } else if (message.target === "league-wire") {
         await openLeagueActivityCard();
         const post = [...document.querySelectorAll("[data-league-event-id]")].find(el => el.dataset.leagueEventId === message.event_id);

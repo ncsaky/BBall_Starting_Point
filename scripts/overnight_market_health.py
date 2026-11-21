@@ -162,7 +162,8 @@ def select_action(save, endpoint):
         return "advance_re_signing", {"mode": "open_market", "team": "GSW"}
     if phase == "free_agency":
         mode = "end" if save.get("free_agency_state", {}).get("status") == "completed" else "day"
-        return "advance_free_agency", {"mode": mode, "team": "GSW"}
+        # FA-REAL slice 3: hands-off, the GM takes the assistant's advice on a rival's offer sheet.
+        return "advance_free_agency", {"mode": mode, "team": "GSW", "follow_advice": True}
     if phase == "training_camp":
         if current >= f"{end_year}-09-01":
             return "advance_save", {"next_event": True}

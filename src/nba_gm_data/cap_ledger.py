@@ -11,7 +11,8 @@ Three numbers per team, each counting what the real rules count:
   dead money, cap holds for free agents whose rights the team still holds, unsigned first-round picks and, from July 1
   to opening night, a rookie minimum for each empty roster spot below 12. Cap room is the salary cap minus this.
 - **tax payroll**: signed salaries and dead money (no holds). The luxury tax is measured on this.
-- **apron payroll**: the same as the tax payroll here (unlikely bonuses and qualifying offers come in slice 2).
+- **apron payroll**: the tax payroll plus outstanding qualifying offers (slice 3; unlikely bonuses don't exist in the
+  game).
 
 Ways to pay for a signing (``ROUTES``): Bird rights (his own team), cap room, the minimum, the room mid-level, the
 full (non-taxpayer) mid-level, the taxpayer mid-level and the bi-annual exception. Each exception is a yearly budget
@@ -21,9 +22,9 @@ either apron, but never past a hard cap it has already triggered.
 
 The save keeps each team's cap year in ``save["cap_ledger"]["seasons"][season][team_id]``: exception money used, the
 signings, whether it used cap room, the hard cap it triggered and the holds it renounced. Signing quotes (``quote``)
-are pure; ``commit`` records a signing; ``reserve`` / ``release`` let an outstanding offer (today an AI or user bid,
-in slice 3 an offer sheet) hold its money until it resolves: a bid's ``payment`` is counted as reserved while the bid
-is active, so the same room or exception cannot be promised twice.
+are pure; ``commit`` records a signing; ``reserve`` / ``release`` let an outstanding offer (an AI or user bid) hold its
+money until it resolves: a bid's ``payment`` is counted as reserved while the bid is active, and a signed offer sheet's
+payment while it is pending (slice 3, ``offer_sheets``), so the same room or exception cannot be promised twice.
 """
 from __future__ import annotations
 
@@ -427,9 +428,13 @@ def team_holds(active: dict[str, Any], save: dict[str, Any], team_id: str, seaso
         declined = declined_rookie_option(save, pid)
         if declined:
             amount = min(amount, float(declined.get("salary") or amount))
+        restricted = bool(qo and qo.get("status") == "tendered")
         holds.append({"player_id": pid, "name": player.get("name"), "kind": f"{bird['level']}_bird",
                       "bird": bird, "previous_salary": bird["previous_salary"], "amount": round(amount),
-                      "years_of_service": service, "restricted": bool(qo and qo.get("status") == "tendered")})
+                      "years_of_service": service, "restricted": restricted,
+                      # FA-REAL slice 3: apron salary counts an outstanding qualifying offer (CBA Art. VII §2(e)).
+                      "qualifying_offer": round(float((qo.get("max_qo_amount") if qo.get("maximum") else qo.get("amount"))
+                                                      or 0.0)) if restricted else 0})
     holds.sort(key=lambda h: (-h["amount"], str(h["name"])))
     return holds
 
@@ -483,6 +488,22 @@ def reservations(save: dict[str, Any], team_id: str, season: str, *, exclude_pla
         held[route] = held.get(route, 0.0) + amount
         if route != "minimum":
             held["apron"] = held.get("apron", 0.0) + amount
+    # FA-REAL slice 3: a signed offer sheet keeps the bidder's room or exception money reserved until his team matches
+    # or passes (CBA Art. XI §5(e): the bidder must keep enough Room until the sheet is settled).
+    sheets = ((save.get("offseason_decisions") or {}).get("offer_sheets") or {}).values()
+    for sheet in sheets:
+        if sheet.get("status") != "pending" or sheet.get("bidder_team_id") != team_id:
+            continue
+        if exclude_player_id and sheet.get("player_id") == exclude_player_id:
+            continue
+        payment = sheet.get("payment") or {}
+        if payment.get("season") and payment.get("season") != season:
+            continue
+        route = payment.get("route") or "cap_room"
+        amount = float(payment.get("amount") or 0.0)
+        held[route] = held.get(route, 0.0) + amount
+        if route != "minimum":
+            held["apron"] = held.get("apron", 0.0) + amount
     return held
 
 
@@ -523,6 +544,10 @@ def team_payroll(active: dict[str, Any], save: dict[str, Any], team_id: str, sea
     roster_charge = empty * float(minimum_salary(season, 0))
     tax_payroll = signed_charge + dead
     cap_payroll = tax_payroll + hold_total + roster_charge
+    # FA-REAL slice 3: apron salary also counts outstanding qualifying offers (CBA Art. VII §2(e): the greater of the
+    # qualifying offer, the maximum qualifying offer or a match notice), so a team can't use an exception that
+    # hard-caps it below the cost of keeping a restricted free agent it tendered. Ordinary holds don't count.
+    qualifying_total = float(sum(float(h.get("qualifying_offer") or 0.0) for h in holds))
     state = team_year(save, team_id, season)
     previous = team_year(save, team_id, _label(season_start(season) - 1))
     held = reservations(save, team_id, season, exclude_player_id=exclude_player_id) if include_reservations else {}
@@ -543,7 +568,8 @@ def team_payroll(active: dict[str, Any], save: dict[str, Any], team_id: str, sea
         "roster_charge": roster_charge,
         "cap_payroll": cap_payroll,
         "tax_payroll": tax_payroll,
-        "apron_payroll": tax_payroll,
+        "apron_payroll": tax_payroll + qualifying_total,
+        "qualifying_offer_total": qualifying_total,
         "cap_room": lines["salary_cap"] - cap_payroll,
         "room_under_tax": lines["tax_line"] - tax_payroll,
         "room_under_first_apron": lines["first_apron"] - tax_payroll,
@@ -715,9 +741,11 @@ def quote(active: dict[str, Any], save: dict[str, Any], team_id: str, player: di
     salary = float(salary)
     is_minimum = salary <= minimum + 100_000 and years <= EXCEPTION_MAX_YEARS["minimum"]
     held = payroll.get("reserved") or {}
-    apron_now = payroll["apron_payroll"] + float(held.get("apron") or 0.0)
     ceiling = payroll.get("hard_cap")
     own_hold = next((h for h in payroll["holds"] if h["player_id"] == pid), None)
+    # His own outstanding qualifying offer leaves apron salary when his new contract replaces it.
+    apron_now = (payroll["apron_payroll"] + float(held.get("apron") or 0.0)
+                 - float((own_hold or {}).get("qualifying_offer") or 0.0))
     team_label = team_abbrev or str(team_id).replace("team_", "").upper()
     results: list[dict[str, Any]] = []
 

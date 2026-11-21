@@ -294,3 +294,9 @@ body.unified-terminal-ui .fa-hold-table .ui-command { min-height:18px; padding:0
   .fa-cap-sheet .fa-cap-lines { grid-template-columns:minmax(0,1fr); }
   .fa-cap-sheet .fa-cap-lines > div:nth-child(odd) { border-right:0; }
 }
+
+/* FA-REAL slice 3: offer sheets in the market and the offer builder. */
+.fa-sheet-chip { display:inline-block; padding:1px 6px; border-radius:9px; background:#f6e2bf; color:#6b4610; font-size:10px; font-weight:700; white-space:nowrap; }
+.fa-offer-sheet { margin-top:8px; padding:6px 8px; border:1px solid #c2862a; border-radius:3px; background:#fffaf0; }
+.fa-offer-sheet .fa-offer-note { margin:2px 0; }
+.fa-offer-sheet .fa-offer-field { margin-top:6px; }
