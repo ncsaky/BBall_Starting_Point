@@ -5998,7 +5998,8 @@ function offseasonChecklistPanel(room = state.data.freeagency || {}) {
     make_offers: "Talk to anyone. Another team's restricted free agent (one sent a qualifying offer) signs with you only on an offer sheet, which his team may match by the end of the next day.",
     finalize: "The first wave is over. Late summer runs in the background; the game stops only for your decisions.",
   };
-  const pending = items.filter((item) => item.status === "pending").length;
+  // FA-REAL slice 3: a rival's offer sheet waiting for your Match or Pass is a decision too.
+  const pending = items.filter((item) => item.status === "pending").length + (room.offer_sheets?.for_you || []).length;
   return `<section class="fa-panel offseason-checklist" data-offseason-checklist aria-label="Offseason checklist">
     <header class="offseason-head">
       <div><p>${escapeHtml(list.season || room.signing_season || "")} · ${pending ? `${pending} decision${pending === 1 ? "" : "s"} waiting` : "No decision waiting"}</p><h3>${escapeHtml(titles[stop] || "Offseason")}</h3><span>${escapeHtml(notes[stop] || "")}</span></div>
