@@ -2,15 +2,15 @@
 
 ## TL;DR
 
-- Batch 1 has reached a checkpoint with 9 fictional people and 27 approved portraits.
+- Batch 1 has reached a checkpoint with 12 fictional people and 36 approved portraits.
 - Each approved portrait has a full-size PNG and a 320 × 320 game JPEG.
-- The next person is staff-m/0010.
+- The next person is staff-m/0013.
 
 ## Batch 1 · November 21, 2026
 
 | Staff men | Staff women | Players | Accepted portraits | Redone stages | Elapsed wall time |
 |---:|---:|---:|---:|---:|---:|
-| 9 / 30 | 0 / 12 | 0 / 20 | 27 | 1 | About 16 min |
+| 12 / 30 | 0 / 12 | 0 / 20 | 36 | 1 | About 20 min |
 
 The approved portraits use the built-in Codex image tool and fictional reference images only. The JPEG conversion initially cropped too tightly. The six affected files were rebuilt and visually rechecked. The game-size contact sheet shows each age in colour and greyscale and links to the full-size original.
 
@@ -25,7 +25,10 @@ The approved portraits use the built-in Codex image tool and fictional reference
 - staff-m/0007. Kept the shaved scalp. Facial-hair greying and creases show the age changes.
 - staff-m/0008. Blue eyes and wide jaw carry through as his hair recedes. Relaxed expression varies across ages.
 - staff-m/0009. Dimple and cheek shape stay recognizable. Grey side part and moustache make the oldest stage read distinctly.
+- staff-m/0010. Nose, eyes, freckles and ear shape remain recognizable through a haircut and shave. The moustache returns in the oldest stage.
+- staff-m/0011. Eyes and cheekbones stay consistent through loose locs, fuller then shorter beard, and distinct lines.
+- staff-m/0012. Frame, nose and brows make for a clear match. Stage 2 adds forehead folds and the moustache. Stage 3 has more age lines and silver hair.
 
 ## Resume
 
-Continue at `staff-m/0010`. Work in order through 30 staff men, 12 staff women and 20 male players. Review each person before starting the next. Commit every three accepted people. The manifest records the exact accepted prompts and cutover ages. Rebuild the contact sheet with `python3 scripts/build_headshot_library_contact_sheet.py`. PNGs, JPEGs and the HTML stay in the ignored output directory.
+Continue at `staff-m/0013`. Work in order through 30 staff men, 12 staff women and 20 male players. Review each person before starting the next. Commit every three accepted people. The manifest records the exact accepted prompts and cutover ages. Rebuild the contact sheet with `python3 scripts/build_headshot_library_contact_sheet.py`. PNGs, JPEGs and the HTML stay in the ignored output directory.
