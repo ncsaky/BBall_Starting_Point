@@ -590,6 +590,9 @@ class SearchMarket:
         gap = round(floor - price(preferred), 2)
         base = {"preferred": preferred["pairing"]["buyer_id"], "best_price_by": lead["pairing"]["buyer_id"],
                 "gap": gap, "reasons": reasons}
+        if gap <= 0:
+            war["decision"] = {**base, "rule": "best_price", "tie_broken_by_preference": True}
+            return preferred  # the same price: the seller's preference breaks the tie
         raised = self.raise_to_floor(preferred, seller, floor, evaluate)
         if raised is not None:
             preferred["candidate"] = raised
@@ -905,6 +908,9 @@ def decision_text(canonical: dict[str, Any], war: dict[str, Any]) -> str | None:
         passed = _abbrev_of(canonical, decision["passed_over"])
         return (f"{winner}'s offer was worth the most to {seller}. {seller} preferred {passed}'s ({reasons}), but "
                 f"{passed} could not match the price.")
+    if second and decision.get("tie_broken_by_preference"):
+        return (f"{winner}'s offer was worth as much to {seller} as {_abbrev_of(canonical, sorted(second)[0])}'s, and "
+                f"{seller} preferred it: {reasons}.")
     if second:
         return f"{winner}'s offer was worth the most to {seller}, more than {_abbrev_of(canonical, sorted(second)[0])}'s."
     return f"{winner}'s offer was worth the most to {seller}."
