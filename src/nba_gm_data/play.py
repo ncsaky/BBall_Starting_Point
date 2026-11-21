@@ -5183,6 +5183,22 @@ def open_free_agency_from_re_signing(save: dict[str, Any], team_id: str, canonic
     return notes
 
 
+def leave_stop_one(canonical: dict[str, Any], save_path: Path, save: dict[str, Any], team_id: str, seed: int) -> str:
+    """FA-REAL slice 2: leave stop 1 the way the calendar allows: to draft night before the draft, else to the market
+    (undecided options and qualifying offers take their defaults)."""
+    from .offseason_calendar import offseason_dates
+    end_year = int(str(save.get("meta", {}).get("season") or CANONICAL_SEASON)[:4]) + 1
+    calendar = offseason_dates(end_year, save)
+    if str(save.get("state", {}).get("current_date") or "") < calendar["draft_round_one"]:
+        root = save_path.parent.parent if save_path.parent.name == "saves" else Path.cwd()
+        advance_save(root, canonical, save_path, to_date=calendar["draft_round_one"], seed=seed)
+        return "done"
+    for note in open_free_agency_from_re_signing(save, team_id, canonical):
+        print(note)
+    write_save(save_path, save)
+    return "done"
+
+
 def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int, forced: bool = False) -> str | None:
     while True:
         save = ensure_league_save_defaults(load_save(save_path), canonical)
@@ -5196,15 +5212,14 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
             and right.get("season") == save.get("meta", {}).get("season")
         ]
         if not rights:
-            open_free_agency_from_re_signing(save, team["id"], canonical)
-            write_save(save_path, save)
-            return "done"
+            return leave_stop_one(canonical, save_path, save, team["id"], seed)
         players = {player["id"]: player for player in active.get("players", [])}
-        day = int(state.get("re_signing_day") or 1)
-        day_count = int(state.get("re_signing_day_count") or 2)
         clear_screen()
-        print_title("Own Free Agents | Exclusive Re-Signing Window")
-        print(f"Day {day}/{day_count}. No outside teams can bid yet. You may go above tax room to retain your own players.")
+        from .offseason_calendar import offseason_dates
+        calendar = offseason_dates(int(str(save.get("meta", {}).get("season") or CANONICAL_SEASON)[:4]) + 1)
+        print_title("Decide Who To Keep | Your Own Free Agents")
+        print(f"Options and qualifying offers are due {calendar['decisions_deadline']}; the draft is {calendar['draft_round_one']}; "
+              f"other teams can talk to your free agents from {calendar['market_opens']}. Deals are official when he agrees.")
         print_cap_summary(active, save, team["id"], team_cap_summary(active, save, team["id"], season=contract_start_season_for_signing(save)))
         print_rule()
         print(" #  Player                     Pos Age OVR  MPG   PPG  Ask")
@@ -5224,8 +5239,8 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
             )
         print_rule()
         print("1. Negotiate with a player")
-        print("2. Advance exclusive day")
-        print("3. Skip to open free agency")
+        print("2. Continue (to draft night, or after it to free agency)")
+        print("3. Continue (same as 2)")
         print("4. Trade Room")
         print("5. Team dashboard")
         print("0. Save and quit" if forced else "0. Back")
@@ -5272,19 +5287,8 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
                     },
                 )
                 pause("Player rejected the offer and may test open free agency.")
-        elif choice == "2":
-            if day >= day_count:
-                open_free_agency_from_re_signing(save, team["id"], canonical)
-            else:
-                state["re_signing_day"] = day + 1
-                current = date.fromisoformat(save["state"]["current_date"])
-                advance_lifecycle_to(canonical, save, min(current + timedelta(days=1), date(current.year, 6, 30)).isoformat(), seed)
-            write_save(save_path, save)
-            return "done"
-        elif choice == "3":
-            open_free_agency_from_re_signing(save, team["id"], canonical)
-            write_save(save_path, save)
-            return "done"
+        elif choice in {"2", "3"}:
+            return leave_stop_one(canonical, save_path, save, team["id"], seed)
         elif choice == "4":
             trade_room(active, save_path, user_team, seed)
         elif choice == "5":
