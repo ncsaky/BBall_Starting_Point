@@ -495,7 +495,7 @@ def _generated_class_records(year: str, seed: int, config: dict[str, Any], *, ta
         source_ids=["src_draft_model_config_v1"],
         notes="Generated deterministic future draft class with season-to-season talent variance.",
     )
-    prospects = assign_class_faces(apply_public_ranks(prospects))  # stock photos, none repeated in the class
+    prospects = assign_class_faces(apply_public_ranks(prospects))  # generated faces, then stock; none repeated
     return {"draft_classes": [draft_class], "draft_prospects": prospects, "draft_prospect_traits": traits}
 
 
@@ -543,7 +543,9 @@ def assemble_real_prospect_class(year: str, seed: int, generated: dict[str, Any]
                                                              talent_model=talent_model)
             real_ids[prospect.id] = str(real_by_slot[slot].get("id") or "")
         else:
-            prospect = gen_prospects[slot - 1]
+            # His face is picked again with this class (below): faces from the all-generated draw would leave the
+            # made-up prospects that fill the later slots on stock photos while generated faces sit unused.
+            prospect = replace(gen_prospects[slot - 1], headshot_url=None)
             prospect_traits = traits_by_prospect.get(prospect.id, [])
         prospects.append(prospect)
         traits.extend(prospect_traits)
@@ -555,7 +557,8 @@ def assemble_real_prospect_class(year: str, seed: int, generated: dict[str, Any]
                "and international prospects; data/canonical/real_prospects.json), placed by expected pick; other "
                "slots generated deterministically from year and seed."),
     )
-    # Real players' photos where found (gui/assets/headshots/real), else a stock photo not used in this class.
+    # Real players' photos where found (gui/assets/headshots/real), else a generated face, then a stock photo, not
+    # used in this class.
     prospects = assign_class_faces(apply_public_ranks(prospects), real_ids)
     return {"draft_classes": [draft_class], "draft_prospects": prospects, "draft_prospect_traits": traits}
 
