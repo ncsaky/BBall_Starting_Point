@@ -6,6 +6,52 @@ Current priority (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE now, ODDS-COA
 
 ---
 
+## Ready now (2026-11-21): INJURY-HISTORY-2025-26 (fresh chat)
+
+Laptop rule: at most two heavy jobs at once (FA-REAL slice 2 and a coordinator test run are the two now). Keep this task light: fetching and parsing only, no season simulations.
+
+### INJURY-HISTORY-2025-26: a complete 2025-26 injury record for every real player
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task INJURY-HISTORY-2025-26 (its board row already exists; set it to "in progress (Codex)").
+Read docs/agents/tasks/top30-games.md (especially "What's left" item 1), docs/agents/tasks/injuries-2.md and
+docs/agents/tasks/injury-followups.md.
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_injury_history -b codex/injury-history-2025-26 HEAD
+Symlink from the main checkout: .venv, every git-ignored file under data/research/bbi/ (including tools/), and
+output/injuries-2 (its nba_pdf/ cache of official injury reports). Commit on branch codex/injury-history-2025-26; never
+push, never commit to main. Raw Basketball Index data stays local; never commit it.
+
+Problem: the injury model starts every real player from his recorded injury history. Its source, the Basketball Index
+tracker, is missing about two-thirds of 2025-26 (18.5 entries per 1,000 games played against 50-55 in 2023-25). The
+game's stars therefore start with too little history and play too many games.
+
+Build data/research/injury_history_2025_26.json: every 2025-26 absence stretch for every player in the game's real
+pool, from:
+- the 2025-26 box scores already in the repo (data/research/game_boxscores_2025_26.json): who missed which of his
+  team's games while on the roster;
+- the NBA's official injury report for each game day (the PDFs; scripts/research/opening_night_injuries.py already
+  fetches and parses them, standard library only; reuse its parser and cache, and fetch politely with small delays):
+  the listed reason (injury/illness with body part and diagnosis, rest, personal, G League, suspension, not with team).
+For each stretch: player, team, first and last game missed, games missed, reason category, body part and diagnosis
+where listed, and sources. Separate injuries and illness from rest, personal, G League and suspensions. Then compare
+with the tracker's 2025-26 entries: how many tracker entries you match, how many new injury stretches you add, and
+the resulting entries per 1,000 games played (target: in line with 2023-25's 50-55 if real).
+Write a small script scripts/research/injury_history_2025_26.py that rebuilds the file.
+
+Do NOT change the injury model, health.py, or the git-ignored data/canonical/injury_player_evidence_v2.json. Another
+agent reads it right now; the coordinator plugs your file in later. Do NOT touch src/, gui/ or tests/ beyond one test
+for your parser if you change it.
+Report in docs/agents/tasks/injury-history-2025-26.md: a plain-language TL;DR first (3 lines), then coverage numbers,
+the comparison with the tracker, examples (e.g. a star's 2025-26 record before and after), gaps, and how to plug the
+file into scripts/build_injury_model.py. Set the board row to "review" and stop.
+```
+
+---
+
 ## Ready now (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE (fresh chat); ODDS-COACH still waits
 
 Running now: TRADE-MARKET, FA-REAL slice 1 and TOP30-GAMES (Claude agents). This task is data research only and touches no code they own.
