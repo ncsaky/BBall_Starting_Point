@@ -68,7 +68,7 @@ class LeagueHealthAuditTests(unittest.TestCase):
         save["team_records"]["0"]["wins"] = 41
         self.assertEqual(audit.career_action(save, 14, "GSW"), ("simulate_playoff_all", {}))
         save["playoff_state"] = {"status": "completed"}
-        self.assertEqual(audit.career_action(save, 14, "GSW")[1]["to_date"], "2027-06-22")
+        self.assertEqual(audit.career_action(save, 14, "GSW")[1]["to_date"], "2027-06-17")  # FA-REAL slice 2: stop 1 opens June 17
         for phase, action in (("draft_lottery", "draft_reveal_lottery"), ("draft", "draft_sim_all"),
                               ("re_signing", "advance_re_signing"), ("free_agency", "advance_free_agency")):
             save["state"]["phase"] = phase

@@ -20,7 +20,8 @@ class CalendarTests(unittest.TestCase):
         self.assertTrue(7.5 < sum(means.values()) < 10.5)  # about 9 over the five days (real Julys 8 and 16)
         self.assertLessEqual(max(max(v) for v in days.values()), cal.FREE_AGENCY_TRADES_PER_DAY)
         self.assertGreater(max(days[1]), 2)  # more than the old two-a-day cap
-        self.assertEqual(cal.free_agency_trade_slots("2027-06-30", 17, 1), 0)
+        # FA-REAL slice 2: the market opens June 30 (free-agency day 1); the day before it has no trade slots.
+        self.assertEqual(cal.free_agency_trade_slots("2027-06-29", 17, None), 0)
         self.assertEqual(cal.free_agency_trade_slots("2027-07-01", 17, 1), cal.free_agency_trade_slots("2027-07-01", 17, 1))
 
     def test_late_summer_and_september_have_a_few_trades(self):
