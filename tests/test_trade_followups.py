@@ -214,6 +214,14 @@ class YoungRotationGuardTests(unittest.TestCase):
         self.assertTrue(tt.young_piece_kept(upside, "contend"))
         self.assertFalse(tt.young_piece_kept(dict(upside, age=27.0), "contend"))
 
+    def test_a_rising_teams_young_rotation_is_its_timeline(self):
+        # Kyle Filipowski: 23, 16 minutes, about the 8th-best player on rising Utah's court, trade value just under 70.
+        filipowski = young("filipowski", minutes=16.0, on_court=53.5, value=68.0)
+        self.roster(filipowski)
+        self.assertEqual(filipowski["on_court_rank"], 8)
+        self.assertTrue(tt.young_piece_kept(filipowski, "rise"))
+        self.assertFalse(tt.young_piece_kept(filipowski, "contend"))
+
     def test_a_listing_or_blocked_reason_still_exposes_him(self):
         self.assertTrue(tt.exposing_reasons(["gm_listed"]))
         self.assertFalse(tt.exposing_reasons(["over_tax_line"]))  # money alone never puts a young piece on the market

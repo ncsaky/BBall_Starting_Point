@@ -525,7 +525,7 @@ def young_piece_kept(row: dict[str, Any], seller_stance: str) -> bool:
     if (seller_stance in {"rebuild", "retool"} or row["minutes"] >= YOUNG_STARTER_MINUTES
             or row["on_court"] >= YOUNG_CORE_ON_COURT):
         return True
-    return young_rotation_piece(row)
+    return young_rotation_piece(row, seller_stance)
 
 
 # TRADE-FOLLOWUPS: a young player in a real rotation role who is one of the team's better players is a piece it builds
@@ -537,6 +537,11 @@ YOUNG_ROTATION_RANK = 8           # ... or among the team's eight players with t
 YOUNG_ROTATION_MIN_MINUTES = 10.0
 YOUNG_ROTATION_ON_COURT_RANK = 6  # value: one of the team's six best players on the court ...
 YOUNG_ROTATION_VALUE = 70.0       # ... or a trade value (age and upside included) of a young core player
+# On a rising team the young rotation is the team's timeline: one of its eight best players on the court, or a trade
+# value of 65, is enough. The first two-season run with the guard had rising Utah sell Kyle Filipowski (23, 16
+# minutes, the 7th-9th best player on its court, a trade value just under 70) to rebuilding Chicago for one second.
+RISING_ON_COURT_RANK = 8
+RISING_VALUE = 65.0
 
 
 def role_row(canonical: dict[str, Any], player_id: str) -> dict[str, Any]:
@@ -562,14 +567,17 @@ def role_row(canonical: dict[str, Any], player_id: str) -> dict[str, Any]:
             "on_court_rank": 1 + sum(1 for pid, f in facts.items() if (-f[1], pid) < (-on_court, player_id))}
 
 
-def young_rotation_piece(row: dict[str, Any]) -> bool:
-    """A young player (25 or younger) in a real rotation role who is also one of the team's better players."""
+def young_rotation_piece(row: dict[str, Any], stance: str | None = None) -> bool:
+    """A young player (25 or younger) in a real rotation role who is also one of the team's better players (on a
+    rising team, one of its better young rotation players: its timeline)."""
     if row["age"] > YOUNG_PIECE_AGE:
         return False
     rank = int(row.get("minutes_rank") or 99)
     role = row["minutes"] >= YOUNG_ROTATION_MINUTES or (rank <= YOUNG_ROTATION_RANK
                                                          and row["minutes"] >= YOUNG_ROTATION_MIN_MINUTES)
-    valued = int(row.get("on_court_rank") or 99) <= YOUNG_ROTATION_ON_COURT_RANK or row["value"] >= YOUNG_ROTATION_VALUE
+    rising = stance == "rise"
+    valued = (int(row.get("on_court_rank") or 99) <= (RISING_ON_COURT_RANK if rising else YOUNG_ROTATION_ON_COURT_RANK)
+              or row["value"] >= (RISING_VALUE if rising else YOUNG_ROTATION_VALUE))
     return role and valued
 
 

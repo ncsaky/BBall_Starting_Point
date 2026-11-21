@@ -347,8 +347,8 @@ def young_piece_outgoing(canonical: dict[str, Any], team_id: str, outgoing: list
         if minutes >= YOUNG_STARTER_MINUTES or player["id"] in core:
             return True
         # TRADE-FOLLOWUPS: the same young rotation pieces the market keeps (trade_targets.young_rotation_piece).
-        from .trade_targets import role_row, young_rotation_piece
-        if young_rotation_piece(role_row(canonical, player["id"])):
+        from .trade_targets import role_row, team_stance, young_rotation_piece, _state
+        if young_rotation_piece(role_row(canonical, player["id"]), team_stance(_state(canonical, team_id))):
             return True
     return False
 
