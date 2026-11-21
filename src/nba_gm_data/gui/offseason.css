@@ -101,3 +101,11 @@ body.unified-terminal-ui .offseason-table thead th { font-size: 9px !important; 
 .cutdown-twoway-games em { font-style: normal; font-size: 10px; }
 .cutdown-twoway-actions { display: flex; gap: 6px; justify-content: flex-end; }
 .cutdown-twoway-actions .ui-command { min-height: 22px; font-size: 10px; }
+
+/* CONTRACT-TERMS: the Option Decisions card (yours, then notable ones around the league); same table style. */
+.option-decisions { margin: 8px 0 10px; border-bottom: 1px solid var(--season-soft-line, #d5dde3); }
+.option-decisions > header { display: flex; align-items: baseline; gap: 10px; padding: 4px 12px 6px; }
+.option-decisions > header h4 { margin: 0; font-size: 12px; }
+.option-decisions > header span { font-size: 10.5px; color: #5c6b75; }
+.option-decisions-summary { margin: 8px 12px 4px; font-size: 10.5px; color: #34424c; }
+.option-decisions-table + .option-decisions-summary { margin-top: 10px; }

@@ -3350,8 +3350,10 @@ def league_event_kind_matches(event: dict[str, Any], kind: str) -> bool:
     requested = str(kind or "").strip().lower()
     event_kind = str(event.get("kind") or "").strip().lower()
     groups = {
-        "transactions": {"trade", "trade_demand", "free_agent_signing", "free_agency_signing", "extension", "staff_hire", "staff_fire"},
-        "all_transactions": {"trade", "trade_demand", "free_agent_signing", "free_agency_signing", "extension", "staff_hire", "staff_fire"},
+        "transactions": {"trade", "trade_demand", "free_agent_signing", "free_agency_signing", "extension", "staff_hire", "staff_fire",
+                         "option_decision"},
+        "all_transactions": {"trade", "trade_demand", "free_agent_signing", "free_agency_signing", "extension", "staff_hire", "staff_fire",
+                             "option_decision"},
         "trades": {"trade"},
         "trade_demands": {"trade_demand"},
         "extensions": {"extension"},
@@ -6741,7 +6743,8 @@ def process_ai_extensions(
             offer.setdefault("team_id", team_id)
             offer.setdefault("start_season", extension_start_season_from_date_save(through_date))
             # CONTRACT-TERMS: an extension is signed in the season of its date (its anniversaries count from there).
-            offer["signed_season"] = extension_start_season_from_date_save(through_date)
+            from .contract_ai import signing_season_for_date
+            offer["signed_season"] = signing_season_for_date(through_date)
             from .contract_ai import extension_first_year_limit
             current_contract = next((c for c in active.get("contracts", []) if c.get("player_id") == player_id), None)
             limit = extension_first_year_limit(current_contract, player, str(offer.get("start_season") or ""),
@@ -6751,6 +6754,21 @@ def process_ai_extensions(
                 # CONTRACT-TERMS: an extension's first year is at most 140% of the greater of his salary and the
                 # average salary (veterans), and never above his max.
                 offer = {**offer, "annual_salary": round(min(float(offer["annual_salary"]), float(limit)), 2)}
+            # CONTRACT-TERMS: the extension's shape (salary path, final-season option) at the real shares.
+            from .contract_ai import EXTENSION_MAX_RAISE
+            from .contract_terms import ai_structure
+            annual_dollars = float(offer.get("annual_salary") or 0.0)
+            annual_dollars *= 1_000_000 if 0 < annual_dollars < 1_000_000 else 1
+            shape = ai_structure(annual_dollars, int(offer.get("years") or 1), player_id=str(player_id),
+                                 team_id=str(team_id), season=f"ext:{through_date[:4]}")
+            # The negotiated salary stays the average: a rising deal starts lower, a declining one higher.
+            from .contract_terms import multipliers, path_rate
+            steps = multipliers(int(offer.get("years") or 1), path_rate(shape["path"], EXTENSION_MAX_RAISE))
+            first = float(offer.get("annual_salary") or 0.0) * len(steps) / sum(steps)
+            if limit:
+                first = min(first, float(limit))
+            offer = {**offer, "annual_salary": round(first, 2), "salary_path": shape["path"], "option": shape["option"],
+                     "max_raise": EXTENSION_MAX_RAISE}
             offer = merge_extension_offer_with_existing_contract(offer, negotiation)
             if not extension_offer_fits_hard_cap(baseline if baseline is not None else canonical, save, player_id, offer):
                 continue
@@ -8754,7 +8772,8 @@ def offer_to_contract_seasons(offer: dict[str, Any]) -> list[dict[str, Any]]:
             row["cap_charge"] = int(round(float(charges[offset])))
         seasons.append(row)
     from .contract_protection import negotiated_seasons
-    return negotiated_seasons(offer, seasons)
+    from .contract_terms import apply_option
+    return apply_option(negotiated_seasons(offer, seasons), offer.get("option") or "none")   # CONTRACT-TERMS
 
 
 def initial_team_morale(canonical: dict[str, Any]) -> dict[str, dict[str, float]]:
@@ -10367,6 +10386,11 @@ def ai_re_signing_contract_terms(save: dict[str, Any], player: dict[str, Any], n
     salary = max(salary, minimum_salary(next_season, service_years(player, next_season)))
     if (player.get("_bird") or {}).get("level") == "early":
         years = max(2, years)
+    # CONTRACT-TERMS: the deal's shape (salary path, final-season option) at the real shares for its salary band.
+    from .contract_terms import ai_structure, apply_option, path_rate
+    shape = ai_structure(float(salary), years, player_id=str(player.get("id")), team_id=str(player.get("team_id") or ""),
+                         season=next_season, bird_level=(player.get("_bird") or {}).get("level"))
+    raise_rate = path_rate(shape["path"], raise_rate)
     seasons = [
         {
             "season": season_label_from_start(season_start_year(next_season) + offset),
@@ -10378,7 +10402,9 @@ def ai_re_signing_contract_terms(save: dict[str, Any], player: dict[str, Any], n
         }
         for offset, amount in enumerate(raise_schedule(salary, years, raise_rate))
     ]
-    return {"salary": salary, "years": years, "seasons": seasons, "score": score, "raise_rate": raise_rate}
+    apply_option(seasons, shape["option"])
+    return {"salary": salary, "years": years, "seasons": seasons, "score": score, "raise_rate": raise_rate,
+            "salary_path": shape["path"], "option": shape["option"]}
 
 
 def re_signing_within_bird_rights(player: dict[str, Any], salary: float) -> bool:
@@ -10407,7 +10433,10 @@ def ai_re_signing_fits_hard_cap(
     from .cap_ledger import quote
     result = quote(active, save, str(team_id), player, float(terms["salary"]), int(terms["years"]), season=next_season,
                    bird=player.get("_bird") or None, raise_rate=terms.get("raise_rate"), include_reservations=False)
-    player["_re_signing_payment"] = result.get("payment")
+    payment = result.get("payment")
+    if payment:
+        payment = {**payment, "option": terms.get("option") or "none", "salary_path": terms.get("salary_path") or "rising"}
+    player["_re_signing_payment"] = payment
     return bool(result["ok"])
 
 

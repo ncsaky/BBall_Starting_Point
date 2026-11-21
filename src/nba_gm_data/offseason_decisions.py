@@ -144,7 +144,8 @@ def option_kind(player: dict[str, Any], row: dict[str, Any]) -> str | None:
             years_in = _season_start(row["season"]) - int(player.get("draft_year") or 0)
         except (TypeError, ValueError):
             years_in = -1
-        if int(player.get("draft_round") or 0) == 1 and years_in in (2, 3):
+        from .contract_ai import _first_round_pick
+        if _first_round_pick(player) and years_in in (2, 3):
             return "rookie_option"
     return kind
 
@@ -283,23 +284,34 @@ def injured_through_opening(save: dict[str, Any], player_id: str, season: str) -
     return False
 
 
+def role_words(player: dict[str, Any]) -> str:
+    """'a 31-year-old starter' (CONTRACT-TERMS: option reasons name his role and age)."""
+    minutes = _minutes(player)
+    role = "starter" if minutes >= 28 else "rotation player" if minutes >= 18 else "bench player"
+    return f"a {round(_age(player))}-year-old {role}"
+
+
 def decide_player_option(save: dict[str, Any], player: dict[str, Any], row: dict[str, Any], market: float | None,
                          bird_level: str | None) -> tuple[str, str]:
-    """(status, reason) for a player option or early termination: the player's own choice."""
+    """(status, reason) for a player option or early termination: the player's own choice. The reason names what
+    decided it: the money available, his role and age, an injury (CONTRACT-TERMS)."""
     rules = RULES["player_option"]
     option = float(row.get("salary") or 0.0)
     age = _age(player)
+    who = role_words(player)
     if injured_through_opening(save, player["id"], row["season"]):
-        return "exercised", f"He is injured into next season, so he keeps his guaranteed {_m(option)}."
+        return "exercised", f"He is injured into next season, so he keeps his guaranteed {_m(option)} ({who})."
     if not market:
-        return "exercised", f"He keeps his {_m(option)} option: no clear market for him."
+        return "exercised", f"He keeps his {_m(option)} option: no clear market for {who}."
     bar = option * (rules["opt_out_ratio_30_plus"] if age >= 30 else rules["opt_out_ratio"])
     regular_with_bird = bird_level == "full" and _minutes(player) >= rules["regular_minutes"]
     if market >= bar or (regular_with_bird and market >= bar * (1.0 - rules["close_band"])):
-        why = (f"he expects about {_m(market)} a year on the market against his {_m(option)} option"
-               + (", and a longer deal (his team holds his full Bird rights)" if market < option else ""))
+        why = (f"as {who} he expects about {_m(market)} a year on the market against his {_m(option)} option"
+               + (", and a longer deal (his team holds his full Bird rights)" if market < option else "")
+               + (" while he is still young enough for a long deal" if age < 30 and market >= option else ""))
         return "declined", f"He becomes a free agent: {why}."
-    return "exercised", f"He keeps his {_m(option)} option: the market would pay him about {_m(market)}."
+    return "exercised", (f"He keeps his {_m(option)} option: the market would pay {who} about {_m(market)}"
+                         + (", and at his age a guaranteed year is worth more" if age >= 30 else "") + ".")
 
 
 def decide_team_option_ai(active: dict[str, Any], save: dict[str, Any], player: dict[str, Any], row: dict[str, Any],
@@ -389,7 +401,44 @@ def decide_veteran_options(canonical: dict[str, Any], save: dict[str, Any], next
             add_news(save, "free_agency", f"{player.get('name')} becomes a free agent: "
                      f"{'he declined his' if record['decided_by'] == 'player' else 'his team declined the'} "
                      f"{_m(record['salary'])} option.", date_value=_today(save))
+        announce_option(save, player, record, users)
     return made
+
+
+OPTION_KIND_WORDS = {"player_option": "player option", "early_termination": "early termination option",
+                     "team_option": "team option", "rookie_option": "rookie-scale option"}
+NOTABLE_OPTION_SALARY = 10_000_000   # the league wire carries option decisions of $10M and up (and all of yours)
+
+
+def option_headline(player: dict[str, Any], record: dict[str, Any]) -> str:
+    from .save import team_id_to_abbrev
+    team = team_id_to_abbrev(record.get("team_id")) if record.get("team_id") else ""
+    kind = OPTION_KIND_WORDS.get(record.get("kind"), "option")
+    money = _m(record.get("salary") or 0)
+    if record.get("status") == "pending":
+        return f"{team} must decide {player.get('name')}'s {money} {kind} by {record.get('deadline')}."
+    if record.get("decided_by") == "player":
+        verb = "picks up" if record["status"] == "exercised" else "declines"
+        return f"{player.get('name')} {verb} his {money} {kind} with {team}."
+    verb = "keeps" if record["status"] == "exercised" else "declines"
+    return f"{team} {verb} {player.get('name')}'s {money} {kind}."
+
+
+def announce_option(save: dict[str, Any], player: dict[str, Any], record: dict[str, Any], users: set[str]) -> None:
+    """CONTRACT-TERMS: put a decided option on the league wire when it is notable ($10M and up) or the user's."""
+    if record.get("status") not in {"exercised", "declined"}:
+        return
+    mine = record.get("team_id") in users
+    if not mine and max(float(record.get("salary") or 0), float(record.get("market_millions") or 0) * 1e6) < NOTABLE_OPTION_SALARY:
+        return
+    from .save import add_league_event
+    add_league_event(save, "option_decision", option_headline(player, record), date_value=_today(save),
+                     team_ids=[record.get("team_id")], player_ids=[player.get("id")],
+                     importance=0.72 if float(record.get("salary") or 0) >= 25_000_000 else None,
+                     details={"player_id": player.get("id"), "team_id": record.get("team_id"), "kind": record.get("kind"),
+                              "status": record.get("status"), "decided_by": record.get("decided_by"),
+                              "salary": record.get("salary"), "season": record.get("season"),
+                              "reason": record.get("reason"), "user_team": mine})
 
 
 def decide_rookie_options(canonical: dict[str, Any], save: dict[str, Any], day: str) -> list[dict[str, Any]]:
@@ -436,6 +485,8 @@ def decide_rookie_options(canonical: dict[str, Any], save: dict[str, Any], day: 
             status, reason = decide_team_option_ai(active, save, player, row, "rookie_option", values.get(player["id"]))
             made.append(record_option(save, player, row, "rookie_option", player.get("team_id"), status, "team", reason,
                                       values.get(player["id"])))
+            if status == "declined":
+                announce_option(save, player, made[-1], users)   # declined rookie options are news
     store(save)["rookie_options_done"] = f"{option_season}:{'lapsed' if str(day) > deadline else 'ai'}"
     return made
 
@@ -489,7 +540,47 @@ def user_decide_option(canonical: dict[str, Any], save: dict[str, Any], player_i
                           (record.get("market_millions") or 0) * 1e6 if record.get("market_millions") else None)
     if not exercise and record["kind"] != "rookie_option":
         make_free_agent_with_rights(save, player_id, str(record.get("team_id")))
+    announce_option(save, player, saved, _user_team_ids(save))   # CONTRACT-TERMS: your decision goes on the wire
     return {"ok": True, "option": saved}
+
+
+def option_decisions_view(canonical: dict[str, Any], save: dict[str, Any], team_id: str, *,
+                          active: dict[str, Any] | None = None, kinds: set[str] | None = None) -> dict[str, Any]:
+    """CONTRACT-TERMS part 3: the option decisions of the current offseason (or autumn, for rookie-scale options),
+    for the "Option Decisions" card: yours (the player's choice with his reason; your team options with Keep/Decline)
+    and the notable ones around the league. Reads the same records the engine writes (rule 4)."""
+    from .save import team_id_to_abbrev
+    root = store(save)
+    today = _today(save)
+    meta = str((save.get("meta") or {}).get("season") or "")
+    start = _season_start(meta) if meta else 0
+    # Summer: options for next season (decided June 17-29); autumn: rookie-scale options for next season too.
+    season = season_label(start + 1) if start else ""
+    records = [dict(r) for r in root["options"].values() if r.get("season") == season]
+    pending = [r for r in user_pending_options(canonical, save, active=active) if r.get("team_id") == team_id
+               and r.get("season") == season]
+    seen = {(r["player_id"], r["kind"]) for r in pending}
+    yours = pending + [r for r in records if r.get("team_id") == team_id and (r["player_id"], r["kind"]) not in seen
+                       and r.get("status") != "pending"]
+    if kinds is not None:
+        yours = [r for r in yours if r.get("kind") in kinds]
+    def row(r: dict[str, Any]) -> dict[str, Any]:
+        return {"player_id": r.get("player_id"), "name": r.get("name"), "team_abbrev": team_id_to_abbrev(r.get("team_id")) if r.get("team_id") else "",
+                "kind": r.get("kind"), "kind_words": OPTION_KIND_WORDS.get(r.get("kind"), "option"),
+                "salary_millions": round(float(r.get("salary") or 0) / 1e6, 2), "season": r.get("season"),
+                "status": r.get("status"), "decided_by": r.get("decided_by"), "deadline": r.get("deadline"),
+                "market_millions": r.get("market_millions"), "reason": r.get("reason"), "date": r.get("date")}
+    league = [r for r in records if r.get("team_id") != team_id and r.get("status") in {"exercised", "declined"}
+              and (kinds is None or r.get("kind") in kinds)]
+    league.sort(key=lambda r: -max(float(r.get("salary") or 0), float(r.get("market_millions") or 0) * 1e6))
+    counts = {"player_opted_in": sum(1 for r in records if r.get("decided_by") == "player" and r["status"] == "exercised"),
+              "player_opted_out": sum(1 for r in records if r.get("decided_by") == "player" and r["status"] == "declined"),
+              "team_kept": sum(1 for r in records if r.get("decided_by") in {"team", "user"} and r["status"] == "exercised"),
+              "team_declined": sum(1 for r in records if r.get("decided_by") in {"team", "user", "default"} and r["status"] == "declined")}
+    return {"season": season, "today": today, "yours": [row(r) for r in sorted(yours, key=lambda r: (r.get("status") != "pending", -float(r.get("salary") or 0)))],
+            "league": [row(r) for r in league[:12]], "counts": counts,
+            "deadlines": {"summer": offseason_dates(start + 1, save)["decisions_deadline"] if start else None,
+                          "rookie": rookie_option_deadline(start).isoformat() if start else None}}
 
 
 def make_free_agent_with_rights(save: dict[str, Any], player_id: str, team_id: str) -> None:
@@ -1059,7 +1150,9 @@ def stop_one_checklist(canonical: dict[str, Any], save: dict[str, Any], team_id:
     pending = sum(1 for i in items if i.get("status") == "pending")
     return {"season": season, "dates": dates, "items": items, "pending_count": pending, "departed": departed,
             "cap_room_millions": round(float(payroll.get("cap_room") or 0) / 1e6, 2),
-            "holds_millions": round(sum(float(h["amount"]) for h in holds.values()) / 1e6, 2)}
+            "holds_millions": round(sum(float(h["amount"]) for h in holds.values()) / 1e6, 2),
+            # CONTRACT-TERMS: the option decisions card (yours and around the league).
+            "option_decisions": option_decisions_view(canonical, save, team_id, active=active)}
 
 
 def stop_four_checklist(canonical: dict[str, Any], save: dict[str, Any], team_id: str,
@@ -1105,7 +1198,9 @@ def stop_four_checklist(canonical: dict[str, Any], save: dict[str, Any], team_id
     items.sort(key=lambda i: (i.get("deadline") or "", i["kind"]))
     return {"season": season, "items": items, "roster_deadline": deadline,
             "rookie_option_deadline": rookie_option_deadline(start).isoformat(),
-            "pending_count": sum(1 for i in items if i.get("status") == "pending")}
+            "pending_count": sum(1 for i in items if i.get("status") == "pending"),
+            # CONTRACT-TERMS: rookie-scale option decisions (yours and around the league).
+            "option_decisions": option_decisions_view(canonical, save, team_id, active=active, kinds={"rookie_option"})}
 
 
 def rookie_extension_candidates(active: dict[str, Any], save: dict[str, Any], team_id: str) -> list[str]:

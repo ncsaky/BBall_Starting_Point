@@ -985,7 +985,9 @@ def contract_seasons(payment: dict[str, Any], *, status: str = "save_state_offer
             row["guaranteed_salary"] = salary if guaranteed else 0
             row["protection_basis"] = "negotiated"
         rows.append(row)
-    return rows
+    # CONTRACT-TERMS: a player or team option on the final season (contract_terms.apply_option).
+    from .contract_terms import apply_option
+    return apply_option(rows, payment.get("option") or "none")
 
 
 def contract_terms(payment: dict[str, Any]) -> dict[str, Any]:
@@ -998,7 +1000,15 @@ def contract_terms(payment: dict[str, Any]) -> dict[str, Any]:
         "cap_charges": [int(round(float(s.get("cap_charge") if s.get("cap_charge") is not None else s["salary"])))
                         for s in payment.get("schedule") or []],
         "trade_eligible_date": payment.get("trade_eligible_date"),
+        # CONTRACT-TERMS: the contract's shape (salary path and final-season option).
+        "salary_path": payment.get("salary_path") or _path_of(payment),
+        "option": payment.get("option") or "none",
     }
+
+
+def _path_of(payment: dict[str, Any]) -> str:
+    rate = float(payment.get("raise_rate") or 0.0)
+    return "rising" if rate > 0 else "declining" if rate < 0 else "flat"
 
 
 # ---------------------------------------------------------------------------------------------------------------------

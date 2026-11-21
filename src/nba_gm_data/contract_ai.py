@@ -623,7 +623,7 @@ def apply_contract_to_save_state(
         accepted_offer = dict(accepted_offer)
         if negotiation_payload.get("negotiation_type") == "extension":
             # CONTRACT-TERMS: an extension is signed in the season of its date, not the season it starts paying.
-            accepted_offer["signed_season"] = extension_start_season_from_date(date)
+            accepted_offer["signed_season"] = signing_season_for_date(date)
         accepted_offer.setdefault("original_contract_years", int(accepted_offer.get("years") or accepted_offer.get("term_years") or 1))
         accepted_offer.setdefault("signed_season", str(accepted_offer.get("start_season") or extension_start_season_from_date(date)))
     if accepted_offer and negotiation_payload.get("negotiation_type") == "extension":
@@ -805,6 +805,18 @@ def extension_start_season_from_date(date_value: str) -> str:
     return f"{start}-{str(start + 1)[-2:]}"
 
 
+def signing_season_for_date(date_value: str) -> str:
+    """CONTRACT-TERMS: the contract season a signing on this date belongs to (from July on, the season that starts that
+    year; earlier, the one that started the year before). Extensions are closed from the June 17 switch to July 6."""
+    try:
+        year = int(str(date_value)[:4])
+        month = int(str(date_value)[5:7])
+    except (TypeError, ValueError):
+        return CANONICAL_SEASON
+    start = year if month >= 7 else year - 1
+    return f"{start}-{str(start + 1)[-2:]}"
+
+
 def merge_extension_offer_with_existing_contract(offer: dict[str, Any], negotiation_payload: dict[str, Any]) -> dict[str, Any]:
     start_season = str(offer.get("start_season") or extension_start_season_from_date(str(negotiation_payload.get("date") or CANONICAL_START_DATE)))
     requested_start_year = season_start_year_for_contract(start_season)
@@ -845,17 +857,21 @@ def offer_contract_seasons(offer: dict[str, Any], start_season: str, guarantee_s
         start = int(start_season.split("-")[0])
     except (ValueError, AttributeError):
         start = 2026
+    # CONTRACT-TERMS: the salary path (rising, flat or declining by the extension limit, 8% of year one) when the
+    # offer carries one; flat otherwise.
+    from .contract_terms import apply_option, normalize_path, path_rate
+    rate = path_rate(normalize_path(offer.get("salary_path"), "flat"), float(offer.get("max_raise") or EXTENSION_MAX_RAISE))
     seasons = [
         {
             "season": f"{start + offset}-{str(start + offset + 1)[-2:]}",
-            "salary": int(round(annual)),
+            "salary": int(round(annual * (1.0 + rate * offset))),
             "option_type": offer.get("option_type"),
             "guarantee_status": guarantee_status,
         }
         for offset in range(max(1, years))
     ]
     from .contract_protection import negotiated_seasons
-    return negotiated_seasons(offer, seasons)
+    return apply_option(negotiated_seasons(offer, seasons), offer.get("option") or "none")
 
 
 def projected_retirement_start_year(player: dict[str, Any], active_start_year: int | None = None) -> int | None:
