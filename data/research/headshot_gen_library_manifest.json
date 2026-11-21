@@ -1,0 +1,100 @@
+{
+  "people": [
+    {
+      "id": "staff-m/0001",
+      "gender": "male",
+      "role": "staff",
+      "stages": [
+        {
+          "min_age": 0,
+          "file": "staff-m/0001-s1.jpg",
+          "age": 38,
+          "changes": "Short tight curls, neat dark goatee and navy quarter-zip. Slight smile."
+        },
+        {
+          "min_age": 46,
+          "file": "staff-m/0001-s2.jpg",
+          "age": 50,
+          "changes": "Higher hairline, grey at the temples and chin, more eye and forehead lines. Charcoal polo."
+        },
+        {
+          "min_age": 58,
+          "file": "staff-m/0001-s3.jpg",
+          "age": 62,
+          "changes": "Silver cropped curls and grey goatee, deeper lines around the eyes and softer lower cheeks. Slate quarter-zip."
+        }
+      ],
+      "prompts": [
+        "Create a single square photorealistic studio headshot for a sports management game. An entirely fictional 38-year-old Black male basketball assistant coach with warm deep-brown skin, a long oval face, low straight eyebrows, prominent cheekbones, a broad nose with a rounded tip, and a small gap between the front teeth visible in a relaxed slight smile. Short tight curls with a soft taper and a neat short goatee. Solid navy quarter-zip without any markings. A slight three-quarter turn with both eyes visible, looking into the lens. Head and upper chest, hair fully in frame, face horizontally centered, even soft studio light and a plain light-grey background. Natural skin texture. One adult only. No hands, lettering, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity anchor. Create one square photorealistic headshot of the exact same fictional adult basketball coach at 50, twelve years older. Preserve his long oval facial proportions, distinctive cheekbones, low straight brows, broad rounded nose, and small front-tooth gap. Add clearly visible but natural crow's feet, forehead creases, some grey around the temples and chin, and a slightly higher hairline. Keep the short goatee and switch to a solid charcoal polo. A relaxed slight smile, slight head turn, both eyes visible. Center his head and upper chest with a little clearance above his hair against the same seamless light-grey background and even studio light. Only one adult. No hands, logos, text, numbers, team designs or watermarks.",
+        "Edit the attached synthetic portrait into a square photoreal studio headshot of the exact same fictional adult basketball coach at 62. Preserve his long oval face, prominent cheekbones, low straight eyebrows, broad round-tipped nose, small front-tooth gap and recognizable eyes. Age him visibly beyond the reference, with silver tightly cropped curls, a mostly grey close goatee, deeper eye creases and slightly heavier lower eyelids, and natural lower cheek and neck laxity. Switch to a plain slate blue quarter-zip. Slight turn the other way, relaxed subtle smile, both eyes visible, hair entirely in the frame. Center the face with upper chest below, light-grey seamless background and even light. Only one adult. No hands, logos, text, numbers, team designs or watermark."
+      ],
+      "tool": "Built-in Codex image generation",
+      "date": "2026-11-21"
+    },
+    {
+      "id": "staff-m/0002",
+      "gender": "male",
+      "role": "staff",
+      "stages": [
+        {
+          "min_age": 0,
+          "file": "staff-m/0002-s1.jpg",
+          "age": 38,
+          "changes": "A 38-year-old white male front office executive with fair freckled skin, a round face, narrow grey-blue eyes, an asymmetrical smile, broad soft chin, a short auburn side part and clean-shaven cheeks. Plain dark olive suit over a cream shirt, no tie. Slight turn right, relaxed closed-mouth smile."
+        },
+        {
+          "min_age": 49,
+          "file": "staff-m/0002-s2.jpg",
+          "age": 50,
+          "changes": "At age 50. Keep the short reddish side part with a little greying above the ears. Show natural under-eye folds and forehead creases. Fine brown stubble, same round face and distinct smile. Plain blue button-down, shoulders at a slight angle."
+        },
+        {
+          "min_age": 56,
+          "file": "staff-m/0002-s3.jpg",
+          "age": 62,
+          "changes": "At age 62. Keep the same round facial structure and distinctive crooked smile. Thinner salt-and-pepper hair with still-visible red tones, clean-shaven, stronger natural lines and a little extra weight at the cheeks. Thin dark-rimmed glasses and a plain charcoal suit. Slight turn left."
+        }
+      ],
+      "prompts": [
+        "A 38-year-old white male front office executive with fair freckled skin, a round face, narrow grey-blue eyes, an asymmetrical smile, broad soft chin, a short auburn side part and clean-shaven cheeks. Plain dark olive suit over a cream shirt, no tie. Slight turn right, relaxed closed-mouth smile. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At age 50. Keep the short reddish side part with a little greying above the ears. Show natural under-eye folds and forehead creases. Fine brown stubble, same round face and distinct smile. Plain blue button-down, shoulders at a slight angle. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At age 62. Keep the same round facial structure and distinctive crooked smile. Thinner salt-and-pepper hair with still-visible red tones, clean-shaven, stronger natural lines and a little extra weight at the cheeks. Thin dark-rimmed glasses and a plain charcoal suit. Slight turn left. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark."
+      ],
+      "tool": "Built-in Codex image generation",
+      "date": "2026-11-21"
+    },
+    {
+      "id": "staff-m/0003",
+      "gender": "male",
+      "role": "staff",
+      "stages": [
+        {
+          "min_age": 0,
+          "file": "staff-m/0003-s1.jpg",
+          "age": 38,
+          "changes": "A 38-year-old Korean American male basketball video coordinator, light tan skin, long wedge-shaped face, slightly hooded dark eyes, high straight brows, small cleft chin and black thick straight hair swept to one side. Shaven, plain dark plum polo, calm eyes and a closed-mouth half smile, chin tilted a fraction left."
+        },
+        {
+          "min_age": 45,
+          "file": "staff-m/0003-s2.jpg",
+          "age": 50,
+          "changes": "At 50. Same distinctive cleft chin, eyes and brows. Shorter side-parted hair and a few ash strands over each sideburn. Thin brushed-metal oval glasses, modest under-eye folds and a warmer smile. Plain black half-zip."
+        },
+        {
+          "min_age": 61,
+          "file": "staff-m/0003-s3.jpg",
+          "age": 62,
+          "changes": "At 62. Same distinctive face with prominent nasolabial folds and crow's feet, silver at the sides and a wide dark streak over the crown. Shaven. Slight shift in shoulder angle, oval glasses and an unmarked black jacket over a soft white shirt."
+        }
+      ],
+      "prompts": [
+        "A 38-year-old Korean American male basketball video coordinator, light tan skin, long wedge-shaped face, slightly hooded dark eyes, high straight brows, small cleft chin and black thick straight hair swept to one side. Shaven, plain dark plum polo, calm eyes and a closed-mouth half smile, chin tilted a fraction left. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 50. Same distinctive cleft chin, eyes and brows. Shorter side-parted hair and a few ash strands over each sideburn. Thin brushed-metal oval glasses, modest under-eye folds and a warmer smile. Plain black half-zip. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 62. Same distinctive face with prominent nasolabial folds and crow's feet, silver at the sides and a wide dark streak over the crown. Shaven. Slight shift in shoulder angle, oval glasses and an unmarked black jacket over a soft white shirt. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark."
+      ],
+      "tool": "Built-in Codex image generation",
+      "date": "2026-11-21"
+    }
+  ]
+}
