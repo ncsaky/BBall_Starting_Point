@@ -90,3 +90,17 @@ The manifest passed checks for paths, stage counts and cutover ages. All 222 PNG
 ## Resume
 
 The last accepted player is `player-m/0024`. The next player ID is `player-m/0025`. The manifest records the exact accepted prompts and cutover ages. Rebuild the contact sheet with `python3 scripts/build_headshot_library_contact_sheet.py`. The portraits and HTML are in the ignored `output/headshots-gen-library/` directory in this worktree.
+
+## Batch 2
+
+- In progress with 3 completed people and 12 new portraits.
+- 3 players, 0 staff women and 0 staff men. 1 redone stages. About 6 minutes.
+- Continue at player-m/0028.
+
+Order: 40 four-stage player sets, 10 three-stage staff women, then staff men as capacity allows. All subjects and image references are fictional adults. The built-in Codex image tool was used. Each accepted image has a full-size PNG and a 320 × 320 JPEG. The combined contact sheet compares colour and greyscale.
+
+### Visual review
+
+- player-m/0025. Cleft chin and nose stay distinct. The shave, chin grey and eye lines differentiate age 35.
+- player-m/0026. Hooded eyes and wide jaw carry across. Fuller neck and grey goatee mark the last stage.
+- player-m/0027. Redid age 35 with a shorter cut and clearer crow's feet. Freckles and eye shape stay consistent.
