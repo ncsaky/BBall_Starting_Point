@@ -1,4 +1,4 @@
-# Ten-season league health check: findings (partial, 8 of 10 seasons)
+# Ten-season league health check: findings (complete, 10 seasons)
 
 _Run on the Azure worker overnight 2026-11-21: seed 17, Golden State hands-off, code as of the night's start. The run resumed after a safety shutdown and is finishing seasons 9-10. Data: `output/ten-season-partial/league_health.json` (one snapshot per action). Measured at the first regular-season snapshot of each season, rostered players only. "Value" is the engine's own player value (the AI's scale, not the new display scale)._
 
@@ -6,6 +6,25 @@ _Run on the Azure worker overnight 2026-11-21: seed 17, Golden State hands-off, 
 - **The league stays believable in the middle.** Talent levels, roster turnover, ages and the rise of drafted players all look healthy over eight seasons.
 - **The top flattens.** After Jokić ages, no one reaches his level again. The best young players stop growing at about 22-23 (Wembanyama flat at 74-75 from 22 to 30, Cooper Flagg peaking near 69 at 22). Top values bunch onto a few exact numbers (five of the top 15 at exactly 73.8), the signature of a hidden ceiling.
 - **The weakest team getting weaker was the hands-off test team (Golden State)**, which by design never trades or signs. The AI teams' parity looks healthy.
+
+## Final season (2035-36, run completed, all 10 regular seasons verified)
+- **Top of the league:** the best player is 75.0 and the top-5 average 74.2, against 78.0 and 75.2 in 2026-27. The 30th best is 68.0.
+- **Made-up players:** 17 of the top 30 (good turnover); the top-30 average age is 27.7.
+- **The 2035-36 top 10:**
+  - Reese Alston 75.0 (made-up, 26);
+  - Wembanyama 74.2 (31);
+  - CJ Rosser 73.9 (made-up);
+  - Alonzo Brankovic II 73.9 (made-up);
+  - Kingston Flemings 73.8;
+  - AJ Williams 73.8 (made-up);
+  - Jonas Freeman-Hughes 73.8 (made-up, 23);
+  - Dominic Okoro 73.4 (made-up);
+  - Darius Acuff Jr. 72.7;
+  - Quentin Coleman 72.4 (made-up).
+
+  Three players sit at exactly 73.8, the same ceiling signature as before.
+- **AI parity holds:** the weakest AI team's top nine is 56.5, the best 67.6.
+- **Cost:** 10 machine-hours on Azure, about US$1.47.
 
 ## The numbers
 | Season | Best | Top 5 avg | Top 10 avg | 30th | 60th | Rotation median | Made-up in top 30 | Made-up in rotations | Avg age | Top-30 age |
