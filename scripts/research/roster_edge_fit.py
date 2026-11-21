@@ -6,7 +6,7 @@ import argparse
 from collections import Counter
 import json
 from pathlib import Path
-from statistics import mean
+from statistics import mean, median
 
 YEARS = (2023, 2024, 2025, 2026)
 DATA = Path(__file__).resolve().parents[2] / "data/research/roster_edge_2023_2026.json"
@@ -135,6 +135,40 @@ def exhibit_10(rows, teams):
     }
 
 
+def camp(decisions):
+    checkpoints = decisions["camp_team_rosters"]
+    players = decisions["camp_checkpoint_players"]
+    cuts = decisions["camp_waivers"]
+    return {
+        "counts_by_team": {
+            y: {r["team"]: r["reconstructed_camp_count"] for r in checkpoints if r["summer"] == y}
+            for y in YEARS
+        },
+        "median_camp_players": {
+            y: median(r["reconstructed_camp_count"] for r in checkpoints if r["summer"] == y)
+            for y in YEARS
+        },
+        "teams_starting_with_21": by_year([r for r in checkpoints if r["reconstructed_camp_count"] == 21],
+                                         lambda _: "teams"),
+        "opening_standard_slots": by_year(checkpoints, lambda r: r["opening_standard"]),
+        "waivers": by_year(cuts, lambda r: r["contract_type_at_cut"] or "other_or_unknown"),
+        "claims": by_year(decisions["camp_waiver_claims"], lambda _: "claims"),
+        "retention_holdout": binary_holdouts(
+            players, "retained_by_opening",
+            [
+                ("keep unless Exhibit 10", lambda r: not r["signed_as_exhibit_10_at_checkpoint"]),
+                ("keep contracted two-ways or players with an earlier NBA appearance",
+                 lambda r: r["signed_as_two_way_before_checkpoint"] or r["prior_nba"] is not None),
+                ("keep recent first-rounders and players with earlier NBA minutes",
+                 lambda r: r["guarantee_at_checkpoint"] == "rookie_scale_first_two_years"
+                 or ((r["prior_nba"] or {}).get("mpg") or 0) >= 10),
+                ("keep a drafted player unless on Exhibit 10",
+                 lambda r: r["draft_pick"] is not None and not r["signed_as_exhibit_10_at_checkpoint"]),
+            ],
+        ),
+    }
+
+
 def validate(data):
     for section, rows in data["decisions"].items():
         for row in rows:
@@ -155,6 +189,8 @@ def main():
     if "exhibit_10_deals" in decisions:
         teams = sorted({r["team"] for r in decisions["two_way_roster_snapshots"]})
         result["exhibit_10"] = exhibit_10(decisions["exhibit_10_deals"], teams)
+    if "camp_team_rosters" in decisions:
+        result["camp"] = camp(decisions)
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
 
