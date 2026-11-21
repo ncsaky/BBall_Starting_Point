@@ -3,18 +3,21 @@
 
 Sources (fetched politely: one request at a time, a delay between requests, every response cached on disk):
 - Head coaches: the lead photo of the coach's English Wikipedia article (Wikimedia Commons, freely licensed;
-  the licence and author are recorded per photo).
+  the licence and author are recorded per photo); where there is none, the official headshot on the coach's page
+  of the National Basketball Coaches Association (nbacoaches.com; --nbca-coaches).
 - College prospects: the player's headshot on his ESPN men's college basketball team roster
   (a.espncdn.com/i/headshots/, allowed by ESPN's robots.txt). ESPN photos are not cleared for redistribution;
   the manifest marks them reference_only_not_cleared, like the NBA player headshots the game already shows.
-- High-school and international prospects: no consistent public source; they fall back to the generated
-  face library (faces.py), recorded in the manifest as a deliberate fallback.
+- High-school, international and the remaining college prospects: photos found by hand research
+  (data/overrides/prospect_photos/found_*.json: USA Basketball, MaxPreps, school and club rosters, league sites,
+  Wikimedia Commons), cut out and framed like ESPN's headshots (--found). Anyone still without a photo falls back
+  to the stock photo library (faces.py), recorded in the manifest as a deliberate fallback.
 
 Images are resized to 260 px wide and stored as AVIF (coach photos as JPEG) under
 src/nba_gm_data/gui/assets/headshots/real/ with manifest.json (person, source URL, date).
 
 Usage:
-  python3 scripts/fetch_real_headshots.py [--coaches] [--prospects] [--delay 0.8]
+  python3 scripts/fetch_real_headshots.py [--coaches] [--nbca-coaches] [--prospects] [--found FILE ...] [--delay 0.8]
 """
 
 from __future__ import annotations
@@ -108,6 +111,7 @@ CROPPER = ROOT / "output" / "headshots" / "tooling" / "bin" / "crop_headshot"
 def crop_face(source: Path, target: Path, width: int = 260) -> list[int] | None:
     """Head-and-shoulders crop around the largest face (scripts/crop_headshot.swift, compiled into CROPPER)."""
     if not CROPPER.exists():
+        CROPPER.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run(["swiftc", "-O", str(ROOT / "scripts" / "crop_headshot.swift"), "-o", str(CROPPER)], check=True)
     target.parent.mkdir(parents=True, exist_ok=True)
     result = subprocess.run([str(CROPPER), str(source), str(target), str(width)], capture_output=True, text=True)
@@ -209,7 +213,7 @@ def fetch_coaches(manifest: dict) -> None:
         summary = coach_summary(name)
         thumb = (summary or {}).get("thumbnail") or {}
         if not summary or not thumb:
-            entry.update(status="fallback_generated", reason="no basketball Wikipedia article with a lead photo")
+            entry.update(status="fallback_stock", reason="no basketball Wikipedia article with a lead photo")
             out[norm(name)] = entry
             print(f"coach {name}: fallback")
             continue
@@ -218,7 +222,7 @@ def fetch_coaches(manifest: dict) -> None:
         licence = commons_licence(file_title) if "/commons/" in original else {}
         if not licence.get("licence"):
             # Only freely licensed Commons photos: a file kept on English Wikipedia alone may be non-free.
-            entry.update(status="fallback_generated", reason="lead photo is not a freely licensed Commons file",
+            entry.update(status="fallback_stock", reason="lead photo is not a freely licensed Commons file",
                          source_page=(summary.get("content_urls") or {}).get("desktop", {}).get("page"))
             out[norm(name)] = entry
             print(f"coach {name}: fallback (licence)")
@@ -234,7 +238,7 @@ def fetch_coaches(manifest: dict) -> None:
             cropped = crop_face(stage(full, ".jpg"), target) if full else None
             image_url = original if cropped else image_url
         if not cropped:
-            entry.update(status="fallback_generated", reason="photo download failed or no face found in it")
+            entry.update(status="fallback_stock", reason="photo download failed or no face found in it")
         else:
             entry.update(
                 status="real_photo",
@@ -248,6 +252,45 @@ def fetch_coaches(manifest: dict) -> None:
             )
         out[norm(name)] = entry
         print(f"coach {name}: {entry['status']}")
+
+
+# Head coaches with no freely licensed photo: the official headshot on the National Basketball Coaches Association's
+# coach page (nbacoaches.com, the NBA coaches' association; robots.txt allows these pages). Same reference-use status
+# as the NBA player headshots the game already shows. (page, image)
+NBCA = "https://nbacoaches.com"
+NBCA_COACHES = {
+    "Charles Lee": ("/charles-lee-head-coach-bio/", "/wp-content/uploads/2024/05/CHARLES-LEE-2.png"),
+    "David Adelman": ("/david-adelman/", "/wp-content/uploads/2025/05/NBCA-HeadCoach-DavidAdelman.jpg"),
+    "Taylor Jenkins": ("/taylor-jenkins/", "/wp-content/uploads/2026/05/Taylor-Jenkins2.jpg"),
+    "Jamahl Mosley": ("/jamahl-mosley/", "/wp-content/uploads/2026/05/jamahl-mosley.png"),
+    "Sean Sweeney": ("/sean-sweeney/", "/wp-content/uploads/2026/08/sweeny.jpg"),
+    "Jordan Ott": ("/jordan-ott/", "/wp-content/uploads/2025/12/Ott-1-Edited-scaled.png"),
+    "Kenny Atkinson": ("/kenny-atkinson/", "/wp-content/uploads/2025/12/AtkinsonHeadshot.png"),
+    "Nick Nurse": ("/nick-nurse/", "/wp-content/uploads/2022/11/NBCA-HeadCoach-NickNurse.jpg"),
+}
+
+
+def fetch_nbca_coaches(manifest: dict) -> None:
+    out = manifest.setdefault("coaches", {})
+    for name, (page, image) in NBCA_COACHES.items():
+        entry = out.get(norm(name)) or {"name": name, "gender": "male"}
+        if entry.get("status") == "real_photo":
+            continue
+        data = fetch(NBCA + image)
+        target = OUT / "coaches" / f"{slug(name)}.jpg"
+        cropped = crop_face(stage(data, "." + image.rsplit(".", 1)[-1]), target) if data else None
+        if not cropped:
+            print(f"coach {name}: NBCA photo failed")
+            continue
+        for key in ("reason", "licence", "licence_url", "author", "file_page"):
+            entry.pop(key, None)
+        entry.update(
+            status="real_photo", file=f"/assets/headshots/real/coaches/{target.name}", source="nbca_coach_page",
+            source_page=NBCA + page, source_url=NBCA + image, rights="reference_only_not_cleared",
+            crop=cropped, fetched=TODAY,
+        )
+        out[norm(name)] = entry
+        print(f"coach {name}: real_photo (NBCA)")
 
 
 # ----------------------------------------------------------------------------------------------- prospects
@@ -313,14 +356,14 @@ def fetch_prospects(manifest: dict, limit: int | None = None) -> None:
         record = {"name": entry["name"], "kind": entry["kind"], "gender": "male", "fetched": TODAY}
         team_name = entry.get("college_team") or (entry.get("scouting") or {}).get("team")
         if not str(entry.get("kind", "")).startswith("college") or not team_name:
-            record.update(status="fallback_generated",
+            record.update(status="fallback_stock",
                           reason=f"no consistent public headshot source for {entry['kind'].replace('_', ' ')} prospects")
             out[pid] = record
             continue
         team = index.get(team_key(team_name))
         if not team:
             unmatched_teams.add(team_name)
-            record.update(status="fallback_generated", reason=f"college team {team_name!r} not found on ESPN")
+            record.update(status="fallback_stock", reason=f"college team {team_name!r} not found on ESPN")
             out[pid] = record
             continue
         if team["id"] not in rosters:
@@ -329,7 +372,7 @@ def fetch_prospects(manifest: dict, limit: int | None = None) -> None:
         athlete = match_athlete(entry["name"], rosters[team["id"]])
         href = ((athlete or {}).get("headshot") or {}).get("href")
         if not href:
-            record.update(status="fallback_generated",
+            record.update(status="fallback_stock",
                           reason="not on his ESPN team roster" if not athlete else "ESPN has no headshot for him",
                           espn_team=team.get("displayName"))
             out[pid] = record
@@ -337,7 +380,7 @@ def fetch_prospects(manifest: dict, limit: int | None = None) -> None:
         target = OUT / "prospects" / f"{slug(pid)}.avif"
         data = fetch(href, binary=True)
         if not data or not convert(stage(data, ".png"), target, "avif", 260, 60):
-            record.update(status="fallback_generated", reason="photo download or conversion failed")
+            record.update(status="fallback_stock", reason="photo download or conversion failed")
         else:
             record.update(
                 status="real_photo",
@@ -357,11 +400,77 @@ def fetch_prospects(manifest: dict, limit: int | None = None) -> None:
         print("unmatched college teams:", sorted(unmatched_teams), file=sys.stderr)
 
 
+STOCK_TOOL = ROOT / "output" / "headshots-v2" / "bin" / "stock_headshot"
+
+
+def cutout(source: Path, target: Path) -> dict | None:
+    """ESPN-style headshot (person cut out, greyscale, head-and-shoulders, 260 px AVIF): scripts/stock_headshot.swift."""
+    if not STOCK_TOOL.exists():
+        STOCK_TOOL.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(["swiftc", "-O", str(ROOT / "scripts" / "stock_headshot.swift"), "-o", str(STOCK_TOOL)], check=True)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    result = subprocess.run([str(STOCK_TOOL), str(source), str(target), "260"], capture_output=True, text=True)
+    try:
+        info = json.loads(result.stdout.strip().splitlines()[-1])
+    except (ValueError, IndexError):
+        return None
+    return info if info.get("written") and target.exists() else None
+
+
+def commons_thumb(url: str, width: int = 1280) -> str:
+    """A Wikimedia Commons original as a standard-width thumbnail (originals can be 5000+ px)."""
+    match = re.match(r"(https://upload\.wikimedia\.org/wikipedia/commons)/(\w/\w\w)/([^/?]+)$", url)
+    if not match:
+        return url
+    return f"{match.group(1)}/thumb/{match.group(2)}/{match.group(3)}/{width}px-{match.group(3)}"
+
+
+def fetch_found_prospects(manifest: dict, path: Path) -> None:
+    """Photos found by hand research for prospects with no ESPN college headshot (high-school, international and a
+    few college players): USA Basketball, MaxPreps, school rosters, club and league sites, Wikimedia Commons.
+    Each is cut out and framed like the ESPN headshots; the source page and site are recorded."""
+    out = manifest.setdefault("prospects", {})
+    for row in json.loads(path.read_text()):
+        record = out.get(row["id"]) or {"name": row["name"], "gender": "male"}
+        if not row.get("found") or not row.get("image_url") or record.get("status") == "real_photo":
+            continue
+        if row.get("reject"):
+            record["reason"] = f"photo found but not used: {row['reject']}"
+            out[row["id"]] = record
+            continue
+        image_url = commons_thumb(row["image_url"])
+        data = fetch(image_url, ua=WIKI_UA if "wikimedia.org" in image_url else BROWSER_UA, binary=True)
+        target = OUT / "prospects" / f"{slug(row['id'])}.avif"
+        info = cutout(stage(data, ".img"), target) if data else None
+        if not info:
+            record["reason"] = "photo found but no usable face in it"
+            out[row["id"]] = record
+            print(f"prospect {row['name']}: no usable face")
+            continue
+        for key in ("reason",):
+            record.pop(key, None)
+        commons = "wikimedia.org" in image_url
+        record.update(
+            status="real_photo", file=f"/assets/headshots/real/prospects/{target.name}",
+            source="wikimedia_commons" if commons else "researched_public_page", source_name=row.get("source_name"),
+            source_page=row.get("source_page"), source_url=row["image_url"], fetched=TODAY,
+            rights="free_licence_wikimedia_commons" if commons else "reference_only_not_cleared",
+        )
+        if commons:
+            file_title = "File:" + urllib.parse.unquote(row["image_url"].rsplit("/", 1)[-1])
+            record.update({k: v for k, v in commons_licence(file_title).items() if v})
+        out[row["id"]] = record
+        print(f"prospect {row['name']}: real_photo ({row.get('source_name')})")
+
+
 def main() -> None:
     global DELAY
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--coaches", action="store_true")
+    parser.add_argument("--nbca-coaches", action="store_true", help="NBCA headshots for coaches with no free photo")
     parser.add_argument("--prospects", action="store_true")
+    parser.add_argument("--found", action="append", default=[],
+                        help="JSON list of researched prospect photos (id, image_url, source_page, source_name)")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--delay", type=float, default=DELAY)
     args = parser.parse_args()
@@ -369,14 +478,19 @@ def main() -> None:
     path = OUT / "manifest.json"
     manifest = json.loads(path.read_text()) if path.exists() else {}
     manifest["notes"] = (
-        "Real headshots stored once for the game (260 px). Coach photos: Wikimedia Commons, licence per photo. "
+        "Real headshots stored once for the game (260 px). Coach photos: Wikimedia Commons (licence per photo), or "
+        "the NBA coaches' association's official headshot where no free photo exists (reference only). "
         "Prospect photos: ESPN college rosters, reference only (rights not cleared), like the NBA player headshots "
-        "the game already links. status fallback_generated = no usable real photo; the game shows a generated face."
+        "the game already links. status fallback_stock = no usable real photo; the game shows a stock photo of a real person (faces.py)."
     )
     if args.coaches:
         fetch_coaches(manifest)
+    if args.nbca_coaches:
+        fetch_nbca_coaches(manifest)
     if args.prospects:
         fetch_prospects(manifest, args.limit)
+    for found in args.found:
+        fetch_found_prospects(manifest, Path(found))
     OUT.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(manifest, indent=1, sort_keys=True, ensure_ascii=False) + "\n")
     for group in ("coaches", "prospects"):

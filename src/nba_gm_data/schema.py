@@ -167,7 +167,7 @@ class DraftProspect:
     notes: str
     medical_profile: dict[str, Any] = field(default_factory=dict)
     scouting_prior: dict[str, float] = field(default_factory=dict)
-    # Picture shown for him: his real photo or a generated face (faces.py); display only.
+    # Picture shown for him: his real photo or a stock photo of a real person (faces.py); display only.
     headshot_url: str | None = None
 
 

@@ -1,13 +1,16 @@
 """Faces for people shown in the game.
 
-Real people (the real head coaches, real draft prospects) use their real public photo when one was found
+Every face in the game is a photo of a real human.
+Real people (the real head coaches, real draft prospects) use their own public photo when one was found
 (gui/assets/headshots/real/, listed with sources in its manifest.json; scripts/fetch_real_headshots.py).
-Made-up people get a face from the generated library (gui/assets/headshots/generated/<LIBRARY>/,
-scripts/build_face_library.mjs): every face there belongs to one gender, and a made-up staff member's name is
-drawn from the same gender's name list (staff_names.py), so name and face always agree.
+Made-up people get a photo from the stock library (gui/assets/headshots/stock/, scripts/build_stock_faces.py):
+openly licensed photos of real, non-famous adults (CC0, public domain, CC BY, CC BY-SA), each credited in
+stock/credits.json and in the game's Photo credits view. Every stock photo is tagged with one gender (checked by
+eye), and a made-up staff member's name is drawn from the same gender's name list (staff_names.py), so name and
+face always agree.
 
 A face is a library id such as "staff-f/0042". Within a league, faces are handed out so that no two staff members
-share one while unused faces remain (several hundred per gender), and no two prospects in a draft class share one.
+share one while unused faces remain, and no two prospects in a draft class share one.
 """
 
 from __future__ import annotations
@@ -22,9 +25,8 @@ from typing import Any, Iterable
 from . import staff_names
 from .utils import normalize_name
 
-# The generated face library in use. Swap by building another style with scripts/build_face_library.mjs
-# (same group sizes) and changing this name; new saves then use it.
-LIBRARY = "open-peeps"
+# The stock photo library (gui/assets/headshots/<LIBRARY>/<group>/<NNNN>.<ext>, manifest.json, credits.json).
+LIBRARY = "stock"
 ASSETS = Path(__file__).resolve().parent / "gui" / "assets" / "headshots"
 URL_ROOT = "/assets/headshots"
 
@@ -49,7 +51,7 @@ def _stable_int(text: str) -> int:
 
 @lru_cache(maxsize=4)
 def library_manifest(library: str = LIBRARY) -> dict[str, Any]:
-    path = ASSETS / "generated" / library / "manifest.json"
+    path = ASSETS / library / "manifest.json"
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -65,7 +67,8 @@ def real_manifest() -> dict[str, Any]:
 
 
 def face_url(face_id: str | None, library: str = LIBRARY) -> str | None:
-    return f"{URL_ROOT}/generated/{library}/{face_id}.svg" if face_id else None
+    ext = library_manifest(library).get("ext", "avif")
+    return f"{URL_ROOT}/{library}/{face_id}.{ext}" if face_id else None
 
 
 def face_gender(face_id: str | None, library: str = LIBRARY) -> str | None:
@@ -73,8 +76,21 @@ def face_gender(face_id: str | None, library: str = LIBRARY) -> str | None:
     return (library_manifest(library).get("groups", {}).get(group) or {}).get("gender")
 
 
+def valid_face(face_id: str | None, library: str = LIBRARY) -> bool:
+    """A face id that exists in the current library (older saves may hold ids from a retired library)."""
+    group, _, index = str(face_id or "").partition("/")
+    info = library_manifest(library).get("groups", {}).get(group) or {}
+    return index.isdigit() and 1 <= int(index) <= int(info.get("count") or 0)
+
+
+def is_current_url(url: str | None, library: str = LIBRARY) -> bool:
+    """A picture URL that the current game ships: a real photo or a face of the current library."""
+    text = str(url or "")
+    return text.startswith(f"{URL_ROOT}/real/") or text.startswith(f"{URL_ROOT}/{library}/")
+
+
 def senior_band(age: Any) -> bool | None:
-    """Grey-haired faces for older staff, younger-looking faces for younger staff, either in between."""
+    """Older-looking faces for older staff, younger-looking faces for younger staff, either in between."""
     try:
         age = float(age)
     except (TypeError, ValueError):
@@ -154,11 +170,18 @@ def apply_staff_face(staff: dict[str, Any], used: set[str] | None = None) -> Non
     if not staff.get("gender"):
         staff["gender"] = staff_names.first_name_gender(staff.get("name")) or "male"
     group = staff_group(staff["gender"])
-    if not staff.get("face_id") or face_gender(staff["face_id"]) != staff["gender"]:
+    if not valid_face(staff.get("face_id")) or face_gender(staff["face_id"]) != staff["gender"]:
         key = str(staff.get("market_source_id") or staff.get("id") or staff.get("name"))
         staff["face_id"] = pick_face(group, key, used, senior=senior_band(staff.get("age")))
     staff["headshot_url"] = face_url(staff["face_id"])
-    staff["headshot_source"] = "generated"
+    staff["headshot_source"] = "stock_photo"
+
+
+def has_current_face(person: dict[str, Any]) -> bool:
+    """Already shows a picture the game ships (older saves may point at a retired library: they get a new one)."""
+    if not is_current_url(person.get("headshot_url")):
+        return False
+    return person.get("headshot_source") == "real_photo" or valid_face(person.get("face_id"))
 
 
 def save_staff_people(save: dict[str, Any]) -> list[dict[str, Any]]:
@@ -170,10 +193,16 @@ def ensure_staff_faces(people: Iterable[dict[str, Any]], held: Iterable[dict[str
     A newly faced made-up person whose name is already taken in the league gets a fresh name of the same gender."""
     people = list(people)
     held = list(held)
-    used_faces = {p["face_id"] for p in [*held, *people] if p.get("face_id")}
+    used_faces = {p["face_id"] for p in [*held, *people] if has_current_face(p) and p.get("face_id")}
     used_names = {normalize_name(p.get("name")) for p in [*held, *people] if p.get("headshot_url")}
     for person in people:
-        if person.get("headshot_url") and (person.get("face_id") or person.get("headshot_source") == "real_photo"):
+        if has_current_face(person):
+            continue
+        if person.get("headshot_url") and not is_real_staff(person):
+            # A face from a retired library (older save): a new photo, same person and name.
+            person.pop("face_id", None)
+            apply_staff_face(person, used_faces)
+            used_faces.add(person["face_id"])
             continue
         if not is_real_staff(person) and normalize_name(person.get("name")) in used_names:
             # A new made-up person whose name is taken: a fresh name from the same gender's list.
@@ -223,23 +252,23 @@ def prospect_face_id(key: str, used: set[str] | None = None) -> str | None:
 
 
 def prospect_headshot_url(prospect: dict[str, Any], used: set[str] | None = None, real_id: str | None = None) -> str | None:
-    """A prospect's picture: his stored one, else his real photo (real prospects only), else a generated face."""
-    if prospect.get("headshot_url"):
+    """A prospect's picture: his stored one, else his real photo (real prospects only), else a stock photo."""
+    if is_current_url(prospect.get("headshot_url")):
         return prospect["headshot_url"]
     photo = real_prospect_photo(real_id, prospect.get("name")) if prospect.get("league") != "generated" else None
     return photo or face_url(prospect_face_id(str(prospect.get("id") or prospect.get("name")), used))
 
 
 def _face_id_of(url: str | None) -> str | None:
-    marker = f"{URL_ROOT}/generated/"
+    marker = f"{URL_ROOT}/{LIBRARY}/"
     if not url or not url.startswith(marker):
         return None
-    return url[len(marker):].split("/", 1)[1].rsplit(".", 1)[0]
+    return url[len(marker):].rsplit(".", 1)[0]
 
 
 def assign_class_faces(prospects: list[Any], real_ids: dict[str, str] | None = None) -> list[Any]:
     """Headshots for one draft class (DraftProspect records or dicts), in class order: real photos where found,
-    otherwise generated faces with no repeats inside the class."""
+    otherwise stock photos with no repeats inside the class."""
     from dataclasses import is_dataclass, replace
 
     real_ids = real_ids or {}
@@ -247,9 +276,10 @@ def assign_class_faces(prospects: list[Any], real_ids: dict[str, str] | None = N
     used = {face for face in (_face_id_of(row.get("headshot_url")) for row in rows) if face}
     out = []
     for prospect, row in zip(prospects, rows):
-        if row.get("headshot_url"):
+        if is_current_url(row.get("headshot_url")):
             out.append(prospect)
             continue
+        row = {**row, "headshot_url": None}
         url = prospect_headshot_url(row, used, real_ids.get(row.get("id")))
         face_id = _face_id_of(url)
         if face_id:

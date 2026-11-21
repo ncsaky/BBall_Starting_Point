@@ -145,6 +145,7 @@
     "modal:playerFinder": ["league", "user_search"],
     "modal:dashboardSettings": ["fallback", "sliders"],
     "modal:issueReport": ["fallback", "envelope"],
+    "modal:photoCredits": ["fallback", "sliders"],
     "modal:champion": ["playoffs", "trophy"],
     "modal:standings": ["season", "ranked"],
   };
@@ -168,7 +169,7 @@
     "card:player": "Player Card", "card:coach": "Coach Card", "card:fantasy": "Fantasy Player Card", "card:prospect": "Prospect Card",
     "card:freeAgent": "Free-Agent Card", "card:extension": "Contract Extension",
     "modal:boxScore": "Box Score", "modal:playoffBoxScore": "Playoff Box Score", "modal:leagueLeaders": "League Leaders",
-    "modal:playerFinder": "Player Finder", "modal:dashboardSettings": "Settings", "modal:issueReport": "Report an Issue",
+    "modal:playerFinder": "Player Finder", "modal:dashboardSettings": "Settings", "modal:issueReport": "Report an Issue", "modal:photoCredits": "Photo Credits",
     "modal:champion": "Champion", "modal:standings": "Full Standings",
   };
   const GROUP_NAMES = {

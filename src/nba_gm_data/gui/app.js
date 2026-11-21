@@ -4078,7 +4078,7 @@ function coachPortraitMarkup(portraitId, extraClass = "") {
   return `<span class="coach-portrait-art ${escapeAttr(extraClass)}" aria-hidden="true"><img class="coach-portrait-silver" src="${path}-silver.webp" alt="" decoding="async" draggable="false"><img class="coach-portrait-ink" src="${path}-ink.webp" alt="" decoding="async" draggable="false"></span>`;
 }
 
-// A staff member's own face: the real photo for a real head coach, otherwise his or her generated face (same
+// A staff member's own face: the real photo for a real head coach, otherwise a stock photo of a real person (same
 // gender as the name; faces.py). Saves made before faces existed fall back to the old shared coach art.
 function staffPortraitMarkup(row, portraitId, extraClass = "") {
   const source = String(row?.headshot_url || "").trim();
@@ -11401,10 +11401,73 @@ function openSettingsModal() {
         ${seasonSlideshowMenuMarkup()}
         <button type="button" class="ui-command" data-report-issue>Report an Issue</button>
         <a class="artwork-credits-link" href="/assets/game-art/CREDITS.md" target="_blank" rel="noopener">Artwork credits</a>
+        <button type="button" data-photo-credits>Photo credits</button>
         <button class="settings-return-button" data-return-save-selection>Back to Save Selection</button>
       </section>`,
   };
   renderModal();
+}
+
+// Photo credits (required by CC BY and CC BY-SA): every stock photo used for made-up staff and prospects, and every
+// real photo used under a free licence, with author, licence and source. Real photos shown for reference only (ESPN
+// college rosters, the coaches' association, USA Basketball, club sites) are counted by source, like NBA headshots.
+const PHOTO_CREDIT_COLUMNS = [["photo", "", "Photo"], ["use", "Used for", "Sort by what the photo is used for"], ["subject", "Photo", "Sort by photo title"], ["author", "Author", "Sort by author"], ["licence", "Licence", "Sort by licence"]];
+
+async function openPhotoCreditsModal() {
+  let stock = {}, real = {};
+  try {
+    [stock, real] = await Promise.all(["/assets/headshots/stock/credits.json", "/assets/headshots/real/manifest.json"].map(url => fetch(url).then(response => response.json())));
+  } catch (error) {
+    showToast("Could not load the photo credits.", true);
+    return;
+  }
+  const rows = (stock.photos || []).map(photo => ({file: photo.file, use: photo.use, subject: photo.title, author: photo.author, authorUrl: photo.author_url, licence: photo.licence, licenceUrl: photo.licence_url, source: photo.source_url}));
+  const reference = {};
+  for (const [kind, entries] of [["Real head coach", real.coaches], ["Real prospect", real.prospects]]) {
+    for (const entry of Object.values(entries || {})) {
+      if (entry.status !== "real_photo") continue;
+      if (entry.licence) rows.push({file: entry.file, use: kind, subject: entry.name, author: entry.author || "Unknown", licence: entry.licence, licenceUrl: entry.licence_url, source: entry.file_page || entry.source_page});
+      else {
+        const site = entry.source_name || ({espn_college_roster: "ESPN college rosters", nbca_coach_page: "National Basketball Coaches Association"})[entry.source] || "Public sports pages";
+        reference[site] = (reference[site] || 0) + 1;
+      }
+    }
+  }
+  const link = (text, url) => url ? `<a href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(text || "—")}</a>` : escapeHtml(text || "—");
+  const head = PHOTO_CREDIT_COLUMNS.map(([key, label, title]) => key === "photo" ? `<th scope="col" class="photo-credit-face-col"><span class="sr-only">Photo</span></th>` : `<th scope="col" data-credit-col="${key}"><button type="button" data-credit-sort="${key}" title="${escapeAttr(title)}">${escapeHtml(label)}</button></th>`).join("");
+  const body = rows.map((row, index) => `<tr data-credit-row data-sort-use="${escapeAttr(row.use || "")}" data-sort-subject="${escapeAttr(row.subject || "")}" data-sort-author="${escapeAttr(row.author || "")}" data-sort-licence="${escapeAttr(row.licence || "")}" data-order="${index}">
+      <td class="photo-credit-face"><span class="player-headshot-frame"><img src="${escapeAttr(row.file)}" alt="" loading="lazy" decoding="async"></span></td>
+      <td data-credit-col="use">${escapeHtml(row.use || "")}</td>
+      <td data-credit-col="subject">${link(row.subject, row.source)}</td>
+      <td data-credit-col="author">${link(row.author, row.authorUrl)}</td>
+      <td data-credit-col="licence">${link(row.licence, row.licenceUrl)}</td>
+    </tr>`).join("");
+  const referenceText = Object.entries(reference).sort((a, b) => b[1] - a[1]).map(([site, count]) => `${escapeHtml(site)} (${count})`).join(", ");
+  state.modal = {
+    kind: "photoCredits",
+    title: "Photo credits",
+    subtitle: "",
+    body: `<div class="photo-credits">
+      <p>Every face in the game is a photo of a real person. Made-up coaches, staff and draft prospects use openly licensed photos of real people (CC0, public domain, CC BY, CC BY-SA), cut out and shown in greyscale; the photographers and licences are listed below. Real coaches and prospects use their own photos: the freely licensed ones are listed below too.</p>
+      ${referenceText ? `<p class="photo-credits-reference">Shown for reference only, like the NBA player headshots: ${referenceText}.</p>` : ""}
+      <p class="photo-credits-count">${rows.length} credited photos.</p>
+      <div class="photo-credits-scroll"><table class="photo-credits-table" aria-label="Photo credits"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
+    </div>`,
+  };
+  renderModal();
+}
+
+function sortPhotoCredits(root, key) {
+  const table = root.querySelector(".photo-credits-table");
+  if (!table) return;
+  const descending = table.dataset.sortKey === key && table.dataset.sortDir !== "desc";
+  table.dataset.sortKey = key;
+  table.dataset.sortDir = descending ? "desc" : "asc";
+  const body = table.tBodies[0];
+  const rows = [...body.rows].sort((a, b) => (a.dataset[`sort${key[0].toUpperCase()}${key.slice(1)}`] || "").localeCompare(b.dataset[`sort${key[0].toUpperCase()}${key.slice(1)}`] || "") || Number(a.dataset.order) - Number(b.dataset.order));
+  if (descending) rows.reverse();
+  rows.forEach(row => body.appendChild(row));
+  table.querySelectorAll("[data-credit-col]").forEach(cell => cell.classList.toggle("is-sorted", cell.dataset.creditCol === key));
 }
 
 function seasonSlideshowMenuMarkup() {
@@ -12014,6 +12077,8 @@ function renderModal() {
       ? " modal-trade-room"
       : ["tradeOffers", "humanTradeOffers"].includes(state.modal.kind)
         ? " modal-trade-offers"
+      : state.modal.kind === "photoCredits"
+        ? " modal-settings modal-photo-credits"
       : ["dashboardSettings", "issueReport"].includes(state.modal.kind)
         ? " modal-settings"
       : state.modal.kind === "staffNegotiation"
@@ -12031,7 +12096,7 @@ function renderModal() {
       : state.modal.kind === "standings"
         ? " modal-standings"
         : "";
-  const closeLabel = ["standings", "teamWants", "waivers", "playerFinder", "leagueLeaders", "dashboardSettings", "issueReport"].includes(state.modal.kind) ? state.modal.title : state.modal.kind === "tradeDeadline" ? "Trade Deadline" : state.modal.kind === "tradeRoom"
+  const closeLabel = ["standings", "teamWants", "waivers", "playerFinder", "leagueLeaders", "dashboardSettings", "issueReport", "photoCredits"].includes(state.modal.kind) ? state.modal.title : state.modal.kind === "tradeDeadline" ? "Trade Deadline" : state.modal.kind === "tradeRoom"
     ? "Trade Room"
     : state.modal.kind === "dashboardStaff"
       ? "Coach Card"
@@ -12047,7 +12112,7 @@ function renderModal() {
       ? "Box Score"
       : "Trade Offers";
   const isBoxScore = ["boxScore", "playoffBoxScore"].includes(state.modal.kind);
-  const hasClipboardTitlebar = isBoxScore || ["standings", "teamWants", "waivers", "playerFinder", "leagueLeaders", "tradeRoom", "tradeDeadline", "postseason", "champion", "staffNegotiation", "dashboardSettings", "issueReport", "tradeOffers", "humanTradeOffers"].includes(state.modal.kind);
+  const hasClipboardTitlebar = isBoxScore || ["standings", "teamWants", "waivers", "playerFinder", "leagueLeaders", "tradeRoom", "tradeDeadline", "postseason", "champion", "staffNegotiation", "dashboardSettings", "issueReport", "photoCredits", "tradeOffers", "humanTradeOffers"].includes(state.modal.kind);
   const closeControl = hasClipboardTitlebar
     ? `<button type="button" class="modal-close-icon card-board-control card-board-close" data-close-modal aria-label="Close ${closeLabel}" title="Close"><img src="/assets/window-icons/x.svg" alt="" aria-hidden="true"></button>`
     : ["tradeRoom", "tradeOffers", "humanTradeOffers", "fantasyPlayer", "dashboardPlayer", "dashboardStaff", "draftProspect", "freeAgentPlayer", "freeAgentNegotiation", "freeAgentComparison", "staffNegotiation", "contractExtension"].includes(state.modal.kind)
@@ -12107,12 +12172,17 @@ function renderModal() {
   if (state.modal.kind === "dashboardSettings") {
     wireCoachRestToggles(els.modalRoot);
     els.modalRoot.querySelector("[data-report-issue]")?.addEventListener("click", openIssueReport);
+    els.modalRoot.querySelector("[data-photo-credits]")?.addEventListener("click", openPhotoCreditsModal);
     els.modalRoot.querySelector("[data-return-save-selection]")?.addEventListener("click", returnToSaveSelection);
     els.modalRoot.querySelector("[data-replay-tutorial]")?.addEventListener("click", () => {
       state.modal = null;
       renderModal();
       startGameTutorial(true);
     });
+  }
+  if (state.modal.kind === "photoCredits") {
+    els.modalRoot.querySelectorAll("[data-credit-sort]").forEach(button => button.addEventListener("click", () => sortPhotoCredits(els.modalRoot, button.dataset.creditSort)));
+    sortPhotoCredits(els.modalRoot, "use");
   }
   if (state.modal.kind === "issueReport") {
     els.modalRoot.querySelector("[data-issue-report-form]")?.addEventListener("submit", downloadIssueReport);
@@ -12793,7 +12863,7 @@ function modalWindowMark(kind) {
 }
 
 function playerHeadshotMarkup(row, className = "player-headshot") {
-  // Prospects show their real photo or generated face (faces.py) when the server sends one; blank portrait otherwise.
+  // Prospects show their real photo or a stock photo of a real person (faces.py) when the server sends one; blank portrait otherwise.
   if (row.is_prospect && !String(row.headshot_url || "").trim()) return `<span class="player-headshot-frame prospect-profile-placeholder" aria-label="Blank profile portrait"><svg class="${escapeAttr(className)}" viewBox="0 0 220 160" role="img" aria-label="Blank profile portrait"><rect width="220" height="160" fill="#e4e8eb"/><circle cx="110" cy="57" r="32" fill="#a9b3bc"/><path d="M43 160v-10c0-39 30-61 67-61s67 22 67 61v10" fill="#a9b3bc"/></svg></span>`;
   const source = String(row.headshot_url || "").trim();
   if (!source) return "";

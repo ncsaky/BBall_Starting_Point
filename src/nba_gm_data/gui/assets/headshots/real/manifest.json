@@ -23,11 +23,21 @@
    "team_id": "team_was"
   },
   "charles lee": {
+   "crop": [
+    59,
+    0,
+    375,
+    500
+   ],
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/coaches/charles-lee.jpg",
    "gender": "male",
    "name": "Charles Lee",
-   "reason": "no basketball Wikipedia article with a lead photo",
-   "status": "fallback_generated",
+   "rights": "reference_only_not_cleared",
+   "source": "nbca_coach_page",
+   "source_page": "https://nbacoaches.com/charles-lee-head-coach-bio/",
+   "source_url": "https://nbacoaches.com/wp-content/uploads/2024/05/CHARLES-LEE-2.png",
+   "status": "real_photo",
    "team_id": "team_cha"
   },
   "chris finch": {
@@ -75,11 +85,21 @@
    "team_id": "team_tor"
   },
   "david adelman": {
+   "crop": [
+    98,
+    0,
+    375,
+    500
+   ],
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/coaches/david-adelman.jpg",
    "gender": "male",
    "name": "David Adelman",
-   "reason": "no basketball Wikipedia article with a lead photo",
-   "status": "fallback_generated",
+   "rights": "reference_only_not_cleared",
+   "source": "nbca_coach_page",
+   "source_page": "https://nbacoaches.com/david-adelman/",
+   "source_url": "https://nbacoaches.com/wp-content/uploads/2025/05/NBCA-HeadCoach-DavidAdelman.jpg",
+   "status": "real_photo",
    "team_id": "team_den"
   },
   "doug christie": {
@@ -171,11 +191,21 @@
    "team_id": "team_hou"
   },
   "jamahl mosley": {
+   "crop": [
+    59,
+    0,
+    375,
+    500
+   ],
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/coaches/jamahl-mosley.jpg",
    "gender": "male",
    "name": "Jamahl Mosley",
-   "reason": "no basketball Wikipedia article with a lead photo",
-   "status": "fallback_generated",
+   "rights": "reference_only_not_cleared",
+   "source": "nbca_coach_page",
+   "source_page": "https://nbacoaches.com/jamahl-mosley/",
+   "source_url": "https://nbacoaches.com/wp-content/uploads/2026/05/jamahl-mosley.png",
+   "status": "real_photo",
    "team_id": "team_nop"
   },
   "jb bickerstaff": {
@@ -245,11 +275,21 @@
    "team_id": "team_bos"
   },
   "jordan ott": {
+   "crop": [
+    566,
+    0,
+    1437,
+    1916
+   ],
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/coaches/jordan-ott.jpg",
    "gender": "male",
    "name": "Jordan Ott",
-   "reason": "no basketball Wikipedia article with a lead photo",
-   "status": "fallback_generated",
+   "rights": "reference_only_not_cleared",
+   "source": "nbca_coach_page",
+   "source_page": "https://nbacoaches.com/jordan-ott/",
+   "source_url": "https://nbacoaches.com/wp-content/uploads/2025/12/Ott-1-Edited-scaled.png",
+   "status": "real_photo",
    "team_id": "team_phx"
   },
   "jordi fernandez": {
@@ -275,12 +315,21 @@
    "team_id": "team_bkn"
   },
   "kenny atkinson": {
+   "crop": [
+    60,
+    0,
+    375,
+    500
+   ],
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/coaches/kenny-atkinson.jpg",
    "gender": "male",
    "name": "Kenny Atkinson",
-   "reason": "lead photo is not a freely licensed Commons file",
-   "source_page": "https://en.wikipedia.org/wiki/Kenny_Atkinson",
-   "status": "fallback_generated",
+   "rights": "reference_only_not_cleared",
+   "source": "nbca_coach_page",
+   "source_page": "https://nbacoaches.com/kenny-atkinson/",
+   "source_url": "https://nbacoaches.com/wp-content/uploads/2025/12/AtkinsonHeadshot.png",
+   "status": "real_photo",
    "team_id": "team_cle"
   },
   "mark daigneault": {
@@ -372,12 +421,21 @@
    "team_id": "team_sas"
   },
   "nick nurse": {
+   "crop": [
+    55,
+    0,
+    375,
+    500
+   ],
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/coaches/nick-nurse.jpg",
    "gender": "male",
    "name": "Nick Nurse",
-   "reason": "lead photo is not a freely licensed Commons file",
-   "source_page": "https://en.wikipedia.org/wiki/Nick_Nurse",
-   "status": "fallback_generated",
+   "rights": "reference_only_not_cleared",
+   "source": "nbca_coach_page",
+   "source_page": "https://nbacoaches.com/nick-nurse/",
+   "source_url": "https://nbacoaches.com/wp-content/uploads/2022/11/NBCA-HeadCoach-NickNurse.jpg",
+   "status": "real_photo",
    "team_id": "team_phi"
   },
   "quin snyder": {
@@ -425,11 +483,21 @@
    "team_id": "team_ind"
   },
   "sean sweeney": {
+   "crop": [
+    112,
+    0,
+    375,
+    500
+   ],
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/coaches/sean-sweeney.jpg",
    "gender": "male",
    "name": "Sean Sweeney",
-   "reason": "no basketball Wikipedia article with a lead photo",
-   "status": "fallback_generated",
+   "rights": "reference_only_not_cleared",
+   "source": "nbca_coach_page",
+   "source_page": "https://nbacoaches.com/sean-sweeney/",
+   "source_url": "https://nbacoaches.com/wp-content/uploads/2026/08/sweeny.jpg",
+   "status": "real_photo",
    "team_id": "team_orl"
   },
   "steve kerr": {
@@ -455,11 +523,21 @@
    "team_id": "team_gsw"
   },
   "taylor jenkins": {
+   "crop": [
+    95,
+    0,
+    450,
+    600
+   ],
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/coaches/taylor-jenkins.jpg",
    "gender": "male",
    "name": "Taylor Jenkins",
-   "reason": "no basketball Wikipedia article with a lead photo",
-   "status": "fallback_generated",
+   "rights": "reference_only_not_cleared",
+   "source": "nbca_coach_page",
+   "source_page": "https://nbacoaches.com/taylor-jenkins/",
+   "source_url": "https://nbacoaches.com/wp-content/uploads/2026/05/Taylor-Jenkins2.jpg",
+   "status": "real_photo",
    "team_id": "team_mil"
   },
   "tiago splitter": {
@@ -551,7 +629,7 @@
    "team_id": "team_uta"
   }
  },
- "notes": "Real headshots stored once for the game (260 px). Coach photos: Wikimedia Commons, licence per photo. Prospect photos: ESPN college rosters, reference only (rights not cleared), like the NBA player headshots the game already links. status fallback_generated = no usable real photo; the game shows a generated face.",
+ "notes": "Real headshots stored once for the game (260 px). Coach photos: Wikimedia Commons (licence per photo), or the NBA coaches' association's official headshot where no free photo exists (reference only). Prospect photos: ESPN college rosters, reference only (rights not cleared), like the NBA player headshots the game already links. status fallback_generated = no usable real photo; the game shows a generated face.",
  "prospects": {
   "college_126518": {
    "espn_id": "4873219",

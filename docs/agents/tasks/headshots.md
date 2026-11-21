@@ -137,3 +137,21 @@ Size: 2,000 SVGs, 18.8 MB. With the real photos, about 24 MB in all (29 MB on di
 - [x] Face library (Open Peeps, 2,000), options.html (3 styles)
 - [x] faces.py, staff_names.py, staff/save/lifecycle wiring, prospect faces, GUI
 - [x] Tests, screenshots, report
+
+---
+
+# HEADSHOTS-V2: real photos only (in progress)
+
+Owner: Claude (Opus agent), branch `worktree-agent-a1049d23b312b874f` (merged the HEADSHOTS branch first). Board row: HEADSHOTS-V2.
+
+User verdict 2026-11-21: no cartoon faces; every face in the game is a photo of a real human. Real coaches and real prospects use their own photos; made-up staff and prospects use openly licensed stock photos of real people, credited.
+
+## Resume state
+- [x] Merge HEADSHOTS branch, worktree symlinks
+- [x] 8 coaches: official headshots from the NBA coaches' association pages (`fetch_real_headshots.py --nbca-coaches`) -> 30/30
+- [~] Prospects: research files in `data/overrides/prospect_photos/found_*.json` (69 of 127 found); fetch with `--found`
+- [~] Stock library: `scripts/build_stock_faces.py` search (Openverse very slow: 504s; Commons Unsplash/Pexels imports) -> download -> process -> sheet -> review -> publish
+- [x] faces.py points at `stock/` (AVIF), retired-library faces in older saves are replaced
+- [x] Open Peeps library and build scripts removed
+- [x] Photo credits view (Settings), CSS, JS test, Python tests rewritten
+- [ ] Review sheets, publish, screenshots, contact sheet, tests, report
