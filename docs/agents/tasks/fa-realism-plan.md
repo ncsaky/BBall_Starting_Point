@@ -84,6 +84,16 @@ The real calendar, with each stop pausing for the user's decisions only:
 - **Changed:** `cap_rules.py`, `contract_ai.py`, `play.py` free-agency paths, `save.py` re-signing and phase paths, `waivers.py`, `transactions.py` (only the legality check and signing-date rules), `app_actions.py` free-agency actions, `gui/app.js` and `free-agency.css` (the four stops and the match screen), tests.
 - **Sequencing:** the work must follow TRADE-DEADLINE, which owns `transactions.py` and trade legality right now.
 
+## Slice 1 results and follow-ups (merged 2026-11-21; report `fa-real-slice1.md`)
+- **Done:** one cap calculator (`cap_ledger.py`) for every signing, used by the room, AI bids, re-signings, roster repair and waivers. The room shows how each offer is paid, plus a cap sheet with Renounce.
+- **The AI market is too thin; the money rules aren't the cause.** In the 2027 replay only 16 AI bids came on day one. The owner's payroll rule (`payroll_plan`) blocks most bids, including teams' Bird bids for their own regulars. Results: return-to-own-team share 32% (real 45–55%), 13 teams using a mid-level (real 18–23), Kuzma unbid for five days. **Fix this in slice 2,** with the evidence from OFFSEASON-DECISIONS-EVIDENCE.
+- **Trade hook-up** (after TRADE-MARKET merges; the coordinator does it): `transactions.recently_signed_player_ids` should call `cap_ledger.trade_blocked_player_ids`; call `trigger_hard_cap` for sign-and-trades and aggregation; check `hard_cap` before trades that add salary; and use `cap_charge` for veteran minimums in tax and apron math.
+- **Smaller gaps:**
+  - AI waiver claims don't use the mid-level or bi-annual yet (the user's claims can);
+  - roster repair can fill past a triggered hard cap, at true minimums;
+  - extensions keep their own check;
+  - exception holds under the cap, the mid-level shrinking after January 10, and the disabled-player, traded-player and second-round exceptions are not modeled.
+
 ## User decisions (2026-11-20)
 - **Build order:** the money rules first (slice 1), then the calendar with options and qualifying offers, then offer sheets and matching, then two-ways and sign-and-trades.
 - **Signing:** deals are official the moment both sides agree. There is no "agreed until July 6" stage and no reneges.

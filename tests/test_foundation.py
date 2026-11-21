@@ -4452,7 +4452,12 @@ class DataFoundationTests(unittest.TestCase):
             self.assertEqual(saved["state"]["phase"], "regular_season")
             self.assertEqual(len(saved["game_results"]), 2)
             self.assertTrue(all(result["home_score"] != result["away_score"] for result in saved["game_results"]))
-            self.assertLess(max(line["minutes"] for result in saved["game_results"] for line in result["player_lines"]), 43)
+            for result in saved["game_results"]:
+                # 43 minutes in regulation, plus each overtime period's 5 (a team plays 240 minutes, +25 per overtime).
+                team_minutes = sum(line["minutes"] for line in result["player_lines"]
+                                   if line["team_id"] == result["player_lines"][0]["team_id"])
+                overtimes = max(0, round((team_minutes - 240) / 25))
+                self.assertLess(max(line["minutes"] for line in result["player_lines"]), 43 + 5 * overtimes)
             self.assertEqual(len(saved["schedule_state"]["simulated_game_ids"]), 2)
             self.assertEqual(sum(record["wins"] + record["losses"] for record in saved["team_records"].values()), 4)
             self.assertEqual(
