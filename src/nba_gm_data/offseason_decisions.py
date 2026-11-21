@@ -533,6 +533,9 @@ def qualifying_offer_terms(save: dict[str, Any], player: dict[str, Any], contrac
             if fifteen < amount:
                 amount, note = fifteen, "the No. 15 pick's offer: he missed the starter criteria"
         maximum = true_max_salary(next_season, credited)
+        floor = minimum_salary(next_season, credited) + QO_MINIMUM_PLUS   # never below a standard offer's floor
+        if amount < floor:
+            amount, note = floor, "his minimum plus $200,000 (his rookie salary was below the scale)"
         return {**base, "eligible": True, "route": "rookie_scale", "amount": int(round(amount)), "basis": note,
                 "max_qo_amount": int(round(maximum)), "max_qo_years": 5}
     if credited <= 3:
