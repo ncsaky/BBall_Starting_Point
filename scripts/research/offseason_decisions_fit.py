@@ -200,6 +200,29 @@ def fit_team_options(evidence):
     }
 
 
+def fit_rookie_extensions(evidence):
+    rows = [r for r in evidence["decisions"]["rookie_scale_extensions"]
+            if r["decision"] != "waived_before_deadline"]
+    rules = []
+    for minutes in (1000, 1400, 1800, 2200):
+        rules.extend([
+            (f"prior minutes >= {minutes}", lambda f, m=minutes: f["minutes"] >= m),
+            (f"prior minutes >= {minutes} and above replacement",
+             lambda f, m=minutes: f["minutes"] >= m and f["vorp"] > 0),
+            (f"prior minutes >= {minutes} and above replacement, or lottery pick with 1000+ minutes",
+             lambda f, m=minutes: (f["minutes"] >= m and f["vorp"] > 0)
+             or (f["pick"] <= 14 and f["minutes"] >= 1000)),
+        ])
+    for value in (.5, 1, 1.5):
+        rules.append((f"prior value above replacement >= {value:g}", lambda f, v=value: f["vorp"] >= v))
+
+    def features(row, _held_out):
+        _, _, minutes, vorp, _ = season_features(row)
+        return {"minutes": minutes, "vorp": vorp, "pick": row["draft_pick"] or 31}
+
+    return validation(rows, features, lambda row: row["decision"] == "extended", rules)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--evidence", type=Path, default=EVIDENCE)
@@ -210,6 +233,8 @@ def main():
         results["qualifying_offers"] = fit_qualifying_offers(evidence)
     if "team_options" in evidence["decisions"]:
         results["team_options"] = fit_team_options(evidence)
+    if "rookie_scale_extensions" in evidence["decisions"]:
+        results["rookie_scale_extensions"] = fit_rookie_extensions(evidence)
     print(json.dumps(results, indent=2, ensure_ascii=False))
 
 

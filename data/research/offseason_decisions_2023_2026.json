@@ -826,8 +826,8 @@
     },
     "cba": {
       "url": "https://nbpa.com/cba/",
-      "date": "2026-11-20",
-      "date_kind": "accessed"
+      "date": "2023-06-28",
+      "date_kind": "signed"
     },
     "https://www.basketball-reference.com/players/w/washipj01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2023-06-30_bbr": {
       "url": "https://www.basketball-reference.com/players/w/washipj01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2023-06-30_bbr",
@@ -4027,6 +4027,266 @@
     "rq2027": {
       "url": "https://www.hoopsrumors.com/2026/11/recap-of-2027-28-rookie-scale-option-decisions.html",
       "date": "2026-11-03",
+      "date_kind": "published"
+    },
+    "ex2023": {
+      "url": "https://www.hoopsrumors.com/2023/10/2023-nba-rookie-scale-extension-recap.html",
+      "date": "2023-10-24",
+      "date_kind": "published"
+    },
+    "https://www.hoopsrumors.com/2023/07/hornets-lamelo-ball-finalizing-five-year-max-extension.html": {
+      "url": "https://www.hoopsrumors.com/2023/07/hornets-lamelo-ball-finalizing-five-year-max-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2023/07/timberwolves-anthony-edwards-agree-to-five-year-max-extension.html": {
+      "url": "https://www.hoopsrumors.com/2023/07/timberwolves-anthony-edwards-agree-to-five-year-max-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2023/07/pacers-tyrese-haliburton-agree-to-rookie-scale-max-extension.html": {
+      "url": "https://www.hoopsrumors.com/2023/07/pacers-tyrese-haliburton-agree-to-rookie-scale-max-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2023/07/desmond-bane-signing-five-year-max-extension-with-grizzlies.html": {
+      "url": "https://www.hoopsrumors.com/2023/07/desmond-bane-signing-five-year-max-extension-with-grizzlies.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2023/10/spurs-devin-vassell-agree-to-five-year-146mm-extension.html": {
+      "url": "https://www.hoopsrumors.com/2023/10/spurs-devin-vassell-agree-to-five-year-146mm-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2023/10/wolves-jaden-mcdaniels-agree-to-five-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2023/10/wolves-jaden-mcdaniels-agree-to-five-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2023/10/hawks-onyeka-okongwu-agree-to-four-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2023/10/hawks-onyeka-okongwu-agree-to-four-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2023/07/pistons-reach-four-year-extension-agreement-with-isaiah-stewart.html": {
+      "url": "https://www.hoopsrumors.com/2023/07/pistons-reach-four-year-extension-agreement-with-isaiah-stewart.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2023/10/wizards-deni-avdija-agree-to-four-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2023/10/wizards-deni-avdija-agree-to-four-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2023/10/mavs-josh-green-finalizing-three-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2023/10/mavs-josh-green-finalizing-three-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2023/10/magic-cole-anthony-agree-to-three-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2023/10/magic-cole-anthony-agree-to-three-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2023/10/aaron-nesmith-lands-three-year-33mm-extension-with-pacers.html": {
+      "url": "https://www.hoopsrumors.com/2023/10/aaron-nesmith-lands-three-year-33mm-extension-with-pacers.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2023/10/zeke-nnaji-gets-four-year-32mm-extension-from-nuggets.html": {
+      "url": "https://www.hoopsrumors.com/2023/10/zeke-nnaji-gets-four-year-32mm-extension-from-nuggets.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2023/10/celtics-payton-pritchard-agree-to-four-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2023/10/celtics-payton-pritchard-agree-to-four-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "ex2024": {
+      "url": "https://www.hoopsrumors.com/2024/10/2024-nba-rookie-scale-extension-recap.html",
+      "date": "2024-10-22",
+      "date_kind": "published"
+    },
+    "https://www.hoopsrumors.com/2024/07/scottie-barnes-to-sign-max-extension-with-raptors.html": {
+      "url": "https://www.hoopsrumors.com/2024/07/scottie-barnes-to-sign-max-extension-with-raptors.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2024/06/pistons-to-sign-cade-cunningham-to-rookie-scale-max-extension.html": {
+      "url": "https://www.hoopsrumors.com/2024/06/pistons-to-sign-cade-cunningham-to-rookie-scale-max-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2024/07/cavaliers-to-sign-evan-mobley-to-five-year-max-extension.html": {
+      "url": "https://www.hoopsrumors.com/2024/07/cavaliers-to-sign-evan-mobley-to-five-year-max-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2024/07/magics-franz-wagner-signing-five-year-max-extension.html": {
+      "url": "https://www.hoopsrumors.com/2024/07/magics-franz-wagner-signing-five-year-max-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2024/10/rockets-alperen-sengun-agree-to-five-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2024/10/rockets-alperen-sengun-agree-to-five-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2024/10/magic-to-sign-jalen-suggs-to-five-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2024/10/magic-to-sign-jalen-suggs-to-five-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2024/10/hawks-to-sign-jalen-johnson-to-five-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2024/10/hawks-to-sign-jalen-johnson-to-five-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2024/10/pelicans-trey-murphy-agree-to-four-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2024/10/pelicans-trey-murphy-agree-to-four-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2024/10/jalen-green-rockets-agree-to-three-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2024/10/jalen-green-rockets-agree-to-three-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2024/10/wizards-corey-kispert-agree-to-four-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2024/10/wizards-corey-kispert-agree-to-four-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2024/10/warriors-moses-moody-agrees-to-three-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2024/10/warriors-moses-moody-agrees-to-three-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "ex2025": {
+      "url": "https://www.hoopsrumors.com/2025/10/2025-nba-rookie-scale-extension-recap.html",
+      "date": "2025-10-21",
+      "date_kind": "published"
+    },
+    "https://www.hoopsrumors.com/2025/07/magic-banchero-agree-on-five-year-max-extension.html": {
+      "url": "https://www.hoopsrumors.com/2025/07/magic-banchero-agree-on-five-year-max-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2025/07/thunder-jalen-williams-agree-to-five-year-max-extension.html": {
+      "url": "https://www.hoopsrumors.com/2025/07/thunder-jalen-williams-agree-to-five-year-max-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2025/07/thunder-chet-holmgren-agree-to-max-five-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2025/07/thunder-chet-holmgren-agree-to-max-five-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2025/10/kings-sign-keegan-murray-to-five-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2025/10/kings-sign-keegan-murray-to-five-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2025/10/nuggets-christian-braun-agree-to-five-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2025/10/nuggets-christian-braun-agree-to-five-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2025/06/rockets-to-sign-jabari-smith-jr-to-five-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2025/06/rockets-to-sign-jabari-smith-jr-to-five-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2025/10/hawks-dyson-daniels-agree-to-four-year-100mm-extension.html": {
+      "url": "https://www.hoopsrumors.com/2025/10/hawks-dyson-daniels-agree-to-four-year-100mm-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2025/10/blazers-shaedon-sharpe-agree-to-four-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2025/10/blazers-shaedon-sharpe-agree-to-four-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2025/10/heat-signing-nikola-jovic-to-four-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2025/10/heat-signing-nikola-jovic-to-four-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "ex2026": {
+      "url": "https://www.hoopsrumors.com/2026/10/2026-nba-rookie-scale-extension-recap.html",
+      "date": "2026-10-19",
+      "date_kind": "published"
+    },
+    "https://www.hoopsrumors.com/2026/07/victor-wembanyama-spurs-agree-to-five-year-max-extension.html": {
+      "url": "https://www.hoopsrumors.com/2026/07/victor-wembanyama-spurs-agree-to-five-year-max-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "draft2023": {
+      "url": "https://www.basketball-reference.com/draft/NBA_2023.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2026/10/brandon-miller-hornets-agree-to-five-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2026/10/brandon-miller-hornets-agree-to-five-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2026/09/rockets-amen-thompson-agree-to-five-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2026/09/rockets-amen-thompson-agree-to-five-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2026/09/jazz-keyonte-george-agree-to-five-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2026/09/jazz-keyonte-george-agree-to-five-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2026/09/pistons-ausar-thompson-agree-to-five-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2026/09/pistons-ausar-thompson-agree-to-five-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2026/10/cason-wallace-thunder-agree-to-five-year-139mm-extension.html": {
+      "url": "https://www.hoopsrumors.com/2026/10/cason-wallace-thunder-agree-to-five-year-139mm-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.hoopsrumors.com/2026/10/warriors-podziemski-agree-to-five-year-extension.html": {
+      "url": "https://www.hoopsrumors.com/2026/10/warriors-podziemski-agree-to-five-year-extension.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "bref_contracts_2026_10_13": {
+      "url": "https://www.basketball-reference.com/contracts/players.html",
+      "date": "2026-10-13",
+      "date_kind": "archived_capture"
+    },
+    "cap2024": {
+      "url": "https://www.nba.com/news/nba-salary-cap-2024-25-season",
+      "date": "2024-06-30",
+      "date_kind": "published"
+    },
+    "cap2025": {
+      "url": "https://www.nba.com/news/nba-salary-cap-2025-26-season",
+      "date": "2025-06-30",
+      "date_kind": "published"
+    },
+    "https://www.hoopsrumors.com/2024/09/nets-sign-tyrese-martin-killian-hayes.html": {
+      "url": "https://www.hoopsrumors.com/2024/09/nets-sign-tyrese-martin-killian-hayes.html",
+      "date": "2024-09-20",
+      "date_kind": "published"
+    },
+    "https://www.hoopsrumors.com/2024/02/thunder-waive-aleksej-pokusevski.html": {
+      "url": "https://www.hoopsrumors.com/2024/02/thunder-waive-aleksej-pokusevski.html",
+      "date": "2024-02-23",
+      "date_kind": "published"
+    },
+    "https://www.hoopsrumors.com/2025/08/pelicans-sign-jaden-springer.html": {
+      "url": "https://www.hoopsrumors.com/2025/08/pelicans-sign-jaden-springer.html",
+      "date": "2025-08-06",
       "date_kind": "published"
     }
   },
@@ -37406,6 +37666,3898 @@
         "game_on_court_value_2026_snapshot": 50.25,
         "prior_team_active_payroll": 189852974,
         "prior_team_total_cap_allocations": 199054230,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      }
+    ],
+    "rookie_scale_extensions": [
+      {
+        "summer": 2023,
+        "player": "LaMelo Ball",
+        "player_key": "lameloball",
+        "team": "CHA",
+        "draft_pick": 3,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2024,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": null,
+          "aav_share_of_start_year_cap": null,
+          "max_initial_cap_share_before_awards": 0.25,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": true,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 140588000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2024",
+          "draft2020",
+          "ex2023",
+          "https://www.hoopsrumors.com/2023/07/hornets-lamelo-ball-finalizing-five-year-max-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "ballla01",
+          "season_age": 21,
+          "games": 36,
+          "starts": 36,
+          "minutes": 1268,
+          "vorp": 1.4,
+          "bpm": 2.4,
+          "ws": 1.8
+        },
+        "game_on_court_value_2026_snapshot": 69.55,
+        "prior_team_active_payroll": 104845190,
+        "prior_team_total_cap_allocations": 146049640,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Anthony Edwards",
+        "player_key": "anthonyedwards",
+        "team": "MIN",
+        "draft_pick": 1,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2024,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": null,
+          "aav_share_of_start_year_cap": null,
+          "max_initial_cap_share_before_awards": 0.25,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": true,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 140588000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2024",
+          "draft2020",
+          "ex2023",
+          "https://www.hoopsrumors.com/2023/07/timberwolves-anthony-edwards-agree-to-five-year-max-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "edwaran01",
+          "season_age": 21,
+          "games": 79,
+          "starts": 79,
+          "minutes": 2842,
+          "vorp": 2.1,
+          "bpm": 1.0,
+          "ws": 3.8
+        },
+        "game_on_court_value_2026_snapshot": 72.1,
+        "prior_team_active_payroll": 141488618,
+        "prior_team_total_cap_allocations": 174906722,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Tyrese Haliburton",
+        "player_key": "tyresehaliburton",
+        "team": "IND",
+        "draft_pick": 12,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2024,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": null,
+          "aav_share_of_start_year_cap": null,
+          "max_initial_cap_share_before_awards": 0.25,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": true,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 140588000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2024",
+          "draft2020",
+          "ex2023",
+          "https://www.hoopsrumors.com/2023/07/pacers-tyrese-haliburton-agree-to-rookie-scale-max-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "halibty01",
+          "season_age": 22,
+          "games": 56,
+          "starts": 56,
+          "minutes": 1883,
+          "vorp": 4.3,
+          "bpm": 7.1,
+          "ws": 7.6
+        },
+        "game_on_court_value_2026_snapshot": 74.72,
+        "prior_team_active_payroll": 110310554,
+        "prior_team_total_cap_allocations": 122145349,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Desmond Bane",
+        "player_key": "desmondbane",
+        "team": "MEM",
+        "draft_pick": 30,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2024,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": 197230450,
+          "aav_share_of_start_year_cap": 0.28058,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 140588000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2024",
+          "draft2020",
+          "ex2023",
+          "https://www.hoopsrumors.com/2023/07/desmond-bane-signing-five-year-max-extension-with-grizzlies.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "banede01",
+          "season_age": 24,
+          "games": 58,
+          "starts": 58,
+          "minutes": 1841,
+          "vorp": 2.5,
+          "bpm": 3.4,
+          "ws": 5.8
+        },
+        "game_on_court_value_2026_snapshot": 63.93,
+        "prior_team_active_payroll": 123017190,
+        "prior_team_total_cap_allocations": 127756781,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Devin Vassell",
+        "player_key": "devinvassell",
+        "team": "SAS",
+        "draft_pick": 11,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2024,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": 135000000,
+          "aav_share_of_start_year_cap": 0.19205,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 140588000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2024",
+          "draft2020",
+          "ex2023",
+          "https://www.hoopsrumors.com/2023/10/spurs-devin-vassell-agree-to-five-year-146mm-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "vassede01",
+          "season_age": 22,
+          "games": 38,
+          "starts": 32,
+          "minutes": 1178,
+          "vorp": 0.7,
+          "bpm": 0.4,
+          "ws": 1.2
+        },
+        "game_on_court_value_2026_snapshot": 60.95,
+        "prior_team_active_payroll": 70878022,
+        "prior_team_total_cap_allocations": 101649048,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Jaden McDaniels",
+        "player_key": "jadenmcdaniels",
+        "team": "MIN",
+        "draft_pick": 28,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2024,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": 131000000,
+          "aav_share_of_start_year_cap": 0.18636,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 140588000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2024",
+          "draft2020",
+          "ex2023",
+          "https://www.hoopsrumors.com/2023/10/wolves-jaden-mcdaniels-agree-to-five-year-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "mcdanja02",
+          "season_age": 22,
+          "games": 79,
+          "starts": 79,
+          "minutes": 2416,
+          "vorp": 0.5,
+          "bpm": -1.2,
+          "ws": 4.4
+        },
+        "game_on_court_value_2026_snapshot": 64.77,
+        "prior_team_active_payroll": 141488618,
+        "prior_team_total_cap_allocations": 174906722,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Onyeka Okongwu",
+        "player_key": "onyekaokongwu",
+        "team": "ATL",
+        "draft_pick": 6,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2024,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 4,
+          "reported_fixed_value": 62000000,
+          "aav_share_of_start_year_cap": 0.11025,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 140588000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2024",
+          "draft2020",
+          "ex2023",
+          "https://www.hoopsrumors.com/2023/10/hawks-onyeka-okongwu-agree-to-four-year-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "okongon01",
+          "season_age": 22,
+          "games": 80,
+          "starts": 18,
+          "minutes": 1849,
+          "vorp": 1.3,
+          "bpm": 0.8,
+          "ws": 7.1
+        },
+        "game_on_court_value_2026_snapshot": 63.63,
+        "prior_team_active_payroll": 149028218,
+        "prior_team_total_cap_allocations": 149133740,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Isaiah Stewart",
+        "player_key": "isaiahstewart",
+        "team": "DET",
+        "draft_pick": 16,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2024,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 4,
+          "reported_fixed_value": 60000000,
+          "aav_share_of_start_year_cap": 0.10669,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": true,
+          "term_cap_reference": 140588000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2024",
+          "draft2020",
+          "ex2023",
+          "https://www.hoopsrumors.com/2023/07/pistons-reach-four-year-extension-agreement-with-isaiah-stewart.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "stewais01",
+          "season_age": 21,
+          "games": 50,
+          "starts": 47,
+          "minutes": 1414,
+          "vorp": 0.0,
+          "bpm": -2.1,
+          "ws": 2.0
+        },
+        "game_on_court_value_2026_snapshot": 58.47,
+        "prior_team_active_payroll": 97376476,
+        "prior_team_total_cap_allocations": 127673493,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Deni Avdija",
+        "player_key": "deniavdija",
+        "team": "WAS",
+        "draft_pick": 9,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2024,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 4,
+          "reported_fixed_value": 55000000,
+          "aav_share_of_start_year_cap": 0.0978,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 140588000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2024",
+          "draft2020",
+          "ex2023",
+          "https://www.hoopsrumors.com/2023/10/wizards-deni-avdija-agree-to-four-year-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "avdijde01",
+          "season_age": 22,
+          "games": 76,
+          "starts": 40,
+          "minutes": 2020,
+          "vorp": -0.1,
+          "bpm": -2.2,
+          "ws": 2.3
+        },
+        "game_on_court_value_2026_snapshot": 61.52,
+        "prior_team_active_payroll": 133790093,
+        "prior_team_total_cap_allocations": 183801576,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Josh Green",
+        "player_key": "joshgreen",
+        "team": "DAL",
+        "draft_pick": 18,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2024,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 3,
+          "reported_fixed_value": 41000000,
+          "aav_share_of_start_year_cap": 0.09721,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 140588000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2024",
+          "draft2020",
+          "ex2023",
+          "https://www.hoopsrumors.com/2023/10/mavs-josh-green-finalizing-three-year-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "greenjo02",
+          "season_age": 22,
+          "games": 60,
+          "starts": 21,
+          "minutes": 1539,
+          "vorp": -0.2,
+          "bpm": -2.4,
+          "ws": 2.6
+        },
+        "game_on_court_value_2026_snapshot": 51.89,
+        "prior_team_active_payroll": 172025683,
+        "prior_team_total_cap_allocations": 180090371,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Cole Anthony",
+        "player_key": "coleanthony",
+        "team": "ORL",
+        "draft_pick": 15,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2024,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 3,
+          "reported_fixed_value": 39100000,
+          "aav_share_of_start_year_cap": 0.09271,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": true,
+          "term_cap_reference": 140588000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2024",
+          "draft2020",
+          "ex2023",
+          "https://www.hoopsrumors.com/2023/10/magic-cole-anthony-agree-to-three-year-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "anthoco01",
+          "season_age": 22,
+          "games": 60,
+          "starts": 4,
+          "minutes": 1552,
+          "vorp": 1.3,
+          "bpm": 1.2,
+          "ws": 3.7
+        },
+        "game_on_court_value_2026_snapshot": 56.18,
+        "prior_team_active_payroll": 99161703,
+        "prior_team_total_cap_allocations": 139801010,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Aaron Nesmith",
+        "player_key": "aaronnesmith",
+        "team": "IND",
+        "draft_pick": 14,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2024,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 3,
+          "reported_fixed_value": 33000000,
+          "aav_share_of_start_year_cap": 0.07824,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 140588000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2024",
+          "draft2020",
+          "ex2023",
+          "https://www.hoopsrumors.com/2023/10/aaron-nesmith-lands-three-year-33mm-extension-with-pacers.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "nesmiaa01",
+          "season_age": 23,
+          "games": 73,
+          "starts": 60,
+          "minutes": 1816,
+          "vorp": -0.4,
+          "bpm": -2.9,
+          "ws": 2.0
+        },
+        "game_on_court_value_2026_snapshot": 56.51,
+        "prior_team_active_payroll": 110310554,
+        "prior_team_total_cap_allocations": 122145349,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Zeke Nnaji",
+        "player_key": "zekennaji",
+        "team": "DEN",
+        "draft_pick": 22,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2024,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 4,
+          "reported_fixed_value": 32000001,
+          "aav_share_of_start_year_cap": 0.0569,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": true,
+          "reported_team_option": false,
+          "term_cap_reference": 140588000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2024",
+          "draft2020",
+          "ex2023",
+          "https://www.hoopsrumors.com/2023/10/zeke-nnaji-gets-four-year-32mm-extension-from-nuggets.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "nnajize01",
+          "season_age": 22,
+          "games": 53,
+          "starts": 5,
+          "minutes": 728,
+          "vorp": -0.3,
+          "bpm": -3.6,
+          "ws": 1.6
+        },
+        "game_on_court_value_2026_snapshot": 47.53,
+        "prior_team_active_payroll": 160688004,
+        "prior_team_total_cap_allocations": 169601210,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Payton Pritchard",
+        "player_key": "paytonpritchard",
+        "team": "BOS",
+        "draft_pick": 26,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2024,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 4,
+          "reported_fixed_value": 30000000,
+          "aav_share_of_start_year_cap": 0.05335,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 140588000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2024",
+          "draft2020",
+          "ex2023",
+          "https://www.hoopsrumors.com/2023/10/celtics-payton-pritchard-agree-to-four-year-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "pritcpa01",
+          "season_age": 25,
+          "games": 48,
+          "starts": 3,
+          "minutes": 643,
+          "vorp": -0.2,
+          "bpm": -3.3,
+          "ws": 0.6
+        },
+        "game_on_court_value_2026_snapshot": 67.07,
+        "prior_team_active_payroll": 176702907,
+        "prior_team_total_cap_allocations": 176795764,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Precious Achiuwa",
+        "player_key": "preciousachiuwa",
+        "team": "TOR",
+        "draft_pick": 20,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "no_qualifying_offer",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2020",
+          "ex2023"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "achiupr01",
+          "season_age": 23,
+          "games": 55,
+          "starts": 12,
+          "minutes": 1140,
+          "vorp": -0.1,
+          "bpm": -2.2,
+          "ws": 2.2
+        },
+        "game_on_court_value_2026_snapshot": 53.38,
+        "prior_team_active_payroll": 144096592,
+        "prior_team_total_cap_allocations": 149260166,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Saddiq Bey",
+        "player_key": "saddiqbey",
+        "team": "ATL",
+        "draft_pick": 19,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "no_qualifying_offer",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2020",
+          "ex2023"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "beysa01",
+          "season_age": 23,
+          "games": 77,
+          "starts": 37,
+          "minutes": 2129,
+          "vorp": 0.9,
+          "bpm": -0.3,
+          "ws": 3.9
+        },
+        "game_on_court_value_2026_snapshot": 52.01,
+        "prior_team_active_payroll": 149028218,
+        "prior_team_total_cap_allocations": 149133740,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Malachi Flynn",
+        "player_key": "malachiflynn",
+        "team": "TOR",
+        "draft_pick": 29,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "no_qualifying_offer",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2020",
+          "ex2023"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "flynnma01",
+          "season_age": 24,
+          "games": 53,
+          "starts": 2,
+          "minutes": 691,
+          "vorp": -0.4,
+          "bpm": -4.0,
+          "ws": 0.5
+        },
+        "game_on_court_value_2026_snapshot": null,
+        "prior_team_active_payroll": 144096592,
+        "prior_team_total_cap_allocations": 149260166,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Killian Hayes",
+        "player_key": "killianhayes",
+        "team": "DET",
+        "draft_pick": 7,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "rookie_deal_ended_early",
+        "terms": {},
+        "sources": [
+          "draft2020",
+          "ex2023",
+          "https://www.hoopsrumors.com/2024/09/nets-sign-tyrese-martin-killian-hayes.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "hayeski01",
+          "season_age": 21,
+          "games": 76,
+          "starts": 56,
+          "minutes": 2154,
+          "vorp": -1.0,
+          "bpm": -3.8,
+          "ws": -0.5
+        },
+        "game_on_court_value_2026_snapshot": 48.01,
+        "prior_team_active_payroll": 97376476,
+        "prior_team_total_cap_allocations": 127673493,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Kira Lewis",
+        "player_key": "kiralewis",
+        "team": "NOP",
+        "draft_pick": 13,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "no_qualifying_offer",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2020",
+          "ex2023"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "lewiski01",
+          "season_age": 21,
+          "games": 25,
+          "starts": 0,
+          "minutes": 235,
+          "vorp": 0.1,
+          "bpm": -0.3,
+          "ws": 0.6
+        },
+        "game_on_court_value_2026_snapshot": null,
+        "prior_team_active_payroll": 147340203,
+        "prior_team_total_cap_allocations": 154090191,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Tyrese Maxey",
+        "player_key": "tyresemaxey",
+        "team": "PHI",
+        "draft_pick": 21,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "restricted",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2020",
+          "ex2023"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "maxeyty01",
+          "season_age": 22,
+          "games": 60,
+          "starts": 41,
+          "minutes": 2016,
+          "vorp": 1.3,
+          "bpm": 0.6,
+          "ws": 5.4
+        },
+        "game_on_court_value_2026_snapshot": 69.95,
+        "prior_team_active_payroll": 149166783,
+        "prior_team_total_cap_allocations": 164391836,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Chuma Okeke",
+        "player_key": "chumaokeke",
+        "team": "ORL",
+        "draft_pick": 16,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "no_qualifying_offer",
+        "terms": {},
+        "sources": [
+          "cba",
+          "ex2023"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "okekech01",
+          "season_age": 24,
+          "games": 27,
+          "starts": 8,
+          "minutes": 518,
+          "vorp": 0.1,
+          "bpm": -1.6,
+          "ws": 0.7
+        },
+        "game_on_court_value_2026_snapshot": null,
+        "prior_team_active_payroll": 99161703,
+        "prior_team_total_cap_allocations": 139801010,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Isaac Okoro",
+        "player_key": "isaacokoro",
+        "team": "CLE",
+        "draft_pick": 5,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "restricted",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2020",
+          "ex2023"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "okorois01",
+          "season_age": 22,
+          "games": 76,
+          "starts": 46,
+          "minutes": 1652,
+          "vorp": 0.7,
+          "bpm": -0.3,
+          "ws": 4.2
+        },
+        "game_on_court_value_2026_snapshot": 49.24,
+        "prior_team_active_payroll": 121702948,
+        "prior_team_total_cap_allocations": 154561446,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Aleksej Pokusevski",
+        "player_key": "aleksejpokusevski",
+        "team": "OKC",
+        "draft_pick": 17,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "rookie_deal_ended_early",
+        "terms": {},
+        "sources": [
+          "draft2020",
+          "ex2023",
+          "https://www.hoopsrumors.com/2024/02/thunder-waive-aleksej-pokusevski.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "pokusal01",
+          "season_age": 21,
+          "games": 34,
+          "starts": 25,
+          "minutes": 701,
+          "vorp": 0.3,
+          "bpm": 0.0,
+          "ws": 1.0
+        },
+        "game_on_court_value_2026_snapshot": null,
+        "prior_team_active_payroll": 98156672,
+        "prior_team_total_cap_allocations": 155437627,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Immanuel Quickley",
+        "player_key": "immanuelquickley",
+        "team": "NYK",
+        "draft_pick": 25,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "restricted",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2020",
+          "ex2023"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "quickim01",
+          "season_age": 23,
+          "games": 81,
+          "starts": 21,
+          "minutes": 2344,
+          "vorp": 2.1,
+          "bpm": 1.7,
+          "ws": 6.7
+        },
+        "game_on_court_value_2026_snapshot": 66.63,
+        "prior_team_active_payroll": 149994034,
+        "prior_team_total_cap_allocations": 150263571,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Obi Toppin",
+        "player_key": "obitoppin",
+        "team": "IND",
+        "draft_pick": 8,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "restricted",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2020",
+          "ex2023"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "toppiob01",
+          "season_age": 24,
+          "games": 67,
+          "starts": 5,
+          "minutes": 1050,
+          "vorp": 0.4,
+          "bpm": -0.5,
+          "ws": 2.1
+        },
+        "game_on_court_value_2026_snapshot": 61.45,
+        "prior_team_active_payroll": 110310554,
+        "prior_team_total_cap_allocations": 122145349,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Patrick Williams",
+        "player_key": "patrickwilliams",
+        "team": "CHI",
+        "draft_pick": 4,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "restricted",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2020",
+          "ex2023"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "willipa01",
+          "season_age": 21,
+          "games": 82,
+          "starts": 65,
+          "minutes": 2323,
+          "vorp": 0.4,
+          "bpm": -1.3,
+          "ws": 3.5
+        },
+        "game_on_court_value_2026_snapshot": 44.43,
+        "prior_team_active_payroll": 145549077,
+        "prior_team_total_cap_allocations": 153093665,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "James Wiseman",
+        "player_key": "jameswiseman",
+        "team": "DET",
+        "draft_pick": 2,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "no_qualifying_offer",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2020",
+          "ex2023"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "wisemja01",
+          "season_age": 21,
+          "games": 45,
+          "starts": 22,
+          "minutes": 867,
+          "vorp": -0.3,
+          "bpm": -3.5,
+          "ws": 1.4
+        },
+        "game_on_court_value_2026_snapshot": 50.88,
+        "prior_team_active_payroll": 97376476,
+        "prior_team_total_cap_allocations": 127673493,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Scottie Barnes",
+        "player_key": "scottiebarnes",
+        "team": "TOR",
+        "draft_pick": 4,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2025,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": null,
+          "aav_share_of_start_year_cap": null,
+          "max_initial_cap_share_before_awards": 0.25,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": true,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 154647000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2025",
+          "draft2021",
+          "ex2024",
+          "https://www.hoopsrumors.com/2024/07/scottie-barnes-to-sign-max-extension-with-raptors.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "barnesc01",
+          "season_age": 22,
+          "games": 60,
+          "starts": 60,
+          "minutes": 2094,
+          "vorp": 3.0,
+          "bpm": 3.7,
+          "ws": 4.3
+        },
+        "game_on_court_value_2026_snapshot": 72.29,
+        "prior_team_active_payroll": 138558316,
+        "prior_team_total_cap_allocations": 161887358,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Cade Cunningham",
+        "player_key": "cadecunningham",
+        "team": "DET",
+        "draft_pick": 1,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2025,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": null,
+          "aav_share_of_start_year_cap": null,
+          "max_initial_cap_share_before_awards": 0.25,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": true,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 154647000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2025",
+          "draft2021",
+          "ex2024",
+          "https://www.hoopsrumors.com/2024/06/pistons-to-sign-cade-cunningham-to-rookie-scale-max-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "cunnica01",
+          "season_age": 22,
+          "games": 62,
+          "starts": 62,
+          "minutes": 2074,
+          "vorp": 1.2,
+          "bpm": 0.3,
+          "ws": 1.8
+        },
+        "game_on_court_value_2026_snapshot": 74.95,
+        "prior_team_active_payroll": 84251419,
+        "prior_team_total_cap_allocations": 136419412,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Evan Mobley",
+        "player_key": "evanmobley",
+        "team": "CLE",
+        "draft_pick": 3,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2025,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": null,
+          "aav_share_of_start_year_cap": null,
+          "max_initial_cap_share_before_awards": 0.25,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": true,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 154647000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2025",
+          "draft2021",
+          "ex2024",
+          "https://www.hoopsrumors.com/2024/07/cavaliers-to-sign-evan-mobley-to-five-year-max-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "mobleev01",
+          "season_age": 22,
+          "games": 50,
+          "starts": 50,
+          "minutes": 1532,
+          "vorp": 1.9,
+          "bpm": 2.8,
+          "ws": 5.5
+        },
+        "game_on_court_value_2026_snapshot": 71.01,
+        "prior_team_active_payroll": 160092854,
+        "prior_team_total_cap_allocations": 168250835,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Franz Wagner",
+        "player_key": "franzwagner",
+        "team": "ORL",
+        "draft_pick": 8,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2025,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": null,
+          "aav_share_of_start_year_cap": null,
+          "max_initial_cap_share_before_awards": 0.25,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": true,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 154647000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2025",
+          "draft2021",
+          "ex2024",
+          "https://www.hoopsrumors.com/2024/07/magics-franz-wagner-signing-five-year-max-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "wagnefr01",
+          "season_age": 22,
+          "games": 72,
+          "starts": 72,
+          "minutes": 2337,
+          "vorp": 1.9,
+          "bpm": 1.2,
+          "ws": 6.4
+        },
+        "game_on_court_value_2026_snapshot": 66.72,
+        "prior_team_active_payroll": 130964229,
+        "prior_team_total_cap_allocations": 139355784,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Alperen Sengun",
+        "player_key": "alperensengun",
+        "team": "HOU",
+        "draft_pick": 16,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2025,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": 185000000,
+          "aav_share_of_start_year_cap": 0.23925,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": true,
+          "reported_team_option": false,
+          "term_cap_reference": 154647000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2025",
+          "draft2021",
+          "ex2024",
+          "https://www.hoopsrumors.com/2024/10/rockets-alperen-sengun-agree-to-five-year-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "sengual01",
+          "season_age": 21,
+          "games": 63,
+          "starts": 63,
+          "minutes": 2046,
+          "vorp": 3.5,
+          "bpm": 4.8,
+          "ws": 6.9
+        },
+        "game_on_court_value_2026_snapshot": 64.65,
+        "prior_team_active_payroll": 143402009,
+        "prior_team_total_cap_allocations": 145302009,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Jalen Suggs",
+        "player_key": "jalensuggs",
+        "team": "ORL",
+        "draft_pick": 5,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2025,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": 150500000,
+          "aav_share_of_start_year_cap": 0.19464,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 154647000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2025",
+          "draft2021",
+          "ex2024",
+          "https://www.hoopsrumors.com/2024/10/magic-to-sign-jalen-suggs-to-five-year-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "suggsja01",
+          "season_age": 22,
+          "games": 75,
+          "starts": 75,
+          "minutes": 2025,
+          "vorp": 1.5,
+          "bpm": 1.0,
+          "ws": 4.7
+        },
+        "game_on_court_value_2026_snapshot": 70.16,
+        "prior_team_active_payroll": 130964229,
+        "prior_team_total_cap_allocations": 139355784,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Jalen Johnson",
+        "player_key": "jalenjohnson",
+        "team": "ATL",
+        "draft_pick": 20,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2025,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": 150000000,
+          "aav_share_of_start_year_cap": 0.19399,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 154647000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2025",
+          "draft2021",
+          "ex2024",
+          "https://www.hoopsrumors.com/2024/10/hawks-to-sign-jalen-johnson-to-five-year-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "johnsja05",
+          "season_age": 22,
+          "games": 56,
+          "starts": 52,
+          "minutes": 1889,
+          "vorp": 1.5,
+          "bpm": 1.2,
+          "ws": 3.8
+        },
+        "game_on_court_value_2026_snapshot": 67.93,
+        "prior_team_active_payroll": 149336848,
+        "prior_team_total_cap_allocations": 156139798,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Trey Murphy",
+        "player_key": "treymurphy",
+        "team": "NOP",
+        "draft_pick": 17,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2025,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 4,
+          "reported_fixed_value": 112000000,
+          "aav_share_of_start_year_cap": 0.18106,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 154647000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2025",
+          "draft2021",
+          "ex2024",
+          "https://www.hoopsrumors.com/2024/10/pelicans-trey-murphy-agree-to-four-year-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "murphtr02",
+          "season_age": 23,
+          "games": 57,
+          "starts": 23,
+          "minutes": 1690,
+          "vorp": 1.9,
+          "bpm": 2.4,
+          "ws": 5.4
+        },
+        "game_on_court_value_2026_snapshot": 64.19,
+        "prior_team_active_payroll": 164656924,
+        "prior_team_total_cap_allocations": 176969502,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Jalen Green",
+        "player_key": "jalengreen",
+        "team": "HOU",
+        "draft_pick": 2,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2025,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 3,
+          "reported_fixed_value": 105333333,
+          "aav_share_of_start_year_cap": 0.22704,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": true,
+          "reported_team_option": false,
+          "term_cap_reference": 154647000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2025",
+          "draft2021",
+          "ex2024",
+          "https://www.hoopsrumors.com/2024/10/jalen-green-rockets-agree-to-three-year-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "greenja05",
+          "season_age": 21,
+          "games": 82,
+          "starts": 82,
+          "minutes": 2601,
+          "vorp": 1.0,
+          "bpm": -0.5,
+          "ws": 3.1
+        },
+        "game_on_court_value_2026_snapshot": 58.43,
+        "prior_team_active_payroll": 143402009,
+        "prior_team_total_cap_allocations": 145302009,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Corey Kispert",
+        "player_key": "coreykispert",
+        "team": "WAS",
+        "draft_pick": 15,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2025,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 4,
+          "reported_fixed_value": 54050000,
+          "aav_share_of_start_year_cap": 0.08738,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": true,
+          "term_cap_reference": 154647000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2025",
+          "draft2021",
+          "ex2024",
+          "https://www.hoopsrumors.com/2024/10/wizards-corey-kispert-agree-to-four-year-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "kispeco01",
+          "season_age": 24,
+          "games": 80,
+          "starts": 22,
+          "minutes": 2067,
+          "vorp": -0.1,
+          "bpm": -2.1,
+          "ws": 2.1
+        },
+        "game_on_court_value_2026_snapshot": 49.35,
+        "prior_team_active_payroll": 132379717,
+        "prior_team_total_cap_allocations": 189901033,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Moses Moody",
+        "player_key": "mosesmoody",
+        "team": "GSW",
+        "draft_pick": 14,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2025,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 3,
+          "reported_fixed_value": 37500000,
+          "aav_share_of_start_year_cap": 0.08083,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 154647000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2025",
+          "draft2021",
+          "ex2024",
+          "https://www.hoopsrumors.com/2024/10/warriors-moses-moody-agrees-to-three-year-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "moodymo01",
+          "season_age": 21,
+          "games": 66,
+          "starts": 9,
+          "minutes": 1156,
+          "vorp": 0.6,
+          "bpm": -0.1,
+          "ws": 2.4
+        },
+        "game_on_court_value_2026_snapshot": 62.05,
+        "prior_team_active_payroll": 206814776,
+        "prior_team_total_cap_allocations": 224848124,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Santi Aldama",
+        "player_key": "santialdama",
+        "team": "MEM",
+        "draft_pick": 30,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "restricted",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2021",
+          "ex2024"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "aldamsa01",
+          "season_age": 23,
+          "games": 61,
+          "starts": 35,
+          "minutes": 1618,
+          "vorp": 0.7,
+          "bpm": -0.2,
+          "ws": 2.4
+        },
+        "game_on_court_value_2026_snapshot": 60.91,
+        "prior_team_active_payroll": 135440708,
+        "prior_team_total_cap_allocations": 162996801,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Chris Duarte",
+        "player_key": "chrisduarte",
+        "team": "CHI",
+        "draft_pick": 13,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "not_verified",
+        "terms": {},
+        "sources": [
+          "draft2021",
+          "ex2024"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "duartch01",
+          "season_age": 26,
+          "games": 59,
+          "starts": 11,
+          "minutes": 719,
+          "vorp": -0.2,
+          "bpm": -3.3,
+          "ws": 0.7
+        },
+        "game_on_court_value_2026_snapshot": null,
+        "prior_team_active_payroll": 162193482,
+        "prior_team_total_cap_allocations": 166348969,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Josh Giddey",
+        "player_key": "joshgiddey",
+        "team": "CHI",
+        "draft_pick": 6,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "restricted",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2021",
+          "ex2024"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "giddejo01",
+          "season_age": 21,
+          "games": 80,
+          "starts": 80,
+          "minutes": 2011,
+          "vorp": 1.7,
+          "bpm": 1.5,
+          "ws": 4.3
+        },
+        "game_on_court_value_2026_snapshot": 59.56,
+        "prior_team_active_payroll": 162193482,
+        "prior_team_total_cap_allocations": 166348969,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Quentin Grimes",
+        "player_key": "quentingrimes",
+        "team": "DAL",
+        "draft_pick": 25,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "restricted",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2021",
+          "ex2024"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "grimequ01",
+          "season_age": 23,
+          "games": 51,
+          "starts": 18,
+          "minutes": 1025,
+          "vorp": 0.0,
+          "bpm": -2.2,
+          "ws": 1.3
+        },
+        "game_on_court_value_2026_snapshot": 58.92,
+        "prior_team_active_payroll": 162282786,
+        "prior_team_total_cap_allocations": 175321021,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Bones Hyland",
+        "player_key": "boneshyland",
+        "team": "LAC",
+        "draft_pick": 26,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "no_qualifying_offer",
+        "terms": {},
+        "sources": [
+          "draft2021",
+          "ex2024",
+          "https://www.basketball-reference.com/players/h/hylanbo01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2025-06-30_bbr"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "hylanbo01",
+          "season_age": 23,
+          "games": 37,
+          "starts": 5,
+          "minutes": 540,
+          "vorp": -0.2,
+          "bpm": -3.6,
+          "ws": 0.0
+        },
+        "game_on_court_value_2026_snapshot": 59.53,
+        "prior_team_active_payroll": 198296474,
+        "prior_team_total_cap_allocations": 202080521,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Isaiah Jackson",
+        "player_key": "isaiahjackson",
+        "team": "IND",
+        "draft_pick": 22,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "restricted",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2021",
+          "ex2024"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "jacksis01",
+          "season_age": 22,
+          "games": 60,
+          "starts": 3,
+          "minutes": 771,
+          "vorp": 0.7,
+          "bpm": 1.7,
+          "ws": 3.3
+        },
+        "game_on_court_value_2026_snapshot": 61.65,
+        "prior_team_active_payroll": 127076533,
+        "prior_team_total_cap_allocations": 146679278,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Jonathan Kuminga",
+        "player_key": "jonathankuminga",
+        "team": "GSW",
+        "draft_pick": 7,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "restricted",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2021",
+          "ex2024"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "kuminjo01",
+          "season_age": 21,
+          "games": 74,
+          "starts": 46,
+          "minutes": 1949,
+          "vorp": 0.8,
+          "bpm": -0.4,
+          "ws": 4.6
+        },
+        "game_on_court_value_2026_snapshot": 56.37,
+        "prior_team_active_payroll": 206814776,
+        "prior_team_total_cap_allocations": 224848124,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Tre Mann",
+        "player_key": "tremann",
+        "team": "CHA",
+        "draft_pick": 18,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "no_qualifying_offer",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2021",
+          "ex2024"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "manntr01",
+          "season_age": 22,
+          "games": 41,
+          "starts": 28,
+          "minutes": 987,
+          "vorp": 0.2,
+          "bpm": -1.3,
+          "ws": 1.2
+        },
+        "game_on_court_value_2026_snapshot": 49.32,
+        "prior_team_active_payroll": 97074991,
+        "prior_team_total_cap_allocations": 141036011,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Davion Mitchell",
+        "player_key": "davionmitchell",
+        "team": "TOR",
+        "draft_pick": 9,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "restricted",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2021",
+          "ex2024"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "mitchda01",
+          "season_age": 25,
+          "games": 72,
+          "starts": 4,
+          "minutes": 1101,
+          "vorp": -0.4,
+          "bpm": -3.4,
+          "ws": 1.3
+        },
+        "game_on_court_value_2026_snapshot": 54.95,
+        "prior_team_active_payroll": 138558316,
+        "prior_team_total_cap_allocations": 161887358,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Day’Ron Sharpe",
+        "player_key": "dayronsharpe",
+        "team": "BKN",
+        "draft_pick": 29,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "no_qualifying_offer",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2021",
+          "ex2024"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "sharpda01",
+          "season_age": 22,
+          "games": 61,
+          "starts": 1,
+          "minutes": 921,
+          "vorp": 0.5,
+          "bpm": 0.0,
+          "ws": 2.9
+        },
+        "game_on_court_value_2026_snapshot": 66.43,
+        "prior_team_active_payroll": 139773430,
+        "prior_team_total_cap_allocations": 157982129,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Jaden Springer",
+        "player_key": "jadenspringer",
+        "team": "BOS",
+        "draft_pick": 28,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "rookie_deal_ended_early",
+        "terms": {},
+        "sources": [
+          "draft2021",
+          "ex2024",
+          "nba2025",
+          "https://www.hoopsrumors.com/2025/08/pelicans-sign-jaden-springer.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "sprinja01",
+          "season_age": 21,
+          "games": 49,
+          "starts": 2,
+          "minutes": 507,
+          "vorp": -0.2,
+          "bpm": -3.4,
+          "ws": 0.6
+        },
+        "game_on_court_value_2026_snapshot": null,
+        "prior_team_active_payroll": 184845028,
+        "prior_team_total_cap_allocations": 188759360,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Cam Thomas",
+        "player_key": "cameronthomas",
+        "team": "BKN",
+        "draft_pick": 27,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "restricted",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2021",
+          "ex2024"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "thomaca02",
+          "season_age": 22,
+          "games": 66,
+          "starts": 51,
+          "minutes": 2075,
+          "vorp": 0.4,
+          "bpm": -1.2,
+          "ws": 2.5
+        },
+        "game_on_court_value_2026_snapshot": 52.91,
+        "prior_team_active_payroll": 139773430,
+        "prior_team_total_cap_allocations": 157982129,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2024,
+        "player": "Ziaire Williams",
+        "player_key": "ziairewilliams",
+        "team": "BKN",
+        "draft_pick": 10,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "no_qualifying_offer",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2021",
+          "ex2024"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "willizi02",
+          "season_age": 22,
+          "games": 51,
+          "starts": 15,
+          "minutes": 1038,
+          "vorp": -0.6,
+          "bpm": -4.4,
+          "ws": 0.2
+        },
+        "game_on_court_value_2026_snapshot": 52.99,
+        "prior_team_active_payroll": 139773430,
+        "prior_team_total_cap_allocations": 157982129,
+        "prior_season_cap": 136021000,
+        "context_sources": [
+          "stats2024",
+          "pay2024"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Paolo Banchero",
+        "player_key": "paolobanchero",
+        "team": "ORL",
+        "draft_pick": 1,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2026,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": null,
+          "aav_share_of_start_year_cap": null,
+          "max_initial_cap_share_before_awards": 0.25,
+          "first_season_salary_observed": 41500000,
+          "first_season_observed_share_of_cap": 0.25157,
+          "max_escalator_to_30pct_reported": true,
+          "reported_player_option": true,
+          "reported_team_option": false,
+          "term_cap_reference": 164961000,
+          "term_cap_reference_is_projection": false,
+          "first_season_salary_is_projection": false
+        },
+        "sources": [
+          "cap2026",
+          "draft2022",
+          "ex2025",
+          "https://www.hoopsrumors.com/2025/07/magic-banchero-agree-on-five-year-max-extension.html",
+          "bref_contracts_2026_10_13"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "banchpa01",
+          "season_age": 22,
+          "games": 46,
+          "starts": 46,
+          "minutes": 1582,
+          "vorp": 2.2,
+          "bpm": 3.5,
+          "ws": 3.5
+        },
+        "game_on_court_value_2026_snapshot": 59.07,
+        "prior_team_active_payroll": 152959238,
+        "prior_team_total_cap_allocations": 152959238,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Jalen Williams",
+        "player_key": "jalenwilliams",
+        "team": "OKC",
+        "draft_pick": 12,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2026,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": null,
+          "aav_share_of_start_year_cap": null,
+          "max_initial_cap_share_before_awards": 0.25,
+          "first_season_salary_observed": 41500000,
+          "first_season_observed_share_of_cap": 0.25157,
+          "max_escalator_to_30pct_reported": true,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 164961000,
+          "term_cap_reference_is_projection": false,
+          "first_season_salary_is_projection": false
+        },
+        "sources": [
+          "cap2026",
+          "draft2022",
+          "ex2025",
+          "https://www.hoopsrumors.com/2025/07/thunder-jalen-williams-agree-to-five-year-max-extension.html",
+          "bref_contracts_2026_10_13"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "willija06",
+          "season_age": 23,
+          "games": 69,
+          "starts": 69,
+          "minutes": 2237,
+          "vorp": 3.4,
+          "bpm": 4.0,
+          "ws": 7.8
+        },
+        "game_on_court_value_2026_snapshot": 70.33,
+        "prior_team_active_payroll": 162209242,
+        "prior_team_total_cap_allocations": 166001694,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Chet Holmgren",
+        "player_key": "chetholmgren",
+        "team": "OKC",
+        "draft_pick": 2,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2026,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": null,
+          "aav_share_of_start_year_cap": null,
+          "max_initial_cap_share_before_awards": 0.25,
+          "first_season_salary_observed": 41500000,
+          "first_season_observed_share_of_cap": 0.25157,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 164961000,
+          "term_cap_reference_is_projection": false,
+          "first_season_salary_is_projection": false
+        },
+        "sources": [
+          "cap2026",
+          "draft2022",
+          "ex2025",
+          "https://www.hoopsrumors.com/2025/07/thunder-chet-holmgren-agree-to-max-five-year-extension.html",
+          "bref_contracts_2026_10_13"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "holmgch01",
+          "season_age": 22,
+          "games": 32,
+          "starts": 32,
+          "minutes": 877,
+          "vorp": 1.0,
+          "bpm": 2.4,
+          "ws": 3.2
+        },
+        "game_on_court_value_2026_snapshot": 73.07,
+        "prior_team_active_payroll": 162209242,
+        "prior_team_total_cap_allocations": 166001694,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Keegan Murray",
+        "player_key": "keeganmurray",
+        "team": "SAC",
+        "draft_pick": 4,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2026,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": 140000000,
+          "aav_share_of_start_year_cap": 0.16974,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": 24137936,
+          "first_season_observed_share_of_cap": 0.14633,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 164961000,
+          "term_cap_reference_is_projection": false,
+          "first_season_salary_is_projection": false
+        },
+        "sources": [
+          "cap2026",
+          "draft2022",
+          "ex2025",
+          "https://www.hoopsrumors.com/2025/10/kings-sign-keegan-murray-to-five-year-extension.html",
+          "bref_contracts_2026_10_13"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "murrake02",
+          "season_age": 24,
+          "games": 76,
+          "starts": 76,
+          "minutes": 2610,
+          "vorp": 0.2,
+          "bpm": -1.6,
+          "ws": 4.4
+        },
+        "game_on_court_value_2026_snapshot": 60.94,
+        "prior_team_active_payroll": 166101303,
+        "prior_team_total_cap_allocations": 171370782,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Christian Braun",
+        "player_key": "christianbraun",
+        "team": "DEN",
+        "draft_pick": 21,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2026,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": 125000000,
+          "aav_share_of_start_year_cap": 0.15155,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": 21551726,
+          "first_season_observed_share_of_cap": 0.13065,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 164961000,
+          "term_cap_reference_is_projection": false,
+          "first_season_salary_is_projection": false
+        },
+        "sources": [
+          "cap2026",
+          "draft2022",
+          "ex2025",
+          "https://www.hoopsrumors.com/2025/10/nuggets-christian-braun-agree-to-five-year-extension.html",
+          "bref_contracts_2026_10_13"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "braunch01",
+          "season_age": 23,
+          "games": 79,
+          "starts": 77,
+          "minutes": 2675,
+          "vorp": 1.6,
+          "bpm": 0.3,
+          "ws": 8.0
+        },
+        "game_on_court_value_2026_snapshot": 54.96,
+        "prior_team_active_payroll": 182574315,
+        "prior_team_total_cap_allocations": 192786656,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Jabari Smith Jr.",
+        "player_key": "jabarismith",
+        "team": "HOU",
+        "draft_pick": 3,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2026,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": 122000000,
+          "aav_share_of_start_year_cap": 0.14791,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": 23643411,
+          "first_season_observed_share_of_cap": 0.14333,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 164961000,
+          "term_cap_reference_is_projection": false,
+          "first_season_salary_is_projection": false
+        },
+        "sources": [
+          "cap2026",
+          "draft2022",
+          "ex2025",
+          "https://www.hoopsrumors.com/2025/06/rockets-to-sign-jabari-smith-jr-to-five-year-extension.html",
+          "bref_contracts_2026_10_13"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "smithja05",
+          "season_age": 21,
+          "games": 57,
+          "starts": 39,
+          "minutes": 1716,
+          "vorp": 0.6,
+          "bpm": -0.7,
+          "ws": 4.2
+        },
+        "game_on_court_value_2026_snapshot": 60.68,
+        "prior_team_active_payroll": 161552948,
+        "prior_team_total_cap_allocations": 173496349,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Dyson Daniels",
+        "player_key": "dysondaniels",
+        "team": "ATL",
+        "draft_pick": 8,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2026,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 4,
+          "reported_fixed_value": 100000000,
+          "aav_share_of_start_year_cap": 0.15155,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": 25000000,
+          "first_season_observed_share_of_cap": 0.15155,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 164961000,
+          "term_cap_reference_is_projection": false,
+          "first_season_salary_is_projection": false
+        },
+        "sources": [
+          "cap2026",
+          "draft2022",
+          "ex2025",
+          "https://www.hoopsrumors.com/2025/10/hawks-dyson-daniels-agree-to-four-year-100mm-extension.html",
+          "bref_contracts_2026_10_13"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "daniedy01",
+          "season_age": 21,
+          "games": 76,
+          "starts": 76,
+          "minutes": 2571,
+          "vorp": 2.3,
+          "bpm": 1.5,
+          "ws": 5.0
+        },
+        "game_on_court_value_2026_snapshot": 61.0,
+        "prior_team_active_payroll": 161255749,
+        "prior_team_total_cap_allocations": 174418704,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Shaedon Sharpe",
+        "player_key": "shaedonsharpe",
+        "team": "POR",
+        "draft_pick": 7,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2026,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 4,
+          "reported_fixed_value": 90000000,
+          "aav_share_of_start_year_cap": 0.1364,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": 20089287,
+          "first_season_observed_share_of_cap": 0.12178,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 164961000,
+          "term_cap_reference_is_projection": false,
+          "first_season_salary_is_projection": false
+        },
+        "sources": [
+          "cap2026",
+          "draft2022",
+          "ex2025",
+          "https://www.hoopsrumors.com/2025/10/blazers-shaedon-sharpe-agree-to-four-year-extension.html",
+          "bref_contracts_2026_10_13"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "sharpsh01",
+          "season_age": 21,
+          "games": 72,
+          "starts": 52,
+          "minutes": 2252,
+          "vorp": 0.4,
+          "bpm": -1.3,
+          "ws": 3.0
+        },
+        "game_on_court_value_2026_snapshot": 57.17,
+        "prior_team_active_payroll": 165518581,
+        "prior_team_total_cap_allocations": 176848446,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Nikola Jovic",
+        "player_key": "nikolajovic",
+        "team": "MIA",
+        "draft_pick": 27,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2026,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 4,
+          "reported_fixed_value": 62400000,
+          "aav_share_of_start_year_cap": 0.09457,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 164961000,
+          "term_cap_reference_is_projection": false
+        },
+        "sources": [
+          "cap2026",
+          "draft2022",
+          "ex2025",
+          "https://www.hoopsrumors.com/2025/10/heat-signing-nikola-jovic-to-four-year-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "jovicni01",
+          "season_age": 21,
+          "games": 46,
+          "starts": 10,
+          "minutes": 1156,
+          "vorp": 0.7,
+          "bpm": 0.3,
+          "ws": 2.5
+        },
+        "game_on_court_value_2026_snapshot": 52.46,
+        "prior_team_active_payroll": 173088172,
+        "prior_team_total_cap_allocations": 179350729,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Ochai Agbaji",
+        "player_key": "ochaiagbaji",
+        "team": "TOR",
+        "draft_pick": 14,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "no_qualifying_offer",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2022",
+          "ex2025"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "agbajoc01",
+          "season_age": 24,
+          "games": 64,
+          "starts": 45,
+          "minutes": 1739,
+          "vorp": 0.5,
+          "bpm": -0.7,
+          "ws": 3.1
+        },
+        "game_on_court_value_2026_snapshot": 51.39,
+        "prior_team_active_payroll": 154302912,
+        "prior_team_total_cap_allocations": 178496026,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Malaki Branham",
+        "player_key": "malakibranham",
+        "team": "WAS",
+        "draft_pick": 20,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "not_verified",
+        "terms": {},
+        "sources": [
+          "draft2022",
+          "ex2025"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "branhma01",
+          "season_age": 21,
+          "games": 47,
+          "starts": 0,
+          "minutes": 427,
+          "vorp": -0.1,
+          "bpm": -3.2,
+          "ws": 0.1
+        },
+        "game_on_court_value_2026_snapshot": 46.68,
+        "prior_team_active_payroll": 162581956,
+        "prior_team_total_cap_allocations": 211677970,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Ousmane Dieng",
+        "player_key": "ousmanedieng",
+        "team": "OKC",
+        "draft_pick": 11,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "no_qualifying_offer",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2022",
+          "ex2025"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "diengou01",
+          "season_age": 21,
+          "games": 37,
+          "starts": 1,
+          "minutes": 405,
+          "vorp": 0.1,
+          "bpm": -0.9,
+          "ws": 0.9
+        },
+        "game_on_court_value_2026_snapshot": 50.84,
+        "prior_team_active_payroll": 162209242,
+        "prior_team_total_cap_allocations": 166001694,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Jalen Duren",
+        "player_key": "jalenduren",
+        "team": "DET",
+        "draft_pick": 13,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "restricted",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2022",
+          "ex2025"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "durenja01",
+          "season_age": 21,
+          "games": 78,
+          "starts": 78,
+          "minutes": 2034,
+          "vorp": 2.7,
+          "bpm": 3.1,
+          "ws": 9.2
+        },
+        "game_on_court_value_2026_snapshot": 67.81,
+        "prior_team_active_payroll": 133989678,
+        "prior_team_total_cap_allocations": 141808220,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Tari Eason",
+        "player_key": "tarieason",
+        "team": "HOU",
+        "draft_pick": 17,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "restricted",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2022",
+          "ex2025"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "easonta01",
+          "season_age": 23,
+          "games": 57,
+          "starts": 16,
+          "minutes": 1420,
+          "vorp": 2.0,
+          "bpm": 3.6,
+          "ws": 5.0
+        },
+        "game_on_court_value_2026_snapshot": 59.14,
+        "prior_team_active_payroll": 161552948,
+        "prior_team_total_cap_allocations": 173496349,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Jaden Ivey",
+        "player_key": "jadenivey",
+        "team": "DET",
+        "draft_pick": 5,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "not_verified",
+        "terms": {},
+        "sources": [
+          "draft2022",
+          "ex2025"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "iveyja01",
+          "season_age": 22,
+          "games": 30,
+          "starts": 30,
+          "minutes": 898,
+          "vorp": 0.5,
+          "bpm": 0.0,
+          "ws": 1.2
+        },
+        "game_on_court_value_2026_snapshot": 54.61,
+        "prior_team_active_payroll": 133989678,
+        "prior_team_total_cap_allocations": 141808220,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Walker Kessler",
+        "player_key": "walkerkessler",
+        "team": "UTA",
+        "draft_pick": 22,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "restricted",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2022",
+          "ex2025"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "kesslwa01",
+          "season_age": 23,
+          "games": 58,
+          "starts": 58,
+          "minutes": 1740,
+          "vorp": 1.7,
+          "bpm": 1.8,
+          "ws": 5.4
+        },
+        "game_on_court_value_2026_snapshot": 67.74,
+        "prior_team_active_payroll": 142648013,
+        "prior_team_total_cap_allocations": 154114022,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Bennedict Mathurin",
+        "player_key": "bennedictmathurin",
+        "team": "IND",
+        "draft_pick": 6,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "restricted",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2022",
+          "ex2025"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "mathube01",
+          "season_age": 22,
+          "games": 72,
+          "starts": 49,
+          "minutes": 2149,
+          "vorp": -0.5,
+          "bpm": -2.9,
+          "ws": 3.0
+        },
+        "game_on_court_value_2026_snapshot": 51.26,
+        "prior_team_active_payroll": 166839774,
+        "prior_team_total_cap_allocations": 171232577,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Jeremy Sochan",
+        "player_key": "jeremysochan",
+        "team": "SAS",
+        "draft_pick": 9,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "tracked_unrestricted",
+        "terms": {},
+        "sources": [
+          "draft2022",
+          "ex2025",
+          "nba2026"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "sochaje01",
+          "season_age": 21,
+          "games": 54,
+          "starts": 23,
+          "minutes": 1364,
+          "vorp": 0.3,
+          "bpm": -1.2,
+          "ws": 2.7
+        },
+        "game_on_court_value_2026_snapshot": 51.38,
+        "prior_team_active_payroll": 155231927,
+        "prior_team_total_cap_allocations": 162809380,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Dalen Terry",
+        "player_key": "dalenterry",
+        "team": "CHI",
+        "draft_pick": 18,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "tracked_unrestricted",
+        "terms": {},
+        "sources": [
+          "draft2022",
+          "ex2025",
+          "nba2026"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "terryda01",
+          "season_age": 22,
+          "games": 73,
+          "starts": 5,
+          "minutes": 987,
+          "vorp": -0.5,
+          "bpm": -3.8,
+          "ws": 1.1
+        },
+        "game_on_court_value_2026_snapshot": 48.59,
+        "prior_team_active_payroll": 157180244,
+        "prior_team_total_cap_allocations": 168006873,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Peyton Watson",
+        "player_key": "peytonwatson",
+        "team": "DEN",
+        "draft_pick": 30,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "restricted",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2022",
+          "ex2025"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "watsope01",
+          "season_age": 22,
+          "games": 68,
+          "starts": 18,
+          "minutes": 1656,
+          "vorp": 0.1,
+          "bpm": -1.8,
+          "ws": 2.5
+        },
+        "game_on_court_value_2026_snapshot": 55.16,
+        "prior_team_active_payroll": 182574315,
+        "prior_team_total_cap_allocations": 192786656,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Mark Williams",
+        "player_key": "markwilliams",
+        "team": "PHX",
+        "draft_pick": 15,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "restricted",
+        "terms": {},
+        "sources": [
+          "cba",
+          "draft2022",
+          "ex2025"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "willima07",
+          "season_age": 23,
+          "games": 44,
+          "starts": 41,
+          "minutes": 1171,
+          "vorp": 1.6,
+          "bpm": 3.5,
+          "ws": 4.7
+        },
+        "game_on_court_value_2026_snapshot": 59.45,
+        "prior_team_active_payroll": 210557299,
+        "prior_team_total_cap_allocations": 228464502,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "Blake Wesley",
+        "player_key": "blakewesley",
+        "team": "SAS",
+        "draft_pick": 25,
+        "decision": "waived_before_deadline",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": null,
+        "terms": {},
+        "sources": [
+          "draft2022",
+          "ex2025"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "weslebl01",
+          "season_age": 21,
+          "games": 58,
+          "starts": 0,
+          "minutes": 683,
+          "vorp": -0.4,
+          "bpm": -4.2,
+          "ws": 0.2
+        },
+        "game_on_court_value_2026_snapshot": 52.54,
+        "prior_team_active_payroll": 155231927,
+        "prior_team_total_cap_allocations": 162809380,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Victor Wembanyama",
+        "player_key": "victorwembanyama",
+        "team": "SAS",
+        "draft_pick": 1,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2027,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": null,
+          "aav_share_of_start_year_cap": null,
+          "max_initial_cap_share_before_awards": 0.25,
+          "first_season_salary_observed": 43500000,
+          "first_season_observed_share_of_cap": 0.25,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": true,
+          "reported_team_option": false,
+          "term_cap_reference": 174000000,
+          "term_cap_reference_is_projection": true,
+          "first_season_salary_is_projection": true
+        },
+        "sources": [
+          "draft2023",
+          "ex2026",
+          "https://www.hoopsrumors.com/2026/07/victor-wembanyama-spurs-agree-to-five-year-max-extension.html",
+          "bref_contracts_2026_10_13"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "wembavi01",
+          "season_age": 22,
+          "games": 64,
+          "starts": 55,
+          "minutes": 1866,
+          "vorp": 6.0,
+          "bpm": 10.7,
+          "ws": 10.0
+        },
+        "game_on_court_value_2026_snapshot": 77.7,
+        "prior_team_active_payroll": 176732468,
+        "prior_team_total_cap_allocations": 183990669,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Brandon Miller",
+        "player_key": "brandonmiller",
+        "team": "CHA",
+        "draft_pick": 2,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2027,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": 208800000,
+          "aav_share_of_start_year_cap": 0.24,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 174000000,
+          "term_cap_reference_is_projection": true
+        },
+        "sources": [
+          "draft2023",
+          "ex2026",
+          "https://www.hoopsrumors.com/2026/10/brandon-miller-hornets-agree-to-five-year-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "millebr02",
+          "season_age": 23,
+          "games": 65,
+          "starts": 65,
+          "minutes": 1968,
+          "vorp": 1.8,
+          "bpm": 1.6,
+          "ws": 4.5
+        },
+        "game_on_court_value_2026_snapshot": 67.61,
+        "prior_team_active_payroll": 154497268,
+        "prior_team_total_cap_allocations": 183806358,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Amen Thompson",
+        "player_key": "amenthompson",
+        "team": "HOU",
+        "draft_pick": 4,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2027,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": 208000000,
+          "aav_share_of_start_year_cap": 0.23908,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": 35862069,
+          "first_season_observed_share_of_cap": 0.2061,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 174000000,
+          "term_cap_reference_is_projection": true,
+          "first_season_salary_is_projection": true
+        },
+        "sources": [
+          "draft2023",
+          "ex2026",
+          "https://www.hoopsrumors.com/2026/09/rockets-amen-thompson-agree-to-five-year-extension.html",
+          "bref_contracts_2026_10_13"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "thompam01",
+          "season_age": 23,
+          "games": 79,
+          "starts": 79,
+          "minutes": 2953,
+          "vorp": 3.4,
+          "bpm": 2.6,
+          "ws": 10.3
+        },
+        "game_on_court_value_2026_snapshot": 68.7,
+        "prior_team_active_payroll": 194771442,
+        "prior_team_total_cap_allocations": 201412484,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Keyonte George",
+        "player_key": "keyontegeorge",
+        "team": "UTA",
+        "draft_pick": 16,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2027,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": 155000000,
+          "aav_share_of_start_year_cap": 0.17816,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": 28700000,
+          "first_season_observed_share_of_cap": 0.16494,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 174000000,
+          "term_cap_reference_is_projection": true,
+          "first_season_salary_is_projection": true
+        },
+        "sources": [
+          "draft2023",
+          "ex2026",
+          "https://www.hoopsrumors.com/2026/09/jazz-keyonte-george-agree-to-five-year-extension.html",
+          "bref_contracts_2026_10_13"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "georgke01",
+          "season_age": 22,
+          "games": 54,
+          "starts": 54,
+          "minutes": 1786,
+          "vorp": 1.3,
+          "bpm": 0.9,
+          "ws": 3.3
+        },
+        "game_on_court_value_2026_snapshot": 54.18,
+        "prior_team_active_payroll": 147149062,
+        "prior_team_total_cap_allocations": 173117343,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Ausar Thompson",
+        "player_key": "ausarthompson",
+        "team": "DET",
+        "draft_pick": 5,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2027,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": 155000000,
+          "aav_share_of_start_year_cap": 0.17816,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": 26724138,
+          "first_season_observed_share_of_cap": 0.15359,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 174000000,
+          "term_cap_reference_is_projection": true,
+          "first_season_salary_is_projection": true
+        },
+        "sources": [
+          "draft2023",
+          "ex2026",
+          "https://www.hoopsrumors.com/2026/09/pistons-ausar-thompson-agree-to-five-year-extension.html",
+          "bref_contracts_2026_10_13"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "thompau01",
+          "season_age": 23,
+          "games": 73,
+          "starts": 72,
+          "minutes": 1896,
+          "vorp": 2.4,
+          "bpm": 3.1,
+          "ws": 5.7
+        },
+        "game_on_court_value_2026_snapshot": 67.79,
+        "prior_team_active_payroll": 176545353,
+        "prior_team_total_cap_allocations": 193082507,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Cason Wallace",
+        "player_key": "casonwallace",
+        "team": "OKC",
+        "draft_pick": 10,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2027,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": 135000000,
+          "aav_share_of_start_year_cap": 0.15517,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": false,
+          "reported_team_option": false,
+          "term_cap_reference": 174000000,
+          "term_cap_reference_is_projection": true
+        },
+        "sources": [
+          "draft2023",
+          "ex2026",
+          "https://www.hoopsrumors.com/2026/10/cason-wallace-thunder-agree-to-five-year-139mm-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "wallaca01",
+          "season_age": 22,
+          "games": 77,
+          "starts": 58,
+          "minutes": 2046,
+          "vorp": 1.7,
+          "bpm": 1.2,
+          "ws": 5.2
+        },
+        "game_on_court_value_2026_snapshot": 59.69,
+        "prior_team_active_payroll": 183713089,
+        "prior_team_total_cap_allocations": 188057857,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Brandin Podziemski",
+        "player_key": "brandinpodziemski",
+        "team": "GSW",
+        "draft_pick": 19,
+        "decision": "extended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": 2027,
+        "next_offseason_status": null,
+        "terms": {
+          "years": 5,
+          "reported_fixed_value": 110000000,
+          "aav_share_of_start_year_cap": 0.12644,
+          "max_initial_cap_share_before_awards": null,
+          "first_season_salary_observed": null,
+          "first_season_observed_share_of_cap": null,
+          "max_escalator_to_30pct_reported": false,
+          "reported_player_option": true,
+          "reported_team_option": true,
+          "term_cap_reference": 174000000,
+          "term_cap_reference_is_projection": true
+        },
+        "sources": [
+          "draft2023",
+          "ex2026",
+          "https://www.hoopsrumors.com/2026/10/warriors-podziemski-agree-to-five-year-extension.html"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "podzibr01",
+          "season_age": 22,
+          "games": 82,
+          "starts": 43,
+          "minutes": 2333,
+          "vorp": 1.3,
+          "bpm": 0.2,
+          "ws": 5.1
+        },
+        "game_on_court_value_2026_snapshot": 61.6,
+        "prior_team_active_payroll": 204850563,
+        "prior_team_total_cap_allocations": 234222725,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Anthony Black",
+        "player_key": "anthonyblack",
+        "team": "ORL",
+        "draft_pick": 6,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "2027_not_observed",
+        "terms": {},
+        "sources": [
+          "draft2023",
+          "ex2026"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "blackan01",
+          "season_age": 22,
+          "games": 64,
+          "starts": 40,
+          "minutes": 1910,
+          "vorp": 0.7,
+          "bpm": -0.6,
+          "ws": 2.6
+        },
+        "game_on_court_value_2026_snapshot": 56.97,
+        "prior_team_active_payroll": 187670352,
+        "prior_team_total_cap_allocations": 194063614,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Noah Clowney",
+        "player_key": "noahclowney",
+        "team": "BKN",
+        "draft_pick": 21,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "2027_not_observed",
+        "terms": {},
+        "sources": [
+          "draft2023",
+          "ex2026"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "clownno01",
+          "season_age": 21,
+          "games": 66,
+          "starts": 60,
+          "minutes": 1780,
+          "vorp": -0.6,
+          "bpm": -3.4,
+          "ws": 1.1
+        },
+        "game_on_court_value_2026_snapshot": 49.98,
+        "prior_team_active_payroll": 126082200,
+        "prior_team_total_cap_allocations": 150960352,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Bilal Coulibaly",
+        "player_key": "bilalcoulibaly",
+        "team": "WAS",
+        "draft_pick": 7,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "2027_not_observed",
+        "terms": {},
+        "sources": [
+          "draft2023",
+          "ex2026"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "coulibi01",
+          "season_age": 21,
+          "games": 56,
+          "starts": 56,
+          "minutes": 1468,
+          "vorp": -0.1,
+          "bpm": -2.1,
+          "ws": 1.0
+        },
+        "game_on_court_value_2026_snapshot": 54.39,
+        "prior_team_active_payroll": 162858635,
+        "prior_team_total_cap_allocations": 232033397,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Gradey Dick",
+        "player_key": "gradeydick",
+        "team": "LAC",
+        "draft_pick": 13,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "2027_not_observed",
+        "terms": {},
+        "sources": [
+          "draft2023",
+          "ex2026"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "dickgr01",
+          "season_age": 22,
+          "games": 76,
+          "starts": 1,
+          "minutes": 1067,
+          "vorp": -0.4,
+          "bpm": -3.6,
+          "ws": 1.4
+        },
+        "game_on_court_value_2026_snapshot": 47.64,
+        "prior_team_active_payroll": 189852974,
+        "prior_team_total_cap_allocations": 199054230,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Scoot Henderson",
+        "player_key": "scoothenderson",
+        "team": "POR",
+        "draft_pick": 3,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "2027_not_observed",
+        "terms": {},
+        "sources": [
+          "draft2023",
+          "ex2026"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "hendesc01",
+          "season_age": 21,
+          "games": 30,
+          "starts": 10,
+          "minutes": 748,
+          "vorp": 0.0,
+          "bpm": -2.2,
+          "ws": 1.0
+        },
+        "game_on_court_value_2026_snapshot": 54.49,
+        "prior_team_active_payroll": 159149269,
+        "prior_team_total_cap_allocations": 197927822,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Taylor Hendricks",
+        "player_key": "taylorhendricks",
+        "team": "MEM",
+        "draft_pick": 9,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "2027_not_observed",
+        "terms": {},
+        "sources": [
+          "draft2023",
+          "ex2026"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "hendrta01",
+          "season_age": 22,
+          "games": 59,
+          "starts": 17,
+          "minutes": 1118,
+          "vorp": -0.1,
+          "bpm": -2.4,
+          "ws": 1.1
+        },
+        "game_on_court_value_2026_snapshot": 53.3,
+        "prior_team_active_payroll": 133187436,
+        "prior_team_total_cap_allocations": 157723438,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Jaime Jaquez Jr.",
+        "player_key": "jaimejaquez",
+        "team": "MIL",
+        "draft_pick": 18,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "2027_not_observed",
+        "terms": {},
+        "sources": [
+          "draft2023",
+          "ex2026"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "jaqueja01",
+          "season_age": 24,
+          "games": 75,
+          "starts": 1,
+          "minutes": 2121,
+          "vorp": 1.1,
+          "bpm": 0.1,
+          "ws": 4.2
+        },
+        "game_on_court_value_2026_snapshot": 54.33,
+        "prior_team_active_payroll": 151771975,
+        "prior_team_total_cap_allocations": 180894447,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Dereck Lively II",
+        "player_key": "derecklively",
+        "team": "DAL",
+        "draft_pick": 12,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "2027_not_observed",
+        "terms": {},
+        "sources": [
+          "draft2023",
+          "ex2026"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "livelde01",
+          "season_age": 21,
+          "games": 7,
+          "starts": 4,
+          "minutes": 115,
+          "vorp": 0.1,
+          "bpm": 0.6,
+          "ws": 0.3
+        },
+        "game_on_court_value_2026_snapshot": 58.87,
+        "prior_team_active_payroll": 174224556,
+        "prior_team_total_cap_allocations": 200372430,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Kris Murray",
+        "player_key": "krismurray",
+        "team": "MEM",
+        "draft_pick": 23,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "2027_not_observed",
+        "terms": {},
+        "sources": [
+          "draft2023",
+          "ex2026"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "murrakr01",
+          "season_age": 25,
+          "games": 57,
+          "starts": 15,
+          "minutes": 1333,
+          "vorp": 0.2,
+          "bpm": -1.5,
+          "ws": 2.2
+        },
+        "game_on_court_value_2026_snapshot": 52.25,
+        "prior_team_active_payroll": 133187436,
+        "prior_team_total_cap_allocations": 157723438,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Marcus Sasser",
+        "player_key": "marcussasser",
+        "team": "DAL",
+        "draft_pick": 25,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "2027_not_observed",
+        "terms": {},
+        "sources": [
+          "draft2023",
+          "ex2026"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "sassema01",
+          "season_age": 25,
+          "games": 38,
+          "starts": 5,
+          "minutes": 457,
+          "vorp": 0.0,
+          "bpm": -1.7,
+          "ws": 0.8
+        },
+        "game_on_court_value_2026_snapshot": 54.17,
+        "prior_team_active_payroll": 174224556,
+        "prior_team_total_cap_allocations": 200372430,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Brice Sensabaugh",
+        "player_key": "bricesensabaugh",
+        "team": "UTA",
+        "draft_pick": 28,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "2027_not_observed",
+        "terms": {},
+        "sources": [
+          "draft2023",
+          "ex2026"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "sensabr01",
+          "season_age": 22,
+          "games": 75,
+          "starts": 22,
+          "minutes": 1762,
+          "vorp": -0.3,
+          "bpm": -2.6,
+          "ws": 1.1
+        },
+        "game_on_court_value_2026_snapshot": 54.8,
+        "prior_team_active_payroll": 147149062,
+        "prior_team_total_cap_allocations": 173117343,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Ben Sheppard",
+        "player_key": "bensheppard",
+        "team": "IND",
+        "draft_pick": 26,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "2027_not_observed",
+        "terms": {},
+        "sources": [
+          "draft2023",
+          "ex2026"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "sheppbe01",
+          "season_age": 24,
+          "games": 65,
+          "starts": 20,
+          "minutes": 1390,
+          "vorp": -0.4,
+          "bpm": -3.0,
+          "ws": 1.4
+        },
+        "game_on_court_value_2026_snapshot": 44.37,
+        "prior_team_active_payroll": 183115307,
+        "prior_team_total_cap_allocations": 191900207,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Julian Strawther",
+        "player_key": "julianstrawther",
+        "team": "DEN",
+        "draft_pick": 29,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "2027_not_observed",
+        "terms": {},
+        "sources": [
+          "draft2023",
+          "ex2026"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "strawju01",
+          "season_age": 23,
+          "games": 57,
+          "starts": 14,
+          "minutes": 861,
+          "vorp": -0.1,
+          "bpm": -2.3,
+          "ws": 1.3
+        },
+        "game_on_court_value_2026_snapshot": 48.66,
+        "prior_team_active_payroll": 187214031,
+        "prior_team_total_cap_allocations": 200743895,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Jarace Walker",
+        "player_key": "jaracewalker",
+        "team": "IND",
+        "draft_pick": 8,
+        "decision": "unextended",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": "2027_not_observed",
+        "terms": {},
+        "sources": [
+          "draft2023",
+          "ex2026"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "walkeja02",
+          "season_age": 22,
+          "games": 76,
+          "starts": 41,
+          "minutes": 1953,
+          "vorp": -0.2,
+          "bpm": -2.4,
+          "ws": 0.5
+        },
+        "game_on_court_value_2026_snapshot": 50.84,
+        "prior_team_active_payroll": 183115307,
+        "prior_team_total_cap_allocations": 191900207,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Cam Whitmore",
+        "player_key": "camwhitmore",
+        "team": "CLE",
+        "draft_pick": 20,
+        "decision": "waived_before_deadline",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": null,
+        "terms": {},
+        "sources": [
+          "draft2023",
+          "ex2026"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "whitmca01",
+          "season_age": 21,
+          "games": 21,
+          "starts": 0,
+          "minutes": 354,
+          "vorp": -0.1,
+          "bpm": -3.3,
+          "ws": 0.0
+        },
+        "game_on_court_value_2026_snapshot": 58.23,
+        "prior_team_active_payroll": 211979654,
+        "prior_team_total_cap_allocations": 226181970,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Jordan Hawkins",
+        "player_key": "jordanhawkins",
+        "team": "NOP",
+        "draft_pick": 14,
+        "decision": "waived_before_deadline",
+        "agreement_report_date": null,
+        "extension_salary_start_season": null,
+        "next_offseason_status": null,
+        "terms": {},
+        "sources": [
+          "draft2023",
+          "ex2026"
+        ],
+        "prior_season_box_value": {
+          "bref_id": "hawkijo01",
+          "season_age": 23,
+          "games": 51,
+          "starts": 1,
+          "minutes": 692,
+          "vorp": -0.7,
+          "bpm": -6.2,
+          "ws": -0.4
+        },
+        "game_on_court_value_2026_snapshot": 34.51,
+        "prior_team_active_payroll": 182257822,
+        "prior_team_total_cap_allocations": 207453274,
         "prior_season_cap": 154647000,
         "context_sources": [
           "stats2026",
