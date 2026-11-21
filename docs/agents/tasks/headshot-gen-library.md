@@ -93,9 +93,9 @@ The last accepted player is `player-m/0024`. The next player ID is `player-m/002
 
 ## Batch 2
 
-- In progress with 27 completed people and 108 new portraits.
-- 27 players, 0 staff women and 0 staff men. 5 redone stages. About 47 minutes.
-- Continue at player-m/0052.
+- In progress with 30 completed people and 120 new portraits.
+- 30 players, 0 staff women and 0 staff men. 6 redone stages. About 53 minutes.
+- Continue at player-m/0055.
 
 Order: 40 four-stage player sets, 10 three-stage staff women, then staff men as capacity allows. All subjects and image references are fictional adults. The built-in Codex image tool was used. Each accepted image has a full-size PNG and a 320 × 320 JPEG. The combined contact sheet compares colour and greyscale.
 
@@ -128,3 +128,6 @@ Order: 40 four-stage player sets, 10 three-stage staff women, then staff men as 
 - player-m/0049. Asymmetric brow and pointed nose carry through the braid and close cut. Subtle greying in stubble.
 - player-m/0050. Strong brows and broad nose hold through developing neck and beard. The last portrait keeps the waves and shows grey and fuller cheeks.
 - player-m/0051. Redid the late portrait to strengthen the eye lines and add subtle silver. Smile and eye spacing hold through shaved and cropped hair.
+- player-m/0052. Redid age 35 for clearer eye lines and a shorter fade. Smile, nose and hazel eyes remain recognizable.
+- player-m/0053. Dimple and wide nose stay distinct through stronger beard, fuller neckline and lighter facial hair.
+- player-m/0054. Pointed nose and freckles are steady. Final buzz and fine eye and brow lines mark the change.
