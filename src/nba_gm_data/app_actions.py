@@ -4166,6 +4166,24 @@ def offer_sheet_request(active: dict[str, Any], save: dict[str, Any], team: dict
     return {"terms": terms, "check": check, "takes": takes, "takes_reason": takes_reason, "view": view}
 
 
+def follow_offer_sheet_advice(canonical: dict[str, Any], save_path: Path, *, everything: bool = False) -> list[dict[str, Any]]:
+    """Decide the user's offer sheets the way the assistant GM advises (offer_sheets.incumbent_choice): those due
+    today, or all pending ones (``everything``). For hands-off play only; the screens always ask."""
+    from .offer_sheets import incumbent_choice, user_decide, user_decisions_due, user_pending
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    waiting = user_pending(save) if everything else user_decisions_due(save)
+    done = []
+    for sheet in waiting:
+        active = canonical_with_save(canonical, save)
+        choice = incumbent_choice(active, save, sheet)
+        result = user_decide(canonical, save, sheet["id"], bool(choice["match"]))
+        if result.get("ok"):
+            done.append(result["sheet"])
+    if done:
+        write_save(save_path, save)
+    return done
+
+
 def cap_ledger_year(save: dict[str, Any]) -> str:
     from .cap_ledger import cap_year
     return cap_year(save)
@@ -4310,6 +4328,9 @@ def advance_free_agency_action(canonical: dict[str, Any], save_path: Path, paylo
     # FA-REAL slice 3: a rival's offer sheet for one of your restricted free agents stops the clock for your Match or
     # Pass (``let_sheets_expire``: let it run out instead, as a multiplayer round timer does; he then leaves).
     expire = bool(payload.get("let_sheets_expire"))
+    if payload.get("follow_advice"):
+        # Hands-off play (the automated GM in the probes): take the assistant GM's advice on sheets that are due.
+        follow_offer_sheet_advice(canonical, save_path, everything=(mode == "end"))
     if mode == "end":
         # FA-REAL slice 2: "end" first finishes the first wave and stops on signing day (stop 3); from signing day it
         # closes the market and runs late summer in the background to camp.
