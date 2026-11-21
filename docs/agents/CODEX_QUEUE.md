@@ -6,6 +6,51 @@ Current priority (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE now, ODDS-COA
 
 ---
 
+## Ready now (2026-11-21): ROSTER-EDGE-EVIDENCE (fresh chat)
+
+Laptop rule: at most two heavy jobs at once. One is running now (the betting-test agent). This task is research only: light.
+
+### ROSTER-EDGE-EVIDENCE: how real teams use two-way contracts, camp deals, roster cuts and sign-and-trades
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task ROSTER-EDGE-EVIDENCE (its board row already exists; set it to "in progress (Codex)").
+Read docs/agents/tasks/fa-realism-plan.md (slice 4), docs/agents/tasks/fa-realism-research.md (the rules you already
+researched: two-ways, Exhibit 10, waivers, sign-and-trades) and docs/agents/tasks/offseason-decisions-evidence.md
+(your format: rules fitted on three summers, tested on the fourth).
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_roster_edge -b codex/roster-edge-evidence HEAD
+Commit on that branch; never push, never commit to main. Research only: no files under src/, gui/ or tests/.
+
+Goal: free agency's slice 4 builds two-way contracts, Exhibit 10 camp deals, the 21-to-15 roster cutdown and
+sign-and-trades. AI teams need measured rules for these decisions, from the 2023, 2024, 2025 and 2026 offseasons and
+seasons (sourced rows: RealGM/Hoops Rumors/Spotrac/NBA.com/team releases; record URL and date). One evidence collection
+per decision, plus a short fit where the data allow:
+1. Two-way contracts: who gets them (draft slot or undrafted, age, G League production, prior two-way), how many teams
+   fill all 3 slots and when, how many two-ways reach the 50-game limit, and conversions to standard deals (how many per
+   season, when, which players: production, injuries on the NBA roster).
+2. Exhibit 10 deals: how many per team each camp, how many convert to two-ways before opening night, how many earn the
+   G League bonus, how many make the opening roster.
+3. The camp cutdown: how many players each team carries into camp (up to 21), who gets cut (guarantees, age, draft
+   status, camp invite vs signed), waiver claims of camp cuts (how many, by whom).
+4. Sign-and-trades: every one in 2023-2026 (your earlier research found 3, 11, 4 and 4), with the reason each side
+   did it (the receiving team over the cap, the sending team getting value for a departing free agent, base-year
+   compensation cases), the contract terms, and whether the receiving team was hard-capped.
+5. Late free agency and overseas: veterans who signed after August 1 or in camp, and players who left for overseas,
+   by age and prior role, so the game's late market is thin in the right way.
+For each: counts per season, the rule teams seem to follow and its held-out accuracy where a fit is possible, named
+examples, and gaps.
+
+Output: data/research/roster_edge_2023_2026.json (rows plus sources), scripts/research/roster_edge_fit.py,
+docs/agents/tasks/roster-edge-evidence.md. Report: plain-language TL;DR first (5 lines, no jargon; define each term
+simply), then one section per decision. Paraphrase sources; don't copy long passages. Save and commit after each
+decision so a usage limit loses nothing. Set the board row to "review" and stop.
+```
+
+---
+
 ## Ready now (2026-11-21): INJURY-HISTORY-2025-26 (fresh chat)
 
 Laptop rule: at most two heavy jobs at once (FA-REAL slice 2 and a coordinator test run are the two now). Keep this task light: fetching and parsing only, no season simulations.
