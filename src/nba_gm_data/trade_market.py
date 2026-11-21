@@ -46,6 +46,7 @@ STAR_ON_COURT = 66.0            # unsolicited offers: a contender's star (about 
 STAR_VALUE = 75.0               # ... by on-court value or by trade value, with no reason to sell
 UNSOLICITED_PER_BUYER = 1
 TEXTS_PER_DAY = 2
+SELLER_PRINCIPAL_BAND = 4.0     # a seller's principal outgoing players: within this much of its best one
 OPINION_PAIRINGS_PER_BUYER = 2  # available players an office pursues because its scouts like them
 OPINION_MIN_MINUTES = 14.0      # ... only if he would play for it
 OPINION_REBUILD_MAX_AGE = 29.0  # ... and a rebuilding or retooling office does not chase older players
@@ -178,16 +179,24 @@ def concession_size(canonical: dict[str, Any], team_id: str, neg: dict[str, Any]
 
 def _motivated(canonical: dict[str, Any], team_id: str, incoming: list[dict[str, Any]],
                outgoing: list[dict[str, Any]]) -> bool:
-    """A side with its own reason to deal: every player it sends is one it has a stated reason to move (a buyer
-    paying in picks and salary it would move, or a seller moving a player it wants to move), and it gets or sends
-    at least one player. A team giving up a player it had no plan to move is never in a hurry, whatever it gets."""
+    """A side with its own reason to deal. A buyer (it gets a better player than any it sends, or sends no player)
+    is pursuing a target. A seller is motivated only when the players it is really selling (its best outgoing
+    players) are ones it has a stated reason to move or salary it would move: a team giving up a player it had no
+    plan to move is never in a hurry, whatever it gets back."""
+    from .front_office import _on_court
     players_out = [a for a in outgoing if a.get("kind") == "player"]
+    players_in = [a for a in incoming if a.get("kind") == "player"]
     if not players_out:
-        return any(a.get("kind") == "player" for a in incoming)
+        return bool(players_in)
+    best_out = max(_on_court(canonical, a["id"]) for a in players_out)
+    best_in = max((_on_court(canonical, a["id"]) for a in players_in), default=0.0)
+    if best_in > best_out:
+        return True
     from .trade_targets import salary_filler, team_sell_reasons
     reasons = team_sell_reasons(canonical, team_id)
     filler = salary_filler(canonical, team_id)
-    return all(reasons.get(a.get("id")) or a.get("id") in filler for a in players_out)
+    principal = [a for a in players_out if _on_court(canonical, a["id"]) >= best_out - SELLER_PRINCIPAL_BAND]
+    return all(reasons.get(a.get("id")) or a.get("id") in filler for a in principal)
 
 
 def concession_term(canonical: dict[str, Any], team_id: str, proposal: Any, incoming: list[dict[str, Any]],
