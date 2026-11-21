@@ -69,3 +69,39 @@ _Drafted overnight 2026-11-21 by Claude (coordinator) from a read-only code surv
 - Stage 2's goal is a new engine driven by the 94 inputs. It is judged by beating today's results on both scorecards (real-stat targets and the betting test), not by matching today's games.
 - The byte-identical gate is dropped. Retiring the old switch (job A) becomes housekeeping done along the way.
 - Next: survey the experimental possession engine (Track C) and the engine roadmap, then write a revised plan with small first components, each spot-checked against real data on its own before full games.
+
+## Revised plan (2026-11-21, after the engine survey)
+The user's framing: build on what exists (roles, coaches, injuries and rust, ratings, data), keep speed realistic, and beat the simpler engine on both scorecards.
+
+**What exists:**
+- **The experimental engine (Track C)** has good physics pieces:
+  - shooting and finishing by mode and zone (`offense_response.py`, which reads all 15 shooting/finishing skills);
+  - rim defense (`interior_defense.py`, `shot_geometry.py`);
+  - screens (`screen_navigation.py`);
+  - drives, help, kick-outs and passes (`creation_passing.py`);
+  - choices (`action_choice.py`);
+  - a shared 94-input reader (`experimental_inputs.py`).
+- **Its limits:**
+  - It has never been scored against real stats or betting odds. Its own reviews call it uncalibrated.
+  - It runs on hand-made 6-12 player packets, not the league's 691 estimated players.
+  - It lacks lineups, substitutions, a clock, transition, post play, rebounding skill (S29-S32), off-ball movement and 12 of 18 passing inputs.
+  - It costs about 0.3-1.5 s a game, against about 0.01 s today. The budget allows roughly 0.02-0.04 s a game.
+
+**The approach: a fast possession engine, built in pieces, each measured.**
+1. **Seam and side-by-side scoring.** Add an `engine=` choice where the game sim branches (`sim_game_with_context`, sim.py:606), and pass it through `calibration_report.py` and the betting test. From day one, every new piece is scored next to today's engine on both scorecards.
+2. **League input bridge.** Compile all 691 players' 94 inputs (estimated, prior or unknown) into the typed profiles the physics pieces need, with one documented rule for unknown cells (the prior with its uncertainty, never a hand control).
+3. **Spot-check each component against real data before full games:**
+   - shooting and finishing by zone and mode against real 2025-26 per-player shooting;
+   - turnovers and steals;
+   - rebounding (built new from S29-S32 and T12/T13);
+   - fouls and free throws.
+
+   Each one is compared with how well today's engine does the same.
+4. **Fast rules fitted to the exact pieces** (roadmap S2.4). The exact physics stay as the reference, and live games use cheap fitted rules. The target is about 0.2-0.4 ms per possession.
+5. **Whole-game frame.** Five-man lineups, a clock and quarters, substitutions through the existing coach model (`game_minutes`, foul trouble, fatigue, blowouts, the user's minutes targets), injuries and rust, bonus and foul-outs, and end-game. Roles and coach usage decide who initiates and which action.
+6. **Gate (roadmap S2.6).** Beats today's engine on both scorecards, meets the speed budget, and survives a multi-season run. Only then does it become the default. Today's engine stays selectable.
+
+**First tasks:**
+- **S2-SEAM-SHOOTING:** the seam (step 1), the input bridge (step 2) and the shooting/finishing spot-check (step 3, first part).
+- **S2-REBOUND-FOULS:** the rebound and foul spot-checks.
+- **Then** the first fast possession loop.
