@@ -190,3 +190,5 @@ Anthony Bennett and Hasheem Thabeet never crossed the qualifying minutes cut. Ma
 Research complete on `codex/development-evidence`. The public inputs, source registry, tables and holdouts are in `data/research/development_evidence.json`. The branch keeps aggregate Basketball Index comparisons. The original Basketball Index files are available in the local worktree via symlinks.
 
 Run `.venv/bin/python scripts/research/development_evidence_fit.py --out /tmp/development_evidence.json` to recompute from the frozen Basketball Reference rows. With the local Basketball Index files linked, this also recomputes the cross-check. Without them, it carries forward the saved cross-check. Add `--cache output/development-evidence` to rebuild the public inputs from the cached season and draft pages. The script uses the Python standard library.
+
+Verification covered a byte-for-byte rebuild from the frozen inputs and a second from the cached source pages. Cohort, rankings and turnover counts reconcile. The no-cache Basketball Index fallback also reproduced the file.
