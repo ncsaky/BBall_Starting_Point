@@ -6737,9 +6737,16 @@ def apply_free_agency_offer_state(
             return {'status': 'blocked', 'notes': plan['reason']}
         # Payroll discipline (TRADE-VOLUME): re-check against the payroll after the day's earlier signings.
         from .payroll_plan import payroll_check, plain_words
+        # FA-REAL slice 3: for a restricted free agent the alternative is his qualifying offer, which the team pays
+        # this season anyway if he signs it; so only the salary above it is new money for the owner.
+        qo_baseline = 0.0
+        if offer.get("restricted_re_signing"):
+            from .offseason_decisions import qo_record
+            qo_baseline = float((qo_record(save, contract_start_season_for_signing(save), str(player.get("id") or ""))
+                                 or {}).get("amount") or 0.0)
         tax_plan = payroll_check(
             active, save, team_id, contract_start_season_for_signing(save),
-            add_salary=float(offer.get('aav_millions') or 0) * 1_000_000,
+            add_salary=float(offer.get('aav_millions') or 0) * 1_000_000, remove_salary=qo_baseline,
             roster_delta=1 - len(plan.get('cuts') or []), minutes=display_minutes_projection(player),
             kind="re_signing" if bird else "free_agency", committed=reserved * 1_000_000,
             age=player.get("display_age", player.get("age")),
