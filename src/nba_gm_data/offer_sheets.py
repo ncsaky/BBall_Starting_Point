@@ -48,6 +48,7 @@ random stream moves):
 from __future__ import annotations
 
 from datetime import date, timedelta
+import math
 from typing import Any
 
 from .offseason_calendar import offseason_dates, season_label
@@ -57,7 +58,8 @@ MIN_YEARS, MAX_YEARS, MAX_QO_MIN_YEARS = 2, 4, 3
 SHEET_RAISE = 0.05
 ARENAS_SERVICE = (1, 2)
 ARENAS_YEAR_FOUR_RAISE = 0.045
-LATE_PASS_MONTH_DAY = (7, 15)     # the late sheet pass (last day of the free-agency phase), before late summer
+LATE_PASS_MONTH_DAY = (7, 15)
+TRACE: list | None = None          # calibration only: set to a list to record each pass's best bidder per player     # the late sheet pass (last day of the free-agency phase), before late summer
 
 RULES: dict[str, dict[str, float]] = {
     # Incumbents (2023-26: 6 sheets, 4 matched; "match unless a hard cap prevents it" 5 of 6 right).
@@ -365,12 +367,14 @@ def sign_sheet(save: dict[str, Any], player: dict[str, Any], bidder_id: str, ter
     return record
 
 
-def player_takes_sheet(save: dict[str, Any], player: dict[str, Any], first_salary: float, stage: float) -> tuple[bool, str]:
+def player_takes_sheet(save: dict[str, Any], player: dict[str, Any], first_salary: float, stage: float,
+                       active: dict[str, Any] | None = None) -> tuple[bool, str]:
     """The player's choice: sign the sheet when its first-year salary reaches what he will take now and his
-    qualifying offer (personality-free: the price against his market)."""
+    qualifying offer (personality-free: the price against his market, which is no more than the most any team could
+    offer him: ``leverage_price``)."""
     from .cap_ledger import cap_year
     from .offseason_decisions import qo_record, rfa_market_price, rfa_reservation
-    market = rfa_market_price(save, player["id"])
+    market = rfa_market_price(save, player["id"], active=active)
     qo = float((qo_record(save, cap_year(save), player["id"]) or {}).get("amount") or 0.0)
     want = max(qo, rfa_reservation(save, player, market, stage) if market else qo)
     if float(first_salary) + 1 >= want:
@@ -388,6 +392,46 @@ def summer_stage(save: dict[str, Any]) -> float:
     if today[5:] < "07-16":
         return 0.5
     return RFA_STAGES["late_summer"]
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# What the outside market can pay him (his leverage)
+
+_CAPACITY: dict[tuple, dict[str, float]] = {}
+
+
+def outside_capacity(active: dict[str, Any], save: dict[str, Any]) -> dict[str, float]:
+    """The largest first-year salary each team could put in an offer sheet today (dollars): its cap room left after
+    reservations, or its largest available exception (the minimum always). Cached per day and ledger state."""
+    from . import cap_ledger
+    season = cap_ledger.cap_year(save)
+    ledger = ((save.get("cap_ledger") or {}).get("seasons") or {}).get(season) or {}
+    key = (_today(save), (save.get("meta") or {}).get("seed"), sum(len(r.get("signings") or []) for r in ledger.values()),
+           len(pending_sheets(save)), len(save.get("free_agent_offers") or []))
+    if key in _CAPACITY:
+        return _CAPACITY[key]
+    out = {}
+    for team in active.get("teams", []):
+        payroll = cap_ledger.team_payroll(active, save, team["id"], season, include_reservations=True)
+        room = float(payroll["cap_room"]) - float((payroll.get("reserved") or {}).get("cap_room") or 0.0)
+        balances = [float(v["balance"]) for v in payroll["exceptions"].values() if v["available"]]
+        out[team["id"]] = max([room, 0.0] + balances)
+    _CAPACITY.clear()
+    _CAPACITY[key] = out
+    return out
+
+
+def leverage_price(active: dict[str, Any], save: dict[str, Any], player_id: str, market: float) -> float:
+    """His price as a restricted free agent: his market price, but no more than the most any other team could pay
+    him in an offer sheet today (his only outside leverage), and never below his qualifying offer. Real restricted
+    players whose price no team can reach settle for less with their own team (Kuminga and Giddey 2025, Duren 2026)."""
+    from .offseason_decisions import qo_record, restricted_rights_team
+    from .cap_ledger import cap_year
+    holder = restricted_rights_team(save, player_id)
+    capacity = outside_capacity(active, save)
+    best = max([v for team, v in capacity.items() if team != holder] or [0.0])
+    qo = float((qo_record(save, cap_year(save), player_id) or {}).get("amount") or 0.0)
+    return max(qo, min(float(market), best)) if market else qo
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -576,10 +620,11 @@ def ai_sheet_pass(canonical: dict[str, Any], save: dict[str, Any], *, label: str
     busy = {s["bidder_team_id"] for s in pending_sheets(save)}
     teams = [t for t in active.get("teams", []) if t.get("id") not in users]
     payrolls: dict[str, dict[str, Any]] = {}
+    capacities = outside_capacity(active, save)
     signed = []
     for pid, holder in sorted(held.items()):
         player = players.get(pid)
-        market = rfa_market_price(save, pid)
+        market = rfa_market_price(save, pid, active=active)
         if not player or market <= 0:
             continue
         age = float(player.get("display_age", player.get("age")) or 27.0)
@@ -587,7 +632,7 @@ def ai_sheet_pass(canonical: dict[str, Any], save: dict[str, Any], *, label: str
             continue
         record = qo_record(save, season, pid) or {}
         qo = float(record.get("amount") or 0.0)
-        ok, _ = player_takes_sheet(save, player, market * rules["max_over_market"], stage)
+        ok, _ = player_takes_sheet(save, player, market * rules["max_over_market"], stage, active)
         if not ok:
             continue          # he wants more than anyone would pay: he waits
         value = max(rules["min_value_share"], min(1.0, market / rules["value_scale"]))
@@ -614,14 +659,20 @@ def ai_sheet_pass(canonical: dict[str, Any], save: dict[str, Any], *, label: str
                 continue
             row = office_row(active, team_id)
             urgency = urgency_level(row) if row else 0.0
+            # A little over his price (more from an urgent office), but no more than the team can fund: a "full
+            # mid-level sheet" when that is all it has. He must take it (his price now, his qualifying offer).
+            capacity = float(capacities.get(team_id) or 0.0)
             price = max(qo, market * (rules["premium"] + rules["urgent_premium"] * max(0.0, urgency)))
-            price = round(price / 100_000) * 100_000
-            taken, _ = player_takes_sheet(save, player, price, stage)
+            price = min(price, capacity)
+            price = math.floor(price / 100_000) * 100_000
+            if price < qo:
+                continue
+            taken, _ = player_takes_sheet(save, player, price, stage, active)
             if not taken:
-                price = max(price, market * rules["max_over_market"])
-                taken, _ = player_takes_sheet(save, player, price, stage)
-                if not taken:
+                stretch = math.floor(min(capacity, market * rules["max_over_market"]) / 100_000) * 100_000
+                if stretch <= price or not player_takes_sheet(save, player, stretch, stage, active)[0]:
                     continue
+                price = stretch
             terms = sheet_terms(save, player, price, years, season=season)
             if not terms["ok"] and terms.get("arenas"):
                 terms = sheet_terms(save, player, float(cap_ledger.exception_amount("non_taxpayer_mle", season)),
@@ -631,11 +682,6 @@ def ai_sheet_pass(canonical: dict[str, Any], save: dict[str, Any], *, label: str
             if team_id not in payrolls:
                 payrolls[team_id] = cap_ledger.team_payroll(active, save, team_id, season, include_reservations=True)
             payroll = payrolls[team_id]
-            capacity = max([float(payroll["cap_room"]) - float((payroll.get("reserved") or {}).get("cap_room") or 0.0)]
-                           + [float(v["balance"]) for v in payroll["exceptions"].values() if v["available"]]
-                           + [float(cap_ledger.minimum_salary(season, terms["service"])) + 100_000])
-            if capacity + 1 < terms["bidder_charges"][0]:
-                continue
             quote = bidder_quote(active, save, team_id, player, terms, payroll=payroll, team_abbrev=team.get("abbrev"))
             if not quote.get("ok") and years > MIN_YEARS and not record.get("maximum"):
                 short = sheet_terms(save, player, terms["salaries"][0], MIN_YEARS, season=season)
@@ -656,6 +702,10 @@ def ai_sheet_pass(canonical: dict[str, Any], save: dict[str, Any], *, label: str
             if best is None or appeal > best["appeal"]:
                 best = {"appeal": appeal, "team": team, "terms": terms, "quote": quote, "urgency": urgency,
                         "minutes": float(context["projected_minutes"])}
+        if TRACE is not None:
+            TRACE.append({"label": label, "player": player.get("name"), "holder": _abbrev(holder), "market": market,
+                          "guess": guess["kind"], "best": (best["team"].get("abbrev"), round(best["appeal"], 3))
+                          if best else None})
         if best is None:
             continue
         draw = _hash_unit(seed, season, label, pid, best["team"]["id"], "offer_sheet")
@@ -672,6 +722,7 @@ def ai_sheet_pass(canonical: dict[str, Any], save: dict[str, Any], *, label: str
         signed.append(sheet)
         busy.add(team["id"])
         payrolls.pop(team["id"], None)
+        capacities = outside_capacity(active, save)
     return signed
 
 

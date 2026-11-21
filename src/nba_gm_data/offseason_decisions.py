@@ -801,14 +801,22 @@ def rfa_reservation(save: dict[str, Any], player: dict[str, Any], market: float,
     return market * (1.0 + rfa_belief(save, player) - rules["belief_fade"] * max(0.0, min(1.0, stage)))
 
 
-def rfa_market_price(save: dict[str, Any], player_id: str) -> float:
-    """His price in dollars: today's ask in the free-agency room, else the market value recorded with his offer."""
+def rfa_market_price(save: dict[str, Any], player_id: str, active: dict[str, Any] | None = None) -> float:
+    """His price in dollars: today's ask in the free-agency room, else the market value recorded with his offer.
+    From the market's opening (``active`` given, slice 3) no more than the most another team could pay him in an offer
+    sheet today (offer_sheets.leverage_price): above that he has no outside leverage."""
     asks = (save.get("free_agency_state") or {}).get("player_asks_millions") or {}
-    if asks.get(player_id):
-        return float(asks[player_id]) * 1e6
     from .cap_ledger import cap_year
-    record = qo_record(save, cap_year(save), player_id) or {}
-    return float(record.get("market_millions") or 0.0) * 1e6
+    if asks.get(player_id):
+        price = float(asks[player_id]) * 1e6
+    else:
+        record = qo_record(save, cap_year(save), player_id) or {}
+        price = float(record.get("market_millions") or 0.0) * 1e6
+    if active is not None and price:
+        from .offer_sheets import leverage_price, sheets_open
+        if sheets_open(save) or str((save.get("state") or {}).get("phase") or "") == "free_agency":
+            price = leverage_price(active, save, player_id, price)
+    return price
 
 
 def restricted_market_day(canonical: dict[str, Any], save: dict[str, Any], day: int) -> int:
@@ -826,7 +834,7 @@ def restricted_market_day(canonical: dict[str, Any], save: dict[str, Any], day: 
     signed = 0
     for player_id, team_id in sorted(held.items()):
         player = players.get(player_id)
-        market = rfa_market_price(save, player_id)
+        market = rfa_market_price(save, player_id, active=active)
         if not player or not market:
             continue
         if rfa_negotiate(canonical, save, active, player, team_id, market, stage):
@@ -859,7 +867,7 @@ def restricted_summer_pass(canonical: dict[str, Any], save: dict[str, Any], *, f
     signed = accepted = 0
     for player_id, team_id in sorted(held.items()):
         player = players.get(player_id) or {"id": player_id}
-        market = rfa_market_price(save, player_id)
+        market = rfa_market_price(save, player_id, active=active)
         offer = market * RULES["qualifying_offer"]["team_offer_share"]
         if team_id not in users and market and rfa_negotiate(canonical, save, active, player, team_id, market, stage,
                                                               final=final):

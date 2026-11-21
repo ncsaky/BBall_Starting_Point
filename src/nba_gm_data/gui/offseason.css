@@ -53,3 +53,23 @@
 body.unified-terminal-ui .offseason-table tbody th.offseason-player { background: transparent !important; font-size: 11px !important; font-weight: 700 !important; text-transform: none !important; letter-spacing: 0 !important; color: #1d2a33 !important; }
 body.unified-terminal-ui .offseason-table tbody th.offseason-player .fa-player-name { font-size: 11px !important; font-weight: 700 !important; color: #1d2a33 !important; }
 body.unified-terminal-ui .offseason-table thead th { font-size: 9px !important; font-weight: 700 !important; }
+
+/* FA-REAL slice 3: a rival's offer sheet for one of your restricted free agents: the Match or Pass countdown. */
+.offer-sheet-decision { margin: 8px 12px 10px; border: 1px solid #c2862a; border-radius: 4px; background: #fffaf0; box-shadow: inset 4px 0 #c2862a; }
+.offer-sheet-decision > header { display: flex; justify-content: space-between; gap: 12px; padding: 8px 10px 6px 14px; }
+.offer-sheet-decision > header p { margin: 0; font-size: 10px; font-weight: 700; color: #6b4610; text-transform: uppercase; letter-spacing: .02em; }
+.offer-sheet-decision > header h4 { margin: 2px 0; font-size: 15px; }
+.offer-sheet-decision > header h4 .fa-player-name { appearance: none; border: 0; padding: 0; background: none; font: inherit; font-weight: 700; color: #1d2a33; cursor: pointer; }
+.offer-sheet-decision > header span { font-size: 11px; color: #34424c; }
+.offer-sheet-clock { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; min-width: 120px; padding: 4px 10px; border-radius: 4px; background: #f6e2bf; color: #6b4610; }
+.offer-sheet-clock strong { font-size: 14px; }
+.offer-sheet-clock small { font-size: 10px; }
+.offer-sheet-clock.is-due { background: #a8434b; color: #fff; }
+.offer-sheet-table { margin: 0 10px 0 14px; width: calc(100% - 24px); }
+.offer-sheet-facts { display: grid; grid-template-columns: 110px 1fr; gap: 3px 10px; margin: 8px 10px 0 14px; font-size: 11px; line-height: 1.35; }
+.offer-sheet-facts > div { display: contents; }
+.offer-sheet-facts dt { font-weight: 700; color: #5c6b75; }
+.offer-sheet-facts dd { margin: 0; color: #1d2a33; }
+.offer-sheet-facts .is-negative { color: #a8434b; }
+.offer-sheet-decision > footer { display: flex; gap: 8px; justify-content: flex-end; padding: 8px 10px 10px; }
+.offer-sheet-decision > footer .ui-command { min-width: 90px; min-height: 28px; font-weight: 700; }

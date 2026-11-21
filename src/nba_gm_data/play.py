@@ -5468,7 +5468,9 @@ def process_ai_free_agency_offers_for_day_state(
     # need were reaching it only after the best players were gone.
     target_count = min(len(pool), FREE_AGENCY_SCREEN_FIRST + day * FREE_AGENCY_SCREEN_PER_DAY)
     from .offseason_decisions import restricted_player_ids
-    restricted = restricted_player_ids(save)   # FA-REAL slice 2: interim rule, only the team holding him bids
+    # FA-REAL slices 2-3: no ordinary bids for a restricted free agent: his own team talks to him each day
+    # (offseason_decisions.restricted_market_day) and other teams sign him only to offer sheets (offer_sheets).
+    restricted = restricted_player_ids(save)
     for player in pool[:target_count]:
         if player["id"] in restricted and restricted[player["id"]] not in human_team_ids:
             continue   # an AI team talks to its restricted free agent each day (offseason_decisions.restricted_market_day)

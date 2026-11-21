@@ -119,6 +119,37 @@ test('the verdict uses the salary he needs from you today (the rival bids\' rule
   assert.equal(freeAgencyOfferPreview({...miller, signing_blocked_reason: 'stretched'}, r, {aav: 20, years: 1}).canSubmit, false);
 });
 
+// FA-REAL slice 3: another team's restricted free agent signs only an offer sheet: 2-4 years, guaranteed, his price now,
+// and the engine's sheet quote (offer_sheets via free_agent_offer_quote).
+test('offer sheet mode: legal lengths, his price now, the reserved payment and the button', () => {
+  const scope = builderScope();
+  const r = room();
+  const rfa = {...miller, id: 'p_rfa', name: 'Young Wing', restricted: {team_abbrev: 'BOS', yours: false},
+    accept_floor_by_years: {guaranteed: {1: null, 2: 12.4, 3: 12.4, 4: 12.4, 5: null}, non_guaranteed: {1: null, 2: null, 3: null, 4: null, 5: null}},
+    offer_sheet: {min_years: 2, max_years: 4, want_millions: 12.4, routes: ['cap_room', 'non_taxpayer_mle'], words: 'Restricted free agent of BOS.'}};
+  const one = scope.freeAgencyOfferPreview(rfa, r, {aav: 13, years: 1, guaranteed: false});
+  assert.equal(one.years, 2, 'an offer sheet runs at least two years');
+  assert.equal(one.guaranteed, true, 'offer sheets are fully guaranteed');
+  assert.equal(scope.freeAgencyOfferPreview(rfa, r, {aav: 13, years: 5}).years, 4, 'and at most four');
+  quoteFor(scope, rfa, {aav: 12.0, years: 3}, {ok: true, label: 'the full mid-level exception', routes: [],
+    offer_sheet: {player_signs: false, player_reason: 'He wants at least $12.4M a year now.', legal: true}});
+  const low = scope.freeAgencyOfferPreview(rfa, r, {aav: 12.0, years: 3});
+  assert.equal(low.verdict.headline, "He won't sign this sheet");
+  assert.match(low.verdict.detail, /\$12\.4M/);
+  quoteFor(scope, rfa, {aav: 12.5, years: 3}, {ok: true, label: 'the full mid-level exception', routes: [],
+    offer_sheet: {player_signs: true, legal: true}});
+  const good = scope.freeAgencyOfferPreview(rfa, r, {aav: 12.5, years: 3});
+  assert.equal(good.verdict.headline, 'He signs the offer sheet');
+  assert.match(good.verdict.detail, /BOS then has until the end of the next day to match/);
+  assert.equal(good.canSubmit, true);
+  scope.escapeAttr = escapeHtml;
+  vm.runInContext(slice('function freeAgencyOfferFootMarkup(', '// ---- Signing wire'), scope);
+  assert.match(scope.freeAgencyOfferFootMarkup(rfa, good, {legal: true, open: true}), /Sign Offer Sheet/);
+  quoteFor(scope, rfa, {aav: 30, years: 3}, {ok: false, message: 'BOS? no: Above the full mid-level.', routes: [],
+    offer_sheet: {player_signs: true, legal: false}});
+  assert.equal(scope.freeAgencyOfferPreview(rfa, r, {aav: 30, years: 3}).verdict.headline, 'Not a legal offer sheet');
+});
+
 test('cap preview uses the ledger by season and the engine schedule (raises off year one) for the contract years', () => {
   const scope = builderScope();
   const r = room({cap_ledger: {season: '2027-28', by_year: [

@@ -3845,7 +3845,7 @@ def free_agency_room_payload(
             player_row = players_by_id.get(candidate["id"], {})
             blocked = sheets_rules.can_receive_sheet(save, candidate["id"], team["id"])
             from .offseason_decisions import qo_record, rfa_market_price, rfa_reservation
-            market_dollars = rfa_market_price(save, candidate["id"])
+            market_dollars = rfa_market_price(save, candidate["id"], active=active)
             qo_amount = float((qo_record(save, signing_season, candidate["id"]) or {}).get("amount") or 0.0)
             want = max(qo_amount, rfa_reservation(save, player_row, market_dollars, sheet_stage) if market_dollars else qo_amount)
             service = sheets_rules.credited_service(save, player_row, signing_season)
@@ -4151,7 +4151,7 @@ def offer_sheet_request(active: dict[str, Any], save: dict[str, Any], team: dict
                  "quote": quote, "payment": quote.get("payment")}
     first = float((terms.get("bidder_charges") or [aav_millions * 1e6])[0]) if terms.get("ok") else aav_millions * 1e6
     takes, takes_reason = rules.player_takes_sheet(save, player, float((terms.get("salaries") or [first])[0]),
-                                                   rules.summer_stage(save))
+                                                   rules.summer_stage(save), active)
     view = {"is_offer_sheet": True, "rights_abbrev": team_id_to_abbrev(holder), "legal": bool(terms.get("ok")),
             "reason": terms.get("reason") or blocked or "", "player_signs": takes, "player_reason": takes_reason,
             "backloaded": bool(terms.get("backloaded")), "arenas": bool(terms.get("arenas")),
@@ -4160,7 +4160,7 @@ def offer_sheet_request(active: dict[str, Any], save: dict[str, Any], team: dict
             "bidder_charges_millions": [round(v / 1e6, 3) for v in terms.get("bidder_charges") or []],
             "want_millions": None}
     from .offseason_decisions import qo_record, rfa_market_price, rfa_reservation
-    market = rfa_market_price(save, str(player["id"]))
+    market = rfa_market_price(save, str(player["id"]), active=active)
     qo = float((qo_record(save, season, str(player["id"])) or {}).get("amount") or 0.0)
     view["want_millions"] = round(max(qo, rfa_reservation(save, player, market, rules.summer_stage(save)) if market else qo) / 1e6, 2)
     return {"terms": terms, "check": check, "takes": takes, "takes_reason": takes_reason, "view": view}

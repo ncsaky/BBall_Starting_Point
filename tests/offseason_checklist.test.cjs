@@ -30,7 +30,8 @@ function context() {
   };
   vm.createContext(ctx);
   const names = ['shortDate', 'offseasonStopTimeline', 'offseasonItemStatus', 'offseasonItemMoney', 'offseasonItemActions',
-    'offseasonChecklistTable', 'signingDayRecap', 'offseasonChecklistPanel'];
+    'offseasonChecklistTable', 'signingDayRecap', 'offseasonChecklistPanel', 'offerSheetStillOpen', 'offerSheetStatusWords',
+    'offerSheetDecisionMarkup', 'shortSeasonLabel'];
   vm.runInContext(`${extract('OFFSEASON_STOPS', 'const')}\n${extract('OFFSEASON_ITEM_LABELS', 'const')}\n${names.map((n) => extract(n)).join('\n')}
 this.offseasonChecklistPanel = offseasonChecklistPanel; this.shortDate = shortDate;`, ctx);
   return ctx;
@@ -85,5 +86,50 @@ test('signing day recaps the first wave and says what is still open', () => {
   assert.match(html, /Signing Day/);
   assert.match(html, /Your signings<\/h4><ul><li>GSW signs New Guy\./);
   assert.match(html, /Your free agents who left<\/h4><ul><li>Own Guy signed with BOS\./);
-  assert.match(html, /a restricted free agent talks only to you/);
+  // FA-REAL slice 3 (rule changed): offer sheets exist now; with none this summer the box says what can still happen.
+  assert.match(html, /No offer sheets this summer yet/);
+});
+
+// FA-REAL slice 3: a rival's offer sheet for one of your restricted free agents: a Match or Pass countdown with the
+// terms year by year, what matching does to your cap, and any hard cap it would break.
+const sheet = {
+  id: 'offer_sheet:2027-28:b:team_mem:2027-07-02', player_id: 'b', name: 'Young Wing', status: 'pending',
+  bidder_abbrev: 'MEM', rights_abbrev: 'GSW', signed_date: '2027-07-02', match_deadline: '2027-07-03', days_left: 1,
+  total_millions: 37.8, years: [{season: '2027-28', salary_millions: 12.0}, {season: '2028-29', salary_millions: 12.6},
+    {season: '2029-30', salary_millions: 13.2}],
+  cap_effect: [{season: '2027-28', payroll_millions: 190.0, adds_millions: 12.0, after_millions: 202.0, cap_room_after_millions: -37.3,
+    tax_room_after_millions: -1.6, first_apron_room_after_millions: 7.0}],
+  can_match: true, match_route: 'full Bird rights', tax_cost_millions: 2.4, hard_cap: null,
+  advice: {match: true, reason: 'GSW matches: he is a regular (26 minutes).'},
+  if_matched: "He stays on these salaries year by year and can't be traded for a year.", if_passed: 'He joins MEM on these terms.',
+};
+
+test('match or pass: countdown, terms by year, cap effect and both buttons', () => {
+  const html = context().offseasonChecklistPanel({...room, stop: 'make_offers', offer_sheets: {for_you: [sheet], yours: [], league: [sheet]}});
+  assert.match(html, /Offer sheet · MEM · signed Jul 2/);
+  assert.match(html, /1 day left<\/strong><small>by the end of Jul 3/);
+  assert.match(html, /\$12\.0M[\s\S]*\$12\.6M/);
+  assert.match(html, /\$202\.0M/, 'payroll if matched');
+  assert.match(html, /Paid with <strong>full Bird rights<\/strong>\. No hard cap this season\./);
+  assert.match(html, /About \$2\.4M more this season if you match/);
+  assert.match(html, /data-offer-sheet-match="offer_sheet:2027-28:b:team_mem:2027-07-02"/);
+  assert.match(html, /data-offer-sheet-pass=/);
+  assert.match(html, /Assistant GM<\/dt><dd>GSW matches/);
+});
+
+test('a hard cap that blocks the match disables Match and says why', () => {
+  const blocked = {...sheet, can_match: false, match_route: null, days_left: 0,
+    match_blocked: 'GSW is hard-capped at the first apron ($216.3M) after using the full mid-level exception.'};
+  const html = context().offseasonChecklistPanel({...room, stop: 'make_offers', offer_sheets: {for_you: [blocked], yours: [], league: []}});
+  assert.match(html, /Decide today/);
+  assert.match(html, /You can't match:<\/strong> GSW is hard-capped at the first apron/);
+  assert.match(html, /data-offer-sheet-match="[^"]+" disabled/);
+});
+
+test('signing day still-open box lists decided sheets and your own pending sheets', () => {
+  const matched = {...sheet, id: 's2', name: 'Other Guy', status: 'matched', bidder_abbrev: 'NYK', rights_abbrev: 'DAL'};
+  const mine = {...sheet, id: 's3', name: 'Target', status: 'pending', bidder_abbrev: 'GSW', rights_abbrev: 'OKC', paid_with: 'the full mid-level exception'};
+  const html = context().offseasonChecklistPanel({...room, stop: 'finalize', offer_sheets: {for_you: [], yours: [mine], league: [matched, mine]}});
+  assert.match(html, /Your sheets:<\/b> Target \(OKC decides by Jul 3; your the full mid-level exception stays reserved\)/);
+  assert.match(html, /Other Guy <small>NYK sheet · \$37\.8M over 3 years · DAL matched/);
 });
