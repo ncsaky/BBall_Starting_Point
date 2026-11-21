@@ -30,6 +30,7 @@ def sign_and_trades(rows):
         "signed_players": dict(counts),
         "receiving_teams": {year: len({r["receiver"] for r in rows if r["summer"] == year}) for year in YEARS},
         "receiver_mechanisms": dict(Counter(row["receiver_mechanism"] for row in rows)),
+        "base_year_compensation": by_year(rows, lambda r: r["base_year_compensation"]),
         "count_holdouts": count_holdouts(counts),
     }
 
