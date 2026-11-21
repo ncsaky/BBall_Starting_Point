@@ -66,6 +66,7 @@ RULES: dict[str, dict[str, float]] = {
     # player and the offer is not a big overpay (the price of keeping the right to keep him).
     "qualifying_offer": {
         "tender_value_ratio": 0.85,
+        "tender_min_minutes": 12.0,       # fringe players (and not first-round picks) get no offer
         "tender_rotation_minutes": 18.0,
         "tender_rotation_overpay": 1.5,
         "regular_minutes": 24.0,          # a tendered regular is kept like a franchise player (KEEP-STARS budget)
@@ -557,16 +558,41 @@ def qo_record(save: dict[str, Any], season: str, player_id: str) -> dict[str, An
     return store(save)["qualifying_offers"].get(_key(season, player_id))
 
 
-def ai_tender_choice(player: dict[str, Any], terms: dict[str, Any], market: float | None) -> tuple[bool, str]:
+def ai_tender_choice(player: dict[str, Any], terms: dict[str, Any], market: float | None,
+                     can_pay_market: bool = True) -> tuple[bool, str]:
+    """An AI team's qualifying-offer choice. It sends one only to a player it means to keep: worth about the offer or
+    a rotation player, a first-round pick or one who plays (fringe second-rounders on minimum deals get none), and one
+    it could legally pay his market price (otherwise the offer would only be a one-year deal he'd take)."""
     rules = RULES["qualifying_offer"]
     amount = float(terms["amount"])
     value = float(market or 0.0)
     minutes = _minutes(player)
+    if terms.get("route") != "rookie_scale" and minutes < rules["tender_min_minutes"]:
+        return False, f"A fringe player: no qualifying offer ({_m(amount)}); he becomes an unrestricted free agent."
+    if not can_pay_market:
+        return False, (f"The team could not pay him his price (about {_m(value)}) over the cap, so no qualifying "
+                       "offer: he becomes an unrestricted free agent.")
     if value >= amount * rules["tender_value_ratio"]:
         return True, f"He is worth about {_m(value)}: the {_m(amount)} offer keeps the right to keep him."
     if minutes >= rules["tender_rotation_minutes"] and amount <= value * rules["tender_rotation_overpay"]:
         return True, f"A rotation player: the team keeps the right to keep him for {_m(amount)}."
     return False, f"Not worth the {_m(amount)} offer (about {_m(value)}): he becomes an unrestricted free agent."
+
+
+def can_pay_market_price(active: dict[str, Any], save: dict[str, Any], player: dict[str, Any], team_id: str | None,
+                          season: str, market: float) -> bool:
+    """Whether his team could legally re-sign him at his market price (Bird rights, room or an exception)."""
+    if not team_id or market <= 0:
+        return False
+    from .cap_ledger import quote
+    from .contract_ai import bird_rights
+    contract = next((c for c in active.get("contracts", []) if c.get("player_id") == player.get("id")), None)
+    bird = bird_rights(save, player, team_id, season_label(_season_start(season) - 1), contract)
+    try:
+        return bool(quote(active, save, team_id, player, market, 3, season=season, bird=bird,
+                          include_reservations=False).get("ok"))
+    except (KeyError, ValueError, TypeError):
+        return True
 
 
 def prepare_qualifying_offers(canonical: dict[str, Any], save: dict[str, Any], active: dict[str, Any],
@@ -600,7 +626,9 @@ def prepare_qualifying_offers(canonical: dict[str, Any], save: dict[str, Any], a
                           reason="Your decision: send the qualifying offer to keep the right to keep him, or let him "
                                  "become an unrestricted free agent.")
         else:
-            tender, reason = ai_tender_choice(player, terms, values.get(player["id"]))
+            tender, reason = ai_tender_choice(player, terms, values.get(player["id"]),
+                                              can_pay_market_price(active, save, player, team_id, next_season,
+                                                                   values.get(player["id"], 0.0)))
             record.update(status="tendered" if tender else "not_tendered", decided_by="team", reason=reason)
             if tender and values.get(player["id"], 0.0) >= 10_000_000:
                 add_news(save, "free_agency", f"{player.get('name')} receives a qualifying offer and becomes a "

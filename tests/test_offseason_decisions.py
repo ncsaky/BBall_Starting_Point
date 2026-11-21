@@ -197,8 +197,12 @@ class Restricted(unittest.TestCase):
 
     def test_ai_tender_rule(self):
         p = player("p", draft_year=2023, minutes=8)
-        self.assertTrue(od.ai_tender_choice(p, {"amount": 5e6}, 6e6)[0])
-        self.assertFalse(od.ai_tender_choice(p, {"amount": 8e6}, 3e6)[0])
+        self.assertTrue(od.ai_tender_choice(p, {"amount": 5e6, "route": "rookie_scale"}, 6e6)[0])
+        self.assertFalse(od.ai_tender_choice(p, {"amount": 8e6, "route": "rookie_scale"}, 3e6)[0])
+        self.assertFalse(od.ai_tender_choice(p, {"amount": 2.8e6, "route": "standard"}, 6e6)[0],
+                         "a fringe second-rounder gets no offer (his team would only be paying him a one-year deal)")
+        self.assertFalse(od.ai_tender_choice(p, {"amount": 5e6, "route": "rookie_scale"}, 6e6, can_pay_market=False)[0],
+                         "no offer to a player the team could not pay his price")
         rotation = player("r", draft_year=2023, minutes=22)
         self.assertTrue(od.ai_tender_choice(rotation, {"amount": 8e6}, 6e6)[0], "a rotation player at a modest premium")
 
