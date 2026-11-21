@@ -3,7 +3,26 @@
 _Updated 2026-11-21. Everything below is in the main game. Start a **new save**; old saves don't get the new systems._
 
 ## How to start
-Run the game the usual way (`nba-gm-data-gui`) and create a **new save**. A good first pass covers one full season through the trade deadline, then the playoffs and the whole new offseason, into the next preseason. The offseason changed the most, so give it the most attention.
+
+**1. Open Terminal and go to the game folder:**
+```bash
+cd ~/Documents/BBall_data/BBall_Starting_Point
+```
+
+**2. Start the game.** This opens it in your browser at http://127.0.0.1:8765:
+```bash
+PYTHONPATH=src .venv/bin/python -m nba_gm_data.app_server --root . --open
+```
+
+**3. Choose New Save.** Saves made before a merge don't get the new systems.
+
+**To stop the game:** click the Terminal window and press Control-C. Your save is kept.
+
+**After Claude merges something:** you don't need to download anything, since merges land straight in this folder. Just stop the game (Control-C) and start it again with step 2. The new code only takes effect after a restart.
+
+**If the browser says it can't connect:** the game isn't running. Run step 2 again. If Terminal says the address is already in use, an old copy is still running. Close that Terminal window, or start on another port by adding `--port 8766` to the end of step 2.
+
+**What to cover:** a good first pass is one full season through the trade deadline, then the playoffs and the whole new offseason, into the next preseason. The offseason changed the most, so give it the most attention.
 
 ## What's new, and what to check
 
