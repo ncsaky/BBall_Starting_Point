@@ -8,7 +8,7 @@ import unittest
 
 from nba_gm_data import sim
 from nba_gm_data.save import save_coach_ratings
-from nba_gm_data.staff import HEAD_COACH_REPUTATION_GRADES, apply_head_coach_reputation, normalize_name
+from nba_gm_data.staff import HEAD_COACH_REPUTATION_GRADES, apply_head_coach_reputation, neutral_starting_coordinator, normalize_name
 
 ROOT = Path(__file__).resolve().parents[1]
 STAFFS = json.loads((ROOT / sim.REPLAY_STAFFS_FILE).read_text())
@@ -71,7 +71,8 @@ class ReplayStaffTests(unittest.TestCase):
         self.assertTrue(set(sim.STAFF_EFFECT_KEYS) <= set(rating.ratings))
         self.assertEqual(sim.coach_effect(rating).get("staff_model"), 1.0)
         # Same numbers a new save gives Mosley on Orlando's starting slots.
-        slots = deepcopy([s for s in self.canonical["gameplay_staff_slots"] if s["team_id"] == "team_orl"])
+        # Coordinators start neutral, as in a new save (NEUTRAL-COORDINATORS, 2026-11-21).
+        slots = [neutral_starting_coordinator(deepcopy(s)) for s in self.canonical["gameplay_staff_slots"] if s["team_id"] == "team_orl"]
         head = next(s for s in slots if s["slot"] == "head_coach")
         head["name"] = "Jamahl Mosley"
         apply_head_coach_reputation(head, "Jamahl Mosley")
