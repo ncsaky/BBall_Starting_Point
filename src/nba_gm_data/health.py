@@ -599,7 +599,9 @@ def advance_development(canonical: dict[str, Any] | Any, month: str, seed: int =
     states = {state["player_id"]: state for state in canonical.get("player_health_states", [])}
     coaches = coach_development_by_team(canonical)
     from .ratings_model import uses_inputs_model
-    volatility = DEVELOPMENT_SEASON_VOLATILITY if uses_inputs_model(canonical) else LEGACY_DEVELOPMENT_SEASON_VOLATILITY
+    inputs_model = uses_inputs_model(canonical)
+    volatility = DEVELOPMENT_SEASON_VOLATILITY if inputs_model else LEGACY_DEVELOPMENT_SEASON_VOLATILITY
+    stored_bound = None if inputs_model else 100.0
     events: list[dict[str, Any]] = []
     for player in canonical.get("players", []):
         if player.get("_inactive_player"):
@@ -617,7 +619,7 @@ def advance_development(canonical: dict[str, Any] | Any, month: str, seed: int =
             current = float(traits.get(player["id"], {}).get(trait_key, {}).get("value", 50.0))
             trait_context = (traits.get(player["id"], {}).get(trait_key, {}).get("components") or {}).get("career_capacity")
             delta = monthly_trait_delta(player, trait_key, current, age, minutes, staff, health_drag, seed, month, float(focus.get(trait_key, 0.32)), trait_context,
-                                        season_volatility=volatility)
+                                        season_volatility=volatility, stored_bound=stored_bound)
             if abs(delta) >= 0.015:
                 deltas[trait_key] = round(delta, 3)
         # An evaluated plateau is still a processed player-month. Keep the
@@ -1540,8 +1542,14 @@ def monthly_trait_delta(
     trait_context: dict[str, Any] | None = None,
     expected: bool = False,
     season_volatility: float | None = None,
+    stored_bound: float | None = None,
 ) -> float:
-    """Change in one hidden rating over a month. Expected changes omit season form and monthly noise."""
+    """Change in one hidden rating over a month. Expected changes omit season form and monthly noise.
+
+    stored_bound: the older ratings store each hidden rating clamped to 0-100, so their gains taper over the last
+    10 points below it (pass 100.0). The 94-input ratings store inputs, not hidden ratings, and a hidden rating has
+    no top (RATING-CEILING, 2026-11-21: the best rim protectors already sit above 100 and could never grow), so the
+    default is no taper; gains still shrink with the rating's level through cap_room."""
     age = 27.0 if age is None else age
     age_factor = development_age_factor(age, player=player, seed=seed)
     role_factor = clamp(minutes / 24.0, 0.18, 1.18)
@@ -1633,8 +1641,9 @@ def monthly_trait_delta(
     delta = min(growth + noise, growth_cap) + season_change
     if delta <= 0.0:
         return delta
-    # Slow gains near the top of the stored scale before the writer's bound.
-    delta *= clamp((100.0 - current) / 10.0, 0.0, 1.0)
+    if stored_bound is not None:
+        # Slow gains near the top of the stored scale before the writer's bound (older ratings only).
+        delta *= clamp((stored_bound - current) / 10.0, 0.0, 1.0)
     return min(delta, max(0.0, ceiling - current)) if ceiling is not None else delta
 
 

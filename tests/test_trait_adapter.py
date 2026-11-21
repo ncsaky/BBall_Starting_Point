@@ -2,7 +2,7 @@ import unittest
 
 from nba_gm_data.player_model_registry import definition_registry
 from nba_gm_data.trait_adapter import (
-    ADAPTER_SPEC, LEGACY_TRAITS, derive_traits, fit_adapter, scalar_value, spec_input_ids,
+    ADAPTER_SPEC, LEGACY_TRAITS, _percentile, _value_at, derive_traits, fit_adapter, scalar_value, spec_input_ids,
     trait_input_weights, uncensor_top, validate_spec,
 )
 
@@ -133,6 +133,56 @@ class TraitAdapterTests(unittest.TestCase):
     def test_spec_only_names_real_inputs(self):
         self.assertTrue(spec_input_ids() <= set(DEFS))
         self.assertTrue(all(ADAPTER_SPEC[t] for t in LEGACY_TRAITS))
+
+
+class NoHardTopTests(unittest.TestCase):
+    """RATING-CEILING (2026-11-21): the maps from inputs to traits are continuous and keep rising past the league's best."""
+
+    TABLE = sorted([10.0, 20.0, 20.0, 20.0, 35.0, 40.0, 41.0, 55.0, 60.0, 61.0, 70.0, 72.0, 80.0, 81.0, 90.0])
+
+    @staticmethod
+    def step_percentile(table, value):
+        """The original step map (mid-rank of the run, or the share of values below)."""
+        from bisect import bisect_left, bisect_right
+        lo, hi = bisect_left(table, value), bisect_right(table, value)
+        return ((lo + hi) / 2) / len(table)
+
+    def test_league_values_keep_their_exact_percentile(self):
+        for value in self.TABLE:
+            self.assertEqual(_percentile(self.TABLE, value), self.step_percentile(self.TABLE, value))
+
+    def test_percentile_is_continuous_monotone_and_has_no_hard_ends(self):
+        xs = [x / 4 for x in range(-80, 600)]
+        ps = [_percentile(self.TABLE, x) for x in xs]
+        self.assertTrue(all(b > a for a, b in zip(ps, ps[1:])), "strictly increasing everywhere, ends included")
+        self.assertLess(max(abs(b - a) for a, b in zip(ps, ps[1:])), 0.03, "no jumps")
+        self.assertGreater(_percentile(self.TABLE, 120.0), 1.0)    # past the best: keeps separating
+        self.assertLess(_percentile(self.TABLE, -10.0), 0.0)       # past the worst: keeps falling
+
+    def test_value_at_extends_past_the_target_table(self):
+        target = [float(v) for v in range(40, 100, 2)]
+        self.assertEqual(_value_at(target, 1.0), 98.0)
+        self.assertEqual(_value_at(target, 0.0), 40.0)
+        self.assertGreater(_value_at(target, 1.05), 98.0)
+        self.assertLess(_value_at(target, -0.05), 40.0)
+        values = [_value_at(target, p / 100) for p in range(-20, 121)]
+        self.assertTrue(all(b > a for a, b in zip(values, values[1:])))
+
+    def test_players_beyond_the_league_best_keep_rising(self):
+        levels = [i / 20 for i in range(21)]
+        league = {f"p{i}": player(level) for i, level in enumerate(levels)}
+        traits = {f"p{i}": {t: 40 + i for t in LEGACY_TRAITS} for i in range(21)}
+        fitted = fit_adapter(league, traits)
+        best = derive_traits(league["p20"], fitted)
+        beyond = [derive_traits(player(level), fitted) for level in (1.05, 1.10, 1.20)]
+        for trait in LEGACY_TRAITS:
+            path = [best[trait]] + [b[trait] for b in beyond]
+            self.assertTrue(all(b > a for a, b in zip(path, path[1:])), (trait, path))
+            self.assertGreater(path[-1], max(fitted.target_tables[trait]), trait)   # past the old top
+        # League members stay inside the league's own range (exact equality with the old map: test_ratings_model).
+        for pid, inputs in league.items():
+            derived = derive_traits(inputs, fitted)
+            self.assertTrue(all(39.0 <= v <= 61.0 for v in derived.values()), pid)
 
 
 if __name__ == "__main__":

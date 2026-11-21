@@ -187,6 +187,32 @@ def _value_at(sorted_values: list[float], u: float) -> float:
     return sorted_values[lo] + (sorted_values[hi] - sorted_values[lo]) * (pos - lo)
 
 
+SUMMARY_STEP = 0.1   # the summary scale is stored rounded to one decimal
+
+
+def unround(values: list[float], step: float = SUMMARY_STEP) -> list[float]:
+    """Spread each run of identical values evenly inside its rounding interval (value +- step/2, exclusive).
+
+    The summary scale's league table holds values rounded to 0.1, so several players share e.g. 74.2. Mapped through
+    such a table, every prediction between those players' predictions lands on exactly 74.2: a flat stretch where
+    real differences in value disappear and developed players bunch on one number (RATING-CEILING, 2026-11-21).
+    Spreading the run inside 74.15-74.25 keeps every baseline player's value the same after rounding to 0.1 and
+    makes the map strictly increasing."""
+    out = sorted(float(v) for v in values)
+    i = 0
+    while i < len(out):
+        j = i
+        while j + 1 < len(out) and out[j + 1] == out[i]:
+            j += 1
+        k = j - i + 1
+        if k > 1:
+            base = out[i]
+            for m in range(k):
+                out[i + m] = base - step / 2 + (m + 0.5) * step / k
+        i = j + 1
+    return out
+
+
 def build_tables(predictions: Mapping[str, Mapping[str, float]], scale_values: Mapping[str, list[float]]) -> dict[str, Any]:
     """Source (predicted impact) and target (existing scale) distributions per key, fixed at the baseline."""
     tables = {}
@@ -198,9 +224,18 @@ def build_tables(predictions: Mapping[str, Mapping[str, float]], scale_values: M
 
 
 def mapped(tables: Mapping[str, Any], prediction: Mapping[str, float], key: str) -> float:
-    """A prediction placed on the existing scale by its league rank (beyond the baseline range, the extremes)."""
+    """A prediction placed on the existing scale by its league rank.
+
+    Continuous, with no hard ends (RATING-CEILING, 2026-11-21): a baseline player's prediction lands exactly where it
+    always did; a prediction between two baseline players is interpolated between their values (it used to snap to
+    the midpoint of the pair, so developed players bunched onto a few exact numbers); past the best (worst) baseline
+    player the line through the last EXTENSION_SPAN players continues (it used to stop at the best player's value, so
+    nobody could ever be valued above the league's opening-day best). Same map as impact_from_summary inverts."""
     table = tables[key]
-    return _value_at(table["target"], _pct(table["source"], prediction[table["side"]]))
+    source, target = table["source"], table["target"]
+    if len(source) >= 2 and len(source) == len(target):
+        return _carry(source, target, prediction[table["side"]])
+    return _value_at(target, _pct(source, prediction[table["side"]]))
 
 
 def _profile(canonical: Mapping[str, Any], player: Mapping[str, Any], traits: Mapping[str, float]) -> Mapping[str, float]:
@@ -245,7 +280,7 @@ def install_summary_tables(canonical: dict[str, Any], root: Path | None = None) 
             _BUILDING = False
         predictions = {p["id"]: predict(fit, traits[p["id"]], p, _profile(canonical, p, traits[p["id"]]), _inputs(canonical, p))
                        for p in players}
-        scales = {k: [s[k] for s in summaries.values() if k in s] for k in ("overall", "offense", "defense")}
+        scales = {k: unround([s[k] for s in summaries.values() if k in s]) for k in ("overall", "offense", "defense")}
         # The game sim's own player impact feature (sim.player_impact_score), same baseline players: its league
         # distribution is the target scale for sim_impact, so team-strength calibrations keep their meaning.
         from .sim import player_impact_score

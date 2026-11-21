@@ -14,6 +14,12 @@ How a trait is derived:
    trait. This keeps the legacy engine's calibrated scale intact while the new evidence decides which
    player sits where. It is engine plumbing, not a ratings adjustment.
 
+Both maps (input -> percentile, and composite -> trait) are continuous and have no hard ends
+(RATING-CEILING, 2026-11-21). Between league values they interpolate; past the best (or worst) player in the
+league they continue in a straight line fitted to the top (or bottom) TAIL_SHARE of the league. A player whose
+inputs develop past today's best therefore keeps rising (AGENTS.md rule 3: no clipping). Every player in the
+league tables maps exactly as before; only values between or beyond league values behave differently.
+
 Weights are written down for review; they are not fitted to simulation outcomes (playoff translation is fitted
 to real playoff box production; see its entry).
 """
@@ -22,11 +28,12 @@ from __future__ import annotations
 from bisect import bisect_left, bisect_right
 from dataclasses import dataclass
 from functools import lru_cache
+from math import ceil
 from typing import Any, Iterable, Mapping
 
 from .player_model_registry import definition_registry
 
-ADAPTER_VERSION = "trait_adapter_v4_2026_11_18"
+ADAPTER_VERSION = "trait_adapter_v5_2026_11_21"
 
 PASS_FAMILIES = [f"F0{i}" for i in range(1, 10)]
 PASS_RECOGNITION = [f"{f}.recognition" for f in PASS_FAMILIES]
@@ -170,12 +177,51 @@ def _term_keys(term: str | list[str]) -> list[tuple[str, str | None]]:
     return out
 
 
+# Share of the league (at least TAIL_MIN players) whose spread sets the straight-line continuation past either end.
+TAIL_SHARE = 0.05
+TAIL_MIN = 10
+
+
+def _tail_count(n: int) -> int:
+    return min(n - 1, max(TAIL_MIN, ceil(n * TAIL_SHARE)))
+
+
+def _mid_rank(sorted_values: list[float], value: float) -> float:
+    """Mid-rank (in players) of a value present in the table; ties share the middle of their run."""
+    return (bisect_left(sorted_values, value) + bisect_right(sorted_values, value)) / 2
+
+
 def _percentile(sorted_values: list[float], value: float) -> float:
-    """Mid-rank percentile in [0, 1]; ties share the same percentile."""
-    if not sorted_values:
+    """Continuous mid-rank percentile; no hard ends.
+
+    A value in the table gets its mid-rank share (ties share the same percentile), exactly as the original step
+    map did. Between two league values the percentile is interpolated. Past the league's best (worst) value the
+    line through the top (bottom) tail continues, so the result can exceed 1 (fall below 0): a player better than
+    everyone in the league keeps separating instead of tying at the top."""
+    n = len(sorted_values)
+    if not n:
         return 0.5
     lo, hi = bisect_left(sorted_values, value), bisect_right(sorted_values, value)
-    return ((lo + hi) / 2) / len(sorted_values)
+    if hi > lo or n == 1:
+        return ((lo + hi) / 2) / n
+    if 0 < lo < n:
+        a, b = sorted_values[lo - 1], sorted_values[lo]
+        ra, rb = _mid_rank(sorted_values, a), _mid_rank(sorted_values, b)
+        return (ra + (rb - ra) * (value - a) / (b - a)) / n
+    k = _tail_count(n)
+    if lo == n:
+        end, inner = sorted_values[-1], sorted_values[-1 - k]
+        if end <= inner:
+            inner = sorted_values[0]
+    else:
+        end, inner = sorted_values[0], sorted_values[k]
+        if inner <= end:
+            inner = sorted_values[-1]
+    r_end = _mid_rank(sorted_values, end)
+    if inner == end:
+        return r_end / n      # every league value identical: no spread to continue
+    slope = (r_end - _mid_rank(sorted_values, inner)) / (end - inner)
+    return (r_end + slope * (value - end)) / n
 
 
 def uncensor_top(sorted_values: list[float], ceiling: float = 99.5, tail: float = 0.05) -> list[float]:
@@ -215,13 +261,21 @@ def uncensor_top(sorted_values: list[float], ceiling: float = 99.5, tail: float 
 
 
 def _value_at(sorted_values: list[float], pct: float) -> float:
+    """The target table's value at a percentile, interpolated; past either end the line through the top (bottom)
+    tail continues instead of stopping at the league's best (worst) value."""
     if not sorted_values:
         raise ValueError("Empty target distribution")
-    if len(sorted_values) == 1:
+    n = len(sorted_values)
+    if n == 1:
         return sorted_values[0]
-    position = min(max(pct, 0.0), 1.0) * (len(sorted_values) - 1)
+    position = pct * (n - 1)
+    k = _tail_count(n)
+    if position > n - 1:
+        return sorted_values[-1] + (position - (n - 1)) * (sorted_values[-1] - sorted_values[-1 - k]) / k
+    if position < 0:
+        return sorted_values[0] + position * (sorted_values[k] - sorted_values[0]) / k
     low = int(position)
-    high = min(low + 1, len(sorted_values) - 1)
+    high = min(low + 1, n - 1)
     frac = position - low
     return sorted_values[low] * (1 - frac) + sorted_values[high] * frac
 
