@@ -35,6 +35,10 @@ class RosterEdgeLeague(unittest.TestCase):
         records = two_way.contracts(saved)
         self.assertGreaterEqual(len(records), 80, "the real 2026-27 opening two-ways (83 on 30 teams)")
         self.assertTrue(all(saved["roster_overrides"].get(pid) is None for pid in records), "off the 15")
+        pool = set(saved.get("free_agent_player_ids") or [])
+        released = saved.get("released_free_agents") or {}
+        self.assertFalse(pool & set(records), "two-way players are not free agents")
+        self.assertFalse(set(released) & set(records), "nor lost roster cuts")
         active = sv.canonical_with_save(self.canonical, saved)
         for team in active["teams"]:
             self.assertLessEqual(two_way.standard_roster_count(active, saved, team["id"]), 15)

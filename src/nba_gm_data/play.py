@@ -5506,8 +5506,8 @@ def process_ai_free_agency_offers_for_day_state(
                 continue
             roster_count = sum(row.get("team_id") == team["id"] for row in active.get("players", []))
             # FA-REAL slice 4: the 21-player offseason maximum counts two-way players too.
-            roster_count += len(((save.get("two_way") or {}).get("contracts") or {}) and
-                                [r for r in save["two_way"]["contracts"].values() if r.get("team_id") == team["id"]])
+            roster_count += sum(1 for r in ((save.get("two_way") or {}).get("contracts") or {}).values()
+                                if r.get("team_id") == team["id"])
             pending_players = {
                 offer["player_id"] for offer in save.get("free_agent_offers", [])
                 if offer.get("team_id") == team["id"] and offer.get("status") == "active"

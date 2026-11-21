@@ -941,6 +941,12 @@ def repair_unpooled_unrostered_players(canonical: dict[str, Any], save: dict[str
     retired = set(save.get("retired_player_ids") or [])
     from .waivers import pending_ids
     retired |= pending_ids(save)
+    # FA-REAL slice 4: two-way players (and expired two-ways whose team still decides on a qualifying offer) are off
+    # the standard roster on purpose; they are not lost roster cuts.
+    two_way = save.get("two_way") or {}
+    retired |= set(two_way.get("contracts") or {})
+    retired |= {pid for pid, row in (two_way.get("qualifying_offers") or {}).items()
+                if row.get("status") in {"pending", "tendered"}}
     unsigned_rights = {
         row.get("player_id")
         for row in save.get("incoming_rookies", [])
