@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-from collections import Counter
 import json
 from math import log1p
 from pathlib import Path
@@ -40,7 +39,7 @@ def validation(rows, feature, label, rules):
             training_labels, [item[1](r) for r in prepared_train]
         ))
         guesses = [rule(r) for r in prepared_test]
-        baseline = Counter(training_labels).most_common(1)[0][0]
+        baseline = mean(training_labels) > .5
         results[summer] = {
             "rule": name,
             "correct": sum(a == p for a, p in zip(test_labels, guesses)),
@@ -79,14 +78,19 @@ def estimated_salary(row, comparables, caps, held_out):
     return round(median(share for _, share in closest) * caps[str(row["summer"])])
 
 
-def fit_player_options(evidence):
-    rows = evidence["decisions"]["player_options"]
+def salary_comparables(evidence):
     caps = evidence["cap_by_start_year"]
-    comps = [{
+    return [{
         **row,
         "vector": comparable_vector(row),
         "annual_salary_share": row["reported_total"] / row["new_deal_years"] / caps[str(row["summer"])],
     } for row in evidence["salary_comparables"]]
+
+
+def fit_player_options(evidence):
+    rows = evidence["decisions"]["player_options"]
+    caps = evidence["cap_by_start_year"]
+    comps = salary_comparables(evidence)
     rules = []
     for multiplier in (1.0, 0.8, 0.9, 1.1, 1.25, 1.5):
         rules.append((f"expected annual salary >= {multiplier:g} × option",
@@ -140,6 +144,62 @@ def fit_qualifying_offers(evidence):
     return results
 
 
+def fit_team_options(evidence):
+    caps = evidence["cap_by_start_year"]
+    comps = salary_comparables(evidence)
+    rows = evidence["decisions"]["team_options"]
+    veterans = [r for r in rows if r["kind"] == "veteran_team" and r["decision"] in ("exercised", "declined")]
+    rookies = [r for r in rows if r["kind"].startswith("rookie_year_")]
+
+    def veteran_features(row, held_out):
+        _, _, minutes, _, _ = season_features(row)
+        return {
+            "minutes": minutes,
+            "ratio": estimated_salary(row, comps, caps, held_out) / row["option_salary"],
+            "flexible": row["non_full_guarantee_at_exercise"],
+        }
+
+    veteran_rules = []
+    for cutoff in (500, 250, 1000, 1500):
+        veteran_rules.append((f"prior minutes >= {cutoff}", lambda f, m=cutoff: f["minutes"] >= m))
+    for multiple in (1.0, 0.8, 1.2, 1.5):
+        veteran_rules.append((f"expected market >= {multiple:g} × option",
+                             lambda f, ratio=multiple: f["ratio"] >= ratio))
+        veteran_rules.append((f"expected market >= {multiple:g} × option or option pay can still be cut",
+                             lambda f, ratio=multiple: f["ratio"] >= ratio or f["flexible"]))
+
+    def rookie_features(row, _held_out):
+        _, _, minutes, vorp, _ = season_features(row)
+        return {
+            "third_year": row["kind"] == "rookie_year_3",
+            "minutes": minutes,
+            "vorp": vorp,
+            "salary_share": row["option_salary"] / caps[str(row["summer"])],
+        }
+
+    rookie_rules = []
+    for cutoff in (350, 250, 500, 700, 900, 1000):
+        rookie_rules.extend([
+            (f"exercise third years; exercise fourth years at {cutoff}+ prior minutes",
+             lambda f, m=cutoff: f["third_year"] or f["minutes"] >= m),
+            (f"exercise third years; fourth years at {cutoff}+ minutes plus 250 when salary exceeds 4% of cap",
+             lambda f, m=cutoff: f["third_year"] or f["minutes"] >= m + 250 * (f["salary_share"] > .04)),
+            (f"exercise third years; fourth years at {cutoff}+ prior minutes and a replacement-level box score",
+             lambda f, m=cutoff: f["third_year"] or (f["minutes"] >= m and f["vorp"] >= 0)),
+        ])
+
+    def exercised(row):
+        return row["decision"] == "exercised"
+
+    return {
+        "veteran": validation(veterans, veteran_features, exercised, veteran_rules),
+        "rookie": validation(rookies, rookie_features, exercised, rookie_rules),
+        "rookie_without_waivers": validation(
+            [r for r in rookies if not r["waived_at_decision"]], rookie_features, exercised, rookie_rules
+        ),
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--evidence", type=Path, default=EVIDENCE)
@@ -148,6 +208,8 @@ def main():
     results = {"player_options": fit_player_options(evidence)}
     if "qualifying_offers" in evidence["decisions"]:
         results["qualifying_offers"] = fit_qualifying_offers(evidence)
+    if "team_options" in evidence["decisions"]:
+        results["team_options"] = fit_team_options(evidence)
     print(json.dumps(results, indent=2, ensure_ascii=False))
 
 
