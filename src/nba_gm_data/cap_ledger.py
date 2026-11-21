@@ -21,9 +21,9 @@ either apron, but never past a hard cap it has already triggered.
 
 The save keeps each team's cap year in ``save["cap_ledger"]["seasons"][season][team_id]``: exception money used, the
 signings, whether it used cap room, the hard cap it triggered and the holds it renounced. Signing quotes (``quote``)
-are pure; ``commit`` records a signing; ``reserve`` / ``release`` let an outstanding offer (today an AI or user bid,
-in slice 3 an offer sheet) hold its money until it resolves: a bid's ``payment`` is counted as reserved while the bid
-is active, so the same room or exception cannot be promised twice.
+are pure; ``commit`` records a signing; ``reserve`` / ``release`` let an outstanding offer (an AI or user bid) hold its
+money until it resolves: a bid's ``payment`` is counted as reserved while the bid is active, and a signed offer sheet's
+payment while it is pending (slice 3, ``offer_sheets``), so the same room or exception cannot be promised twice.
 """
 from __future__ import annotations
 
@@ -480,6 +480,22 @@ def reservations(save: dict[str, Any], team_id: str, season: str, *, exclude_pla
             continue
         route = payment.get("route") or "unknown"
         amount = float(payment.get("amount") or float(offer.get("aav_millions") or 0.0) * 1_000_000)
+        held[route] = held.get(route, 0.0) + amount
+        if route != "minimum":
+            held["apron"] = held.get("apron", 0.0) + amount
+    # FA-REAL slice 3: a signed offer sheet keeps the bidder's room or exception money reserved until his team matches
+    # or passes (CBA Art. XI §5(e): the bidder must keep enough Room until the sheet is settled).
+    sheets = ((save.get("offseason_decisions") or {}).get("offer_sheets") or {}).values()
+    for sheet in sheets:
+        if sheet.get("status") != "pending" or sheet.get("bidder_team_id") != team_id:
+            continue
+        if exclude_player_id and sheet.get("player_id") == exclude_player_id:
+            continue
+        payment = sheet.get("payment") or {}
+        if payment.get("season") and payment.get("season") != season:
+            continue
+        route = payment.get("route") or "cap_room"
+        amount = float(payment.get("amount") or 0.0)
         held[route] = held.get(route, 0.0) + amount
         if route != "minimum":
             held["apron"] = held.get("apron", 0.0) + amount

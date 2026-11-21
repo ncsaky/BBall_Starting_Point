@@ -4976,6 +4976,8 @@ def free_agency_room(canonical: dict[str, Any], save_path: Path, user_team: str,
             if result in {"quit", "back"}:
                 return result
             continue
+        if cli_offer_sheet_decisions(canonical, save_path, user_team):
+            continue
         print_title("Free Agency Room")
         print_free_agency_status(canonical, save, user_team)
         print_rule()
@@ -5006,18 +5008,22 @@ def free_agency_room(canonical: dict[str, Any], save_path: Path, user_team: str,
             wait()
             if (load_save(save_path).get("free_agency_state") or {}).get("status") == "completed":
                 final_free_agency_roster_repair(canonical, save_path, seed)
-                finish_free_agency_phase(canonical, save_path)
+                if finish_free_agency_phase(canonical, save_path).get("status") == "decision_needed":
+                    continue
                 return "done"
         elif choice == "3":
             with loading_screen(save_path.parent.parent if save_path.parent.name == "saves" else Path.cwd(), "Simulating free agency...", seed=seed):
                 result = simulate_free_agency_to_end(canonical, save_path, user_team, seed)
+            if result.get("status") == "decision_needed":
+                continue
             print_free_agency_breaking_news(result.get("ai_trade_news") or [])
             pause(
                 f"Free agency completed: {result.get('accepted_count', 0)} signing(s), "
                 f"{result.get('auto_fill_count', 0)} roster repair signing(s), "
                 f"{result.get('ai_trade_count', 0)} AI trade(s)."
             )
-            finish_free_agency_phase(canonical, save_path)
+            if finish_free_agency_phase(canonical, save_path).get("status") == "decision_needed":
+                continue
             return "done" if forced else None
         elif choice == "4":
             print_user_active_bids(canonical, save_path, user_team)
@@ -5294,6 +5300,41 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
         elif choice == "5":
             root = save_path.parent.parent if save_path.parent.name == "saves" else Path.cwd()
             print_dashboard(root, canonical, save_path, user_team, user_team=user_team, seed=seed)
+
+
+def cli_offer_sheet_decisions(canonical: dict[str, Any], save_path: Path, user_team: str) -> bool:
+    """FA-REAL slice 3 (text room): Match or Pass for each rival offer sheet waiting on your restricted free agents.
+    Returns True when a decision was made."""
+    from .offer_sheets import pending_sheets, sheet_view, user_decide
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = canonical_with_save(canonical, save)
+    team = resolve_team(active, user_team)
+    waiting = [s for s in pending_sheets(save) if s["rights_team_id"] == team["id"]]
+    if not waiting:
+        return False
+    sheet = waiting[0]
+    view = sheet_view(active, save, sheet, team["id"])
+    clear_screen()
+    print_title(f"Offer Sheet | {view['name']} signed with {view['bidder_abbrev']}")
+    print(f"Match or pass by the end of {view['match_deadline']} ({view['days_left']} day(s) left).")
+    print("Salary by year: " + " · ".join(f"{y['season']} ${y['salary_millions']:.1f}M" for y in view["years"])
+          + f"  (total ${view['total_millions']:.1f}M)")
+    for row in view.get("cap_effect") or []:
+        print(f"  {row['season']}: payroll ${row['payroll_millions']:.1f}M -> ${row['after_millions']:.1f}M, "
+              f"tax room ${row['tax_room_after_millions']:+.1f}M, first apron ${row['first_apron_room_after_millions']:+.1f}M")
+    print(f"Matching: {view.get('match_route') or view.get('match_blocked')}")
+    print(f"Assistant GM: {view['advice']['reason']}")
+    print("1. Match (he stays; no trade for a year)")
+    print("2. Pass (he joins the new team)")
+    print("0. Decide later")
+    choice = input("> Pick a number: ").strip()
+    if choice not in {"1", "2"}:
+        return False
+    result = user_decide(canonical, save, sheet["id"], choice == "1")
+    if result.get("ok"):
+        write_save(save_path, save)
+    pause(result.get("headline") or result.get("reason") or "")
+    return True
 
 
 def print_free_agency_status(canonical: dict[str, Any], save: dict[str, Any], user_team: str) -> None:
@@ -6112,8 +6153,17 @@ def print_free_agency_breaking_news(news: list[dict[str, Any]]) -> None:
     print_rule()
 
 
-def advance_free_agency_day(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int, *, root: Path | None = None) -> dict[str, Any]:
+def advance_free_agency_day(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int, *, root: Path | None = None,
+                            let_sheets_expire: bool = False) -> dict[str, Any]:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
+    # FA-REAL slice 3: a rival's offer sheet for one of your restricted free agents is your decision. The day does not
+    # end while one is due today, unless the caller lets the clock run out (he then joins the new team: the real rule).
+    from .offer_sheets import ai_sheet_pass, resolve_due, user_decisions_due
+    due = user_decisions_due(save)
+    if due and not let_sheets_expire:
+        return {"status": "decision_needed", "offer_sheets_due": [s["id"] for s in due], "accepted_count": 0,
+                "accepted_offers": [], "ask_adjusted_count": 0, "ai_trade_news": []}
+    resolve_due(canonical, save, expire_user=let_sheets_expire)   # AI teams decide on the sheets due today
     active = canonical_with_save(canonical, save)
     process_ai_free_agency_offers_for_day_state(
         canonical,
@@ -6133,6 +6183,9 @@ def advance_free_agency_day(canonical: dict[str, Any], save_path: Path, user_tea
     accepted = resolve_free_agency_day_state(canonical, save, seed)
     from .offseason_decisions import restricted_market_day
     restricted_market_day(canonical, save, int((save.get("free_agency_state") or {}).get("day") or 1))
+    # FA-REAL slice 3: from July 1 (the new league year) AI teams may sign unsigned restricted free agents to offer
+    # sheets at the end of each market day; their teams decide by the end of the next day.
+    sheets = ai_sheet_pass(canonical, save, label=f"day{int((save.get('free_agency_state') or {}).get('day') or 1)}")
     post_trades = maybe_run_free_agency_ai_trades_state(
         canonical,
         save,
@@ -6165,6 +6218,7 @@ def advance_free_agency_day(canonical: dict[str, Any], save_path: Path, user_tea
         "accepted_offers": accepted.get("accepted_offers", []),
         "ask_adjusted_count": adjusted.get("ask_adjusted_count", 0),
         "ai_trade_news": [*(pre_trades.get("news") or []), *(post_trades.get("news") or [])],
+        "offer_sheets_signed": [s["id"] for s in sheets],
     }
 
 
@@ -6799,6 +6853,11 @@ def simulate_free_agency_to_end(canonical: dict[str, Any], save_path: Path, user
         if (save.get("free_agency_state") or {}).get("status") == "completed":
             break
         result = advance_free_agency_day(canonical, save_path, user_team, seed, root=root)
+        if result.get("status") == "decision_needed":
+            # FA-REAL slice 3: an offer sheet for one of your players is due today; the first wave waits for you.
+            return {"status": "decision_needed", "offer_sheets_due": result["offer_sheets_due"],
+                    "accepted_count": total_accepted, "auto_fill_count": 0, "ai_trade_count": total_ai_trades,
+                    "ai_trade_news": trade_news}
         total_accepted += int(result.get("accepted_count") or 0)
         total_ai_trades += len(result.get("ai_trade_news") or [])
         trade_news.extend(result.get("ai_trade_news") or [])
@@ -6852,10 +6911,26 @@ def queue_free_agency_suggestions(canonical: dict[str, Any], save_path: Path, se
     print(f"Queued {payload.get('negotiation_count')} AI free-agency suggestions.")
 
 
-def finish_free_agency_phase(canonical: dict[str, Any], save_path: Path, *, root: Path | None = None) -> None:
+def finish_free_agency_phase(canonical: dict[str, Any], save_path: Path, *, root: Path | None = None,
+                             let_sheets_expire: bool = False) -> dict[str, Any]:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     end_year = int(str(save.get("meta", {}).get("season") or CANONICAL_SEASON).split("-")[0]) + 1
     seed = int(save.get("meta", {}).get("seed", 1))
+    # FA-REAL slice 3: sheets signed on the first wave's last day, and one more sheet pass on July 15 (the last day of
+    # the free-agency phase). AI teams decide at once; a sheet for one of your players stops here for your decision.
+    from .offer_sheets import late_pass, resolve_due, user_pending
+    if user_pending(save) and not let_sheets_expire:
+        write_save(save_path, save)
+        return {"status": "decision_needed", "offer_sheets_due": [s["id"] for s in user_pending(save)]}
+    if str(save.get("state", {}).get("current_date") or "") < f"{end_year}-08-01":
+        late = late_pass(canonical, save, seed, root)
+        if late["user_pending"]:
+            if not let_sheets_expire:
+                write_save(save_path, save)
+                return {"status": "decision_needed", "offer_sheets_due": [s["id"] for s in late["user_pending"]]}
+            for sheet in late["user_pending"]:
+                sheet["match_deadline"] = min(sheet["match_deadline"], str(save["state"]["current_date"]))
+            resolve_due(canonical, save, expire_user=True)
     # TRADE-VOLUME-2: the game skips from the end of free agency to September 1, so the late-July and August trade
     # market runs once on August 1 on the way.
     if str(save.get("state", {}).get("current_date") or "") < f"{end_year}-08-01":
@@ -6869,6 +6944,7 @@ def finish_free_agency_phase(canonical: dict[str, Any], save_path: Path, *, root
     add_news(save, "free_agency", "Free agency period closed. Training camp is next.", date_value=f"{end_year}-09-01")
     write_save(save_path, save)
     print("Free agency complete. Training camp is next.")
+    return {"status": "done"}
 
 
 def run_late_summer_ai_trades(canonical: dict[str, Any], save: dict[str, Any], seed: int, season_start: int) -> int:

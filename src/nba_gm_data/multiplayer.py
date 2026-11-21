@@ -82,6 +82,7 @@ TEAM_MUTATIONS = {
     "renounce_cap_hold",
     "decide_option",
     "qualifying_offer",
+    "offer_sheet_decision",
     "waive_player",
 }
 HOST_MUTATIONS = {
@@ -1526,7 +1527,8 @@ class MultiplayerService:
         if phase == "free_agency":
             if (save.get("free_agency_state") or {}).get("status") == "completed":
                 return "advance_save", {"next_event": True, "seed": seed}
-            return "advance_free_agency", {"team": team, "seed": seed, "mode": "day"}
+            # FA-REAL slice 3: when the round timer runs out, a pending offer sheet expires (the real rule).
+            return "advance_free_agency", {"team": team, "seed": seed, "mode": "day", "let_sheets_expire": True}
         if phase in {"play_in", "playoffs"}:
             if (save.get("playoff_state") or {}).get("status") == "completed":
                 return "advance_save", {"next_event": True, "seed": seed}
