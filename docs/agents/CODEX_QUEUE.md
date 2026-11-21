@@ -6,6 +6,58 @@ Current priority (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE now, ODDS-COA
 
 ---
 
+## Ready now (2026-11-21, afternoon): HEADSHOT-GEN-PILOT (fresh chat; needs image generation)
+
+### HEADSHOT-GEN-PILOT: AI-generated fictional faces that age through a career
+
+Suggested settings: GPT-6.2 Sol, Medium, fresh chat (one with image generation available).
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task HEADSHOT-GEN-PILOT (its board row exists; set it to
+"in progress (Codex)"). Background: the game needs faces for made-up players and staff. The user wants real-looking
+photos of FICTIONAL people (no cartoons), and each person should change over their career (rookie photo, later a beard
+or new haircut, grey hair at the end), with the changes not uniform across people. This is a pilot to judge quality,
+identity consistency, speed and cost before making a full library.
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_headshots -b codex/headshot-gen-pilot HEAD
+Commit on that branch; never push, never commit to main. Nothing under src/, gui/ or tests/. Images go in
+output/headshots-gen-pilot/ (git-ignored); commit only the script, the manifest and the report.
+
+Hard rules:
+- Fictional people only. Never put a real person's name, a real photo, or "looks like <celebrity/player>" in any prompt.
+- No logos, team names, real jersey designs, brand marks or readable text in images.
+- Adults only (players 19+).
+- Don't spend money or use API keys. If you cannot generate images in this environment, stop and report which route
+  would work (ChatGPT app, OpenAI API with an estimated cost per image, other) instead of improvising.
+
+Make 12 people:
+- 6 players (men, varied ethnicities, builds and face shapes), 4 stages each: rookie (~20), prime (~26),
+  veteran (~31), late career (~35).
+- 6 staff (4 men, 2 women, varied ethnicities), 3 stages each: ~38, ~50, ~62.
+First write a short plan per person: which stage changes what (beard grows or goes, haircut, braids/locs/shaved head,
+hairline, greying, a little weight, glasses for staff). Vary it: some people barely change, some change a lot, and the
+changes come at different stages.
+Style for every image: realistic photo, head and upper chest, facing the camera, plain light-grey studio background,
+even lighting, square. Players wear a plain generic sleeveless jersey (no number); staff a suit, polo or quarter-zip,
+all without logos. Keep each person recognisably the same person: make stage 1 from text, then each later stage by
+editing the previous image ("same person, about 6 years older, ...").
+
+Output:
+- output/headshots-gen-pilot/<person_id>/stage<N>.png
+- data/research/headshot_gen_pilot_manifest.json: id, gender, role (player/staff), per stage {age, file, changes},
+  the exact prompts, the tool/model and the date.
+- output/headshots-gen-pilot/contact_sheet.html: one row per person, stages left to right, also a greyscale copy of
+  each row (the game shows headshots in greyscale).
+- docs/agents/tasks/headshot-gen-pilot.md: plain-language TL;DR first (5 lines); how often the same person stayed
+  recognisable (your honest rating per person); failures (wrong age, logos, odd hands, drift); time per image; how many
+  images your plan allows per day; what a full library would take (about 400 players x 4 stages and 300 staff x 3
+  stages); the image tool's terms on using outputs in a game (paraphrased, with the link).
+Commit after each few people so a usage limit loses nothing. Set the board row to "review" and stop.
+```
+
+---
+
 ## Ready now (2026-11-21, midday): DEVELOPMENT-EVIDENCE (fresh chat)
 
 ### DEVELOPMENT-EVIDENCE: how real NBA players develop and decline
