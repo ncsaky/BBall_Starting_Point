@@ -63,3 +63,9 @@ _Drafted overnight 2026-11-21 by Claude (coordinator) from a read-only code surv
 - **OVERALL-SCALE:** one overall scale everywhere (card, tables, lists), linear in the engine's value, with the anchors above. Display only; the AI keeps its internal value. Running now as a light job.
 - **STAGE2-A:** steps 1–2 (old system unreachable, dead branches deleted; gate: byte-identical new-system games and unchanged scorecards). Starts at the next free heavy slot.
 - **STAGE2-B-PROBE:** measurement-only prototype of injury risk read from the 94 inputs instead of the traits, plus an integration estimate for each job-B area. After STAGE2-A.
+
+## User correction (2026-11-21, night): Stage 2 is a new engine
+"We're starting a new engine largely from the ground up. I don't expect byte for byte identical results at all. But if we get lucky, perhaps we could get even better results than we were getting before."
+- Stage 2's goal is a new engine driven by the 94 inputs. It is judged by beating today's results on both scorecards (real-stat targets and the betting test), not by matching today's games.
+- The byte-identical gate is dropped. Retiring the old switch (job A) becomes housekeeping done along the way.
+- Next: survey the experimental possession engine (Track C) and the engine roadmap, then write a revised plan with small first components, each spot-checked against real data on its own before full games.
