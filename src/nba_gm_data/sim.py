@@ -110,6 +110,7 @@ def load_sim_context(root: str | Path, canonical: dict[str, Any] | None = None, 
     """A sim context. ``reference`` reuses tables from load_sim_reference (the simulation only reads them);
     ``indices=False`` leaves the lookup indexes to a caller that replaces the schedule first."""
     root = Path(root)
+    replay = canonical is None
     if canonical is None:
         canonical = load_json(root / "data/canonical/universe_2026_27_offseason.json")
         from .ratings_model import INPUTS_V1, install_inputs_model, ratings_model_for
@@ -127,6 +128,10 @@ def load_sim_context(root: str | Path, canonical: dict[str, Any] | None = None, 
         "manifestos": tables["manifestos"],
         "sim_cache": {"player_pools": {}, "team_features": {}, "game_contexts": {}},
     }
+    if replay:
+        # Save-less tools replay the real 2025-26 season: its real coaches, rated by the save staff model.
+        # Saves pass their own canonical and install their staff's ratings (save.save_coach_ratings).
+        context["replay_staff_stints"] = replay_staff_stints(canonical, root)
     if indices:
         context["indices"] = build_sim_indices(context)
     return context
@@ -201,7 +206,7 @@ def build_sim_indices(context: dict[str, Any]) -> dict[str, Any]:
         "teams_by_espn_id": teams_by_espn_id,
         "espn_id_by_team_id": espn_id_by_team_id,
         "players_by_name": {normalize_name(player["name"]): player for player in canonical["players"]},
-        "coach_by_team": {rating.team_id: rating for rating in coach_ratings(canonical)},
+        **replay_coach_indices(context),
         "schedule_by_team_espn_id": dict(schedule_by_team_espn_id),
         "boxscores_by_team_espn_id": dict(boxscores_by_team_espn_id),
     }
@@ -508,6 +513,66 @@ def coach_ratings(canonical: dict[str, Any]) -> list[CoachRating]:
     return ratings
 
 
+REPLAY_STAFFS_FILE = Path("data/research/staffs_2025_26.json")
+
+
+def replay_staff_stints(canonical: dict[str, Any], root: str | Path) -> dict[str, list[tuple[str | None, CoachRating]]]:
+    """Each team's real 2025-26 head coaches (in order, with their first game date), rated by the save staff model.
+
+    Every coach gets the slots a new save starts that team with (gameplay_staff_slots: head coach and coordinators),
+    his head-coach slot calibrated to his reputation grade exactly as a new save calibrates a real coach
+    (staff.apply_head_coach_reputation), then save.save_coach_ratings turns the slots into the sim's ratings."""
+    path = Path(root) / REPLAY_STAFFS_FILE
+    if not path.exists():
+        return {}
+    from copy import deepcopy
+    from .save import save_coach_ratings
+    from .staff import apply_head_coach_reputation, normalize_name as staff_name
+    data = load_json(path)
+    extra_grades = {staff_name(name): entry["grade"] for name, entry in (data.get("unrated_coach_grades") or {}).items()}
+    teams_by_abbrev = {team["abbrev"]: team for team in canonical.get("teams", [])}
+    stints: dict[str, list[tuple[str | None, CoachRating]]] = {}
+    for abbrev, entry in sorted((data.get("teams") or {}).items()):
+        team = teams_by_abbrev.get(abbrev)
+        if team is None:
+            continue
+        base = [slot for slot in canonical.get("gameplay_staff_slots", []) if slot.get("team_id") == team["id"]]
+        for coach in entry.get("head_coaches") or []:
+            slots = deepcopy(base)
+            head = next((slot for slot in slots if slot.get("slot") == "head_coach"), None)
+            if head is None:
+                continue
+            head["name"] = coach["name"]
+            apply_head_coach_reputation(head, coach["name"], grade=extra_grades.get(staff_name(coach["name"])))
+            rating = save_coach_ratings({"teams": [team]}, {"staff_slots": slots}).get(team["id"])
+            if rating is not None:
+                stints.setdefault(team["id"], []).append((coach.get("first_game_date"), rating))
+    return stints
+
+
+def replay_coach_indices(context: dict[str, Any]) -> dict[str, Any]:
+    """coach_by_team (each team's opening-night coach) plus a replayed season's dated coaching changes."""
+    stints = context.get("replay_staff_stints")
+    if not stints:
+        return {"coach_by_team": {rating.team_id: rating for rating in coach_ratings(context["canonical"])}}
+    return {"coach_by_team": {team_id: entries[0][1] for team_id, entries in stints.items()},
+            "coach_changes_by_team": {team_id: entries for team_id, entries in stints.items() if len(entries) > 1}}
+
+
+def coaches_on_date(context: dict[str, Any], coach_by_team: dict[str, CoachRating], game_date: str | None) -> dict[str, CoachRating]:
+    """The coach in charge of each team on a replayed game's date (in-season firings and interims)."""
+    changes = context.get("indices", {}).get("coach_changes_by_team")
+    if not changes or not game_date:
+        return coach_by_team
+    day = str(game_date)[:10]
+    current = dict(coach_by_team)
+    for team_id, entries in changes.items():
+        for first_date, rating in entries:
+            if first_date is None or first_date <= day:
+                current[team_id] = rating
+    return current
+
+
 def sim_game(root: str | Path, game_id: str, mode: str = "replay-real-minutes", seed: int = 1) -> SimGameResult:
     return sim_game_with_context(load_sim_context(root), game_id, mode=mode, seed=seed)
 
@@ -545,7 +610,8 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
 
         return simulate_interior_game(canonical, game, home_team, away_team,
                                       home_players, away_players, mode, seed, interior_experiment)
-    coach_by_team = context.get("indices", {}).get("coach_by_team") or {rating.team_id: rating for rating in coach_ratings(canonical)}
+    coach_by_team = coaches_on_date(context, context.get("indices", {}).get("coach_by_team")
+                                    or {rating.team_id: rating for rating in coach_ratings(canonical)}, game_date)
     if mode == "sandbox-sim":
         # Minutes the coach planned for absent teammates' replacements lean toward size or toward guards for tonight's
         # opponent (absence_fill; no random draws).
@@ -2835,7 +2901,8 @@ def explain_game_probability(root: str | Path, game_id: str, runs: int = 200, se
     away_pool = game_player_pool(context, game_id, away_team, mode, game_date=game_date)
     home_features = game_team_features(context, canonical, home_team, home_pool, mode, game_date=game_date)
     away_features = game_team_features(context, canonical, away_team, away_pool, mode, game_date=game_date)
-    coach_by_team = context.get("indices", {}).get("coach_by_team") or {rating.team_id: rating for rating in coach_ratings(canonical)}
+    coach_by_team = coaches_on_date(context, context.get("indices", {}).get("coach_by_team")
+                                    or {rating.team_id: rating for rating in coach_ratings(canonical)}, game_date)
     return {
         "game_id": str(game_id),
         "mode": mode,
