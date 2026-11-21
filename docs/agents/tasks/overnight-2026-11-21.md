@@ -35,5 +35,7 @@ _(Filled in as work lands.)_
 ### Branches for review (not merged)
 - `overnight/ui-polish`: 13 fixes. Dialogs and messages no longer open behind windows; the playoff bracket fits at 1024 px; a clearer start screen; Full Standings in the house style; the server no longer drops page files under load. It merges cleanly with main. Screenshots are in `output/ui-polish/`.
 
+- `overnight/headshots`: 2,000 generated faces; every made-up staff member's name matches the face's gender; no repeats within a league. 22 of 30 real head coaches have real (freely licensed) photos, and 528 of 535 real college prospects have ESPN headshots. Merges cleanly. Style samples are in `output/headshots/options.html`; before/after screenshots are in `output/headshots/`. Decisions: face style (Open Peeps built in, Avataaars or Personas available), and whether to use NBA.com or ESPN photos for the 8 coaches without a free one.
+
 ### Infrastructure
 - **Azure worker:** working end to end (core tests passed there in about 8.5 minutes). The upload is fixed: it skipped caches and builds, and avoided a link loop in the settlement data.
