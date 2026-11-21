@@ -5256,3 +5256,15 @@ body.unified-terminal-ui .has-card-board .card-board-window-mark.has-window-icon
 }
 .card-board-window-mark.has-window-icon .window-icon { display:block; width:100%; height:100%; }
 .card-board-window-switcher-icon .window-icon { display:block; width:100%; height:100%; filter:drop-shadow(0 2px 1px #344d6114); }
+
+/* HEADSHOTS (2026-11-21): each staff member's own face (real coach photo or a gender-matched generated face) and
+   prospect headshots on the draft boards. Greyscale like every other headshot in the game. */
+.staff-face-art img.coach-portrait-face { display:block; width:100%; height:100%; object-fit:contain; object-position:center bottom; }
+.staff-face-art.is-photo img.coach-portrait-face { object-fit:cover; object-position:center 18%; }
+body.unified-terminal-ui .staff-face-art img.coach-portrait-face { filter:grayscale(1) contrast(1.08); }
+body .has-card-board [data-board-window="staff"] .staff-face-art { overflow:hidden; align-self:end; }
+.draft-board-name .prospect-board-face { flex:0 0 30px; width:30px; height:31px; align-self:flex-end; display:block; overflow:hidden; }
+.draft-board-name { height:32px; }
+.draft-board-name .prospect-board-face img { display:block; width:100%; height:100%; object-fit:cover; object-position:center bottom; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-name-main .prospect-board-face { flex:0 0 22px; width:22px; height:24px; align-self:flex-end; margin:-2px 0; display:block; overflow:hidden; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-name-main .prospect-board-face img { display:block; width:100%; height:100%; object-fit:cover; object-position:center bottom; }

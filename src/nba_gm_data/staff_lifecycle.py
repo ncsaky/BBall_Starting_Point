@@ -306,6 +306,9 @@ def roll_staff_lifecycle(
     refill_staff_pool(pool, save["former_staff"], seed, new_season)
     save["staff_market_pool"] = pool
     save["staff_lifecycle_season"] = new_season
+    # New interims and the new market intake get gender-matched faces not already held in the league.
+    from .faces import ensure_save_staff_faces
+    ensure_save_staff_faces(save)
 
 
 def refill_staff_pool(pool: list[dict[str, Any]], former: list[dict[str, Any]], seed: int, season: str) -> None:
