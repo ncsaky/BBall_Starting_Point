@@ -4591,7 +4591,8 @@ def draft_reveal_lottery_action(canonical: dict[str, Any], save_path: Path, payl
     year = str(payload.get("year") or current_draft_year(save))
     phase = str((save.get("state") or {}).get("phase") or "")
     saved_order = (save.get("draft_orders") or {}).get(year)
-    if phase not in {"draft_lottery", "draft"} and not saved_order:
+    # FA-REAL slice 2: the lottery is drawn in May; its reveal can be watched any time from the playoffs to the draft.
+    if phase not in {"draft_lottery", "draft", "playoffs", "re_signing"} and not saved_order:
         return {"status": "blocked", "notes": "The draft lottery is not active."}
     if not saved_order:
         saved_order = run_draft_lottery(canonical, save_path, year=year, seed=None, advance_to_draft=False)

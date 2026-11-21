@@ -14,7 +14,8 @@ class FittedFreeAgentSalaryTests(unittest.TestCase):
         self.season = "2028-29"
         self.save = {
             "meta": {"season": "2027-28"},
-            "state": {"phase": "free_agency"},
+            # FA-REAL slice 2: the contract season follows the date (one switch date), not the phase name.
+            "state": {"phase": "free_agency", "current_date": "2028-07-02"},
             "free_agent_player_ids": ["bench"],
             "free_agency_state": {"season": "2027-28", "status": "active", "day": 5},
         }

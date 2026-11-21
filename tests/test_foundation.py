@@ -1000,10 +1000,11 @@ class DataFoundationTests(unittest.TestCase):
             save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=905)
             season = str(save.get("meta", {}).get("season") or "2026-27")
             year = str(int(season.split("-")[0]) + 1)
+            # FA-REAL slice 2: before the draft (stop 1), with no lottery drawn yet, the room shows the odds.
             save["state"] = {
-                "current_date": f"{year}-06-22",
-                "phase": "draft_lottery",
-                "legal_actions": ["draft_lottery", "advance"],
+                "current_date": f"{year}-06-17",
+                "phase": "re_signing",
+                "legal_actions": ["free_agent_signings", "advance"],
             }
             write_save(save_path, save)
 
@@ -3609,10 +3610,11 @@ class DataFoundationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             save_path = Path(tmp) / "completed_playoffs.json"
             save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=425)
+            # FA-REAL slice 2: the playoffs run to June 16; there is no lottery stop any more.
             save["state"] = {
-                "current_date": "2026-06-22",
-                "phase": "draft_lottery",
-                "legal_actions": ["draft_lottery", "advance"],
+                "current_date": "2026-06-14",
+                "phase": "playoffs",
+                "legal_actions": ["advance"],
             }
             save["playoff_state"] = {
                 "status": "completed",
@@ -3624,7 +3626,7 @@ class DataFoundationTests(unittest.TestCase):
             write_save(save_path, save)
 
             status = save_status(ROOT, self.plain, save_path)
-            self.assertEqual(status["phase"], "draft_lottery")
+            self.assertEqual(status["phase"], "playoffs")
             self.assertEqual(status["playoff_status"], "completed")
             self.assertEqual(status["playoff_round"], "champion")
             self.assertEqual(status["playoff_champion_team_id"], "team_gsw")
