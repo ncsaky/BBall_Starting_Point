@@ -270,6 +270,9 @@ def _create_league_save(
     normalize_starting_rosters(canonical, save)
     merge_startup_pick_obligations(save, canonical)
     align_real_head_coach_names(canonical, save)
+    # Staff faces: real head coaches' photos, gender-matched library faces for everyone else (no repeats).
+    from .faces import ensure_save_staff_faces
+    ensure_save_staff_faces(save)
     from .contract_imports import initialize_imported_obligations
     initialize_imported_obligations(save, canonical)
     initialize_new_career_health(save, start_date)
@@ -1366,6 +1369,8 @@ def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] 
         if needs_repair:
             repair_unpooled_unrostered_players(canonical, save)
             align_real_head_coach_names(canonical, save)
+            from .faces import ensure_save_staff_faces
+            ensure_save_staff_faces(save)
             seed_morale_if_flat(canonical, save)
             refresh_roster_cutdowns(canonical, save)
     if needs_repair:

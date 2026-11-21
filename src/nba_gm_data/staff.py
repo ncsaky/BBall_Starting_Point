@@ -4,6 +4,8 @@ import random
 from copy import deepcopy
 from typing import Any
 
+from . import faces
+from .faces import draw_staff_identity
 from .schema import TransactionLog, to_plain
 from .staff_lifecycle import initialize_staff_bio, staff_bio_evidence, staff_person_id
 from .utils import clamp, normalize_name as evidence_name, stable_id
@@ -38,6 +40,8 @@ ROLE_EFFECTS = {
     "performance_lead": "Lower injury odds, less fatigue, shorter absences and faster return from post-injury rust.",
 }
 
+# The original twelve-by-twelve name grid. It no longer names anyone (staff_names.py does, by gender); its two
+# draws still key each generated candidate's id, so contracts, ages and the rest of every candidate are unchanged.
 FIRST_NAMES = [
     "Andre",
     "Caleb",
@@ -228,6 +232,7 @@ def initialize_save_staff_slots(canonical: dict[str, Any], seed: int) -> list[di
         for staff in canonical.get("staff_profiles", [])
         if staff.get("role") == "head_coach" and staff.get("name")
     }
+    used_names: set[str] = {evidence_name(name) for name in head_names.values()}
     for slot in sorted(canonical.get("gameplay_staff_slots", []), key=lambda item: (item["team_id"], item["slot"])):
         record = deepcopy(slot)
         score = staff_grade(record)
@@ -246,6 +251,12 @@ def initialize_save_staff_slots(canonical: dict[str, Any], seed: int) -> list[di
         )
         real_name = head_names.get(record["team_id"]) if record["slot"] == "head_coach" else None
         initialize_staff_bio(record, seed, score, evidence.get(evidence_name(real_name or record["name"])))
+        if not real_name:
+            # Made-up staff: a gender and a name from that gender's list, unique in the league (faces follow in
+            # faces.ensure_save_staff_faces once the real head coaches are named). Own random stream.
+            identity = draw_staff_identity(f"{seed}:{record['id']}", record["slot"], used_names)
+            record.update(name=identity["name"], gender=identity["gender"])
+            used_names.add(evidence_name(identity["name"]))
         slots.append(record)
     # Seeded salaries are generated independently by role, while legality is
     # team-wide. Normalize only the handful of staffs whose rounded starting
@@ -344,6 +355,7 @@ def generate_staff_market(canonical: dict[str, Any], save: dict[str, Any], slot:
             candidate["asking_years"] = 3 if staff_slot == "head_coach" or score >= 68 else 2
             candidate["grade"] = round(score, 2)
             candidates.append(candidate)
+    apply_market_faces(save, seed, candidates)
     return sorted(
         candidates,
         key=lambda item: (
@@ -354,6 +366,36 @@ def generate_staff_market(canonical: dict[str, Any], save: dict[str, Any], slot:
             item.get("name") or "",
         ),
     )
+
+
+_MARKET_FACE_CACHE: dict[tuple, dict[str, dict[str, Any]]] = {}
+
+
+def apply_market_faces(save: dict[str, Any], seed: int, candidates: list[dict[str, Any]]) -> None:
+    """Faces (and gender-matched names) for staff-market candidates, avoiding faces held in the league.
+
+    Before the first offseason the market is generated on the fly (no stored pool); its faces are then handed out
+    in one fixed order over the whole generated market, so a candidate shows the same face whether the market is
+    listed for one role or all of them, and keeps it when hired."""
+    missing = [candidate for candidate in candidates if not candidate.get("headshot_url")]
+    if not missing:
+        return
+    held = faces.save_staff_people(save)
+    if save.get("staff_market_pool") is None:
+        key = (seed, tuple(sorted(person.get("face_id") or person.get("headshot_url") or "" for person in held)))
+        by_id = _MARKET_FACE_CACHE.get(key)
+        if by_id is None:
+            full = [candidate for slot in STAFF_SLOTS for candidate in generated_staff_candidates(seed, slot)]
+            faces.ensure_staff_faces(full, held=held)
+            by_id = {candidate["id"]: candidate for candidate in full}
+            if len(_MARKET_FACE_CACHE) >= 16:
+                _MARKET_FACE_CACHE.pop(next(iter(_MARKET_FACE_CACHE)))
+            _MARKET_FACE_CACHE[key] = by_id
+        for candidate in missing:
+            source = by_id.get(candidate.get("id"))
+            if source:
+                candidate.update({field: source.get(field) for field in ("name", "gender", "face_id", "headshot_url", "headshot_source")})
+    faces.ensure_staff_faces([candidate for candidate in candidates if not candidate.get("headshot_url")], held=held)
 
 
 def generated_staff_candidates(
@@ -383,11 +425,13 @@ def generated_staff_candidates(
             "communication": round(clamp(base + rng.gauss(0, 3.6), 20, 92), 2),
             "ambition": round(clamp(base + rng.gauss(0, 4.4), 20, 94), 2),
         }
+        identity = draw_staff_identity(f"{seed}:staff_market:{key}", staff_slot)
         candidate = {
             "id": stable_id("staff_market", staff_slot, season, rank, first, last),
             "team_id": None,
             "slot": staff_slot,
-            "name": f"{first} {last}",
+            "name": identity["name"],
+            "gender": identity["gender"],
             "archetype": archetype,
             "style_tags": [archetype.replace(" ", "_"), staff_slot],
             "skill_traits": traits,
@@ -691,6 +735,7 @@ def fire_staff_from_save(save: dict[str, Any], team_id: str, slot: str, reason: 
     ]
     save["staff_slots"].append(interim)
     save["staff_slots"].sort(key=lambda item: (item.get("team_id") or "", item.get("slot") or "", item.get("id") or ""))
+    faces.ensure_save_staff_faces(save)
     if not contract_expired:
         record_staff_season_change(save, team_id, slot, "fired")
     log = staff_transaction_log(save, "staff_fire", stable_id("staff_fire", team_id, slot, save.get("state", {}).get("current_date")), [team_id], {"fired_staff": fired, "interim_staff": interim}, [])
@@ -863,19 +908,16 @@ def interim_staff(
     seed: int | None = None,
 ) -> dict[str, Any]:
     keys = SLOT_SKILLS.get(slot, ["general_management"])
-    name = ""
-    rng = random.Random(f"{team_id}:{slot}:{date}:{nonce}:{previous_id}:interim_staff")
-    for attempt in range(8):
-        first = FIRST_NAMES[int(rng.random() * len(FIRST_NAMES)) % len(FIRST_NAMES)]
-        last = LAST_NAMES[int(rng.random() * len(LAST_NAMES)) % len(LAST_NAMES)]
-        name = f"{first} {last}"
-        if name != previous_name:
-            break
+    identity = draw_staff_identity(
+        f"{team_id}:{slot}:{date}:{nonce}:{previous_id}:interim_staff", slot,
+        {evidence_name(previous_name)} if previous_name else None,
+    )
     staff = {
         "id": stable_id("interim_staff", team_id, slot, date, nonce, previous_id),
         "team_id": team_id,
         "slot": slot,
-        "name": name,
+        "name": identity["name"],
+        "gender": identity["gender"],
         "archetype": "interim replacement",
         "style_tags": ["interim", slot],
         "skill_traits": {key: 50.0 for key in keys},

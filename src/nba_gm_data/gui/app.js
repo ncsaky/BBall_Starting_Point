@@ -3967,7 +3967,7 @@ function seasonProspectsCard(options = {}) {
         const now = Number(row.now), potential = Number(row.potential);
         return `<button type="button" class="season-prospect-row" data-draft-prospect-card="${escapeAttr(row.id)}" title="Open scouting report for ${escapeAttr(row.name)}">
           <span class="season-prospect-rank">${String(row.consensusRank ?? row.rank).padStart(2, "0")}</span>
-          <span class="season-prospect-name"><span class="season-prospect-name-main">${prospectOriginMarkup(row.sourceTeam)}<strong>${escapeHtml(row.name)}</strong>${prospectInjuryMarkup(row.injuryReport, { compact: true })}</span></span>
+          <span class="season-prospect-name"><span class="season-prospect-name-main">${prospectFaceMarkup(row)}${prospectOriginMarkup(row.sourceTeam)}<strong>${escapeHtml(row.name)}</strong>${prospectInjuryMarkup(row.injuryReport, { compact: true })}</span></span>
           <span class="season-prospect-position">${escapeHtml(row.position)}</span>
           <span>${escapeHtml(row.age ?? "—")}</span>
           <span>${escapeHtml(row.height || "—")}</span>
@@ -4047,7 +4047,16 @@ function coachPortraitMarkup(portraitId, extraClass = "") {
   return `<span class="coach-portrait-art ${escapeAttr(extraClass)}" aria-hidden="true"><img class="coach-portrait-silver" src="${path}-silver.webp" alt="" decoding="async" draggable="false"><img class="coach-portrait-ink" src="${path}-ink.webp" alt="" decoding="async" draggable="false"></span>`;
 }
 
-function staffActionPermission(slot, permissions = state.data.staff?.team_report?.staff_action_permissions || state.data.dashboard?.staff_action_permissions || {}) {
+// A staff member's own face: the real photo for a real head coach, otherwise his or her generated face (same
+// gender as the name; faces.py). Saves made before faces existed fall back to the old shared coach art.
+function staffPortraitMarkup(row, portraitId, extraClass = "") {
+  const source = String(row?.headshot_url || "").trim();
+  if (!source) return coachPortraitMarkup(portraitId, extraClass);
+  const photo = row.headshot_source === "real_photo" || source.includes("/headshots/real/");
+  return `<span class="coach-portrait-art staff-face-art${photo ? " is-photo" : ""} ${escapeAttr(extraClass)}" aria-hidden="true"><img class="coach-portrait-face" src="${escapeAttr(source)}" alt="" loading="lazy" decoding="async" draggable="false"></span>`;
+}
+
+function staffActionPermission(slot, permissions =state.data.staff?.team_report?.staff_action_permissions || state.data.dashboard?.staff_action_permissions || {}) {
   return permissions[slot] || {};
 }
 
@@ -4068,7 +4077,7 @@ function seasonStaffRowMarkup(row, portraitId, {actions = false, candidate = fal
   const roleRank = ["Head Coach", "Offensive Coordinator", "Defensive Coordinator", "Performance Lead", "Development Lead", "Scouting Lead"].indexOf(role);
   const sortData = `data-house-row data-house-order="${order}"${order % 2 ? " data-house-alt" : ""} data-sort-role="${roleRank < 0 ? 6 : roleRank}" data-sort-grade="${grade.toFixed(2)}" data-sort-contract="${salary ? Number(salary).toFixed(3) : ""}"`;
   return `<div class="season-staff-row${candidate ? " season-staff-candidate-row" : ""}" ${sortData}>
-    <button type="button" class="season-staff-person" ${personAction} ${candidate && actionAttributes ? actionAttributes : `title="${escapeAttr(name)}"`} aria-label="${candidate ? "Negotiate with" : "Open coach card for"} ${escapeAttr(name)}">${coachPortraitMarkup(portraitId, "season-staff-portrait")}<span><strong title="${escapeAttr(name)}">${escapeHtml(name)}</strong><small title="${escapeAttr(role)}">${escapeHtml(role)}</small></span></button>
+    <button type="button" class="season-staff-person" ${personAction} ${candidate && actionAttributes ? actionAttributes : `title="${escapeAttr(name)}"`} aria-label="${candidate ? "Negotiate with" : "Open coach card for"} ${escapeAttr(name)}">${staffPortraitMarkup(row, portraitId, "season-staff-portrait")}<span><strong title="${escapeAttr(name)}">${escapeHtml(name)}</strong><small title="${escapeAttr(role)}">${escapeHtml(role)}</small></span></button>
     <span class="season-staff-grade" aria-label="Grade ${grade.toFixed(0)}"><em>${grade.toFixed(0)}</em><i><b style="${performanceBarStyle(grade)}"></b></i></span>
     <span class="season-staff-contract"><strong>${escapeHtml(contract)}</strong></span>
     ${actions ? `<button type="button" class="season-staff-action" ${actionAttributes} ${candidate ? `data-staff-id="${escapeAttr(row.id)}"` : `data-fire-slot="${escapeAttr(row.slot || row.role)}"`}>${candidate ? "Negotiate" : "Fire"}</button>` : ""}
@@ -4118,7 +4127,7 @@ function coachProfileCardMarkup(staff, portraitId, info = {}, options = {}) {
   const years = options.candidate ? Number(staff.asking_years || staffYears(staff)) : staffYears(staff);
   return `<div class="coach-profile-card">
     <section class="coach-profile-identity">
-      ${coachPortraitMarkup(portraitId, "coach-profile-portrait")}
+      ${staffPortraitMarkup(staff, portraitId, "coach-profile-portrait")}
       <div class="coach-profile-bio">${options.context ? `<p class="coach-profile-context">${escapeHtml(options.context)}</p>` : ""}<h2>${escapeHtml(staffName(staff))}</h2><p>${escapeHtml(role)}</p></div>
       <dl class="coach-profile-contract" aria-label="${options.candidate ? "Candidate asking contract" : "Coach contract"}"><dt>${options.candidate ? "Asking contract" : "Contract"}</dt><dd>${salary ? `${money(salary)} x ${years || "—"}` : "—"}</dd></dl>
       <div class="coach-profile-overview" aria-label="Coach overview ratings">${coachRatingRow("Grade", staffGrade(staff), "grade", info)}${options.candidate ? (options.gradeChange == null ? "" : `<p class="coach-profile-grade-change"><strong>${options.gradeChange > 0 ? "+" : ""}${options.gradeChange.toFixed(1)}</strong> rating points vs current coach</p>`) : `${coachRatingRow("Morale", staff.morale, "morale", info)}${coachRatingRow("Job security", staff.job_security, "job_security", info)}`}</div>
@@ -4396,7 +4405,7 @@ function seasonDevelopmentMetric(label, delta, scale = 2) {
 }
 
 function leagueActivitySubject(subject) {
-  const portrait = subject.kind === "staff" ? coachPortraitMarkup(coachPortraitAssignments([subject]).get(staffIdentity(subject)), "wire-staff-portrait") : playerHeadshotMarkup(subject, "wire-player-headshot");
+  const portrait = subject.kind === "staff" ? staffPortraitMarkup(subject, coachPortraitAssignments([subject]).get(staffIdentity(subject)), "wire-staff-portrait") : playerHeadshotMarkup(subject, "wire-player-headshot");
   return `<div class="wire-subject ${subject.kind === "pick" ? "is-pick" : ""}"><div class="wire-subject-art">${portrait}${subject.kind === "pick" ? `<strong class="wire-pick-label">${escapeHtml(subject.season || "Draft")}<small>${subject.round ? `ROUND ${escapeHtml(subject.round)}` : "PICK"}</small></strong>` : ""}</div><span>${escapeHtml(subject.name || "")}</span></div>`;
 }
 
@@ -5693,7 +5702,7 @@ function draftProspectBoard(rows, selectable = false, selectedId = "", freshPick
     const now = Number(row.now), potential = Number(row.potential), fit = Number(row.fit);
     const cells = {
       consensus: `<span class="draft-board-rank">${Number.isFinite(consensus) ? String(consensus).padStart(2, "0") : "—"}</span>${spread}`,
-      name: `<span class="draft-board-name">${prospectOriginMarkup(row.sourceTeam)}<button type="button" class="draft-prospect-name" data-draft-prospect-card="${escapeAttr(row.id)}" title="${escapeAttr(`Open scouting report for ${row.name || "this prospect"}${row.scoutsDiffer ? `. Your scouts are ${row.scoutsDiffer} than the league.` : ""}`)}">${escapeHtml(row.name || "Unknown")}</button></span>`,
+      name: `<span class="draft-board-name">${prospectFaceMarkup(row)}${prospectOriginMarkup(row.sourceTeam)}<button type="button" class="draft-prospect-name" data-draft-prospect-card="${escapeAttr(row.id)}" title="${escapeAttr(`Open scouting report for ${row.name || "this prospect"}${row.scoutsDiffer ? `. Your scouts are ${row.scoutsDiffer} than the league.` : ""}`)}">${escapeHtml(row.name || "Unknown")}</button></span>`,
       position: escapeHtml(row.position || "—"), age: escapeHtml(row.age ?? "—"), height: escapeHtml(row.height || "—"),
       nowpot: `<span class="draft-board-nowpot" title="Your scouts' estimates: current level ${Number.isFinite(now) ? now.toFixed(1) : "unknown"}, realistic peak ${Number.isFinite(potential) ? potential.toFixed(1) : "unknown"}"><strong>${Number.isFinite(now) ? now.toFixed(0) : "—"}</strong><i aria-hidden="true">→</i><b>${Number.isFinite(potential) ? potential.toFixed(0) : "—"}</b></span>`,
       rank: `<span class="draft-board-yours"><strong>#${escapeHtml(row.rank ?? "—")}</strong>${draftRankMove(row.rankChange)}</span>`,
@@ -12525,7 +12534,8 @@ function salaryHorizonChart({seasons=[],rows=[],capByYear={},highlightPlayerId='
 }
 
 function playerHeadshotMarkup(row, className = "player-headshot") {
-  if (row.is_prospect) return `<span class="player-headshot-frame prospect-profile-placeholder" aria-label="Blank profile portrait"><svg class="${escapeAttr(className)}" viewBox="0 0 220 160" role="img" aria-label="Blank profile portrait"><rect width="220" height="160" fill="#e4e8eb"/><circle cx="110" cy="57" r="32" fill="#a9b3bc"/><path d="M43 160v-10c0-39 30-61 67-61s67 22 67 61v10" fill="#a9b3bc"/></svg></span>`;
+  // Prospects show their real photo or generated face (faces.py) when the server sends one; blank portrait otherwise.
+  if (row.is_prospect && !String(row.headshot_url || "").trim()) return `<span class="player-headshot-frame prospect-profile-placeholder" aria-label="Blank profile portrait"><svg class="${escapeAttr(className)}" viewBox="0 0 220 160" role="img" aria-label="Blank profile portrait"><rect width="220" height="160" fill="#e4e8eb"/><circle cx="110" cy="57" r="32" fill="#a9b3bc"/><path d="M43 160v-10c0-39 30-61 67-61s67 22 67 61v10" fill="#a9b3bc"/></svg></span>`;
   const source = String(row.headshot_url || "").trim();
   if (!source) return "";
   return `<span class="player-headshot-frame" aria-hidden="true"><img class="${escapeAttr(className)}" src="${escapeAttr(source)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" /></span>`;
@@ -14868,6 +14878,13 @@ function prospectInjuryTitle(report) {
 
 // Compact marker: current injury cross, past-injury count, projected-risk word. Empty when the engine has no medical data.
 // compact: only show something notable (current injury, history, or above-low risk), for dense cards.
+// Small headshot at the start of a draft-board name cell (bottom-aligned, filling the row; lazy-loaded).
+function prospectFaceMarkup(row) {
+  const source = String(row?.prospect?.headshot_url || row?.headshot_url || "").trim();
+  if (!source) return "";
+  return `<span class="player-headshot-frame prospect-board-face" aria-hidden="true"><img class="roster-player-headshot" src="${escapeAttr(source)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" /></span>`;
+}
+
 function prospectInjuryMarkup(report, { compact = false } = {}) {
   if (!report?.available) return "";
   const history = (report.history || []).length;
