@@ -154,11 +154,24 @@ def run(cfg: dict, args) -> int:
              f"> run.log 2>&1 &) ; true")
     print(f"running on the worker: {command}", flush=True)
     started = time.time()
+    misses = 0
     while True:
         time.sleep(30)
         state = ssh(cfg, f"cd {remote} && (cat EXIT_CODE 2>/dev/null || echo running)", check=False)
         if state and state != "running":
             break
+        misses = 0 if state else misses + 1
+        if misses >= 6:   # three minutes without an answer: is the machine still on?
+            power = power_state(cfg)
+            if power != "VM running":
+                print(f"the worker stopped ({power}) while '{name}' was running; its folder is kept on the disk "
+                      f"so the job can be resumed", flush=True)
+                data = ledger()
+                if data["intervals"] and not data["intervals"][-1].get("stop"):
+                    data["intervals"][-1]["stop"] = now()
+                    save_ledger(data)
+                return 1
+            misses = 0
         if args.progress and int(time.time() - started) % 300 < 30:
             print(f"  ... {int((time.time() - started) / 60)} min", flush=True)
     code = int(state.splitlines()[-1]) if state.splitlines()[-1].isdigit() else 1
