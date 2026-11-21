@@ -79,19 +79,25 @@ class PublicHistoryFoldInTests(unittest.TestCase):
 class HistoryWeightTests(unittest.TestCase):
     def test_weights_and_anchor_agree(self):
         self.assertEqual(im.HISTORY_WEIGHT, 0.75)
-        self.assertLess(im.SIMULATED_HISTORY_WEIGHT, im.HISTORY_WEIGHT)
+        # With 2025-26 complete, the game's own draws need no discount to keep the league rate steady.
+        self.assertEqual(im.SIMULATED_HISTORY_WEIGHT, 0.75)
         model = json.loads((ROOT / im.MODEL_FILE).read_text())
         # The model's league rates are anchored with the engine's real-history weight.
         self.assertEqual(model["rate_fit"]["history_weight"], im.HISTORY_WEIGHT)
 
-    def test_game_draws_count_less_than_real_history(self):
+    def test_game_draws_use_their_own_weight(self):
         on = date(2027, 1, 1)
         when = date(2026, 1, 1)
         decay = math.exp(-((on - when).days / 365.25) / 1.5)
-        real = im.prior_terms([(when, "knee")], on, 1.5)["knee"]
-        drawn = im.prior_terms([(when, "knee", True)], on, 1.5)["knee"]
+        saved = im.SIMULATED_HISTORY_WEIGHT
+        try:
+            im.SIMULATED_HISTORY_WEIGHT = 0.5
+            real = im.prior_terms([(when, "knee")], on, 1.5)["knee"]
+            drawn = im.prior_terms([(when, "knee", True)], on, 1.5)["knee"]
+        finally:
+            im.SIMULATED_HISTORY_WEIGHT = saved
         self.assertAlmostEqual(real, decay)
-        self.assertAlmostEqual(drawn, decay * im.SIMULATED_HISTORY_WEIGHT / im.HISTORY_WEIGHT)
+        self.assertAlmostEqual(drawn, decay * 0.5 / im.HISTORY_WEIGHT)
 
     def test_event_sources(self):
         model = {"player_history": {"p": [["2025-05-12", "achilles", 2, "Achilles tendon rupture"]]}}
