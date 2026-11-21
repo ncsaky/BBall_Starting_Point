@@ -93,9 +93,9 @@ The last accepted player is `player-m/0024`. The next player ID is `player-m/002
 
 ## Batch 2
 
-- In progress with 3 completed people and 12 new portraits.
-- 3 players, 0 staff women and 0 staff men. 1 redone stages. About 6 minutes.
-- Continue at player-m/0028.
+- In progress with 6 completed people and 24 new portraits.
+- 6 players, 0 staff women and 0 staff men. 2 redone stages. About 11 minutes.
+- Continue at player-m/0031.
 
 Order: 40 four-stage player sets, 10 three-stage staff women, then staff men as capacity allows. All subjects and image references are fictional adults. The built-in Codex image tool was used. Each accepted image has a full-size PNG and a 320 × 320 JPEG. The combined contact sheet compares colour and greyscale.
 
@@ -104,3 +104,6 @@ Order: 40 four-stage player sets, 10 three-stage staff women, then staff men as 
 - player-m/0025. Cleft chin and nose stay distinct. The shave, chin grey and eye lines differentiate age 35.
 - player-m/0026. Hooded eyes and wide jaw carry across. Fuller neck and grey goatee mark the last stage.
 - player-m/0027. Redid age 35 with a shorter cut and clearer crow's feet. Freckles and eye shape stay consistent.
+- player-m/0028. Dimple and grin stay recognizable, with a slim moustache, clean crop and later grey goatee.
+- player-m/0029. Redid the late stage for a more distinct cut and beard. Eyes, eyebrows and diamond face stay recognizable.
+- player-m/0030. Unchanged eye shape and uneven brow through four believable hair and facial-hair choices.
