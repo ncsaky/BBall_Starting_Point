@@ -46,6 +46,9 @@ LOOP = {
     # (league pace 102.0 possessions per 48 minutes).
     "hc_floor": 5.0, "hc_mean": 15.6, "hc_shape": 2.6, "trans_floor": 2.5, "trans_mean": 6.0, "reset_floor": 2.0,
     "reset_mean": 8.0, "putback_s": 2.0, "sideout_s": 3.5, "k_pace": 1.2, "tempo_scale": .01,
+    # The defending lineup's pace habit also sets the half-court length (pace is a game-level thing: both teams play
+    # about the same number of possessions). S2-TOTALS-MATCHUPS: see k_pace refit below.
+    "k_pace_def": 0.0,
     # Transition chance by how the possession started, times the lineup's transition habit.
     "trans_dreb": .20, "trans_steal": .60, "trans_made": .04, "trans_dead": .06, "k_trans": 1.5,
     # Turnovers: the defense's ball pressure (log-odds per index unit); transition and offensive-foul shares.
@@ -308,13 +311,14 @@ class Game:
             # The last-two-minutes foul count starts fresh.
             self.home.fouls_late = self.away.fouls_late = 0
 
-    def _duration(self, kind: str, off: TeamState) -> float:
+    def _duration(self, kind: str, off: TeamState, de: TeamState | None = None) -> float:
         L, rng = self.L, self.rng
         if kind == "trans":
             return L["trans_floor"] + rng.gammavariate(2.0, (L["trans_mean"] - L["trans_floor"]) / 2.0)
         if kind == "reset":
             return L["reset_floor"] + rng.gammavariate(2.0, (L["reset_mean"] - L["reset_floor"]) / 2.0)
-        mean = (L["hc_mean"] - L["hc_floor"]) * math.exp(-L["k_pace"] * (off.pace - self.lg_pace)) * (1.0 - L["tempo_scale"] * off.tempo)
+        dpace = 0.0 if de is None else L["k_pace_def"] * (de.pace - self.lg_pace)
+        mean = (L["hc_mean"] - L["hc_floor"]) * math.exp(-L["k_pace"] * (off.pace - self.lg_pace) - dpace) * (1.0 - L["tempo_scale"] * off.tempo)
         return min(23.5, L["hc_floor"] + rng.gammavariate(L["hc_shape"], mean / L["hc_shape"]))
 
     # ---- scoring helpers -----------------------------------------------------------------------------------------
@@ -412,7 +416,7 @@ class Game:
         p_trans ={"dreb": L["trans_dreb"], "steal": L["trans_steal"], "made": L["trans_made"]}.get(start, L["trans_dead"])
         p_trans *= math.exp(L["k_trans"] * (off.trans_pref - self.lg_trans))
         trans = rng.random() < p_trans
-        seg = self._duration("trans" if trans else "half", off)
+        seg = self._duration("trans" if trans else "half", off, de)
         final = False
         if seg >= self.t_left:
             if self.t_left < 3.0:
@@ -553,7 +557,7 @@ class Game:
             if self.t_left <= 0.0:
                 return "end"
             return self._shot(off, de, k, PUTBACK, putback=True)
-        seg = self._duration("reset", off)
+        seg = self._duration("reset", off, de)
         final = False
         if seg >= self.t_left:
             if self.t_left < 1.0:
