@@ -15,6 +15,7 @@ SEASON = "2027-28"
 EXPIRING = "2026-27"
 TODAY = "2027-07-02"
 MLE = cl.exception_amount("non_taxpayer_mle", SEASON)
+LINES_FIRST_APRON = cl.cap_lines_for_season(SEASON)["first_apron"]
 
 
 def roster(team: str, payroll: float, count: int = 13) -> tuple[list, list]:
@@ -130,6 +131,22 @@ class BidderAndReservation(unittest.TestCase):
         paid = os_.bidder_quote(league, save, "b", player, small)
         self.assertEqual(paid["payment"]["route"], "non_taxpayer_mle")
         self.assertFalse(os_.bidder_quote(league, save, "b", player, small, route="bird")["ok"])
+
+
+class ApronCountsQualifyingOffers(unittest.TestCase):
+    def test_a_tendered_qualifying_offer_counts_toward_the_apron(self):
+        league, save = world(incumbent_payroll=195e6)
+        payroll = cl.team_payroll(league, save, "t", SEASON)
+        self.assertEqual(payroll["apron_payroll"], payroll["tax_payroll"] + 7_000_000)
+        # Using the full mid-level would hard-cap the team below his qualifying offer: refused.
+        other = {"id": "fa", "name": "Free Agent", "age": 27, "draft_year": 2019, "team_id": None}
+        room = LINES_FIRST_APRON - payroll["tax_payroll"]
+        quote = cl.quote(league, save, "t", other, room - 3_000_000, 2, season=SEASON, route="non_taxpayer_mle")
+        self.assertFalse(quote["ok"], "it fits under the apron only without counting his qualifying offer")
+        # His own new contract replaces his qualifying offer in the apron count.
+        own = cl.quote(league, save, "t", rfa(league), 9e6, 3, season=SEASON)
+        self.assertTrue(own["ok"])
+        self.assertAlmostEqual(own["apron_after"], payroll["tax_payroll"] + 9e6)
 
 
 class Matching(unittest.TestCase):
