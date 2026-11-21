@@ -84,13 +84,15 @@ def wants_for_team(canonical, team_id):
 
 
 def player_facts(canonical, player):
-    from .save import player_display_attribute_summary
+    from .save import player_engine_attribute_summary
     from .transactions import current_salary, player_asset_values_by_id
     pid = player['id']
     cache = canonical.setdefault('_wants_player_facts', {}) if canonical.get('_allow_internal_caches') else {}
     if pid in cache:
         return cache[pid]
-    attrs = player_display_attribute_summary(canonical, pid)
+    # The AI's own scale: every want threshold (AI-written and user-entered) is stored and matched on it. The app
+    # converts OVR/OFF/DEF thresholds to and from the display scale at the screen (OVERALL-SCALE, 2026-11-21).
+    attrs = player_engine_attribute_summary(canonical, pid)
     value = player_asset_values_by_id(canonical).get(pid, {})
     contract = next((c for c in canonical.get('contracts', []) if c.get('player_id') == pid), {})
     salary = current_salary(contract)

@@ -153,15 +153,16 @@ def _team_ref(teams: dict[str, dict[str, Any]], team_id: str | None) -> dict[str
 
 
 def _player_ref(active: dict[str, Any], player_id: str, fallback_name: str | None = None) -> dict[str, Any]:
-    from .save import player_attribute_summary, presentation_rating_value
+    from .save import player_display_attribute_summary
 
     player = next((row for row in active.get("players", []) if row.get("id") == player_id), None)
     if not player:
         return {"id": player_id, "name": fallback_name or player_id, "team_id": None}
-    overall = float(player_attribute_summary(active, player_id).get("overall") or 0.0)
+    # The one OVR display scale, the same number as the card and tables (OVERALL-SCALE, 2026-11-21).
+    overall = player_display_attribute_summary(active, player_id).get("overall")
     return {"id": player_id, "name": player.get("name") or fallback_name, "team_id": player.get("team_id"),
             "position": player.get("position"), "age": player.get("display_age", player.get("age")),
-            "headshot_url": player.get("headshot_url"), "overall": presentation_rating_value(overall)}
+            "headshot_url": player.get("headshot_url"), "overall": overall}
 
 
 def _per_game(totals: dict[str, Any], key: str) -> float:

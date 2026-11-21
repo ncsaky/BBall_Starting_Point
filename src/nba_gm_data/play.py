@@ -62,6 +62,7 @@ from .save import (
     team_cap_summary,
     team_dashboard,
     player_attribute_summary,
+    player_display_attribute_summary,
     presentation_rating_value,
     player_salary_table,
     update_narrative_settings,
@@ -483,7 +484,7 @@ def cut_player_from_roster(canonical: dict[str, Any], save_path: Path, team_abbr
     print_title(f"Cut Player | {team['abbrev']}")
     print(" #  Player                   Pos Age  MPG  PPG  RPG  APG   OVR  Health        Contract")
     for idx, player in enumerate(roster, start=1):
-        attrs = player_attribute_summary(active, player["id"])
+        attrs = player_display_attribute_summary(active, player["id"])
         totals = stats.get(player["id"], {})
         health = next((state for state in save.get("health_states", []) if state.get("player_id") == player["id"]), {})
         print(
@@ -969,7 +970,7 @@ def league_trait_rows(canonical: dict[str, Any], save_path: Path, sort_key: str)
     for player in active.get("players", []):
         if not player.get("team_id") or player.get("id") in set(save.get("free_agent_player_ids") or []):
             continue
-        attrs = derived_trait_attributes(player_attribute_summary(active, player["id"]))
+        attrs = derived_trait_attributes(player_display_attribute_summary(active, player["id"]))
         totals = stats_by_player.get(player["id"], {})
         games = int(totals.get("games") or 0)
         stat_games = max(1, games)
@@ -2336,7 +2337,7 @@ def choose_assets(
     health = {state.get("player_id"): state for state in save.get("health_states", [])}
     for player in players:
         totals = stats.get(player["id"], {})
-        attrs = player_attribute_summary(canonical, player["id"])
+        attrs = player_display_attribute_summary(canonical, player["id"])
         trade_value = market_trade_target_value(player, values.get(player["id"], fallback_asset_valuation(player)))
         gp = int(totals.get("games") or 0)
         contract_text = salary_summary(player_salary_table(canonical, player["id"]), season)
@@ -4628,7 +4629,7 @@ def print_prospect_line(prospect: dict[str, Any], prefix: str = "Prospect", team
         print(f"{prefix}: unavailable")
         return
     height = prospect_height(prospect)
-    traits = prospect_trait_summary(prospect)
+    traits = prospect_trait_summary(prospect, canonical)
     comp = prospect.get("comp") or prospect.get("archetype") or prospect.get("role_archetype") or "scouted prospect"
     confidence = ""
     if team_id and canonical is not None:
@@ -4703,14 +4704,17 @@ def prospect_age_text(prospect: dict[str, Any]) -> str:
         return "--"
 
 
-def prospect_trait_summary(prospect: dict[str, Any]) -> str:
-    """Public numbers only (no team view given): the class's public upside, never the hidden true potential."""
+def prospect_trait_summary(prospect: dict[str, Any], canonical: dict[str, Any] | None = None) -> str:
+    """Public numbers only (no team view given): the class's public upside, never the hidden true potential.
+    Shown on the one OVR display scale (OVERALL-SCALE) when the league universe is given."""
     from .draft import prospect_evaluation_value
+    from .save import display_rating_from_summary
 
     pairs = []
     for key, label in [("current_ability", "now"), ("potential", "pot"), ("floor", "floor"), ("ceiling", "ceil")]:
         if prospect.get(key) is not None:
             value = prospect_evaluation_value(prospect, key) if key in {"potential", "ceiling"} else float(prospect[key])
+            value = display_rating_from_summary(canonical, "overall", value)
             pairs.append(f"{label} {value:.0f}")
     return ", ".join(pairs[:5])
 
@@ -5233,7 +5237,7 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
         candidates.sort(key=lambda player: (display_minutes_projection(player), float(player_attribute_summary(active, player["id"]).get("overall") or 0.0)), reverse=True)
         fitted_bounds = state.get("fitted_ask_salary_bounds_millions") or {}
         for idx, player in enumerate(candidates, start=1):
-            attrs = player_attribute_summary(active, player["id"])
+            attrs = player_display_attribute_summary(active, player["id"])
             stats = active_season_line(save, player["id"], player)
             if player["id"] in fitted_bounds:
                 ask = user_offer_market_terms(active, save, player, team)["ask_millions"]
@@ -5856,7 +5860,7 @@ def free_agency_player_market(canonical: dict[str, Any], save_path: Path, user_t
         print_rule()
         print(" #  Player                     Pos Age OVR   PPG  Ask       Offers / best interest")
         for idx, player in enumerate(players[:60], start=1):
-            attrs = player_attribute_summary(active, player["id"])
+            attrs = player_display_attribute_summary(active, player["id"])
             stats = active_season_line(save, player["id"], player)
             ask = float((save.get("free_agency_state", {}).get("player_asks_millions") or {}).get(player["id"]) or 0)
             offers = active_offers_for_player(save, player["id"])
@@ -5897,7 +5901,7 @@ def compare_free_agents_then_pick(canonical: dict[str, Any], save: dict[str, Any
     print(" #  Player                     Pos Age Ht    Ask       Last yr         OVR Shot Cre Def Rim Pass")
     asks = (save.get("free_agency_state") or {}).get("player_asks_millions") or {}
     for idx, player in enumerate(players, start=1):
-        attrs = player_attribute_summary(canonical, player["id"])
+        attrs = player_display_attribute_summary(canonical, player["id"])
         stats = active_season_line(save, player["id"], player)
         ask = float(asks.get(player["id"]) or free_agency_initial_ask(player, {}))
         print(
@@ -7069,7 +7073,7 @@ def current_free_agents_room(canonical: dict[str, Any], save_path: Path, user_te
             return
         print(" #  Player                     Pos Age OVR  MPG   PPG  RPG  APG  Ask")
         for idx, player in enumerate(players[:50], start=1):
-            attrs = player_attribute_summary(active, player["id"])
+            attrs = player_display_attribute_summary(active, player["id"])
             stats = active_season_line(save, player["id"], player)
             ask = max(1.8, display_minutes_projection(player) * 0.45)
             print(
@@ -7121,7 +7125,7 @@ def user_free_agent_signing(canonical: dict[str, Any], save_path: Path, user_tea
     print(" #  Player                     Pos  OVR   PPG  RPG  APG  Fit   Ask")
     for idx, item in enumerate(candidates, start=1):
         player_id = item.get("id") or item.get("player_id")
-        attrs = player_attribute_summary(active, player_id)
+        attrs = player_display_attribute_summary(active, player_id)
         stats = active_season_line(load_save(save_path), player_id)
         projected_aav = max(2.0, float(item.get("projected_aav_millions") or 0))
         print(
@@ -7284,7 +7288,7 @@ def save_pool_free_agent_signing(
 
 
 def print_free_agent_investigation(active: dict[str, Any], save: dict[str, Any], player: dict[str, Any], market: dict[str, Any], user_team: str) -> None:
-    attrs = player_attribute_summary(active, player.get("id"))
+    attrs = player_display_attribute_summary(active, player.get("id"))
     stats = active_season_line(save, player.get("id"), player)
     projected_aav = round(max(2.0, float(market.get("projected_aav_millions") or 0.0) or display_minutes_projection(player) * 0.45), 1)
     print_title(f"Free-Agent Investigation | {player.get('name')}")
@@ -7296,11 +7300,12 @@ def print_free_agent_investigation(active: dict[str, Any], save: dict[str, Any],
     cap_season = contract_start_season_for_signing(save)
     print_cap_summary(active, save, team["id"], team_cap_summary(active, save, team["id"], season=cap_season))
     print_rule()
+    # OVR/DEF are on the display scale (OVERALL-SCALE): under 70 is end of bench, 80+ a top-quarter rotation player.
     print(
-        f"OVR {rating_cell(float(attrs.get('overall') or 0), (50, 70))} "
+        f"OVR {rating_cell(float(attrs.get('overall') or 0), (70, 80))} "
         f"Shot {rating_cell(float(attrs.get('shooting') or 0), (50, 70))} "
         f"Create {rating_cell(float(attrs.get('creation') or 0), (50, 70))} "
-        f"Def {rating_cell(float(attrs.get('defense') or 0), (50, 70))} "
+        f"Def {rating_cell(float(attrs.get('defense') or 0), (70, 80))} "
         f"Reb {rating_cell(float(attrs.get('rebounding') or 0), (50, 70))}"
     )
 
@@ -7376,7 +7381,8 @@ def print_save_free_agents(
         market = report_by_id.get(player_id) or {}
         ask = round(max(2.0, float(market.get("projected_aav_millions") or 0.0) or display_minutes_projection(player) * 0.45), 1)
         desirability = float(attrs.get("overall") or 0) * 1.4 + float(stats["ppg"]) * 0.6 + display_minutes_projection(player) * 0.45 + ask * 0.25
-        rows.append((desirability, player, attrs, stats, ask, player_trait_blurb(attrs)))
+        shown = player_display_attribute_summary(active_canonical, player_id)
+        rows.append((desirability, player, shown, stats, ask, player_trait_blurb(shown)))
     rows.sort(key=lambda item: (-item[0], -item[4], item[1].get("name", "")))
     players = []
     print(" #  Player                     Pos  OVR   PPG  RPG  APG   Ask  Snapshot")
@@ -8341,7 +8347,10 @@ def print_dashboard_ratings(payload: dict[str, Any]) -> None:
     print()
     sort_no = pick_number("Sort", 1, len(columns), default=1)
     sort_key = columns[sort_no - 1][0]
-    rows = sorted(payload["rotation"], key=lambda player: float((player.get("attributes") or {}).get(sort_key) or 0), reverse=True)
+    # Show what the GUI shows: the display ratings (one OVR/OFF/DEF scale everywhere; OVERALL-SCALE, 2026-11-21).
+    shown_rows = [{**player, "attributes": player.get("display_ratings") or player.get("attributes") or {}}
+                  for player in payload["rotation"]]
+    rows = sorted(shown_rows, key=lambda player: float((player.get("attributes") or {}).get(sort_key) or 0), reverse=True)
     thresholds = rating_percentile_thresholds(rows, [key for key, _ in columns])
     print_title(f"Ratings / Traits | sort: {columns[sort_no - 1][1]}")
     print(f" #  {'Player':<22} {'Age':>3} {'Ht':<5} " + " ".join(f"{label:>5}" for _, label in columns))
@@ -8763,7 +8772,7 @@ def print_trade_offer_details(canonical: dict[str, Any], candidate: dict[str, An
                 continue
             player = players.get(asset.get("id"), {})
             value = values.get(asset.get("id"), {})
-            attrs = player_attribute_summary(canonical, asset.get("id"))
+            attrs = player_display_attribute_summary(canonical, asset.get("id"))
             totals = season_stats.get(asset.get("id"), {})
             contract_years = salary_summary(player_salary_table(canonical, asset.get("id")), season)
             trade_value = market_trade_target_value(player, value or fallback_asset_valuation(player))
@@ -9336,7 +9345,7 @@ def choose_trade_player_from_team(canonical: dict[str, Any], save: dict[str, Any
         gp = int(totals.get("games") or 0)
         contract = salary_summary(player_salary_table(canonical, player["id"]), season)
         status = trade_health_text(health.get(player["id"], {}))
-        attrs = player_attribute_summary(canonical, player["id"])
+        attrs = player_display_attribute_summary(canonical, player["id"])
         print(
             f"{idx:>2}. {player['name']:<24} {compact_position(player.get('position')):<3} "
             f"{age_text(player, 3)} {height_text(player):<5} {display_minutes_projection(player):>4.0f} "

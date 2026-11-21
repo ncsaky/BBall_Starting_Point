@@ -1502,6 +1502,58 @@ def set_roster_payload(canonical: dict[str, Any], save: dict[str, Any], active: 
     return checklist
 
 
+WANT_DISPLAY_FIELDS = ("overall", "offense", "defense")
+
+
+def wants_for_display(active: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    """Trade-want thresholds on OVR/OFF/DEF are stored and matched on the AI's own scale (trade_wants.player_facts);
+    the screen shows them on the one display scale (OVERALL-SCALE, 2026-11-21). Returns a converted copy."""
+    from .save import display_rating_from_summary
+
+    def shown(want: dict[str, Any]) -> dict[str, Any]:
+        conditions = [
+            {**c, "value": display_rating_from_summary(active, c["field"], c["value"])}
+            if c.get("field") in WANT_DISPLAY_FIELDS and isinstance(c.get("value"), (int, float)) else dict(c)
+            for c in want.get("conditions") or []
+        ]
+        return {**want, "conditions": conditions} if "conditions" in want else dict(want)
+
+    out = dict(payload)
+    for group in ("entries", "suggestions"):
+        if isinstance(payload.get(group), list):
+            out[group] = [shown(want) for want in payload[group]]
+    return out
+
+
+def wants_from_display(active: dict[str, Any], entries: Any, stored: list[dict[str, Any]] | None = None) -> Any:
+    """Inverse of wants_for_display for wants the user saves: typed OVR/OFF/DEF thresholds go back to the AI's scale.
+    A threshold the user left as shown keeps its stored value exactly (`stored`: the saved wants), so re-saving never
+    drifts. Anything malformed passes through untouched for normalize_wants to reject."""
+    from .save import display_rating_from_summary, display_rating_to_summary
+    if not isinstance(entries, list):
+        return entries
+    previous = {(w.get("id"), c.get("field"), c.get("op"), display_rating_from_summary(active, c["field"], c["value"])): c["value"]
+                for w in stored or [] for c in w.get("conditions") or []
+                if c.get("field") in WANT_DISPLAY_FIELDS and isinstance(c.get("value"), (int, float))}
+
+    def engine_value(want: dict[str, Any], c: dict[str, Any]) -> float:
+        typed = float(c["value"])
+        kept = previous.get((want.get("id"), c["field"], c.get("op"), round(typed, 1)))
+        return kept if kept is not None else display_rating_to_summary(active, c["field"], typed)
+
+    out = []
+    for want in entries:
+        if isinstance(want, dict) and isinstance(want.get("conditions"), list):
+            want = {**want, "conditions": [
+                {**c, "value": engine_value(want, c)}
+                if isinstance(c, dict) and c.get("field") in WANT_DISPLAY_FIELDS
+                and isinstance(c.get("value"), (int, float)) and not isinstance(c.get("value"), bool)
+                and math.isfinite(float(c["value"])) else c
+                for c in want["conditions"]]}
+        out.append(want)
+    return out
+
+
 def team_wants_action(canonical, save_path, payload, action="team_wants"):
     from .trade_wants import (VERSION, normalize_wants, ownership_keys, wants_payload,
                               clear_wants_cache, asset_matches)
@@ -1529,7 +1581,7 @@ def team_wants_action(canonical, save_path, payload, action="team_wants"):
             allowed = {p['id'] for p in active.get('players', []) if p.get('team_id') == tid}
             allowed.update(w.get('target_player_id') for w in record.get('entries', []) if w.get('kind') == 'upgrade')
             try:
-                entries = normalize_wants(payload.get('entries'), allowed)
+                entries = normalize_wants(wants_from_display(active, payload.get('entries'), record.get('entries')), allowed)
             except ValueError as error:
                 raise AppActionError(str(error)) from error
             from .trade_wants import player_facts
@@ -1553,7 +1605,7 @@ def team_wants_action(canonical, save_path, payload, action="team_wants"):
         write_save(save_path, save)
         active['team_trade_wants'] = deepcopy(save['team_trade_wants'])
         clear_wants_cache(active)
-    result = wants_payload(active, save, tid)
+    result = wants_for_display(active, wants_payload(active, save, tid))
     result['teams'] = [{'id': t['id'], 'abbrev': t['abbrev']} for t in active.get('teams', [])]
     result['editable'] = tid == save.get('meta', {}).get('user_team_id')
     result['matches'] = {a['id']: deepcopy(asset_matches(active, tid, a)) for a in assets[:30]
@@ -1817,7 +1869,7 @@ def team_assets_payload(canonical: dict[str, Any], save_path: Path, team_query: 
         "league_block": league_block,
         "team_block_player_ids": [player_id for player_id in save.get("team_trade_blocks", {}).get(team["id"], []) if any(p["id"] == player_id for p in players)],
         "team_block_pick_ids": [pick_id for pick_id in save.get("team_trade_block_picks", {}).get(team["id"], []) if any(p["id"] == pick_id for p in picks)],
-        "wants": wants_payload(active, save, team['id']),
+        "wants": wants_for_display(active, wants_payload(active, save, team['id'])),
         "assets": [*players, *picks, *swaps],
     }
     context["team_assets"][team["id"]] = result
@@ -2717,21 +2769,25 @@ def safe_date(value: Any) -> date | None:
 
 
 def development_overall_path(active: dict[str, Any], player: dict[str, Any], deltas_by_month: list[tuple[str, dict[str, float]]]) -> tuple[float, list[float]]:
-    """Exact OVR at the start and after each month, from the engine's own summary formula.
+    """OVR at the start and after each month, on the one display scale the card and tables use.
 
-    Today's hidden ratings are walked back through the saved monthly development changes, then the same
-    player_attribute_summary the card and AI use is evaluated at every month end. Minutes are held at today's
-    projection, so the line isolates development (skill change), not role changes. Approximate only in the new
-    inputs mode, where development is routed through the 94 inputs before ratings are re-derived."""
+    Today's hidden ratings are walked back through the saved monthly development changes, then valued at every month
+    end. New-ratings mode: the engine's fitted impact on the display line (save.display_ratings_for_traits), so
+    today's point equals the card (OVERALL-SCALE, 2026-11-21); the 94 inputs are held at today's values, so earlier
+    points are approximate. Other modes: the summary formula, graded. Minutes are held at today's projection, so the
+    line isolates development (skill change), not role changes."""
     player_id = player["id"]
-    from .save import trait_values_by_player
+    from .save import display_ratings_for_traits, presentation_rating_value, trait_values_by_player
     current = dict(trait_values_by_player(active).get(player_id, {}))
     meta = active.get("meta", {})
 
     def overall(traits: dict[str, float]) -> float:
+        shown = display_ratings_for_traits(active, player, traits)
+        if shown is not None:
+            return shown["overall"]
         context = {"meta": meta, "players": [player],
                    "traits": [{"player_id": player_id, "trait_key": key, "value": value} for key, value in traits.items()]}
-        return float(player_attribute_summary(context, player_id).get("overall") or 0.0)
+        return presentation_rating_value(player_attribute_summary(context, player_id).get("overall") or 0.0)
 
     states = [current]
     for _month, deltas in reversed(deltas_by_month):
