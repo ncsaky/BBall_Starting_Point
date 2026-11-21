@@ -24,7 +24,8 @@ _PACKAGE_ROOT = Path(__file__).resolve().parents[2]
 MODEL_FILE = "data/canonical/injury_model_v2.json"
 POSSESSIONS_PER_MINUTE = 2.1      # a player's on-court possessions per minute at a ~101-possession pace
 MIN_MINUTES_FOR_EXPOSURE = 4.0    # deep reserves who barely play still get hurt occasionally (Codex INJ)
-# The builder anchors the built-in per-part rates to 2021-22 through 2024-25 tracker coverage.
+# The builder anchors the built-in per-part rates to the complete public records for 2023-24 through 2025-26 (every
+# injury and illness that cost a regular-season game; INJURY-ANCHOR, 2026-11-21), no longer to the tracker.
 # This multiplier defaults to neutral and remains available for the injury season research script.
 LEAGUE_RATE_SCALE = 1.0
 # How much a real player's recorded injury history counts, against the strength the fit found (1.0). Measured on a
@@ -70,10 +71,12 @@ def _load(path: str) -> dict[str, Any] | None:
     return json.loads(p.read_text()) if p.exists() else None
 
 
-# Local only (per-player Basketball Index evidence, plus the public 2025-26 stretches the tracker lacks; built by
-# scripts/build_injury_model.py). v2 is the older tracker-only file, used when v3 has not been built yet.
-EVIDENCE_FILE = "data/canonical/injury_player_evidence_v3.json"
-FALLBACK_EVIDENCE_FILE = "data/canonical/injury_player_evidence_v2.json"
+# Local only (per-player Basketball Index evidence, plus the public 2023-24 to 2025-26 injuries and illnesses the tracker
+# lacks; built by scripts/build_injury_model.py). Older files are used, newest first, when v4 has not been built yet:
+# v3 (public 2025-26 injuries only), v2 (tracker only).
+EVIDENCE_FILE = "data/canonical/injury_player_evidence_v4.json"
+FALLBACK_EVIDENCE_FILES = ("data/canonical/injury_player_evidence_v3.json", "data/canonical/injury_player_evidence_v2.json")
+EVIDENCE_SUMMARY_KEYS = ("version", "public_history", "public_history_2025_26")
 
 
 @lru_cache(maxsize=4)
@@ -82,15 +85,17 @@ def _load_with_evidence(path: str, evidence_path: str) -> dict[str, Any] | None:
     if model is None:
         return None
     evidence = _load(evidence_path) or {}
-    return {**model, **{k: v for k, v in evidence.items() if k not in ("version", "public_history_2025_26")}}
+    return {**model, **{k: v for k, v in evidence.items() if k not in EVIDENCE_SUMMARY_KEYS}}
 
 
 def load_model(root: str | Path | None = None) -> dict[str, Any] | None:
     """The fitted model, plus real players' injury history/forecasts/recovery speed when the local evidence file exists."""
     root = Path(root) if root is not None else _PACKAGE_ROOT
     evidence = root / EVIDENCE_FILE
-    if not evidence.exists() and FALLBACK_EVIDENCE_FILE:
-        evidence = root / FALLBACK_EVIDENCE_FILE
+    for fallback in FALLBACK_EVIDENCE_FILES:
+        if evidence.exists():
+            break
+        evidence = root / fallback
     return _load_with_evidence(str(root / MODEL_FILE), str(evidence))
 
 
@@ -122,7 +127,14 @@ def history_entry(d: date, part: str, simulated: bool) -> tuple:
 
 
 def player_history(model: Mapping[str, Any], player_id: str, events: Iterable[Mapping[str, Any]]) -> list[tuple]:
-    """(start date, part[, simulated]) of the player's known injuries: real recent history plus the save's own events."""
+    """(start date, part[, simulated]) of the player's known injuries: real recent history plus the save's own events.
+
+    Illness stays out (INJURY-ANCHOR, 2026-11-21). Over the three complete public seasons, counting it would predict who
+    gets sick next much better (Poisson log-likelihood +31.5) and who gets hurt next a little better (+5.7;
+    scripts/research/injury_anchor_measure.py --section illness), but the illness slopes were fit on the tracker, which
+    logs few illnesses. Counted in the game, its own illnesses feed back: over four seasons back to back illness rose
+    from 7.7 to 12.5 a team (real 5.6-7.0) and all spells from 46.6 to 53.7 (injury_multiseason_check.py, seed 17);
+    with illness left out the rate holds (42.4 to 42.7). Revisit once the slopes are refit on complete records."""
     out = []
     for start, part, *_ in (model.get("player_history") or {}).get(player_id, []):
         d = _parse(start)

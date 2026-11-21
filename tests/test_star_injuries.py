@@ -69,11 +69,13 @@ class PublicHistoryFoldInTests(unittest.TestCase):
         self.assertEqual([e[0] for e in entries["p_trade"]], ["2026-01-20"])
         self.assertEqual(set(entries), {"p_new", "p_trade", "p_preseason", "p_old"})
 
-    def test_builder_reads_the_public_file_and_writes_v3(self):
+    def test_builder_reads_the_public_files_and_writes_v4(self):
         import scripts.build_injury_model as builder
-        self.assertTrue(builder.EVIDENCE_OUT.name.endswith("injury_player_evidence_v3.json"))
+        self.assertTrue(builder.EVIDENCE_OUT.name.endswith("injury_player_evidence_v4.json"))
         self.assertEqual(builder.PUBLIC_HISTORY, ROOT / "data/research/injury_history_2025_26.json")
-        self.assertEqual(im.EVIDENCE_FILE, "data/canonical/injury_player_evidence_v3.json")
+        self.assertEqual(sorted(builder.PUBLIC_HISTORIES), ["2023-24", "2024-25", "2025-26"])
+        self.assertEqual(builder.PUBLIC_HISTORIES["2023-24"], ROOT / "data/research/injury_history_2023_24.json")
+        self.assertEqual(im.EVIDENCE_FILE, "data/canonical/injury_player_evidence_v4.json")
 
 
 class HistoryWeightTests(unittest.TestCase):
@@ -113,18 +115,24 @@ class HistoryWeightTests(unittest.TestCase):
         self.assertEqual(history, [(date(2025, 5, 12), "achilles"), (date(2026, 10, 19), "knee"),
                                    (date(2026, 11, 1), "ankle", True)])
 
-    def test_load_model_falls_back_to_v2_evidence(self):
+    def test_load_model_falls_back_to_older_evidence(self):
+        v3, v2 = im.FALLBACK_EVIDENCE_FILES
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "data/canonical").mkdir(parents=True)
             (root / im.MODEL_FILE).write_text(json.dumps({"parts": {}}))
-            (root / im.FALLBACK_EVIDENCE_FILE).write_text(json.dumps({"version": "v2", "player_history": {"a": []}}))
+            (root / v2).write_text(json.dumps({"version": "v2", "player_history": {"a": []}}))
             self.assertEqual(im.load_model(root)["player_history"], {"a": []})
-            (root / im.EVIDENCE_FILE).write_text(json.dumps({"version": "v3", "player_history": {"b": []},
-                                                             "public_history_2025_26": {"stretches": {}}}))
+            (root / v3).write_text(json.dumps({"version": "v3", "player_history": {"b": []},
+                                               "public_history_2025_26": {"stretches": {}}}))
             loaded = im.load_model(root)
             self.assertEqual(loaded["player_history"], {"b": []})
             self.assertNotIn("public_history_2025_26", loaded)
+            (root / im.EVIDENCE_FILE).write_text(json.dumps({"version": "v4", "player_history": {"c": []},
+                                                             "public_history": {"2023-24": {}}}))
+            loaded = im.load_model(root)
+            self.assertEqual(loaded["player_history"], {"c": []})
+            self.assertNotIn("public_history", loaded)
 
 
 if __name__ == "__main__":

@@ -66,6 +66,13 @@ def main() -> None:
         on = date(year, 10, 20)
         chance = mean(82 * sum(im.part_hazards(model, players[pid], traits.get(pid, {}), 33.0,
                                                im.player_history(model, pid, events_all), on).values()) for pid in top30)
+        # History density at the season start for rotation players (15+ planned minutes): decayed entries, as the engine
+        # weighs them (the game's own draws at SIMULATED_HISTORY_WEIGHT / HISTORY_WEIGHT), illness apart from injuries.
+        rotation = [pid for pid, p in players.items() if p.get("team_id") and float(p.get("minutes_projection") or 0) >= 15]
+        terms = [im.prior_terms(im.player_history(model, pid, events_all), on, float(model.get("history_decay_years") or 1.5))
+                 for pid in rotation]
+        density = (mean(sum(v for part, v in t.items() if part != "illness") for t in terms),
+                   mean(t.get("illness", 0.0) for t in terms))
         t0 = perf_counter()
         r = health.simulate_health(ROOT, canonical, games[0]["gameDate"], games[-1]["gameDate"], seed=a.seed + k,
                                    schedule=games, season_schedule=games)
@@ -76,7 +83,9 @@ def main() -> None:
         # Next season starts fresh except injuries that run past opening night (fixed rosters, nobody ages).
         canonical["player_health_states"] = r["final_states"]
         top_ev = [e for e in ev if e["player_id"] in top30]
-        print(f"{season}: spells costing a game {len(ev) / teams:5.1f} per team | top 30: model chance per 82 at 33 "
+        ill = sum(1 for e in ev if e.get("body_part") == "illness")
+        print(f"{season}: spells costing a game {len(ev) / teams:5.1f} per team ({ill / teams:4.1f} illness) | history at "
+              f"the start per rotation player: injuries {density[0]:4.2f}, illness {density[1]:4.2f} | top 30: model chance per 82 at 33 "
               f"minutes {chance:4.2f} at the start, spells {len(top_ev) / 30:4.2f} each, games {sum(int(e['expected_games_missed']) for e in top_ev) / 30:5.1f} each"
               f" | {secs:4.1f} s")
 
