@@ -2,7 +2,7 @@ import unittest
 
 from nba_gm_data.player_model_registry import definition_registry
 from nba_gm_data.trait_adapter import (
-    ADAPTER_SPEC, LEGACY_TRAITS, _percentile, _value_at, derive_traits, fit_adapter, scalar_value, spec_input_ids,
+    ADAPTER_SPEC, LEGACY_TRAITS, _excess_z, _percentile, _trait_value, derive_traits, fit_adapter, scalar_value, spec_input_ids,
     trait_input_weights, uncensor_top, validate_spec,
 )
 
@@ -151,22 +151,29 @@ class NoHardTopTests(unittest.TestCase):
         for value in self.TABLE:
             self.assertEqual(_percentile(self.TABLE, value), self.step_percentile(self.TABLE, value))
 
-    def test_percentile_is_continuous_monotone_and_has_no_hard_ends(self):
-        xs = [x / 4 for x in range(-80, 600)]
+    def test_percentile_is_continuous_and_monotone_inside_the_league(self):
+        xs = [10 + x / 4 for x in range(0, 321)]
         ps = [_percentile(self.TABLE, x) for x in xs]
-        self.assertTrue(all(b > a for a, b in zip(ps, ps[1:])), "strictly increasing everywhere, ends included")
+        self.assertTrue(all(b > a for a, b in zip(ps, ps[1:])))
         self.assertLess(max(abs(b - a) for a, b in zip(ps, ps[1:])), 0.03, "no jumps")
-        self.assertGreater(_percentile(self.TABLE, 120.0), 1.0)    # past the best: keeps separating
-        self.assertLess(_percentile(self.TABLE, -10.0), 0.0)       # past the worst: keeps falling
 
-    def test_value_at_extends_past_the_target_table(self):
-        target = [float(v) for v in range(40, 100, 2)]
-        self.assertEqual(_value_at(target, 1.0), 98.0)
-        self.assertEqual(_value_at(target, 0.0), 40.0)
-        self.assertGreater(_value_at(target, 1.05), 98.0)
-        self.assertLess(_value_at(target, -0.05), 40.0)
-        values = [_value_at(target, p / 100) for p in range(-20, 121)]
-        self.assertTrue(all(b > a for a, b in zip(values, values[1:])))
+    def test_distance_past_the_ends_is_measured_on_the_tail_scale(self):
+        self.assertEqual(_excess_z(self.TABLE, 50.0), 0.0)
+        beyond = [_excess_z(self.TABLE, 90.0 + d) for d in (0.0, 1.0, 5.0, 20.0)]
+        self.assertEqual(beyond[0], 0.0)
+        self.assertTrue(all(b > a for a, b in zip(beyond, beyond[1:])))
+        below = [_excess_z(self.TABLE, 10.0 - d) for d in (0.0, 1.0, 5.0)]
+        self.assertTrue(all(b < a for a, b in zip(below, below[1:])))
+
+    def test_composite_to_trait_is_continuous_monotone_and_unbounded(self):
+        composites = sorted(i / 200 for i in range(201))
+        target = sorted(40 + 0.3 * i for i in range(201))
+        path = [_trait_value(composites, target, c / 400, 0.0) for c in range(-100, 400)]
+        path += [_trait_value(composites, target, 1.0, e / 10) for e in range(1, 40)]
+        self.assertTrue(all(b > a for a, b in zip(path, path[1:])))
+        self.assertLess(max(b - a for a, b in zip(path, path[1:])), 1.0, "no jumps")
+        self.assertGreater(path[-1], max(target) + 10)
+        self.assertLess(path[0], min(target))
 
     def test_players_beyond_the_league_best_keep_rising(self):
         levels = [i / 20 for i in range(21)]
