@@ -10,7 +10,7 @@
 
 ## 1. How players improve and age
 
-Basketball Reference's **Box Plus/Minus (BPM)** estimates how many points a player adds per 100 possessions above league average from the box score. **Value Over Replacement Player (VORP)** estimates season-long contribution above a replacement player and gives credit for more playing time. BPM is the main growth and ranking measure. VORP identifies established stars for the aging comparison and provides a check on the top five. The main panel has 11,059 player-seasons from 2004–05 through 2025–26. Earlier seasons back to 1995–96 are used to identify prior entries and NBA debuts. Year labels use the season's ending year. [2004–05 advanced stats](https://www.basketball-reference.com/leagues/NBA_2005_advanced.html) · [2025–26 advanced stats](https://www.basketball-reference.com/leagues/NBA_2026_advanced.html) · [Basketball Reference methodology](https://www.basketball-reference.com/about/bpm2.html)
+Basketball Reference's **Box Plus/Minus (BPM)** estimates how many points a player adds per 100 possessions above league average from the box score. **Value Over Replacement Player (VORP)** estimates season-long contribution above a replacement player and gives credit for more playing time. BPM is the main growth and ranking measure. VORP identifies established stars for the aging comparison and provides a check on the top five. The main panel has 11,059 player-seasons across 2,328 players from 2004–05 through 2025–26. Earlier seasons back to 1995–96 are used to identify prior entries and NBA debuts. Year labels use the season's ending year. [2004–05 advanced stats](https://www.basketball-reference.com/leagues/NBA_2005_advanced.html) · [2025–26 advanced stats](https://www.basketball-reference.com/leagues/NBA_2026_advanced.html) · [Basketball Reference methodology](https://www.basketball-reference.com/about/bpm2.html)
 
 Each pair follows the same player into the next season and requires at least 1,000 minutes in both years, prorated for shortened schedules. Starting groups are the bottom, middle and top thirds of qualified players of the same age that season. The table gives the mean change with the middle 80% of observed changes in brackets. Counts by age and group are in the JSON. The oldest rows have very few observations.
 
@@ -160,6 +160,33 @@ A spell starts when a player enters or re-enters the top five after a season out
 
 The [ten-season game check](ten-season-findings.md) measured the engine's own player value. To compare with this NBA evidence, calculate the game's simulated BPM from its season results or establish a link between its internal scale and on-court impact. Compare the best player's level, the top-five average and new arrivals over several runs. A fixed count of ranked slots alone cannot show that a hidden ceiling has gone away.
 
+## 4. Late bloomers and high picks who fell short
+
+A late bloomer is a player who appeared in the NBA at 23 and first reached the top 25 at 27–30. The stricter definition also requires that he was outside the top 100 or below the minutes cut at 23. A bust in the draft table is a top-ten pick who missed the top 50 and had fewer than three qualifying seasons in his first seven years.
+
+| Outcome | Players | Share |
+|---|---:|---:|
+| Late bloomers among players who appeared at 23 | 16/722 | 2.2% |
+| Late bloomers among that cohort's top-25 finishers by 30 | 16/79 | 20.3% |
+| Stricter late bloomers among players who appeared at 23 | 8/722 | 1.1% |
+| Top-ten picks who missed the top 50 | 87/150 | 58.0% |
+| Top-ten picks who also fell short of three qualifying seasons | 23/150 | 15.3% |
+| Same two misses, picks 1–3 | 6/45 | 13.3% |
+| Same two misses, picks 4–10 | 17/105 | 16.2% |
+
+Derrick White went from 139 minutes at 23 to his first top-25 BPM season at 29. Goran Dragić went from 116th at 23 to 19th at 27. Khris Middleton went from 61st at 23 to 16th at 28. Steve Novak also qualifies, with one particularly strong season on the rate measure. There's enough evidence to leave room for late breakouts, including ones that last only a season. [White](https://www.basketball-reference.com/players/w/whitede01.html) · [Dragić](https://www.basketball-reference.com/players/d/dragigo01.html) · [Middleton](https://www.basketball-reference.com/players/m/middlkh01.html) · [Novak](https://www.basketball-reference.com/players/n/novakst01.html)
+
+Anthony Bennett and Hasheem Thabeet never crossed the qualifying minutes cut. Markelle Fultz qualified twice and reached 108th at his best within the window. Greg Oden qualified once. The definition measures NBA outcomes and the available playing time. It cannot distinguish health, opportunity and development. There are too few late cases and narrow misses to choose a separate forecast rule for either group. [Bennett](https://www.basketball-reference.com/players/b/bennean01.html) · [Thabeet](https://www.basketball-reference.com/players/t/thabeha01.html) · [Fultz](https://www.basketball-reference.com/players/f/fultzma01.html) · [Oden](https://www.basketball-reference.com/players/o/odengr01.html)
+
+## Gaps
+
+- Minutes and roles affect who qualifies, and both impact measures reflect the lineups and assignments a player actually had. The year-to-year spread includes shooting swings, injury, role changes and measurement noise. The evidence gives a target for simulated outcomes. It does not estimate how much variation to put in permanent ratings.
+- Career exits, years without NBA minutes, and declines below the minutes cut are counted in the JSON. The change curves only measure players with enough minutes in both seasons. At older ages, the apparent decline is likely milder than the combined effects of losing playing time and declining on the court.
+- The young-player odds cover players already in the NBA at each starting age. Players who debuted after that age enter the study at later ages. The seven-year window excludes newer starting cohorts and misses draft outcomes that take longer. The undrafted sample is restricted to players who made the league.
+- The tiny age-38-and-older samples and the six-season turnover test give weak evidence for exact rates. Individual impacts are sensitive to the metric, especially for players in narrow roles and players with shorter seasons. The estimate uses NBA regular seasons and one approximate schedule length for the uneven 2020 season.
+
 ## Resume state
 
-Research only on `codex/development-evidence`. The frozen public panel, Basketball Index comparison and fits are in `data/research/development_evidence.json`. Age curves, star odds and superstar turnover are documented. The remaining report section covers late bloomers and busts.
+Research complete on `codex/development-evidence`. The public inputs, source registry, tables and holdouts are in `data/research/development_evidence.json`. The branch keeps aggregate Basketball Index comparisons. The original Basketball Index files are available in the local worktree via symlinks.
+
+Run `.venv/bin/python scripts/research/development_evidence_fit.py --out /tmp/development_evidence.json` to recompute from the frozen Basketball Reference rows. With the local Basketball Index files linked, this also recomputes the cross-check. Without them, it carries forward the saved cross-check. Add `--cache output/development-evidence` to rebuild the public inputs from the cached season and draft pages. The script uses the Python standard library.

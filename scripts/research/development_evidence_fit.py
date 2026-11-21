@@ -627,10 +627,15 @@ def cases(panel, drafts):
     return {
         "age_23_cohort_n": len(age_23), "age_23_cohort_ever_top_25_through_30": reached,
         "late_first_top_25_age_27_to_30": len(late),
+        "late_share_of_age_23_cohort": round(len(late) / len(age_23), 5),
+        "late_share_of_age_23_cohort_top_25_finishers": round(len(late) / reached, 5),
         "strict_late_from_outside_top_100_at_age_23": len(strict),
+        "strict_late_share_of_age_23_cohort": round(len(strict) / len(age_23), 5),
         "late_bloomers": late,
         "top_ten_picks_n": len(misses), "top_ten_no_top_50": len(no_top_50),
+        "top_ten_no_top_50_share": round(len(no_top_50) / len(misses), 5),
         "top_ten_no_top_50_and_fewer_than_3_qualifying_seasons": len(bust),
+        "top_ten_bust_share": round(len(bust) / len(misses), 5),
         "bust_by_pick_group": {group: {"n": sum(pick_group(r["pick"]) == group for r in misses),
                                       "busts": sum(pick_group(r["pick"]) == group for r in bust)}
                                for group in DRAFT_GROUPS[:2]},

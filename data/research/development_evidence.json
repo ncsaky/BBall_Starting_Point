@@ -7162,7 +7162,10 @@
     "age_23_cohort_n": 722,
     "age_23_cohort_ever_top_25_through_30": 79,
     "late_first_top_25_age_27_to_30": 16,
+    "late_share_of_age_23_cohort": 0.02216,
+    "late_share_of_age_23_cohort_top_25_finishers": 0.20253,
     "strict_late_from_outside_top_100_at_age_23": 8,
+    "strict_late_share_of_age_23_cohort": 0.01108,
     "late_bloomers": [
       {
         "name": "Tony Allen",
@@ -7295,7 +7298,9 @@
     ],
     "top_ten_picks_n": 150,
     "top_ten_no_top_50": 87,
+    "top_ten_no_top_50_share": 0.58,
     "top_ten_no_top_50_and_fewer_than_3_qualifying_seasons": 23,
+    "top_ten_bust_share": 0.15333,
     "bust_by_pick_group": {
       "1–3": {
         "n": 45,
