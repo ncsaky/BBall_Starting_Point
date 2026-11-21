@@ -863,6 +863,102 @@
       ],
       "tool": "Built-in Codex image generation",
       "date": "2026-11-21"
+    },
+    {
+      "id": "staff-m/0028",
+      "gender": "male",
+      "role": "staff",
+      "stages": [
+        {
+          "min_age": 0,
+          "file": "staff-m/0028-s1.jpg",
+          "age": 38,
+          "changes": "A 38-year-old Black male basketball physical therapist with light golden brown skin, hooded downturned eyes, broad oval face and full lips, a low close dark afro and thin angled sideburns. Short chin beard and no moustache. Slightly raised cheek as he smiles. Plain sand linen shirt under a dark blue cardigan."
+        },
+        {
+          "min_age": 45,
+          "file": "staff-m/0028-s2.jpg",
+          "age": 50,
+          "changes": "At 50. Same hooded eyes, broad soft face, smile and chin. Thinner hair but still a close dark crop with the first silver at the temples, narrow sideburns and a neatly connected dark beard. Visible soft eye creases and cheek folds. Plain black polo."
+        },
+        {
+          "min_age": 56,
+          "file": "staff-m/0028-s3.jpg",
+          "age": 62,
+          "changes": "At 62. Same eyes and characteristic mouth, with visible deeper skin folds and a noticeably softened jaw. Dark grey closely cropped coils and round gentle-rimmed glasses. No beard or moustache. Slight head turn and a plain denim-blue jacket."
+        }
+      ],
+      "prompts": [
+        "A 38-year-old Black male basketball physical therapist with light golden brown skin, hooded downturned eyes, broad oval face and full lips, a low close dark afro and thin angled sideburns. Short chin beard and no moustache. Slightly raised cheek as he smiles. Plain sand linen shirt under a dark blue cardigan. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 50. Same hooded eyes, broad soft face, smile and chin. Thinner hair but still a close dark crop with the first silver at the temples, narrow sideburns and a neatly connected dark beard. Visible soft eye creases and cheek folds. Plain black polo. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 62. Same eyes and characteristic mouth, with visible deeper skin folds and a noticeably softened jaw. Dark grey closely cropped coils and round gentle-rimmed glasses. No beard or moustache. Slight head turn and a plain denim-blue jacket. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark."
+      ],
+      "tool": "Built-in Codex image generation",
+      "date": "2026-11-21"
+    },
+    {
+      "id": "staff-m/0029",
+      "gender": "male",
+      "role": "staff",
+      "stages": [
+        {
+          "min_age": 0,
+          "file": "staff-m/0029-s1.jpg",
+          "age": 38,
+          "changes": "A 38-year-old white Eastern European male basketball coaching staff member with a very long face, pale rosy skin, close-set hazel eyes and high angular cheekbones, a large chin notch, light brown straight hair clipped short uniformly, and a clean shave. Plain sage-green quarter-zip. Head slightly inclined and a slight smile."
+        },
+        {
+          "min_age": 49,
+          "file": "staff-m/0029-s2.jpg",
+          "age": 50,
+          "changes": "At 50. Preserve the chin notch, shape of the cheekbones and close-set eyes. Same crew cut with a particularly grey side stripe and some light brow and eye creases. Clean-shaven. Plain muted tan tweed jacket over a dark mauve shirt."
+        },
+        {
+          "min_age": 59,
+          "file": "staff-m/0029-s3.jpg",
+          "age": 62,
+          "changes": "At 62. Same long face, eyes and distinctive chin notch. More pronounced eye bags, forehead lines and loose jaw contours. Uniformly short silver hair and an even thin grey beard shadow. Plain deep brown cardigan. Relaxed slightly angled pose."
+        }
+      ],
+      "prompts": [
+        "A 38-year-old white Eastern European male basketball coaching staff member with a very long face, pale rosy skin, close-set hazel eyes and high angular cheekbones, a large chin notch, light brown straight hair clipped short uniformly, and a clean shave. Plain sage-green quarter-zip. Head slightly inclined and a slight smile. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 50. Preserve the chin notch, shape of the cheekbones and close-set eyes. Same crew cut with a particularly grey side stripe and some light brow and eye creases. Clean-shaven. Plain muted tan tweed jacket over a dark mauve shirt. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 62. Same long face, eyes and distinctive chin notch. More pronounced eye bags, forehead lines and loose jaw contours. Uniformly short silver hair and an even thin grey beard shadow. Plain deep brown cardigan. Relaxed slightly angled pose. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark."
+      ],
+      "tool": "Built-in Codex image generation",
+      "date": "2026-11-21"
+    },
+    {
+      "id": "staff-m/0030",
+      "gender": "male",
+      "role": "staff",
+      "stages": [
+        {
+          "min_age": 0,
+          "file": "staff-m/0030-s1.jpg",
+          "age": 38,
+          "changes": "A 38-year-old Dominican male basketball associate coach, heavyset, warm reddish-brown complexion, round wide face, deep-set eyes, curved eyebrows, narrow nose tip and a broad rounded chin. Short tapered dark curls, full neatly sculpted dark beard. Solid deep blue blazer with matte navy shirt. An easy broad smile and slightly turned head."
+        },
+        {
+          "min_age": 47,
+          "file": "staff-m/0030-s2.jpg",
+          "age": 50,
+          "changes": "At 50. Same full face, curved brows and smile, keep the close beard with a modest strip of grey near the jaw. Shorter more receding hair, a few silver curls. Natural additional eye and forehead lines. Plain dark green polo."
+        },
+        {
+          "min_age": 57,
+          "file": "staff-m/0030-s3.jpg",
+          "age": 62,
+          "changes": "At 62. Same recognizable chin, eyes and smile. Higher hairline with close silver dark-mixed curls, trimmed uniformly grey beard and visible smile lines at the eyes with slight looseness around the jaw. Plain charcoal blazer over unmarked pale blue collar."
+        }
+      ],
+      "prompts": [
+        "A 38-year-old Dominican male basketball associate coach, heavyset, warm reddish-brown complexion, round wide face, deep-set eyes, curved eyebrows, narrow nose tip and a broad rounded chin. Short tapered dark curls, full neatly sculpted dark beard. Solid deep blue blazer with matte navy shirt. An easy broad smile and slightly turned head. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 50. Same full face, curved brows and smile, keep the close beard with a modest strip of grey near the jaw. Shorter more receding hair, a few silver curls. Natural additional eye and forehead lines. Plain dark green polo. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark.",
+        "Use the attached synthetic portrait as the identity reference. Show this exact same fictional adult with the stated changes. Preserve signature eye spacing, nose, chin, skin tone and overall facial proportions. At 62. Same recognizable chin, eyes and smile. Higher hairline with close silver dark-mixed curls, trimmed uniformly grey beard and visible smile lines at the eyes with slight looseness around the jaw. Plain charcoal blazer over unmarked pale blue collar. Single square photorealistic head-and-upper-chest studio portrait for a basketball management game. Horizontally centered face, hair entirely in frame with modest headroom, relaxed pose, even soft light, natural skin texture, plain seamless light-grey background. Only one fictional adult. No hands, text, numbers, logos, patches, team designs, props or watermark."
+      ],
+      "tool": "Built-in Codex image generation",
+      "date": "2026-11-21"
     }
   ]
 }
