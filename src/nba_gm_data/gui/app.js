@@ -589,7 +589,7 @@ async function loadSaves() {
   const previousSelection = els.startupSaveSelect.value || state.currentSave;
   state.saves = (data.saves || []).filter((save) => save.path);
   els.startupSaveSelect.innerHTML = state.saves.length
-    ? state.saves.map((save) => `<option value="${escapeAttr(save.path)}">${escapeHtml(save.name || "Unnamed save")} | ${save.status === "ok" ? `${escapeHtml(save.team || "?")} | ${escapeHtml(save.current_date || "")}` : "Needs recovery"}</option>`).join("")
+    ? state.saves.map((save) => `<option value="${escapeAttr(save.path)}">${escapeHtml(save.name || "Unnamed save")} · ${save.status === "ok" ? `${escapeHtml(save.team || "?")} · ${escapeHtml(formatWrittenDate(save.current_date) || save.current_date || "")}` : "Needs recovery"}</option>`).join("")
     : '<option value="">No saves yet</option>';
   if (!state.saves.some((save) => save.status === "ok" && save.path === state.currentSave)) {
     state.currentSave = "";
@@ -746,11 +746,22 @@ async function createSave() {
   const team = els.teamSelect.value || "random";
   const gameMode = els.gameModeSelect.value || "standard";
   const saveName = els.saveName.value.trim();
-  const result = await action("create_save", {
-    team,
-    game_mode: gameMode,
-    save_name: saveName || undefined,
-  });
+  // Building a league takes a little while; say so on the button instead of leaving a dimmed screen.
+  const button = els.createSave;
+  const idleLabel = button.textContent;
+  button.textContent = "Building your league…";
+  button.setAttribute("aria-busy", "true");
+  let result;
+  try {
+    result = await action("create_save", {
+      team,
+      game_mode: gameMode,
+      save_name: saveName || undefined,
+    });
+  } finally {
+    button.textContent = idleLabel;
+    button.removeAttribute("aria-busy");
+  }
   state.currentSave = result.save_path;
   localStorage.setItem(LAST_SAVE_KEY, state.currentSave);
   state.view = "dashboard";
@@ -3111,11 +3122,21 @@ function seasonMoraleBar(label, value) {
   return `<div class="season-signal-row"><span>${escapeHtml(label)}</span><i><b style="${performanceBarStyle(score)}"></b></i><strong>${score.toFixed(0)}</strong></div>`;
 }
 
+// Plain-language meaning of each of the four factors, shown on hover (the labels are the standard short names).
+const FOUR_FACTOR_MEANINGS = {
+  efg: "Effective field-goal %: shooting accuracy, counting a made three as one and a half makes. Higher is better.",
+  tov: "Turnover %: share of possessions that end in a turnover. Lower is better.",
+  oreb: "Offensive rebound %: share of your own misses you grab back. Higher is better.",
+  ftr: "Free-throw rate: free-throw attempts per shot attempt, a sign of getting to the line. Higher is better.",
+};
+
 function seasonFactorBar(factor) {
   const score = clampNumber(Number(factor.score || 0), 0, 100);
   const value = Number(factor.value || 0);
   const average = Number(factor.league_average || 0);
-  return `<div class="season-signal-row season-factor-row" title="League average ${average.toFixed(1)}">
+  const meaning = FOUR_FACTOR_MEANINGS[factor.key] ? `${FOUR_FACTOR_MEANINGS[factor.key]} ` : "";
+  const rank = factor.rank && factor.team_count ? ` Rank #${factor.rank} of ${factor.team_count}.` : "";
+  return `<div class="season-signal-row season-factor-row" title="${escapeAttr(`${meaning}League average ${average.toFixed(1)}.${rank}`)}">
     <span>${escapeHtml(factor.label || "Factor")}</span><i><b style="--fill:${clampNumber(value, 0, 100)}%;--bar-color:${performanceBarColor(score)}"></b><u style="left:${clampNumber(average, 0, 100)}%"></u></i><strong>${value.toFixed(1)}</strong>
   </div>`;
 }
@@ -4426,7 +4447,7 @@ function seasonLeagueWire(expanded = false) {
         const columns = subjects.length > 1 ? 2 : 1;
         return `<section class="wire-asset-group" style="--asset-columns:${columns};--asset-rows:${Math.max(1, Math.ceil(subjects.length / columns))}">${groups.length > 1 ? `<div class="wire-asset-team"><strong>${escapeHtml(group.team)}</strong><span>receives</span></div>` : ""}${teamLogoSrc(group.team) ? `<img class="wire-group-logo" src="${escapeAttr(teamLogoSrc(group.team))}" alt="${escapeAttr(group.team)}">` : ""}<div class="wire-subjects">${subjects.map(leagueActivitySubject).join("")}</div></section>`;
       }).join("") : normalized.teams.map(team => `<img class="wire-fallback-logo" src="${escapeAttr(teamLogoSrc(team))}" alt="${escapeAttr(team)}">`).join("");
-      return `<article class="season-wire-post" data-league-event-id="${escapeAttr(event.id || "")}"><header class="wire-post-author"><span class="wire-reporter-avatar">LI</span><div><strong>League Insider</strong><span>@leagueinsider · <time>${escapeHtml(normalized.date)}</time></span></div></header><div class="wire-post-type">${escapeHtml(rowLabel(normalized.kind))}</div><div class="wire-post-media ${groups.length > 1 ? "is-trade" : ""}">${media}</div><h3 class="wire-post-headline">${escapeHtml(event.activity_headline || normalized.text)}</h3>${leagueActivityComment(event)}</article>`;
+      return `<article class="season-wire-post" data-league-event-id="${escapeAttr(event.id || "")}"><header class="wire-post-author"><span class="wire-reporter-avatar">LI</span><div><strong>League Insider</strong><span>@leagueinsider · <time datetime="${escapeAttr(normalized.date)}">${escapeHtml(formatDashboardShortDate(normalized.date) || normalized.date)}</time></span></div></header><div class="wire-post-type">${escapeHtml(rowLabel(normalized.kind))}</div><div class="wire-post-media ${groups.length > 1 ? "is-trade" : ""}">${media}</div><h3 class="wire-post-headline">${escapeHtml(event.activity_headline || normalized.text)}</h3>${leagueActivityComment(event)}</article>`;
     }).join("");
     return `<footer class="season-league-wire season-league-wire-expanded" aria-label="League activity"><div class="season-wire-activity-list">${items || `<div class="season-wire-activity-empty">No league activity to show.</div>`}</div></footer>`;
   }
@@ -4436,7 +4457,7 @@ function seasonLeagueWire(expanded = false) {
       const logo = teamLogoSrc(team);
       return logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(team)}" />` : "";
     }).join("");
-    return `<span class="season-wire-item">${marks}<em>${escapeHtml(normalized.date)}</em><strong>${escapeHtml(normalized.text)}</strong></span>`;
+    return `<span class="season-wire-item">${marks}<em>${escapeHtml(formatDashboardShortDate(normalized.date) || normalized.date)}</em><strong>${escapeHtml(normalized.text)}</strong></span>`;
   }).join("");
   return `<footer class="season-league-wire"><div class="season-wire-window"><div class="season-wire-track">${items || `<span class="season-wire-item"><strong>No recent league events.</strong></span>`}</div></div></footer>`;
 }
@@ -11998,8 +12019,10 @@ function renderModal() {
         ? " modal-champion"
       : ["tradeDeadline","postseason"].includes(state.modal.kind)
         ? " modal-box-score modal-trade-deadline"
+      : state.modal.kind === "standings"
+        ? " modal-standings"
         : "";
-  const closeLabel = ["teamWants", "waivers", "playerFinder", "leagueLeaders", "dashboardSettings", "issueReport"].includes(state.modal.kind) ? state.modal.title : state.modal.kind === "tradeDeadline" ? "Trade Deadline" : state.modal.kind === "tradeRoom"
+  const closeLabel = ["standings", "teamWants", "waivers", "playerFinder", "leagueLeaders", "dashboardSettings", "issueReport"].includes(state.modal.kind) ? state.modal.title : state.modal.kind === "tradeDeadline" ? "Trade Deadline" : state.modal.kind === "tradeRoom"
     ? "Trade Room"
     : state.modal.kind === "dashboardStaff"
       ? "Coach Card"
@@ -12015,7 +12038,7 @@ function renderModal() {
       ? "Box Score"
       : "Trade Offers";
   const isBoxScore = ["boxScore", "playoffBoxScore"].includes(state.modal.kind);
-  const hasClipboardTitlebar = isBoxScore || ["teamWants", "waivers", "playerFinder", "leagueLeaders", "tradeRoom", "tradeDeadline", "postseason", "champion", "staffNegotiation", "dashboardSettings", "issueReport", "tradeOffers", "humanTradeOffers"].includes(state.modal.kind);
+  const hasClipboardTitlebar = isBoxScore || ["standings", "teamWants", "waivers", "playerFinder", "leagueLeaders", "tradeRoom", "tradeDeadline", "postseason", "champion", "staffNegotiation", "dashboardSettings", "issueReport", "tradeOffers", "humanTradeOffers"].includes(state.modal.kind);
   const closeControl = hasClipboardTitlebar
     ? `<button type="button" class="modal-close-icon card-board-control card-board-close" data-close-modal aria-label="Close ${closeLabel}" title="Close"><img src="/assets/window-icons/x.svg" alt="" aria-hidden="true"></button>`
     : ["tradeRoom", "tradeOffers", "humanTradeOffers", "fantasyPlayer", "dashboardPlayer", "dashboardStaff", "draftProspect", "freeAgentPlayer", "freeAgentNegotiation", "freeAgentComparison", "staffNegotiation", "contractExtension"].includes(state.modal.kind)
@@ -12032,7 +12055,7 @@ function renderModal() {
     <div class="modal-shell${modalClass}" role="dialog" aria-modal="true" aria-label="${escapeAttr(state.modal.title || "Detail")}">
       <header class="modal-head${hasClipboardTitlebar ? " card-board-titlebar" : ""}">
         <div>
-          ${hasClipboardTitlebar ? `<span class="card-board-window-mark" aria-hidden="true"></span>` : ""}
+          ${hasClipboardTitlebar ? modalWindowMark(state.modal.kind) : ""}
           ${state.modal.subtitle ? `<p class="eyebrow">${escapeHtml(state.modal.subtitle)}</p>` : ""}
           <h3>${escapeHtml(state.modal.title || "Detail")}</h3>
         </div>
@@ -12752,6 +12775,14 @@ function salaryHorizonChart({seasons=[],rows=[],capByYear={},highlightPlayerId='
   }).join('')}<div class="salary-horizon-legend"><span>Tax</span><span>Hard cap</span></div></div>`;
 }
 
+// Dialog title-bar icon: the dialog's own coloured icon when it has one (window-icons.js "modal:<kind>"),
+// otherwise the plain window mark. Trade dialogs keep the plain mark.
+function modalWindowMark(kind) {
+  const key = `modal:${kind}`;
+  if (window.WindowIcons?.typeFor(key)) return `<span class="card-board-window-mark has-window-icon" aria-hidden="true">${window.WindowIcons.svg(key)}</span>`;
+  return `<span class="card-board-window-mark" aria-hidden="true"></span>`;
+}
+
 function playerHeadshotMarkup(row, className = "player-headshot") {
   if (row.is_prospect) return `<span class="player-headshot-frame prospect-profile-placeholder" aria-label="Blank profile portrait"><svg class="${escapeAttr(className)}" viewBox="0 0 220 160" role="img" aria-label="Blank profile portrait"><rect width="220" height="160" fill="#e4e8eb"/><circle cx="110" cy="57" r="32" fill="#a9b3bc"/><path d="M43 160v-10c0-39 30-61 67-61s67 22 67 61v10" fill="#a9b3bc"/></svg></span>`;
   const source = String(row.headshot_url || "").trim();
@@ -12951,9 +12982,9 @@ function dashboardStandingsTable(rows, user, options = {}) {
             const disclosure = showTrendDisclosure && team === user
               ? `<button type="button" class="standings-trend-disclosure" data-standings-trend-toggle title="Show ${escapeAttr(team)} standings trend" aria-label="Show ${escapeAttr(team)} standings trend" aria-expanded="false">▶</button>`
               : "";
-            return `<tr class="${rank === 7 ? "play-in-cutoff-row" : ""}">
+            return `<tr class="${[rank === 7 ? "play-in-cutoff-row" : "", options.logos && team === user ? "is-user-team" : ""].filter(Boolean).join(" ")}">
               <td class="standings-rank">${rank}.</td>
-              <td class="standings-team"><button data-dashboard-team-jump="${escapeAttr(team)}" class="${team === user ? "user-highlight" : ""}">${escapeHtml(team)}</button></td>
+              <td class="standings-team"><button data-dashboard-team-jump="${escapeAttr(team)}" class="${team === user ? "user-highlight" : ""}">${options.logos && teamLogoSrc(team) ? `<img class="standings-team-logo" src="${escapeAttr(teamLogoSrc(team))}" alt="" aria-hidden="true" />` : ""}${escapeHtml(team)}</button></td>
               <td class="standings-record">${escapeHtml(`${row.wins || 0}-${row.losses || 0}`)}</td>
               <td>${escapeHtml(winPct(row.win_pct))}</td>
               ${showTrendDisclosure ? `<td class="standings-disclosure">${disclosure}</td>` : ""}
@@ -12970,14 +13001,14 @@ function openStandingsModal() {
   const viewed = teamLabel(state.data.dashboard?.team || state.dashboardTeam || userTeam());
   state.modal = {
     kind: "standings",
-    title: "Full Standings",
-    subtitle: state.home?.save?.current_date || "",
+    title: ["Full Standings", formatWrittenDate(state.home?.save?.current_date)].filter(Boolean).join(" · "),
+    subtitle: "",
     body: `<div class="standings-modal-grid">
       ${conferences.map((conference) => {
         const rows = standings.filter((row) => String(row.team?.conference || "") === conference);
         return `<section>
           ${sectionHead(`${conference} Conference`)}
-          ${dashboardStandingsTable(rows, viewed)}
+          ${dashboardStandingsTable(rows, viewed, { logos: true })}
         </section>`;
       }).join("")}
     </div>`,

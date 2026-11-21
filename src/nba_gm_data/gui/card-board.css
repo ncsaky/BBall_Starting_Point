@@ -125,7 +125,7 @@ body .has-card-board .card-board-window[data-board-window="week"] .season-week-d
 .card-board-window.is-active { box-shadow:0 4px 12px #1c304440; }
 .card-board-window.is-dragging { box-shadow:0 8px 18px #1c304455; }
 body .has-card-board .card-board-titlebar,
-body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-trade-offers,.modal-champion) > .card-board-titlebar {
+body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-standings,.modal-trade-offers,.modal-champion) > .card-board-titlebar {
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -142,7 +142,7 @@ body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-trade-offer
 }
 body .has-card-board .card-board-window:not(.is-minimized) > .card-board-titlebar { flex-wrap:nowrap; overflow:hidden; }
 body .has-card-board .is-active > .card-board-titlebar,
-body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-trade-offers,.modal-champion) > .card-board-titlebar { background:#bfd0df !important; border-color:#6b879e; }
+body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-standings,.modal-trade-offers,.modal-champion) > .card-board-titlebar { background:#bfd0df !important; border-color:#6b879e; }
 body .has-card-board .card-board-move {
   display:flex;
   align-items:center;
@@ -167,7 +167,7 @@ body .has-card-board .card-board-move[aria-disabled="true"] { cursor:default; }
 .card-board-window-mark { flex:0 0 9px; height:9px; border:1px solid #6a7d8e; background:var(--season-panel); box-shadow:inset 0 2px #89a6c0; }
 .card-board-window-controls { display:flex; gap:2px; }
 body .has-card-board .card-board-control,
-body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-trade-offers,.modal-champion) .card-board-control {
+body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-standings,.modal-trade-offers,.modal-champion) .card-board-control {
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -183,11 +183,11 @@ body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-trade-offer
   color:var(--season-text);
 }
 body .has-card-board .card-board-control:hover,
-body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-trade-offers,.modal-champion) .card-board-control:hover { background:#dce8f2; border-color:#6c879d; }
+body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-standings,.modal-trade-offers,.modal-champion) .card-board-control:hover { background:#dce8f2; border-color:#6c879d; }
 body .has-card-board .card-board-control:active,
-body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-trade-offers,.modal-champion) .card-board-control:active { box-shadow:none !important; }
+body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-standings,.modal-trade-offers,.modal-champion) .card-board-control:active { box-shadow:none !important; }
 body .has-card-board .card-board-close:hover,
-body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-trade-offers,.modal-champion) .card-board-close:hover { background:#f2d5d8; border-color:#bd4b58; }
+body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-standings,.modal-trade-offers,.modal-champion) .card-board-close:hover { background:#f2d5d8; border-color:#bd4b58; }
 body .has-card-board .card-board-control[aria-pressed="true"] { background:#cbddeb; box-shadow:inset 1px 1px #89949f; }
 .card-board-control img, .card-board-gallery-toggle img { display:block; width:13px; height:13px; object-fit:contain; }
 .card-board-resize-handle {
@@ -3407,13 +3407,13 @@ body.unified-terminal-ui .modal-shell.modal-trade-room button:is(.trade-evaluate
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages .player-summary-rating :is(small,.linked-rating > span) { font:12px Tahoma,Arial,sans-serif !important; color:#263a4b; }
 
 /* Box scores share clipboard titlebar and control rules above. */
-body.unified-terminal-ui :is(.modal-box-score,.modal-settings) > .modal-head {
+body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-standings) > .modal-head {
   flex:0 0 24px;
   overflow:hidden;
 }
-body.unified-terminal-ui :is(.modal-box-score,.modal-settings) .card-board-window-mark { box-shadow:none !important; }
-body.unified-terminal-ui :is(.modal-box-score,.modal-settings) .card-board-control { font:inherit; line-height:inherit; padding:2px !important; }
-body.unified-terminal-ui :is(.modal-box-score,.modal-settings) > .modal-head > div:first-child {
+body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-standings) .card-board-window-mark { box-shadow:none !important; }
+body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-standings) .card-board-control { font:inherit; line-height:inherit; padding:2px !important; }
+body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-standings) > .modal-head > div:first-child {
   align-items:center;
   display:flex;
   flex:1 1 auto;
@@ -3422,7 +3422,7 @@ body.unified-terminal-ui :is(.modal-box-score,.modal-settings) > .modal-head > d
   height:19px;
   min-width:0;
 }
-body.unified-terminal-ui :is(.modal-box-score,.modal-settings) .modal-head h3 {
+body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-standings) .modal-head h3 {
   color:#17212a !important;
   flex:0 1 auto;
   font:600 10px Tahoma,"Trebuchet MS",Arial,sans-serif !important;

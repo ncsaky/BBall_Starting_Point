@@ -154,6 +154,10 @@ def make_gui_server(
 
 
 class GuiThreadingHTTPServer(ThreadingHTTPServer):
+    # The page asks for ~60 files (stylesheets, scripts, logos) at once. The standard-library default
+    # waiting line of 5 connections overflows on a busy Mac, and the browser then gets "connection reset"
+    # and shows the game without some of its styles, scripts or logos.
+    request_queue_size = 128
     multiplayer_scheduler: MultiplayerScheduler
     api_token: str
     allowed_origins: frozenset[tuple[str, str, int]]

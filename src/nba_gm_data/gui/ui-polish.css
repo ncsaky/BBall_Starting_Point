@@ -1,0 +1,83 @@
+/* UI polish pass (2026-11-21). Loaded last. Refines the existing look; nothing here changes a number.
+   Each block names the audit item it fixes (docs/agents/tasks/ui-polish.md). */
+
+/* Fix 4: the playoff bracket scales to fit its window (scale set by ui-polish.js on the window frame). */
+.seasonal-clipboard-card .playoff-command-center .phase-bracket-shell .tournament-bracket {
+  transform: translateX(var(--bracket-shift, 0px)) scale(var(--bracket-fit, 1));
+  transform-origin: top left;
+}
+[style*="--bracket-fit"] .phase-bracket-shell { overflow: hidden !important; }
+
+/* Fix 5: empty bracket slots ("TBD", "9/10 winner", "7/8 loser") read as quiet placeholders that fit their box,
+   and a series nobody is in yet no longer shows a made-up 0. Real teams always carry a logo. */
+body.unified-terminal-ui .seasonal-clipboard-card .playoff-command-center .series-team:not(:has(img)) strong {
+  color: var(--season-muted, #495968);
+  font-size: 12px;
+  font-style: italic;
+  line-height: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: none;
+  white-space: nowrap;
+}
+body.unified-terminal-ui .seasonal-clipboard-card .playoff-command-center .series-team:not(:has(img)) span { visibility: hidden; }
+
+/* Fix 6: dialog title bars carry the same coloured window icon as board windows. */
+body.unified-terminal-ui .modal-head .card-board-window-mark.has-window-icon {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  border: 0;
+  background: transparent;
+  box-shadow: none !important;
+}
+body.unified-terminal-ui .modal-head .card-board-window-mark.has-window-icon .window-icon { display: block; width: 100%; height: 100%; }
+
+/* Fix 7: the one main action on each start-screen panel (Enter Save, Create New Save, Create Lobby) stands out
+   from the secondary buttons, in the blue of the trade window's main buttons. Flat colour: the shared skin turns
+   background gradients off everywhere, so a gradient here would leave white text on a white button. */
+.startup-screen .startup-pane .startup-primary-action:not(:disabled) {
+  background-color: #2f6688;
+  border: 1px solid #214b69;
+  box-shadow: inset 1px 1px #9abbd1, inset -1px -1px #1a4360, 0 2px 3px #1d354653;
+  color: #fff;
+  font-weight: 700;
+  text-shadow: 0 1px #1c4560;
+}
+.startup-screen .startup-pane .startup-primary-action:not(:disabled):hover {
+  background-color: #3b7aa0;
+  border-color: #173f5c;
+  color: #fff;
+}
+.startup-screen .startup-pane .startup-primary-action[aria-busy="true"] { cursor: progress; }
+
+/* Fix 11: Full Standings dialog in the house table style (rule 12): window-style title bar with the date, small
+   bold headers over a double rule, alternating rows, whole-row hover, team logos, your team marked. */
+body.unified-terminal-ui .modal-shell.modal-standings { width: min(860px, calc(100vw - 32px)); }
+body.unified-terminal-ui .modal-standings .standings-modal-grid { gap: 14px; }
+body.unified-terminal-ui .modal-standings .section-head { padding: 6px 2px 4px; }
+body.unified-terminal-ui .modal-standings .section-head h3 { font: 700 12px Tahoma, Arial, sans-serif; }
+body.unified-terminal-ui .modal-standings .dashboard-standings { width: 100%; border-collapse: collapse; background: var(--house-row, #fff); }
+body.unified-terminal-ui .modal-standings .dashboard-standings thead th {
+  border-bottom: 3px double var(--house-head-rule, #89949f);
+  color: var(--house-head-text, #17212a);
+  font: 700 9px Tahoma, Arial, sans-serif;
+  letter-spacing: 0;
+  padding: 5px 6px 4px;
+  text-transform: none;
+  background: var(--house-row, #fff);
+}
+body.unified-terminal-ui .modal-standings .dashboard-standings td { font: 12px Tahoma, Arial, sans-serif; padding: 0 6px; height: 26px; border-bottom: 1px solid var(--house-rule, #cbd2d8); }
+body.unified-terminal-ui .modal-standings .dashboard-standings tbody tr:nth-child(even) { background: var(--house-row-alt, #eef1f3); }
+body.unified-terminal-ui .modal-standings .dashboard-standings tbody tr:hover { background: var(--house-row-hover, #dce8f2); }
+body.unified-terminal-ui .modal-standings .dashboard-standings tbody tr.is-user-team { background: var(--house-row-active, #cfe1f1); box-shadow: inset 3px 0 var(--house-active-mark, #3d82c5); }
+body.unified-terminal-ui .modal-standings .dashboard-standings :is(th, td):is(:nth-child(1), :nth-child(3), :nth-child(4)) { text-align: right; font-variant-numeric: tabular-nums; }
+body.unified-terminal-ui .modal-standings .dashboard-standings :is(th, td):nth-child(2) { text-align: left; }
+body.unified-terminal-ui .modal-standings .dashboard-standings .standings-team button { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
+body.unified-terminal-ui .modal-standings .dashboard-standings .standings-team-logo { width: 18px; height: 18px; object-fit: contain; }
+body.unified-terminal-ui .modal-standings .dashboard-standings .play-in-cutoff-row td { border-top: 1px dashed #b98926; }
+body.unified-terminal-ui .modal-shell.modal-standings { --season-line: var(--ui-line); --season-panel: var(--ui-panel); --season-text: var(--ui-text); border: 0; border-radius: 3px 3px 0 0; background: var(--season-panel); }
+body.unified-terminal-ui .modal-standings > .modal-head.card-board-titlebar { border: 1px solid #6b879e; border-radius: 3px 3px 0 0; }
+body.unified-terminal-ui .modal-standings .modal-head [data-close-modal] { flex: 0 0 19px; width: 19px !important; padding: 2px !important; }
+body.unified-terminal-ui .modal-standings .modal-head [data-close-modal] .shortcut-hint { display: none !important; }
+body.unified-terminal-ui .modal-standings .modal-body { padding: 8px 10px 10px; }

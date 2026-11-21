@@ -349,7 +349,7 @@ const GameInterface = (() => {
     hints.forEach(([selector,keys])=>scope.querySelectorAll(selector).forEach(button=>{
       if (button.querySelector('[data-key-hint]')) return;
       const name=label(button);button.setAttribute('aria-label',name);
-      button.title=button.matches('[data-window-switcher-open]') ? `${name} (${keys}; Option/Alt+Tab forward, Option/Alt+${String.fromCharCode(96)} backward)` : `${name} (${keys})`;
+      button.title=button.matches('[data-window-switcher-open]') ? `${name} (${keys}; Option/Alt+Tab forward, Option/Alt+${String.fromCharCode(96)} backward)` : name.endsWith(`(${keys})`) ? name : `${name} (${keys})`;
       const hint=document.createElement('span');hint.dataset.keyHint=keys;hint.className='shortcut-hint';hint.setAttribute('aria-hidden','true');hint.textContent=keys;
       button.append(hint);
     }));

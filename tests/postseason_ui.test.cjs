@@ -78,7 +78,7 @@ test('postseason phase command matches top-bar styling and hides trade tools', (
 
 test('champion modal uses clipboard window chrome and keeps its button label dark on hover', () => {
   const css = fs.readFileSync(path.join(gui,'card-board.css'),'utf8');
-  assert.match(css,/\.modal-box-score,\.modal-settings,\.modal-trade-offers,\.modal-champion\) > \.card-board-titlebar/);
+  assert.match(css,/\.modal-box-score,\.modal-settings,\.modal-standings,\.modal-trade-offers,\.modal-champion\) > \.card-board-titlebar/);
   assert.match(css,/\.modal-champion > \.modal-head\.card-board-titlebar \{[\s\S]*?height:24px/);
   assert.match(css,/\.modal-champion \.modal-head \.card-board-control \{[\s\S]*?width:19px !important/);
   assert.match(css,/\.modal-champion \.champion-celebration > \.ui-command:hover:not\(:disabled\) \{[\s\S]*?color:#17212a !important/);

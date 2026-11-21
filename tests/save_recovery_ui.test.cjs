@@ -5,7 +5,8 @@ const test = require('node:test');
 const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, '../src/nba_gm_data/gui/app.js'), 'utf8');
-const saveFunctions = source.slice(source.indexOf('async function loadSaves()'), source.indexOf('async function createSave()'));
+const saveFunctions = source.slice(source.indexOf('async function loadSaves()'), source.indexOf('async function createSave()'))
+  + '\n' + source.slice(source.indexOf('function formatWrittenDate('), source.indexOf('function formatDashboardShortDate('));
 
 function element() {
   return {value: '', textContent: '', hidden: false, disabled: false, files: [], classList: {toggle() {}}, focus() {}};
