@@ -33,42 +33,40 @@ OPTION_TYPES = ("player_option", "team_option", "early_termination")
 FIRST_DECIDED_SEASON = "2026-27"   # options for this season and earlier were decided in real life (exercised)
 
 # ----------------------------------------------------------------------------------------------------------------------
-# RULES: every threshold the AI uses for these decisions, in one place (refit with OFFSEASON-DECISIONS-EVIDENCE).
+# RULES: every threshold the AI uses for these decisions, in one place. Fitted by OFFSEASON-DECISIONS-EVIDENCE
+# (main c19849b: docs/agents/tasks/offseason-decisions-evidence.md, data/research/offseason_decisions_2023_2026.json,
+# scripts/research/offseason_decisions_fit.py), each rule checked by predicting one summer from the other three.
 RULES: dict[str, dict[str, float]] = {
-    # A player opts out when what he expects on the market clearly beats his option: the expected first-year salary,
-    # plus the value of guaranteed extra years (more for players 30 and older, who value security), against the
-    # option salary times ``opt_out_ratio``. Injured players (out past opening night) opt in. Real examples: Kyrie
-    # Irving and James Harden declined 2025 options to re-sign for more years; LeBron James opted in at $52.6M when no
-    # team could pay more; Klay Thompson's small option (2027-28, $5.75M) is the kind a veteran keeps.
+    # Player options (2023-26: 45 kept, 45 declined). Opt out when his market price is at least ``opt_out_ratio`` of
+    # the option (the fits chose 0.8-1.1), with a lower bar at 30 and older; 51 of 90 right against 41 for the baseline.
+    # The evidence is weak, so a close call (within ``close_band``) goes to context: full Bird rights with a team
+    # that keeps its regulars tilts him to opt out and re-sign longer (Kyrie Irving 2025: $43M option for 3 years and
+    # $119M); an injury into next season keeps him in (Lonzo Ball 2024).
     "player_option": {
-        "opt_out_ratio": 1.05,
-        "security_per_year_30_plus": 0.06,   # Irving 2025: $43.0M option out for 3 years at about $39.5M
-        "security_per_year_younger": 0.03,
-        "security_years_counted": 4,
-        "full_bird_reunion_bonus": 0.03,   # full Bird rights with a team that keeps its regulars: opt out, re-sign longer
+        "opt_out_ratio": 0.95,
+        "opt_out_ratio_30_plus": 0.85,
+        "close_band": 0.10,
         "regular_minutes": 24.0,
     },
-    # A team keeps a veteran option year when the player is worth about his salary (or more), or when he is a
-    # rotation player on a contender worth most of it.
+    # Veteran team options (2023-26: 63 exercised, 68 declined). Exercise when his market price is at least
+    # ``exercise_value_ratio`` of the option (fits: 1.2-1.5), or when the year is cheap to keep and cut later (a
+    # minimum-level salary); 76 of 131 right against 68.
     "team_option": {
-        "exercise_value_ratio": 0.85,
-        "contender_rotation_minutes": 20.0,
-        "contender_value_ratio": 0.60,
+        "exercise_value_ratio": 1.2,
+        "cheap_salary_minimums": 1.5,     # an option at or below 1.5x his minimum salary is kept (cheap to cut)
     },
-    # Rookie-scale options are cheap and almost always kept (about nine in ten in recent autumns). A team drops one
-    # only for a player worth well under the option who plays little.
+    # Rookie-scale options: the third year is kept almost always (116 of 120); the fourth is declined only for a
+    # player under about ``decline_prior_minutes`` last season with replacement-level value (fits: 700-1,000 minutes).
     "rookie_option": {
-        "decline_value_ratio": 0.50,
-        "decline_minutes": 12.0,
-        "decline_min_age": 21.0,
+        "decline_prior_minutes": 850.0,
+        "replacement_value_minimums": 1.5,   # worth no more than 1.5x his minimum salary: replacement level
     },
-    # Qualifying offers: a team sends one when the player is worth about the offer or more, or when he is a rotation
-    # player and the offer is not a big overpay (the price of keeping the right to keep him).
+    # Qualifying offers, standard contracts (2023-26: 47 of 100 sent). Send one to a player who logged about
+    # ``tender_prior_minutes`` last season (three folds chose 1,000, one 500), and to an injured rotation player
+    # (Indiana and Isaiah Jackson after his Achilles injury); 74 of 100 right against 53. Two-way offers are slice 4.
     "qualifying_offer": {
-        "tender_value_ratio": 0.85,
-        "tender_min_minutes": 12.0,       # fringe players (and not first-round picks) get no offer
-        "tender_rotation_minutes": 18.0,
-        "tender_rotation_overpay": 1.5,
+        "tender_prior_minutes": 1000.0,
+        "injured_rotation_minutes": 18.0,
         "regular_minutes": 24.0,          # a tendered regular is kept like a franchise player (KEEP-STARS budget)
         # The talks: his team offers his market price; he holds out for his price plus his belief in himself
         # (0 to 16%, more for 23 and younger), and gives up ``belief_fade`` of his price as the summer goes
@@ -285,17 +283,11 @@ def decide_player_option(save: dict[str, Any], player: dict[str, Any], row: dict
         return "exercised", f"He is injured into next season, so he keeps his guaranteed {_m(option)}."
     if not market:
         return "exercised", f"He keeps his {_m(option)} option: no clear market for him."
-    from .contract_ai import market_offer_preferred_years
-    years = min(int(rules["security_years_counted"]), market_offer_preferred_years(age, market / 1e6))
-    per_year = rules["security_per_year_30_plus"] if age >= 30 else rules["security_per_year_younger"]
-    bonus = rules["full_bird_reunion_bonus"] if bird_level == "full" and _minutes(player) >= rules["regular_minutes"] else 0.0
-    value = market * (1.0 + per_year * max(0, years - 1) + bonus)
-    if value >= option * rules["opt_out_ratio"]:
-        if market >= option:
-            why = f"he expects about {_m(market)} a year on the market, more than his {_m(option)} option"
-        else:
-            why = (f"he expects about {_m(market)} a year for {years} years on the market, worth more to him than one "
-                   f"year at {_m(option)}")
+    bar = option * (rules["opt_out_ratio_30_plus"] if age >= 30 else rules["opt_out_ratio"])
+    regular_with_bird = bird_level == "full" and _minutes(player) >= rules["regular_minutes"]
+    if market >= bar or (regular_with_bird and market >= bar * (1.0 - rules["close_band"])):
+        why = (f"he expects about {_m(market)} a year on the market against his {_m(option)} option"
+               + (", and a longer deal (his team holds his full Bird rights)" if market < option else ""))
         return "declined", f"He becomes a free agent: {why}."
     return "exercised", f"He keeps his {_m(option)} option: the market would pay him about {_m(market)}."
 
@@ -305,21 +297,39 @@ def decide_team_option_ai(active: dict[str, Any], save: dict[str, Any], player: 
     option = float(row.get("salary") or 0.0)
     value = float(market or 0.0)
     minutes = _minutes(player)
+    del minutes
+    from .cap_ledger import minimum_salary, years_of_service
+    minimum = float(minimum_salary(row["season"], years_of_service(player, row["season"])))
     if kind == "rookie_option":
         rules = RULES["rookie_option"]
-        if (value < option * rules["decline_value_ratio"] and minutes < rules["decline_minutes"]
-                and _age(player) >= rules["decline_min_age"]):
-            return "declined", (f"The team declines his {_m(option)} rookie-scale option: he plays little and is worth "
-                                f"about {_m(value)}.")
+        try:
+            fourth_year = _season_start(row["season"]) - int(player.get("draft_year") or 0) == 3
+        except (TypeError, ValueError):
+            fourth_year = False
+        prior = prior_season_minutes(save, player["id"])
+        if (fourth_year and prior < rules["decline_prior_minutes"]
+                and value <= minimum * rules["replacement_value_minimums"]):
+            return "declined", (f"The team declines his {_m(option)} fourth-year option: {round(prior)} minutes last "
+                                f"season and a replacement-level price (about {_m(value)}).")
         return "exercised", f"The team keeps his {_m(option)} rookie-scale option."
     rules = RULES["team_option"]
-    from .payroll_plan import team_phase
-    contender = team_phase(active, save, str(player.get("team_id"))) == "peak"
     if value >= option * rules["exercise_value_ratio"]:
-        return "exercised", f"The team keeps him at {_m(option)}: he is worth about {_m(value)}."
-    if contender and minutes >= rules["contender_rotation_minutes"] and value >= option * rules["contender_value_ratio"]:
-        return "exercised", f"The contending team keeps its rotation player at {_m(option)}."
+        return "exercised", f"The team keeps him at {_m(option)}: he is worth about {_m(value)}, a bargain."
+    if option <= minimum * rules["cheap_salary_minimums"]:
+        return "exercised", f"The team keeps his cheap {_m(option)} year: it can still cut him later."
     return "declined", f"The team declines his {_m(option)} option: he is worth about {_m(value)}."
+
+
+def prior_season_minutes(save: dict[str, Any], player_id: str) -> float:
+    """Minutes in the last completed regular season: this season's totals in the summer, the archived season in
+    the autumn (the save starts a new season's totals at rollover)."""
+    phase = str((save.get("state") or {}).get("phase") or "")
+    if phase in {"re_signing", "draft", "free_agency", "offseason", "training_camp", "playoffs", "play_in"}:
+        return float(((save.get("player_season_stats") or {}).get(player_id) or {}).get("minutes") or 0.0)
+    history = save.get("season_history") or []
+    if not history:
+        return float(((save.get("player_season_stats") or {}).get(player_id) or {}).get("minutes") or 0.0)
+    return float(((history[-1].get("player_season_stats") or {}).get(player_id) or {}).get("minutes") or 0.0)
 
 
 def decide_veteran_options(canonical: dict[str, Any], save: dict[str, Any], next_season: str) -> list[dict[str, Any]]:
@@ -559,40 +569,21 @@ def qo_record(save: dict[str, Any], season: str, player_id: str) -> dict[str, An
 
 
 def ai_tender_choice(player: dict[str, Any], terms: dict[str, Any], market: float | None,
-                     can_pay_market: bool = True) -> tuple[bool, str]:
-    """An AI team's qualifying-offer choice. It sends one only to a player it means to keep: worth about the offer or
-    a rotation player, a first-round pick or one who plays (fringe second-rounders on minimum deals get none), and one
-    it could legally pay his market price (otherwise the offer would only be a one-year deal he'd take)."""
+                     can_pay_market: bool = True, *, prior_minutes: float | None = None,
+                     injured: bool = False) -> tuple[bool, str]:
+    """An AI team's qualifying-offer choice (the evidence's rule): send one to a player who played about 1,000 minutes
+    last season, or to an injured rotation player."""
+    del can_pay_market, market
     rules = RULES["qualifying_offer"]
     amount = float(terms["amount"])
-    value = float(market or 0.0)
-    minutes = _minutes(player)
-    if terms.get("route") != "rookie_scale" and minutes < rules["tender_min_minutes"]:
-        return False, f"A fringe player: no qualifying offer ({_m(amount)}); he becomes an unrestricted free agent."
-    if not can_pay_market:
-        return False, (f"The team could not pay him his price (about {_m(value)}) over the cap, so no qualifying "
-                       "offer: he becomes an unrestricted free agent.")
-    if value >= amount * rules["tender_value_ratio"]:
-        return True, f"He is worth about {_m(value)}: the {_m(amount)} offer keeps the right to keep him."
-    if minutes >= rules["tender_rotation_minutes"] and amount <= value * rules["tender_rotation_overpay"]:
-        return True, f"A rotation player: the team keeps the right to keep him for {_m(amount)}."
-    return False, f"Not worth the {_m(amount)} offer (about {_m(value)}): he becomes an unrestricted free agent."
-
-
-def can_pay_market_price(active: dict[str, Any], save: dict[str, Any], player: dict[str, Any], team_id: str | None,
-                          season: str, market: float) -> bool:
-    """Whether his team could legally re-sign him at his market price (Bird rights, room or an exception)."""
-    if not team_id or market <= 0:
-        return False
-    from .cap_ledger import quote
-    from .contract_ai import bird_rights
-    contract = next((c for c in active.get("contracts", []) if c.get("player_id") == player.get("id")), None)
-    bird = bird_rights(save, player, team_id, season_label(_season_start(season) - 1), contract)
-    try:
-        return bool(quote(active, save, team_id, player, market, 3, season=season, bird=bird,
-                          include_reservations=False).get("ok"))
-    except (KeyError, ValueError, TypeError):
-        return True
+    minutes = float(prior_minutes if prior_minutes is not None else 0.0)
+    if minutes >= rules["tender_prior_minutes"]:
+        return True, (f"He played {round(minutes)} minutes last season: the {_m(amount)} offer keeps the right to "
+                      "keep him.")
+    if injured and _minutes(player) >= rules["injured_rotation_minutes"]:
+        return True, f"An injured rotation player: the team keeps the right to keep him for {_m(amount)}."
+    return False, (f"{round(minutes)} minutes last season: no qualifying offer ({_m(amount)}); he becomes an "
+                   "unrestricted free agent.")
 
 
 def prepare_qualifying_offers(canonical: dict[str, Any], save: dict[str, Any], active: dict[str, Any],
@@ -626,9 +617,11 @@ def prepare_qualifying_offers(canonical: dict[str, Any], save: dict[str, Any], a
                           reason="Your decision: send the qualifying offer to keep the right to keep him, or let him "
                                  "become an unrestricted free agent.")
         else:
-            tender, reason = ai_tender_choice(player, terms, values.get(player["id"]),
-                                              can_pay_market_price(active, save, player, team_id, next_season,
-                                                                   values.get(player["id"], 0.0)))
+            tender, reason = ai_tender_choice(
+                player, terms, values.get(player["id"]), prior_minutes=prior_season_minutes(save, player["id"]),
+                injured=injured_through_opening(save, player["id"], next_season)
+                or any(s.get("player_id") == player["id"] and s.get("availability_status") == "out"
+                       for s in save.get("health_states", []) or []))
             record.update(status="tendered" if tender else "not_tendered", decided_by="team", reason=reason)
             if tender and values.get(player["id"], 0.0) >= 10_000_000:
                 add_news(save, "free_agency", f"{player.get('name')} receives a qualifying offer and becomes a "

@@ -114,14 +114,19 @@ class Options(unittest.TestCase):
         self.assertEqual(od.option_deadline("team_option", "2027-28"), "2027-06-29")
 
     def test_player_option_rule(self):
+        # The evidence's rule (OFFSEASON-DECISIONS-EVIDENCE): opt out when the market is at least 0.95 of the option
+        # (0.85 at 30 and older); a close call with full Bird rights goes to opting out and re-signing longer.
         save = summer_save()
         young = player("young", draft_year=2020, age=26)
         row = {"season": NEXT, "salary": 10e6}
-        self.assertEqual(od.decide_player_option(save, young, row, 14e6, "non")[0], "declined", "market clearly beats it")
+        self.assertEqual(od.decide_player_option(save, young, row, 9.6e6, "non")[0], "declined")
         self.assertEqual(od.decide_player_option(save, young, row, 9e6, "non")[0], "exercised")
         veteran = player("veteran", draft_year=2014, age=33, minutes=28)
-        # Near the option at 33: four guaranteed years and full Bird rights make opting out worth it (Irving, Harden).
-        self.assertEqual(od.decide_player_option(save, veteran, {"season": NEXT, "salary": 30e6}, 28e6, "full")[0], "declined")
+        self.assertEqual(od.decide_player_option(save, veteran, {"season": NEXT, "salary": 30e6}, 26e6, "non")[0], "declined",
+                         "a lower bar at 30 and older")
+        self.assertEqual(od.decide_player_option(save, veteran, {"season": NEXT, "salary": 43e6}, 35e6, "full")[0], "declined",
+                         "Irving: a regular with full Bird rights, close call")
+        self.assertEqual(od.decide_player_option(save, veteran, {"season": NEXT, "salary": 43e6}, 35e6, "non")[0], "exercised")
         self.assertEqual(od.decide_player_option(save, veteran, {"season": NEXT, "salary": 50e6}, 30e6, "full")[0], "exercised")
         hurt = summer_save(health_states=[{"player_id": "young", "availability_status": "out", "return_date": "2027-12-01"}])
         status, reason = od.decide_player_option(hurt, young, row, 20e6, "non")
@@ -131,14 +136,19 @@ class Options(unittest.TestCase):
     def test_team_option_rules(self):
         save = summer_save()
         p = player("p", draft_year=2018, age=29, minutes=18)
-        with patch("nba_gm_data.payroll_plan.team_phase", return_value="entering"):
-            self.assertEqual(od.decide_team_option_ai({}, save, p, {"salary": 10e6}, "team_option", 9e6)[0], "exercised")
-            self.assertEqual(od.decide_team_option_ai({}, save, p, {"salary": 10e6}, "team_option", 5e6)[0], "declined")
+        self.assertEqual(od.decide_team_option_ai({}, save, p, {"season": NEXT, "salary": 10e6}, "team_option", 12.5e6)[0], "exercised")
+        self.assertEqual(od.decide_team_option_ai({}, save, p, {"season": NEXT, "salary": 10e6}, "team_option", 9e6)[0], "declined",
+                         "below 1.2x the option: declined (some teams then sign a longer deal)")
+        self.assertEqual(od.decide_team_option_ai({}, save, p, {"season": NEXT, "salary": 3e6}, "team_option", 2e6)[0], "exercised",
+                         "a minimum-level year is cheap to keep and cut later")
+        # Rookie options: the third year almost always; the fourth declined for a little-used, replacement-level player.
+        third = player("third", draft_year=2026, pick=4, age=20, minutes=6)
+        self.assertEqual(od.decide_team_option_ai({}, save, third, {"season": "2028-29", "salary": 9e6}, "rookie_option", 2e6)[0], "exercised")
         bust = player("bust", draft_year=2024, pick=4, age=22, minutes=6)
-        self.assertEqual(od.decide_team_option_ai({}, save, bust, {"salary": 9e6}, "rookie_option", 2e6)[0], "declined")
-        prospect = player("prospect", draft_year=2025, pick=4, age=20, minutes=6)
-        self.assertEqual(od.decide_team_option_ai({}, save, prospect, {"salary": 9e6}, "rookie_option", 2e6)[0],
-                         "exercised", "a 20-year-old keeps his option")
+        stats = summer_save(player_season_stats={"bust": {"minutes": 400}})
+        self.assertEqual(od.decide_team_option_ai({}, stats, bust, {"season": NEXT, "salary": 9e6}, "rookie_option", 2e6)[0], "declined")
+        used = summer_save(player_season_stats={"bust": {"minutes": 1400}})
+        self.assertEqual(od.decide_team_option_ai({}, used, bust, {"season": NEXT, "salary": 9e6}, "rookie_option", 2e6)[0], "exercised")
 
 
 class Restricted(unittest.TestCase):
@@ -196,16 +206,13 @@ class Restricted(unittest.TestCase):
         self.assertGreater(od.rfa_reservation(save, young, 10e6, od.RFA_STAGES["june"]), 10e6)
 
     def test_ai_tender_rule(self):
-        p = player("p", draft_year=2023, minutes=8)
-        self.assertTrue(od.ai_tender_choice(p, {"amount": 5e6, "route": "rookie_scale"}, 6e6)[0])
-        self.assertFalse(od.ai_tender_choice(p, {"amount": 8e6, "route": "rookie_scale"}, 3e6)[0])
-        self.assertFalse(od.ai_tender_choice(p, {"amount": 2.8e6, "route": "standard"}, 6e6)[0],
-                         "a fringe second-rounder gets no offer (his team would only be paying him a one-year deal)")
-        self.assertFalse(od.ai_tender_choice(p, {"amount": 5e6, "route": "rookie_scale"}, 6e6, can_pay_market=False)[0],
-                         "no offer to a player the team could not pay his price")
-        rotation = player("r", draft_year=2023, minutes=22)
-        self.assertTrue(od.ai_tender_choice(rotation, {"amount": 8e6}, 6e6)[0], "a rotation player at a modest premium")
-
+        # The evidence's rule: about 1,000 minutes last season, or an injured rotation player (Isaiah Jackson).
+        p = player("p", draft_year=2023, minutes=22)
+        self.assertTrue(od.ai_tender_choice(p, {"amount": 5e6}, 6e6, prior_minutes=1200)[0])
+        self.assertFalse(od.ai_tender_choice(p, {"amount": 5e6}, 6e6, prior_minutes=600)[0])
+        self.assertTrue(od.ai_tender_choice(p, {"amount": 5e6}, 6e6, prior_minutes=200, injured=True)[0])
+        bench = player("b", draft_year=2023, minutes=8)
+        self.assertFalse(od.ai_tender_choice(bench, {"amount": 5e6}, 6e6, prior_minutes=200, injured=True)[0])
 
 if __name__ == "__main__":
     unittest.main()
