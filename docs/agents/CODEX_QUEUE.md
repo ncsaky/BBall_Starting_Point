@@ -6,6 +6,43 @@ Current priority (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE now, ODDS-COA
 
 ---
 
+## Ready now (2026-11-21, midday): DEVELOPMENT-EVIDENCE (fresh chat)
+
+### DEVELOPMENT-EVIDENCE: how real NBA players develop and decline
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task DEVELOPMENT-EVIDENCE (its board row already exists; set it to "in progress (Codex)").
+Read docs/agents/tasks/ten-season-findings.md (the game's development curve and a hidden ceiling on stars) and
+docs/agents/tasks/offseason-decisions-evidence.md (your format: rules fitted on some seasons, tested on held-out ones).
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_development -b codex/development-evidence HEAD
+Symlink .venv and the git-ignored data/research/bbi/ files from the main checkout (Basketball Index's LEBRON and
+progression tables are in data/research/bbi/tools/, e.g. progression_player_seasons.csv.gz). Commit on that branch;
+never push, never commit to main. Research only: nothing under src/, gui/ or tests/.
+
+Goal: the game's player development needs an evidence target. Build, from about 2005-2026 public data (Basketball
+Reference advanced stats, box plus-minus / VORP, minutes; Basketball Index LEBRON where available; draft position), with
+sources recorded:
+1. Development curves: average year-over-year change in an all-in-one impact measure by age, overall and by starting
+   level (e.g. bottom/middle/top of the league at that age), with the spread (10th-90th percentile). Peak age. How
+   steeply players decline after 30, and how that differs for stars.
+2. Star formation: of players at each level at ages 19-23, what share become top-10 / top-25 / top-50 players later,
+   and when. Same by draft slot (1-3, 4-10, 11-30, second round, undrafted).
+3. How many genuine superstar-level players (top-5 impact) exist in a typical season, how long they stay there, and how
+   often a new one appears (the game's league slowly lost its superstars; we need the real replacement rate).
+4. Late bloomers and busts: shares and examples.
+Fit simple rules where the data allow and test them on held-out seasons. Output:
+data/research/development_evidence.json, scripts/research/development_evidence_fit.py,
+docs/agents/tasks/development-evidence.md (plain-language TL;DR first, 5 lines; tables; named examples; gaps).
+Paraphrase sources. Save and commit after each part so a usage limit loses nothing. Set the board row to "review"
+and stop.
+```
+
+---
+
 ## Ready now (2026-11-21, overnight): INJURY-HISTORY-2023-25 (fresh chat; long but light)
 
 ### INJURY-HISTORY-2023-25: complete injury records for 2023-24 and 2024-25, the way 2025-26 was done
