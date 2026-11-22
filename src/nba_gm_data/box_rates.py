@@ -34,7 +34,12 @@ PASS_FAMILIES = tuple(f"F0{i}" for i in range(1, 10))
 
 # log(rate) = constant + sum(coefficient * value); values are 0-100 grades, or logs of tendency probabilities.
 # Out-of-fold correlation with real 2025-26 rates (377 players with 500+ minutes) in the comments.
-TURNOVERS_INPUTS = {"constant": 3.37798, "log T08": 0.78791, "log T07": 0.92858, "S16": -0.00457, "S17": -0.0111}  # r 0.85
+# Turnovers and free throws refitted 2026-11-21 (RATINGS-FT-TOV) on the corrected handle-security and foul-drawing
+# grades (now measured per chance, with a wider league spread): turnovers out-of-fold r 0.915 -> 0.923 (previous
+# coefficients: constant 3.37798, log T08 0.78791, log T07 0.92858, S16 -0.00457, S17 -0.0111); free throws per point
+# r 0.887 -> 0.889 and prediction spread 0.100 -> 0.073 against a real 0.078 (previous: constant -0.78847, log T18
+# 2.35318, S24 0.00939, log T08 -0.56596; on the wider grades they overshot the league level, 23.6 -> 24.7 per 100).
+TURNOVERS_INPUTS = {"constant": 2.89447, "log T08": 0.99906, "log T07": 0.38101, "S16": -0.00068, "S17": -0.0109}  # r 0.92
 ASSISTS_INPUTS = {"constant": 3.05475, "log T01.pass": 0.7642, "log T08": 0.28271, "F.execution": 0.02663,
                   "log T07": 0.5197, "log T01.post": 0.21179}  # r 0.95 (previous fit 0.91)
 STEALS_INPUTS = {"constant": -0.76884, "S43": 0.01181, "S42": 0.00667}  # r 0.92
@@ -42,7 +47,7 @@ STEALS_INPUTS = {"constant": -0.76884, "S43": 0.01181, "S42": 0.00667}  # r 0.92
 # negative sign; the technique grades are built from the same steal record), so gambling shows up as fouls
 # (FOULS_INPUTS), not extra steals. No team-defence penalty either: teams that gamble more defended better in 2025-26
 # (r -0.69 with defensive rating), so the data cannot separate a gambling cost from the skill behind it.
-FTA_PER_POINT_INPUTS = {"constant": -0.78847, "log T18": 2.35318, "S24": 0.00939, "log T08": -0.56596}  # r 0.87
+FTA_PER_POINT_INPUTS = {"constant": -0.70954, "log T18": 2.06953, "S24": 0.00406, "log T08": -0.52594}  # r 0.89
 
 # Points per 36: involvement (T08), shoot-first vs pass-first choices (T01 shoot +, pass -), close-range touch (S10)
 # and contact seeking (T18, free throws). Sets each player's share of the team's points (sim.distribute_player_lines).

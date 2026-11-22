@@ -744,3 +744,12 @@ body.unified-terminal-ui .unified-phase-dashboard:is([data-phase="cutdown"],[dat
 .injury-event-body .injury-risk-body svg.injury-body-figure.mini { height:44px; }
 .injury-negotiation-body { align-items:center; display:flex; gap:6px; }
 .injury-negotiation-body .injury-risk-body b { display:none; }
+
+/* In-game confirm dialog (askConfirm in app.js): above board windows, dialogs and toasts. */
+.ask-confirm-root { position:fixed; inset:0; z-index:17000; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(4,5,6,.55); }
+.ask-confirm { width:min(460px, 100%); max-height:calc(100dvh - 32px); display:flex; flex-direction:column; background:var(--ui-panel, #f4f6f7); color:var(--ui-text, #17212a); border:1px solid #4c535a; border-radius:3px; box-shadow:0 14px 60px #0008; overflow:hidden; }
+.ask-confirm header { padding:8px 12px; border-bottom:1px solid var(--ui-line, #c9d0d6); background:var(--ui-header, #e4e8ec); }
+.ask-confirm h3 { margin:0; font-size:14px; }
+.ask-confirm p { margin:0; padding:12px; font-size:12.5px; line-height:1.45; white-space:pre-wrap; overflow:auto; }
+.ask-confirm footer { display:flex; justify-content:flex-end; gap:8px; padding:8px 12px; border-top:1px solid var(--ui-line, #c9d0d6); }
+.ask-confirm .ask-confirm-ok { background:#2f6fb0; border-color:#22558a; color:#fff; }

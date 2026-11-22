@@ -2,6 +2,12 @@
 
 ## TL;DR
 
+- Batch 2 added 37 players and 148 portraits. The image tool reached the Plus usage limit before player 0062 had any images.
+- Resume with players 0062–0064, then staff women 0013–0022. Staff men start at 0031 if capacity remains.
+- The combined library has 103 people and 370 portraits across both batches.
+
+### Batch 1 recap
+
 - Batch 1 is ready for review. It has 30 staff men, 12 staff women and 24 players, including four extras.
 - Each of the 222 approved portraits has a full-size PNG and a 320 × 320 game JPEG.
 - Finished after player 0024 at a three-person checkpoint. Generation hit no usage limit.
@@ -87,6 +93,58 @@ The manifest passed checks for paths, stage counts and cutover ages. All 222 PNG
 - player-m/0023. Hooded eyes, nose and brows remain distinct across the short undercut and wavy later styles. Eye and brow lines are visible at 35.
 - player-m/0024. Redid the final age for a clearer buzz cut, silver chin hairs and stronger eye lines. The dimple and eye spacing stay recognizable.
 
-## Resume
+### Resume after Batch 1
 
 The last accepted player is `player-m/0024`. The next player ID is `player-m/0025`. The manifest records the exact accepted prompts and cutover ages. Rebuild the contact sheet with `python3 scripts/build_headshot_library_contact_sheet.py`. The portraits and HTML are in the ignored `output/headshots-gen-library/` directory in this worktree.
+
+## Batch 2
+
+- Ready for review with 37 completed people and 148 new portraits.
+- 37 players, 0 staff women and 0 staff men. 6 redone stages. About 66 minutes.
+- Stopped at the Plus usage limit before player 0062. Next ID: player-m/0062.
+
+Order: 40 four-stage player sets, 10 three-stage staff women, then staff men as capacity allows. All subjects and image references are fictional adults. The built-in Codex image tool was used. Each accepted image has a full-size PNG and a 320 × 320 JPEG. The combined contact sheet compares colour and greyscale.
+
+The batch stopped before the tool returned any image for player 0062. Three of the requested players are pending (0062–0064), followed by all ten staff women (0013–0022). Staff men start at 0031 if there is capacity. Twenty-five of the 37 player profiles are Black (68%). Some adjacent ages, especially 31 and 35, remain subtle.
+
+Verification preserved all 66 Batch 1 manifest entries and checked the combined library for 370 unique PNGs and 370 unique 320 × 320 JPEGs. All 1,480 references and links in the contact sheet resolved.
+
+### Visual review
+
+- player-m/0025. Cleft chin and nose stay distinct. The shave, chin grey and eye lines differentiate age 35.
+- player-m/0026. Hooded eyes and wide jaw carry across. Fuller neck and grey goatee mark the last stage.
+- player-m/0027. Redid age 35 with a shorter cut and clearer crow's feet. Freckles and eye shape stay consistent.
+- player-m/0028. Dimple and grin stay recognizable, with a slim moustache, clean crop and later grey goatee.
+- player-m/0029. Redid the late stage for a more distinct cut and beard. Eyes, eyebrows and diamond face stay recognizable.
+- player-m/0030. Unchanged eye shape and uneven brow through four believable hair and facial-hair choices.
+- player-m/0031. Nose, forehead and ears stay recognizable as waves replace ringlets and some grey appears.
+- player-m/0032. Raised brow and nose carry through. Older stage keeps the twists and shows grey in the beard and fuller neckline.
+- player-m/0033. Eye spacing and chin stay stable. Late forehead and eye creases are distinct at 320 pixels.
+- player-m/0034. Nose bridge and ears remain distinct. The late portrait uses a plain collared shirt and shaved hair.
+- player-m/0035. Cheekbones and downturned eyes carry through. Wave cut and goatee mark the last stage.
+- player-m/0036. Long face and chin stay consistent. The hair crops closer with age and the final forehead lines are clear.
+- player-m/0037. Freckles, flared brows and low chin carry through. Mature stage adds eye folds and lighter stubble.
+- player-m/0038. Tooth gap and smile persist across the four stages. Greyer stubble, a close buzz and fine lines show age 35.
+- player-m/0039. Dimple, nose and smile stay recognizable. Age 35 shaves the beard and adds eye and mouth lines.
+- player-m/0040. Redid age 31 with a defined goatee and quieter expression. Freckles, eyes and dimples remain recognizable.
+- player-m/0041. Squared nose and brow hold steady through more developed jaw and beard. Eyes look just off camera in this set.
+- player-m/0042. The high uneven smile, eyes and nose remain distinct. Later shave and hairline recession change the look.
+- player-m/0043. Deep-set blue-grey eyes and straight nose stay recognizable through a fuller beard and softer expression.
+- player-m/0044. Redid age 26 for a clear shorter haircut and mature jaw. Dimple and amber eyes remain recognizable.
+- player-m/0045. The rookie wears a plain sleeveless training top. Nose and eye spacing stay consistent as neck, facial hair and brow lines mature.
+- player-m/0046. Nose and right ear stay distinct. The grey-flecked chin strip and cropped scalp change the late silhouette.
+- player-m/0047. Low eyelid and full lip remain distinct. Closely cut later hair, trimmed beard and eye contours show the age change.
+- player-m/0048. The low nose and unequal ears stay recognizable as neck and jaw fill out and the crop gets shorter.
+- player-m/0049. Asymmetric brow and pointed nose carry through the braid and close cut. Subtle greying in stubble.
+- player-m/0050. Strong brows and broad nose hold through developing neck and beard. The last portrait keeps the waves and shows grey and fuller cheeks.
+- player-m/0051. Redid the late portrait to strengthen the eye lines and add subtle silver. Smile and eye spacing hold through shaved and cropped hair.
+- player-m/0052. Redid age 35 for clearer eye lines and a shorter fade. Smile, nose and hazel eyes remain recognizable.
+- player-m/0053. Dimple and wide nose stay distinct through stronger beard, fuller neckline and lighter facial hair.
+- player-m/0054. Pointed nose and freckles are steady. Final buzz and fine eye and brow lines mark the change.
+- player-m/0055. Arched brow and pointed chin remain recognizable through braids, brushed waves and later short curls.
+- player-m/0056. Nose and brow stay consistent. Age 35 has a buzz cut, silver chin and fine eye lines.
+- player-m/0057. Hazel eyes and crooked nose stay distinct. Older moustache, forehead lines and slightly fuller cheeks show the progression.
+- player-m/0058. Rounded nose bridge and smile stay consistent. Close-cropped hair and grey goatee mark the last stage.
+- player-m/0059. Cleft chin and eyelids are consistent. A high hairline, softer lower face and close grey stubble distinguish 35.
+- player-m/0060. Brow gap, smile and cheek shape stay consistent. Late goatee and fine eye lines show a visible change.
+- player-m/0061. Nose bridge, chin and eye spacing carry through. The late portrait keeps short stubble and has clearer eye and forehead lines.

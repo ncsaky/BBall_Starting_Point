@@ -49,7 +49,8 @@ function harness(saves = []) {
     setBusy(value) {context.state.busy = value;},
     escapeHtml: value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;'),
     escapeAttr: value => String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;'),
-    window: {confirm: () => true},
+    window: {},
+    askConfirm: async () => true,
     atob, Blob, Uint8Array,
     URL: {createObjectURL: blob => {context.downloadBlob = blob; return 'blob:backup';}, revokeObjectURL() {}},
     document: {body: {append() {}}, createElement: () => ({click() {downloads.push({href: this.href, filename: this.download});}, remove() {}})},
@@ -148,10 +149,10 @@ test('oversized upload is rejected before reading or calling restore', async () 
 test('recovery cancellation does not mutate; confirmation restores the selected unreadable save', async () => {
   const {context, elements, calls} = harness([{path: '/temporary/broken.json', name: 'Broken', status: 'unreadable', recovery_available: true}]);
   await context.loadSaves();
-  context.window.confirm = () => false;
+  context.askConfirm = async () => false;
   await context.recoverStartupSave();
   assert.equal(calls.filter(call => call.name === 'recover_save').length, 0);
-  context.window.confirm = () => true;
+  context.askConfirm = async () => true;
   await context.recoverStartupSave();
   assert.equal(calls.find(call => call.name === 'recover_save').payload.save_path, '/temporary/broken.json');
   assert.equal(elements.startupLoadSave.disabled, false);

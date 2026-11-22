@@ -191,6 +191,10 @@ def main() -> None:
         from nba_gm_data.bbi_evidence import apply_overlay, apply_measured_tendencies
         bbi_summary=apply_overlay(section,root)
         bbi_summary.update(apply_measured_tendencies(section,root))
+        # Foul drawing and handle security per chance: free throws and turnovers against what an average player
+        # earns or commits from the same drives, shots, passes and touches (RATINGS-FT-TOV, 2026-11-21).
+        from nba_gm_data.foul_security_evidence import apply_foul_security_evidence
+        bbi_summary.update(apply_foul_security_evidence(section,root,universe))
         # College usage for the 2026 rookies' involvement, on the measured scale (veterans and the map untouched).
         bbi_summary['rookie_college_involvement']=apply_rookie_involvement(section,college)
     # Measured dunk rates (public Basketball-Reference shooting data) for dunk execution, net of body size.

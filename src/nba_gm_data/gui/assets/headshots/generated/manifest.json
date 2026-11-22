@@ -1,0 +1,2497 @@
+{
+ "library": "generated",
+ "ext": "avif",
+ "built_by": "scripts/build_generated_faces.py",
+ "built": "2026-11-21",
+ "source_manifest": "data/research/headshot_gen_library_manifest.json",
+ "about": "AI-generated portraits of fictional people (no real person is depicted), made with OpenAI's image tool (HEADSHOT-GEN-LIBRARY). Each face is one fictional person with images at several ages; the game shows the last stage whose min_age is at or below the person's age (faces.py).",
+ "made_with": "OpenAI image generation (Codex built-in image tool)",
+ "fictional": true,
+ "groups": {
+  "gen-player-m": {
+   "gender": "male",
+   "count": 61,
+   "use": "Made-up draft prospects and the players they become"
+  },
+  "gen-staff-f": {
+   "gender": "female",
+   "count": 12,
+   "use": "Made-up coaches and staff (women)"
+  },
+  "gen-staff-m": {
+   "gender": "male",
+   "count": 30,
+   "use": "Made-up coaches and staff (men)"
+  }
+ },
+ "faces": {
+  "gen-player-m/0001": {
+   "gender": "male",
+   "source_id": "player-m/0001",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0001-s1.avif"
+    },
+    {
+     "min_age": 24,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0001-s2.avif"
+    },
+    {
+     "min_age": 29,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0001-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0001-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0002": {
+   "gender": "male",
+   "source_id": "player-m/0002",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0002-s1.avif"
+    },
+    {
+     "min_age": 25,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0002-s2.avif"
+    },
+    {
+     "min_age": 30,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0002-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0002-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0003": {
+   "gender": "male",
+   "source_id": "player-m/0003",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0003-s1.avif"
+    },
+    {
+     "min_age": 23,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0003-s2.avif"
+    },
+    {
+     "min_age": 28,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0003-s3.avif"
+    },
+    {
+     "min_age": 32,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0003-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0004": {
+   "gender": "male",
+   "source_id": "player-m/0004",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0004-s1.avif"
+    },
+    {
+     "min_age": 26,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0004-s2.avif"
+    },
+    {
+     "min_age": 31,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0004-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0004-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0005": {
+   "gender": "male",
+   "source_id": "player-m/0005",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0005-s1.avif"
+    },
+    {
+     "min_age": 24,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0005-s2.avif"
+    },
+    {
+     "min_age": 30,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0005-s3.avif"
+    },
+    {
+     "min_age": 32,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0005-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0006": {
+   "gender": "male",
+   "source_id": "player-m/0006",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0006-s1.avif"
+    },
+    {
+     "min_age": 25,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0006-s2.avif"
+    },
+    {
+     "min_age": 29,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0006-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0006-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0007": {
+   "gender": "male",
+   "source_id": "player-m/0007",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0007-s1.avif"
+    },
+    {
+     "min_age": 23,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0007-s2.avif"
+    },
+    {
+     "min_age": 30,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0007-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0007-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0008": {
+   "gender": "male",
+   "source_id": "player-m/0008",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0008-s1.avif"
+    },
+    {
+     "min_age": 26,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0008-s2.avif"
+    },
+    {
+     "min_age": 28,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0008-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0008-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0009": {
+   "gender": "male",
+   "source_id": "player-m/0009",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0009-s1.avif"
+    },
+    {
+     "min_age": 24,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0009-s2.avif"
+    },
+    {
+     "min_age": 31,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0009-s3.avif"
+    },
+    {
+     "min_age": 32,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0009-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0010": {
+   "gender": "male",
+   "source_id": "player-m/0010",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0010-s1.avif"
+    },
+    {
+     "min_age": 25,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0010-s2.avif"
+    },
+    {
+     "min_age": 29,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0010-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0010-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0011": {
+   "gender": "male",
+   "source_id": "player-m/0011",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0011-s1.avif"
+    },
+    {
+     "min_age": 26,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0011-s2.avif"
+    },
+    {
+     "min_age": 30,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0011-s3.avif"
+    },
+    {
+     "min_age": 32,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0011-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0012": {
+   "gender": "male",
+   "source_id": "player-m/0012",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0012-s1.avif"
+    },
+    {
+     "min_age": 23,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0012-s2.avif"
+    },
+    {
+     "min_age": 28,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0012-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0012-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0013": {
+   "gender": "male",
+   "source_id": "player-m/0013",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0013-s1.avif"
+    },
+    {
+     "min_age": 25,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0013-s2.avif"
+    },
+    {
+     "min_age": 31,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0013-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0013-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0014": {
+   "gender": "male",
+   "source_id": "player-m/0014",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0014-s1.avif"
+    },
+    {
+     "min_age": 24,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0014-s2.avif"
+    },
+    {
+     "min_age": 29,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0014-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0014-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0015": {
+   "gender": "male",
+   "source_id": "player-m/0015",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0015-s1.avif"
+    },
+    {
+     "min_age": 26,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0015-s2.avif"
+    },
+    {
+     "min_age": 28,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0015-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0015-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0016": {
+   "gender": "male",
+   "source_id": "player-m/0016",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0016-s1.avif"
+    },
+    {
+     "min_age": 23,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0016-s2.avif"
+    },
+    {
+     "min_age": 30,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0016-s3.avif"
+    },
+    {
+     "min_age": 32,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0016-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0017": {
+   "gender": "male",
+   "source_id": "player-m/0017",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0017-s1.avif"
+    },
+    {
+     "min_age": 25,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0017-s2.avif"
+    },
+    {
+     "min_age": 28,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0017-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0017-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0018": {
+   "gender": "male",
+   "source_id": "player-m/0018",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0018-s1.avif"
+    },
+    {
+     "min_age": 26,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0018-s2.avif"
+    },
+    {
+     "min_age": 31,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0018-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0018-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0019": {
+   "gender": "male",
+   "source_id": "player-m/0019",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0019-s1.avif"
+    },
+    {
+     "min_age": 24,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0019-s2.avif"
+    },
+    {
+     "min_age": 29,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0019-s3.avif"
+    },
+    {
+     "min_age": 32,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0019-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0020": {
+   "gender": "male",
+   "source_id": "player-m/0020",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0020-s1.avif"
+    },
+    {
+     "min_age": 25,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0020-s2.avif"
+    },
+    {
+     "min_age": 30,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0020-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0020-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0021": {
+   "gender": "male",
+   "source_id": "player-m/0021",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0021-s1.avif"
+    },
+    {
+     "min_age": 23,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0021-s2.avif"
+    },
+    {
+     "min_age": 31,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0021-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0021-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0022": {
+   "gender": "male",
+   "source_id": "player-m/0022",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0022-s1.avif"
+    },
+    {
+     "min_age": 25,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0022-s2.avif"
+    },
+    {
+     "min_age": 28,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0022-s3.avif"
+    },
+    {
+     "min_age": 32,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0022-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0023": {
+   "gender": "male",
+   "source_id": "player-m/0023",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0023-s1.avif"
+    },
+    {
+     "min_age": 24,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0023-s2.avif"
+    },
+    {
+     "min_age": 30,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0023-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0023-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0024": {
+   "gender": "male",
+   "source_id": "player-m/0024",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0024-s1.avif"
+    },
+    {
+     "min_age": 26,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0024-s2.avif"
+    },
+    {
+     "min_age": 29,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0024-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0024-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0025": {
+   "gender": "male",
+   "source_id": "player-m/0025",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0025-s1.avif"
+    },
+    {
+     "min_age": 24,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0025-s2.avif"
+    },
+    {
+     "min_age": 29,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0025-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0025-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0026": {
+   "gender": "male",
+   "source_id": "player-m/0026",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0026-s1.avif"
+    },
+    {
+     "min_age": 26,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0026-s2.avif"
+    },
+    {
+     "min_age": 30,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0026-s3.avif"
+    },
+    {
+     "min_age": 32,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0026-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0027": {
+   "gender": "male",
+   "source_id": "player-m/0027",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0027-s1.avif"
+    },
+    {
+     "min_age": 23,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0027-s2.avif"
+    },
+    {
+     "min_age": 28,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0027-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0027-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0028": {
+   "gender": "male",
+   "source_id": "player-m/0028",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0028-s1.avif"
+    },
+    {
+     "min_age": 25,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0028-s2.avif"
+    },
+    {
+     "min_age": 31,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0028-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0028-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0029": {
+   "gender": "male",
+   "source_id": "player-m/0029",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0029-s1.avif"
+    },
+    {
+     "min_age": 24,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0029-s2.avif"
+    },
+    {
+     "min_age": 30,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0029-s3.avif"
+    },
+    {
+     "min_age": 32,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0029-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0030": {
+   "gender": "male",
+   "source_id": "player-m/0030",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0030-s1.avif"
+    },
+    {
+     "min_age": 25,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0030-s2.avif"
+    },
+    {
+     "min_age": 29,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0030-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0030-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0031": {
+   "gender": "male",
+   "source_id": "player-m/0031",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0031-s1.avif"
+    },
+    {
+     "min_age": 26,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0031-s2.avif"
+    },
+    {
+     "min_age": 28,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0031-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0031-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0032": {
+   "gender": "male",
+   "source_id": "player-m/0032",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0032-s1.avif"
+    },
+    {
+     "min_age": 23,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0032-s2.avif"
+    },
+    {
+     "min_age": 31,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0032-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0032-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0033": {
+   "gender": "male",
+   "source_id": "player-m/0033",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0033-s1.avif"
+    },
+    {
+     "min_age": 25,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0033-s2.avif"
+    },
+    {
+     "min_age": 29,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0033-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0033-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0034": {
+   "gender": "male",
+   "source_id": "player-m/0034",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0034-s1.avif"
+    },
+    {
+     "min_age": 23,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0034-s2.avif"
+    },
+    {
+     "min_age": 30,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0034-s3.avif"
+    },
+    {
+     "min_age": 32,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0034-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0035": {
+   "gender": "male",
+   "source_id": "player-m/0035",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0035-s1.avif"
+    },
+    {
+     "min_age": 26,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0035-s2.avif"
+    },
+    {
+     "min_age": 29,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0035-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0035-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0036": {
+   "gender": "male",
+   "source_id": "player-m/0036",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0036-s1.avif"
+    },
+    {
+     "min_age": 24,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0036-s2.avif"
+    },
+    {
+     "min_age": 31,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0036-s3.avif"
+    },
+    {
+     "min_age": 32,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0036-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0037": {
+   "gender": "male",
+   "source_id": "player-m/0037",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0037-s1.avif"
+    },
+    {
+     "min_age": 25,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0037-s2.avif"
+    },
+    {
+     "min_age": 28,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0037-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0037-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0038": {
+   "gender": "male",
+   "source_id": "player-m/0038",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0038-s1.avif"
+    },
+    {
+     "min_age": 23,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0038-s2.avif"
+    },
+    {
+     "min_age": 31,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0038-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0038-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0039": {
+   "gender": "male",
+   "source_id": "player-m/0039",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0039-s1.avif"
+    },
+    {
+     "min_age": 24,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0039-s2.avif"
+    },
+    {
+     "min_age": 29,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0039-s3.avif"
+    },
+    {
+     "min_age": 32,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0039-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0040": {
+   "gender": "male",
+   "source_id": "player-m/0040",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0040-s1.avif"
+    },
+    {
+     "min_age": 26,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0040-s2.avif"
+    },
+    {
+     "min_age": 30,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0040-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0040-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0041": {
+   "gender": "male",
+   "source_id": "player-m/0041",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0041-s1.avif"
+    },
+    {
+     "min_age": 23,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0041-s2.avif"
+    },
+    {
+     "min_age": 28,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0041-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0041-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0042": {
+   "gender": "male",
+   "source_id": "player-m/0042",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0042-s1.avif"
+    },
+    {
+     "min_age": 26,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0042-s2.avif"
+    },
+    {
+     "min_age": 31,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0042-s3.avif"
+    },
+    {
+     "min_age": 32,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0042-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0043": {
+   "gender": "male",
+   "source_id": "player-m/0043",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0043-s1.avif"
+    },
+    {
+     "min_age": 24,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0043-s2.avif"
+    },
+    {
+     "min_age": 30,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0043-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0043-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0044": {
+   "gender": "male",
+   "source_id": "player-m/0044",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0044-s1.avif"
+    },
+    {
+     "min_age": 25,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0044-s2.avif"
+    },
+    {
+     "min_age": 29,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0044-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0044-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0045": {
+   "gender": "male",
+   "source_id": "player-m/0045",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0045-s1.avif"
+    },
+    {
+     "min_age": 24,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0045-s2.avif"
+    },
+    {
+     "min_age": 31,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0045-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0045-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0046": {
+   "gender": "male",
+   "source_id": "player-m/0046",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0046-s1.avif"
+    },
+    {
+     "min_age": 26,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0046-s2.avif"
+    },
+    {
+     "min_age": 30,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0046-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0046-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0047": {
+   "gender": "male",
+   "source_id": "player-m/0047",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0047-s1.avif"
+    },
+    {
+     "min_age": 23,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0047-s2.avif"
+    },
+    {
+     "min_age": 28,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0047-s3.avif"
+    },
+    {
+     "min_age": 32,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0047-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0048": {
+   "gender": "male",
+   "source_id": "player-m/0048",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0048-s1.avif"
+    },
+    {
+     "min_age": 24,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0048-s2.avif"
+    },
+    {
+     "min_age": 29,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0048-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0048-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0049": {
+   "gender": "male",
+   "source_id": "player-m/0049",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0049-s1.avif"
+    },
+    {
+     "min_age": 25,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0049-s2.avif"
+    },
+    {
+     "min_age": 30,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0049-s3.avif"
+    },
+    {
+     "min_age": 32,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0049-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0050": {
+   "gender": "male",
+   "source_id": "player-m/0050",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0050-s1.avif"
+    },
+    {
+     "min_age": 26,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0050-s2.avif"
+    },
+    {
+     "min_age": 31,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0050-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0050-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0051": {
+   "gender": "male",
+   "source_id": "player-m/0051",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0051-s1.avif"
+    },
+    {
+     "min_age": 23,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0051-s2.avif"
+    },
+    {
+     "min_age": 28,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0051-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0051-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0052": {
+   "gender": "male",
+   "source_id": "player-m/0052",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0052-s1.avif"
+    },
+    {
+     "min_age": 23,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0052-s2.avif"
+    },
+    {
+     "min_age": 29,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0052-s3.avif"
+    },
+    {
+     "min_age": 32,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0052-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0053": {
+   "gender": "male",
+   "source_id": "player-m/0053",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0053-s1.avif"
+    },
+    {
+     "min_age": 25,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0053-s2.avif"
+    },
+    {
+     "min_age": 30,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0053-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0053-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0054": {
+   "gender": "male",
+   "source_id": "player-m/0054",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0054-s1.avif"
+    },
+    {
+     "min_age": 26,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0054-s2.avif"
+    },
+    {
+     "min_age": 31,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0054-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0054-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0055": {
+   "gender": "male",
+   "source_id": "player-m/0055",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0055-s1.avif"
+    },
+    {
+     "min_age": 24,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0055-s2.avif"
+    },
+    {
+     "min_age": 28,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0055-s3.avif"
+    },
+    {
+     "min_age": 32,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0055-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0056": {
+   "gender": "male",
+   "source_id": "player-m/0056",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0056-s1.avif"
+    },
+    {
+     "min_age": 25,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0056-s2.avif"
+    },
+    {
+     "min_age": 29,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0056-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0056-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0057": {
+   "gender": "male",
+   "source_id": "player-m/0057",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0057-s1.avif"
+    },
+    {
+     "min_age": 23,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0057-s2.avif"
+    },
+    {
+     "min_age": 30,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0057-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0057-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0058": {
+   "gender": "male",
+   "source_id": "player-m/0058",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0058-s1.avif"
+    },
+    {
+     "min_age": 24,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0058-s2.avif"
+    },
+    {
+     "min_age": 31,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0058-s3.avif"
+    },
+    {
+     "min_age": 32,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0058-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0059": {
+   "gender": "male",
+   "source_id": "player-m/0059",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0059-s1.avif"
+    },
+    {
+     "min_age": 26,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0059-s2.avif"
+    },
+    {
+     "min_age": 28,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0059-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0059-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0060": {
+   "gender": "male",
+   "source_id": "player-m/0060",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0060-s1.avif"
+    },
+    {
+     "min_age": 23,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0060-s2.avif"
+    },
+    {
+     "min_age": 29,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0060-s3.avif"
+    },
+    {
+     "min_age": 34,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0060-s4.avif"
+    }
+   ]
+  },
+  "gen-player-m/0061": {
+   "gender": "male",
+   "source_id": "player-m/0061",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 20,
+     "file": "/assets/headshots/generated/player-m/0061-s1.avif"
+    },
+    {
+     "min_age": 24,
+     "age": 26,
+     "file": "/assets/headshots/generated/player-m/0061-s2.avif"
+    },
+    {
+     "min_age": 30,
+     "age": 31,
+     "file": "/assets/headshots/generated/player-m/0061-s3.avif"
+    },
+    {
+     "min_age": 33,
+     "age": 35,
+     "file": "/assets/headshots/generated/player-m/0061-s4.avif"
+    }
+   ]
+  },
+  "gen-staff-f/0001": {
+   "gender": "female",
+   "source_id": "staff-f/0001",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-f/0001-s1.avif"
+    },
+    {
+     "min_age": 46,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-f/0001-s2.avif"
+    },
+    {
+     "min_age": 58,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-f/0001-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-f/0002": {
+   "gender": "female",
+   "source_id": "staff-f/0002",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-f/0002-s1.avif"
+    },
+    {
+     "min_age": 50,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-f/0002-s2.avif"
+    },
+    {
+     "min_age": 59,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-f/0002-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-f/0003": {
+   "gender": "female",
+   "source_id": "staff-f/0003",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-f/0003-s1.avif"
+    },
+    {
+     "min_age": 49,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-f/0003-s2.avif"
+    },
+    {
+     "min_age": 56,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-f/0003-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-f/0004": {
+   "gender": "female",
+   "source_id": "staff-f/0004",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-f/0004-s1.avif"
+    },
+    {
+     "min_age": 47,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-f/0004-s2.avif"
+    },
+    {
+     "min_age": 61,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-f/0004-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-f/0005": {
+   "gender": "female",
+   "source_id": "staff-f/0005",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-f/0005-s1.avif"
+    },
+    {
+     "min_age": 45,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-f/0005-s2.avif"
+    },
+    {
+     "min_age": 57,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-f/0005-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-f/0006": {
+   "gender": "female",
+   "source_id": "staff-f/0006",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-f/0006-s1.avif"
+    },
+    {
+     "min_age": 48,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-f/0006-s2.avif"
+    },
+    {
+     "min_age": 60,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-f/0006-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-f/0007": {
+   "gender": "female",
+   "source_id": "staff-f/0007",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-f/0007-s1.avif"
+    },
+    {
+     "min_age": 50,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-f/0007-s2.avif"
+    },
+    {
+     "min_age": 58,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-f/0007-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-f/0008": {
+   "gender": "female",
+   "source_id": "staff-f/0008",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-f/0008-s1.avif"
+    },
+    {
+     "min_age": 46,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-f/0008-s2.avif"
+    },
+    {
+     "min_age": 60,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-f/0008-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-f/0009": {
+   "gender": "female",
+   "source_id": "staff-f/0009",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-f/0009-s1.avif"
+    },
+    {
+     "min_age": 48,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-f/0009-s2.avif"
+    },
+    {
+     "min_age": 57,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-f/0009-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-f/0010": {
+   "gender": "female",
+   "source_id": "staff-f/0010",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-f/0010-s1.avif"
+    },
+    {
+     "min_age": 49,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-f/0010-s2.avif"
+    },
+    {
+     "min_age": 59,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-f/0010-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-f/0011": {
+   "gender": "female",
+   "source_id": "staff-f/0011",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-f/0011-s1.avif"
+    },
+    {
+     "min_age": 47,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-f/0011-s2.avif"
+    },
+    {
+     "min_age": 56,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-f/0011-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-f/0012": {
+   "gender": "female",
+   "source_id": "staff-f/0012",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-f/0012-s1.avif"
+    },
+    {
+     "min_age": 46,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-f/0012-s2.avif"
+    },
+    {
+     "min_age": 61,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-f/0012-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0001": {
+   "gender": "male",
+   "source_id": "staff-m/0001",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0001-s1.avif"
+    },
+    {
+     "min_age": 46,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0001-s2.avif"
+    },
+    {
+     "min_age": 58,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0001-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0002": {
+   "gender": "male",
+   "source_id": "staff-m/0002",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0002-s1.avif"
+    },
+    {
+     "min_age": 49,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0002-s2.avif"
+    },
+    {
+     "min_age": 56,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0002-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0003": {
+   "gender": "male",
+   "source_id": "staff-m/0003",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0003-s1.avif"
+    },
+    {
+     "min_age": 45,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0003-s2.avif"
+    },
+    {
+     "min_age": 61,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0003-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0004": {
+   "gender": "male",
+   "source_id": "staff-m/0004",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0004-s1.avif"
+    },
+    {
+     "min_age": 50,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0004-s2.avif"
+    },
+    {
+     "min_age": 60,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0004-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0005": {
+   "gender": "male",
+   "source_id": "staff-m/0005",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0005-s1.avif"
+    },
+    {
+     "min_age": 47,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0005-s2.avif"
+    },
+    {
+     "min_age": 59,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0005-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0006": {
+   "gender": "male",
+   "source_id": "staff-m/0006",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0006-s1.avif"
+    },
+    {
+     "min_age": 48,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0006-s2.avif"
+    },
+    {
+     "min_age": 57,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0006-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0007": {
+   "gender": "male",
+   "source_id": "staff-m/0007",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0007-s1.avif"
+    },
+    {
+     "min_age": 46,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0007-s2.avif"
+    },
+    {
+     "min_age": 57,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0007-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0008": {
+   "gender": "male",
+   "source_id": "staff-m/0008",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0008-s1.avif"
+    },
+    {
+     "min_age": 48,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0008-s2.avif"
+    },
+    {
+     "min_age": 61,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0008-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0009": {
+   "gender": "male",
+   "source_id": "staff-m/0009",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0009-s1.avif"
+    },
+    {
+     "min_age": 49,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0009-s2.avif"
+    },
+    {
+     "min_age": 58,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0009-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0010": {
+   "gender": "male",
+   "source_id": "staff-m/0010",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0010-s1.avif"
+    },
+    {
+     "min_age": 45,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0010-s2.avif"
+    },
+    {
+     "min_age": 56,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0010-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0011": {
+   "gender": "male",
+   "source_id": "staff-m/0011",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0011-s1.avif"
+    },
+    {
+     "min_age": 48,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0011-s2.avif"
+    },
+    {
+     "min_age": 60,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0011-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0012": {
+   "gender": "male",
+   "source_id": "staff-m/0012",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0012-s1.avif"
+    },
+    {
+     "min_age": 50,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0012-s2.avif"
+    },
+    {
+     "min_age": 57,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0012-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0013": {
+   "gender": "male",
+   "source_id": "staff-m/0013",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0013-s1.avif"
+    },
+    {
+     "min_age": 46,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0013-s2.avif"
+    },
+    {
+     "min_age": 61,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0013-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0014": {
+   "gender": "male",
+   "source_id": "staff-m/0014",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0014-s1.avif"
+    },
+    {
+     "min_age": 50,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0014-s2.avif"
+    },
+    {
+     "min_age": 58,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0014-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0015": {
+   "gender": "male",
+   "source_id": "staff-m/0015",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0015-s1.avif"
+    },
+    {
+     "min_age": 47,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0015-s2.avif"
+    },
+    {
+     "min_age": 56,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0015-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0016": {
+   "gender": "male",
+   "source_id": "staff-m/0016",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0016-s1.avif"
+    },
+    {
+     "min_age": 49,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0016-s2.avif"
+    },
+    {
+     "min_age": 59,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0016-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0017": {
+   "gender": "male",
+   "source_id": "staff-m/0017",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0017-s1.avif"
+    },
+    {
+     "min_age": 45,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0017-s2.avif"
+    },
+    {
+     "min_age": 60,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0017-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0018": {
+   "gender": "male",
+   "source_id": "staff-m/0018",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0018-s1.avif"
+    },
+    {
+     "min_age": 46,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0018-s2.avif"
+    },
+    {
+     "min_age": 61,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0018-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0019": {
+   "gender": "male",
+   "source_id": "staff-m/0019",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0019-s1.avif"
+    },
+    {
+     "min_age": 48,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0019-s2.avif"
+    },
+    {
+     "min_age": 58,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0019-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0020": {
+   "gender": "male",
+   "source_id": "staff-m/0020",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0020-s1.avif"
+    },
+    {
+     "min_age": 47,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0020-s2.avif"
+    },
+    {
+     "min_age": 56,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0020-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0021": {
+   "gender": "male",
+   "source_id": "staff-m/0021",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0021-s1.avif"
+    },
+    {
+     "min_age": 50,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0021-s2.avif"
+    },
+    {
+     "min_age": 57,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0021-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0022": {
+   "gender": "male",
+   "source_id": "staff-m/0022",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0022-s1.avif"
+    },
+    {
+     "min_age": 46,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0022-s2.avif"
+    },
+    {
+     "min_age": 60,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0022-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0023": {
+   "gender": "male",
+   "source_id": "staff-m/0023",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0023-s1.avif"
+    },
+    {
+     "min_age": 49,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0023-s2.avif"
+    },
+    {
+     "min_age": 59,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0023-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0024": {
+   "gender": "male",
+   "source_id": "staff-m/0024",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0024-s1.avif"
+    },
+    {
+     "min_age": 48,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0024-s2.avif"
+    },
+    {
+     "min_age": 61,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0024-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0025": {
+   "gender": "male",
+   "source_id": "staff-m/0025",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0025-s1.avif"
+    },
+    {
+     "min_age": 50,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0025-s2.avif"
+    },
+    {
+     "min_age": 58,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0025-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0026": {
+   "gender": "male",
+   "source_id": "staff-m/0026",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0026-s1.avif"
+    },
+    {
+     "min_age": 45,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0026-s2.avif"
+    },
+    {
+     "min_age": 57,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0026-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0027": {
+   "gender": "male",
+   "source_id": "staff-m/0027",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0027-s1.avif"
+    },
+    {
+     "min_age": 47,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0027-s2.avif"
+    },
+    {
+     "min_age": 60,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0027-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0028": {
+   "gender": "male",
+   "source_id": "staff-m/0028",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0028-s1.avif"
+    },
+    {
+     "min_age": 45,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0028-s2.avif"
+    },
+    {
+     "min_age": 56,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0028-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0029": {
+   "gender": "male",
+   "source_id": "staff-m/0029",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0029-s1.avif"
+    },
+    {
+     "min_age": 49,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0029-s2.avif"
+    },
+    {
+     "min_age": 59,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0029-s3.avif"
+    }
+   ]
+  },
+  "gen-staff-m/0030": {
+   "gender": "male",
+   "source_id": "staff-m/0030",
+   "stages": [
+    {
+     "min_age": 0,
+     "age": 38,
+     "file": "/assets/headshots/generated/staff-m/0030-s1.avif"
+    },
+    {
+     "min_age": 47,
+     "age": 50,
+     "file": "/assets/headshots/generated/staff-m/0030-s2.avif"
+    },
+    {
+     "min_age": 57,
+     "age": 62,
+     "file": "/assets/headshots/generated/staff-m/0030-s3.avif"
+    }
+   ]
+  }
+ }
+}
