@@ -149,7 +149,9 @@ def main() -> None:
                          "security are offensive skills; the defensive fit gives their group no weight)")
     args = ap.parse_args()
     canonical = load_app_canonical(ROOT)
-    install_inputs_model(canonical, ROOT)
+    # The targets are 2025-26 impact, so the fit reads 2025-26-level ratings: the inputs' opening-day 2026-27
+    # projection (age, return from injury) is undone, as in the replay scorecards (RATINGS-FOLLOWUPS, 2026-11-22).
+    install_inputs_model(canonical, ROOT, replay_last_season=True)
     traits = trait_values_by_player(canonical)
     players = {p["id"]: p for p in canonical["players"]}
     table = be.collect_values(ROOT, set(TARGETS.values()))

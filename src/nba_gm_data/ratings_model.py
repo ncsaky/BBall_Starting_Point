@@ -108,6 +108,65 @@ def _load_inputs_keyed(root: Path | None = None) -> tuple[str, dict[str, dict[st
     return key, _INPUT_CACHE[key]
 
 
+# Tools that replay the real 2025-26 season (the betting-odds test, the real-stat scorecard, fit scripts) judge the
+# engine with 2025-26-level ratings. The canonical inputs describe opening day 2026-27: veterans are carried forward by
+# their age (and later steps such as return from major injury), and each such step records, per moved input, the value
+# before the step (evidence notes "replay_undo"). The replay copy restores the earliest recorded value, so every
+# opening-day projection is undone and every evidence step that describes the player's level is kept
+# (RATINGS-FOLLOWUPS, 2026-11-22). The level steps (thin samples, no NBA track record) record the same note so a
+# diagnostic replay can undo them too. Environment, for comparisons only: NBA_GM_REPLAY_OPENING_DAY=1 keeps the
+# projection; NBA_GM_REPLAY_UNDO=all also undoes the level steps.
+REPLAY_SUFFIX = "#replay-2025-26"
+REPLAY_UNDO_STEPS = frozenset({"age_projection", "physical_aging"})   # return from injury is part of the age step
+
+
+def _replay_steps() -> frozenset[str] | None:
+    return None if os.environ.get("NBA_GM_REPLAY_UNDO") == "all" else REPLAY_UNDO_STEPS
+
+
+def _replay_record(record: Mapping[str, Any], steps: frozenset[str] | None = REPLAY_UNDO_STEPS) -> Mapping[str, Any]:
+    """steps: the steps to undo (None = every recorded step)."""
+    first = None
+    for evidence in record.get("evidence") or ():
+        notes = evidence.get("notes") if isinstance(evidence, Mapping) else None
+        if isinstance(notes, str) and "replay_undo" in notes:
+            undo = json.loads(notes).get("replay_undo")
+            if undo and (steps is None or undo.get("step") in steps):
+                first = undo
+                break
+    if first is None:
+        return record
+    value = dict(record["value"])
+    if first["field"] == "grade":
+        value["grade"] = first["before"]
+    elif first["field"] == "display_grade":
+        value["display_grade"] = {**value["display_grade"], "grade": first["before"]}
+    elif first["field"] == "jump_cm":
+        measurements = list(value["measurements"])
+        measurements[0] = {**measurements[0], "value": first["before"]}
+        value["measurements"] = measurements
+    else:
+        raise ValueError(f"unknown replay_undo field {first['field']!r}")
+    return {**record, "value": value}
+
+
+def replay_last_season_inputs(league_inputs: Mapping[str, Mapping[str, Any]],
+                              steps: frozenset[str] | None = REPLAY_UNDO_STEPS) -> dict[str, dict[str, Any]]:
+    """The league's inputs with every opening-day projection undone (see REPLAY_SUFFIX)."""
+    return {pid: {iid: _replay_record(rec, steps) for iid, rec in inputs.items()} for pid, inputs in league_inputs.items()}
+
+
+def _replay_keyed(root: Path | None = None) -> tuple[str, dict[str, dict[str, Any]]]:
+    key, league = _load_inputs_keyed(root)
+    if os.environ.get("NBA_GM_REPLAY_OPENING_DAY") == "1":
+        return key, league
+    steps = _replay_steps()
+    replay_key = key + REPLAY_SUFFIX + ("" if steps == REPLAY_UNDO_STEPS else "-all")
+    if replay_key not in _INPUT_CACHE:
+        _INPUT_CACHE[replay_key] = replay_last_season_inputs(league, steps)
+    return replay_key, _INPUT_CACHE[replay_key]
+
+
 def load_league_inputs(root: Path | None = None) -> dict[str, dict[str, Any]]:
     """player_id -> {input_id: record}, read once per file."""
     return _load_inputs_keyed(root)[1]
@@ -320,7 +379,7 @@ def _sum_trait_deltas(totals: Mapping[str, Mapping[str, float]] | None,
     return combined
 
 
-def install_inputs_model(canonical: dict[str, Any], root: Path | None = None) -> None:
+def install_inputs_model(canonical: dict[str, Any], root: Path | None = None, *, replay_last_season: bool = False) -> None:
     """Fit the adapter on the baseline league and derive every player's traits from inputs.
 
     Must run on the baseline (pre-development) traits. The adapter is fitted only on players in the
@@ -328,8 +387,9 @@ def install_inputs_model(canonical: dict[str, Any], root: Path | None = None) ->
     developing never shift anyone else's ratings). Players without canonical inputs (drafted rookies,
     generated players) get inputs from the estimator's prospect path, using their current legacy traits only
     as weak prior evidence; their traits are then derived from those inputs like everyone else's.
+    replay_last_season: tools replaying 2025-26 use the inputs with the opening-day projection undone.
     """
-    inputs_key, league_inputs = _load_inputs_keyed(root)
+    inputs_key, league_inputs = _replay_keyed(root) if replay_last_season else _load_inputs_keyed(root)
     baseline = _trait_values(canonical)
     # The adapter's target distributions come from evidence-backed legacy values only (placeholders excluded).
     evidence_traits = _trait_values(canonical, skip_placeholders=True)

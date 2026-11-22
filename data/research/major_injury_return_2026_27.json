@@ -1,0 +1,1531 @@
+{
+ "version": "major_injury_return_v1_2026_11_22",
+ "method": "Cost of an Achilles rupture or ACL tear in the first season back, beyond age, by injury and age at injury. Cost = real LEBRON in the first season back (250+ minutes) minus what his measured level before the injury and the age curve predict for that season (data/research/age_projection_2026_27.json: the same change the age step gives every veteran, missed seasons included). Groups: injury x age at injury (under 30 / 30+), means unweighted, with a standard error. Survivors only: players who never got back to 250 minutes are counted apart (return share), so the cost is if anything understated. Basketball Index's own matched estimate (injury_long_term.json, all ages, matched controls) is reported alongside as a check.",
+ "sources": [
+  "Basketball Index LEBRON by season 2010-2026 (fanspo tools capture, local)",
+  "Basketball Index Injury Tracker (data/research/bbi/tools: injury_player_history, injury_examples, injury_long_term)",
+  "public injury reports for the season of injury (cases marked 'public')",
+  "Basketball Reference minutes and ages (data/research/development_evidence.json)"
+ ],
+ "age_split": 30,
+ "groups": {
+  "achilles under 30": {
+   "cases": 11,
+   "back": 11,
+   "return_share": 1.0,
+   "cost_offense": -0.59,
+   "se_offense": 0.214,
+   "cost_defense": 0.072,
+   "se_defense": 0.184,
+   "cost_total": -0.518,
+   "se_total": 0.34
+  },
+  "achilles 30+": {
+   "cases": 6,
+   "back": 6,
+   "return_share": 1.0,
+   "cost_offense": -0.344,
+   "se_offense": 0.211,
+   "cost_defense": -0.461,
+   "se_defense": 0.254,
+   "cost_total": -0.805,
+   "se_total": 0.261
+  },
+  "acl under 30": {
+   "cases": 25,
+   "back": 23,
+   "return_share": 0.92,
+   "cost_offense": -0.374,
+   "se_offense": 0.238,
+   "cost_defense": -0.293,
+   "se_defense": 0.164,
+   "cost_total": -0.668,
+   "se_total": 0.316
+  },
+  "acl 30+": {
+   "cases": 3,
+   "back": 3,
+   "return_share": 1.0,
+   "cost_offense": -0.702,
+   "se_offense": 0.137,
+   "cost_defense": 0.08,
+   "se_defense": 0.416,
+   "cost_total": -0.622,
+   "se_total": 0.413
+  }
+ },
+ "applied_cost": {
+  "pooled": {
+   "offense": -0.448,
+   "defense": -0.197
+  },
+  "between_group_variance": {
+   "offense": 0.0,
+   "defense": 0.0
+  },
+  "achilles under 30": {
+   "offense": -0.448,
+   "defense": -0.197
+  },
+  "achilles 30+": {
+   "offense": -0.448,
+   "defense": -0.197
+  },
+  "acl under 30": {
+   "offense": -0.448,
+   "defense": -0.197
+  },
+  "acl 30+": {
+   "offense": -0.448,
+   "defense": -0.197
+  },
+  "cases_back": 43
+ },
+ "basketball_index_matched_estimate": {
+  "ACL tear": {
+   "n_treated": 76,
+   "returned_rate": 0.711,
+   "d_rapm_1y": -0.541,
+   "d_rapm_1y_shrunk": -0.331,
+   "d_rapm_1y_shrunk_ci": [
+    -0.515,
+    -0.154
+   ]
+  },
+  "Achilles tendon rupture": {
+   "n_treated": 44,
+   "returned_rate": 0.682,
+   "d_rapm_1y": -1.124,
+   "d_rapm_1y_shrunk": -0.422,
+   "d_rapm_1y_shrunk_ci": [
+    -0.603,
+    -0.237
+   ]
+  }
+ },
+ "current_players": [
+  {
+   "player": "Damian Lillard",
+   "injury": "achilles",
+   "season": 2025,
+   "sources": [
+    "bbi_history",
+    "nba_reports"
+   ]
+  },
+  {
+   "player": "Tyrese Haliburton",
+   "injury": "achilles",
+   "season": 2025,
+   "sources": [
+    "bbi_history",
+    "nba_reports"
+   ]
+  },
+  {
+   "player": "Jayson Tatum",
+   "injury": "achilles",
+   "season": 2025,
+   "sources": [
+    "bbi_history",
+    "nba_reports"
+   ]
+  },
+  {
+   "player": "Dejounte Murray",
+   "injury": "achilles",
+   "season": 2025,
+   "sources": [
+    "bbi_history",
+    "nba_reports"
+   ]
+  },
+  {
+   "player": "Donte DiVincenzo",
+   "injury": "achilles",
+   "season": 2026,
+   "sources": [
+    "bbi_history",
+    "nba_reports"
+   ]
+  },
+  {
+   "player": "Isaiah Jackson",
+   "injury": "achilles",
+   "season": 2025,
+   "sources": [
+    "bbi_history"
+   ]
+  },
+  {
+   "player": "Dru Smith",
+   "injury": "achilles",
+   "season": 2025,
+   "sources": [
+    "bbi_history"
+   ]
+  },
+  {
+   "player": "James Wiseman",
+   "injury": "achilles",
+   "season": 2025,
+   "sources": [
+    "bbi_history"
+   ]
+  },
+  {
+   "player": "Kyrie Irving",
+   "injury": "acl",
+   "season": 2025,
+   "sources": [
+    "bbi_history"
+   ]
+  },
+  {
+   "player": "Fred VanVleet",
+   "injury": "acl",
+   "season": 2025,
+   "sources": [
+    "bbi_history",
+    "nba_reports"
+   ]
+  },
+  {
+   "player": "Jimmy Butler",
+   "injury": "acl",
+   "season": 2026,
+   "sources": [
+    "nba_reports"
+   ]
+  },
+  {
+   "player": "De'Anthony Melton",
+   "injury": "acl",
+   "season": 2025,
+   "sources": [
+    "nba_reports"
+   ]
+  },
+  {
+   "player": "Grant Williams",
+   "injury": "acl",
+   "season": 2025,
+   "sources": [
+    "bbi_history",
+    "nba_reports"
+   ]
+  },
+  {
+   "player": "Moritz Wagner",
+   "injury": "acl",
+   "season": 2025,
+   "sources": [
+    "bbi_examples",
+    "nba_reports"
+   ]
+  },
+  {
+   "player": "Saddiq Bey",
+   "injury": "acl",
+   "season": 2024,
+   "sources": [
+    "bbi_history"
+   ]
+  },
+  {
+   "player": "Johnny Furphy",
+   "injury": "acl",
+   "season": 2026,
+   "sources": [
+    "nba_reports"
+   ]
+  },
+  {
+   "player": "N'Faly Dante",
+   "injury": "acl",
+   "season": 2026,
+   "sources": [
+    "nba_reports"
+   ]
+  },
+  {
+   "player": "Jamir Watkins",
+   "injury": "acl",
+   "season": 2026,
+   "sources": [
+    "bbi_history"
+   ]
+  }
+ ],
+ "cases": [
+  {
+   "player": "Mehmet Okur",
+   "injury": "achilles",
+   "season": 2010,
+   "age": 30.0,
+   "source": "bbi_examples",
+   "level_before": [
+    0.08,
+    0.89
+   ],
+   "status": "back",
+   "season_back": 2012,
+   "seasons_missed": 1,
+   "minutes_back": 454.0,
+   "expected_back": [
+    -0.54,
+    0.802
+   ],
+   "actual_back": [
+    -0.9,
+    -0.46
+   ],
+   "cost": [
+    -0.36,
+    -1.262
+   ]
+  },
+  {
+   "player": "Chauncey Billups",
+   "injury": "achilles",
+   "season": 2012,
+   "age": 35.0,
+   "source": "bbi_examples",
+   "level_before": [
+    2.667,
+    -1.032
+   ],
+   "status": "back",
+   "season_back": 2013,
+   "seasons_missed": 0,
+   "minutes_back": 418.0,
+   "expected_back": [
+    2.069,
+    -1.195
+   ],
+   "actual_back": [
+    1.87,
+    -1.24
+   ],
+   "cost": [
+    -0.199,
+    -0.045
+   ]
+  },
+  {
+   "player": "Kobe Bryant",
+   "injury": "achilles",
+   "season": 2013,
+   "age": 34.0,
+   "source": "bbi_examples",
+   "level_before": [
+    3.89,
+    -1.496
+   ],
+   "status": "back",
+   "season_back": 2015,
+   "seasons_missed": 1,
+   "minutes_back": 1207.0,
+   "expected_back": [
+    2.945,
+    -1.729
+   ],
+   "actual_back": [
+    1.6408791859865532,
+    -1.4918801478928183
+   ],
+   "cost": [
+    -1.304,
+    0.237
+   ]
+  },
+  {
+   "player": "Anderson Varejao",
+   "injury": "achilles",
+   "season": 2015,
+   "age": 32.0,
+   "source": "bbi_examples",
+   "level_before": [
+    -0.384,
+    1.455
+   ],
+   "status": "back",
+   "season_back": 2016,
+   "seasons_missed": 0,
+   "minutes_back": 496.0,
+   "expected_back": [
+    -0.845,
+    1.398
+   ],
+   "actual_back": [
+    -1.2104933894792198,
+    0.4405460003675059
+   ],
+   "cost": [
+    -0.366,
+    -0.957
+   ]
+  },
+  {
+   "player": "Brandon Jennings",
+   "injury": "achilles",
+   "season": 2015,
+   "age": 25.0,
+   "source": "bbi_examples",
+   "level_before": [
+    1.275,
+    -1.472
+   ],
+   "status": "back",
+   "season_back": 2016,
+   "seasons_missed": 0,
+   "minutes_back": 868.0,
+   "expected_back": [
+    1.371,
+    -1.471
+   ],
+   "actual_back": [
+    0.8915942238612604,
+    -0.5143640144327705
+   ],
+   "cost": [
+    -0.48,
+    0.957
+   ]
+  },
+  {
+   "player": "Wesley Matthews",
+   "injury": "achilles",
+   "season": 2015,
+   "age": 28.0,
+   "source": "public",
+   "level_before": [
+    1.525,
+    -0.301
+   ],
+   "status": "back",
+   "season_back": 2016,
+   "seasons_missed": 0,
+   "minutes_back": 2644.0,
+   "expected_back": [
+    1.368,
+    -0.319
+   ],
+   "actual_back": [
+    0.5188120739910576,
+    -0.3122518914544306
+   ],
+   "cost": [
+    -0.849,
+    0.007
+   ]
+  },
+  {
+   "player": "Rudy Gay",
+   "injury": "achilles",
+   "season": 2017,
+   "age": 30.0,
+   "source": "public",
+   "level_before": [
+    0.643,
+    0.143
+   ],
+   "status": "back",
+   "season_back": 2018,
+   "seasons_missed": 0,
+   "minutes_back": 1231.0,
+   "expected_back": [
+    0.316,
+    0.1
+   ],
+   "actual_back": [
+    0.2740277336541087,
+    0.1656839457365461
+   ],
+   "cost": [
+    -0.042,
+    0.065
+   ]
+  },
+  {
+   "player": "DeMarcus Cousins",
+   "injury": "achilles",
+   "season": 2018,
+   "age": 27.0,
+   "source": "bbi_examples",
+   "level_before": [
+    1.922,
+    1.395
+   ],
+   "status": "back",
+   "season_back": 2019,
+   "seasons_missed": 0,
+   "minutes_back": 771.0,
+   "expected_back": [
+    1.851,
+    1.383
+   ],
+   "actual_back": [
+    0.6986322493238089,
+    1.3525996070360613
+   ],
+   "cost": [
+    -1.153,
+    -0.03
+   ]
+  },
+  {
+   "player": "Kevin Durant",
+   "injury": "achilles",
+   "season": 2019,
+   "age": 30.0,
+   "source": "bbi_history",
+   "level_before": [
+    4.097,
+    0.419
+   ],
+   "status": "back",
+   "season_back": 2021,
+   "seasons_missed": 1,
+   "minutes_back": 1157.0,
+   "expected_back": [
+    3.476,
+    0.331
+   ],
+   "actual_back": [
+    3.685533117741354,
+    -0.4726769170411072
+   ],
+   "cost": [
+    0.209,
+    -0.804
+   ]
+  },
+  {
+   "player": "John Wall",
+   "injury": "achilles",
+   "season": 2019,
+   "age": 28.0,
+   "source": "public",
+   "level_before": [
+    2.086,
+    -0.069
+   ],
+   "status": "back",
+   "season_back": 2021,
+   "seasons_missed": 1,
+   "minutes_back": 1288.0,
+   "expected_back": [
+    1.727,
+    -0.114
+   ],
+   "actual_back": [
+    0.6947889591111485,
+    -1.3259035927526768
+   ],
+   "cost": [
+    -1.033,
+    -1.212
+   ]
+  },
+  {
+   "player": "Rodney Hood",
+   "injury": "achilles",
+   "season": 2020,
+   "age": 27.0,
+   "source": "public",
+   "level_before": [
+    -0.423,
+    -0.764
+   ],
+   "status": "back",
+   "season_back": 2021,
+   "seasons_missed": 0,
+   "minutes_back": 942.0,
+   "expected_back": [
+    -0.494,
+    -0.776
+   ],
+   "actual_back": [
+    -2.572955096727011,
+    -1.1038992999996613
+   ],
+   "cost": [
+    -2.079,
+    -0.328
+   ]
+  },
+  {
+   "player": "Dwight Powell",
+   "injury": "achilles",
+   "season": 2020,
+   "age": 28.0,
+   "source": "bbi_history",
+   "level_before": [
+    0.198,
+    0.859
+   ],
+   "status": "back",
+   "season_back": 2021,
+   "seasons_missed": 0,
+   "minutes_back": 966.0,
+   "expected_back": [
+    0.041,
+    0.84
+   ],
+   "actual_back": [
+    -0.7189782797029417,
+    1.1707591158764858
+   ],
+   "cost": [
+    -0.76,
+    0.33
+   ]
+  },
+  {
+   "player": "Brandon Clarke",
+   "injury": "achilles",
+   "season": 2023,
+   "age": 26.0,
+   "source": "bbi_history",
+   "level_before": [
+    0.044,
+    0.322
+   ],
+   "status": "back",
+   "season_back": 2025,
+   "seasons_missed": 1,
+   "minutes_back": 1207.0,
+   "expected_back": [
+    -0.044,
+    0.304
+   ],
+   "actual_back": [
+    -0.263356552,
+    0.521243876
+   ],
+   "cost": [
+    -0.219,
+    0.217
+   ]
+  },
+  {
+   "player": "Dejounte Murray",
+   "injury": "achilles",
+   "season": 2025,
+   "age": 28.0,
+   "source": "bbi_history",
+   "level_before": [
+    1.141,
+    -0.349
+   ],
+   "status": "back",
+   "season_back": 2026,
+   "seasons_missed": 0,
+   "minutes_back": 389.0,
+   "expected_back": [
+    0.985,
+    -0.368
+   ],
+   "actual_back": [
+    0.997514836,
+    0.56311574
+   ],
+   "cost": [
+    0.013,
+    0.931
+   ]
+  },
+  {
+   "player": "Isaiah Jackson",
+   "injury": "achilles",
+   "season": 2025,
+   "age": 23.0,
+   "source": "bbi_history",
+   "level_before": [
+    -0.774,
+    1.176
+   ],
+   "status": "back",
+   "season_back": 2026,
+   "seasons_missed": 0,
+   "minutes_back": 908.0,
+   "expected_back": [
+    -0.498,
+    1.223
+   ],
+   "actual_back": [
+    -0.776554087,
+    0.779359248
+   ],
+   "cost": [
+    -0.279,
+    -0.444
+   ]
+  },
+  {
+   "player": "Dru Smith",
+   "injury": "achilles",
+   "season": 2025,
+   "age": 27.0,
+   "source": "bbi_history",
+   "level_before": [
+    -1.431,
+    1.079
+   ],
+   "status": "back",
+   "season_back": 2026,
+   "seasons_missed": 0,
+   "minutes_back": 1141.0,
+   "expected_back": [
+    -1.502,
+    1.067
+   ],
+   "actual_back": [
+    -0.864571309,
+    1.347615936
+   ],
+   "cost": [
+    0.637,
+    0.28
+   ]
+  },
+  {
+   "player": "James Wiseman",
+   "injury": "achilles",
+   "season": 2025,
+   "age": 23.0,
+   "source": "bbi_history",
+   "level_before": [
+    -2.265,
+    -0.2
+   ],
+   "status": "not back yet"
+  },
+  {
+   "player": "Jayson Tatum",
+   "injury": "achilles",
+   "season": 2025,
+   "age": 26.0,
+   "source": "bbi_history",
+   "level_before": [
+    3.326,
+    0.761
+   ],
+   "status": "back",
+   "season_back": 2026,
+   "seasons_missed": 0,
+   "minutes_back": 522.0,
+   "expected_back": [
+    3.338,
+    0.755
+   ],
+   "actual_back": [
+    3.04651076,
+    0.84074939
+   ],
+   "cost": [
+    -0.291,
+    0.085
+   ]
+  },
+  {
+   "player": "Tyrese Haliburton",
+   "injury": "achilles",
+   "season": 2025,
+   "age": 24.0,
+   "source": "bbi_history",
+   "level_before": [
+    4.369,
+    -0.803
+   ],
+   "status": "not back yet"
+  },
+  {
+   "player": "Damian Lillard",
+   "injury": "achilles",
+   "season": 2025,
+   "age": 34.0,
+   "source": "bbi_history",
+   "level_before": [
+    4.209,
+    -1.512
+   ],
+   "status": "not back yet"
+  },
+  {
+   "player": "Donte DiVincenzo",
+   "injury": "achilles",
+   "season": 2026,
+   "age": 29.0,
+   "source": "bbi_history",
+   "level_before": [
+    0.447,
+    0.118
+   ],
+   "status": "not back yet"
+  },
+  {
+   "player": "Danilo Gallinari",
+   "injury": "acl",
+   "season": 2013,
+   "age": 24.0,
+   "source": "public",
+   "level_before": [
+    2.34,
+    0.687
+   ],
+   "status": "back",
+   "season_back": 2015,
+   "seasons_missed": 1,
+   "minutes_back": 1426.0,
+   "expected_back": [
+    2.537,
+    0.697
+   ],
+   "actual_back": [
+    1.503531379624518,
+    -0.8045390883940108
+   ],
+   "cost": [
+    -1.033,
+    -1.501
+   ]
+  },
+  {
+   "player": "Danilo Gallinari",
+   "injury": "acl",
+   "season": 2022,
+   "age": 33.0,
+   "source": "public",
+   "level_before": [
+    1.012,
+    -0.878
+   ],
+   "status": "back",
+   "season_back": 2024,
+   "seasons_missed": 1,
+   "minutes_back": 630.0,
+   "expected_back": [
+    0.124,
+    -1.031
+   ],
+   "actual_back": [
+    -0.6396237309553822,
+    -0.1200255882451358
+   ],
+   "cost": [
+    -0.764,
+    0.911
+   ]
+  },
+  {
+   "player": "Ricky Rubio",
+   "injury": "acl",
+   "season": 2012,
+   "age": 21.0,
+   "source": "public",
+   "level_before": [
+    0.19,
+    2.04
+   ],
+   "status": "back",
+   "season_back": 2013,
+   "seasons_missed": 0,
+   "minutes_back": 1691.0,
+   "expected_back": [
+    0.673,
+    2.167
+   ],
+   "actual_back": [
+    0.74,
+    1.22
+   ],
+   "cost": [
+    0.067,
+    -0.947
+   ]
+  },
+  {
+   "player": "Ricky Rubio",
+   "injury": "acl",
+   "season": 2022,
+   "age": 31.0,
+   "source": "public",
+   "level_before": [
+    0.618,
+    0.531
+   ],
+   "status": "back",
+   "season_back": 2023,
+   "seasons_missed": 0,
+   "minutes_back": 566.0,
+   "expected_back": [
+    0.219,
+    0.479
+   ],
+   "actual_back": [
+    -0.2196423916019832,
+    0.1730560259216953
+   ],
+   "cost": [
+    -0.439,
+    -0.306
+   ]
+  },
+  {
+   "player": "Derrick Rose",
+   "injury": "acl",
+   "season": 2012,
+   "age": 23.0,
+   "source": "public",
+   "level_before": [
+    3.239,
+    -0.55
+   ],
+   "status": "back",
+   "season_back": 2014,
+   "seasons_missed": 1,
+   "minutes_back": 311.0,
+   "expected_back": [
+    3.594,
+    -0.501
+   ],
+   "actual_back": [
+    -0.0369259624305957,
+    -1.7241481192366113
+   ],
+   "cost": [
+    -3.631,
+    -1.223
+   ]
+  },
+  {
+   "player": "Rajon Rondo",
+   "injury": "acl",
+   "season": 2013,
+   "age": 26.0,
+   "source": "public",
+   "level_before": [
+    0.818,
+    0.548
+   ],
+   "status": "back",
+   "season_back": 2014,
+   "seasons_missed": 0,
+   "minutes_back": 998.0,
+   "expected_back": [
+    0.83,
+    0.542
+   ],
+   "actual_back": [
+    1.48213086493226,
+    0.256885525702551
+   ],
+   "cost": [
+    0.652,
+    -0.285
+   ]
+  },
+  {
+   "player": "Iman Shumpert",
+   "injury": "acl",
+   "season": 2012,
+   "age": 21.0,
+   "source": "public",
+   "level_before": [
+    0.31,
+    0.77
+   ],
+   "status": "back",
+   "season_back": 2013,
+   "seasons_missed": 0,
+   "minutes_back": 996.0,
+   "expected_back": [
+    0.792,
+    0.897
+   ],
+   "actual_back": [
+    -0.64,
+    0.0
+   ],
+   "cost": [
+    -1.433,
+    -0.897
+   ]
+  },
+  {
+   "player": "Lou Williams",
+   "injury": "acl",
+   "season": 2013,
+   "age": 26.0,
+   "source": "public",
+   "level_before": [
+    1.787,
+    -0.731
+   ],
+   "status": "back",
+   "season_back": 2014,
+   "seasons_missed": 0,
+   "minutes_back": 1445.0,
+   "expected_back": [
+    1.799,
+    -0.736
+   ],
+   "actual_back": [
+    0.2679000210584308,
+    -1.780675640276224
+   ],
+   "cost": [
+    -1.531,
+    -1.044
+   ]
+  },
+  {
+   "player": "Tony Wroten",
+   "injury": "acl",
+   "season": 2015,
+   "age": 21.0,
+   "source": "public",
+   "level_before": [
+    -0.768,
+    -2.452
+   ],
+   "status": "no 250-minute season within three seasons"
+  },
+  {
+   "player": "Jabari Parker",
+   "injury": "acl",
+   "season": 2015,
+   "age": 19.0,
+   "source": "public",
+   "level_before": [
+    -0.877,
+    -0.504
+   ],
+   "status": "back",
+   "season_back": 2016,
+   "seasons_missed": 0,
+   "minutes_back": 2408.0,
+   "expected_back": [
+    -0.245,
+    -0.3
+   ],
+   "actual_back": [
+    -0.1487633595340804,
+    -1.4791457962179766
+   ],
+   "cost": [
+    0.096,
+    -1.179
+   ]
+  },
+  {
+   "player": "Jabari Parker",
+   "injury": "acl",
+   "season": 2017,
+   "age": 21.0,
+   "source": "public",
+   "level_before": [
+    0.107,
+    -1.366
+   ],
+   "status": "back",
+   "season_back": 2018,
+   "seasons_missed": 0,
+   "minutes_back": 743.0,
+   "expected_back": [
+    0.589,
+    -1.239
+   ],
+   "actual_back": [
+    0.8058792403996415,
+    -1.889183743340885
+   ],
+   "cost": [
+    0.217,
+    -0.65
+   ]
+  },
+  {
+   "player": "Zach LaVine",
+   "injury": "acl",
+   "season": 2017,
+   "age": 21.0,
+   "source": "bbi_examples",
+   "level_before": [
+    -0.568,
+    -1.433
+   ],
+   "status": "back",
+   "season_back": 2018,
+   "seasons_missed": 0,
+   "minutes_back": 656.0,
+   "expected_back": [
+    -0.086,
+    -1.306
+   ],
+   "actual_back": [
+    0.985198205278718,
+    -0.5515113383861959
+   ],
+   "cost": [
+    1.071,
+    0.755
+   ]
+  },
+  {
+   "player": "Brandon Knight",
+   "injury": "acl",
+   "season": 2017,
+   "age": 25.0,
+   "source": "public",
+   "level_before": [
+    -0.28,
+    -1.016
+   ],
+   "status": "back",
+   "season_back": 2019,
+   "seasons_missed": 1,
+   "minutes_back": 736.0,
+   "expected_back": [
+    -0.23,
+    -1.025
+   ],
+   "actual_back": [
+    -1.3120168211407095,
+    -0.4573434980942447
+   ],
+   "cost": [
+    -1.082,
+    0.567
+   ]
+  },
+  {
+   "player": "Kristaps Porzingis",
+   "injury": "acl",
+   "season": 2018,
+   "age": 22.0,
+   "source": "bbi_history",
+   "level_before": [
+    0.266,
+    0.658
+   ],
+   "status": "back",
+   "season_back": 2020,
+   "seasons_missed": 1,
+   "minutes_back": 1814.0,
+   "expected_back": [
+    0.791,
+    0.768
+   ],
+   "actual_back": [
+    1.4966801247203136,
+    2.0328509030830357
+   ],
+   "cost": [
+    0.706,
+    1.264
+   ]
+  },
+  {
+   "player": "Dejounte Murray",
+   "injury": "acl",
+   "season": 2018,
+   "age": 21.0,
+   "source": "bbi_history",
+   "level_before": [
+    -0.932,
+    1.655
+   ],
+   "status": "back",
+   "season_back": 2020,
+   "seasons_missed": 1,
+   "minutes_back": 1687.0,
+   "expected_back": [
+    -0.222,
+    1.837
+   ],
+   "actual_back": [
+    -1.142651676232277,
+    0.9382291669847532
+   ],
+   "cost": [
+    -0.921,
+    -0.899
+   ]
+  },
+  {
+   "player": "DeMarcus Cousins",
+   "injury": "acl",
+   "season": 2019,
+   "age": 28.0,
+   "source": "bbi_examples",
+   "level_before": [
+    1.696,
+    1.349
+   ],
+   "status": "back",
+   "season_back": 2021,
+   "seasons_missed": 1,
+   "minutes_back": 713.0,
+   "expected_back": [
+    1.337,
+    1.304
+   ],
+   "actual_back": [
+    -0.6201082870852191,
+    1.7996765648410191
+   ],
+   "cost": [
+    -1.957,
+    0.496
+   ]
+  },
+  {
+   "player": "Jeremy Lamb",
+   "injury": "acl",
+   "season": 2020,
+   "age": 27.0,
+   "source": "bbi_examples",
+   "level_before": [
+    0.212,
+    0.098
+   ],
+   "status": "back",
+   "season_back": 2021,
+   "seasons_missed": 0,
+   "minutes_back": 765.0,
+   "expected_back": [
+    0.141,
+    0.086
+   ],
+   "actual_back": [
+    0.686141721727121,
+    -0.3319030453047493
+   ],
+   "cost": [
+    0.545,
+    -0.418
+   ]
+  },
+  {
+   "player": "Jonathan Isaac",
+   "injury": "acl",
+   "season": 2020,
+   "age": 22.0,
+   "source": "bbi_examples",
+   "level_before": [
+    -1.311,
+    2.351
+   ],
+   "status": "no 250-minute season within three seasons"
+  },
+  {
+   "player": "Spencer Dinwiddie",
+   "injury": "acl",
+   "season": 2021,
+   "age": 27.0,
+   "source": "bbi_examples",
+   "level_before": [
+    2.063,
+    -1.228
+   ],
+   "status": "back",
+   "season_back": 2022,
+   "seasons_missed": 0,
+   "minutes_back": 1980.0,
+   "expected_back": [
+    1.992,
+    -1.24
+   ],
+   "actual_back": [
+    1.1822847193559558,
+    -0.7279224454267814
+   ],
+   "cost": [
+    -0.809,
+    0.512
+   ]
+  },
+  {
+   "player": "Jamal Murray",
+   "injury": "acl",
+   "season": 2021,
+   "age": 23.0,
+   "source": "bbi_examples",
+   "level_before": [
+    1.863,
+    -0.444
+   ],
+   "status": "back",
+   "season_back": 2023,
+   "seasons_missed": 1,
+   "minutes_back": 2133.0,
+   "expected_back": [
+    2.217,
+    -0.395
+   ],
+   "actual_back": [
+    1.9450950300029024,
+    -0.9010080536715744
+   ],
+   "cost": [
+    -0.272,
+    -0.506
+   ]
+  },
+  {
+   "player": "Thomas Bryant",
+   "injury": "acl",
+   "season": 2021,
+   "age": 23.0,
+   "source": "bbi_examples",
+   "level_before": [
+    -0.116,
+    0.234
+   ],
+   "status": "back",
+   "season_back": 2022,
+   "seasons_missed": 0,
+   "minutes_back": 439.0,
+   "expected_back": [
+    0.161,
+    0.281
+   ],
+   "actual_back": [
+    -1.154601101411009,
+    1.097603081171533
+   ],
+   "cost": [
+    -1.316,
+    0.817
+   ]
+  },
+  {
+   "player": "Markelle Fultz",
+   "injury": "acl",
+   "season": 2021,
+   "age": 22.0,
+   "source": "bbi_examples",
+   "level_before": [
+    -1.331,
+    0.606
+   ],
+   "status": "back",
+   "season_back": 2022,
+   "seasons_missed": 0,
+   "minutes_back": 360.0,
+   "expected_back": [
+    -0.953,
+    0.693
+   ],
+   "actual_back": [
+    0.0925215670981862,
+    0.0795617411651003
+   ],
+   "cost": [
+    1.045,
+    -0.613
+   ]
+  },
+  {
+   "player": "Kawhi Leonard",
+   "injury": "acl",
+   "season": 2021,
+   "age": 29.0,
+   "source": "public",
+   "level_before": [
+    4.067,
+    1.264
+   ],
+   "status": "back",
+   "season_back": 2023,
+   "seasons_missed": 1,
+   "minutes_back": 1748.0,
+   "expected_back": [
+    3.573,
+    1.195
+   ],
+   "actual_back": [
+    3.985546246137116,
+    0.462763423653175
+   ],
+   "cost": [
+    0.413,
+    -0.732
+   ]
+  },
+  {
+   "player": "Dario Saric",
+   "injury": "acl",
+   "season": 2021,
+   "age": 26.0,
+   "source": "bbi_history",
+   "level_before": [
+    -0.363,
+    -0.089
+   ],
+   "status": "back",
+   "season_back": 2023,
+   "seasons_missed": 1,
+   "minutes_back": 806.0,
+   "expected_back": [
+    -0.451,
+    -0.107
+   ],
+   "actual_back": [
+    -0.9910213531024292,
+    0.519258902101351
+   ],
+   "cost": [
+    -0.54,
+    0.626
+   ]
+  },
+  {
+   "player": "Joe Ingles",
+   "injury": "acl",
+   "season": 2022,
+   "age": 34.0,
+   "source": "bbi_examples",
+   "level_before": [
+    0.518,
+    0.156
+   ],
+   "status": "back",
+   "season_back": 2023,
+   "seasons_missed": 0,
+   "minutes_back": 1044.0,
+   "expected_back": [
+    -0.043,
+    0.05
+   ],
+   "actual_back": [
+    -0.9452016012823152,
+    -0.314927127515252
+   ],
+   "cost": [
+    -0.903,
+    -0.364
+   ]
+  },
+  {
+   "player": "Saddiq Bey",
+   "injury": "acl",
+   "season": 2024,
+   "age": 24.0,
+   "source": "bbi_history",
+   "level_before": [
+    0.562,
+    -1.57
+   ],
+   "status": "back",
+   "season_back": 2026,
+   "seasons_missed": 1,
+   "minutes_back": 2246.0,
+   "expected_back": [
+    0.759,
+    -1.56
+   ],
+   "actual_back": [
+    1.569226415,
+    -1.771391719
+   ],
+   "cost": [
+    0.811,
+    -0.212
+   ]
+  },
+  {
+   "player": "Moritz Wagner",
+   "injury": "acl",
+   "season": 2025,
+   "age": 27.0,
+   "source": "bbi_examples",
+   "level_before": [
+    0.81,
+    0.066
+   ],
+   "status": "back",
+   "season_back": 2026,
+   "seasons_missed": 0,
+   "minutes_back": 427.0,
+   "expected_back": [
+    0.739,
+    0.054
+   ],
+   "actual_back": [
+    0.531484024,
+    -0.852062286
+   ],
+   "cost": [
+    -0.207,
+    -0.906
+   ]
+  },
+  {
+   "player": "Grant Williams",
+   "injury": "acl",
+   "season": 2025,
+   "age": 26.0,
+   "source": "bbi_examples",
+   "level_before": [
+    -1.191,
+    0.339
+   ],
+   "status": "back",
+   "season_back": 2026,
+   "seasons_missed": 0,
+   "minutes_back": 711.0,
+   "expected_back": [
+    -1.179,
+    0.334
+   ],
+   "actual_back": [
+    -0.678729391,
+    0.561946312
+   ],
+   "cost": [
+    0.501,
+    0.228
+   ]
+  },
+  {
+   "player": "Kyrie Irving",
+   "injury": "acl",
+   "season": 2025,
+   "age": 32.0,
+   "source": "bbi_history",
+   "level_before": [
+    3.019,
+    -0.738
+   ],
+   "status": "not back yet"
+  },
+  {
+   "player": "Fred VanVleet",
+   "injury": "acl",
+   "season": 2025,
+   "age": 30.0,
+   "source": "bbi_history",
+   "level_before": [
+    1.704,
+    1.069
+   ],
+   "status": "not back yet"
+  },
+  {
+   "player": "Jimmy Butler",
+   "injury": "acl",
+   "season": 2026,
+   "age": 36.0,
+   "source": "bbi_history",
+   "level_before": [
+    2.653,
+    0.51
+   ],
+   "status": "not back yet"
+  }
+ ]
+}
