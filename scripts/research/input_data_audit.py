@@ -207,7 +207,8 @@ def capture_values(root, mapping):
     for name in capture.links:
         if bounds := percentage_range(name, definitions.get(name, "")):
             capture.ranges[name] = bounds
-    capture.context = {"batches": records, "row_checks": dict(ingest), "glossary_present": bool(definitions)}
+    capture.context = {"batches": records, "row_checks": dict(ingest), "glossary_present": bool(definitions),
+                       "captured_column_count": len({name for _, name in capture.columns})}
     return capture, raw_table
 
 
@@ -497,6 +498,7 @@ def career_and_outcomes(root):
                     row_counts[f"{makes}>{attempts} or negative"] += 1
             minutes = row.get("minutes") or 0
             for key, label in (("fta", "free-throw attempts per minute"), ("assists", "assists per minute"),
+                               ("fg3a", "three-point attempts per minute"),
                                ("blocks", "blocks per minute"), ("steals", "steals per minute"),
                                ("rebounds", "rebounds per minute"), ("turnovers", "turnovers per minute")):
                 value = estimator._get(row, key)
@@ -716,11 +718,13 @@ OUTCOME_METRICS = {
 }
 
 
-def direction_checks(sources, capture, outcomes, raw_table, universe):
+def direction_checks(sources, capture, outcomes, universe):
     names = {p["id"]: estimator._normalize(p["name"]) for p in universe["players"]}
     bad_names = {name for name, count in Counter(names.values()).items() if count > 1}
-    recent = sorted(bbi.SEASON_WEIGHTS)
     results = []
+    seasons = sorted(capture.populations)
+    keys_to_names = {key: (estimator._normalize(key.removeprefix("name:")) if key.startswith("name:") else names.get(key))
+                     for keys in capture.populations.values() for key in keys}
 
     @lru_cache(maxsize=None)
     def benchmark_block(season, benchmark):
@@ -760,10 +764,19 @@ def direction_checks(sources, capture, outcomes, raw_table, universe):
             multiplier = None
             if metric in OUTCOME_METRICS:
                 benchmark, expected, note, multiplier = OUTCOME_METRICS[metric]
-            for season in recent:
-                values = bbi._metric_values(raw_table, season, {"metric": metric, "per_sum": link["exposure"]})
-                block = {names[cid]: value for value, minutes, cid in values.values()
-                         if cid in names and minutes >= MINUTES}
+            for season in seasons:
+                block = {}
+                values = capture.columns.get((season, metric), {})
+                for key, value in values.items():
+                    player = keys_to_names[key]
+                    if not player or value is None or capture.minutes[season].get(key, 0) < MINUTES:
+                        continue
+                    if link["exposure"]:
+                        parts = [capture.columns.get((season, col), {}).get(key) for col in link["exposure"]]
+                        if None in parts or sum(parts) <= 0:
+                            continue
+                        value /= sum(parts)
+                    block[player] = value
                 check(BBI, metric, iid, block, season, benchmark, link["direction"], expected, note, multiplier)
 
     for path in (estimator.STATS_PATH, estimator.SKILL_PATH):
@@ -782,6 +795,15 @@ def direction_checks(sources, capture, outcomes, raw_table, universe):
             check(path, metric, iid, block, season, benchmark, 1, 1,
                   "full-season ESPN comparison against an earlier snapshot; turnover and passer models use different definitions",
                   multiplier)
+    for path in (estimator.STATS_PATH, estimator.SKILL_PATH):
+        table = sources[path]
+        for metric, iid, label in (("3PAp75", "S01", "three-point attempts per minute"),
+                                   ("ASTp75", "F01.recognition", "assists per minute")):
+            block = {pid: value for pid, value in table.columns.get(("2025-26", metric), {}).items()
+                     if value is not None and table.minutes["2025-26"].get(pid, 0) >= MINUTES}
+            check(path, metric, iid, block, "2025-26", label, 1, 1,
+                  "expected ~75 / 2.05 when roughly 2.05 possessions occur per minute; teams vary",
+                  75 / 2.05)
     return results
 
 
@@ -1070,7 +1092,7 @@ def main():
     capture.context["builder_cache_parity"] = cache_parity(args.root, raw_table)
     overlay_impact(capture, raw_table, universe)
     add_outcomes(outcomes, universe, args.root)
-    directions = direction_checks(sources, capture, outcomes, raw_table, universe)
+    directions = direction_checks(sources, capture, outcomes, universe)
     described = {name: describe(table) for name, table in sources.items()}
     report = {"mapping_version": mapping["version"], "nonpanel_evidence": judgments,
               "settings": {"build_season_weights": bbi.SEASON_WEIGHTS, "minimum_minutes_each_season": MINUTES,
