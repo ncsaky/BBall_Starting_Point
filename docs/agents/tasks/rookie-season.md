@@ -2,6 +2,12 @@
 
 _Owner: Claude (Opus agent, worktree branch `worktree-agent-a9faafaa376e62df1`). Started 2026-11-22. Status: in progress._
 
+Progress: 6/8 - checking development minutes and the betting test (real game logs still downloading)
+
+Plan: 1 read and measure real minutes; 2 fix rookies' shot volume; 3 season simulations before the change; 4 first
+simulation after the changes; 5 settle in-season growth timing from the full real game logs; 6 calibrate development
+minutes; 7 gates (scorecard, betting test, tests, speed); 8 report.
+
 ## Objective
 1. In-season growth: rookies (and young players) improve through the season like real ones. Measure real first-half
    vs second-half change (2015-2025), split into real improvement vs role/minutes, then reshape when the game hands
@@ -44,3 +50,8 @@ _Owner: Claude (Opus agent, worktree branch `worktree-agent-a9faafaa376e62df1`).
   at `output/rookie-season/before_s17` (season-end saves in `season_end_<year>/`). Scorecard with shot volume 18/18
   (`output/rookie-season/calibration_volume.txt`; base `calibration_base.txt`). Next: base seed 18, decide timing share
   from full real halves, calibrate development priority (constants in `save.py` DEVELOPMENT_PRIORITY_REBUILDING).
+- 17:05: both baseline seeds done (`before_s17`, `before_s18`; compare `compare_before.json`, dev minutes
+  `devmin_before_2027/2028.json`, halves `halves_before.json`). Baseline rebuilding premium for first-rounders is short
+  of real (year 1 about +2 vs real +6; year 2 +2 vs +3; year 3 0 vs +2). Commit 2d01f0ab: development priority
+  {1: 6, 2: 4, 3: 2}, timing share by NBA year {1: 0.6}. Running `after1_s17` with those. Partial real timing: first
+  year in-season share ~0.6-0.75 (wide), second year mostly summer; veterans show a +0.3-0.5 second-half swing.

@@ -99,8 +99,12 @@ INPUTS_UPSIDE_POWER = 0.25
 # in the six development events that cover the regular season (dated November-April; each event covers the month
 # before it); the other six (May-October) share the rest. 0.5 = spread evenly, as before. The yearly total is unchanged
 # (each July-June year keeps its sum). By the player's season in the NBA (draft year = season 1); others use the default.
+# Evidence: real game logs 2015-16 .. 2025-26 (scripts/research/rookie_halves.py; 250 rookie seasons, 303 second-year,
+# 310 veterans as the league's second-half swing). First-year players: about 70-80% of their year's improvement in box
+# impact (at fixed minutes) comes during the season (0.68 with shot volume held fixed, 0.83 without; 80% ranges
+# 0.28-1.06 and 0.52-1.14). Second-year players: no clear lean (0.21 / 0.49, ranges spanning 0 to 1), so even.
 INPUTS_IN_SEASON_SHARE = 0.5
-INPUTS_IN_SEASON_SHARE_BY_NBA_YEAR: dict[int, float] = {1: 0.6}
+INPUTS_IN_SEASON_SHARE_BY_NBA_YEAR: dict[int, float] = {1: 0.75}
 IN_SEASON_EVENT_MONTHS = frozenset({11, 12, 1, 2, 3, 4})
 # Monthly decline: (slope per year past onset, onset age, extra slope past the late onset, late onset, largest).
 LEGACY_DECLINE = {"offense": (0.033, 25.5, 0.030, 32.0, 0.45), "physical": (0.021, 28.5, 0.028, 32.0, 0.36),
