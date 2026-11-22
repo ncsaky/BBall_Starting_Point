@@ -108,6 +108,39 @@ class DraftBoardTests(unittest.TestCase):
             return statistics.mean(misses)
         self.assertLess(error(85), error(50))
 
+    def test_user_board_uses_the_same_grades_as_pick_selection(self):
+        year = "2031"
+        team_id = self.team["id"]
+        board = D.draft_board_report(self.canonical, self.team["abbrev"], year, month=S.DRAFT_MONTH)
+        scouting = S.class_scouting(self.canonical, year, S.DRAFT_MONTH)
+        ids = [entry["prospect_id"] for entry in board["entries"]]
+        gm_rows = D.gm_rows(self.canonical, scouting, team_id, 20, ids)
+        gm_by_prospect = {row["prospect_id"]: row for row in gm_rows}
+        for rank, entry in enumerate(board["entries"], 1):
+            gm = gm_by_prospect[entry["prospect_id"]]
+            self.assertEqual(entry["scout_grade"], gm["scout_grade"])
+            self.assertEqual(entry["scout_rank"], gm["scout_rank"])
+            self.assertEqual(entry["scout_rank"], rank)
+        best = D.preferred_prospect_for_pick(self.canonical, year, team_id, 20,
+                                             [scouting["prospects"][pid] for pid in ids], seed=17)
+        self.assertEqual(best["id"], gm_rows[0]["prospect_id"])
+
+    def test_different_staff_skills_with_same_overall_refresh_the_report(self):
+        team_id = self.team["id"]
+        slot = next(slot for slot in self.canonical["gameplay_staff_slots"]
+                    if slot["team_id"] == team_id and slot["slot"] == "scouting_lead")
+
+        def with_skills(talent, risk):
+            updated = {**slot, "skill_traits": {"talent_eval": talent, "risk_modeling": risk,
+                                               "international_coverage": 65}}
+            slots = [updated if row is slot else row for row in self.canonical["gameplay_staff_slots"]]
+            return {**self.canonical, "gameplay_staff_slots": slots}
+
+        first = S.class_scouting(with_skills(65, 65), "2031", S.DRAFT_MONTH)
+        second = S.class_scouting(with_skills(78.5, 36), "2031", S.DRAFT_MONTH)
+        self.assertAlmostEqual(first["staffs"][team_id]["score"], second["staffs"][team_id]["score"])
+        self.assertNotEqual(first["reports"][team_id], second["reports"][team_id])
+
     def test_draft_is_deterministic_and_explained(self):
         first = D.simulate_draft(self.canonical, "2030", seed=11)
         second = D.simulate_draft(self.canonical, "2030", seed=11)

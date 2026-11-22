@@ -6,6 +6,8 @@ Run from this checkout with:
 
 The default build is offline. --refresh-game runs the selector and replaces the
 compact game fixture. Source details are in data/research/draft_boards/cache.
+The disagreement probe, its training grid and the live timing probe each write
+to an explicit output path.
 """
 
 from __future__ import annotations
@@ -13,20 +15,26 @@ from __future__ import annotations
 import argparse
 import csv
 from collections import Counter, defaultdict
+from contextlib import nullcontext
 from dataclasses import dataclass, replace
 from datetime import date
 from itertools import combinations
 import json
 from pathlib import Path
 import re
-from statistics import mean, median
+from statistics import mean, median, pstdev
+from tempfile import TemporaryDirectory
+from time import perf_counter
 import unicodedata
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[2]
 RESEARCH = ROOT / "data" / "research"
 CACHE = RESEARCH / "draft_boards" / "cache"
 SPLITS = {"fit": range(2012, 2022), "held_out": range(2022, 2026)}
+GAME_CASES = ((2026, 17), (2031, 17), (2032, 23), (2033, 31))
+EXTRA_CHECK_CASES = ((2034, 47), (2035, 59), (2036, 71))
 BANDS = ((1, 5, "1–5"), (6, 14, "6–14"), (15, 30, "15–30"), (31, 60, "second round"))
 DRAFT_DATES = {
     2012: "06-28", 2013: "06-27", 2014: "06-26", 2015: "06-25",
@@ -508,17 +516,19 @@ def historical_game_class(base, config, draft):
             "draft_prospect_traits": to_plain(traits), "draft_picks": [*base["draft_picks"], *picks]}
 
 
-def game_inputs(base, year, seed, config, real_ages):
+def game_inputs(base, year, seed, config, real_ages, *, selections=None, scouting=None):
     from nba_gm_data import draft as engine, draft_scouting as scouts
 
     canonical = {**base, "meta": {**base["meta"], "draft_class_seed": seed}}
-    result = engine.simulate_draft(canonical, str(year), seed=seed, config=config)
-    expected_slots = {int(row["overall_pick"]) for row in result.get("draft_order", [])} or set(range(1, 61))
-    assert {int(row["overall_pick"]) for row in result["selections"]} == expected_slots
-    assert len(result["selections"]) == len(expected_slots)
-    report = scouts.class_scouting(canonical, str(year), scouts.DRAFT_MONTH)
+    if selections is None:
+        result = engine.simulate_draft(canonical, str(year), seed=seed, config=config)
+        selections = result["selections"]
+        expected_slots = {int(row["overall_pick"]) for row in result.get("draft_order", [])} or set(range(1, 61))
+        assert {int(row["overall_pick"]) for row in selections} == expected_slots
+        assert len(selections) == len(expected_slots)
+    report = scouting if scouting is not None else scouts.class_scouting(canonical, str(year), scouts.DRAFT_MONTH)
     team_names = {t["id"]: team_key(t["abbrev"]) for t in canonical["teams"]}
-    picks = [(int(row["overall_pick"]), row["prospect_id"], team_names[row["team_id"]]) for row in result["selections"]]
+    picks = [(int(row["overall_pick"]), row["prospect_id"], team_names[row["team_id"]]) for row in selections]
     board = {}
     for pid, r in report["consensus"].items():
         p = report["prospects"][pid]
@@ -534,7 +544,7 @@ def game_inputs(base, year, seed, config, real_ages):
 
     by_team = {}
     phases = {}
-    for sel in result["selections"]:
+    for sel in selections:
         team = sel["team_id"]
         if team_names[team] in by_team:
             continue
@@ -569,6 +579,8 @@ def game_replay(draft, weights):
             if pid in pool:
                 phase = weights["upside"] * upside + weights["ready"] * ready - weights["risk"] * risk
                 reach = weights["reach"] * max(0, slot_value - prospect_value - weights["tolerance"])
+                if slot <= 5:
+                    reach += weights.get("top_five_reach", 0.0) * max(0, draft["board"][pid].rank - slot - 2)
                 score = round(grade + phase + need * fit - reach, 4)
                 scored.append((-score, draft["board"][pid].rank, pid))
         selected = min(scored)[2]
@@ -648,13 +660,9 @@ def refresh_game(teams, historical):
     draft = read_json(RESEARCH / "draft_prospects_2026.json")
     game_2026 = historical_game_class(base, config, draft)
     ages = {name_key(r["player"]): r["age"] for r in draft["prospects"]}
-    stock = {
-        "reach": engine.GM_REACH_WEIGHT, "tolerance": engine.GM_REACH_TOLERANCE,
-        "need": [weight for _, weight in engine.GM_NEED_WEIGHTS], "upside": engine.GM_PHASE_UPSIDE,
-        "ready": engine.GM_PHASE_READY, "risk": engine.GM_CONTENDER_RISK,
-    }
+    stock = game_weights(engine)
     game = []
-    for year, seed in ((2026, 17), (2031, 17), (2032, 23), (2033, 31)):
+    for year, seed in GAME_CASES:
         canonical = game_2026 if year == 2026 else base
         item = game_inputs(canonical, year, seed, config, ages)
         assert item["picks"] == game_replay(item, stock)["picks"], f"Stock replay differs in {year}"
@@ -693,11 +701,303 @@ def compact_events(events):
     }}
 
 
+def game_weights(engine):
+    return {
+        "reach": engine.GM_REACH_WEIGHT, "tolerance": engine.GM_REACH_TOLERANCE,
+        "need": [weight for _, weight in engine.GM_NEED_WEIGHTS], "upside": engine.GM_PHASE_UPSIDE,
+        "ready": engine.GM_PHASE_READY, "risk": engine.GM_CONTENDER_RISK,
+        "top_five_reach": getattr(engine, "GM_TOP_FIVE_REACH_WEIGHT", 0.0),
+    }
+
+
+def scouting_spread(scouting, canonical):
+    """Spread across teams judging the same prospect, grouped by initial public rank."""
+    from nba_gm_data import draft as engine
+
+    teams = scouting["reports"]
+    ids = list(scouting["prospects"])
+    result = {}
+    for low, high, label in BANDS:
+        pick = (low + high) // 2
+        candidates = [pid for pid in ids if low <= scouting["consensus"][pid]["public_rank"] <= high]
+        gm_lists = [engine.gm_rows(canonical, scouting, team, pick, ids) for team in teams]
+        gm_positions = [{row["prospect_id"]: i for i, row in enumerate(rows, 1)} for rows in gm_lists]
+        gm_scores = [{row["prospect_id"]: row["score"] for row in rows} for rows in gm_lists]
+
+        def spread(values):
+            return average(pstdev(values(pid)) for pid in candidates)
+
+        result[label] = {
+            "prospects": len(candidates),
+            "coverage": average(teams[t][pid]["coverage"] for t in teams for pid in candidates),
+            "scout_grade_sd": spread(lambda pid: [teams[t][pid]["scouted_grade"] for t in teams]),
+            "scout_rank_sd": spread(lambda pid: [scouting["ranks"][t][pid] for t in teams]),
+            "gm_grade_sd": spread(lambda pid: [rows[pid] for rows in gm_scores]),
+            "gm_rank_sd": spread(lambda pid: [ranks[pid] for ranks in gm_positions]),
+        }
+    return result
+
+
+def scouting_accuracy(canonical, year, team):
+    """Change staff skill for one team while keeping its identity, taste and seeded reads fixed."""
+    from nba_gm_data import draft_scouting as scouts
+    from nba_gm_data.health import prospect_medical_penalty
+
+    prospects, traits, seed = scouts.class_records(canonical, year)
+    slot = next(s for s in canonical["gameplay_staff_slots"]
+                if s["team_id"] == team and s["slot"] == "scouting_lead")
+    result = {}
+    for quality in (50, 85):
+        stronger = {**slot, "skill_traits": dict.fromkeys(("talent_eval", "risk_modeling", "international_coverage"), quality)}
+        staff = scouts.staff_profile({**canonical, "gameplay_staff_slots": [stronger]}, team)
+        errors = defaultdict(list)
+        for p in prospects:
+            pid = p["id"]
+            report = scouts.team_report(p, traits.get(pid, {}), staff, team, scouts.DRAFT_MONTH, seed)
+            current, potential = p["current_ability"], p["potential"]
+            tail = (p.get("scouting_prior") or {}).get("latent_tail", 0)
+            medical = prospect_medical_penalty(p)
+            true_grade = scouts.scout_grade({"weights": scouts.DEFAULT_WEIGHTS}, current, potential, p["ceiling"],
+                                            p["floor"], p["volatility"], medical)
+            errors["current_mae"].append(abs(report["estimated_current"]["mid"] - current))
+            errors["full_potential_mae"].append(abs(report["estimated_potential"]["mid"] - potential))
+            errors["knowable_potential_mae"].append(abs(report["estimated_potential"]["mid"] - (potential - tail)))
+            errors["true_grade_mae"].append(abs(report["scouted_grade"] - true_grade))
+            errors["coverage"].append(report["coverage"])
+        result[quality] = {key: average(values) for key, values in errors.items()}
+    return result
+
+
+def scout_attribution(canonical, year, full):
+    """Remove one influence at a time. Changes can interact and need not add up."""
+    from nba_gm_data import draft as engine, draft_scouting as scouts
+
+    month = scouts.DRAFT_MONTH
+    coverage = {pid: mean(report[pid]["coverage"] for report in full["reports"].values())
+                for pid in full["prospects"]}
+    average_coverage = mean(coverage.values())
+
+    def shared_coverage(staff, rank, month, team, pid, seed, ahead=0):
+        return coverage[pid]
+
+    def flat_coverage(staff, rank, month, team, pid, seed, ahead=0):
+        return average_coverage
+
+    def neutral_weights(canonical, team):
+        staff = staff_profile(canonical, team)
+        return {**staff, "weights": scouts.DEFAULT_WEIGHTS, "taste": dict.fromkeys(scouts.TASTE_GROUPS, 0.0)}
+
+    staff_profile = scouts.staff_profile
+    same_quality = {**canonical, "gameplay_staff_slots": [
+        {**slot, "skill_traits": dict.fromkeys(("talent_eval", "risk_modeling", "international_coverage"), 65)}
+        if slot["slot"] == "scouting_lead" else slot for slot in canonical["gameplay_staff_slots"]
+    ]}
+    variants = {
+        "without_estimation_error": (scouts, {"POT_NOISE": 0, "CUR_NOISE": 0, "TRAIT_NOISE": 0}),
+        "shared_coverage_per_prospect": (scouts, {"coverage_pct": shared_coverage}),
+        "same_coverage_for_every_prospect": (scouts, {"coverage_pct": flat_coverage}),
+        "without_staff_preferences": (scouts, {"staff_profile": neutral_weights}),
+        "without_phase": (engine, {"GM_PHASE_UPSIDE": 0, "GM_PHASE_READY": 0, "GM_CONTENDER_RISK": 0}),
+        "without_need": (engine, {"GM_NEED_WEIGHTS": tuple((hi, 0.0) for _, hi, _ in BANDS)}),
+        "same_staff_quality": (scouts, {}),
+    }
+    result = {"full": scouting_spread(full, canonical)}
+    for key, (module, changes) in variants.items():
+        context = same_quality if key == "same_staff_quality" else canonical
+        with patch.multiple(module, **changes) if changes else nullcontext():
+            scouts.clear_cache()
+            alternate = scouts.class_scouting(context, year, month) if module is scouts else full
+            result[key] = scouting_spread(alternate, canonical)
+    scouts.clear_cache()
+    return result
+
+
+def draft_outcome_sanity(drafts):
+    """True talent at the pick, relative to the consensus prospect available at the exact turn."""
+    from nba_gm_data import draft as engine
+
+    groups = defaultdict(list)
+    for draft in drafts:
+        truth = {pid: engine.generated_bpa_grade({**p, "scouting_prior": {}})
+                 for pid, p in draft["scouting"]["prospects"].items()}
+        pool = set(draft["board"])
+        for slot, pid, _ in draft["picks"]:
+            alternative = min(pool, key=lambda p: draft["board"][p].rank)
+            gap = draft["board"][pid].rank - slot
+            group = "reach_5" if gap >= 5 else "slide_5" if gap <= -5 else "within_4"
+            groups[pick_band(slot), group].append((truth[pid], truth[pid] - truth[alternative]))
+            pool.remove(pid)
+    return {f"{band} / {group}": {"n": len(rows), "true_grade": average(row[0] for row in rows),
+                                 "true_grade_vs_board_available": average(row[1] for row in rows)}
+            for (band, group), rows in groups.items()}
+
+
+def disagreement_inputs():
+    from nba_gm_data import draft as engine
+    from nba_gm_data.app_actions import load_app_canonical
+
+    base = engine.with_draft_context(load_app_canonical(ROOT))
+    config = engine.default_draft_model_config()
+    historical = read_json(RESEARCH / "draft_prospects_2026.json")
+    game_2026 = historical_game_class(base, config, historical)
+    ages = {name_key(row["player"]): row["age"] for row in historical["prospects"]}
+    contexts = {year: {**(game_2026 if year == 2026 else base),
+                       "meta": {**base["meta"], "draft_class_seed": seed}} for year, seed in GAME_CASES}
+    return contexts, config, ages
+
+
+def live_draft_timing():
+    """Time the draft-room action from a fixed lottery save, including trades and signing."""
+    from nba_gm_data import draft_scouting as scouts, save as engine
+    from nba_gm_data.app_actions import dispatch_app_action, load_app_canonical
+
+    canonical = load_app_canonical(ROOT)
+    elapsed, trades = [], []
+    with TemporaryDirectory() as directory:
+        folder = Path(directory)
+        setup = folder / "setup.json"
+        save = engine.create_league_save(ROOT, canonical, "TOR", setup, seed=17)
+        save["meta"]["season"] = "2028-29"
+        engine.set_save_date_phase(save, "2029-06-26")
+        save["lifecycle_state"] = {"through_date": "2029-06-26", "health_game_ids": []}
+        engine.write_save(setup, save)
+        order = engine.run_draft_lottery(canonical, setup, year="2029", seed=913)
+        save = engine.load_save(setup)
+        for iteration in range(3):
+            path = folder / f"draft-{iteration}.json"
+            engine.write_save(path, save)
+            scouts.clear_cache()
+            start = perf_counter()
+            result = dispatch_app_action("draft_sim_all", {"save_path": str(path), "year": "2029",
+                                                          "team": "TOR", "seed": 17},
+                                         root=ROOT, save_dir=folder, canonical=canonical)
+            elapsed.append(perf_counter() - start)
+            assert result["status"] == "simulated"
+            assert result["result"]["applied_count"] == len(order["draft_order"])
+            trades.append(len(result["result"]["draft_trade_news"]))
+    return {"median_seconds": median(elapsed), "seconds": elapsed, "trades": trades, "picks": len(order["draft_order"])}
+
+
+def disagreement_probe(teams, context, config, ages):
+    from nba_gm_data import draft as engine, draft_scouting as scouts
+
+    measured = {}
+    diagnostics = {}
+    weights = game_weights(engine)
+    for year, seed in GAME_CASES:
+        canonical = context[year]
+        draft_times, month_times = [], []
+        for _ in range(3):
+            scouts.clear_cache()
+            start = perf_counter()
+            result = engine.simulate_draft(canonical, str(year), seed, config)
+            draft_times.append(perf_counter() - start)
+            scouts.clear_cache()
+            start = perf_counter()
+            scouts.class_scouting(canonical, str(year), 6)
+            month_times.append(perf_counter() - start)
+        full = scouts.class_scouting(canonical, str(year), scouts.DRAFT_MONTH)
+        item = game_inputs(canonical, year, seed, config, ages, selections=result["selections"], scouting=full)
+        assert item["picks"] == game_replay(item, weights)["picks"], f"Draft replay differs in {year}"
+        home = next(t for t in canonical["teams"] if t["abbrev"] == "TOR")
+        board = engine.draft_board_report(canonical, "TOR", str(year), month=scouts.DRAFT_MONTH)
+        for index, row in enumerate(board["entries"], 1):
+            report = full["reports"][home["id"]][row["prospect"]["id"]]
+            assert row["board_rank"] == index == report["scout_rank"]
+            assert row["scout_grade"] == report["scouted_grade"]
+            assert row["coverage"] == report["coverage"]
+        diagnostics[year] = {
+            "attribution": scout_attribution(canonical, str(year), full),
+            "toronto_staff_accuracy": scouting_accuracy(canonical, str(year), home["id"]),
+            "toronto_board": [{key: row[key] for key in ("board_rank", "consensus_rank", "coverage", "development")}
+                              | {"name": row["prospect"]["name"]} for row in board["entries"]],
+            "class_size": len(full["prospects"]),
+            "timing": {"draft_seconds": median(draft_times), "scouting_month_seconds": median(month_times)},
+        }
+        measured[year] = {**item, "scouting": full}
+        print(f"Measured draft choices and scouting for {year}", flush=True)
+
+    groups = {"historical_2026": (2026,), "fit": (2031, 2032), "held_out": (2033,),
+              "all_generated": (2031, 2032, 2033), "all": tuple(measured)}
+    metrics = {}
+    for group, years in groups.items():
+        selected = {year: measured[year] for year in years}
+        info, _ = summary(selected, teams, game=True)
+        info["outcomes"] = draft_outcome_sanity(selected.values())
+        metrics[group] = info
+    extra_drafts = {year: game_inputs(context[2031], year, seed, config, ages) for year, seed in EXTRA_CHECK_CASES}
+    metrics["additional_generated"], _ = summary(extra_drafts, teams, game=True)
+    return {"weights": weights, "classes": diagnostics, "metrics": metrics}
+
+
+def disagreement_loss(ranges, slides, target):
+    slide_target = target["top_10_slides"]
+    slide_error = mean(abs(slides[key] / slides["top_10"] - slide_target[key] / slide_target["top_10"]) / 0.10
+                       for key in ("slid_5", "past_14"))
+    return 0.75 * reach_error(ranges, target["by_pick_range"]) + 0.25 * slide_error
+
+
+def fit_disagreement(teams, context, config, ages, target):
+    """Choose both the scouting changes and the cost of reaching using only the two training classes."""
+    from nba_gm_data import draft as engine, draft_scouting as scouts
+
+    stock = game_weights(engine)
+    choices = {year: engine.simulate_draft(context[year], str(year), seed, config)["selections"]
+               for year, seed in GAME_CASES[1:3]}
+    grid = []
+    for slope in (1.3, 2.0, 3.0, 4.0, 5.0):
+        for taste in (2.0, 4.0, 6.0, 8.0, 10.0):
+            with patch.multiple(scouts, UPSIDE_WIDTH_SLOPE=slope, TASTE_SCALE=taste):
+                scouts.clear_cache()
+                drafts = []
+                for year, seed in GAME_CASES[1:3]:
+                    scouting = scouts.class_scouting(context[year], str(year), scouts.DRAFT_MONTH)
+                    drafts.append(game_inputs(context[year], year, seed, config, ages, selections=choices[year],
+                                              scouting=scouting))
+
+            for reach in (0.0, 0.05, 0.10, 0.15, 0.25, 0.40):
+                for tolerance in ((2.0,) if reach == 0 else (0.0, 2.0, 4.0, 6.0)):
+                    weights = {**stock, "reach": reach, "tolerance": tolerance}
+                    picks = [game_replay(d, weights) for d in drafts]
+                    ranges = range_summaries([row for d in picks for row in selection_rows(d, teams, 2026)])
+                    slides = slide_summary(picks)
+                    grid.append({"upside_width_slope": slope, "taste_scale": taste, "reach_weight": reach,
+                                 "reach_tolerance": tolerance, "fit_error": disagreement_loss(ranges, slides, target),
+                                 "by_pick_range": ranges, "top_10_slides": slides})
+    scouts.clear_cache()
+    return sorted(grid, key=lambda row: row["fit_error"])
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--refresh-game", action="store_true", help="Run the read-only seeded game probe")
-    parser.add_argument("--output", type=Path, default=RESEARCH / "draft_decisions_evidence.json")
+    parser.add_argument("--output", type=Path)
+    probe = parser.add_mutually_exclusive_group()
+    probe.add_argument("--refresh-game", action="store_true", help="Run the seeded game probe and replace its cache")
+    probe.add_argument("--disagreement", action="store_true", help="Measure choices, scouting and cold monthly builds")
+    probe.add_argument("--fit-disagreement", action="store_true", help="Fit scout and reach weights on the training split")
+    probe.add_argument("--time-live-draft", action="store_true", help="Time the draft-room action on a copied save")
     args = parser.parse_args()
+
+    if (args.fit_disagreement or args.disagreement or args.time_live_draft) and args.output is None:
+        parser.error("Specify --output for the disagreement probe.")
+    if args.output is None:
+        args.output = RESEARCH / "draft_decisions_evidence.json"
+
+    if args.time_live_draft:
+        write_json(args.output, live_draft_timing())
+        return
+
+    if args.fit_disagreement:
+        contexts, config, ages = disagreement_inputs()
+        target = read_json(RESEARCH / "draft_decisions_evidence.json")["real_nba"]["fit"]
+        write_json(args.output, fit_disagreement(team_context(), contexts, config, ages, target))
+        return
+
+    if args.disagreement:
+        contexts, config, ages = disagreement_inputs()
+        report = disagreement_probe(team_context(), contexts, config, ages)
+        write_json(args.output, report)
+        return
 
     teams = team_context()
     drafts, boards = real_drafts()

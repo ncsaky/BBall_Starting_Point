@@ -91,8 +91,9 @@ GM_PHASE_READY = 0.14  # contending: per point of current level above a typical 
 GM_TYPICAL_ROOM = 22.0
 GM_TYPICAL_CURRENT = 54.0
 GM_CONTENDER_RISK = 0.03  # contenders dislike volatile prospects a little more than the scouts do
-GM_REACH_WEIGHT = 0.25  # per point of slot value paid above the prospect's consensus slot (beyond the tolerance)
-GM_REACH_TOLERANCE = 2.0
+GM_REACH_WEIGHT = 0.40  # per point of slot value paid above the prospect's consensus slot (beyond the tolerance)
+GM_REACH_TOLERANCE = 6.0
+GM_TOP_FIVE_REACH_WEIGHT = 1.5  # extra grade cost per consensus spot beyond the first two at a premium pick
 GM_NEUTRAL_PICK = 15  # the pick used for the GM order shown on pre-draft boards
 REBUILD_PHASES = {"rebuilding", "developing"}
 CONTEND_PHASES = {"contending", "contending_with_future_upside"}
@@ -2569,7 +2570,10 @@ def gm_rows(canonical: dict[str, Any], scouting: dict[str, Any], team_id: str, o
     state = team_state(canonical, team_id)
     phase = str(state.get("phase") or "")
     reports = scouting["reports"].get(team_id) or {}
-    need_weight = gm_need_weight(int(overall_pick))
+    overall_pick = int(overall_pick)
+    need_weight = gm_need_weight(overall_pick)
+    pick_value = _slot_value(PROFILE_POTENTIAL, overall_pick)
+    top_five_reach_weight = GM_TOP_FIVE_REACH_WEIGHT if overall_pick <= 5 else 0.0
     rows = []
     for pid in candidate_ids:
         report = reports.get(pid)
@@ -2588,15 +2592,17 @@ def gm_rows(canonical: dict[str, Any], scouting: dict[str, Any], team_id: str, o
         # Price: taking a prospect the league ranks far below this pick pays this pick's price for a later pick's
         # player; a GM knows he could likely get him later or trade down for him.
         consensus_rank = scouting["consensus"][pid]["rank"]
-        reach_term = -GM_REACH_WEIGHT * max(0.0, _slot_value(PROFILE_POTENTIAL, int(overall_pick))
-                                            - _slot_value(PROFILE_POTENTIAL, consensus_rank) - GM_REACH_TOLERANCE)
+        reach_term = -GM_REACH_WEIGHT * max(0.0, pick_value - _slot_value(PROFILE_POTENTIAL, consensus_rank)
+                                            - GM_REACH_TOLERANCE)
+        # The most valuable picks carry an extra cost for passing multiple higher-ranked prospects.
+        reach_term -= top_five_reach_weight * max(0, consensus_rank - overall_pick - 2)
         rows.append({
             "prospect_id": pid,
             "score": round(report["scouted_grade"] + phase_term + need_term + reach_term, 4),
             "reach_term": round(reach_term, 3),
             "scout_grade": report["scouted_grade"],
             "scout_rank": report["scout_rank"],
-            "consensus_rank": scouting["consensus"][pid]["rank"],
+            "consensus_rank": consensus_rank,
             "phase_term": round(phase_term, 3),
             "need_term": round(need_term, 3),
             "fit": fit,

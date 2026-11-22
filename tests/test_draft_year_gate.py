@@ -1,14 +1,16 @@
 from copy import deepcopy
 from pathlib import Path
+import sys
 from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
 
-from league_health_audit import career_action
 from nba_gm_data import save as engine
 from nba_gm_data.app_actions import dispatch_app_action, load_app_canonical
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+from league_health_audit import career_action
 
 
 class DraftYearGateTests(unittest.TestCase):
