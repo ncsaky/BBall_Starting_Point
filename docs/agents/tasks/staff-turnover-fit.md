@@ -24,6 +24,15 @@ This work covers AI head coaches, offensive and defensive coordinators, and revi
 
 Sources and real-world targets are in [NBA staff turnover evidence](staff-turnover-evidence.md) and [the underlying data](../../../data/research/staff_turnover_evidence.json).
 
+## Fitted rules
+
+- Each AI team gets one head-coach review on monthly crossings from November through April once it has played 15 games. The chances per review are 2.4%, 1.8%, 1.1% and 0.6% for gaps below −8, −8 to below −3, −3 through +3, and above +3 wins per 82. The NBA evidence gives the annual rate and typical pace at dismissal. The monthly probabilities are gameplay estimates.
+- At rollover, the summer uses the completed regular-season record and the saved preseason forecast. It gives eligible permanent coaches a 14%, 11%, or 4% chance of dismissal for gaps below −3, within ±3, or above +3. The one-change-per-slot rule still applies. A scheduled retirement counts as a head change for bench review and does not add a firing. An interim appointed in season has a one-in-three chance of being retained in summer. Head-coach renewals follow the summer decision and an affordable contract.
+- Coordinators qualify for renewal at grade 60, or with neutral average skills when personality pulls the overall grade below 60. The team record does not veto their renewal. During the season, a coordinator can still be replaced at grade below 55 after a substantial skid and underperformance, when there is a credible market upgrade. The sample had no reliable role-specific rate for that exception.
+- At the end of the year, the chance of changing zero, one or two coordinators is 71% / 24% / 5% under a returning head coach and 8% / 27% / 65% under a different one. Earlier departures, expiring below-bar jobs and upcoming retirements count toward that target. Grades and a seeded tie-break determine which slot moves first. The probabilities represent all assistant departures in the NBA bench sample. The game records a deliberate replacement as a firing.
+- Preseason vacancies use existing market candidates and negotiation. A replacement needs an affordable offer and cannot be the just-dismissed incumbent. An opening vacancy fill does not use the following season's staff change allowance. Role-specific support-staff review, natural retirement and the human teams' manual contract decisions keep their existing paths.
+- The new rolls use the save seed, season, team and decision name. The career retirement stream retains its draw order. Trade reviews can exit early, so the staff review now runs before those exits. Head and coordinator identities can change how games play out in a career, and future standings and decisions can therefore diverge with the same save seed. The historical 2025–26 replays install their own dated coaches and do not run a career staff market.
+
 ## Resume state
 
-The old rules have been traced. The full two-season baseline uses a detached copy of the starting commit and opening staff snapshots, with the Azure run queued behind an existing job.
+The rules and focused coverage are in place. The baseline uses a detached copy of the starting commit. Run the same existing two-season league probe with opening staff snapshots on both revisions, compare both replay scorecards, then run the core suite. The Azure baseline is queued behind an existing job.

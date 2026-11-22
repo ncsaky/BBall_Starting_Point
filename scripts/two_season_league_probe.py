@@ -106,11 +106,19 @@ def record_staff_snapshot(out: Path, save: dict) -> None:
     path = out / f"staff_opening_{season}.json"
     if state["phase"] != "regular_season" or path.exists():
         return
+    from nba_gm_data.save import human_controlled_team_ids
+    from nba_gm_data.staff import is_interim_staff
+    from nba_gm_data.staff_lifecycle import staff_person_id
+
     fixture.write_json(path, {
         "date": state["current_date"],
+        "human_team_ids": sorted(human_controlled_team_ids(save)),
         "team_ids": sorted(save.get("team_records", {})),
         "slots": [
-            {key: slot.get(key) for key in ("team_id", "slot", "id", "person_id", "name", "market_status")}
+            {
+                "team_id": slot["team_id"], "slot": slot["slot"], "name": slot["name"],
+                "person_id": staff_person_id(slot), "interim": is_interim_staff(slot),
+            }
             for slot in save.get("staff_slots", [])
         ],
         "firings": save.get("staff_firing_history", []),
