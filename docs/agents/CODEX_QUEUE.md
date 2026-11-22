@@ -6,6 +6,46 @@ Current priority (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE now, ODDS-COA
 
 ---
 
+## Ready now (2026-11-21, late night): ROTATION-EVIDENCE (fresh chat; research)
+
+### ROTATION-EVIDENCE: how real NBA coaches run rotations and make in-game decisions
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task ROTATION-EVIDENCE (add a board row, "in progress
+(Codex)"). Read docs/agents/tasks/s2-totals-matchups.md (the new possession engine; its next piece is a proper coach:
+rotations and in-game decisions) and docs/agents/tasks/offseason-decisions-evidence.md (your format: rules fitted on
+some seasons, tested on held-out ones).
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_rotations -b codex/rotation-evidence HEAD
+Symlink .venv from the main checkout. Commit on that branch; never push, never commit to main. Research only: nothing
+under src/, gui/ or tests/.
+
+From public play-by-play for 2023-24 to 2025-26 (the NBA's own play-by-play and box score endpoints via public URLs, or
+pbpstats-style public data; respect robots.txt, rate limits and terms; record sources; check the repo's existing
+game logs under data/ first), measure:
+1. Stints: how long players stay in (median and spread) by role (starter, sixth man, bench, star), when starters first
+   sit (game clock), how long they rest, when they return, and how many players a team uses by game state.
+2. Minutes shape: starters' minutes by quarter; closing lineups (who is on the floor in the last 5 minutes of close
+   games vs the starting five); the share of the regular top-8 used in the playoffs.
+3. Game-state decisions: blowouts (when starters are pulled, by margin and time), foul trouble (when a player with 2
+   fouls in the first quarter, 3 in the first half, 4 or 5 sits, and for how long; stars vs others), fatigue and
+   back-to-backs.
+4. Timeouts: how often and when (after opponent runs of 6-0, 8-0, 10-0; end of game), and whether runs stop after them.
+5. End of game: fouling when behind (margin and seconds left), fouling up three, hack-a-player frequency,
+   two-for-one attempts.
+6. Coach differences: which of these vary most by coach (e.g. starters' minutes, rotation depth, foul-trouble
+   patience), with named examples.
+Fit simple rules where the data allow (e.g. "a starter with 2 fouls in the first quarter sits until about X") and
+check them on a held-out season. Output: data/research/rotation_evidence.json, scripts/research/rotation_evidence_fit.py,
+docs/agents/tasks/rotation-evidence.md (plain-language TL;DR first, 5 lines; tables; named examples; gaps).
+Save and commit after each part so a usage limit loses nothing. Set the board row to "review" and stop.
+```
+
+---
+
 ## Ready now (2026-11-21, night): CONTRACT-STRUCTURE-EVIDENCE (fresh chat; research, no image tool)
 
 ### CONTRACT-STRUCTURE-EVIDENCE: how real NBA contracts are shaped, and how options get decided
