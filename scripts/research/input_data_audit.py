@@ -1083,6 +1083,7 @@ def main():
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
+    args.root = args.root.resolve()
     mapping = bbi.load_mapping(args.root)
     universe = read_json(args.root, estimator.UNIVERSE_PATH)
     sources, outcomes = load_other_sources(args.root, universe)
