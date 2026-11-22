@@ -58,7 +58,7 @@ Oklahoma City repeatedly brought Haliburton into the play. Bringing his man up t
 
 | Requested decision | What is measured | What is missing |
 |---|---|---|
-| Double a post touch | Atlanta sent two at Towns in the second half of 2026 Game 5. New York found open shots away from him. Phoenix sent Oso Ighodaro to double Gilgeous-Alexander in Game 3. The public play-type tables count qualifying post-up endings, averaging 3.89, 3.46 and 3.25 per 100 team possessions in the three years. | Post catches that end in a kick-out, where the second defender came from, and team-level double counts or shares. |
+| Double a post touch | Atlanta sent two at Towns in the second half of 2026 Game 5. New York found open shots away from him. Phoenix sent Oso Ighodaro to double Gilgeous-Alexander in Game 3. The public play-type tables count qualifying post-up endings, giving 3.89, 3.46 and 3.25 defender attributions per 100 team possessions in the three years. | Post catches that end in a kick-out, where the second defender came from, and team-level double counts or shares. |
 | Help at the rim | Basketball Index measures how often a player helps away from the ball and their involvement in rim contests. In 2025–26, the bigs' minutes-weighted defended rim attempts were 7.9 per 75 on Rick Carlisle's Pacers and 4.1 on Mike Brown's Knicks. | The player sent, the pass or drive that caused the rotation, and whether the help came from the strong or weak side. The NBA matchup archive's three help fields are all zero in every season examined. |
 | Choose strong- or weak-side help | Denver's weak-side wing was responsible for the roll when Jokić came up to screen level. In 2026 Finals Game 3 the Knicks sometimes lost their early tag when San Antonio put its lone weak-side player deep in the corner. Sixteen of Wembanyama's 35 screens that night had two teammates on the weak side. | How often a defender actually helped from either side. The 16-of-35 count describes offensive spacing. |
 
@@ -74,6 +74,31 @@ A brief tag on a roller, a dig at a post player and a sustained double should be
 
 Miami stayed a frequent zone team while its usage changed considerably within the same season. Sacramento is an example of a short comparison across coaches, with different opponents and only eight games after the change. These samples do not give a 30-team zone table or enough observations to fit independent coach effects. [2024 zone reporting](https://www.basketballpoetry.com/p/1-stat-explaining-every-first-round) · [2024 NBA midseason report](https://www.nba.com/news/power-rankings-2023-24-week-16) · [2025 NBA offseason data](https://www.nba.com/news/offseason-power-rankings-east-2025) · [2026 NBA offseason data](https://www.nba.com/news/offseason-power-rankings-east-2026) · [2026 NBA in-season splits](https://www.nba.com/news/power-rankings-2025-26-week-24) · [Houston film and tracking](https://www.nba.com/news/4-takeaways-from-rockets-early-season-success) · [Ben Pfeifer's Sacramento charting](https://www.sportscasting.com/?p=1614398)
 
+## 4. Offensive screens, handoffs and movement
+
+**Screen assists** require a made field goal directly off the screen. Team rates divide NBA Hustle totals by NBA advanced possessions, and player rates use possessions with the player on the floor. The JSON covers all 90 team-seasons and 1,715 player-seasons in the Hustle tables. Three-year team totals matched the sum of player totals in each season. Player team labels show the player's final team in the source. Trade-season player totals cover all of their teams. [NBA Team Hustle](https://www.nba.com/stats/teams/hustle) · [NBA Player Hustle](https://www.nba.com/stats/players/hustle) · [NBA glossary](https://www.nba.com/stats/help/glossary)
+
+| Season | NBA screen assists per 100 team possessions | Handoff endings per 100 | Off-screen endings per 100 |
+|---|---:|---:|---:|
+| 2023–24 | 8.57 | 5.06 | 3.59 |
+| 2024–25 | 8.25 | 5.15 | 3.71 |
+| 2025–26 | 7.29 | 4.54 | 3.63 |
+
+The handoff and off-screen columns sum qualifying NBA.com/Synergy player-by-team lines. An ending is a shot, free throws or a turnover assigned to that action. Handoffs that set up another action and screens that free someone without an immediate ending are outside those columns. The archive also omits players without enough tracked endings to qualify. Named examples line up with the styles. Steve Kerr's Warriors had **10.64, 8.30 and 6.84** qualifying off-screen endings per 100. Mike Brown's 2023–24 Sacramento offense had **10.94** qualifying handoff endings per 100. Jordi Fernández's 2025–26 Nets had **9.07**. [NBA handoffs](https://www.nba.com/stats/teams/hand-off) · [NBA off-screen plays](https://www.nba.com/stats/teams/off-screen) · [Coaches on their offenses](https://www.thescore.com/nba/news/2883055/how-modern-offenses-blend-old-school-tactics-with-new-age-skills)
+
+| Named screen-assist example | Assists per 100 possessions |
+|---|---:|
+| 2023–24 Golden State | 11.73 |
+| 2024–25 Detroit | 10.44 |
+| 2025–26 Boston | 9.72 |
+| 2025–26 Miami | 2.91 |
+| Domantas Sabonis, Sacramento, 2024–25 | 8.29 |
+| Steven Adams, Houston, 2024–25 | 8.56 |
+| Luke Kornet, San Antonio, 2025–26 | 7.77 |
+| Neemias Queta, Boston, 2025–26 | 7.18 |
+
+Selected public tracking reports also give **counts of screens set**, including screens that produced no basket. Sports Info Solutions counted **63.4** ball screens per 100 for 2024–25 Memphis, **77.1** for Denver, **81.4** for Golden State and **99.9** for Miami. Miami fell to **27.8** over its first ten games of 2025–26 by the same provider. A separate Genius Sports tally put Miami at **68.9** screens per 100 in 2024–25 and **18.0** through 40 games of 2025–26. Second Spectrum figures published by Nekias Duncan put the 2025–26 Heat at **20.0** on-ball screens, **27.0** off-ball screens and **5.7** handoffs per 100. For an individual, Giannis Antetokounmpo set **26.5** on-ball and **7.2** off-ball screens per 100 in the same season. The providers and windows differ, so compare within a single series. There was no comparable full team/player panel of all screens and exchanges across the three seasons. [Sports Info Solutions tracking](https://www.sportsinfosolutions.com/2025/11/11/heat-check-a-different-offensive-approach-than-any-other-team/) · [Miami Herald with Genius Sports rates](https://www.miamiherald.com/sports/nba/miami-heat/article314323490.html) · [Duncan with Second Spectrum rates](https://www.aol.co.uk/articles/heat-suddenly-threat-east-giannis-143148000.html)
+
 ## Resume state
 
-Worktree and shared board row are set. Coverage definitions and named film examples are recorded. The public archive and cross-position matchup summaries are now built. Help, zone and the tracking depth spot check are recorded. Next are offensive screening and the coach comparisons.
+Worktree and shared board row are set. Coverage definitions and named film examples are recorded. The public archive and cross-position matchup summaries are now built. Help, zone and the tracking depth spot check are recorded. Screening totals and published action examples are recorded. Next are the coach comparisons and final reproduction checks.

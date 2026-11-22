@@ -194,8 +194,10 @@ def nba_season(files):
                         "points_per_ending": ratio(stats["pts"], stats["poss"]),
                     })
     for player in player_result.values():
-        for stints in player.get("synergy_qualifying_offensive_stints", {}).values():
+        for action, stints in player.get("synergy_qualifying_offensive_stints", {}).items():
             stints.sort(key=lambda stint: stint["team"])
+            player.setdefault("synergy_qualifying_endings_per_100_on_court", {})[action] = ratio(
+                sum(stint["endings"] for stint in stints), player["possessions_on_court"], 100)
     return team_result, player_result
 
 
@@ -401,6 +403,10 @@ SOURCES = {
     "miami_zone_2026": "https://www.nba.com/news/offseason-power-rankings-east-2026",
     "miami_zone_changes_2026": "https://www.nba.com/news/power-rankings-2025-26-week-24",
     "miami_team_screening": "https://www.miamiherald.com/sports/nba/miami-heat/article314323490.html",
+    "miami_team_handoffs": "https://www.miamiherald.com/sports/nba/miami-heat/article313344337.html",
+    "miami_full_season_actions": "https://www.aol.co.uk/articles/heat-suddenly-threat-east-giannis-143148000.html",
+    "ball_screens_2024": "https://www.thescore.com/nba/news/2883055/how-modern-offenses-blend-old-school-tactics-with-new-age-skills",
+    "screen_assist_definition": "https://www.nba.com/stats/help/glossary",
     "sis_ball_screens": "https://www.sportsinfosolutions.com/2025/11/11/heat-check-a-different-offensive-approach-than-any-other-team/",
     "aggression_variation": "https://www.lastnightinbasketball.com/nba-defenses-are-different-too/",
     "thibodeau": "https://staging-aws.sports.yahoo.com/nba/article/is-the-knicks-curveball-affecting-boston-behind-the-celtics-3-point-shooting-woes-192439329.html",
@@ -534,12 +540,29 @@ def public_samples(verify_tracking=None):
         ],
         "offensive_screen_counts": [
             {"season": "2024-25", "team": "MIA", "coach": "Erik Spoelstra", "source": "miami_team_screening",
-             "sample": "Genius Sports, prior full season as reported by Miami Herald.", "screens_per_100": 68.9},
+             "sample": "Genius Sports, prior full season as reported by Miami Herald.", "screens_per_100": 68.9,
+             "handoffs_per_100": 22.3, "handoff_source": "miami_team_handoffs"},
             {"season": "2025-26", "team": "MIA", "coach": "Erik Spoelstra", "source": "miami_team_screening",
              "sample": "Genius Sports, first 40 games, same story as the prior full season.", "screens_per_100": 18},
             {"season": "2025-26", "team": "MIA", "coach": "Erik Spoelstra", "source": "sis_ball_screens",
              "sample": "Sports Info Solutions, first 10 games, provider's ball-screen definition.",
-             "screens_per_100": 27.8},
+             "ball_screens_per_100": 27.8},
+            {"season": "2024-25", "team": "MIA", "coach": "Erik Spoelstra", "source": "sis_ball_screens",
+             "sample": "Full season, Sports Info Solutions ball-screen definition.", "ball_screens_per_100": 99.9},
+            {"season": "2024-25", "team": "MEM", "coach": None, "source": "sis_ball_screens",
+             "sample": "Full season, Sports Info Solutions ball-screen definition.", "ball_screens_per_100": 63.4},
+            {"season": "2024-25", "team": "DEN", "coach": None, "source": "sis_ball_screens",
+             "sample": "Full season, Sports Info Solutions ball-screen definition.", "ball_screens_per_100": 77.1},
+            {"season": "2024-25", "team": "GSW", "coach": "Steve Kerr", "source": "sis_ball_screens",
+             "sample": "Full season, Sports Info Solutions ball-screen definition.", "ball_screens_per_100": 81.4},
+            {"season": "2023-24", "team": None, "source": "ball_screens_2024",
+             "sample": "League snapshot, Second Spectrum as reported by theScore.", "ball_screens_per_100": 68.8},
+            {"season": "2025-26", "team": "MIA", "coach": "Erik Spoelstra", "source": "miami_full_season_actions",
+             "sample": "Prior-season reference, Second Spectrum as reported by Nekias Duncan.",
+             "ball_screens_per_100": 20.0, "off_ball_screens_per_100": 27.0, "handoffs_per_100": 5.7},
+            {"season": "2025-26", "team": "MIL", "player": "Giannis Antetokounmpo", "source": "miami_full_season_actions",
+             "sample": "Second Spectrum, per 100 with the player on the floor as reported by Nekias Duncan.",
+             "ball_screens_set_per_100": 26.5, "off_ball_screens_set_per_100": 7.2},
         ],
     }
 
@@ -792,8 +815,10 @@ def build(cache, fetch, verify_tracking=None):
             "screen_assists": "Made baskets directly credited to a screen, divided by NBA advanced possessions. "
                               "Players use on-court possessions across all their teams.",
             "synergy_qualifying_player_stints": "NBA.com/Synergy player by team stints above the source's play-type "
-                                               "minimum. Team aggregates omit unqualified stints. Plays ending in "
-                                               "a shot, free throws or turnover, not all initiating actions.",
+                                               "minimum. Team aggregates omit unqualified stints. Defensive sums "
+                                               "count player attributions and cannot be deduplicated by team possession. "
+                                               "Endings involve a shot, free throws or turnover; initiating actions are "
+                                               "a different denominator.",
             "assignments": "Season-aggregated assignments, including initial matchups, switches and other "
                            "changes. Effective FG% uses attributed field goal attempts. No intervention or hunt labels.",
             "bbi": "Minutes-weighted private-research aggregates from the local Basketball Index input. "
