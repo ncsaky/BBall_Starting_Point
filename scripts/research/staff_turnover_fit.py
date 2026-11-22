@@ -301,6 +301,7 @@ def compare_assistants(snapshots, head_rows):
             if role in old["support_roles"]:
                 support_pairs[role].append({
                     "season": year - 1, "team": team, "previous": old["support_roles"][role],
+                    "head_changed": incoming_head,
                     "current": name, "same_person": person_key(name) == person_key(old["support_roles"][role]),
                 })
         if year == LAST + 1:

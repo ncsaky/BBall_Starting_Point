@@ -17333,6 +17333,49 @@
         "role": "player_development",
         "summary": "G League head coach Zach Guthrie moved to lead NBA player development, and prior lead Ty Abbott moved into an assistant role.",
         "source": "https://www.nba.com/lakers/team/coaching-staff"
+      },
+      {
+        "team": "IND",
+        "year": 2025,
+        "role": "scouting_and_medical",
+        "summary": "Vance Catlin moved up from pro scouting director to senior vice president after 20 seasons with the club. Mike Born became college scouting director. Josh Corbeil, on staff since 2004, retained the head trainer title in an expanded role.",
+        "source": "https://www.nba.com/pacers/news/indiana-pacers-announce-basketball-operations-promotions"
+      },
+      {
+        "team": "UTA",
+        "year": 2025,
+        "role": "pro_scouting",
+        "summary": "Marquis Newman added director of pro scouting to his G League general manager work during a front-office leadership change.",
+        "source": "https://www.nba.com/jazz/news/marquis-newman-and-katie-benzan-earn-expanded-roles-and-continue-growth-in-utah-jazz-organization"
+      },
+      {
+        "team": "MIA",
+        "year": 2025,
+        "role": "international_scouting",
+        "summary": "Denis Memic moved from international scout to director of global scouting after first working for Miami as a scouting consultant in 2014.",
+        "source": "https://www.nba.com/heat/bio/bio-denis-memic"
+      },
+      {
+        "team": "DEN",
+        "year": 2023,
+        "role": "scouting_and_development",
+        "summary": "Todd Checovich directed college scouting and Dethie Fall directed pro scouting. Darrell Arthur was listed in both pro scouting and player development.",
+        "source": "https://cdn.nba.com/teams/uploads/sites/1610612743/2024/01/DN_2324_MediaGuide.pdf"
+      },
+      {
+        "team": "GSW",
+        "year": 2018,
+        "role": "medical_performance",
+        "summary": "Golden State hired Rick Celebrini as director of sports medicine and performance from outside basketball while retaining its head coach. He still held the role in the 2023–24 team guide.",
+        "source": "https://www.nba.com/warriors/news/warriors-name-rick-celebrini-director-sports-medicine-and-performance",
+        "followup_source": "https://cdn.nba.com/teams/uploads/sites/1610612744/2023/12/2324-gsw-media-guide.pdf"
+      },
+      {
+        "team": "LAL",
+        "year": 2026,
+        "role": "medical_performance",
+        "summary": "Keith D’Amelio led integrated performance, Vanessa Brooks was head athletic trainer, Jeremy Holsopple led strength and conditioning, and a separate group handled team medical care.",
+        "source": "https://www.nba.com/lakers/team/trainers-and-performance"
       }
     ],
     "assistant_role_examples": [
@@ -19791,6 +19834,7 @@
           "season": 2020,
           "team": "ATL",
           "previous": "Scottie Parker",
+          "head_changed": false,
           "current": "Scottie Parker",
           "same_person": true
         },
@@ -19798,6 +19842,7 @@
           "season": 2020,
           "team": "CHI",
           "previous": "Jeff Tanaka",
+          "head_changed": true,
           "current": "Todd Campbell",
           "same_person": false
         },
@@ -19805,6 +19850,7 @@
           "season": 2020,
           "team": "CLE",
           "previous": "Steve Spiro",
+          "head_changed": true,
           "current": "Steve Spiro",
           "same_person": true
         },
@@ -19812,6 +19858,7 @@
           "season": 2020,
           "team": "DEN",
           "previous": "Dan Shimensky",
+          "head_changed": false,
           "current": "Dan Shimensky",
           "same_person": true
         },
@@ -19819,6 +19866,7 @@
           "season": 2020,
           "team": "GSW",
           "previous": "Drew Yoder",
+          "head_changed": false,
           "current": "Drew Yoder",
           "same_person": true
         },
@@ -19826,6 +19874,7 @@
           "season": 2020,
           "team": "LAL",
           "previous": "Nina Hsieh",
+          "head_changed": false,
           "current": "Nina Hsieh",
           "same_person": true
         },
@@ -19833,6 +19882,7 @@
           "season": 2020,
           "team": "ORL",
           "previous": "Ernest Eugene",
+          "head_changed": false,
           "current": "Ernest Eugene",
           "same_person": true
         },
@@ -19840,6 +19890,7 @@
           "season": 2020,
           "team": "SAS",
           "previous": "Will Sevening",
+          "head_changed": false,
           "current": "Will Sevening",
           "same_person": true
         },
@@ -19847,6 +19898,7 @@
           "season": 2020,
           "team": "TOR",
           "previous": "Scott McCullough",
+          "head_changed": false,
           "current": "Scott McCullough",
           "same_person": true
         },
@@ -19854,6 +19906,7 @@
           "season": 2021,
           "team": "ATL",
           "previous": "Scottie Parker",
+          "head_changed": true,
           "current": "Scottie Parker",
           "same_person": true
         },
@@ -19861,6 +19914,7 @@
           "season": 2021,
           "team": "CHI",
           "previous": "Todd Campbell",
+          "head_changed": false,
           "current": "Todd Campbell",
           "same_person": true
         },
@@ -19868,6 +19922,7 @@
           "season": 2021,
           "team": "CLE",
           "previous": "Steve Spiro",
+          "head_changed": false,
           "current": "Steve Spiro",
           "same_person": true
         },
@@ -19875,6 +19930,7 @@
           "season": 2021,
           "team": "DEN",
           "previous": "Dan Shimensky",
+          "head_changed": false,
           "current": "Dan Shimensky",
           "same_person": true
         },
@@ -19882,6 +19938,7 @@
           "season": 2021,
           "team": "GSW",
           "previous": "Drew Yoder",
+          "head_changed": false,
           "current": "Drew Yoder",
           "same_person": true
         },
@@ -19889,6 +19946,7 @@
           "season": 2021,
           "team": "LAL",
           "previous": "Nina Hsieh",
+          "head_changed": false,
           "current": "Roger Sancho",
           "same_person": false
         },
@@ -19896,6 +19954,7 @@
           "season": 2021,
           "team": "ORL",
           "previous": "Ernest Eugene",
+          "head_changed": true,
           "current": "Ernest Eugene",
           "same_person": true
         },
@@ -19903,6 +19962,7 @@
           "season": 2021,
           "team": "SAS",
           "previous": "Will Sevening",
+          "head_changed": false,
           "current": "Will Sevening",
           "same_person": true
         },
@@ -19910,6 +19970,7 @@
           "season": 2021,
           "team": "TOR",
           "previous": "Scott McCullough",
+          "head_changed": false,
           "current": "Scott McCullough",
           "same_person": true
         },
@@ -19917,6 +19978,7 @@
           "season": 2022,
           "team": "ATL",
           "previous": "Scottie Parker",
+          "head_changed": false,
           "current": "Scottie Parker",
           "same_person": true
         },
@@ -19924,6 +19986,7 @@
           "season": 2022,
           "team": "CHI",
           "previous": "Todd Campbell",
+          "head_changed": false,
           "current": "Todd Campbell",
           "same_person": true
         },
@@ -19931,6 +19994,7 @@
           "season": 2022,
           "team": "CLE",
           "previous": "Steve Spiro",
+          "head_changed": false,
           "current": "Steve Spiro",
           "same_person": true
         },
@@ -19938,6 +20002,7 @@
           "season": 2022,
           "team": "DAL",
           "previous": "Dionne Calhoun",
+          "head_changed": false,
           "current": "Dionne Calhoun",
           "same_person": true
         },
@@ -19945,6 +20010,7 @@
           "season": 2022,
           "team": "DEN",
           "previous": "Dan Shimensky",
+          "head_changed": false,
           "current": "Dan Shimensky",
           "same_person": true
         },
@@ -19952,6 +20018,7 @@
           "season": 2022,
           "team": "GSW",
           "previous": "Drew Yoder",
+          "head_changed": false,
           "current": "Drew Yoder",
           "same_person": true
         },
@@ -19959,6 +20026,7 @@
           "season": 2022,
           "team": "LAL",
           "previous": "Roger Sancho",
+          "head_changed": true,
           "current": "Roger Sancho",
           "same_person": true
         },
@@ -19966,6 +20034,7 @@
           "season": 2022,
           "team": "MEM",
           "previous": "David Crewe",
+          "head_changed": false,
           "current": "Pete Elliot",
           "same_person": false
         },
@@ -19973,6 +20042,7 @@
           "season": 2022,
           "team": "MIL",
           "previous": "Scott Faust",
+          "head_changed": false,
           "current": "Scott Faust",
           "same_person": true
         },
@@ -19980,6 +20050,7 @@
           "season": 2022,
           "team": "NYK",
           "previous": "Roger Hinds",
+          "head_changed": false,
           "current": "Anthony Goenaga",
           "same_person": false
         },
@@ -19987,6 +20058,7 @@
           "season": 2022,
           "team": "ORL",
           "previous": "Ernest Eugene",
+          "head_changed": false,
           "current": "Ernest Eugene",
           "same_person": true
         },
@@ -19994,6 +20066,7 @@
           "season": 2022,
           "team": "SAS",
           "previous": "Will Sevening",
+          "head_changed": false,
           "current": "Will Sevening",
           "same_person": true
         },
@@ -20001,6 +20074,7 @@
           "season": 2022,
           "team": "TOR",
           "previous": "Scott McCullough",
+          "head_changed": false,
           "current": "Scott McCullough",
           "same_person": true
         },
@@ -20008,6 +20082,7 @@
           "season": 2023,
           "team": "CHI",
           "previous": "Todd Campbell",
+          "head_changed": false,
           "current": "Todd Campbell",
           "same_person": true
         },
@@ -20015,6 +20090,7 @@
           "season": 2023,
           "team": "DAL",
           "previous": "Dionne Calhoun",
+          "head_changed": false,
           "current": "Dionne Calhoun",
           "same_person": true
         },
@@ -20022,6 +20098,7 @@
           "season": 2023,
           "team": "DEN",
           "previous": "Dan Shimensky",
+          "head_changed": false,
           "current": "Dan Shimensky",
           "same_person": true
         },
@@ -20029,6 +20106,7 @@
           "season": 2023,
           "team": "DET",
           "previous": "Rachel Cutts",
+          "head_changed": true,
           "current": "Rachel Cutts",
           "same_person": true
         },
@@ -20036,6 +20114,7 @@
           "season": 2023,
           "team": "LAL",
           "previous": "Roger Sancho",
+          "head_changed": false,
           "current": "Roger Sancho",
           "same_person": true
         },
@@ -20043,6 +20122,7 @@
           "season": 2023,
           "team": "MEM",
           "previous": "Pete Elliot",
+          "head_changed": false,
           "current": "Pete Elliot",
           "same_person": true
         },
@@ -20050,6 +20130,7 @@
           "season": 2023,
           "team": "MIL",
           "previous": "Scott Faust",
+          "head_changed": true,
           "current": "Scott Faust",
           "same_person": true
         },
@@ -20057,6 +20138,7 @@
           "season": 2023,
           "team": "NYK",
           "previous": "Anthony Goenaga",
+          "head_changed": false,
           "current": "Anthony Goenaga",
           "same_person": true
         },
@@ -20064,6 +20146,7 @@
           "season": 2023,
           "team": "ORL",
           "previous": "Ernest Eugene",
+          "head_changed": false,
           "current": "Ernest Eugene",
           "same_person": true
         },
@@ -20071,6 +20154,7 @@
           "season": 2023,
           "team": "SAS",
           "previous": "Will Sevening",
+          "head_changed": false,
           "current": "Will Sevening",
           "same_person": true
         },
@@ -20078,6 +20162,7 @@
           "season": 2023,
           "team": "TOR",
           "previous": "Scott McCullough",
+          "head_changed": true,
           "current": "Rayhan Malik",
           "same_person": false
         },
@@ -20085,6 +20170,7 @@
           "season": 2024,
           "team": "BOS",
           "previous": "Patrick Chasse",
+          "head_changed": false,
           "current": "Patrick Chasse",
           "same_person": true
         },
@@ -20092,6 +20178,7 @@
           "season": 2024,
           "team": "CHI",
           "previous": "Todd Campbell",
+          "head_changed": false,
           "current": "Todd Campbell",
           "same_person": true
         },
@@ -20099,6 +20186,7 @@
           "season": 2024,
           "team": "DAL",
           "previous": "Dionne Calhoun",
+          "head_changed": false,
           "current": "Dionne Calhoun",
           "same_person": true
         },
@@ -20106,6 +20194,7 @@
           "season": 2024,
           "team": "DEN",
           "previous": "Dan Shimensky",
+          "head_changed": false,
           "current": "Dan Shimensky",
           "same_person": true
         },
@@ -20113,6 +20202,7 @@
           "season": 2024,
           "team": "MEM",
           "previous": "Pete Elliot",
+          "head_changed": false,
           "current": "Cally Beltz",
           "same_person": false
         },
@@ -20120,6 +20210,7 @@
           "season": 2024,
           "team": "MIL",
           "previous": "Scott Faust",
+          "head_changed": true,
           "current": "Scott Faust",
           "same_person": true
         },
@@ -20127,6 +20218,7 @@
           "season": 2024,
           "team": "NYK",
           "previous": "Anthony Goenaga",
+          "head_changed": false,
           "current": "Anthony Goenaga",
           "same_person": true
         },
@@ -20134,6 +20226,7 @@
           "season": 2024,
           "team": "ORL",
           "previous": "Ernest Eugene",
+          "head_changed": false,
           "current": "Ernest Eugene",
           "same_person": true
         },
@@ -20141,6 +20234,7 @@
           "season": 2024,
           "team": "PHI",
           "previous": "Kevin Johnson",
+          "head_changed": false,
           "current": "Kevin Johnson",
           "same_person": true
         },
@@ -20148,6 +20242,7 @@
           "season": 2024,
           "team": "SAC",
           "previous": "Joel Noland",
+          "head_changed": false,
           "current": "Joel Noland",
           "same_person": true
         },
@@ -20155,6 +20250,7 @@
           "season": 2024,
           "team": "SAS",
           "previous": "Will Sevening",
+          "head_changed": false,
           "current": "Will Sevening",
           "same_person": true
         },
@@ -20162,6 +20258,7 @@
           "season": 2024,
           "team": "TOR",
           "previous": "Rayhan Malik",
+          "head_changed": false,
           "current": "Rayhan Malik",
           "same_person": true
         },
@@ -20169,6 +20266,7 @@
           "season": 2025,
           "team": "BOS",
           "previous": "Patrick Chasse",
+          "head_changed": false,
           "current": "Patrick Chasse",
           "same_person": true
         },
@@ -20176,6 +20274,7 @@
           "season": 2025,
           "team": "CHI",
           "previous": "Todd Campbell",
+          "head_changed": false,
           "current": "Todd Campbell",
           "same_person": true
         },
@@ -20183,6 +20282,7 @@
           "season": 2025,
           "team": "DAL",
           "previous": "Dionne Calhoun",
+          "head_changed": false,
           "current": "Jana Austin",
           "same_person": false
         },
@@ -20190,6 +20290,7 @@
           "season": 2025,
           "team": "DEN",
           "previous": "Dan Shimensky",
+          "head_changed": true,
           "current": "Dan Shimensky",
           "same_person": true
         },
@@ -20197,6 +20298,7 @@
           "season": 2025,
           "team": "HOU",
           "previous": "Jason Biles",
+          "head_changed": false,
           "current": "Jason Biles",
           "same_person": true
         },
@@ -20204,6 +20306,7 @@
           "season": 2025,
           "team": "MEM",
           "previous": "Cally Beltz",
+          "head_changed": true,
           "current": "Cally Beltz",
           "same_person": true
         },
@@ -20211,6 +20314,7 @@
           "season": 2025,
           "team": "MIL",
           "previous": "Scott Faust",
+          "head_changed": false,
           "current": "Scott Faust",
           "same_person": true
         },
@@ -20218,6 +20322,7 @@
           "season": 2025,
           "team": "NYK",
           "previous": "Anthony Goenaga",
+          "head_changed": true,
           "current": "Anthony Goenaga",
           "same_person": true
         },
@@ -20225,6 +20330,7 @@
           "season": 2025,
           "team": "ORL",
           "previous": "Ernest Eugene",
+          "head_changed": false,
           "current": "Ernest Eugene",
           "same_person": true
         },
@@ -20232,6 +20338,7 @@
           "season": 2025,
           "team": "PHI",
           "previous": "Kevin Johnson",
+          "head_changed": false,
           "current": "Kevin Johnson",
           "same_person": true
         },
@@ -20239,6 +20346,7 @@
           "season": 2025,
           "team": "SAC",
           "previous": "Joel Noland",
+          "head_changed": true,
           "current": "Joel Noland",
           "same_person": true
         },
@@ -20246,6 +20354,7 @@
           "season": 2025,
           "team": "SAS",
           "previous": "Will Sevening",
+          "head_changed": true,
           "current": "Will Sevening",
           "same_person": true
         },
@@ -20253,6 +20362,7 @@
           "season": 2025,
           "team": "TOR",
           "previous": "Rayhan Malik",
+          "head_changed": false,
           "current": "Rayhan Malik",
           "same_person": true
         }
@@ -20262,6 +20372,7 @@
           "season": 2025,
           "team": "MIL",
           "previous": "Jack Herum",
+          "head_changed": false,
           "current": "Jack Herum",
           "same_person": true
         }
