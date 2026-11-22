@@ -96,6 +96,37 @@ def table(before_path: str, after_path: str) -> None:
               f"{a['ovr']:.1f} | {b.get('class_rank', '—')} → {a['class_rank']} | {b.get('rank', '—')} → {a['rank']} |")
 
 
+def table3(old_path: str, first_path: str, new_path: str) -> None:
+    """ROOKIE-FIT-2: the 2026 class under the old method, the first attempt and the new ability level."""
+    bundle = json.loads(BUNDLE.read_text(encoding="utf-8"))["class_2026"]
+    snaps = [class_rows(json.loads(Path(p).read_text()), "2026") for p in (old_path, first_path, new_path)]
+    old, first, new = snaps
+    print("| Rookie | Pick | Age | College fit (off / def) | Readiness | This season so far (min, per 36 pts, box +/-) "
+          "| Day-one ability (off / def) | Overall: old → first try → new | Rookie rank | League rank |")
+    print("|---|---:|---:|---:|---|---|---:|---:|---:|---:|")
+    for pid, a in sorted(new.items(), key=lambda kv: kv[1]["class_rank"]):
+        e = bundle.get(pid)
+        if e:
+            parts, pr = e["projection_parts"], e["projection"]
+            fit = f"{parts['college_fit']['o']:+.2f} / {parts['college_fit']['d']:+.2f}"
+            tier = parts["readiness"]["tier"].replace("_", " ")
+            g = parts["early_games"]
+            games = (f"{g['minutes']:.0f} min, {g['pts_per36']:.1f}, {g['bpm']:+.1f} (moved {g['o'] + g['d']:+.2f})"
+                     if g.get("minutes") else "—")
+            proj = f"{pr['lebron']:+.2f} ({pr['o']:+.2f} / {pr['d']:+.2f})"
+        else:
+            fit, tier, games, proj = "no college season", "—", "—", "earlier method"
+        ovr = " → ".join(f"{s[pid]['ovr']:.1f}" if pid in s else "—" for s in snaps)
+        rk = " → ".join(str(s[pid]["class_rank"]) if pid in s else "—" for s in snaps)
+        lg = " → ".join(str(s[pid]["rank"]) if pid in s else "—" for s in snaps)
+        print(f"| {a['name']} | {a['pick']} | {a['age']:.0f} | {fit} | {tier} | {games} | {proj} | {ovr} | {rk} | {lg} |")
+    ovrs = [r["ovr"] for r in new.values()]
+    print(f"\nnew class overall range {min(ovrs):.1f}-{max(ovrs):.1f}, sd {statistics.pstdev(ovrs):.2f}; first try "
+          f"{min(r['ovr'] for r in first.values()):.1f}-{max(r['ovr'] for r in first.values()):.1f}, sd "
+          f"{statistics.pstdev([r['ovr'] for r in first.values()]):.2f}; old {min(r['ovr'] for r in old.values()):.1f}-"
+          f"{max(r['ovr'] for r in old.values()):.1f}, sd {statistics.pstdev([r['ovr'] for r in old.values()]):.2f}")
+
+
 def rookie_lebron(season: str) -> dict[str, dict]:
     out = {}
     with LEBRON_CSV.open(newline="", encoding="utf-8") as handle:
@@ -171,6 +202,8 @@ def main() -> None:
         Path(sys.argv[2]).write_text(json.dumps(snapshot(), indent=0))
     elif command == "table":
         table(sys.argv[2], sys.argv[3])
+    elif command == "table3":
+        table3(sys.argv[2], sys.argv[3], sys.argv[4])
     elif command == "backtest":
         backtest(sys.argv[2])
     else:

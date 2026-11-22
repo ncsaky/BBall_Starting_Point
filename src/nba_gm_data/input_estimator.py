@@ -41,12 +41,15 @@ STATS_PATH = 'Player Stats/player_stats.json'
 CAREER_PATH = 'data/research/player_career_stats.json'
 PACKET_PATH = 'docs/ratings-evidence-2026-10-29'
 SHOT_ZONE_PATH = 'data/research/shot_chart_reference.json'
-# ROOKIE-FIT (2026-11-21): the 2026 class's final college season, its projected rookie-year impact
-# (scripts/research/rookie_fit.py) and the fitted college -> 94-input mapping (data/canonical/real_prospects.json).
+# ROOKIE-FIT (2026-11-21): the 2026 class's final college season and the fitted college -> 94-input mapping
+# (data/canonical/real_prospects.json) set each rookie's skill SHAPE. ROOKIE-FIT-2 (2026-11-22,
+# scripts/research/rookie_fit2.py): his LEVEL is his day-one ability, the impact per 100 possessions he is expected to
+# show if he plays (fitted on rookies who played, corrected for who gets minutes; never pulled toward a bench level
+# by minutes), blended with the scouts' board rank, readiness write-ups and, lightly, this season's games.
 ROOKIE_TRANSLATION_PATH = 'data/research/rookie_translation_2026.json'
 ROOKIE_MAPPING_PATH = 'data/canonical/real_prospects.json'
-ROOKIE_METHOD = 'rookie_translation_v1'
-# The projection is the expected rookie-year impact (already a shrunk forecast), and it is this player's only
+ROOKIE_METHOD = 'rookie_translation_v2'
+# The projection is the expected day-one ability (already a regressed forecast), and it is this player's only
 # level evidence. It enters the family-talent step exactly like a veteran's impact metric, at the most
 # precision one impact observation may carry there (2), so it is not shrunk twice.
 ROOKIE_PROJECTION_PRECISION = 2.0
@@ -600,7 +603,7 @@ def load_rookie_college(root: str | Path, path: Path | None = None) -> dict[str,
                 'college:' + pid, n=minutes, prior_exposure=ROOKIE_EVIDENCE_PRIOR_MINUTES,
                 reliability=reliability, exposure_unit='college_minutes'))
         out[pid] = dict(evidence=evidence, projection=dict(entry['projection']), involvement=involvement,
-                        name=entry['name'], college=college)
+                        name=entry['name'], college=college, parts=entry.get('projection_parts'))
     return out
 
 

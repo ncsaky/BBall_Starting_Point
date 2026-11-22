@@ -87,7 +87,9 @@ def apply_rookie_college(section: dict, estimator: InputEstimator, universe: dic
 
 
 # ROOKIE-FIT level step. The college evidence fixes each rookie's SHAPE (which skills are strengths); the
-# translation fit fixes his LEVEL: his projected rookie-year impact, offense and defense, placed on the game's
+# translation bundle fixes his LEVEL (ROOKIE-FIT-2: his day-one ability, the impact he shows if he plays, from the
+# college fit on rookies who played, scouts' board rank, readiness notes and lightly this season's games; never his
+# expected playing time), offense and defense, placed on the game's
 # value scale by the same line that links veterans' real single-season impact to the game's value of their
 # inputs. One log-odds shift per side (all offensive technique / all defensive technique, free throws excepted)
 # moves his technique until the game values him at that level. Tools, tendencies and coach usage never move.
@@ -166,8 +168,9 @@ def _shifted(record: dict, delta: float, note: dict) -> dict:
         notes["interval"] = [round(max(0.0, min(low + new - grade, new)), 6), round(min(100.0, max(high + new - grade, new)), 6)]
     out["uncertainty"]["notes"] = json.dumps(notes, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     out["evidence"] = [*out["evidence"], {"source": "data/research/rookie_translation_2026.json",
-        "method": "rookie_translation_v1 level: projected rookie-year impact placed on the game's value scale "
-                  "(veteran real-impact line); one log-odds shift per side of the ball",
+        "method": "rookie_translation_v2 level: day-one ability (impact if he plays: college fit on rookies who "
+                  "played, scouts' rank, readiness notes, this season's games by minutes) placed on the game's value "
+                  "scale (veteran real-impact line); one log-odds shift per side of the ball",
         "shared_evidence_id": "rookie_level:" + note["player_id"],
         "notes": json.dumps(note, sort_keys=True, separators=(",", ":"))}]
     return out
@@ -213,6 +216,14 @@ def level_rookies(section: dict, college: dict, root: Path, iterations: int = 25
                     "projected_rookie_defense": college[pid]["projection"]["d"],
                     "shift_offense": round(delta[pid]["offense"], 4), "shift_defense": round(delta[pid]["defense"], 4),
                     "value_line": {k: lines[k] for k in channels}}
+            parts = college[pid].get("parts")
+            if parts:   # what the day-one ability is made of (labelled evidence; LEBRON points per 100 possessions)
+                games = parts["early_games"]
+                note["evidence_parts"] = {
+                    "college_fit": {s: parts["college_fit"][s] for s in ("o", "d")},
+                    "scout_rank": parts["scout_rank"],
+                    "readiness": parts["readiness"],
+                    "early_games": {k: games[k] for k in ("o", "d", "minutes", "weight", "games", "team") if k in games}}
             for side, inputs in channels.items():
                 for iid in inputs:
                     section["players"][pid]["inputs"][iid] = _shifted(original[pid][iid], delta[pid][side], note)
