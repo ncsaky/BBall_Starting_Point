@@ -2,7 +2,56 @@
 
 Paste one prompt into a **fresh** Codex chat. One task per chat keeps it from drifting after context compaction. Each prompt is self-contained. Claude reviews the result and updates `BOARD.md`.
 
-Current priority (2026-11-22, evening): DRAFT-DISAGREEMENT now. GUI tasks are parked at the bottom.
+Current priority (2026-11-22, night): DRAFT-REAL-ORDER now. GUI tasks are parked at the bottom.
+
+---
+
+## Ready now (2026-11-22, night): DRAFT-REAL-ORDER (fresh chat; code task with tests)
+
+### DRAFT-REAL-ORDER: AI drafts land close to how real teams draft
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task DRAFT-REAL-ORDER (the board row exists; set it to
+"in progress (Codex)" when you start). Read your own reports docs/agents/tasks/draft-decisions-evidence.md and
+docs/agents/tasks/draft-disagreement.md first: this task follows on from them.
+
+The project moved: it now lives at /Users/noahtyler/Developer/BBall_data/BBall_Starting_Point (the old
+~/Documents/BBall_data path is a link to it). Setup: your own git worktree:
+  git worktree add ../BBall_codex_draft_real_order -b codex/draft-real-order HEAD
+Symlink .venv and the git-ignored data the tests need from the main checkout (as last time). Commit on that branch;
+never push, never commit to main.
+
+Boundaries: src/nba_gm_data/draft.py, src/nba_gm_data/draft_scouting.py, scripts/research/draft_decisions_fit.py,
+draft tests, your report. Do NOT touch the input builder, input_estimator.py, data/canonical/, health.py or the coach /
+rotation code: two Claude agents (RATINGS-AUDIT-GSW and ROOKIE-SEASON) are working there.
+
+The user's requirement: AI teams must still pick close to how real teams pick. Two problems remain after
+DRAFT-DISAGREEMENT:
+1. The 2026 class rerun on game teams went Dybantsa 1, Boozer 2, Peterson 4, Lendeborg 5. Real: Dybantsa 1,
+   Peterson 2, Boozer 3, Lendeborg 11. Find why the game's scouts and GMs rate the 24-year-old Lendeborg as a
+   top-five pick (current ability counted too much against upside? the prospect profile's potential? a contender's
+   readiness bonus?) and why Peterson slips. Fix the cause in the scouting or GM logic, not by special-casing
+   players. The real 2026 order is the target for this one real class: report the typical gap between the game's
+   order and the real order for picks 1-14 and 15-30, before and after, over a few seeds.
+2. Picks 6-14 now stray too far from the board: in the 2026 rerun 56% of those picks were 5+ spot reaches (44%
+   10+), and the 2033 check also overshot, against about 28% / 14% in real drafts. Bring 6-14 back toward the real
+   rates without losing the late-round gains (second round 6-8 typical gap against the NBA's 9-10) or the top-five
+   discipline. Fit on 2012-2021 and the first two generated classes, check on 2022-2025 and the third class, as before.
+
+Keep: better scouting staffs measurably more accurate; reaches paying off worse on average; the user's own board built
+by the same machinery as the AI's (AGENTS.md rule 4); draft-day speed.
+
+Gates: all draft tests (PYTHONPATH=src:tests .venv/bin/python -m unittest discover -s tests -p "test_draft*.py"),
+bash scripts/run_core_tests.sh, and the real-stat scorecard stays 18/18 (PYTHONPATH=src .venv/bin/python
+scripts/calibration_report.py --games 1230 --mode replay-real-minutes). Laptop: nice -n 10, and at most two heavy jobs
+on the machine in total; two Claude agents are also running, so check `uptime` and wait (no pgrep wait loops) if the
+1-minute load is above 20.
+
+Report: docs/agents/tasks/draft-real-order.md, plain everyday language, 3-line TL;DR first, before/after/real tables.
+Set the board row to "review" and stop.
+```
 
 ---
 
