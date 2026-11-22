@@ -93,6 +93,7 @@ GM_TYPICAL_CURRENT = 54.0
 GM_CONTENDER_RISK = 0.03  # contenders dislike volatile prospects a little more than the scouts do
 GM_REACH_WEIGHT = 0.40  # per point of slot value paid above the prospect's consensus slot (beyond the tolerance)
 GM_REACH_TOLERANCE = 6.0
+GM_LOTTERY_CONSENSUS_SHARE = 0.25  # picks 6–14 use a second opinion on the scouting grade
 GM_TOP_FIVE_REACH_WEIGHT = 1.5  # extra grade cost per consensus spot beyond the first two at a premium pick
 GM_NEUTRAL_PICK = 15  # the pick used for the GM order shown on pre-draft boards
 REBUILD_PHASES = {"rebuilding", "developing"}
@@ -196,6 +197,7 @@ def build_draft_context(canonical: dict[str, Any] | Any, draft_research: dict[st
     }
 
 
+ARCHIVED_PUBLIC_CLASS_TYPE = "real_public_source_bundle"
 REAL_CLASS_TYPE = "real_college_plus_generated"
 _SAVE_CLASS_CACHE: dict[tuple[int, int], tuple[dict[str, Any], dict[str, Any]]] = {}
 
@@ -275,7 +277,7 @@ def build_2026_draft_records(draft_research: dict[str, Any] | None, config: dict
     draft_class = DraftClass(
         id=stable_id("draft_class", "2026"),
         season="2026",
-        class_type="real_public_source_bundle",
+        class_type=ARCHIVED_PUBLIC_CLASS_TYPE,
         seed=None,
         class_strength=round((strength * 0.58 + depth * 0.42), 2),
         top_end_strength=round(strength, 2),
@@ -1993,7 +1995,7 @@ CLASS_CURRENT_PER_POINT = 0.30
 CLASS_POTENTIAL_PER_POINT = 0.55
 
 
-def _slot_value(table: tuple[tuple[int, float], ...], rank: int) -> float:
+def _slot_value(table: tuple[tuple[int, float], ...], rank: float) -> float:
     rank = max(table[0][0], min(table[-1][0], rank))
     for (r0, v0), (r1, v1) in zip(table, table[1:]):
         if r0 <= rank <= r1:
@@ -2564,6 +2566,7 @@ def gm_rows(canonical: dict[str, Any], scouting: dict[str, Any], team_id: str, o
 
     - Phase: a rebuilding or developing team adds value for upside room beyond a typical prospect's; a contender
       adds value for a current level above a typical first-rounder's and dislikes volatility.
+    - Picks 6–14 weigh the consensus grade along with the team’s grade before adding fit.
     - Need and fit: weighs more as the draft goes on (teams take the best talent at the top).
     - What is left: the GM takes the best of what is still there, so a prospect who slides gets taken.
     """
@@ -2574,6 +2577,7 @@ def gm_rows(canonical: dict[str, Any], scouting: dict[str, Any], team_id: str, o
     need_weight = gm_need_weight(overall_pick)
     pick_value = _slot_value(PROFILE_POTENTIAL, overall_pick)
     top_five_reach_weight = GM_TOP_FIVE_REACH_WEIGHT if overall_pick <= 5 else 0.0
+    consensus_share = GM_LOTTERY_CONSENSUS_SHARE if 6 <= overall_pick <= 14 else 0.0
     rows = []
     for pid in candidate_ids:
         report = reports.get(pid)
@@ -2591,14 +2595,18 @@ def gm_rows(canonical: dict[str, Any], scouting: dict[str, Any], team_id: str, o
         need_term = need_weight * (fit - 50.0)
         # Price: taking a prospect the league ranks far below this pick pays this pick's price for a later pick's
         # player; a GM knows he could likely get him later or trade down for him.
-        consensus_rank = scouting["consensus"][pid]["rank"]
+        consensus = scouting["consensus"][pid]
+        consensus_rank = consensus["rank"]
         reach_term = -GM_REACH_WEIGHT * max(0.0, pick_value - _slot_value(PROFILE_POTENTIAL, consensus_rank)
                                             - GM_REACH_TOLERANCE)
         # The most valuable picks carry an extra cost for passing multiple higher-ranked prospects.
         reach_term -= top_five_reach_weight * max(0, consensus_rank - overall_pick - 2)
+        grade = report["scouted_grade"]
+        if consensus_share:
+            grade += consensus_share * (consensus["grade"] - grade)
         rows.append({
             "prospect_id": pid,
-            "score": round(report["scouted_grade"] + phase_term + need_term + reach_term, 4),
+            "score": round(grade + phase_term + need_term + reach_term, 4),
             "reach_term": round(reach_term, 3),
             "scout_grade": report["scouted_grade"],
             "scout_rank": report["scout_rank"],
