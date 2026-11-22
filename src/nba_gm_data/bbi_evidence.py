@@ -217,7 +217,8 @@ def reliability_factor(r: float | None) -> float:
 
 def _percentiles(values: dict[str, tuple[float, float, str | None]], direction: int) -> dict[str, float]:
     pool = sorted(v * direction for v, m, _ in values.values() if m >= MIN_POOL_MINUTES)
-    if len(pool) < 30:
+    if len(pool) < 30 or pool[0] == pool[-1]:
+        # A column with one value for everyone (a broken export: shooting fouls drawn is all zeros) ranks nobody.
         return {}
     import bisect
     n = len(pool)
@@ -234,7 +235,8 @@ def player_input_scores(root: Path, mapping: Mapping[str, Any] | None = None) ->
     mapping = mapping or load_mapping(root)
     specs: dict[str, dict[str, Any]] = {}
     for iid, spec in mapping["inputs"].items():
-        if not spec.get("metrics"):
+        if not spec.get("metrics") or spec.get("measured_by"):
+            # measured_by: the input is measured elsewhere from the same data (e.g. foul_security_evidence).
             continue
         if spec.get("kind") in OVERLAY_KINDS:
             specs[iid] = spec
