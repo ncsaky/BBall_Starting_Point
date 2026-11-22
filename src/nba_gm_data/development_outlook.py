@@ -11,8 +11,8 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
-from .health import (DEVELOPMENT_TRAITS, coach_development_by_team, development_staff_modifiers,
-                     development_trait_focus, monthly_trait_delta)
+from .health import (DEVELOPMENT_TRAITS, INPUTS_CURVE, LEGACY_CURVE, coach_development_by_team,
+                     development_staff_modifiers, development_trait_focus, monthly_trait_delta)
 from .utils import maybe_float
 
 
@@ -25,6 +25,11 @@ def _months_after(start: str, count: int) -> list[str]:
             year, month = year + 1, 1
         out.append(f"{year:04d}-{month:02d}")
     return out
+
+
+def _curve(active: dict[str, Any]) -> str:
+    from .ratings_model import uses_inputs_model
+    return INPUTS_CURVE if uses_inputs_model(active) else LEGACY_CURVE
 
 
 def _overall(active: dict[str, Any], player: dict[str, Any], traits: dict[str, float], model: dict[str, Any] | None) -> float:
@@ -53,15 +58,17 @@ def expected_rating_changes(active: dict[str, Any], player: dict[str, Any], mont
     staff = development_staff_modifiers(active, player.get("team_id"), coach)
     start = (start_month or str(active.get("meta", {}).get("current_date") or date.today().isoformat()))[:7]
     totals: dict[str, float] = {}
+    curve = _curve(active)
     for index, month in enumerate(_months_after(start, months)):
         month_age = None if age is None else age + (index + 1) / 12.0
-        focus = development_trait_focus(player, staff, rows, seed, month)
+        focus = development_trait_focus(player, staff, rows, seed, month, curve=curve)
         for key in DEVELOPMENT_TRAITS:
             if key not in current:
                 continue
             context = (rows.get(key, {}).get("components") or {}).get("career_capacity")
             delta = monthly_trait_delta(player, key, current[key], month_age, minutes, staff, 0.0, seed, month,
-                                        float(focus.get(key, 0.32)), context, expected=True)
+                                        float(focus.get(key, 0.32)), context, expected=True,
+                                        curve=curve)
             current[key] += delta
             totals[key] = totals.get(key, 0.0) + delta
     return totals
@@ -96,16 +103,18 @@ def expected_overall_change(active: dict[str, Any], player: dict[str, Any], mont
     staff = development_staff_modifiers(active, player.get("team_id"), coach)
     start = (start_month or str(active.get("meta", {}).get("current_date") or date.today().isoformat()))[:7]
     totals: dict[str, float] = {}
+    curve = _curve(active)
     current = dict(traits)
     for index, month in enumerate(_months_after(start, months)):
         month_age = None if age is None else age + (index + 1) / 12.0
-        focus = development_trait_focus(player, staff, rows, seed, month)
+        focus = development_trait_focus(player, staff, rows, seed, month, curve=curve)
         for key in DEVELOPMENT_TRAITS:
             if key not in current:
                 continue
             context = (rows.get(key, {}).get("components") or {}).get("career_capacity")
             delta = monthly_trait_delta(player, key, current[key], month_age, minutes, staff, 0.0, seed, month,
-                                        float(focus.get(key, 0.32)), context, expected=True)
+                                        float(focus.get(key, 0.32)), context, expected=True,
+                                        curve=curve)
             current[key] += delta
             totals[key] = totals.get(key, 0.0) + delta
     model = active.get(MODEL_KEY) if uses_inputs_model(active) else None

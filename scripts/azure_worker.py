@@ -42,6 +42,11 @@ LEDGER = ROOT / "output" / "azure_ledger.json"
 PRICE_PER_HOUR = 0.147
 
 
+def hour_cap() -> float:
+    """Monthly machine-hour budget shared by the whole pool (per-worker entries don't carry it)."""
+    return float(config()["monthly_hour_cap"])
+
+
 def config() -> dict:
     try:
         cfg = json.loads(CONFIG.read_text())
@@ -162,8 +167,8 @@ def start(cfg: dict, force_budget: bool = False) -> None:
             save_ledger(data)
         return
     used = month_hours(data)
-    if used >= cfg["monthly_hour_cap"] and not force_budget:
-        sys.exit(f"budget: {used:.0f} of {cfg['monthly_hour_cap']} machine-hours used this month; not starting")
+    if used >= hour_cap() and not force_budget:
+        sys.exit(f"budget: {used:.0f} of {hour_cap()} machine-hours used this month; not starting")
     print("starting the worker...", flush=True)
     sh(["az", "vm", "start", "-g", cfg["resource_group"], "-n", cfg["vm"], "-o", "none"])
     data = ledger()
@@ -196,8 +201,8 @@ def active_jobs(cfg: dict) -> list[str]:
 # ---- run a job -------------------------------------------------------------------------------------------------------
 def pick_worker(cfg: dict, name: str, force_budget: bool, only: str | None = None) -> dict:
     """Claim an idle worker: one already running with no job first (warm), then one that is off; else wait."""
-    if month_hours(ledger()) >= cfg["monthly_hour_cap"] and not force_budget:
-        sys.exit(f"budget: {month_hours(ledger()):.0f} of {cfg['monthly_hour_cap']} machine-hours used this month")
+    if month_hours(ledger()) >= hour_cap() and not force_budget:
+        sys.exit(f"budget: {month_hours(ledger()):.0f} of {hour_cap()} machine-hours used this month")
     workers = [w for w in pool(cfg) if not only or w["name"] == only]
     announced = False
     while True:

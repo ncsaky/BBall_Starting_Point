@@ -62,6 +62,46 @@ EXPERIENCE_TRAITS = frozenset({"scheme_iq", "passing_reads", "portability"})
 # had at 0.47 before the routing change (output/prospect-realism/measure_spread.py).
 DEVELOPMENT_SEASON_VOLATILITY = 0.28          # 94-input ratings (default)
 LEGACY_DEVELOPMENT_SEASON_VOLATILITY = 0.36   # older trait-only ratings
+# Development curves (DEV-CURVE, 2026-11-21). The 94-input ratings use INPUTS_CURVE, fitted to real NBA development
+# (docs/agents/tasks/dev-curve.md); the older trait-only ratings keep LEGACY_CURVE unchanged.
+# Target: Basketball Index LEBRON change per season for players with 1,000+ minutes in both seasons, 2010-2026 (the
+# engine's player value is fitted to LEBRON), about +1.0 at 19, +0.8 at 20, +0.5 at 21, +0.3 at 22, +0.2 at 23-24,
+# about 0 at 25-27, -0.1 at 28-29, -0.2 at 30-32, -0.5 at 33-35, -0.65 at 36+; peak 26. Growth does not depend on how
+# good a player already is (Basketball Reference 2004-26: with the starting level taken from the season before, the
+# top third grows as much as the bottom third). Fitted with scripts/research/dev_curve_talent.py (development-only
+# probe of the opening league plus made-up draft classes) and checked in five simulated seasons.
+INPUTS_CURVE = "inputs"
+LEGACY_CURVE = "legacy"
+# Growth multiplier by age (straight lines between the points). Large at 19-21 because the 94 inputs, re-derived into
+# hidden ratings and then player value, turn a hidden-rating point into less value than the older ratings did. Ages
+# 21-24 sit a little above the probe's target: in played seasons (injuries, fatigue, the coach's minutes) young
+# players grew about a third less than in the development-only probe.
+INPUTS_AGE_FACTOR = ((19.0, 4.0), (20.0, 3.6), (21.0, 2.5), (22.0, 1.35), (23.0, 0.8), (24.0, 0.55), (25.0, 0.25),
+                     (26.0, 0.12), (27.0, 0.07), (29.0, 0.05), (31.0, 0.02), (33.0, 0.0))
+# Made-up draftees (career-capacity profiles) add their own learning runway into the mid-twenties, so they keep the
+# smaller 21-24 factors: with the larger ones, 30% of made-up top-10 picks were top-25 players by year four (real
+# 2015-2021 classes: 1-20%, tests/test_prospect_realism.py).
+INPUTS_DRAFTEE_AGE_FACTOR = ((19.0, 4.0), (20.0, 3.6), (21.0, 1.9), (22.0, 0.85), (23.0, 0.5), (24.0, 0.38), (25.0, 0.18),
+                             (26.0, 0.1), (27.0, 0.07), (29.0, 0.05), (31.0, 0.02), (33.0, 0.0))
+# The extra growth of young players fades out over these ages (legacy: gone at 24, over the two years before).
+INPUTS_YOUTH_END = 25.0
+INPUTS_YOUTH_SPAN = 3.0
+# Share of growth that does not depend on minutes (0.0 = growth scales fully with minutes / 24, as before). Real
+# young players outside the rotation still improve (20 of 111 age-20 players below 1,000 minutes later made the top 50).
+INPUTS_ROLE_FLOOR = 0.3
+# Scale on the monthly ceiling of one hidden rating's growth (real players; made-up draftees keep their own limit).
+INPUTS_GROWTH_CAP_SCALE = 2.5
+# Power on a prospect's upside multiplier and on a made-up draftee's learning boost (1.0 = as before). Without the old
+# slowdown at high ratings, the full multipliers (up to 3.8x) turned most top-20 picks into stars: in the probe, half
+# of picks 4-10 reached today's top-10 level against 9% of real picks 4-10 (2005-2019 drafts). The order is kept.
+INPUTS_UPSIDE_POWER = 0.25
+# Monthly decline: (slope per year past onset, onset age, extra slope past the late onset, late onset, largest).
+LEGACY_DECLINE = {"offense": (0.033, 25.5, 0.030, 32.0, 0.45), "physical": (0.021, 28.5, 0.028, 32.0, 0.36),
+                  "other": (0.019, 29.5, 0.022, 32.0, 0.24)}
+# Slightly earlier and steeper than the older curve at 28-32 (real decline is about -0.2 a season at 30-32; it was
+# -0.15), gentler past 32: in played seasons, injuries add about -0.1 a season at 33-35 on top of this.
+INPUTS_DECLINE = {"offense": (0.036, 26.0, 0.015, 31.0, 0.50), "physical": (0.034, 28.0, 0.015, 32.0, 0.40),
+                  "other": (0.030, 29.0, 0.012, 32.0, 0.30)}
 SEASON_FORM_TRAIT_WEIGHTS = {
     "foot_speed_lateral_agility": 0.35,
     "passing_reads": 0.55,
@@ -602,6 +642,7 @@ def advance_development(canonical: dict[str, Any] | Any, month: str, seed: int =
     inputs_model = uses_inputs_model(canonical)
     volatility = DEVELOPMENT_SEASON_VOLATILITY if inputs_model else LEGACY_DEVELOPMENT_SEASON_VOLATILITY
     stored_bound = None if inputs_model else 100.0
+    curve = INPUTS_CURVE if inputs_model else LEGACY_CURVE
     events: list[dict[str, Any]] = []
     for player in canonical.get("players", []):
         if player.get("_inactive_player"):
@@ -614,12 +655,12 @@ def advance_development(canonical: dict[str, Any] | Any, month: str, seed: int =
         state = states.get(player["id"], {})
         health_drag = development_health_drag(state)
         deltas: dict[str, float] = {}
-        focus = development_trait_focus(player, staff, traits.get(player["id"], {}), seed, month)
+        focus = development_trait_focus(player, staff, traits.get(player["id"], {}), seed, month, curve=curve)
         for trait_key in DEVELOPMENT_TRAITS:
             current = float(traits.get(player["id"], {}).get(trait_key, {}).get("value", 50.0))
             trait_context = (traits.get(player["id"], {}).get(trait_key, {}).get("components") or {}).get("career_capacity")
             delta = monthly_trait_delta(player, trait_key, current, age, minutes, staff, health_drag, seed, month, float(focus.get(trait_key, 0.32)), trait_context,
-                                        season_volatility=volatility, stored_bound=stored_bound)
+                                        season_volatility=volatility, stored_bound=stored_bound, curve=curve)
             if abs(delta) >= 0.015:
                 deltas[trait_key] = round(delta, 3)
         # An evaluated plateau is still a processed player-month. Keep the
@@ -1543,23 +1584,45 @@ def monthly_trait_delta(
     expected: bool = False,
     season_volatility: float | None = None,
     stored_bound: float | None = None,
+    curve: str = LEGACY_CURVE,
 ) -> float:
     """Change in one hidden rating over a month. Expected changes omit season form and monthly noise.
 
     stored_bound: the older ratings store each hidden rating clamped to 0-100, so their gains taper over the last
     10 points below it (pass 100.0). The 94-input ratings store inputs, not hidden ratings, and a hidden rating has
     no top (RATING-CEILING, 2026-11-21: the best rim protectors already sit above 100 and could never grow), so the
-    default is no taper; gains still shrink with the rating's level through cap_room."""
+    default is no taper.
+
+    curve: INPUTS_CURVE (the 94-input ratings; advance_development and development_outlook pass it for those saves)
+    or LEGACY_CURVE (the older trait-only ratings, unchanged; the default for other callers, such as the offline
+    combine aging in physical_evidence, so they keep their numbers). The inputs curve is fitted to real NBA development (DEV-CURVE, docs/agents/tasks/dev-curve.md): growth does not
+    depend on how good a player already is, and young players keep growing into their mid-twenties."""
     age = 27.0 if age is None else age
-    age_factor = development_age_factor(age, player=player, seed=seed)
+    inputs_curve = curve != LEGACY_CURVE
+    age_factor = development_age_factor(age, player=player, seed=seed, curve=curve, draftee=bool(trait_context))
+    if inputs_curve and trait_key in PHYSICAL_TRAITS:
+        # Young players' extra growth in the new curve is skill growth. Physical capacities (conditioning, speed,
+        # strength) keep the older, gentler youth curve: with the new curve's young growth on top, a 19-year-old's
+        # stamina could still jump 10+ points in one season.
+        age_factor = min(age_factor, development_age_factor(age, player=player, seed=seed, curve=LEGACY_CURVE))
     role_factor = clamp(minutes / 24.0, 0.18, 1.18)
     if player.get("rotation_priority") == "development_priority":
         role_factor *= 1.16
     if player.get("rotation_priority") == "fringe":
         role_factor *= 0.72
-    cap_room = clamp((92.0 - current) / 42.0, 0.08, 1.0)
+    if inputs_curve:
+        # Real players improve by about the same amount at every starting level once the level is measured apart
+        # from the season being changed (Basketball Reference, 2004-05 to 2025-26: ages 21-24, the top third grows
+        # +0.88 / +0.28 a year against +0.76 / +0.32 for the bottom third). The older rule slowed any hidden rating
+        # above 50 and cut gains to 8% at 88+, so the best young players stopped growing at 22-23.
+        cap_room = 1.0
+        role_factor = INPUTS_ROLE_FLOOR + (1.0 - INPUTS_ROLE_FLOOR) * role_factor
+    else:
+        cap_room = clamp((92.0 - current) / 42.0, 0.08, 1.0)
     focus_multiplier = clamp(focus_multiplier, 0.12, 1.45)
     upside_multiplier = development_upside_multiplier(player, seed)
+    if inputs_curve:
+        upside_multiplier **= INPUTS_UPSIDE_POWER
     realization = prospect_development_realization(player, seed)
     ceiling = trait_ceiling(player, trait_key, trait_context, realization, seed) if trait_context else None
     learning = 0.0
@@ -1587,7 +1650,10 @@ def monthly_trait_delta(
         # they played. Now the youth growth arrives with real minutes (Basketball Index: early gains are tied to
         # opportunity; low-minute young players gain less and less consistently).
         youth_boost *= clamp((minutes - 6.0) / 14.0, 0.0, 1.0)
-    growth_rate += youth_boost * clamp((24.0 - age) / 2.0, 0.0, 1.0)
+    if inputs_curve:
+        growth_rate += youth_boost * clamp((INPUTS_YOUTH_END - age) / INPUTS_YOUTH_SPAN, 0.0, 1.0)
+    else:
+        growth_rate += youth_boost * clamp((24.0 - age) / 2.0, 0.0, 1.0)
     growth = growth_rate * age_factor * role_factor * cap_room * float(staff.get("development_multiplier", 1.0)) * float(staff.get("patience_multiplier", 1.0)) * focus_multiplier * upside_multiplier
     if ceiling is not None:
         entry = float(trait_context["entry_value"])
@@ -1595,7 +1661,8 @@ def monthly_trait_delta(
         elite = clamp((float(trait_context["potential"]) - 80) / 15, 0, 1)
         fulfillment = clamp((realization - .8) / .48, 0, 1)
         aptitude = clamp((float(trait_context["aptitude"]) - .35) / .7, 0, 1)
-        growth *= 1 + .45 * elite * fulfillment * aptitude + 1.25 * learning
+        boost = 1 + .45 * elite * fulfillment * aptitude + 1.25 * learning
+        growth *= boost ** INPUTS_UPSIDE_POWER if inputs_curve else boost
         # Raw high-upside players have farther to travel than ready-made picks;
         # learn toward their own skill capacity, never a draft-slot OVR target.
         growth += (max(0.0, ceiling - current) * .05 * raw_learning * window
@@ -1608,12 +1675,11 @@ def monthly_trait_delta(
         growth -= min(max(0.0, growth) * 0.88, health_penalty)
     else:
         growth -= health_penalty
-    if trait_key in OFFENSIVE_AGING_TRAITS:
-        growth -= min(0.45, 0.033 * max(0.0, age - 25.5) + 0.030 * max(0.0, age - 32.0))
-    elif trait_key in PHYSICAL_TRAITS:
-        growth -= min(0.36, 0.021 * max(0.0, age - 28.5) + 0.028 * max(0.0, age - 32.0))
-    elif trait_key not in EXPERIENCE_TRAITS:
-        growth -= min(0.24, 0.019 * max(0.0, age - 29.5) + 0.022 * max(0.0, age - 32.0))
+    group = ("offense" if trait_key in OFFENSIVE_AGING_TRAITS else "physical" if trait_key in PHYSICAL_TRAITS
+             else None if trait_key in EXPERIENCE_TRAITS else "other")
+    if group:
+        slope, onset, late_slope, late_onset, most = (INPUTS_DECLINE if inputs_curve else LEGACY_DECLINE)[group]
+        growth -= min(most, slope * max(0.0, age - onset) + late_slope * max(0.0, age - late_onset))
     noise = 0.0
     season_change = 0.0
     if not expected:
@@ -1638,6 +1704,9 @@ def monthly_trait_delta(
         elif player.get("rotation_priority") in {"fringe", "rookie_depth", "deep_rotation"}:
             season_change *= 0.45
     growth_cap = .36 + .45 * raw_learning if upside_multiplier > 1.0 else .24
+    if inputs_curve and ceiling is None:
+        # Real players' fastest young growth (made-up draftees keep their own capacity-based limit).
+        growth_cap *= INPUTS_GROWTH_CAP_SCALE
     delta = min(growth + noise, growth_cap) + season_change
     if delta <= 0.0:
         return delta
@@ -1685,7 +1754,8 @@ def prospect_development_realization(player: dict[str, Any], seed: int) -> float
     return 1.28
 
 
-def development_trait_focus(player: dict[str, Any], staff: dict[str, Any], player_traits: dict[str, Any], seed: int, month: str) -> dict[str, float]:
+def development_trait_focus(player: dict[str, Any], staff: dict[str, Any], player_traits: dict[str, Any], seed: int, month: str,
+                            curve: str = LEGACY_CURVE) -> dict[str, float]:
     position = str(player.get("position") or "").upper()
     archetype = str(player.get("primary_off_role") or player.get("archetype") or "").lower()
     age = maybe_float(player.get("age")) or 27.0
@@ -1737,14 +1807,18 @@ def development_trait_focus(player: dict[str, Any], staff: dict[str, Any], playe
     for trait in DEVELOPMENT_TRAITS:
         value = 1.0 if trait in chosen else 0.2 + rng.random() * 0.18
         current = float((player_traits.get(trait) or {}).get("value", 50.0))
-        if current >= 84:
+        # Older ratings only: a rating at 84+ gets less practice focus. In the 94-input ratings growth does not
+        # depend on level (see monthly_trait_delta).
+        if curve == LEGACY_CURVE and current >= 84:
             value *= 0.68
         output[trait] = round(value, 3)
     return output
 
 
-def development_age_factor(age: float, *, player: dict[str, Any] | None = None, seed: int = 1) -> float:
-    """Vary promising prospects' maturation, never delay veteran decline."""
+def development_age_factor(age: float, *, player: dict[str, Any] | None = None, seed: int = 1,
+                           curve: str = LEGACY_CURVE, draftee: bool = False) -> float:
+    """Vary promising prospects' maturation, never delay veteran decline. draftee: a made-up draftee with a career
+    capacity profile (its own learning runway; see INPUTS_DRAFTEE_AGE_FACTOR)."""
     pace = 1.0
     if (player is not None and age < 30
             and maybe_float(player.get("current_ability")) is not None
@@ -1755,6 +1829,9 @@ def development_age_factor(age: float, *, player: dict[str, Any] | None = None, 
             age, pace = age + 1.0, 1.12
         elif timing >= 0.80:
             age, pace = age - 2.0, 0.88
+    if curve != LEGACY_CURVE:
+        table = INPUTS_DRAFTEE_AGE_FACTOR if draftee else INPUTS_AGE_FACTOR
+        return _interpolate(table, age) * (pace if age <= 30 else 1.0)
     if age <= 20:
         return 1.25 * pace
     if age <= 23:
@@ -1766,6 +1843,16 @@ def development_age_factor(age: float, *, player: dict[str, Any] | None = None, 
     if age <= 32:
         return 0.03
     return 0.0
+
+
+def _interpolate(points: tuple[tuple[float, float], ...], x: float) -> float:
+    """Straight lines between (age, value) points; flat beyond the first and last point."""
+    if x <= points[0][0]:
+        return points[0][1]
+    for (x0, y0), (x1, y1) in zip(points, points[1:]):
+        if x <= x1:
+            return y0 + (y1 - y0) * (x - x0) / (x1 - x0)
+    return points[-1][1]
 
 
 def development_health_drag(state: dict[str, Any]) -> float:

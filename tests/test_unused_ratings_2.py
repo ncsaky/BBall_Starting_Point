@@ -112,8 +112,11 @@ class DevelopmentRoutingTests(unittest.TestCase):
         deltas = ratings_model.route_trait_deltas(self.inputs, {"offensive_rebounding": 2.0, "scheme_iq": 1.0,
                                                                 "passing_reads": 1.0, "defensive_effort": -1.0,
                                                                 "foot_speed_lateral_agility": -1.0, "rim_deterrence": 1.0})
+        steps = ratings_model._development_steps()
         for orphan, like in ratings_model.DEVELOPS_LIKE.items():
-            self.assertAlmostEqual(deltas[orphan], deltas[like])
+            # Same curve as the closest skill, on the orphan's own league spread (DEV-CURVE 2026-11-21).
+            ratio = steps.get(orphan, 1.0) / steps.get(like, 1.0) if steps else 1.0
+            self.assertAlmostEqual(deltas[orphan], deltas[like] * ratio)
         self.assertLess(deltas["P10"], 0)    # jump capacity (cm) follows foot speed
         self.assertGreater(deltas["P08"], 0)  # strength follows the general curve (rim protection here)
 

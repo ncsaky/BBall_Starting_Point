@@ -17,8 +17,9 @@ class DevelopmentTopTests(unittest.TestCase):
         self.assertGreater(self.gain(105.0), 0.0)
         self.assertGreater(self.gain(95.0), self.gain(105.0) * 0.99)
 
-    def test_gains_still_shrink_with_level(self):
-        values = [self.gain(level) for level in (50.0, 70.0, 85.0, 105.0)]
+    def test_gains_still_shrink_with_level_in_the_older_ratings(self):
+        # DEV-CURVE (2026-11-21): the 94-input ratings grow at the same rate at every level (tests/test_dev_curve.py).
+        values = [self.gain(level, curve=health.LEGACY_CURVE) for level in (50.0, 70.0, 85.0, 105.0)]
         self.assertEqual(values, sorted(values, reverse=True))
 
     def test_older_ratings_keep_their_stored_bound(self):
