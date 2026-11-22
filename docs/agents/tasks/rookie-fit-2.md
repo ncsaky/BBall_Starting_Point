@@ -135,7 +135,7 @@ Class overall range 69.8-78.1, spread (standard deviation) 1.81. First try 69.8-
   first month (19.7 a game, 57% true shooting, +0.6 box plus-minus) lift him. Potential 76.9 (little upside), unchanged.
   See section 5: the simulated Warriors still play him only ~18 minutes.
 - **Darryn Peterson (2): 8th of rookies.** College fit says a good scorer but a weak defender; readiness notes say
-  ready; his first month (+0.4 box plus-minus on a bad Utah team) moved him up the most of anyone with minutes (+0.37).
+  ready; his first month (+0.4 box plus-minus on a bad Utah team) moved him up +0.37, one of the largest moves.
   Potential 87.5, unchanged: a top-two future, not a top-two rookie today.
 - **Keaton Wagler (5): 11th.** Ready offensive player (near-average offense on day one), poor defense.
 - **Brayden Burries (10): 20th.** Readiness write-ups called him ready; his college numbers and first month are
@@ -145,7 +145,7 @@ Class overall range 69.8-78.1, spread (standard deviation) 1.81. First try 69.8-
   and -4.1 box plus-minus (moved him -0.38). The fit says a high-usage freshman wing like this starts about where Cade
   Cunningham, Jalen Green or Brandon Miller started (all -1.4 to -3.3 in year one). Potential 87.5 unchanged: the
   pick was for the future.
-- **Darius Acuff Jr. (7): 29th.** Near-average offense on day one (best of the guards after Wagler and Peterson) but
+- **Darius Acuff Jr. (7): 29th.** Near-average offense on day one (third in the class, behind Boozer and level with Peterson) but
   the weakest defensive projection in the first round. His 25.4 a game is volume on a 2-14 Sacramento (33% usage,
   51% true shooting, -2.3 box plus-minus); that context explains the gap between his scoring and his rating.
 
@@ -220,7 +220,7 @@ weight minutes / (minutes + 1,000).
   State has ten players rated above him and gives him ~18 minutes, not 31.6. The rating is not the cause; it is the
   depth chart (and possibly real injuries the simulation does not have). Flag for the user.
 - **Meleek Thomas** (33rd; 23.6 minutes, 12.7 a game, near-average box plus-minus on a winning Cleveland): better start
-  than his rating; moved up +0.33, the most allowed by 331 minutes.
+  than his rating; moved up +0.33.
 - **Bennett Stirtz** (21st; +1.3 box plus-minus on a good Oklahoma City): moved up +0.46, the largest move.
 
 
@@ -313,7 +313,12 @@ than any forecast can).
   Picking winners and spreads unchanged; totals 0.02-0.06 points further from the market. Rookies do not play in this
   replay of 2025-26; the small change comes from the game rescaling everyone's ratings against a league that now
   includes the re-rated rookies.
-- **Tests:** TESTS_LINE
+- **Tests:** focused set (`run_tests_parallel.py --workers 2 --match "rookie|input|estimator|prospect|draft|rating"`,
+  163 modules, 1,887 tests): all pass except (a) 11 errors from reference files that exist only in the main checkout's
+  `output/` (copied in and rerun: all pass) and 2 from the Windows packaging test needing a local startup video (not
+  related), and (b) one failure, `test_foundation ... test_repeated_same_day_ai_roster_cut_upserts_one_transaction`
+  ("claimed" instead of "cleared" on waivers), which fails the same way on the committed inputs, so it predates this
+  change. Core suite (`run_core_tests.sh`): 338 OK, 2 skipped. `tests/test_rookie_fit.py`: 11 OK (5 new).
 
 
 ## 8. Decisions and notes for the user
