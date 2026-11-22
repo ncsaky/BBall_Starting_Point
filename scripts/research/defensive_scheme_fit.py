@@ -18,6 +18,7 @@ import json
 import math
 import statistics
 import time
+import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 from urllib.request import urlopen
@@ -29,6 +30,7 @@ CACHE = ROOT / "output/defensive-scheme-evidence"
 OUTPUT = ROOT / "data/research/defensive_scheme_evidence.json"
 BBI = ROOT / "data/research/bbi"
 ROTATION = ROOT / "data/research/rotation_evidence.json"
+COMBINE = ROOT / "data/research/draft_combine_2000_2025.json"
 SEASONS = {2024: "2023-24", 2025: "2024-25", 2026: "2025-26"}
 TEAM_ALIASES = {"BRK": "BKN", "CHO": "CHA", "PHO": "PHX"}
 RELEASE = "https://github.com/sportsdataverse/sportsdataverse-data/releases/download"
@@ -243,7 +245,19 @@ def position_group(position):
     return {"PG": "G", "SG": "G", "SF": "F", "PF": "F", "C": "C"}.get(position)
 
 
-def add_bbi_team_profiles(teams, players, roles):
+def name_key(name):
+    return "".join(c for c in unicodedata.normalize("NFKD", name.casefold()) if c.isascii() and c.isalnum())
+
+
+def lane_agility_data():
+    records = defaultdict(list)
+    for row in json.loads(COMBINE.read_text(encoding="utf-8"))["players"]:
+        if row["lane_agility_s"] is not None:
+            records[name_key(row["name"])].append((row["year"], row["lane_agility_s"]))
+    return {key: values[0] for key, values in records.items() if len(values) == 1}
+
+
+def add_bbi_team_profiles(teams, players, roles, lane_agility, year):
     assigned = defaultdict(list)
     for player_id, role in roles.items():
         if len(role["teams"]) == 1 and player_id in players and role["teams"][0] == players[player_id]["last_team"]:
@@ -253,12 +267,20 @@ def add_bbi_team_profiles(teams, players, roles):
         total = sum(role["minutes"] for role in covered)
         bigs = [r for r in covered if r["role"] in {"Mobile Big", "Anchor Big"}]
         big_minutes = sum(r["minutes"] for r in bigs)
+        combine = []
+        for role in bigs:
+            match = lane_agility.get(name_key(role["player"]))
+            if match and match[0] < year:
+                combine.append((match[1], role["minutes"]))
+        combine_minutes = sum(minutes for _, minutes in combine)
         team["bbi_proxy"] = {
             "attributed_player_minutes": total,
             "minute_coverage_pct": ratio(total, 5 * team["team_minutes"], 100),
             "rotation_height_inches": average_weighted([(r["height"], r["minutes"]) for r in covered if r["height"]]),
             "big_height_inches": average_weighted([(r["height"], r["minutes"]) for r in bigs if r["height"]]),
             "big_minutes_per_100_player_minutes": ratio(big_minutes, total, 100),
+            "big_lane_agility_covered_minutes_pct": ratio(combine_minutes, big_minutes, 100),
+            "big_lane_agility_seconds": average_weighted(combine) if combine_minutes >= 0.45 * big_minutes else None,
             "mobile_share_of_big_minutes_pct": ratio(sum(r["minutes"] for r in bigs if r["role"] == "Mobile Big"),
                                                     big_minutes, 100),
         }
@@ -327,7 +349,7 @@ def add_nba_matchups(files, teams, players, roles):
             "effective_field_goal_pct": ratio(stats["matchup_fgm"] + 0.5 * stats["matchup_fg3_m"],
                                               stats["matchup_fga"], 100),
         }
-    # Retain a handful of matchup pairs with enough exposure to be descriptive.
+    # Show selected cross-position pairs in context with their small sample sizes.
     pairs = {
         ("Victor Wembanyama", "Jalen Brunson"),
         ("Nikola Jokić", "Alex Caruso"),
@@ -358,7 +380,7 @@ def add_nba_matchups(files, teams, players, roles):
                 position_group(roles[r["def_player_id"]]["position"])),
             sum(r["partial_poss"] for r in totals), 100),
         "source_pair_rows": quality[0],
-        "source_help_field_nonzero_totals": dict(zip(("attempts", "makes", "blocks"), quality[1:], strict=True)),
+        "source_help_field_totals": dict(zip(("attempts", "makes", "blocks"), quality[1:], strict=True)),
     }
 
 
@@ -373,12 +395,14 @@ SOURCES = {
     "nba_off_screen": "https://www.nba.com/stats/teams/off-screen",
     "nba_ball_handler": "https://www.nba.com/stats/teams/ball-handler",
     "nba_roll_man": "https://www.nba.com/stats/teams/roll-man",
-    "nba_post_up": "https://www.nba.com/stats/teams/post-up",
+    "nba_post_up": "https://www.nba.com/stats/teams/playtype-post-up",
     "nba_isolation": "https://www.nba.com/stats/teams/isolation",
     "nba_matchup_example": "https://www.nba.com/game/sas-vs-nyk-0042500404/box-score?type=matchups",
     "nba_matchup_definition": "https://www.nba.com/news/lu-dorts-defensive-excellence-is-pushing-okc-to-the-next-level",
+    "nba_combine": "https://www.nba.com/stats/draft/combine-strength-agility",
     "nba_guide": "https://cdn.nba.com/manage/2026/10/2026-27-NBA-Guide_v2.pdf",
     "bbi": "https://www.bball-index.com/data-tools-package/",
+    "bbi_defensive_roles": "https://www.bball-index.com/defensive-roles/",
     "bbi_terms": "https://www.bball-index.com/legal/terms-and-conditions/",
     "github_terms": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
     "league_switching": "https://alldlls.com/mavericks/nba-isolation-looks-different-10-years-stats-mid-range/",
@@ -448,6 +472,7 @@ def coordinate_depth_examples(verify_dir):
             "screen_defender": defender_name, "film_description": film, "screener_distance_ft": distances[0],
             "defender_distance_ft": distances[1], "defender_ft_closer_to_rim_than_screener": distances[2],
             "film_source": "spurs_2026" if game.endswith("02") else "knicks_2026",
+            "game_book_source": "finals_game_2_book" if game.endswith("02") else "finals_game_3_book",
             "tracking_source": "tracking_archive_article",
         })
     return result
@@ -589,8 +614,9 @@ FITTED_METRICS = {
     "isolation_defense_endings_per_100": ("synergy_qualifying_player_stints", "isolation_defense",
                                          "endings_per_100_team_possessions"),
 }
-ROSTER = ("rotation_height_inches", "big_height_inches", "mobile_share_of_big_minutes_pct",
-          "role_adjusted_defensive_feet_per_min")
+ROSTER = ("rotation_height_inches", "big_height_inches", "big_minutes_per_100_player_minutes",
+          "mobile_share_of_big_minutes_pct",
+          "role_adjusted_defensive_feet_per_min", "big_lane_agility_seconds")
 
 
 def ranks(numbers):
@@ -652,7 +678,7 @@ def score_models(observations, metric_path):
         roster_models[feature] = {
             "training_teams": len(pairs), "intercept": round_number(intercept, 8),
             "slope": round_number(slope, 8), "training_pearson": correlation(x, y),
-            "limits": [min(x), max(x)], "holdout_pearson": None,
+            "limits": [min(x), max(x)],
         }
     for row in holdout:
         team, coach = row["team"], row["coach"]
@@ -681,6 +707,7 @@ def score_models(observations, metric_path):
                  if r["bbi_proxy"][feature] is not None]
         x, y = zip(*pairs)
         model["holdout_pearson"] = correlation(x, y)
+        model["holdout_league_mean_on_same_teams"] = evaluate([(baseline, value) for value in y])
 
     cohorts = {}
     for name, selected in (
@@ -771,11 +798,12 @@ def build(cache, fetch, verify_tracking=None):
     inputs, provenance = public_assets(cache, fetch)
     roles_by_year, local_provenance = load_bbi()
     coaches = json.loads(ROTATION.read_text(encoding="utf-8"))["coach_comparison"]["team_seasons"]
+    lane_agility = lane_agility_data()
     team_seasons, player_seasons, matchup_seasons, league = {}, {}, {}, {}
     for year, season in SEASONS.items():
         teams, players = nba_season(inputs[year])
         roles = roles_by_year[year]
-        add_bbi_team_profiles(teams, players, roles)
+        add_bbi_team_profiles(teams, players, roles, lane_agility, year)
         matchup_seasons[season] = add_nba_matchups(inputs[year], teams, players, roles)
         player_seasons[year] = players
         for team, record in teams.items():
@@ -786,6 +814,8 @@ def build(cache, fetch, verify_tracking=None):
         league[season] = {
             "team_count": len(teams), "games": sum(record["games"] for record in teams.values()) // 2,
             "team_possessions": possessions, "screen_assists": screen_assists,
+            "hustle_team_minute_coverage_pct": ratio(sum(r["tracking_team_minutes"] for r in teams.values()),
+                                                     sum(r["team_minutes"] for r in teams.values()), 100),
             "screen_assists_per_100": ratio(screen_assists, possessions, 100),
             "player_hustle_rows": len(players), "bbi_defensive_player_seasons": len(roles),
             "synergy_qualifying_player_stints": {},
@@ -810,7 +840,9 @@ def build(cache, fetch, verify_tracking=None):
         "holdout_season": SEASONS[2026],
         "sources": SOURCES,
         "public_release_assets": provenance,
-        "local_inputs_sha256": local_provenance | {str(ROTATION.relative_to(ROOT)): file_checksum(ROTATION)},
+        "local_inputs_sha256": local_provenance | {
+            str(path.relative_to(ROOT)): file_checksum(path) for path in (ROTATION, COMBINE)
+        },
         "measurement_notes": {
             "screen_assists": "Made baskets directly credited to a screen, divided by NBA advanced possessions. "
                               "Players use on-court possessions across all their teams.",
@@ -830,6 +862,9 @@ def build(cache, fetch, verify_tracking=None):
                 "weak_side_help", "zone", "post_switch_mismatch_hunt", "all_screens_set", "all_handoffs",
                 "all_off_ball_screens",
             ],
+            "lane_agility": "Draft combine drill time in seconds, lower means faster. Unambiguous normalized name "
+                            "matches only. Held-out roster mixtures use realized minutes. The feature is withheld "
+                            "when under 45% of attributed big-man minutes have a combine time.",
             "coach": "Named head coach for single-coach seasons from the rotation research. "
                      "Mixed seasons counted at team level with a null coach.",
         },

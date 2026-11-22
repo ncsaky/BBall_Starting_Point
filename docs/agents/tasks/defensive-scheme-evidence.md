@@ -2,11 +2,11 @@
 
 ## TL;DR
 
-- The public evidence supports a league switch rate and a few directly tracked matchup examples.
-- Team and player matchup summaries can show who guarded whom over the year.
-- Ball-screen coverage depends on the two players involved and can change within a game.
-- Help, zone and off-ball screening need their own measurements.
-- This research is for the Stage 2 coach and possession model.
+- League switching rose from **22.5% of ball screens in 2023–24** to **25.9% in an April 2026 snapshot**.
+- Earlier team and coach history helped predict how aggressively teams defended screens, especially when the coach stayed.
+- Big-man height tracked coverage aggression better than measured defensive movement or draft-combine agility.
+- The data cover screen assists for **30 teams and 1,715 player-seasons**. Handoff and off-screen endings also show distinct team habits.
+- Full team coverage, post-double and help-side rates remain open. The game can start with broad preferences and use the named film examples to check how plays unfold.
 
 ## 1. Pick-and-roll coverage
 
@@ -52,7 +52,7 @@ The 2025–26 center-on-guard and guard-on-center slices had different denominat
 | Oklahoma City vs. Indiana in Games 1–2 of the 2025 Finals, Tyrese Haliburton defending the screener | 22 screens | 0.73 points per chance |
 | Same two games with Myles Turner or Thomas Bryant defending the screener | 25 direct endings | 35 points, or 1.40 per direct ending |
 
-Oklahoma City repeatedly brought Haliburton into the play. Bringing his man up to screen does not require Indiana to switch, and overall chance efficiency and direct-ending efficiency use different denominators. A team-wide rate of calling for a mismatch specifically after a switch, and its points per possession, remain unmeasured. Tom Thibodeau's Knicks offer a reminder about opponent adjustments. They ranked in the bottom six for regular-season switching during his five years in New York, then switched far more often in Game 1 against Boston in 2025. Towns picked up early fouls switching onto Jayson Tatum. [NBA Finals film study](https://www.nba.com/news/finals-film-study-thunder-pacers-game-2) · [Yahoo Sports on New York's coverage](https://staging-aws.sports.yahoo.com/nba/article/is-the-knicks-curveball-affecting-boston-behind-the-celtics-3-point-shooting-woes-192439329.html) · [CBS film study](https://www.cbssports.com/nba/news/if-knicks-defense-keeps-playing-with-fire-vs-celtics-theyll-go-up-in-flames-before-nba-playoffs-are-over/)
+Oklahoma City repeatedly brought Haliburton into the play. Indiana could answer by staying with its assignments, switching or hedging. Overall chance efficiency and direct-ending efficiency use different denominators. A team-wide rate of calling for a mismatch specifically after a switch, and its points per possession remain unmeasured. Tom Thibodeau's Knicks offer a reminder about opponent adjustments. They ranked in the bottom six for regular-season switching during his five years in New York, then switched far more often in Game 1 against Boston in 2025. Towns picked up early fouls switching onto Jayson Tatum. [NBA Finals film study](https://www.nba.com/news/finals-film-study-thunder-pacers-game-2) · [Yahoo Sports on New York's coverage](https://staging-aws.sports.yahoo.com/nba/article/is-the-knicks-curveball-affecting-boston-behind-the-celtics-3-point-shooting-woes-192439329.html) · [CBS film study](https://www.cbssports.com/nba/news/if-knicks-defense-keeps-playing-with-fire-vs-celtics-theyll-go-up-in-flames-before-nba-playoffs-are-over/)
 
 ## 3. Post doubles, rim help and zone
 
@@ -72,11 +72,11 @@ A brief tag on a roller, a dig at a post player and a sustained double should be
 | Houston, Ime Udoka, November 2025 | Early snapshot of 18.6% of defensive possessions. Miami was second in that snapshot at 9.7%. |
 | Sacramento, 2024–25 | 2.29 zone possessions per game over Mike Brown's 31 games and 3.25 in Doug Christie's first eight. |
 
-Miami stayed a frequent zone team while its usage changed considerably within the same season. Sacramento is an example of a short comparison across coaches, with different opponents and only eight games after the change. These samples do not give a 30-team zone table or enough observations to fit independent coach effects. [2024 zone reporting](https://www.basketballpoetry.com/p/1-stat-explaining-every-first-round) · [2024 NBA midseason report](https://www.nba.com/news/power-rankings-2023-24-week-16) · [2025 NBA offseason data](https://www.nba.com/news/offseason-power-rankings-east-2025) · [2026 NBA offseason data](https://www.nba.com/news/offseason-power-rankings-east-2026) · [2026 NBA in-season splits](https://www.nba.com/news/power-rankings-2025-26-week-24) · [Houston film and tracking](https://www.nba.com/news/4-takeaways-from-rockets-early-season-success) · [Ben Pfeifer's Sacramento charting](https://www.sportscasting.com/?p=1614398)
+Miami stayed a frequent zone team while its usage changed considerably within the same season. Sacramento is an example of a short comparison across coaches, with different opponents and only eight games after the change. A 30-team zone table and a fit of independent coach effects remain open. [2024 zone reporting](https://www.basketballpoetry.com/p/1-stat-explaining-every-first-round) · [2024 NBA midseason report](https://www.nba.com/news/power-rankings-2023-24-week-16) · [2025 NBA offseason data](https://www.nba.com/news/offseason-power-rankings-east-2025) · [2026 NBA offseason data](https://www.nba.com/news/offseason-power-rankings-east-2026) · [2026 NBA in-season splits](https://www.nba.com/news/power-rankings-2025-26-week-24) · [Houston film and tracking](https://www.nba.com/news/4-takeaways-from-rockets-early-season-success) · [Ben Pfeifer's Sacramento charting](https://www.sportscasting.com/?p=1614398)
 
 ## 4. Offensive screens, handoffs and movement
 
-**Screen assists** require a made field goal directly off the screen. Team rates divide NBA Hustle totals by NBA advanced possessions, and player rates use possessions with the player on the floor. The JSON covers all 90 team-seasons and 1,715 player-seasons in the Hustle tables. Three-year team totals matched the sum of player totals in each season. Player team labels show the player's final team in the source. Trade-season player totals cover all of their teams. [NBA Team Hustle](https://www.nba.com/stats/teams/hustle) · [NBA Player Hustle](https://www.nba.com/stats/players/hustle) · [NBA glossary](https://www.nba.com/stats/help/glossary)
+**Screen assists** require a made field goal directly off the screen. Team rates divide NBA Hustle totals by NBA advanced possessions, and player rates use possessions with the player on the floor. The JSON covers all 90 team-seasons and 1,715 player-seasons in the Hustle tables. Team totals matched the sum of player totals each season. Hustle covered about 99% of team minutes in each season, and the rates use full-season NBA advanced possessions. Player team labels show the player's final team in the source. Trade-season player totals cover all of their teams. [NBA Team Hustle](https://www.nba.com/stats/teams/hustle) · [NBA Player Hustle](https://www.nba.com/stats/players/hustle) · [NBA glossary](https://www.nba.com/stats/help/glossary)
 
 | Season | NBA screen assists per 100 team possessions | Handoff endings per 100 | Off-screen endings per 100 |
 |---|---:|---:|---:|
@@ -99,6 +99,62 @@ The handoff and off-screen columns sum qualifying NBA.com/Synergy player-by-team
 
 Selected public tracking reports also give **counts of screens set**, including screens that produced no basket. Sports Info Solutions counted **63.4** ball screens per 100 for 2024–25 Memphis, **77.1** for Denver, **81.4** for Golden State and **99.9** for Miami. Miami fell to **27.8** over its first ten games of 2025–26 by the same provider. A separate Genius Sports tally put Miami at **68.9** screens per 100 in 2024–25 and **18.0** through 40 games of 2025–26. Second Spectrum figures published by Nekias Duncan put the 2025–26 Heat at **20.0** on-ball screens, **27.0** off-ball screens and **5.7** handoffs per 100. For an individual, Giannis Antetokounmpo set **26.5** on-ball and **7.2** off-ball screens per 100 in the same season. The providers and windows differ, so compare within a single series. There was no comparable full team/player panel of all screens and exchanges across the three seasons. [Sports Info Solutions tracking](https://www.sportsinfosolutions.com/2025/11/11/heat-check-a-different-offensive-approach-than-any-other-team/) · [Miami Herald with Genius Sports rates](https://www.miamiherald.com/sports/nba/miami-heat/article314323490.html) · [Duncan with Second Spectrum rates](https://www.aol.co.uk/articles/heat-suddenly-threat-east-giannis-143148000.html)
 
+## 5. What carries over to the next season
+
+I fit on 2023–24 and 2024–25 and evaluated on 2025–26. The baseline uses the earlier league average. The team, coach and coach-team rules average the earlier matches with one league-average observation to keep thin histories from dominating. A coach's record comes from the rotation study and names staffs with a single coach that season. Split seasons contribute to team history. For the two Basketball Index measures and the assignment comparisons, the fit requires at least 70% of team minutes from unambiguously assigned players. This leaves 55 earlier and 27 held-out team-seasons. The screening rows use all 60 earlier and 30 held-out team-seasons. [NBA Guide](https://cdn.nba.com/manage/2026/10/2026-27-NBA-Guide_v2.pdf) · [Basketball Index role definitions](https://www.bball-index.com/defensive-roles/)
+
+| 2025–26 outcome | League average error | Team history | Coach history | Same coach and team |
+|---|---:|---:|---:|---:|
+| Ball-screen aggression, index points | 5.86 | **4.53** | 4.71 | 4.58 |
+| Ball-screen versatility, index points | 7.95 | **6.28** | 6.65 | 6.52 |
+| Guards defending centers, NBA partial-possession percentage points | 0.93 | **0.80** | 0.81 | 0.82 |
+| Centers defending guards, NBA partial-possession percentage points | **2.91** | 3.30 | 3.07 | 2.99 |
+| Help activity, index points | 0.092 | **0.079** | 0.085 | 0.085 |
+| Bigs' defended rim attempts per 75 possessions | 0.75 | 0.83 | **0.72** | **0.71** |
+| Team screen assists per 100 | 1.34 | 1.31 | 1.33 | **1.30** |
+| Team handoff endings per 100 | 1.28 | 1.18 | 1.20 | **1.10** |
+| Team off-screen endings per 100 | 1.16 | 0.87 | **0.80** | 0.83 |
+
+Smaller average absolute error is better. Coverage aggression measures how much a defense pressures the ball on screens. Versatility measures the balance between its coverages. Both are Basketball Index player measures combined across big-man minutes. Their units are index points. The public league switch rate gives a separate check. The earlier two-season mean was **23.55%**, 2.35 percentage points below the April 2026 observation.
+
+Among the **19 teams with usable history for the same coach**, coach-team history reduced coverage-aggression error from **5.82 to 4.00 index points**. Rank agreement was **.67**. In consecutive seasons for teams that kept their coaches, the aggression ranking correlated **.38** in the earlier transition and **.70** in the later one. The corresponding versatility figures were **.45** and **.66**. Jordi Fernández's Nets were estimated at **105.5** for aggression and came in at **121.5**. Joe Mazzulla's Celtics were estimated at **89.9** and came in at **87.2**. Tom Thibodeau's 2024–25 Knicks tracked **90.5**, compared with **92.5** in Mike Brown's first season. Only one holdout team with enough aggression data had a known coach who previously appeared with a different team and had no same-team record. The fit says little about how far a coach's habits travel after a move.
+
+### Roster size and mobility
+
+| Team roster measure | Correlation with aggression, 2023–25 | Correlation, 2025–26 | 2025–26 prediction error |
+|---|---:|---:|---:|
+| Height of the bigs who played, weighted by minutes | −.60 | −.53 | 4.68 |
+| Overall rotation height | −.05 | .15 | 5.86 |
+| Share of minutes played by bigs | .02 | .12 | 5.84 |
+| Big-man minutes in Basketball Index's Mobile Big role | .72 | .65 | 4.58 |
+| Defensive movement in feet per minute, adjusted for role | .02 | −.06 | 5.86 |
+| Bigs' draft-combine lane agility time | −.65 | −.15 | 5.63 |
+
+Each roster fit is a straight line from the two earlier seasons. It uses the roster minutes actually played in the holdout, so its result describes roster context after the fact. The first five rows use the 27-team holdout with a 5.86 league-average error. The combine row has 16 fitting observations and 13 held-out teams. It includes teams with measured players covering at least 45% of their attributed big-man minutes. The league mean's error on those same 13 teams was 5.09. Players who tested at the combine are a selected group, and the times come from early in their careers. The Mobile Big role already reflects how a player defends screens. Its association with aggression partly measures the same behavior twice. [NBA Combine Strength & Agility](https://www.nba.com/stats/draft/combine-strength-agility) · [Basketball Index role definitions](https://www.bball-index.com/defensive-roles/)
+
+**Screen assists carry better at the player level.** The earlier averages were **5.36 per 100** for listed centers, **1.22** for forwards and **0.59** for guards. For 388 held-out players with at least 1,000 on-court possessions, predicting one league rate missed by **1.40 per 100**. Using the most recent training-season position brought that to **0.80**. Blending each player's earlier rate with their position rate, giving the position rate the weight of 1,000 possessions, reduced the miss to **0.59**. It missed by **0.49** among the 343 returning players. The 45 players without training history used the league rate.
+
+### Stage 2 handoff
+
+- Start with a coach-team preference for **ball-screen pressure and variety**. Use the team history when the coach changes and a league default when the available history is thin. This reproduces the differences between a more conservative Boston team and a more aggressive Brooklyn team in this sample. The fitted values are index targets. The data do not map those targets to percentages for drop, switch, hedge, blitz, at-level or ice.
+- Make the screen call depend on the five players and the opponent. Keep defender depth, whether the defenders exchange assignments, the second defender's commitment, and whether the ball is forced toward the sideline as separate events. That represents Boston changing the plan by screener, Miami changing with personnel, and New York making a playoff adjustment. It also gives the game the denominators it needs to compare coverage frequency and the offense's response.
+- Use the observed screen-assist targets and the handoff and off-screen ending rates to check the output. Zone, post doubles, the side help comes from and intentional mismatch hunts should be logged if implemented. Public evidence is enough to illustrate those choices and their consequences. Their per-coach rates are still open.
+
+## Sources, gaps and reproduction
+
+The JSON includes 90 team-seasons, 1,715 player screening records, league and team positional matchup summaries, pinned input checksums, named examples and the held-out results. The numerical regular-season panel uses NBA.com data from 39 public SportsDataverse release files. Where player-level play types are the available inputs, the defensive data count attributions and can include repeated credit across defenders. Offensive totals include qualifying player stints. The film examples and published figures identify their narrower dates or opponents. [NBA Stats](https://www.nba.com/stats) · [Hustle archive](https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/nba_stats_hustle) · [Matchup archive](https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/nba_stats_matchups) · [Synergy archive](https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/nba_stats_synergy)
+
+The public articles were read for private research. Bulk files came from the public GitHub releases after checking the robots and terms pages. I used the existing local Basketball Index extracts and saved only the derived aggregates needed for the research. The 2025–26 optical-tracking check used two game members from the published Game Pulse archive, with a pause between range requests. The public sources leave most team-by-season scheme frequencies unmeasured. [NBA terms](https://www.nba.com/termsofuse) · [NBA robots](https://www.nba.com/robots.txt) · [GitHub terms](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) · [Basketball Index tools](https://www.bball-index.com/data-tools-package/)
+
+Keep the public files named in the JSON under `output/defensive-scheme-evidence/`, or pass their directory with `--cache`. The three linked Basketball Index inputs are `values_recent.json.gz`, `tools/role_lab_defensive_player_seasons.json.gz` and `tools/progression_player_seasons.csv.gz`. The local rotation evidence provides coach names. The draft-combine research file supplies lane agility times. The default build runs offline. `--fetch` obtains missing public assets in sequence, and the recorded hashes identify the versions used here.
+
+```sh
+uv run --no-project --python 3.12 --with duckdb==2.0.1 \
+  python scripts/research/defensive_scheme_fit.py
+```
+
+The three hand-selected screen depths are recorded in the script. To recompute and check them, extract the `tracking.jsonl.gz` members for Games 2 and 3 (NBA game IDs `0042500402` and `0042500403`) from the [published archive](https://www.neilball.org/p/nba-released-player-tracking-data-for-2025-26-season). Name them `0042500402-tracking.jsonl.gz` and `0042500403-tracking.jsonl.gz`, then pass their directory with `--verify-tracking`. The script measures horizontal distance in feet from the center of the target rim.
+
 ## Resume state
 
-Worktree and shared board row are set. Coverage definitions and named film examples are recorded. The public archive and cross-position matchup summaries are now built. Help, zone and the tracking depth spot check are recorded. Screening totals and published action examples are recorded. Next are the coach comparisons and final reproduction checks.
+Ready for coordinator review. The data, fit and named examples are on `codex/defensive-scheme-evidence`. An offline rebuild matched the checked-in JSON byte for byte. All three tracking depths were recomputed. The season and assist totals matched, and changing the held-out outcomes left the fitted predictions unchanged.
