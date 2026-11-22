@@ -553,6 +553,24 @@ def flatten_spatial_profile(profile: dict[str, Any]) -> dict[str, float]:
     return flat
 
 
+def spatial_zones_from_features(features: dict[str, float]) -> dict[str, Any]:
+    """Only the zone grids of spatial_profile_from_features (offense and defense per zone), without the display parts
+    (visual pockets, shot chart) the game's shot diet never reads (MONTH-SPEED-2). Same values."""
+    frequency = 1.0 / len(ZONE_KEYS)
+    offense = {key: {"frequency": frequency, "efficiency": 50.0, "gravity": 50.0, "intensity": 50.0} for key in ZONE_KEYS}
+    defense = {key: {"frequency_influence": 50.0, "contest": 50.0, "suppression": 50.0, "intensity": 50.0} for key in ZONE_KEYS}
+    for key in ZONE_KEYS:
+        for metric in offense[key]:
+            feature_key = f"sp_off_{key}_{metric}"
+            if feature_key in features:
+                offense[key][metric] = float(features[feature_key])
+        for metric in defense[key]:
+            feature_key = f"sp_def_{key}_{metric}"
+            if feature_key in features:
+                defense[key][metric] = float(features[feature_key])
+    return {"offense": offense, "defense": defense}
+
+
 def spatial_profile_from_features(features: dict[str, float], entity_id: str = "features") -> dict[str, Any]:
     profile = neutral_spatial_profile(entity_id)
     for key in ZONE_KEYS:

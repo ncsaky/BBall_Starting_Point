@@ -27,6 +27,7 @@ from .spatial import (
     player_spatial_profile,
     spatial_matchup_adjustment,
     spatial_profile_from_features,
+    spatial_zones_from_features,
     team_spatial_profile,
 )
 from .teams import TEAM_INFO
@@ -3890,9 +3891,10 @@ def team_shot_diet(team_features: dict[str, float], opp_features: dict[str, floa
     above_break_three = clamp(0.205 + spacing_boost * 0.7, 0.12, 0.34)
     free_throw = clamp(0.165 + (team_features["rim_pressure"] - 50) * 0.0012, 0.08, 0.26)
     midrange = max(0.04, 1.0 - (rim + pull_up_three + corner_three + above_break_three + free_throw))
+    # The matchup reads only the zone grids, so the display parts (pockets, chart) are not built (MONTH-SPEED-2).
     spatial = spatial_matchup_adjustment(
-        spatial_profile_from_features(team_features, "offense"),
-        spatial_profile_from_features(opp_features, "defense"),
+        spatial_zones_from_features(team_features),
+        spatial_zones_from_features(opp_features),
     )
     category_delta = spatial["category_delta"]
     rim = clamp(rim + category_delta.get("rim", 0.0), 0.18, 0.48)

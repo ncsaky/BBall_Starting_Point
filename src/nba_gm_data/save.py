@@ -5398,8 +5398,10 @@ def record_game_result(save: dict[str, Any], canonical: dict[str, Any], game: di
     update_team_record(save, canonical, game, home_id, away_id, home_points, away_points, is_home=True)
     update_team_record(save, canonical, game, away_id, home_id, away_points, home_points, is_home=False)
     top_minutes_ids = team_top_minutes_ids(result.get("player_lines", []))
+    # The ids of the season's game logs, gathered once per game instead of once per player line (MONTH-SPEED-2).
+    log_ids = {item.get("id") for item in save.get("player_game_logs") or []}
     for line in result.get("player_lines", []):
-        update_player_stats(save, line, game, top_minutes_ids)
+        update_player_stats(save, line, game, top_minutes_ids, log_ids=log_ids)
         team_points = home_points if line.get("team_id") == home_id else away_points
         opp_points = away_points if line.get("team_id") == home_id else home_points
         update_player_game_morale(save, line, team_points > opp_points, abs(team_points - opp_points))
@@ -5581,14 +5583,19 @@ def count_award_game(totals: dict[str, Any], line: dict[str, Any], top_minutes_i
         totals[key] = int(totals.get(key) or 0) + 1
 
 
-def update_player_stats(save: dict[str, Any], line: dict[str, Any], game: dict[str, Any], top_minutes_ids: set[str] | None = None) -> None:
+def update_player_stats(save: dict[str, Any], line: dict[str, Any], game: dict[str, Any], top_minutes_ids: set[str] | None = None,
+                        *, log_ids: set[Any] | None = None) -> None:
+    """log_ids: the ids already in save["player_game_logs"] (kept up to date here); gathered fresh when not given."""
     player_id = line.get("player_id")
     if not player_id:
         return
     game_id = str(game.get("externalGameId"))
     log_id = stable_id("player_game_log", game_id, player_id)
     logs = save.setdefault("player_game_logs", [])
-    if log_id not in {item.get("id") for item in logs}:
+    if log_ids is None:
+        log_ids = {item.get("id") for item in logs}
+    if log_id not in log_ids:
+        log_ids.add(log_id)
         logs.append(
             {
                 "id": log_id,
