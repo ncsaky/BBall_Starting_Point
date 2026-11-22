@@ -7548,15 +7548,17 @@ def apply_save_rotation_projection(canonical: dict[str, Any], save: dict[str, An
         player.setdefault("_rotation_role_prior", opening_workload)
         baseline = baselines.setdefault(player["id"], opening_workload)
         player["minutes_projection"] = float(baseline or 0.0)
+    # Each team's players in league order, gathered once (nothing below moves a player between teams).
+    by_team: dict[Any, list[dict[str, Any]]] = {}
+    for player in canonical.get("players", []):
+        by_team.setdefault(player.get("team_id"), []).append(player)
     for team_id in sorted(teams):
         fills: dict[str, dict[str, float]] = {}
         projection = team_rotation_projection(canonical, save, team_id, integer=False, fill_out=fills)
         if not projection:
             continue
         # The coach's fill-in minutes for absent teammates; a game re-points them for its opponent (absence_fill).
-        for player in canonical.get("players", []):
-            if player.get("team_id") != team_id:
-                continue
+        for player in by_team.get(team_id, []):
             fill = fills.get(player["id"])
             if fill:
                 player["_absence_fill"], player["_fill_size"] = round(fill["minutes"], 2), round(fill["size"], 3)
@@ -7567,9 +7569,7 @@ def apply_save_rotation_projection(canonical: dict[str, Any], save: dict[str, An
             player_id: round(float(minutes), 2)
             for player_id, minutes in projection.items()
         }
-        for player in canonical.get("players", []):
-            if player.get("team_id") != team_id:
-                continue
+        for player in by_team.get(team_id, []):
             baseline = float(baselines.get(player["id"], display_minutes_projection(player)) or 0.0)
             unavailable = player_unavailable_for_rotation(health_by_player.get(player["id"]))
             player.pop("_trade_value_unavailable", None)
