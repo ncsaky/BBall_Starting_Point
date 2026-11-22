@@ -147,6 +147,9 @@ league (see "What's left").
 5. The full ten-season check should be re-run on main once this merges.
 
 ## Resume state
-Code final (commit 0dc764a constants). Waiting for the after run on Azure (snapshot in scratchpad `dev-curve-after`,
-results to `output/dev-curve/after`), then: `dev_curve_report.py game output/dev-curve/after`, `compare before after
-talent-old final1`, fill AFTER_RUN_LINE / AFTER_RUN_TABLES, board row to review, commit. Data: `output/dev-curve/`.
+Merged main (27aa06b) at 748a35b; final code 5d81feb. Five-season runs on the Azure pool, seed 17, GSW hands-off:
+`output/dev-curve/mainbase` (main, the before) and `output/dev-curve/final2run` (final code; the scratchpad copy of
+azure_worker.py with a fix for the pool's missing `monthly_hour_cap` lookup was used to start it). Earlier runs on the
+pre-merge base: `before`, `after` (first constants), `after2` (more 21-24 growth). When both finish:
+`dev_curve_report.py game` on each, `compare mainbase final2run probe-old probe-new`, fill the tables, board row to
+review, commit.
