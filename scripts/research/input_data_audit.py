@@ -186,6 +186,8 @@ def capture_values(root, mapping):
                 block = capture.columns[(season, name)]
                 if key in block and block[key] != value:
                     ingest["conflicting_overlapping_values"] += 1
+                    if name in capture.links:
+                        ingest["audited_conflicting_overlapping_values"] += 1
                 # The builder retains the last finite value among overlapping batches.
                 if value is not None or key not in block:
                     block[key] = value
@@ -272,15 +274,21 @@ def summary(table, season, column):
     ):
         if condition:
             flags.append(flag)
-    outside = 0
+    outside_keys = set()
     if bounds := table.ranges.get(column):
-        outside = sum((bounds[0] is not None and value < bounds[0]) or (bounds[1] is not None and value > bounds[1]) for value in values.values())
+        low, high, _ = bounds
+        outside_keys = {key for key, value in values.items()
+                        if (low is not None and value < low) or (high is not None and value > high)}
+        outside = len(outside_keys)
         if outside:
             flags.append("outside_expected_range")
     regulars = {key for key in pop if table.minutes[season].get(key, 0) >= MINUTES}
     return {"players": n, "observed": len(values), "missing": missing, "zero": zero, "distinct": len(counts),
             "min": min(counts, default=None), "max": max(counts, default=None), "modal_count": common,
-            "outside_expected_range": outside, "flags": flags,
+            "median_positive": rounded(statistics.median(v for v in values.values() if v > 0))
+            if any(v > 0 for v in values.values()) else None,
+            "outside_expected_range": len(outside_keys), "flags": flags,
+            "outside_expected_range_1000_minutes": len(outside_keys & regulars),
             "rotation_players": len(regulars), "rotation_observed": len(regulars & values.keys()),
             "rotation_zero": sum(values.get(key) == 0 for key in regulars)}
 
@@ -339,7 +347,9 @@ def duplicates(table, season):
                 slope = norm_b / norm_a * r
                 offset = mean_b - slope * mean_a
                 results.append({"columns": [a, b], "paired_players": len(mask), "pearson": rounded(min(r, 1)),
-                                "exact_on_overlap": exact, "identical_coverage": left == right,
+                                "exact_on_overlap": exact, "identical_values": sum(x == y for x, y in zip(va, vb)),
+                                "max_absolute_difference": rounded(max(abs(x - y) for x, y in zip(va, vb))),
+                                "identical_coverage": left == right,
                                 "overlap_fraction": rounded(len(mask) / min(len(left), len(right))),
                                 "slope_second_on_first": rounded(slope), "intercept": rounded(offset)})
     return results
@@ -430,7 +440,7 @@ def configure_crafted(table):
         link_fields(table, "passerRating MP", [f"{family}.execution"], "0.55 × effective MP / (effective MP + 750)")
         link_fields(table, gate, [f"{family}.recognition", f"{family}.execution"], "binary eligibility above 0.02")
     for column in table.links:
-        if column.endswith("_pct") and column.islower() or column in {
+        if (column.endswith("_pct") and column.islower()) or column in {
             "FG3_PCT", "FT_PCT", "3P%", "FT%", "Prbh%", "Post%", "Pnrr%", "Cut%", "Transition%", "Iso%", "SpotUp%", "OffScreen%", "Handoff%",
         }:
             table.ranges[column] = (0, 1, "fraction the builder expects")
@@ -576,6 +586,7 @@ def load_other_sources(root, universe):
     data = read_json(root, estimator.SHOT_ZONE_PATH)
     reconciled = 0
     invalid = Counter()
+    bin_values = defaultdict(list)
     for doc in data["profiles"]:
         bins = doc.get("bins", [])
         coords = [list(col) for col in zip(*(row[:4] for row in bins if isinstance(row, list) and len(row) >= 4))]
@@ -583,13 +594,18 @@ def load_other_sources(root, universe):
         for label, cells in zip(("x", "y", "zone", "count"), coords):
             # A per-player count of present bins, so a containing array is not mistaken for an as-delivered scalar.
             values[f"bins.{label}"] = len(cells)
+            bin_values[label].extend(cells)
         if len(coords) == 4 and len(coords[0]) == len(bins):
             for x, y, z, n in zip(*coords):
                 if None in (x, y, z, n) or z not in range(1, 16) or n < 0:
                     invalid["invalid_bin_rows"] += 1
             reconciled += sum(coords[3]) == doc.get("attempts")
         zones.add(data["season"], estimator._normalize(doc["name"]), values)
-    zones.context.update({"profiles_reconciled": reconciled, "checks": dict(invalid)})
+    zones.context.update({"profiles_reconciled": reconciled, "checks": dict(invalid),
+                          "bin_column_stats": {f"bins.{key}": {"rows": len(cells),
+                              "missing": sum(v is None for v in cells), "zeros": cells.count(0),
+                              "min": min(v for v in cells if v is not None), "max": max(v for v in cells if v is not None)}
+                              for key, cells in bin_values.items()}})
     sources[estimator.SHOT_ZONE_PATH] = zones
     return sources, outcomes
 
@@ -634,13 +650,14 @@ def universe_and_judgments(root, universe):
         "missing": sum(player.get(name) in (None, "") for player in universe["players"]),
         "distinct_nonempty": len({player[name] for player in universe["players"] if player.get(name) not in (None, "")}),
     } for name in sorted(categorical)}
-    packet_summary = defaultdict(lambda: defaultdict(set))
+    packet_summary = defaultdict(lambda: defaultdict(dict))
     for (pid, iid), record in estimator.load_reference_cells(root).items():
         value = record["record"].get("value", {})
         if "grade" in value and estimator.DEFINITIONS[iid]["kind"] == "grade" and iid != "S07":
-            packet_summary[record["packet"]][iid].add(pid)
+            packet_summary[record["packet"]][iid][pid] = value["grade"]
     claims = defaultdict(dict)
     claim_checks = Counter()
+    claim_levels = Counter()
     valid_ids = {p["id"] for p in universe["players"]}
     for claim in analysts.load_claims(root):
         pid = claim.get("player_id")
@@ -648,15 +665,21 @@ def universe_and_judgments(root, universe):
         if claim.get("not_applied") or pid not in valid_ids or claim.get("level") not in analysts.LEVELS or not eligible:
             claim_checks["recorded_or_invalid"] += 1
             continue
+        claim_levels[claim["level"]] += 1
         for iid in eligible:
             claims[iid].setdefault(pid, []).append(analysts.claim_weight(claim))
     return table, {
         "expert_packet_grade": {"weight": .35, "paired_seasons": None,
-                                "players_per_input_by_packet": {path: {iid: len(players) for iid, players in cols.items()}
+                                "by_input_and_packet": {path: {
+                                    iid: {"players": len(players), "distinct_grades": len(set(players.values())),
+                                          "min": min(players.values()), "max": max(players.values()),
+                                          "zero_grades": sum(v == 0 for v in players.values())}
+                                    for iid, players in cols.items()}
                                                                 for path, cols in sorted(packet_summary.items())},
                                 "scope": "Newest eligible estimated grade; packet revision dates are not seasons. S07 and non-grade cells skipped."},
         "analyst_claims": {"path": analysts.CLAIMS_FILE, "checks": dict(claim_checks),
-                           "paired_seasons": None, "fields": ["level", "support", "context", "episode", "notes",
+                           "paired_seasons": None, "eligible_claims_by_level": dict(claim_levels),
+                           "fields": ["level", "support", "context", "episode", "notes",
                                                                "not_applied", "player_id", "inputs"],
                            "by_input": {iid: {"players": len(people), "weights": sorted(w for weights in people.values() for w in weights)}
                                         for iid, people in sorted(claims.items())},
@@ -800,6 +823,12 @@ def overlay_impact(capture, raw_table, universe):
                 link["builder_spearman_mean_untied"] = rounded(r)
                 link["builder_repeatability_multiplier"] = rounded(scale)
                 link["weight_before_player_volume"] = rounded(scale * link["base_weight"])
+                if route == "mapped overlay" and link["exposure"]:
+                    derived = Table()
+                    for season in bbi.SEASON_WEIGHTS:
+                        for pid, (value, minutes, _) in bbi._metric_values(raw_table, season, spec).items():
+                            derived.add(season, pid, {name: value}, minutes)
+                    link["exposure_adjusted_repeatability"] = repeatability(derived, name, sorted(bbi.SEASON_WEIGHTS))
                 for season in bbi.SEASON_WEIGHTS:
                     values = bbi._metric_values(raw_table, season, spec)
                     if scale and bbi._percentiles(values, link["direction"]):
@@ -849,6 +878,17 @@ def pair_scale(item):
     return None
 
 
+CRAFTED_ALIASES = [
+    set(pair.split()) for pair in (
+        "MIN minutes", "MIN MPG", "MPG minutes", "FG3_PCT 3P%", "3PA FG3A", "FT_PCT FT%",
+        "BLK% BLKpct", "DRB% DRBpct", "ORB% ORBpct", "STL% STLpct", "USG% USGpct",
+        "DEFL DEFLECTIONS", "cTOV% cTOVpct", "3PAr threePAr", "SpotUp% spotup_pct",
+        "Transition% transition_pct", "Cut% cut_pct", "Prbh% prbh_pct", "PrbhPPP prbh_ppp",
+        "Pnrr% pnrr_pct", "Post% post_pct", "PostPPP post_ppp", "Iso% iso_pct",
+        "IsoPPP iso_ppp", "OffScreen% offscreen_pct", "OffScreenPPP offscreen_ppp", "Handoff% handoff_pct",
+        "HandoffPPP handoff_ppp", "dPGpct dPG%", "dSGpct dSG%", "dPFpct dPF%", "dCpct dC%",
+    )
+]
 REMEDIES = {
     "all_missing": "Check capture availability and aliases. Use a verified replacement or retain the input's prior.",
     "constant": "Check the original value and exposure. Give a constant no weight until the source varies meaningfully.",
@@ -864,6 +904,12 @@ SPECIFIC_FIXES = {
     "Drive Foul Rate": "Retain one drive-foul rate. Verify independently counted fouled drives / drives before changing foul-drawing craft.",
     "Stable Shooting Fouls Drawn Per 75": "Check the field against official shooting-foul play-by-play and possession exposure, then restore only if it has valid variation.",
     "Movement Distance Rating": "Get unrounded offensive tracking distance per possession, then adjust for role and pace. Keep the effort-allocation preference prior until measured.",
+    "Isolation Foul Drawn Rate": "Compare the latest capture with tagged isolation fouls / isolation possessions. Use only verified seasons.",
+    "Isolation Turnover Rate": "Check the original isolation counts and percent conversion. The latest positive values look 100× too large. Preserve ranks and validate against turnovers per isolation before using raw units.",
+    "Paint Shooting Talent": "Check the provider's paint and pull-up field bindings. Replace the paint copy with verified non-rim paint or floater observations.",
+    "Paint Shot Making Efficiency": "Check the provider's paint and pull-up field bindings. Replace the paint copy with verified non-rim paint shot outcomes.",
+    "CraftedOPM": "Parse the impact value and percentile separately or use the numeric COPM alias where verified.",
+    "CraftedDPM": "Parse the impact value and percentile separately or use the numeric CDPM alias where verified.",
 }
 
 
@@ -918,7 +964,17 @@ def collect_problems(sources, described, directions):
                       "affected_rows_by_season_or_pair": {s: item["paired_players"] for s, item in seasons.items()},
                       "duplicate_details": seasons, "scale_candidates": scales, "inputs_fed_by_both_columns": sorted(shared),
                       "suggested_fix": next((SPECIFIC_FIXES[name] for name in names if name in SPECIFIC_FIXES), REMEDIES["scale" if scales else "duplicate"])}
-            result["impact_score"] = impact_score(result, active) * (1 if shared else .3)
+            expected_career_pair = source == estimator.CAREER_PATH and set(names) in (
+                {"fg3m", "fg3a"}, {"fta", "ftm"}, {"fgm", "fga"}, {"fg3a", "fga"})
+            known_alias = source == estimator.SKILL_PATH and any(
+                tokens == set(names) for tokens in CRAFTED_ALIASES)
+            if expected_career_pair or known_alias:
+                result["classification"] = "structural correlation of makes and attempts" if expected_career_pair else "aliases chosen in sequence"
+                result["suggested_fix"] = "Keep the required count pair." if expected_career_pair else "Keep one unit-normalized alias per lookup."
+                result["impact_score"] = 0
+            else:
+                discount = 1 if shared or any(item["exact_on_overlap"] for item in seasons.values()) else .3
+                result["impact_score"] = round(impact_score(result, active) * discount, 2)
             results.append(result)
     by_direction = defaultdict(dict)
     for result in directions:
@@ -944,11 +1000,60 @@ def impact_score(issue, links):
         n = min(n, max((l.get("unique_build_players", 0) for l in links), default=0)) if issue["type"] != "all_missing" else n
     else:
         n = n or max(affected.values(), default=0)
-    weight = max((l["base_weight"] if l.get("base_weight") is not None else .35 for l in links), default=0)
+    weight = max((l.get("weight_before_player_volume", l["base_weight"]) if l.get("base_weight") is not None else .35
+                  for l in links), default=0)
     severity = {"constant": 1, "all_missing": .35, "mostly_zero_or_missing": .8, "mostly_same_value": .65,
                 "outside_expected_range": .8, "duplicate": .65, "scale": .55,
                 "weak_repeatability": .20, "direction": .25}[issue["type"]]
     return round(n * weight * severity, 2)
+
+
+def priority_sensitivity(root, mapping, raw_table):
+    """Change one column in memory and inspect the evidence score before any final overlays."""
+    from copy import deepcopy
+    from unittest.mock import patch
+
+    cases = {
+        "drop second drive foul column": ("S24", ("Drive Foul Rate",)),
+        "drop constant shooting fouls drawn": ("T18", ("Stable Shooting Fouls Drawn Per 75",)),
+        "drop movement distance": ("T17:offense", ("Movement Distance Rating",)),
+        "drop copied paint columns together": ("S11", ("Paint Shooting Talent", "Paint Shot Making Efficiency")),
+        "drop isolation foul drawn": ("S24", ("Isolation Foul Drawn Rate",)),
+    }
+
+    def collect(table, wanted):
+        return {key: values for key, values in table.items() if key[1] in wanted}
+
+    def scores(table, spec):
+        with patch.object(bbi, "collect_values", new=lambda _root, wanted: collect(table, wanted)):
+            return bbi.player_input_scores(root, spec)
+
+    def compare(before, after, target):
+        a = {pid: rows[target] for pid, rows in before.items() if target in rows}
+        b = {pid: rows[target] for pid, rows in after.items() if target in rows}
+        common = a.keys() & b.keys()
+        delta = [abs(a[pid]["grade"] - b[pid]["grade"]) for pid in common]
+        return {"overlay_target": target, "players_with_score_before": len(a), "players_with_score_after": len(b),
+                "players_ending_without_score": len(a.keys() - b.keys()),
+                "players_with_grade_change": sum(v > 1e-10 for v in delta),
+                "players_with_weight_change": sum(a[pid]["weight"] != b[pid]["weight"] for pid in common),
+                "median_abs_grade_change_among_joint": rounded(statistics.median(delta)) if delta else None,
+                "max_abs_grade_change_among_joint": rounded(max(delta)) if delta else None}
+
+    all_targets = {target.split(":")[0] for target, _ in cases.values()} | {"S17"}
+    subset = {**mapping, "inputs": {iid: spec for iid, spec in mapping["inputs"].items() if iid in all_targets}}
+    before = scores(raw_table, subset)
+    out = {}
+    for title, (target, names) in cases.items():
+        spec = deepcopy(subset)
+        target_spec = spec["inputs"][target.split(":")[0]]
+        target_spec["metrics"] = [metric for metric in target_spec["metrics"] if metric["metric"] not in names]
+        out[title] = compare(before, scores(raw_table, spec), target)
+    corrected = dict(raw_table)
+    key = ("2025-26", "Isolation Turnover Rate")
+    corrected[key] = {pid: (v / 100, minutes, cid) for pid, (v, minutes, cid) in raw_table[key].items()}
+    out["divide 2025-26 isolation turnover rate by 100"] = compare(before, scores(corrected, subset), "S17")
+    return out
 
 
 def main():
@@ -974,6 +1079,8 @@ def main():
                            "direction_flag_oriented_spearman_below": NEGATIVE},
               "inputs": {iid: definition["name"] for iid, definition in estimator.DEFINITIONS.items()},
               "sources": described, "direction_checks": directions,
+              "sensitivity_scope": "In-memory change in the Basketball Index evidence only. Grade is the overlay score, not the game rating.",
+              "priority_sensitivity": priority_sensitivity(args.root, mapping, raw_table),
               "ranked_problems": collect_problems(sources, described, directions)}
     output = args.output or args.root / OUTPUT
     output.write_text(json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
