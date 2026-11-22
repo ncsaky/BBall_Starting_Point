@@ -22,6 +22,20 @@ from nba_gm_data.schema import to_plain
 from box_score_neutral import box_neutral
 
 
+# Retired experimental engine (Track C). These tests compare against frozen reference snapshots in output/, which were
+# never kept in git and were removed in the 2026-11-21 disk cleanup; they cannot be rebuilt exactly. Skip, with the
+# reason, when a snapshot is missing rather than failing. Normal gameplay does not use this engine.
+_RETIRED_SNAPSHOTS = ['expanded-cohort-action-performance-2026-11-15']
+
+
+def setUpModule():
+    from pathlib import Path
+    missing = [n for n in _RETIRED_SNAPSHOTS if not (Path(__file__).resolve().parents[1] / "output" / n).exists()]
+    if missing:
+        raise unittest.SkipTest("retired experimental engine: reference snapshot missing (deleted 2026-11-21, never in git): "
+                                + ", ".join(missing))
+
+
 class ExpandedCohortTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):cls.pool=load_pool();cls.old=reference_modules()

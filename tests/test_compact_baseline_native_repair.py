@@ -14,6 +14,20 @@ from experiments.action_choice_consistency.fixtures import observed_draws
 from experiments.compact_recovery_evaluator.diagnostics import packet
 
 
+# Retired experimental engine (Track C). These tests compare against frozen reference snapshots in output/, which were
+# never kept in git and were removed in the 2026-11-21 disk cleanup; they cannot be rebuilt exactly. Skip, with the
+# reason, when a snapshot is missing rather than failing. Normal gameplay does not use this engine.
+_RETIRED_SNAPSHOTS = ['mixed-pop-validation-2026-11-16']
+
+
+def setUpModule():
+    from pathlib import Path
+    missing = [n for n in _RETIRED_SNAPSHOTS if not (Path(__file__).resolve().parents[1] / "output" / n).exists()]
+    if missing:
+        raise unittest.SkipTest("retired experimental engine: reference snapshot missing (deleted 2026-11-21, never in git): "
+                                + ", ".join(missing))
+
+
 class CompactBaselineRepairTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
