@@ -2,7 +2,66 @@
 
 Paste one prompt into a **fresh** Codex chat. One task per chat keeps it from drifting after context compaction. Each prompt is self-contained. Claude reviews the result and updates `BOARD.md`.
 
-Current priority (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE now, ODDS-COACH after TRADE-MARKET's long runs. GUI tasks are parked at the bottom.
+Current priority (2026-11-22): DRAFT-DECISIONS-EVIDENCE now. GUI tasks are parked at the bottom.
+
+---
+
+## Ready now (2026-11-22, afternoon): DRAFT-DECISIONS-EVIDENCE (fresh chat; research, no game code changes)
+
+### DRAFT-DECISIONS-EVIDENCE: how real NBA teams actually draft, and how the game's AI GMs compare
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task DRAFT-DECISIONS-EVIDENCE (the board row exists; set it
+to "in progress (Codex)" when you start). Research only: do NOT edit game code (src/), the input builder, or
+data/canonical/. A Claude agent (ROOKIE-FIT-2) is rebuilding the 2026 rookies' ratings in those files right now.
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_draft_decisions -b codex/draft-decisions-evidence HEAD
+Symlink .venv and any git-ignored data you need from the main checkout. Commit on that branch; never push, never
+commit to main.
+
+Why: the user cares most that AI GMs make intelligent draft decisions. Real teams weigh NBA readiness against
+long-term upside (2026: Dybantsa and Peterson went 1-2 on upside; Boozer at 3 was seen as the most NBA-ready of that
+tier; Lendeborg, 24, went 11th as a ready starter with little upside). The game's AI picks with gm_rows() in
+src/nba_gm_data/draft.py: its scouts' grade, plus an upside bonus for rebuilding teams (GM_PHASE_UPSIDE 0.10), a
+readiness bonus for contenders (GM_PHASE_READY 0.14, GM_CONTENDER_RISK 0.03), team need weighted more in later picks
+(GM_NEED_WEIGHTS), and a penalty for reaching past the consensus rank (GM_REACH_WEIGHT 0.25, tolerance 2). None of
+those numbers were fitted to evidence. Your job: measure the real behaviour so they can be.
+
+Start from what exists: data/research/draft_boards/real_board_vs_pick_2015_2025.csv (one big board per year vs the
+actual pick, 330 rows), data/research/draft_combine_2000_2025.json, data/research/development_evidence.json (careers,
+draft slots), data/research/prospect_scouting/. Extend it to drafts 2012-2025 with a consensus board per year (average
+of 2-3 public boards where available, e.g. ESPN, The Ringer, NBADraft.net, Tankathon/archived pages; record each
+source and date; respect robots.txt and site terms, rate-limit politely, Basketball Reference about 20 requests a
+minute, no paywalled content).
+
+Measure (fit on drafts 2012-2021, check on 2022-2025):
+1. How far real picks stray from the consensus board, by pick range (1-5, 6-14, 15-30, second round): typical gap,
+   how often a team reaches 5+ / 10+ spots, how often a top-10 consensus prospect slides.
+2. Readiness vs upside by team situation: do contenders (prior-season record, playoff team) take older / more
+   college years / more productive prospects than rebuilding teams at the same pick, versus the board? Use age at
+   draft and college years as readiness proxies, and the board's ranking as the upside-weighted consensus.
+3. Team need: do teams draft positions they lack (roster minutes by position the season before) more than the
+   board says, and does that grow later in the draft?
+4. Outcomes: did picks that strayed from the consensus do better or worse by year 4 (minutes, box plus-minus or
+   VORP/win shares from Basketball Reference)? Was the board itself better than the actual order?
+5. Trades on draft night: how often picks change hands, by range (counts only).
+
+Then compare with the game (read-only): run the game's AI draft for the 2026 class and for two or three generated
+future classes (draft.simulate_draft / draft_board_report, or whatever the tests use; a fresh league from
+scripts or the CLI; keep runs light, at most two heavy jobs on the laptop, use nice -n 10). Report the same
+measures (1-3) for the game's AI and put them side by side with real.
+
+Deliverables:
+- data/research/draft_decisions_evidence.json (all measures, held-out checks, sources)
+- scripts/research/draft_decisions_fit.py (rebuilds the JSON from cached raw pages under data/research/draft_boards/)
+- docs/agents/tasks/draft-decisions-evidence.md: plain everyday language, 3-line TL;DR first, no jargon or internal
+  IDs. End with a table "suggested values" for each GM_* number above (current value, suggested value, the evidence
+  for it), plus any behaviour the game's AI lacks entirely (e.g. trading down, age penalties). Do not change them.
+- Set the board row to "review" and stop.
+```
 
 ---
 
