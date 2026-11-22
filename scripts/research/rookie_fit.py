@@ -384,6 +384,28 @@ def target_class(by_player, ctx):
     return out, missing
 
 
+def college_card(line: dict) -> dict:
+    """The college line as stored in the translation bundle (read by input_estimator.load_rookie_college)."""
+    return {"season": line["season"], "team": line["team_name"], "conf": line["conf"],
+                "class": line["class"], "games": line["games"], "minutes": line["minutes"],
+                "min_pct": r(line["rates"]["min_pct"], 1), "bpm": r(line["bpm"], 2),
+                "obpm": r(line["obpm_raw"], 2), "dbpm": r(line["dbpm_raw"], 2),
+                "usg": r(line["rates"]["usg"], 1), "ts": r(line["rates"]["ts"], 1),
+                "orb_pct": r(line["rates"]["orb_pct"], 1), "drb_pct": r(line["rates"]["drb_pct"], 1),
+                "ast_pct": r(line["rates"]["ast_pct"], 1), "tov_pct": r(line["rates"]["tov_pct"], 1),
+                "stl_pct": r(line["rates"]["stl_pct"], 2), "blk_pct": r(line["rates"]["blk_pct"], 2),
+                "ftr": r(line["rates"]["ftr"], 1), "three_rate": r(line["rates"]["three_rate"], 3),
+                "three_per40": r(line["rates"]["three_per40"], 2),
+                "three_pct": r(line["shoot"]["three_pct"], 3), "ft_pct": r(line["shoot"]["ft_pct"], 3),
+                "fta": line["shoot"]["fta"], "three_a": line["shoot"]["three_a"],
+                "rim_pct": r(line["shoot"]["rim_pct"], 3), "mid_pct": r(line["shoot"]["mid_pct"], 3),
+                "rim_per40": r(line["rates"]["rim_per40"], 2), "dunk_per40": r(line["rates"]["dunk_per40"], 2),
+                "unast_per40": r(line["rates"]["unast_per40"], 2),
+                "unast_three": r(line["rates"]["unast_three"], 3), "ast_to": r(line["rates"]["ast_to"], 2),
+                "team_strength": r(line["team"], 3), "height_in": line["height_in"],
+                "pts_pg": line["pts_pg"], "reb_pg": line["reb_pg"], "ast_pg": line["ast_pg"]}
+
+
 def r(value, digits=3):
     return None if value is None else round(value, digits)
 
@@ -463,24 +485,7 @@ def main() -> None:
         line = e["line"]
         projections[pid] = {
             "name": e["name"], "pick": e["pick"], "age": round(e["x"]["age"], 2),
-            "college": {"season": line["season"], "team": line["team_name"], "conf": line["conf"],
-                        "class": line["class"], "games": line["games"], "minutes": line["minutes"],
-                        "min_pct": r(line["rates"]["min_pct"], 1), "bpm": r(line["bpm"], 2),
-                        "obpm": r(line["obpm_raw"], 2), "dbpm": r(line["dbpm_raw"], 2),
-                        "usg": r(line["rates"]["usg"], 1), "ts": r(line["rates"]["ts"], 1),
-                        "orb_pct": r(line["rates"]["orb_pct"], 1), "drb_pct": r(line["rates"]["drb_pct"], 1),
-                        "ast_pct": r(line["rates"]["ast_pct"], 1), "tov_pct": r(line["rates"]["tov_pct"], 1),
-                        "stl_pct": r(line["rates"]["stl_pct"], 2), "blk_pct": r(line["rates"]["blk_pct"], 2),
-                        "ftr": r(line["rates"]["ftr"], 1), "three_rate": r(line["rates"]["three_rate"], 3),
-                        "three_per40": r(line["rates"]["three_per40"], 2),
-                        "three_pct": r(line["shoot"]["three_pct"], 3), "ft_pct": r(line["shoot"]["ft_pct"], 3),
-                        "fta": line["shoot"]["fta"], "three_a": line["shoot"]["three_a"],
-                        "rim_pct": r(line["shoot"]["rim_pct"], 3), "mid_pct": r(line["shoot"]["mid_pct"], 3),
-                        "rim_per40": r(line["rates"]["rim_per40"], 2), "dunk_per40": r(line["rates"]["dunk_per40"], 2),
-                        "unast_per40": r(line["rates"]["unast_per40"], 2),
-                        "unast_three": r(line["rates"]["unast_three"], 3), "ast_to": r(line["rates"]["ast_to"], 2),
-                        "team_strength": r(line["team"], 3), "height_in": line["height_in"],
-                        "pts_pg": line["pts_pg"], "reb_pg": line["reb_pg"], "ast_pg": line["ast_pg"]},
+            "college": college_card(line),
             "projection": proj, "profile": e["profile"], "effective_minutes": e["effective_minutes"],
         }
     report["class_2026_without_college_line"] = missing

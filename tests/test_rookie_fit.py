@@ -1,4 +1,4 @@
-"""ROOKIE-FIT: the 2026 rookies' technique from their final college season and projected rookie-year impact."""
+"""ROOKIE-FIT and ROOKIE-FIT-2: the 2026 rookies' technique from their final college season; level = day-one ability."""
 import copy
 import json
 import unittest
@@ -94,6 +94,17 @@ class CollegeEvidencePathTests(unittest.TestCase):
         self.assertAlmostEqual(after, .75 * before + .25 * .30, places=7)
         self.assertEqual(section["players"]["vet"], vet)
 
+    def test_involvement_then_this_seasons_usage(self):
+        doc = self.estimator.estimate_player_inputs(ROOKIE).to_dict()
+        before = doc["inputs"]["T08"]["value"]["probability"]
+        section = {"players": {"rookie": doc}}
+        entry = dict(college_entry(), involvement_games=[.40, .2])
+        apply_rookie_involvement(section, {"rookie": entry})
+        college = .75 * before + .25 * .30
+        record = section["players"]["rookie"]["inputs"]["T08"]
+        self.assertAlmostEqual(record["value"]["probability"], .8 * college + .2 * .40, places=7)
+        self.assertEqual(record["evidence"][-1]["source"], "basketball_reference:2026_27_games_so_far")
+
 
 @unittest.skipUnless((ROOT / ROOKIE_TRANSLATION_PATH).exists(), "rookie translation bundle missing")
 class RookieBundleTests(unittest.TestCase):
@@ -115,13 +126,60 @@ class RookieBundleTests(unittest.TestCase):
         target, weight = entry["involvement"]
         self.assertTrue(0 < target < 1 and 0 < weight < .6)
 
-    def test_report_answers_slot_and_age_questions(self):
+    def test_report_answers_slot_and_selection_questions(self):
         bundle = json.loads((ROOT / ROOKIE_TRANSLATION_PATH).read_text())
-        report = bundle["report"]["outcomes"]["lebron"]
-        models = report["models"]
+        self.assertEqual(bundle["method"], "rookie_translation_v2")
+        models = bundle["report"]["outcomes"]["lebron"]["models"]
         # College production predicts first-season impact better than draft slot on held-out drafts.
         self.assertGreater(models["college_slot"]["held_out"]["r"], models["slot"]["held_out"]["r"])
-        self.assertIn("older (22.5+), college BPM 9+", report["age_groups"])
+        # Who gets minutes: a late second-rounder's ability sits below what the few who play show.
+        late = next(b for b in bundle["report"]["pick_bands"] if b["picks"] == "46-60")
+        self.assertLess(late["ability_mean"], late["if_played_mean"])
+
+    def test_day_one_ability_is_the_sum_of_labelled_parts(self):
+        bundle = json.loads((ROOT / ROOKIE_TRANSLATION_PATH).read_text())
+        for pid, entry in bundle["class_2026"].items():
+            parts = entry["projection_parts"]
+            for side in ("o", "d"):
+                with self.subTest(player=entry["name"], side=side):
+                    total = parts["college_fit"][side] + parts["readiness"][side] + parts["early_games"][side]
+                    self.assertAlmostEqual(entry["projection"][side], total, delta=0.002)
+            # This season's games are light evidence: weight minutes / (minutes + 1500), never most of the answer.
+            self.assertLess(parts["early_games"]["weight"], 0.4)
+            if entry["involvement_games"]:
+                self.assertLess(entry["involvement_games"][1], 0.5)
+
+
+class EarlyGamesTests(unittest.TestCase):
+    """ROOKIE-FIT-2: this season's games move a rookie a little, by minutes, and tiny samples not at all."""
+
+    def setUp(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "scripts" / "research"))
+        import rookie_fit2
+        self.r2 = rookie_fit2
+        self.early = {"conversion": {"o": (0.0, 0.5, 0.8), "d": (0.0, 1.0, 0.8)},
+                      "usage_line": {"intercept": 0.0, "slope": 0.015}}
+
+    def row(self, minutes, obpm=2.0, dbpm=1.0, usg=25.0):
+        return {"mp": minutes, "g": 10, "obpm": obpm, "dbpm": dbpm, "bpm": obpm + dbpm, "pts": 100, "usg_pct": usg}
+
+    def test_weight_grows_with_minutes_and_tiny_samples_are_ignored(self):
+        proj = {"o": -1.0, "d": -0.5}
+        none, inv = self.r2.games_evidence(proj, self.row(40, obpm=30), self.early)
+        self.assertEqual((none["o"], none["d"], inv), (0.0, 0.0, None))
+        small, _ = self.r2.games_evidence(proj, self.row(150), self.early)
+        big, inv = self.r2.games_evidence(proj, self.row(600), self.early)
+        self.assertAlmostEqual(small["o"], 150 / 1650 * (1.0 - -1.0), places=3)
+        self.assertGreater(big["o"], small["o"])
+        self.assertLess(big["weight"], 0.3)
+        self.assertAlmostEqual(inv[0], 0.375, places=6)
+        self.assertAlmostEqual(inv[1], 600 / 1600, places=6)
+
+    def test_extreme_box_numbers_are_held_in(self):
+        proj = {"o": -1.0, "d": -0.5}
+        wild, _ = self.r2.games_evidence(proj, self.row(120, obpm=-40.0), self.early)
+        self.assertAlmostEqual(wild["o"], 120 / 1620 * (-5.0 - -1.0), places=3)
 
 
 if __name__ == "__main__":

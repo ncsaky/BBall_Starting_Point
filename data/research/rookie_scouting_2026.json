@@ -1,0 +1,1248 @@
+{
+ "about": "Public pre-draft big boards, readiness write-ups and early-season rookie ladders for the 2026 draft class, gathered 2026-11-22 from the linked public pages (no paywalled content; The Athletic's top 10 via a Bleacher Report summary). Ranks are as published. Readiness tiers (ready_now / some_readiness / project / unknown) and reasons are short paraphrases of the linked write-ups made for this file, not quotes. Spot-checked against ESPN (Woo, 2026-06-23) and the NBA.com Kia Rookie Ladder of 2026-11-18.",
+ "boards": [
+  {
+   "author": "Rookie Scale (no byline)",
+   "date": "2026-06-23",
+   "id": "rookiescale",
+   "kind": "consensus_board",
+   "notes": "Weighted consensus of many outlets, top 100 read in full. Locked June 23 7:45pm ET.",
+   "ranks": {
+    "AJ Dybantsa": 1,
+    "Aday Mara": 11,
+    "Alex Karaban": 32,
+    "Allen Graves": 19,
+    "Baba Miller": 34,
+    "Bennett Stirtz": 17,
+    "Braden Smith": 39,
+    "Brayden Burries": 10,
+    "Bruce Thornton": 44,
+    "Bryce Hopkins": 57,
+    "Caleb Wilson": 4,
+    "Cameron Boozer": 3,
+    "Cameron Carr": 16,
+    "Chris Cenac Jr.": 22,
+    "Christian Anderson": 18,
+    "Dailyn Swain": 21,
+    "Darius Acuff Jr.": 7,
+    "Darryn Peterson": 2,
+    "Dillon Mitchell": 41,
+    "Ebuka Okorie": 23,
+    "Emanuel Sharp": 40,
+    "Felix Okpara": 47,
+    "Hannes Steinbach": 14,
+    "Henri Veesaar": 31,
+    "Isaiah Evans": 28,
+    "Izaiyah Nelson": 48,
+    "Ja'Kobi Gillespie": 45,
+    "Jaden Bradley": 42,
+    "Jaron Pierre Jr.": 72,
+    "Jayden Quaintance": 24,
+    "Joshua Jefferson": 33,
+    "Karim Lopez": 15,
+    "Keaton Wagler": 5,
+    "Kingston Flemings": 9,
+    "Koa Peat": 27,
+    "Labaron Philon": 20,
+    "Maliq Brown": 50,
+    "Meleek Thomas": 30,
+    "Mikel Brown Jr.": 6,
+    "Morez Johnson Jr.": 13,
+    "Nate Ament": 8,
+    "Nick Martinelli": 52,
+    "Otega Oweh": 49,
+    "Ryan Conwell": 36,
+    "Sergio de Larrea": 29,
+    "Tarris Reed Jr.": 25,
+    "Tobi Lawal": 51,
+    "Trevon Brazile": 38,
+    "Tyler Bilodeau": 53,
+    "Tyler Nickel": 46,
+    "Ugonna Onyenso": 43,
+    "Yaxel Lendeborg": 12,
+    "Zuby Ejiofor": 26
+   },
+   "title": "Rookie Scale 2026 Consensus Board (locked)",
+   "url": "https://www.rookiescale.com/2026-consensus-board/"
+  },
+  {
+   "author": "Jeremy Woo",
+   "date": "2026-06-23",
+   "id": "espn_woo",
+   "kind": "big_board",
+   "notes": "Final update before draft, top 100 read in full; write-ups only for 1-25.",
+   "ranks": {
+    "AJ Dybantsa": 2,
+    "Aday Mara": 10,
+    "Alex Karaban": 31,
+    "Allen Graves": 17,
+    "Baba Miller": 34,
+    "Bennett Stirtz": 20,
+    "Braden Smith": 39,
+    "Brayden Burries": 11,
+    "Bruce Thornton": 49,
+    "Bryce Hopkins": 46,
+    "Caleb Wilson": 4,
+    "Cameron Boozer": 3,
+    "Cameron Carr": 21,
+    "Chris Cenac Jr.": 19,
+    "Christian Anderson": 16,
+    "Dailyn Swain": 23,
+    "Darius Acuff Jr.": 6,
+    "Darryn Peterson": 1,
+    "Dillon Mitchell": 40,
+    "Ebuka Okorie": 24,
+    "Emanuel Sharp": 38,
+    "Felix Okpara": 42,
+    "Hannes Steinbach": 13,
+    "Henri Veesaar": 28,
+    "Isaiah Evans": 25,
+    "Izaiyah Nelson": 45,
+    "Ja'Kobi Gillespie": 43,
+    "Jaden Bradley": 44,
+    "Jaron Pierre Jr.": 70,
+    "Jayden Quaintance": 22,
+    "Joshua Jefferson": 33,
+    "Karim Lopez": 14,
+    "Keaton Wagler": 5,
+    "Kingston Flemings": 8,
+    "Koa Peat": 27,
+    "Labaron Philon": 18,
+    "Maliq Brown": 56,
+    "Meleek Thomas": 29,
+    "Mikel Brown Jr.": 7,
+    "Morez Johnson Jr.": 15,
+    "Nate Ament": 9,
+    "Nick Martinelli": 53,
+    "Otega Oweh": 60,
+    "Ryan Conwell": 35,
+    "Sergio de Larrea": 30,
+    "Tarris Reed Jr.": 32,
+    "Tobi Lawal": 51,
+    "Trevon Brazile": 41,
+    "Tyler Bilodeau": 62,
+    "Tyler Nickel": 50,
+    "Ugonna Onyenso": 48,
+    "Yaxel Lendeborg": 12,
+    "Zuby Ejiofor": 26
+   },
+   "title": "ESPN 2026 NBA draft big board: Top 100 prospects",
+   "url": "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players"
+  },
+  {
+   "author": "J. Kyle Mann",
+   "date": "2026-06-18",
+   "id": "ringer_mann",
+   "kind": "big_board",
+   "notes": "Only ranks 1-50 retrievable (page truncated), so lower players show null though may be ranked 51+.",
+   "ranks": {
+    "AJ Dybantsa": 3,
+    "Aday Mara": 15,
+    "Alex Karaban": 30,
+    "Allen Graves": 26,
+    "Baba Miller": 24,
+    "Bennett Stirtz": 16,
+    "Braden Smith": 44,
+    "Brayden Burries": 6,
+    "Bruce Thornton": 40,
+    "Caleb Wilson": 4,
+    "Cameron Boozer": 1,
+    "Cameron Carr": 18,
+    "Chris Cenac Jr.": 37,
+    "Christian Anderson": 22,
+    "Dailyn Swain": 17,
+    "Darius Acuff Jr.": 9,
+    "Darryn Peterson": 2,
+    "Dillon Mitchell": 39,
+    "Ebuka Okorie": 21,
+    "Emanuel Sharp": 41,
+    "Hannes Steinbach": 11,
+    "Henri Veesaar": 19,
+    "Isaiah Evans": 29,
+    "Jayden Quaintance": 10,
+    "Joshua Jefferson": 25,
+    "Karim Lopez": 36,
+    "Keaton Wagler": 5,
+    "Kingston Flemings": 7,
+    "Koa Peat": 23,
+    "Labaron Philon": 14,
+    "Maliq Brown": 32,
+    "Meleek Thomas": 28,
+    "Mikel Brown Jr.": 12,
+    "Morez Johnson Jr.": 13,
+    "Nate Ament": 20,
+    "Nick Martinelli": 49,
+    "Otega Oweh": 42,
+    "Ryan Conwell": 27,
+    "Sergio de Larrea": 38,
+    "Tarris Reed Jr.": 33,
+    "Trevon Brazile": 43,
+    "Tyler Nickel": 46,
+    "Ugonna Onyenso": 48,
+    "Yaxel Lendeborg": 8,
+    "Zuby Ejiofor": 31
+   },
+   "title": "The Ringer 2026 NBA Draft Big Board",
+   "url": "https://www.theringer.com/nba-draft/2026/big-board?view=deep-dive"
+  },
+  {
+   "author": "Brett Siegel",
+   "date": "2026-06-22",
+   "id": "clutchpoints_siegel",
+   "kind": "big_board",
+   "notes": "Top 100 read in full; write-ups 1-30.",
+   "ranks": {
+    "AJ Dybantsa": 1,
+    "Aday Mara": 10,
+    "Alex Karaban": 34,
+    "Allen Graves": 22,
+    "Baba Miller": 35,
+    "Bennett Stirtz": 20,
+    "Braden Smith": 45,
+    "Brayden Burries": 8,
+    "Bruce Thornton": 46,
+    "Bryce Hopkins": 65,
+    "Caleb Wilson": 4,
+    "Cameron Boozer": 3,
+    "Cameron Carr": 14,
+    "Chris Cenac Jr.": 18,
+    "Christian Anderson": 23,
+    "Dailyn Swain": 17,
+    "Darius Acuff Jr.": 7,
+    "Darryn Peterson": 2,
+    "Dillon Mitchell": 42,
+    "Ebuka Okorie": 21,
+    "Emanuel Sharp": 41,
+    "Felix Okpara": 47,
+    "Hannes Steinbach": 15,
+    "Henri Veesaar": 32,
+    "Isaiah Evans": 26,
+    "Izaiyah Nelson": 51,
+    "Ja'Kobi Gillespie": 44,
+    "Jaden Bradley": 40,
+    "Jaron Pierre Jr.": 68,
+    "Jayden Quaintance": 24,
+    "Joshua Jefferson": 31,
+    "Karim Lopez": 19,
+    "Keaton Wagler": 6,
+    "Kingston Flemings": 9,
+    "Koa Peat": 25,
+    "Labaron Philon": 16,
+    "Maliq Brown": 52,
+    "Meleek Thomas": 27,
+    "Mikel Brown Jr.": 5,
+    "Morez Johnson Jr.": 13,
+    "Nate Ament": 12,
+    "Nick Martinelli": 43,
+    "Otega Oweh": 50,
+    "Ryan Conwell": 37,
+    "Sergio de Larrea": 28,
+    "Tarris Reed Jr.": 30,
+    "Tobi Lawal": 54,
+    "Trevon Brazile": 33,
+    "Tyler Bilodeau": 53,
+    "Tyler Nickel": 55,
+    "Ugonna Onyenso": 39,
+    "Yaxel Lendeborg": 11,
+    "Zuby Ejiofor": 29
+   },
+   "title": "ClutchPoints Big Board 5.0 (final top 100)",
+   "url": "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft"
+  },
+  {
+   "author": "Derek Parker",
+   "date": "2026-06-22",
+   "id": "onsi_parker",
+   "kind": "big_board",
+   "notes": "Top 40 only; null means outside the top 40.",
+   "ranks": {
+    "AJ Dybantsa": 3,
+    "Aday Mara": 14,
+    "Alex Karaban": 33,
+    "Allen Graves": 28,
+    "Bennett Stirtz": 18,
+    "Brayden Burries": 7,
+    "Bruce Thornton": 29,
+    "Caleb Wilson": 4,
+    "Cameron Boozer": 2,
+    "Cameron Carr": 26,
+    "Chris Cenac Jr.": 27,
+    "Christian Anderson": 16,
+    "Dailyn Swain": 10,
+    "Darius Acuff Jr.": 6,
+    "Darryn Peterson": 1,
+    "Ebuka Okorie": 17,
+    "Hannes Steinbach": 13,
+    "Henri Veesaar": 24,
+    "Isaiah Evans": 35,
+    "Ja'Kobi Gillespie": 39,
+    "Jayden Quaintance": 22,
+    "Joshua Jefferson": 21,
+    "Karim Lopez": 30,
+    "Keaton Wagler": 5,
+    "Kingston Flemings": 8,
+    "Koa Peat": 23,
+    "Labaron Philon": 19,
+    "Meleek Thomas": 25,
+    "Mikel Brown Jr.": 9,
+    "Morez Johnson Jr.": 12,
+    "Nate Ament": 15,
+    "Otega Oweh": 40,
+    "Sergio de Larrea": 34,
+    "Tarris Reed Jr.": 32,
+    "Tyler Nickel": 37,
+    "Ugonna Onyenso": 38,
+    "Yaxel Lendeborg": 11,
+    "Zuby Ejiofor": 20
+   },
+   "title": "On SI Final Top-40 Big Board",
+   "url": "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board"
+  },
+  {
+   "author": "Raphielle Johnson",
+   "date": "2026-06-19",
+   "id": "nbc_johnson",
+   "kind": "big_board",
+   "notes": "Top 75 (last ~688 chars unread). Null means outside top 75 or unread.",
+   "ranks": {
+    "AJ Dybantsa": 1,
+    "Aday Mara": 12,
+    "Alex Karaban": 33,
+    "Allen Graves": 31,
+    "Baba Miller": 37,
+    "Bennett Stirtz": 22,
+    "Braden Smith": 41,
+    "Brayden Burries": 9,
+    "Bruce Thornton": 39,
+    "Bryce Hopkins": 71,
+    "Caleb Wilson": 4,
+    "Cameron Boozer": 3,
+    "Cameron Carr": 16,
+    "Chris Cenac Jr.": 23,
+    "Christian Anderson": 18,
+    "Dailyn Swain": 13,
+    "Darius Acuff Jr.": 5,
+    "Darryn Peterson": 2,
+    "Dillon Mitchell": 51,
+    "Ebuka Okorie": 19,
+    "Emanuel Sharp": 36,
+    "Felix Okpara": 38,
+    "Hannes Steinbach": 15,
+    "Henri Veesaar": 27,
+    "Isaiah Evans": 34,
+    "Izaiyah Nelson": 42,
+    "Ja'Kobi Gillespie": 46,
+    "Jaden Bradley": 45,
+    "Jayden Quaintance": 20,
+    "Joshua Jefferson": 24,
+    "Karim Lopez": 25,
+    "Keaton Wagler": 8,
+    "Kingston Flemings": 6,
+    "Koa Peat": 21,
+    "Labaron Philon": 17,
+    "Maliq Brown": 35,
+    "Meleek Thomas": 30,
+    "Mikel Brown Jr.": 7,
+    "Morez Johnson Jr.": 14,
+    "Nate Ament": 10,
+    "Nick Martinelli": 48,
+    "Otega Oweh": 64,
+    "Ryan Conwell": 43,
+    "Sergio de Larrea": 32,
+    "Tarris Reed Jr.": 29,
+    "Tobi Lawal": 66,
+    "Trevon Brazile": 44,
+    "Tyler Bilodeau": 53,
+    "Tyler Nickel": 54,
+    "Ugonna Onyenso": 49,
+    "Yaxel Lendeborg": 11,
+    "Zuby Ejiofor": 26
+   },
+   "title": "NBC Sports 2026 NBA Draft Big Board",
+   "url": "https://www.nbcsports.com/fantasy/basketball/news/nbc-sports-2026-nba-draft-big-board-aj-dybantsa-darryn-peterson-lead-the-way"
+  },
+  {
+   "author": "Sam Vecenie",
+   "date": "2026-06-16",
+   "id": "athletic_vecenie",
+   "kind": "big_board",
+   "notes": "Top 10 only, secondhand via Bleacher Report; The Athletic full board paywalled.",
+   "ranks": {
+    "AJ Dybantsa": 1,
+    "Brayden Burries": 8,
+    "Caleb Wilson": 4,
+    "Cameron Boozer": 2,
+    "Darius Acuff Jr.": 5,
+    "Darryn Peterson": 3,
+    "Keaton Wagler": 6,
+    "Kingston Flemings": 7,
+    "Mikel Brown Jr.": 10,
+    "Yaxel Lendeborg": 9
+   },
+   "title": "The Athletic top 10 (via Bleacher Report summary)",
+   "url": "https://bleacherreport.com/articles/25441184-new-nba-draft-2026-big-board-athletic-drops-how-does-it-compare-br-espn"
+  },
+  {
+   "author": "Zach Kram",
+   "date": "2026-07-17",
+   "id": "espn_summer_rookie_rank",
+   "kind": "readiness_list",
+   "notes": "Ranking of summer league performance/readiness; Quaintance and Lopez excluded (injured), Mara judged further from contributing.",
+   "ranks": {
+    "AJ Dybantsa": 1,
+    "Brayden Burries": 5,
+    "Caleb Wilson": 4,
+    "Cameron Boozer": 2,
+    "Darius Acuff Jr.": 11,
+    "Darryn Peterson": 3,
+    "Keaton Wagler": 10,
+    "Kingston Flemings": 9,
+    "Mikel Brown Jr.": 6,
+    "Morez Johnson Jr.": 8,
+    "Yaxel Lendeborg": 7
+   },
+   "title": "ESPN post-summer league rookie rankings",
+   "url": "https://africa.espn.com/nba/story/_/id/49351566/rookie-rankings-summer-league-2026-draft-aj-dybantsa-darryn-peterson"
+  },
+  {
+   "author": "Blake Silverman",
+   "date": "2026-10-03",
+   "id": "si_roy_preseason",
+   "kind": "readiness_list",
+   "notes": "Top 5 as retrieved; Lendeborg called the most NBA-ready of the group.",
+   "ranks": {
+    "AJ Dybantsa": 2,
+    "Caleb Wilson": 4,
+    "Cameron Boozer": 3,
+    "Darryn Peterson": 1,
+    "Yaxel Lendeborg": 5
+   },
+   "title": "SI Rookie of the Year Rankings 1.0 (Preseason)",
+   "url": "https://www.si.com/nba/rookie-of-the-year-rankings-how-stacked-class-looks-heading-into-preseason"
+  },
+  {
+   "author": "Jeff Zillgitt",
+   "date": "2026-10-28",
+   "id": "kia_ladder_2026-10-28",
+   "kind": "rookie_ladder",
+   "notes": "Top 10. Debut ladder; Boozer No. 1.",
+   "ranks": {
+    "Aday Mara": 7,
+    "Brayden Burries": 9,
+    "Caleb Wilson": 3,
+    "Cameron Boozer": 1,
+    "Darius Acuff Jr.": 4,
+    "Darryn Peterson": 6,
+    "Keaton Wagler": 5,
+    "Mikel Brown Jr.": 10,
+    "Trevon Brazile": 8,
+    "Yaxel Lendeborg": 2
+   },
+   "title": "Kia Rookie Ladder 2026-10-28",
+   "url": "https://www.nba.com/news/kia-rookie-ladder-october-28-2026"
+  },
+  {
+   "author": "Jeff Zillgitt",
+   "date": "2026-11-04",
+   "id": "kia_ladder_2026-11-04",
+   "kind": "rookie_ladder",
+   "notes": "Top 10. Through first two weeks.",
+   "ranks": {
+    "AJ Dybantsa": 5,
+    "Aday Mara": 7,
+    "Caleb Wilson": 4,
+    "Cameron Boozer": 1,
+    "Darius Acuff Jr.": 3,
+    "Darryn Peterson": 6,
+    "Keaton Wagler": 9,
+    "Kingston Flemings": 8,
+    "Meleek Thomas": 10,
+    "Yaxel Lendeborg": 2
+   },
+   "title": "Kia Rookie Ladder 2026-11-04",
+   "url": "https://www.nba.com/news/kia-rookie-ladder-november-4-2026"
+  },
+  {
+   "author": "Jeff Zillgitt",
+   "date": "2026-11-11",
+   "id": "kia_ladder_2026-11-11",
+   "kind": "rookie_ladder",
+   "notes": "Top 10. ",
+   "ranks": {
+    "AJ Dybantsa": 5,
+    "Aday Mara": 7,
+    "Caleb Wilson": 6,
+    "Cameron Boozer": 3,
+    "Darius Acuff Jr.": 2,
+    "Darryn Peterson": 4,
+    "Kingston Flemings": 9,
+    "Meleek Thomas": 10,
+    "Mikel Brown Jr.": 8,
+    "Yaxel Lendeborg": 1
+   },
+   "title": "Kia Rookie Ladder 2026-11-11",
+   "url": "https://www.nba.com/news/kia-rookie-ladder-november-11-2026"
+  },
+  {
+   "author": "Jeff Zillgitt",
+   "date": "2026-11-18",
+   "id": "kia_ladder_2026-11-18",
+   "kind": "rookie_ladder",
+   "notes": "Top 10. Wilson out to mid-Dec with hand fracture. Others noted unranked: Christian Anderson, Allen Graves, Jaron Pierre Jr., Ryan Conwell, Koa Peat.",
+   "ranks": {
+    "AJ Dybantsa": 5,
+    "Aday Mara": 7,
+    "Brayden Burries": 10,
+    "Caleb Wilson": 6,
+    "Cameron Boozer": 2,
+    "Darius Acuff Jr.": 3,
+    "Darryn Peterson": 4,
+    "Keaton Wagler": 8,
+    "Meleek Thomas": 9,
+    "Yaxel Lendeborg": 1
+   },
+   "title": "Kia Rookie Ladder 2026-11-18",
+   "url": "https://nba.com/news/kia-rookie-ladder-november-18-2026"
+  }
+ ],
+ "consensus": {
+  "AJ Dybantsa": {
+   "best": 1,
+   "boards": 7,
+   "geometric_mean_rank": 1.51,
+   "worst": 3
+  },
+  "Aday Mara": {
+   "best": 10,
+   "boards": 6,
+   "geometric_mean_rank": 11.85,
+   "worst": 15
+  },
+  "Alex Karaban": {
+   "best": 30,
+   "boards": 6,
+   "geometric_mean_rank": 32.14,
+   "worst": 34
+  },
+  "Allen Graves": {
+   "best": 17,
+   "boards": 6,
+   "geometric_mean_rank": 23.31,
+   "worst": 31
+  },
+  "Baba Miller": {
+   "best": 24,
+   "boards": 5,
+   "geometric_mean_rank": 32.44,
+   "worst": 37
+  },
+  "Bennett Stirtz": {
+   "best": 16,
+   "boards": 6,
+   "geometric_mean_rank": 18.72,
+   "worst": 22
+  },
+  "Braden Smith": {
+   "best": 39,
+   "boards": 5,
+   "geometric_mean_rank": 41.53,
+   "worst": 45
+  },
+  "Brayden Burries": {
+   "best": 6,
+   "boards": 7,
+   "geometric_mean_rank": 8.28,
+   "worst": 11
+  },
+  "Bruce Thornton": {
+   "best": 29,
+   "boards": 6,
+   "geometric_mean_rank": 40.61,
+   "worst": 49
+  },
+  "Bryce Hopkins": {
+   "best": 46,
+   "boards": 4,
+   "geometric_mean_rank": 58.98,
+   "worst": 71
+  },
+  "Caleb Wilson": {
+   "best": 4,
+   "boards": 7,
+   "geometric_mean_rank": 4.0,
+   "worst": 4
+  },
+  "Cameron Boozer": {
+   "best": 1,
+   "boards": 7,
+   "geometric_mean_rank": 2.28,
+   "worst": 3
+  },
+  "Cameron Carr": {
+   "best": 14,
+   "boards": 6,
+   "geometric_mean_rank": 18.11,
+   "worst": 26
+  },
+  "Chris Cenac Jr.": {
+   "best": 18,
+   "boards": 6,
+   "geometric_mean_rank": 23.6,
+   "worst": 37
+  },
+  "Christian Anderson": {
+   "best": 16,
+   "boards": 6,
+   "geometric_mean_rank": 18.64,
+   "worst": 23
+  },
+  "Dailyn Swain": {
+   "best": 10,
+   "boards": 6,
+   "geometric_mean_rank": 16.21,
+   "worst": 23
+  },
+  "Darius Acuff Jr.": {
+   "best": 5,
+   "boards": 7,
+   "geometric_mean_rank": 6.31,
+   "worst": 9
+  },
+  "Darryn Peterson": {
+   "best": 1,
+   "boards": 7,
+   "geometric_mean_rank": 1.74,
+   "worst": 3
+  },
+  "Dillon Mitchell": {
+   "best": 39,
+   "boards": 5,
+   "geometric_mean_rank": 42.4,
+   "worst": 51
+  },
+  "Ebuka Okorie": {
+   "best": 17,
+   "boards": 6,
+   "geometric_mean_rank": 20.7,
+   "worst": 24
+  },
+  "Emanuel Sharp": {
+   "best": 36,
+   "boards": 5,
+   "geometric_mean_rank": 39.15,
+   "worst": 41
+  },
+  "Felix Okpara": {
+   "best": 38,
+   "boards": 4,
+   "geometric_mean_rank": 43.33,
+   "worst": 47
+  },
+  "Hannes Steinbach": {
+   "best": 11,
+   "boards": 6,
+   "geometric_mean_rank": 13.43,
+   "worst": 15
+  },
+  "Henri Veesaar": {
+   "best": 19,
+   "boards": 6,
+   "geometric_mean_rank": 26.44,
+   "worst": 32
+  },
+  "Isaiah Evans": {
+   "best": 25,
+   "boards": 6,
+   "geometric_mean_rank": 29.26,
+   "worst": 35
+  },
+  "Izaiyah Nelson": {
+   "best": 42,
+   "boards": 4,
+   "geometric_mean_rank": 46.38,
+   "worst": 51
+  },
+  "Ja'Kobi Gillespie": {
+   "best": 39,
+   "boards": 5,
+   "geometric_mean_rank": 43.33,
+   "worst": 46
+  },
+  "Jaden Bradley": {
+   "best": 40,
+   "boards": 4,
+   "geometric_mean_rank": 42.71,
+   "worst": 45
+  },
+  "Jaron Pierre Jr.": {
+   "best": 68,
+   "boards": 3,
+   "geometric_mean_rank": 69.98,
+   "worst": 72
+  },
+  "Jayden Quaintance": {
+   "best": 10,
+   "boards": 6,
+   "geometric_mean_rank": 19.55,
+   "worst": 24
+  },
+  "Joshua Jefferson": {
+   "best": 21,
+   "boards": 6,
+   "geometric_mean_rank": 27.42,
+   "worst": 33
+  },
+  "Karim Lopez": {
+   "best": 14,
+   "boards": 6,
+   "geometric_mean_rank": 21.81,
+   "worst": 36
+  },
+  "Keaton Wagler": {
+   "best": 5,
+   "boards": 7,
+   "geometric_mean_rank": 5.63,
+   "worst": 8
+  },
+  "Kingston Flemings": {
+   "best": 6,
+   "boards": 7,
+   "geometric_mean_rank": 7.64,
+   "worst": 9
+  },
+  "Koa Peat": {
+   "best": 21,
+   "boards": 6,
+   "geometric_mean_rank": 24.23,
+   "worst": 27
+  },
+  "Labaron Philon": {
+   "best": 14,
+   "boards": 6,
+   "geometric_mean_rank": 17.22,
+   "worst": 20
+  },
+  "Maliq Brown": {
+   "best": 32,
+   "boards": 5,
+   "geometric_mean_rank": 43.9,
+   "worst": 56
+  },
+  "Meleek Thomas": {
+   "best": 25,
+   "boards": 6,
+   "geometric_mean_rank": 28.11,
+   "worst": 30
+  },
+  "Mikel Brown Jr.": {
+   "best": 5,
+   "boards": 7,
+   "geometric_mean_rank": 7.69,
+   "worst": 12
+  },
+  "Morez Johnson Jr.": {
+   "best": 12,
+   "boards": 6,
+   "geometric_mean_rank": 13.3,
+   "worst": 15
+  },
+  "Nate Ament": {
+   "best": 8,
+   "boards": 6,
+   "geometric_mean_rank": 11.72,
+   "worst": 20
+  },
+  "Nick Martinelli": {
+   "best": 43,
+   "boards": 5,
+   "geometric_mean_rank": 48.87,
+   "worst": 53
+  },
+  "Otega Oweh": {
+   "best": 40,
+   "boards": 6,
+   "geometric_mean_rank": 50.1,
+   "worst": 64
+  },
+  "Ryan Conwell": {
+   "best": 27,
+   "boards": 5,
+   "geometric_mean_rank": 35.21,
+   "worst": 43
+  },
+  "Sergio de Larrea": {
+   "best": 28,
+   "boards": 6,
+   "geometric_mean_rank": 31.66,
+   "worst": 38
+  },
+  "Tarris Reed Jr.": {
+   "best": 25,
+   "boards": 6,
+   "geometric_mean_rank": 30.04,
+   "worst": 33
+  },
+  "Tobi Lawal": {
+   "best": 51,
+   "boards": 4,
+   "geometric_mean_rank": 55.18,
+   "worst": 66
+  },
+  "Trevon Brazile": {
+   "best": 33,
+   "boards": 5,
+   "geometric_mean_rank": 39.59,
+   "worst": 44
+  },
+  "Tyler Bilodeau": {
+   "best": 53,
+   "boards": 4,
+   "geometric_mean_rank": 55.12,
+   "worst": 62
+  },
+  "Tyler Nickel": {
+   "best": 37,
+   "boards": 6,
+   "geometric_mean_rank": 47.6,
+   "worst": 55
+  },
+  "Ugonna Onyenso": {
+   "best": 38,
+   "boards": 6,
+   "geometric_mean_rank": 43.94,
+   "worst": 49
+  },
+  "Yaxel Lendeborg": {
+   "best": 8,
+   "boards": 7,
+   "geometric_mean_rank": 10.47,
+   "worst": 12
+  },
+  "Zuby Ejiofor": {
+   "best": 20,
+   "boards": 6,
+   "geometric_mean_rank": 26.1,
+   "worst": 31
+  }
+ },
+ "readiness": {
+  "AJ Dybantsa": {
+   "reason": "Elite offensive tools now and franchise upside; needs off-ball impact, 3-point consistency, defense, shot selection.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board",
+    "https://africa.espn.com/nba/story/_/id/49351566/rookie-rankings-summer-league-2026-draft-aj-dybantsa-darryn-peterson"
+   ],
+   "tier": "some_readiness"
+  },
+  "Aday Mara": {
+   "reason": "Skilled passer/rim protector with limited mobility and endurance; summer author judged him further from contributing.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft",
+    "https://africa.espn.com/nba/story/_/id/49351566/rookie-rankings-summer-league-2026-draft-aj-dybantsa-darryn-peterson"
+   ],
+   "tier": "some_readiness"
+  },
+  "Alex Karaban": {
+   "reason": "Only ranked late first/early second; no readiness write-up found.",
+   "sources": [
+    "https://www.nbcsports.com/fantasy/basketball/news/nbc-sports-2026-nba-draft-big-board-aj-dybantsa-darryn-peterson-lead-the-way"
+   ],
+   "tier": "unknown"
+  },
+  "Allen Graves": {
+   "reason": "Ready frontcourt contributor with shooting and strong analytics; limited explosiveness.",
+   "sources": [
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft",
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board"
+   ],
+   "tier": "some_readiness"
+  },
+  "Baba Miller": {
+   "reason": "No readiness write-up found in sources read.",
+   "sources": [],
+   "tier": "unknown"
+  },
+  "Bennett Stirtz": {
+   "reason": "High-feel veteran shooter with low turnovers; defense/athleticism cap him.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board",
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft"
+   ],
+   "tier": "ready_now"
+  },
+  "Braden Smith": {
+   "reason": "All-time NCAA assist leader; listed height a concern.",
+   "sources": [
+    "https://www.nbcsports.com/fantasy/basketball/news/nbc-sports-2026-nba-draft-big-board-aj-dybantsa-darryn-peterson-lead-the-way"
+   ],
+   "tier": "some_readiness"
+  },
+  "Brayden Burries": {
+   "reason": "Pro-ready frame and versatile scoring; fits rotation immediately; capped upside.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board",
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft"
+   ],
+   "tier": "ready_now"
+  },
+  "Bruce Thornton": {
+   "reason": "Elite scorer, low turnovers, rebounds well for guard; small.",
+   "sources": [
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board"
+   ],
+   "tier": "some_readiness"
+  },
+  "Bryce Hopkins": {
+   "reason": "Needs more consistent shooting to stick.",
+   "sources": [
+    "https://www.nbcsports.com/fantasy/basketball/news/nbc-sports-2026-nba-draft-big-board-aj-dybantsa-darryn-peterson-lead-the-way"
+   ],
+   "tier": "project"
+  },
+  "Caleb Wilson": {
+   "reason": "Impacts games via energy and finishing; shooting and defense inconsistent; high ceiling.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft",
+    "https://africa.espn.com/nba/story/_/id/49351566/rookie-rankings-summer-league-2026-draft-aj-dybantsa-darryn-peterson"
+   ],
+   "tier": "some_readiness"
+  },
+  "Cameron Boozer": {
+   "reason": "Most polished, immediate winning starter; athletic limits cap ceiling debate.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board"
+   ],
+   "tier": "ready_now"
+  },
+  "Cameron Carr": {
+   "reason": "Athletic scorer, ready in spots but streaky, slight frame.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board",
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft"
+   ],
+   "tier": "some_readiness"
+  },
+  "Chris Cenac Jr.": {
+   "reason": "Not ready; needs time, high tools, more lesser outcomes than great.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board",
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft"
+   ],
+   "tier": "project"
+  },
+  "Christian Anderson": {
+   "reason": "Elite shooter and passer for bench role; size limits.",
+   "sources": [
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board",
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players"
+   ],
+   "tier": "ready_now"
+  },
+  "Dailyn Swain": {
+   "reason": "Rebounding, passing, on-ball defense project; shooting inconsistent, rough overall per ESPN.",
+   "sources": [
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board",
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players"
+   ],
+   "tier": "some_readiness"
+  },
+  "Darius Acuff Jr.": {
+   "reason": "Productive efficient creator, closer to ready than expected; defense a worry.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board"
+   ],
+   "tier": "ready_now"
+  },
+  "Darryn Peterson": {
+   "reason": "Seen as most NBA-ready star talent; availability worries discounted; summer league turnovers/handle shaky.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://africa.espn.com/nba/story/_/id/49351566/rookie-rankings-summer-league-2026-draft-aj-dybantsa-darryn-peterson"
+   ],
+   "tier": "ready_now"
+  },
+  "Dillon Mitchell": {
+   "reason": "Athletic defender/facilitator; shot needs major work.",
+   "sources": [
+    "https://www.nbcsports.com/fantasy/basketball/news/nbc-sports-2026-nba-draft-big-board-aj-dybantsa-darryn-peterson-lead-the-way"
+   ],
+   "tier": "project"
+  },
+  "Ebuka Okorie": {
+   "reason": "Likely second-unit playmaker; boom-or-bust shooting/decision immaturity but upside.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board"
+   ],
+   "tier": "some_readiness"
+  },
+  "Emanuel Sharp": {
+   "reason": "Experienced college veteran.",
+   "sources": [
+    "https://www.nbcsports.com/fantasy/basketball/news/nbc-sports-2026-nba-draft-big-board-aj-dybantsa-darryn-peterson-lead-the-way"
+   ],
+   "tier": "some_readiness"
+  },
+  "Felix Okpara": {
+   "reason": "No readiness write-up found in sources read.",
+   "sources": [],
+   "tier": "unknown"
+  },
+  "Hannes Steinbach": {
+   "reason": "Elite rebounder with pro experience and clear role; limited upside unless jumper develops.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board",
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft"
+   ],
+   "tier": "ready_now"
+  },
+  "Henri Veesaar": {
+   "reason": "7-footer floor spacer, rebounding, passing; inconsistent defense.",
+   "sources": [
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board"
+   ],
+   "tier": "some_readiness"
+  },
+  "Isaiah Evans": {
+   "reason": "NBA-ready shooter with 3-and-D potential but may take time per ESPN.",
+   "sources": [
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft",
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players"
+   ],
+   "tier": "some_readiness"
+  },
+  "Izaiyah Nelson": {
+   "reason": "No readiness write-up found in sources read.",
+   "sources": [],
+   "tier": "unknown"
+  },
+  "Ja'Kobi Gillespie": {
+   "reason": "No readiness write-up found in sources read.",
+   "sources": [],
+   "tier": "unknown"
+  },
+  "Jaden Bradley": {
+   "reason": "No readiness write-up found in sources read.",
+   "sources": [],
+   "tier": "unknown"
+  },
+  "Jaron Pierre Jr.": {
+   "reason": "No readiness write-up found in sources read.",
+   "sources": [],
+   "tier": "unknown"
+  },
+  "Jayden Quaintance": {
+   "reason": "Defensive upside but ACL history, raw skills; readiness tied to knee recovery; injured in summer.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board",
+    "https://africa.espn.com/nba/story/_/id/49351566/rookie-rankings-summer-league-2026-draft-aj-dybantsa-darryn-peterson"
+   ],
+   "tier": "project"
+  },
+  "Joshua Jefferson": {
+   "reason": "High feel, passing, defense; 3-point shooting must improve.",
+   "sources": [
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board",
+    "https://www.nbcsports.com/fantasy/basketball/news/nbc-sports-2026-nba-draft-big-board-aj-dybantsa-darryn-peterson-lead-the-way"
+   ],
+   "tier": "some_readiness"
+  },
+  "Karim Lopez": {
+   "reason": "Competes now; wide outcome range, shooting questions; injured in summer.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board"
+   ],
+   "tier": "some_readiness"
+  },
+  "Keaton Wagler": {
+   "reason": "Poised, high-feel playmaker ready for a role; athleticism limits.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board"
+   ],
+   "tier": "ready_now"
+  },
+  "Kingston Flemings": {
+   "reason": "Strong defender/passer with feel; offense needs polish and shooting development.",
+   "sources": [
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board",
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players"
+   ],
+   "tier": "some_readiness"
+  },
+  "Koa Peat": {
+   "reason": "Physically ready, strong defense/interior; jump shot needs big work.",
+   "sources": [
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board",
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft"
+   ],
+   "tier": "some_readiness"
+  },
+  "Labaron Philon": {
+   "reason": "Could be rotation scorer soon; small frame, passing needs growth.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board",
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft"
+   ],
+   "tier": "some_readiness"
+  },
+  "Maliq Brown": {
+   "reason": "No readiness write-up found in sources read.",
+   "sources": [],
+   "tier": "unknown"
+  },
+  "Meleek Thomas": {
+   "reason": "Productive athletic combo guard; long-term upside, decision/defense questions.",
+   "sources": [
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board",
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft"
+   ],
+   "tier": "some_readiness"
+  },
+  "Mikel Brown Jr.": {
+   "reason": "High scoring ceiling but few games, decision lapses; ESPN calls him more developmental.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board",
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft"
+   ],
+   "tier": "some_readiness"
+  },
+  "Morez Johnson Jr.": {
+   "reason": "NBA-ready frame, rebounding and defense; useful rookie minutes; limited scoring upside.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board",
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft"
+   ],
+   "tier": "ready_now"
+  },
+  "Nate Ament": {
+   "reason": "High-upside size and fluidity but inefficient and weak defensively; needs development time.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board"
+   ],
+   "tier": "project"
+  },
+  "Nick Martinelli": {
+   "reason": "No readiness write-up found in sources read.",
+   "sources": [],
+   "tier": "unknown"
+  },
+  "Otega Oweh": {
+   "reason": "Power-guard upside; needs to refine skills against stronger defenders.",
+   "sources": [
+    "https://www.nbcsports.com/fantasy/basketball/news/nbc-sports-2026-nba-draft-big-board-aj-dybantsa-darryn-peterson-lead-the-way"
+   ],
+   "tier": "project"
+  },
+  "Ryan Conwell": {
+   "reason": "No readiness write-up found in sources read.",
+   "sources": [],
+   "tier": "unknown"
+  },
+  "Sergio de Larrea": {
+   "reason": "Ready shooter/defender with length (ClutchPoints).",
+   "sources": [
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft"
+   ],
+   "tier": "some_readiness"
+  },
+  "Tarris Reed Jr.": {
+   "reason": "Ready big body and lob threat; no perimeter shooting.",
+   "sources": [
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft"
+   ],
+   "tier": "some_readiness"
+  },
+  "Tobi Lawal": {
+   "reason": "Tested well athletically at combine only; no write-up found.",
+   "sources": [
+    "https://www.nbcsports.com/fantasy/basketball/news/nbc-sports-2026-nba-draft-big-board-aj-dybantsa-darryn-peterson-lead-the-way"
+   ],
+   "tier": "unknown"
+  },
+  "Trevon Brazile": {
+   "reason": "No readiness write-up found in sources read.",
+   "sources": [],
+   "tier": "unknown"
+  },
+  "Tyler Bilodeau": {
+   "reason": "No readiness write-up found in sources read.",
+   "sources": [],
+   "tier": "unknown"
+  },
+  "Tyler Nickel": {
+   "reason": "No readiness write-up found in sources read.",
+   "sources": [],
+   "tier": "unknown"
+  },
+  "Ugonna Onyenso": {
+   "reason": "Among best rim protectors in class (NBC).",
+   "sources": [
+    "https://www.nbcsports.com/fantasy/basketball/news/nbc-sports-2026-nba-draft-big-board-aj-dybantsa-darryn-peterson-lead-the-way"
+   ],
+   "tier": "some_readiness"
+  },
+  "Yaxel Lendeborg": {
+   "reason": "Widely called the most NBA-ready of the class due to age and polish; age caps ceiling.",
+   "sources": [
+    "https://www.espn.com/nba/story/_/id/46886245/2026-nba-draft-big-board-rankings-top-100-prospects-players",
+    "https://africa.espn.com/nba/story/_/id/49351566/rookie-rankings-summer-league-2026-draft-aj-dybantsa-darryn-peterson",
+    "https://www.si.com/nba/rookie-of-the-year-rankings-how-stacked-class-looks-heading-into-preseason"
+   ],
+   "tier": "ready_now"
+  },
+  "Zuby Ejiofor": {
+   "reason": "Ready strong defender/bench big; undersized and older.",
+   "sources": [
+    "https://clutchpoints.com/2026-nba-draft-big-board-5-0-final-top-100-rankings-latest-intel-day-before-draft",
+    "https://www.si.com/nba/draft/mock-drafts-big-boards/2026-nba-draft-on-si-final-top-40-big-board"
+   ],
+   "tier": "ready_now"
+  }
+ },
+ "retrieved": "2026-11-22",
+ "skipped_sources": [
+  {
+   "url": "https://www.tankathon.com/big_board",
+   "why": "Now shows the 2027 board; 2026 board not available."
+  },
+  {
+   "url": "https://www.on3.com/pro/news/2026-nba-draft-cbs-sports-ranks-top-100-player-big-board-after-withdrawal-deadline/",
+   "why": "HTTP 403 blocked (CBS board)."
+  },
+  {
+   "url": "The Athletic full board (Vecenie)",
+   "why": "Paywalled; only top 10 via Bleacher Report summary."
+  },
+  {
+   "url": "Bleacher Report (Wasserman), NBADraft.net, No Ceilings, Basketball Index",
+   "why": "Not reached in limited pass."
+  }
+ ],
+ "uses": "consensus: geometric mean of a player's rank on the pre-draft boards that list him; scripts/research/rookie_fit2.py averages it with his draft slot (log scale) as the scouts' view. readiness tier: a small labelled nudge to day-one ability. Ladders and readiness lists: checks only.",
+ "version": 1
+}
