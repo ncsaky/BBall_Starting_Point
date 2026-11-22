@@ -1,6 +1,6 @@
 {
- "version": "bbi_input_mapping_v5_2026_11_20",
- "notes": "Reviewed map from Basketball Index (BBI) metric names to the 94 approved player-model inputs. Metric names only; BBI definition text stays in the git-ignored capture catalog. Layers are kept separate: technique inputs (S/F) use rate, per-shot or versus-expected quality metrics; tendency inputs (T) use frequencies, shares and attempt rates; physical inputs (P) use only listed height/weight and weak in-game speed; coach usage, teammates, opponents and on/off impact are context only. direction: +1 means a higher metric value means more of the input (better skill, larger tool, or more frequent choice); -1 the reverse. Direction is about the raw BBI value; check whether a capture stores a percentile already ordered by desirability before applying it. strength: primary = the most direct available measure; supporting = relevant but mixed with other factors; weak = indirect, use only as a small nudge. Every BBI result is an effective on-court observation that also contains physical tools, role and teammates. It constrains the estimate; it is not 'technique only'. Metrics named '... Per 75' must be divided by the relevant exposure (touches, drives, attempts, contests) before informing a skill. A metric listed under several inputs is one shared signal (one correlation group), never independent evidence. BBI 'Talent' grades fold in volume or self-creation, so per-shot 'Shot Making Efficiency' and 'Stable' percentages are preferred as primary. Passing families share three generic recognition metrics and two generic execution metrics; only drive-and-kick, connector, skip and outlet passes have any family-specific signal. For distribution inputs, outcome names the registry outcome the metric informs; T02 outcomes three_corner_share and three_deep_share describe detail within the three region. volume (2026-11-19): a metric for a secondary shot type (pull-up, movement, deep) may carry {\"per75\": metric, \"minus\": optional metric, \"half\": n}; its weight in a season is multiplied by attempts / (attempts + half), attempts = (per75 - minus) / 75 x minutes x 99/48. A pull-up or off-screen percentage on a handful of attempts (or one shrunk to the league mean) no longer outweighs the player's three-point or midrange shooting as a whole, which stays ungated as the fallback (talent metrics include volume, so non-shooters stay low).",
+ "version": "bbi_input_mapping_v6_2026_11_21",
+ "notes": "Reviewed map from Basketball Index (BBI) metric names to the 94 approved player-model inputs. Metric names only; BBI definition text stays in the git-ignored capture catalog. Layers are kept separate: technique inputs (S/F) use rate, per-shot or versus-expected quality metrics; tendency inputs (T) use frequencies, shares and attempt rates; physical inputs (P) use only listed height/weight and weak in-game speed; coach usage, teammates, opponents and on/off impact are context only. direction: +1 means a higher metric value means more of the input (better skill, larger tool, or more frequent choice); -1 the reverse. Direction is about the raw BBI value; check whether a capture stores a percentile already ordered by desirability before applying it. strength: primary = the most direct available measure; supporting = relevant but mixed with other factors; weak = indirect, use only as a small nudge. Every BBI result is an effective on-court observation that also contains physical tools, role and teammates. It constrains the estimate; it is not 'technique only'. Metrics named '... Per 75' must be divided by the relevant exposure (touches, drives, attempts, contests) before informing a skill. A metric listed under several inputs is one shared signal (one correlation group), never independent evidence. BBI 'Talent' grades fold in volume or self-creation, so per-shot 'Shot Making Efficiency' and 'Stable' percentages are preferred as primary. Passing families share three generic recognition metrics and two generic execution metrics; only drive-and-kick, connector, skip and outlet passes have any family-specific signal. For distribution inputs, outcome names the registry outcome the metric informs; T02 outcomes three_corner_share and three_deep_share describe detail within the three region. volume (2026-11-19): a metric for a secondary shot type (pull-up, movement, deep) may carry {\"per75\": metric, \"minus\": optional metric, \"half\": n}; its weight in a season is multiplied by attempts / (attempts + half), attempts = (per75 - minus) / 75 x minutes x 99/48. A pull-up or off-screen percentage on a handful of attempts (or one shrunk to the league mean) no longer outweighs the player's three-point or midrange shooting as a whole, which stays ungated as the fallback (talent metrics include volume, so non-shooters stay low). measured_by (2026-11-21, RATINGS-FT-TOV): an input whose entry names a module is measured there from opportunity-adjusted counts (foul_security_evidence: free throws and turnovers against what an average player earns or commits from the same chances); the overlay skips it so the same data is not counted twice, and its metric list stays as the record of what Basketball Index offers.",
  "inputs": {
   "P01": {
    "name": "Height",
@@ -761,7 +761,8 @@
     }
    ],
    "coverage": "good",
-   "gap_note": "Turnover counts are divided by plays used or created (shots, turnovers, potential assists). No pressure-specific (trap, press) split. Isolation turnover rate barely repeats season to season, so the repeatability weight keeps it from deciding the input."
+   "gap_note": "Measured since 2026-11-21 as all turnovers against what an average player commits from the same shots, shot-creating passes and touches, adjusted for usage, plus (half weight) balls lost without a pass or a foul against the same handling load (foul_security_evidence). No pressure-specific (trap, press) split.",
+   "measured_by": "foul_security_evidence"
   },
   "S18": {
    "name": "Perimeter separation craft",
@@ -948,7 +949,8 @@
     }
    ],
    "coverage": "good",
-   "gap_note": "Rates also reflect how often the player seeks contact (a tendency), so share with contact-seeking carefully."
+   "gap_note": "Measured since 2026-11-21 as free throws earned against the free throws an average player earns from the same drives, rim shots, other twos and threes (foul_security_evidence). The per-drive rate below repeats less well (0.62-0.67 season to season vs 0.71-0.77) and the second drive-foul column is an exact copy of the first. How often he attacks stays in the tendencies.",
+   "measured_by": "foul_security_evidence"
   },
   "S25": {
    "name": "Cutting-route execution",
@@ -2610,13 +2612,6 @@
      "why": "Free-throw attempts; divide by shot attempts for a free-throw rate."
     },
     {
-     "metric": "Stable Shooting Fouls Drawn Per 75",
-     "direction": 1,
-     "strength": "supporting",
-     "outcome": null,
-     "why": "Shooting fouls drawn; divide by attacks."
-    },
-    {
      "metric": "Stable Fouls Drawn Per 75",
      "direction": 1,
      "strength": "weak",
@@ -2625,7 +2620,7 @@
     }
    ],
    "coverage": "partial",
-   "gap_note": "Cannot separate seeking contact (tendency) from skill at drawing fouls; per-attack foul rates stay with the foul-drawing skill."
+   "gap_note": "Cannot separate seeking contact (tendency) from skill at drawing fouls; per-attack foul rates stay with the foul-drawing skill. Stable Shooting Fouls Drawn Per 75 removed 2026-11-21: the captured column is zero for every player in every season, so it ranked everyone the same and pulled every contact-seeking value toward the middle (its season-to-season check read the identical tie order as perfect repeatability)."
   }
  },
  "context_only": [
@@ -4964,6 +4959,10 @@
   {
    "metric": "Stable Defensive 3-Second Violations Per 75",
    "why": "Minutes or possessions do not measure exposure to the defensive three-second rule. Paint assignments drive the rate."
+  },
+  {
+   "metric": "Stable Shooting Fouls Drawn Per 75",
+   "why": "Captured column is zero for every player in every recent season (broken export); removed from contact seeking 2026-11-21."
   }
  ]
 }

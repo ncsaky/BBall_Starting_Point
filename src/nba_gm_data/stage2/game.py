@@ -161,6 +161,7 @@ ASSIST = {"rim_drive": .18, "rim_finish": .93, "floater": .15, "hook": .30, "sho
           "trans_rim": .55, "trans_three": .85, "heave": 0.0}
 ASSIST_BY_KIND = [ASSIST[k[0]] for k in KINDS]
 TRACE: dict | None = None   # research hook (see Game._trace); None in play
+TO_TRACE: dict | None = None   # research hook (see Game._to_z; scripts/research/s2_turnover_fit.py); None in play
 
 FOUL_ACTION = {"drive": "foul_drive", "roll_cut": "foul_roll_cut", "post": "foul_post", "putback": "foul_putback",
                "transition": "foul_transition", "jumper": "foul_jumper", "pull_up": "foul_pull_up", "heave": None}
@@ -431,6 +432,13 @@ class Game:
 
     def _foul(self, de: TeamState, slot: int, *, team_foul: bool = True) -> None:
         i = de.on[slot]
+        if i in de.out:
+            # Fouled out earlier in this same possession (substitutions wait for its end): he is already gone, so the
+            # foul is a teammate's (the one with the fewest fouls). No random draw, so the game's stream is unchanged.
+            # Before 2026-11-21 a sixth and seventh foul in one possession could leave a player on 7.
+            mates = [j for j in de.on if j not in de.out]
+            if mates:
+                i = min(mates, key=lambda j: (de.stats[j][S_PF], j))
         de.stats[i][S_PF] += 1
         if team_foul:
             de.team_fouls += 1
@@ -515,7 +523,7 @@ class Game:
                 self._run_clock(max(.5, self.t_left - (.5 + 2.5 * rng.random())))
                 slot = _pick(off.usage_cum, rng.random())
                 card = off.cards[off.on[slot]]
-                if rng.random() < _sig(card.to_logit + L["to_shift"] + self._pressure(off, de, slot)):
+                if rng.random() < _sig(self._to_z(card, card.to_logit + L["to_shift"] + self._pressure(off, de, slot))):
                     return self._turnover(off, de, slot)
                 if lead == -3:
                     kind = THREE_PULL if card.menu[THREE_PULL] >= card.menu[THREE_CATCH] else THREE_CATCH
@@ -563,11 +571,20 @@ class Game:
         # Who ends it, and does he turn it over?
         slot = _pick(off.usage_cum, rng.random())
         card = off.cards[off.on[slot]]
-        z = card.to_logit + L["to_shift"] + self._pressure(off, de, slot) + (L["trans_to"] if trans else 0.0)
+        z = self._to_z(card, card.to_logit + L["to_shift"] + self._pressure(off, de, slot) + (L["trans_to"] if trans else 0.0))
         if rng.random() < _sig(z):
             return self._turnover(off, de, slot)
         kind = _pick(card.trans_cum if trans else card.menu_cum, rng.random())
         return self._shot(off, de, slot, kind, final=final)
+
+    @staticmethod
+    def _to_z(card, z: float) -> float:
+        """A turnover chance's log-odds, unchanged. Research only: with TO_TRACE set, each chance's terms outside the
+        card's turnover rule (penalty, level, pressure, transition) are recorded per player, so the rule can be refitted
+        on expected turnovers in real game situations (scripts/research/s2_turnover_fit.py)."""
+        if TO_TRACE is not None:
+            TO_TRACE.setdefault(card.pid, []).append(z - card.to_logit + .01 * card.penalty)
+        return z
 
     def _pressure(self, off: TeamState, de: TeamState, slot: int) -> float:
         """The defense's turnover pressure on this scorer (log-odds)."""
@@ -717,7 +734,7 @@ class Game:
         self._run_clock(seg)
         slot = _pick(off.usage_cum, rng.random())
         card = off.cards[off.on[slot]]
-        if rng.random() < _sig(card.to_logit + L["to_shift"] + self._pressure(off, de, slot)):
+        if rng.random() < _sig(self._to_z(card, card.to_logit + L["to_shift"] + self._pressure(off, de, slot))):
             return self._turnover(off, de, slot)
         kind = _pick(card.menu_cum, rng.random())
         return self._shot(off, de, slot, kind, final=final)

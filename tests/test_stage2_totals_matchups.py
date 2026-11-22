@@ -100,8 +100,15 @@ class TotalsAndMatchupGamesTest(unittest.TestCase):
 
     def test_both_fives_set_the_pace(self):
         # Doubling both pace weights spreads the possession count across games; zero weights narrow it.
+        # 2026-11-21 (RATINGS-FT-TOV): each game's possessions are averaged over six seeds before the spread across games
+        # is taken. Two seeds per game left the comparison to chance (a new inputs file flipped it: seeds 1-2 gave 4.7
+        # vs 8.8, seeds 3-4 4.7 vs 2.7, seeds 1-12 pooled 5.1 vs 5.2); per-game means over six seeds separate cleanly
+        # (wide 3.6-3.9 vs narrow 1.7-2.2 on three different seed sets).
         def spread(**loop):
-            vals = [self._play(gid, seed=s, **loop)["possessions"] for gid in self.ids for s in (1, 2)]
+            vals = []
+            for gid in self.ids:
+                runs = [self._play(gid, seed=s, **loop)["possessions"] for s in range(1, 7)]
+                vals.append(sum(runs) / len(runs))
             m = sum(vals) / len(vals)
             return (sum((v - m) ** 2 for v in vals) / len(vals)) ** .5, m
         wide, m_wide = spread(k_pace=4.0, k_pace_def=4.0)
