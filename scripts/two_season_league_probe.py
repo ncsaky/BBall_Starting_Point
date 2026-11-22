@@ -100,7 +100,25 @@ def snapshot_key(save: dict) -> str | None:
     return None
 
 
-def run(out: Path, model: str, target: str, seed: int, team: str, keep_checkpoint: bool, snapshots: bool = False) -> None:
+def record_staff_snapshot(out: Path, save: dict) -> None:
+    season = save["meta"]["season"]
+    state = save["state"]
+    path = out / f"staff_opening_{season}.json"
+    if state["phase"] != "regular_season" or path.exists():
+        return
+    fixture.write_json(path, {
+        "date": state["current_date"],
+        "team_ids": sorted(save.get("team_records", {})),
+        "slots": [
+            {key: slot.get(key) for key in ("team_id", "slot", "id", "person_id", "name", "market_status")}
+            for slot in save.get("staff_slots", [])
+        ],
+        "firings": save.get("staff_firing_history", []),
+        "expectations": save.get("staff_preseason_expectations", {}),
+    })
+
+
+def run(out: Path, model: str, target: str, seed: int, team: str, keep_checkpoint: bool, snapshots: bool = False, staff_snapshots: bool = False) -> None:
     counter = _count_trade_evaluations()
     runner = SoakRunner(argparse.Namespace(root=str(ROOT), output_dir=str(out), seed=seed, team=team))
     checkpoint = out / "checkpoint"
@@ -117,6 +135,8 @@ def run(out: Path, model: str, target: str, seed: int, team: str, keep_checkpoin
     saved = runner.load()
     if saved["meta"].get("ratings_model", "legacy_traits") != model:
         raise RuntimeError(f"Save is on {saved['meta'].get('ratings_model')}, expected {model}")
+    if staff_snapshots:
+        record_staff_snapshot(out, saved)
     while saved["state"]["current_date"] < target:
         started = time.monotonic()
         cpu_started = _cpu_seconds()
@@ -133,6 +153,8 @@ def run(out: Path, model: str, target: str, seed: int, team: str, keep_checkpoin
         print(json.dumps(row), flush=True)
         result = runner.action(action, save_path=str(live), seed=seed, **payload)
         saved = runner.load()
+        if staff_snapshots:
+            record_staff_snapshot(out, saved)
         if marker(before) == marker(saved):
             raise RuntimeError(f"No calendar/phase progress: {action}: {result.get('status')}")
         if saved["state"]["current_date"] > target:
@@ -170,12 +192,13 @@ def main() -> None:
     parser.add_argument("--keep-checkpoint", action="store_true")
     parser.add_argument("--snapshots", action="store_true",
                         help="keep save copies at the deadline, draft, free agency and camp (output-dir/snapshots)")
+    parser.add_argument("--staff-snapshots", action="store_true", help="record compact opening staff and firing history")
     args = parser.parse_args()
     out = args.output_dir.resolve()
     if not out.is_relative_to(ROOT / "output"):
         parser.error("Output directory must be below output/")
     out.mkdir(parents=True, exist_ok=True)
-    run(out, args.model, args.target, args.seed, args.team, args.keep_checkpoint, args.snapshots)
+    run(out, args.model, args.target, args.seed, args.team, args.keep_checkpoint, args.snapshots, args.staff_snapshots)
 
 
 if __name__ == "__main__":
