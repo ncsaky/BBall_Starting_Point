@@ -1,0 +1,46 @@
+{
+  "cache_accessed": "2026-11-22",
+  "pro_basketball": {
+    "publisher": "Basketball Reference",
+    "original_draft_url_template": "https://www.basketball-reference.com/draft/NBA_{year}.html",
+    "original_league_url_template": "https://www.basketball-reference.com/leagues/NBA_{year}.html",
+    "data_mirror": "https://github.com/sumitrodatta/bball-reference-datasets/tree/3981e43c07e963db539c527beb8a7b4b99ec8716/Data",
+    "tables": ["Draft Pick History", "Player Career Info", "Player Totals", "Team Summaries", "Advanced"],
+    "older_advanced_panel": "data/research/development_evidence.json",
+    "notes": "Compact extracts preserve the draft number, NBA biography, regular-season team stint minutes and team record. Advanced seasons 2013–2019 use the already checked-in Basketball Reference career panel, later seasons use the versioned mirror. No new requests were made to Basketball Reference."
+  },
+  "college": {
+    "publisher": "Bart Torvik T-Rank",
+    "url_template": "https://barttorvik.com/getadvstats.php?year={year}&csv=1",
+    "notes": "Existing repo caches, retained columns for candidate identity, class, birth date and final-season box production. Class is a proxy for years, especially for transfers and players with eligibility exceptions."
+  },
+  "position_check": {
+    "publisher": "NBA Combine",
+    "url": "https://www.nba.com/stats/draft/combine-strength-agility",
+    "cache": "data/research/draft_combine_2000_2025.json"
+  },
+  "draft_night": {
+    "url_template": "https://en.wikipedia.org/wiki/{year}_NBA_draft",
+    "league_results": {
+      "2020": "https://www.nba.com/news/2020-nba-draft-trade-tracker",
+      "2023": "https://www.nba.com/news/2023-nba-draft-order",
+      "2024": "https://www.nba.com/news/2024-nba-draft-order",
+      "2025": "https://www.nba.com/news/2025-nba-draft-order"
+    },
+    "notes": "Draft selection tables and their trade notes identify recipient and rights moves. The annotated count is a documented count, subject to dates and incomplete early coverage. Each number counts once even when a pick moved twice.",
+    "date_adjustments": {
+      "2012": "Pick 55 sent to the Lakers in the draft-day notes.",
+      "2016": "The Taurean Prince / Jeff Teague agreement preceded the draft.",
+      "2020": "Pick 28 had moved in the prior Lakers/Thunder agreement; the draft-night move to Minnesota still counts.",
+      "2021": "Picks 10, 17, 40 were in the already agreed Memphis/New Orleans swap.",
+      "2022": "Pick 30 went to Denver in an earlier agreement. Pick 22 went to Minnesota on draft night before a separate July trade to Utah.",
+      "2023": "Picks 29 and 32 were agreed to before draft night. Pick 37 went to Denver in the preceding deal with Oklahoma City. Pick 40 changed hands again for Maxwell Lewis on draft night.",
+      "2025": "Pick 10 and pick 22 were tied to deals reported before draft day."
+    }
+  },
+  "game_2026": {
+    "prospect_cache": "data/research/draft_prospects_2026.json",
+    "pick_order_cache": "data/research/draft_picks_espn_2026.json",
+    "notes": "The repository's original free pre-draft prospect and ESPN order captures. October 2026 team context is used by the game to pick. The prior 2025–26 record and positional minutes classify all four game drafts for the report."
+  }
+}

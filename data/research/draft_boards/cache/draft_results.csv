@@ -1,0 +1,834 @@
+year,pick,round,name,player_id,announced_team,decision_team,changed_draft_day,position,college_class,school,wiki_name
+2012,1,1,Anthony Davis,davisan02,NOP,NOP,0,PF/C,Fr,Kentucky (Fr.),Anthony Davis
+2012,2,1,Michael Kidd-Gilchrist,kiddgmi01,CHA,CHA,0,SF,Fr,Kentucky (Fr.),Michael Kidd-Gilchrist
+2012,3,1,Bradley Beal,bealbr01,WAS,WAS,0,SG,Fr,Florida (Fr.),Bradley Beal
+2012,4,1,Dion Waiters,waitedi01,CLE,CLE,0,SG,So,Syracuse (So.),Dion Waiters
+2012,5,1,Thomas Robinson,robinth01,SAC,SAC,0,PF,Jr,Kansas (Jr.),Thomas Robinson
+2012,6,1,Damian Lillard,lillada01,POR,POR,0,PG,Jr,Weber St. (Jr.),Damian Lillard
+2012,7,1,Harrison Barnes,barneha02,GSW,GSW,0,SF,So,North Carolina (So.),Harrison Barnes
+2012,8,1,Terrence Ross,rosste01,TOR,TOR,0,SG,So,Washington (So.),Terrence Ross
+2012,9,1,Andre Drummond,drumman01,DET,DET,0,C,Fr,Connecticut (Fr.),Andre Drummond
+2012,10,1,Austin Rivers,riverau01,NOP,NOP,0,SG,Fr,Duke (Fr.),Austin Rivers
+2012,11,1,Meyers Leonard,leoname01,POR,POR,0,C,So,Illinois (So.),Meyers Leonard
+2012,12,1,Jeremy Lamb,lambje01,HOU,HOU,0,SG,So,Connecticut (So.),Jeremy Lamb
+2012,13,1,Kendall Marshall,marshke01,PHO,PHO,0,PG,So,North Carolina (So.),Kendall Marshall
+2012,14,1,John Henson,hensojo01,MIL,MIL,0,PF,Jr,North Carolina (Jr.),John Henson
+2012,15,1,Maurice Harkless,harklma01,PHI,PHI,0,SF,Fr,St. John's (Fr.),Maurice Harkless
+2012,16,1,Royce White,whitero03,HOU,HOU,0,PF,So,Iowa St. (So.),Royce White
+2012,17,1,Tyler Zeller,zellety01,DAL,CLE,1,C,Sr,North Carolina (Sr.),Tyler Zeller
+2012,18,1,Terrence Jones,joneste01,HOU,HOU,0,PF,So,Kentucky (So.),Terrence Jones
+2012,19,1,Andrew Nicholson,nichoan01,ORL,ORL,0,PF,Sr,St. Bonaventure (Sr.),Andrew Nicholson
+2012,20,1,Evan Fournier,fournev01,DEN,DEN,0,SG,,Poitiers Basket (France),Evan Fournier
+2012,21,1,Jared Sullinger,sullija01,BOS,BOS,0,PF,So,Ohio St. (So.),Jared Sullinger
+2012,22,1,Fab Melo,melofa01,BOS,BOS,0,C,So,Syracuse (So.),Fab Melo
+2012,23,1,John Jenkins,jenkijo01,ATL,ATL,0,SG,Jr,Vanderbilt (Jr.),John Jenkins
+2012,24,1,Jared Cunningham,cunnija01,CLE,DAL,1,SG,Jr,Oregon St. (Jr.),Jared Cunningham
+2012,25,1,Tony Wroten,wroteto01,MEM,MEM,0,PG,Fr,Washington (Fr.),Tony Wroten
+2012,26,1,Miles Plumlee,plumlmi01,IND,IND,0,C,Sr,Duke (Sr.),Miles Plumlee
+2012,27,1,Arnett Moultrie,moultar01,MIA,PHI,1,PF,Jr,Mississippi St. (Jr.),Arnett Moultrie
+2012,28,1,Perry Jones,jonespe01,OKC,OKC,0,SF,So,Baylor (So.),Perry Jones III
+2012,29,1,Marquis Teague,teaguma01,CHI,CHI,0,PG,Fr,Kentucky (Fr.),Marquis Teague
+2012,30,1,Festus Ezeli,ezelife01,GSW,GSW,0,C,Sr,Vanderbilt (Sr.),Festus Ezeli
+2012,31,2,Jeff Taylor,tayloje03,CHA,CHA,0,SF,Sr,Vanderbilt (Sr.),Jeffery Taylor
+2012,32,2,Tomáš Satoranský,satorto01,WAS,WAS,0,PG,,Banca Cívica Sevilla (Spain),Tomáš Satoranský
+2012,33,2,Bernard James,jamesbe01,CLE,DAL,1,C,Sr,Florida St. (Sr.),Bernard James
+2012,34,2,Jae Crowder,crowdja01,CLE,DAL,1,SF,Sr,Marquette (Sr.),Jae Crowder
+2012,35,2,Draymond Green,greendr01,GSW,GSW,0,PF,Sr,Michigan St. (Sr.),Draymond Green
+2012,36,2,Orlando Johnson,johnsor01,SAC,IND,1,SG,Sr,UC Santa Barbara (Sr.),Orlando Johnson
+2012,37,2,Quincy Acy,acyqu01,TOR,TOR,0,PF,Sr,Baylor (Sr.),Quincy Acy
+2012,38,2,Quincy Miller,millequ01,DEN,DEN,0,SF,Fr,Baylor (Fr.),Quincy Miller
+2012,39,2,Khris Middleton,middlkh01,DET,DET,0,SF,Jr,Texas A&M (Jr.),Khris Middleton
+2012,40,2,Will Barton,bartowi01,POR,POR,0,SG,So,Memphis (So.),Will Barton
+2012,41,2,Tyshawn Taylor,tayloty01,POR,BRK,1,PG,Sr,Kansas (Sr.),Tyshawn Taylor
+2012,42,2,Doron Lamb,lambdo01,MIL,MIL,0,SG,So,Kentucky (So.),Doron Lamb
+2012,43,2,Mike Scott,scottmi01,ATL,ATL,0,PF,Sr,Virginia (Sr.),Mike Scott
+2012,44,2,Kim English,engliki01,DET,DET,0,SG,Sr,Missouri (Sr.),Kim English
+2012,45,2,Justin Hamilton,hamilju01,PHI,MIA,1,C,Jr,LSU (Jr.),Justin Hamilton
+2012,46,2,Darius Miller,milleda01,NOP,NOP,0,SF,Sr,Kentucky (Sr.),Darius Miller
+2012,47,2,Kevin Murphy,murphke01,UTA,UTA,0,SG,Sr,Tennessee Tech (Sr.),Kevin Murphy
+2012,48,2,Kostas Papanikolaou,papanko01,NYK,NYK,0,SF,,Olympiacos (Greece),Kostas Papanikolaou
+2012,49,2,Kyle O'Quinn,oquinky01,ORL,ORL,0,PF,Sr,Norfolk St. (Sr.),Kyle O'Quinn
+2012,50,2,İzzet Türkyılmaz,turkyiz01,DEN,DEN,0,PF,,Banvit (Turkey),İzzet Türkyılmaz
+2012,51,2,Kris Joseph,josepkr01,BOS,BOS,0,SF,Sr,Syracuse (Sr.),Kris Joseph
+2012,52,2,Ognjen Kuzmić,kuzmiog01,GSW,GSW,0,C,,Clinicas Rincón (Spain),Ognjen Kuzmić
+2012,53,2,Furkan Aldemir,aldemfu01,LAC,LAC,0,PF,,Galatasaray (Turkey),Furkan Aldemir
+2012,54,2,Tornike Shengelia,shengto01,PHI,BRK,1,PF,,Spirou Charleroi (Belgium),Tornike Shengelia
+2012,55,2,Darius Johnson-Odom,johnsda03,DAL,LAL,1,SG,Sr,Marquette (Sr.),Darius Johnson-Odom
+2012,56,2,Tomislav Zubčić,zubcito01,TOR,TOR,0,PF,,Cibona Zagreb (Croatia),Tomislav Zubčić
+2012,57,2,İlkan Karaman,karamil01,BRK,BRK,0,PF,,Pınar Karşıyaka (Turkey),İlkan Karaman
+2012,58,2,Robbie Hummel,hummero01,MIN,MIN,0,SF,Sr,Purdue (Sr.),Robbie Hummel
+2012,59,2,Marcus Denmon,denmoma01,SAS,SAS,0,PG,Sr,Missouri (Sr.),Marcus Denmon
+2012,60,2,Robert Sacre,sacrero01,LAL,LAL,0,C,Sr,Gonzaga (Sr.),Robert Sacre
+2013,1,1,Anthony Bennett,bennean01,CLE,CLE,0,PF/SF,Fr,UNLV (Fr.),Anthony Bennett
+2013,2,1,Victor Oladipo,oladivi01,ORL,ORL,0,SG/PG,Jr,Indiana (Jr.),Victor Oladipo
+2013,3,1,Otto Porter Jr.,porteot01,WAS,WAS,0,SF,So,Georgetown (So.),Otto Porter Jr.
+2013,4,1,Cody Zeller,zelleco01,CHA,CHA,0,C/PF,So,Indiana (So.),Cody Zeller
+2013,5,1,Alex Len,lenal01,PHO,PHO,0,C,So,Maryland (So.),Alex Len
+2013,6,1,Nerlens Noel,noelne01,NOP,PHI,1,C,Fr,Kentucky (Fr.),Nerlens Noel
+2013,7,1,Ben McLemore,mclembe01,SAC,SAC,0,SG,Fr,Kansas (Fr.),Ben McLemore
+2013,8,1,Kentavious Caldwell-Pope,caldwke01,DET,DET,0,SG,So,Georgia (So.),Kentavious Caldwell-Pope
+2013,9,1,Trey Burke,burketr01,MIN,UTA,1,PG,So,Michigan (So.),Trey Burke
+2013,10,1,CJ McCollum,mccolcj01,POR,POR,0,SG,Sr,Lehigh (Sr.),CJ McCollum
+2013,11,1,Michael Carter-Williams,cartemi01,PHI,PHI,0,PG,So,Syracuse (So.),Michael Carter-Williams
+2013,12,1,Steven Adams,adamsst01,OKC,OKC,0,C,Fr,Pittsburgh (Fr.),Steven Adams
+2013,13,1,Kelly Olynyk,olynyke01,DAL,BOS,1,C,Jr,Gonzaga (Jr.),Kelly Olynyk
+2013,14,1,Shabazz Muhammad,muhamsh01,UTA,MIN,1,SG/SF,Fr,UCLA (Fr.),Shabazz Muhammad
+2013,15,1,Giannis Antetokounmpo,antetgi01,MIL,MIL,0,PF,,Filathlitikos (Greece),Giannis Antetokounmpo
+2013,16,1,Lucas Nogueira,noguelu01,BOS,ATL,1,C,,Estudiantes (Spain),Lucas Nogueira
+2013,17,1,Dennis Schröder,schrode01,ATL,ATL,0,PG,,Phantoms Braunschweig (Germany),Dennis Schröder
+2013,18,1,Shane Larkin,larkish01,ATL,DAL,1,PG,So,Miami (FL) (So.),Shane Larkin
+2013,19,1,Sergey Karasev,karasse01,CLE,CLE,0,SG/SF,,Triumph Lyubertsy (Russia),Sergey Karasev
+2013,20,1,Tony Snell,snellto01,CHI,CHI,0,SF,Jr,New Mexico (Jr.),Tony Snell
+2013,21,1,Gorgui Dieng,dienggo01,UTA,MIN,1,C,Jr,Louisville (Jr.),Gorgui Dieng
+2013,22,1,Mason Plumlee,plumlma01,BRK,BRK,0,C,Sr,Duke (Sr.),Mason Plumlee
+2013,23,1,Solomon Hill,hillso01,IND,IND,0,SF,Sr,Arizona (Sr.),Solomon Hill
+2013,24,1,Tim Hardaway Jr.,hardati02,NYK,NYK,0,SG,Jr,Michigan (Jr.),Tim Hardaway Jr.
+2013,25,1,Reggie Bullock,bullore01,LAC,LAC,0,SF,Jr,North Carolina (Jr.),Reggie Bullock
+2013,26,1,Andre Roberson,roberan03,MIN,OKC,1,SG/SF,Jr,Colorado (Jr.),André Roberson
+2013,27,1,Rudy Gobert,goberru01,DEN,UTA,1,C,,Cholet Basket (France),Rudy Gobert
+2013,28,1,Livio Jean-Charles,jeancli01,SAS,SAS,0,SF,,ASVEL Basket (France),Livio Jean-Charles
+2013,29,1,Archie Goodwin,goodwar01,OKC,PHO,1,SG,Fr,Kentucky (Fr.),Archie Goodwin
+2013,30,1,Nemanja Nedović,nedovne01,PHO,GSW,1,SG,,Lietuvos Rytas (Lithuania),Nemanja Nedović
+2013,31,2,Allen Crabbe,crabbal01,CLE,POR,1,SG,Jr,California (Jr.),Allen Crabbe
+2013,32,2,Álex Abrines,abrinal01,OKC,OKC,0,SG/SF,,FC Barcelona (Spain),Álex Abrines
+2013,33,2,Carrick Felix,felixca01,CLE,CLE,0,SG,Sr,Arizona State (Sr.),Carrick Felix
+2013,34,2,Isaiah Canaan,canaais01,HOU,HOU,0,PG,Sr,Murray State (Sr.),Isaiah Canaan
+2013,35,2,Glen Rice Jr.,ricegl02,PHI,WAS,1,SG,,Rio Grande Valley Vipers (NBA D-League),Glen Rice Jr.
+2013,36,2,Ray McCallum,mccalra01,SAC,SAC,0,PG,Jr,Detroit (Jr.),Ray McCallum Jr.
+2013,37,2,Tony Mitchell,mitchto02,DET,DET,0,PF,So,North Texas (So.),Tony Mitchell
+2013,38,2,Nate Wolters,woltena01,WAS,MIL,1,PG,Sr,South Dakota State (Sr.),Nate Wolters
+2013,39,2,Jeff Withey,witheje01,POR,POR,0,C,Sr,Kansas (Sr.),Jeff Withey
+2013,40,2,Grant Jerrett,jerregr01,POR,OKC,1,PF,Fr,Arizona (Fr.),Grant Jerrett
+2013,41,2,Jamaal Franklin,frankja01,MEM,MEM,0,SG,Jr,San Diego State (Jr.),Jamaal Franklin
+2013,42,2,Pierre Jackson,jackspi01,PHI,NOP,1,PG,Sr,Baylor (Sr.),Pierre Jackson
+2013,43,2,Ricky Ledo,ledori01,MIL,DAL,1,SG,Fr,Providence (Fr.),Ricky Ledo
+2013,44,2,Mike Muscala,muscami01,DAL,ATL,1,C,Sr,Bucknell (Sr.),Mike Muscala
+2013,45,2,Marko Todorović,todorma01,POR,POR,0,PF/C,,FC Barcelona (Spain),Marko Todorović
+2013,46,2,Erick Green,greener01,UTA,DEN,1,PG,Sr,Virginia Tech (Sr.),Erick Green
+2013,47,2,Raul Neto,netora01,ATL,UTA,1,PG,,Gipuzkoa Basket (Spain),Raul Neto
+2013,48,2,Ryan Kelly,kellyry01,LAL,LAL,0,PF,Sr,Duke (Sr.),Ryan Kelly
+2013,49,2,Erik Murphy,murpher01,CHI,CHI,0,PF,Sr,Florida (Sr.),Erik Murphy
+2013,50,2,James Ennis III,ennisja01,ATL,MIA,1,SF,Sr,Long Beach State (Sr.),James Ennis
+2013,51,2,Romero Osby,osbyro01,ORL,ORL,0,PF,Sr,Oklahoma (Sr.),Romero Osby
+2013,52,2,Lorenzo Brown,brownlo01,MIN,MIN,0,PG,Jr,NC State (Jr.),Lorenzo Brown
+2013,53,2,Colton Iverson,iversco01,IND,BOS,1,C,Sr,Colorado State (Sr.),Colton Iverson
+2013,54,2,Arsalan Kazemi,kazemar01,WAS,PHI,1,PF,Sr,Oregon (Sr.),Arsalan Kazemi
+2013,55,2,Joffrey Lauvergne,lauvejo01,MEM,DEN,1,C,,Partizan Belgrade (Serbia),Joffrey Lauvergne
+2013,56,2,Peyton Siva,sivape01,DET,DET,0,PG,Sr,Louisville (Sr.),Peyton Siva
+2013,57,2,Alex Oriakhi,oriakal01,PHO,PHO,0,C,Sr,Missouri (Sr.),Alex Oriakhi
+2013,58,2,Deshaun Thomas,thomade01,SAS,SAS,0,SF,Jr,Ohio State (Jr.),Deshaun Thomas
+2013,59,2,Bojan Dubljević,dubljbo01,MIN,MIN,0,PF,,Valencia Basket (Spain),Bojan Dubljević
+2013,60,2,Jānis Timma,timmaja01,MEM,MEM,0,SF,,BK Ventspils (Latvia),Jānis Timma
+2014,1,1,Andrew Wiggins,wiggian01,CLE,CLE,0,SF,Fr,Kansas (Fr.),Andrew Wiggins
+2014,2,1,Jabari Parker,parkeja01,MIL,MIL,0,SF/PF,Fr,Duke (Fr.),Jabari Parker
+2014,3,1,Joel Embiid,embiijo01,PHI,PHI,0,C,Fr,Kansas (Fr.),Joel Embiid
+2014,4,1,Aaron Gordon,gordoaa01,ORL,ORL,0,PF,Fr,Arizona (Fr.),Aaron Gordon
+2014,5,1,Dante Exum,exumda01,UTA,UTA,0,SG/PG,,Australian Institute of Sport,Danté Exum
+2014,6,1,Marcus Smart,smartma01,BOS,BOS,0,SG/PG,So,Oklahoma State (So.),Marcus Smart
+2014,7,1,Julius Randle,randlju01,LAL,LAL,0,PF,Fr,Kentucky (Fr.),Julius Randle
+2014,8,1,Nik Stauskas,stausni01,SAC,SAC,0,SG,So,Michigan (So.),Nik Stauskas
+2014,9,1,Noah Vonleh,vonleno01,BRK,BRK,0,PF,Fr,Indiana (Fr.),Noah Vonleh
+2014,10,1,Elfrid Payton,paytoel01,PHI,ORL,1,PG,Jr,Louisiana–Lafayette (Jr.),Elfrid Payton
+2014,11,1,Doug McDermott,mcderdo01,DEN,CHI,1,SF,Sr,Creighton (Sr.),Doug McDermott
+2014,12,1,Dario Šarić,saricda01,ORL,PHI,1,PF,,Cibona Zagreb (Croatia),Dario Šarić
+2014,13,1,Zach LaVine,lavinza01,MIN,MIN,0,SG,Fr,UCLA (Fr.),Zach LaVine
+2014,14,1,T.J. Warren,warretj01,PHO,PHO,0,SF,So,North Carolina State (So.),T. J. Warren
+2014,15,1,Adreian Payne,paynead01,ATL,ATL,0,PF,Sr,Michigan State (Sr.),Adreian Payne
+2014,16,1,Jusuf Nurkić,nurkiju01,CHI,DEN,1,C,,Cedevita Zagreb (Croatia),Jusuf Nurkić
+2014,17,1,James Young,youngja01,BOS,BOS,0,SG/SF,Fr,Kentucky (Fr.),James Young
+2014,18,1,Tyler Ennis,ennisty01,PHO,PHO,0,PG,Fr,Syracuse (Fr.),Tyler Ennis
+2014,19,1,Gary Harris,harriga01,CHI,DEN,1,SG,So,Michigan State (So.),Gary Harris
+2014,20,1,Bruno Caboclo,cabocbr01,TOR,TOR,0,SF,,EC Pinheiros (Brazil),Bruno Caboclo
+2014,21,1,Mitch McGary,mcgarmi01,OKC,OKC,0,PF,So,Michigan (So.),Mitch McGary
+2014,22,1,Jordan Adams,adamsjo01,MEM,MEM,0,SG,So,UCLA (So.),Jordan Adams
+2014,23,1,Rodney Hood,hoodro01,UTA,UTA,0,SG,So,Duke (So.),Rodney Hood
+2014,24,1,Shabazz Napier,napiesh01,BRK,MIA,1,PG,Sr,Connecticut (Sr.),Shabazz Napier
+2014,25,1,Clint Capela,capelca01,HOU,HOU,0,C,,Élan Chalon (France),Clint Capela
+2014,26,1,P.J. Hairston,hairspj02,MIA,CHA,1,SG,,Texas Legends (NBA D-League),P. J. Hairston
+2014,27,1,Bogdan Bogdanović,bogdabo01,PHO,PHO,0,SG,,Partizan Belgrade (Serbia),Bogdan Bogdanović
+2014,28,1,C.J. Wilcox,wilcocj01,LAC,LAC,0,SG,Sr,Washington (Sr.),C. J. Wilcox
+2014,29,1,Josh Huestis,huestjo01,OKC,OKC,0,SF/PF,Sr,Stanford (Sr.),Josh Huestis
+2014,30,1,Kyle Anderson,anderky01,SAS,SAS,0,SF,So,UCLA (So.),Kyle Anderson
+2014,31,2,Damien Inglis,inglida01,MIL,MIL,0,SF,,Chorale Roanne (France),Damien Inglis
+2014,32,2,K.J. McDaniels,mcdankj01,PHI,PHI,0,SF,Jr,Clemson (Jr.),K. J. McDaniels
+2014,33,2,Joe Harris,harrijo01,CLE,CLE,0,SG,Sr,Virginia (Sr.),Joe Harris
+2014,34,2,Cleanthony Early,earlycl01,NYK,NYK,0,SF,Sr,Wichita State (Sr.),Cleanthony Early
+2014,35,2,Jarnell Stokes,stokeja01,UTA,MEM,1,PF,Jr,Tennessee (Jr.),Jarnell Stokes
+2014,36,2,Johnny O'Bryant,obryajo01,MIL,MIL,0,PF,Jr,Louisiana State (Jr.),Johnny O'Bryant III
+2014,37,2,DeAndre Daniels,daniede01,TOR,TOR,0,SF,Jr,Connecticut (Jr.),DeAndre Daniels
+2014,38,2,Spencer Dinwiddie,dinwisp01,DET,DET,0,PG/SG,Jr,Colorado (Jr.),Spencer Dinwiddie
+2014,39,2,Jerami Grant,grantje01,PHI,PHI,0,SF,So,Syracuse (So.),Jerami Grant
+2014,40,2,Glenn Robinson III,robingl02,MIN,MIN,0,SF,So,Michigan (So.),Glenn Robinson III
+2014,41,2,Nikola Jokić,jokicni01,DEN,DEN,0,C,,Mega Vizura (Serbia),Nikola Jokić
+2014,42,2,Nick Johnson,johnsni01,HOU,HOU,0,PG/SG,Jr,Arizona (Jr.),Nick Johnson
+2014,43,2,Edy Tavares,tavarwa01,ATL,ATL,0,C,,CB Gran Canaria (Spain),Walter Tavares
+2014,44,2,Markel Brown,brownma02,MIN,BRK,1,SG,Sr,Oklahoma State (Sr.),Markel Brown
+2014,45,2,Dwight Powell,poweldw01,BRK,BRK,0,PF,Sr,Stanford (Sr.),Dwight Powell
+2014,46,2,Jordan Clarkson,clarkjo01,WAS,LAL,1,PG,Jr,Missouri (Jr.),Jordan Clarkson
+2014,47,2,Russ Smith,smithru01,PHI,NOP,1,PG/SG,Sr,Louisville (Sr.),Russ Smith
+2014,48,2,Lamar Patterson,pattela01,MIL,ATL,1,SG/SF,Sr,Pittsburgh (Sr.),Lamar Patterson
+2014,49,2,Cameron Bairstow,bairsca01,CHI,CHI,0,PF/C,Sr,New Mexico (Sr.),Cameron Bairstow
+2014,50,2,Alec Brown,brownal01,PHO,PHO,0,C,Sr,Green Bay (Sr.),Alec Brown
+2014,51,2,Thanasis Antetokounmpo,antetth01,NYK,NYK,0,SF,,Delaware 87ers (NBA D-League),Thanasis Antetokounmpo
+2014,52,2,Vasilije Micić,micicva01,PHI,PHI,0,PG,,Mega Vizura (Serbia),Vasilije Micić
+2014,53,2,Alessandro Gentile,gential01,MIN,HOU,1,SF,,Olimpia Milano (Italy),Alessandro Gentile
+2014,54,2,Nemanja Dangubić,dangune01,PHI,SAS,1,SG,,Mega Vizura (Serbia),Nemanja Dangubić
+2014,55,2,Semaj Christon,chrisse01,MIA,OKC,1,PG,So,Xavier (So.),Semaj Christon
+2014,56,2,Devyn Marble,marblde01,DEN,ORL,1,SG/SF,Sr,Iowa (Sr.),Devyn Marble
+2014,57,2,Louis Labeyrie,labeylo01,IND,NYK,1,PF/C,,Paris-Levallois Basket (France),Louis Labeyrie
+2014,58,2,Jordan McRae,mcraejo01,SAS,PHI,1,SG,Sr,Tennessee (Sr.),Jordan McRae
+2014,59,2,Xavier Thames,thamexa01,TOR,BRK,1,PG/SG,Sr,San Diego State (Sr.),Xavier Thames
+2014,60,2,Cory Jefferson,jeffeco01,SAS,BRK,1,PF,Sr,Baylor (Sr.),Cory Jefferson
+2015,1,1,Karl-Anthony Towns,townska01,MIN,MIN,0,C,Fr,Kentucky (Fr.),Karl-Anthony Towns
+2015,2,1,D'Angelo Russell,russeda01,LAL,LAL,0,PG,Fr,Ohio State (Fr.),D'Angelo Russell
+2015,3,1,Jahlil Okafor,okafoja01,PHI,PHI,0,C,Fr,Duke (Fr.),Jahlil Okafor
+2015,4,1,Kristaps Porziņģis,porzikr01,NYK,NYK,0,PF/C,,Baloncesto Sevilla (Spain),Kristaps Porziņģis
+2015,5,1,Mario Hezonja,hezonma01,ORL,ORL,0,SG/SF,,FC Barcelona Liga ACB Spain,Mario Hezonja
+2015,6,1,Willie Cauley-Stein,caulewi01,SAC,SAC,0,PF,Jr,Kentucky (Jr.),Willie Cauley-Stein
+2015,7,1,Emmanuel Mudiay,mudiaem01,DEN,DEN,0,PG,,Guangdong Southern Tigers,Emmanuel Mudiay
+2015,8,1,Stanley Johnson,johnsst04,DET,DET,0,SF,Fr,Arizona (Fr.),Stanley Johnson
+2015,9,1,Frank Kaminsky,kaminfr01,BRK,BRK,0,PF,Sr,Wisconsin (Sr.),Frank Kaminsky
+2015,10,1,Justise Winslow,winslju01,MIA,MIA,0,SF,Fr,Duke (Fr.),Justise Winslow
+2015,11,1,Myles Turner,turnemy01,IND,IND,0,C,Fr,Texas (Fr.),Myles Turner
+2015,12,1,Trey Lyles,lylestr01,UTA,UTA,0,PF,Fr,Kentucky (Fr.),Trey Lyles
+2015,13,1,Devin Booker,bookede01,PHO,PHO,0,SG,Fr,Kentucky (Fr.),Devin Booker
+2015,14,1,Cameron Payne,payneca01,OKC,OKC,0,PG,So,Murray State (So.),Cameron Payne
+2015,15,1,Kelly Oubre Jr.,oubreke01,ATL,WAS,1,SF,Fr,Kansas (Fr.),Kelly Oubre Jr.
+2015,16,1,Terry Rozier,roziete01,BOS,BOS,0,PG,So,Louisville (So.),Terry Rozier
+2015,17,1,Rashad Vaughn,vaughra01,MIL,MIL,0,SG,Fr,UNLV (Fr.),Rashad Vaughn
+2015,18,1,Sam Dekker,dekkesa01,HOU,HOU,0,SF,Jr,Wisconsin (Jr.),Sam Dekker
+2015,19,1,Jerian Grant,grantje02,WAS,NYK,1,PG,Sr,Notre Dame (Sr.),Jerian Grant
+2015,20,1,Delon Wright,wrighde01,TOR,TOR,0,PG,Sr,Utah (Sr.),Delon Wright
+2015,21,1,Justin Anderson,anderju01,DAL,DAL,0,SF,Jr,Virginia (Jr.),Justin Anderson
+2015,22,1,Bobby Portis,portibo01,CHI,CHI,0,PF,So,Arkansas (So.),Bobby Portis
+2015,23,1,Rondae Hollis-Jefferson,holliro01,POR,BRK,1,SF,So,Arizona (So.),Rondae Hollis-Jefferson
+2015,24,1,Tyus Jones,jonesty01,CLE,MIN,1,PG,Fr,Duke (Fr.),Tyus Jones
+2015,25,1,Jarell Martin,martija01,MEM,MEM,0,PF,So,LSU (So.),Jarell Martin
+2015,26,1,Nikola Milutinov,milutni01,SAS,SAS,0,C,,Partizan Belgrade (Serbia),Nikola Milutinov
+2015,27,1,Larry Nance Jr.,nancela02,LAL,LAL,0,PF,Sr,Wyoming (Sr.),Larry Nance Jr.
+2015,28,1,R.J. Hunter,hunterj01,BOS,BOS,0,SG,Jr,Georgia State (Jr.),R. J. Hunter
+2015,29,1,Chris McCullough,mcculch01,BRK,BRK,0,PF,Fr,Syracuse (Fr.),Chris McCullough
+2015,30,1,Kevon Looney,looneke01,GSW,GSW,0,PF,Fr,UCLA (Fr.),Kevon Looney
+2015,31,2,Cedi Osman,osmande01,MIN,CLE,1,SF,,Anadolu Efes (Turkey),Cedi Osman
+2015,32,2,Montrezl Harrell,harremo01,HOU,HOU,0,PF/C,Jr,Louisville (Jr.),Montrezl Harrell
+2015,33,2,Jordan Mickey,mickejo01,BOS,BOS,0,PF,So,LSU (So.),Jordan Mickey
+2015,34,2,Anthony Brown,brownan02,LAL,LAL,0,SF,Sr,Stanford (Sr.),Anthony Brown
+2015,35,2,Willy Hernangómez,hernawi01,PHI,NYK,1,C,,"Baloncesto Sevilla, Spain",Willy Hernangómez
+2015,36,2,Rakeem Christmas,chrisra01,MIN,CLE,1,PF/C,Sr,Syracuse (Sr.),Rakeem Christmas
+2015,37,2,Richaun Holmes,holmeri01,PHI,PHI,0,PF/C,Sr,Bowling Green (Sr.),Richaun Holmes
+2015,38,2,Darrun Hilliard,hillida01,DET,DET,0,SG,Sr,Villanova (Sr.),Darrun Hilliard
+2015,39,2,Juan Pablo Vaulet,vauleju01,BRK,BRK,1,SF,,Estudiantes de Bahía (Argentina),Juan Pablo Vaulet
+2015,40,2,Josh Richardson,richajo01,MIA,MIA,0,SG,Sr,Tennessee (Sr.),Josh Richardson
+2015,41,2,Pat Connaughton,connapa01,BRK,POR,1,SG,Sr,Notre Dame (Sr.),Pat Connaughton
+2015,42,2,Olivier Hanlan,hanlaol01,UTA,UTA,0,PG,Jr,Boston College (Jr.),Olivier Hanlan
+2015,43,2,Joe Young,youngjo01,IND,IND,0,PG,Sr,Oregon (Sr.),Joe Young
+2015,44,2,Andrew Harrison,harrian01,PHO,MEM,1,PG,So,Kentucky (So.),Andrew Harrison
+2015,45,2,Marcus Thornton,thornma02,BOS,BOS,0,PG,Sr,William & Mary (Sr.),Marcus Thornton
+2015,46,2,Norman Powell,powelno01,MIL,TOR,1,SG,Sr,UCLA (Sr.),Norman Powell
+2015,47,2,Artūras Gudaitis,gudaiar01,PHI,PHI,0,C,,Žalgiris Kaunas (Lithuania),Artūras Gudaitis
+2015,48,2,Dakari Johnson,johnsda04,OKC,OKC,0,C,So,Kentucky (So.),Dakari Johnson
+2015,49,2,Aaron White,whiteaa01,WAS,WAS,0,PF,Sr,Iowa (Sr.),Aaron White
+2015,50,2,Marcus Eriksson,eriksma01,ATL,ATL,0,SG,,FC Barcelona Liga ACB Spain,Marcus Eriksson
+2015,51,2,Tyler Harvey,harvety01,ORL,ORL,0,PG,Jr,Eastern Washington (Jr.),Tyler Harvey
+2015,52,2,Satnam Singh,singhsa01,DAL,DAL,0,C,,"IMG Academy (Bradenton, Florida; HSPg.)",Satnam Singh
+2015,53,2,Sir'Dominic Pointer,pointsi01,CLE,CLE,0,SF,Sr,St. John's (Sr.),Sir'Dominic Pointer
+2015,54,2,Dani Díez,diezda01,UTA,POR,1,SF,,Gipuzkoa Basket (Spain),Dani Díez
+2015,55,2,Cady Lalanne,lalanca01,SAS,SAS,0,PF,Sr,Massachusetts (Sr.),Cady Lalanne
+2015,56,2,Branden Dawson,dawsobr01,NOP,LAC,1,SF,Sr,Michigan State (Sr.),Branden Dawson
+2015,57,2,Nikola Radičević,radicni01,DEN,DEN,0,PG,,"Baloncesto Sevilla, Spain",Nikola Radičević
+2015,58,2,J.P. Tokoto,tokotjp01,PHI,PHI,0,SG/SF,Jr,North Carolina (Jr.),J. P. Tokoto
+2015,59,2,Dimitrios Agravanis,agravdi01,ATL,ATL,0,PF,,Olympiacos (Greece),Dimitrios Agravanis
+2015,60,2,Luka Mitrović,mitrolu01,PHI,PHI,0,PF,,Red Star Belgrade (Serbia),Luka Mitrović
+2016,1,1,Ben Simmons,simmobe01,PHI,PHI,0,PF/PG,Fr,LSU (Fr.),Ben Simmons
+2016,2,1,Brandon Ingram,ingrabr01,LAL,LAL,0,SF,Fr,Duke (Fr.),Brandon Ingram
+2016,3,1,Jaylen Brown,brownja02,BOS,BOS,0,SF/SG,Fr,California (Fr.),Jaylen Brown
+2016,4,1,Dragan Bender,bendedr01,PHO,PHO,0,PF/C,,Maccabi Tel Aviv (Israel),Dragan Bender
+2016,5,1,Kris Dunn,dunnkr01,MIN,MIN,0,PG,Jr,Providence (Jr.),Kris Dunn
+2016,6,1,Buddy Hield,hieldbu01,NOP,NOP,0,SG,Sr,Oklahoma (Sr.),Buddy Hield
+2016,7,1,Jamal Murray,murraja01,DEN,DEN,0,PG/SG,Fr,Kentucky (Fr.),Jamal Murray
+2016,8,1,Marquese Chriss,chrisma01,SAC,PHO,1,PF,Fr,Washington (Fr.),Marquese Chriss
+2016,9,1,Jakob Poeltl,poeltja01,TOR,TOR,0,C,So,Utah (So.),Jakob Pöltl
+2016,10,1,Thon Maker,makerth01,MIL,MIL,0,PF,,Orangeville Prep/Athlete Institute (Canada HS Pg.),Thon Maker
+2016,11,1,Domantas Sabonis,sabondo01,ORL,OKC,1,C/PF,So,Gonzaga (So.),Domantas Sabonis
+2016,12,1,Taurean Prince,princta02,UTA,ATL,0,SF,Sr,Baylor (Sr.),Taurean Prince
+2016,13,1,Georgios Papagiannis,papagge01,PHO,SAC,1,C,,Panathinaikos (Greece),Georgios Papagiannis
+2016,14,1,Denzel Valentine,valende01,CHI,CHI,0,SG/SF,Sr,Michigan State (Sr.),Denzel Valentine
+2016,15,1,Juancho Hernangómez,hernaju01,DEN,DEN,0,SF/PF,,Movistar Estudiantes (Spain),Juancho Hernangómez
+2016,16,1,Guerschon Yabusele,yabusgu01,BOS,BOS,0,PF,,Rouen Métropole (France),Guerschon Yabusele
+2016,17,1,Wade Baldwin,baldwwa01,MEM,MEM,0,PG,So,Vanderbilt (So.),Wade Baldwin
+2016,18,1,Henry Ellenson,ellenhe01,DET,DET,0,PF,Fr,Marquette (Fr.),Henry Ellenson
+2016,19,1,Malik Beasley,beaslma01,DEN,DEN,0,SG,Fr,Florida State (Fr.),Malik Beasley
+2016,20,1,Caris LeVert,leverca01,IND,BRK,1,SG,Sr,Michigan (Sr.),Caris LeVert
+2016,21,1,DeAndre' Bembry,bembrde01,ATL,ATL,0,SF,Jr,Saint Joseph's (Jr.),DeAndre' Bembry
+2016,22,1,Malachi Richardson,richama01,BRK,SAC,1,SG,Fr,Syracuse (Fr.),Malachi Richardson
+2016,23,1,Ante Žižić,zizican01,BOS,BOS,0,C,,KK Cibona (Croatia),Ante Žižić
+2016,24,1,Timothé Luwawu-Cabarrot,luwawti01,PHI,PHI,0,SG/SF,,Mega Leks (Serbia),Timothé Luwawu-Cabarrot
+2016,25,1,Brice Johnson,johnsbr02,LAC,LAC,0,PF,Sr,North Carolina (Sr.),Brice Johnson
+2016,26,1,Furkan Korkmaz,korkmfu01,PHI,PHI,0,SG/SF,,Anadolu Efes (Turkey),Furkan Korkmaz
+2016,27,1,Pascal Siakam,siakapa01,TOR,TOR,0,PF,So,New Mexico State (So.),Pascal Siakam
+2016,28,1,Skal Labissière,labissk01,PHO,SAC,1,PF/C,Fr,Kentucky (Fr.),Skal Labissière
+2016,29,1,Dejounte Murray,murrade01,SAS,SAS,0,PG/SG,Fr,Washington (Fr.),Dejounte Murray
+2016,30,1,Damian Jones,jonesda03,GSW,GSW,0,C,Jr,Vanderbilt (Jr.),Damian Jones
+2016,31,2,Deyonta Davis,davisde01,BOS,MEM,1,PF/C,Fr,Michigan State (Fr.),Deyonta Davis
+2016,32,2,Ivica Zubac,zubaciv01,LAL,LAL,0,C,,Mega Leks (Serbia),Ivica Zubac
+2016,33,2,Cheick Diallo,diallch01,LAC,NOP,1,PF/C,Fr,Kansas (Fr.),Cheick Diallo
+2016,34,2,Tyler Ulis,ulisty01,PHO,PHO,0,PG,So,Kentucky (So.),Tyler Ulis
+2016,35,2,Rade Zagorac,zagorra01,BOS,MEM,1,SG/SF,,Mega Leks (Serbia),Rade Zagorac
+2016,36,2,Malcolm Brogdon,brogdma01,MIL,MIL,0,PG/SG,Sr,Virginia (Sr.),Malcolm Brogdon
+2016,37,2,Chinanu Onuaku,onuakch01,HOU,HOU,0,PF/C,So,Louisville (So.),Chinanu Onuaku
+2016,38,2,Patrick McCaw,mccawpa01,MIL,GSW,1,SG/SF,So,UNLV (So.),Patrick McCaw
+2016,39,2,David Michineau,michida01,NOP,LAC,1,PG,,Élan Chalon (France),David Michineau
+2016,40,2,Diamond Stone,stonedi01,NOP,LAC,1,C,Fr,Maryland (Fr.),Diamond Stone
+2016,41,2,Stephen Zimmerman,zimmest01,ORL,ORL,0,PF/C,Fr,UNLV (Fr.),Stephen Zimmerman
+2016,42,2,Isaiah Whitehead,whiteis01,UTA,BRK,1,PG/SG,So,Seton Hall (So.),Isaiah Whitehead
+2016,43,2,Zhou Qi,qizh01,HOU,HOU,0,C,,Xinjiang Flying Tigers (China),Zhou Qi
+2016,44,2,Isaïa Cordinier,cordiis01,ATL,ATL,0,SG,,ASC Denain-Voltaire (France),Isaïa Cordinier
+2016,45,2,Demetrius Jackson,jacksde01,BOS,BOS,0,PG,Jr,Notre Dame (Jr.),Demetrius Jackson
+2016,46,2,A.J. Hammons,hammoaj01,DAL,DAL,0,C,Sr,Purdue (Sr.),A. J. Hammons
+2016,47,2,Jake Layman,laymaja01,ORL,POR,1,SF,Sr,Maryland (Sr.),Jake Layman
+2016,48,2,Paul Zipser,zipsepa01,CHI,CHI,0,SG/SF,,Bayern Munich (Germany),Paul Zipser
+2016,49,2,Michael Gbinije,gbinimi01,DET,DET,0,SF,Sr,Syracuse (Sr.),Michael Gbinije
+2016,50,2,Georges Niang,niangge01,IND,IND,0,PF,Sr,Iowa State (Sr.),Georges Niang
+2016,51,2,Ben Bentil,bentibe01,BOS,BOS,0,PF,So,Providence (So.),Ben Bentil
+2016,52,2,Joel Bolomboy,bolomjo01,UTA,UTA,0,PF/C,Sr,Weber State (Sr.),Joel Bolomboy
+2016,53,2,Petr Cornelie,cornepe01,DEN,DEN,0,PF,,Le Mans Sarthe (France),Petr Cornelie
+2016,54,2,Kay Felder,feldeka01,ATL,CLE,1,PG,Jr,Oakland (Jr.),Kay Felder
+2016,55,2,Marcus Paige,paigema01,BRK,UTA,1,PG,Sr,North Carolina (Sr.),Marcus Paige
+2016,56,2,Daniel Hamilton,hamilda02,DEN,OKC,1,SG/SF,So,Connecticut (So.),Daniel Hamilton
+2016,57,2,Wang Zhelin,sheliwa01,MEM,MEM,0,C,,Fujian Sturgeons (China),Wang Zhelin
+2016,58,2,Abdel Nader,naderab01,BOS,BOS,0,SF,Sr,Iowa State (Sr.),Abdel Nader
+2016,59,2,Isaiah Cousins,cousiis01,SAC,SAC,0,PG/SG,Sr,Oklahoma (Sr.),Isaiah Cousins
+2016,60,2,Tyrone Wallace,wallaty01,UTA,UTA,0,PG,Sr,California (Sr.),Tyrone Wallace
+2017,1,1,Markelle Fultz,fultzma01,PHI,PHI,0,PG,Fr,Washington (Fr.),Markelle Fultz
+2017,2,1,Lonzo Ball,balllo01,LAL,LAL,0,PG,Fr,UCLA (Fr.),Lonzo Ball
+2017,3,1,Jayson Tatum,tatumja01,BOS,BOS,0,SF,Fr,Duke (Fr.),Jayson Tatum
+2017,4,1,Josh Jackson,jacksjo02,PHO,PHO,0,SF,Fr,Kansas (Fr.),Josh Jackson
+2017,5,1,De'Aaron Fox,foxde01,SAC,SAC,0,PG,Fr,Kentucky (Fr.),De'Aaron Fox
+2017,6,1,Jonathan Isaac,isaacjo01,ORL,ORL,0,PF/SF,Fr,Florida State (Fr.),Jonathan Isaac
+2017,7,1,Lauri Markkanen,markkla01,MIN,CHI,1,PF,Fr,Arizona (Fr.),Lauri Markkanen
+2017,8,1,Frank Ntilikina,ntilila01,NYK,NYK,0,PG,,SIG Strasbourg (France),Frank Ntilikina
+2017,9,1,Dennis Smith Jr.,smithde03,DAL,DAL,0,PG,Fr,NC State (Fr.),Dennis Smith Jr.
+2017,10,1,Zach Collins,colliza01,SAC,POR,1,C/PF,Fr,Gonzaga (Fr.),Zach Collins
+2017,11,1,Malik Monk,monkma01,BRK,BRK,0,SG,Fr,Kentucky (Fr.),Malik Monk
+2017,12,1,Luke Kennard,kennalu01,DET,DET,0,SG,So,Duke (So.),Luke Kennard
+2017,13,1,Donovan Mitchell,mitchdo01,DEN,UTA,1,SG,So,Louisville (So.),Donovan Mitchell
+2017,14,1,Bam Adebayo,adebaba01,MIA,MIA,0,PF/C,Fr,Kentucky (Fr.),Bam Adebayo
+2017,15,1,Justin Jackson,jacksju01,POR,SAC,1,SF,Jr,North Carolina (Jr.),Justin Jackson
+2017,16,1,Justin Patton,pattoju01,CHI,MIN,1,C,Fr,Creighton (Fr.),Justin Patton
+2017,17,1,D.J. Wilson,wilsodj01,MIL,MIL,0,PF/SF,Jr,Michigan (Jr.),D. J. Wilson
+2017,18,1,T.J. Leaf,leaftj01,IND,IND,0,PF,Fr,UCLA (Fr.),T. J. Leaf
+2017,19,1,John Collins,collijo01,ATL,ATL,0,PF,So,Wake Forest (So.),John Collins
+2017,20,1,Harry Giles,gilesha01,POR,SAC,1,PF/C,Fr,Duke (Fr.),Harry Giles III
+2017,21,1,Terrance Ferguson,fergute01,OKC,OKC,0,SG,,Adelaide 36ers (Australia),Terrance Ferguson
+2017,22,1,Jarrett Allen,allenja01,BRK,BRK,0,C,Fr,Texas (Fr.),Jarrett Allen
+2017,23,1,OG Anunoby,anunoog01,TOR,TOR,0,SF,So,Indiana (So.),OG Anunoby
+2017,24,1,Tyler Lydon,lydonty01,UTA,DEN,1,PF,So,Syracuse (So.),Tyler Lydon
+2017,25,1,Anžejs Pasečņiks,pasecan01,ORL,PHI,1,C,,Herbalife Gran Canaria (Spain),Anžejs Pasečņiks
+2017,26,1,Caleb Swanigan,swanica01,POR,POR,0,PF,So,Purdue (So.),Caleb Swanigan
+2017,27,1,Kyle Kuzma,kuzmaky01,BRK,LAL,1,PF,Jr,Utah (Jr.),Kyle Kuzma
+2017,28,1,Tony Bradley,bradlto01,LAL,UTA,1,PF/C,Fr,North Carolina (Fr.),Tony Bradley
+2017,29,1,Derrick White,whitede01,SAS,SAS,0,PG/SG,Sr,Colorado (Sr.),Derrick White
+2017,30,1,Josh Hart,hartjo01,UTA,LAL,1,SG,Sr,Villanova (Sr.),Josh Hart
+2017,31,2,Frank Jackson,jacksfr01,BRK,NOP,1,PG,Fr,Duke (Fr.),Frank Jackson
+2017,32,2,Davon Reed,reedda01,PHO,PHO,0,SG,Sr,Miami (Sr.),Davon Reed
+2017,33,2,Wes Iwundu,iwundwe01,ORL,ORL,0,SF,Sr,Kansas State (Sr.),Wes Iwundu
+2017,34,2,Frank Mason III,masonfr01,SAC,SAC,0,PG,Sr,Kansas (Sr.),Frank Mason III
+2017,35,2,Ivan Rabb,rabbiv01,ORL,MEM,1,PF,So,California (So.),Ivan Rabb
+2017,36,2,Jonah Bolden,boldejo01,PHI,PHI,0,PF,,Crvena zvezda (Serbia),Jonah Bolden
+2017,37,2,Semi Ojeleye,ojelese01,BOS,BOS,0,SF/PF,Jr,SMU (Jr.),Semi Ojeleye
+2017,38,2,Jordan Bell,belljo01,CHI,GSW,1,PF,Jr,Oregon (Jr.),Jordan Bell
+2017,39,2,Jawun Evans,evansja01,PHI,LAC,1,PG,So,Oklahoma State (So.),Jawun Evans
+2017,40,2,Dwayne Bacon,bacondw01,NOP,BRK,1,SG,So,Florida State (So.),Dwayne Bacon
+2017,41,2,Tyler Dorsey,dorsety01,ATL,ATL,0,SG,So,Oregon (So.),Tyler Dorsey
+2017,42,2,Thomas Bryant,bryanth01,UTA,LAL,1,PF,So,Indiana (So.),Thomas Bryant
+2017,43,2,Isaiah Hartenstein,harteis01,HOU,HOU,0,PF/C,,Žalgiris (Lithuania),Isaiah Hartenstein
+2017,44,2,Damyean Dotson,dotsoda01,NYK,NYK,0,SG,Sr,Houston (Sr.),Damyean Dotson
+2017,45,2,Dillon Brooks,brookdi01,HOU,MEM,1,SF,Jr,Oregon (Jr.),Dillon Brooks
+2017,46,2,Sterling Brown,brownst02,PHI,MIL,1,SG,Sr,SMU (Sr.),Sterling Brown
+2017,47,2,Ike Anigbogu,anigbik01,IND,IND,0,C,Fr,UCLA (Fr.),Ike Anigbogu
+2017,48,2,Sindarius Thornwell,thornsi01,MIL,LAC,1,SG,Sr,South Carolina (Sr.),Sindarius Thornwell
+2017,49,2,Vlatko Čančar,cancavl01,DEN,DEN,0,SF,,Mega Leks (Serbia),Vlatko Čančar
+2017,50,2,Mathias Lessort,lessoma01,PHI,PHI,0,PF/C,,Nanterre 92 (France),Mathias Lessort
+2017,51,2,Monte Morris,morrimo01,DEN,DEN,0,PG,Sr,Iowa State (Sr.),Monté Morris
+2017,52,2,Edmond Sumner,sumneed01,NOP,IND,1,PG,Jr,Xavier (Jr.),Edmond Sumner
+2017,53,2,Kadeem Allen,allenka01,BOS,BOS,0,SG,Sr,Arizona (Sr.),Kadeem Allen
+2017,54,2,Alec Peters,peteral01,PHO,PHO,0,SF,Sr,Valparaiso (Sr.),Alec Peters
+2017,55,2,Nigel Williams-Goss,willini01,UTA,UTA,0,PG,Jr,Gonzaga (Jr.),Nigel Williams-Goss
+2017,56,2,Jabari Bird,birdja01,BOS,BOS,0,SG,Sr,California (Sr.),Jabari Bird
+2017,57,2,Sasha Vezenkov,vezenal01,BRK,BRK,0,PF,,FC Barcelona Lassa (Spain),Sasha Vezenkov
+2017,58,2,Ognjen Jaramaz,jaramog01,NYK,NYK,0,PG,,Mega Leks (Serbia),Ognjen Jaramaz
+2017,59,2,Jaron Blossomgame,blossja01,SAS,SAS,0,SF,Sr,Clemson (Sr.),Jaron Blossomgame
+2017,60,2,Alpha Kaba,kabaal01,ATL,ATL,0,PF/C,,Mega Leks (Serbia),Alpha Kaba
+2018,1,1,Deandre Ayton,aytonde01,PHO,PHO,0,C,Fr,Arizona (Fr.),Deandre Ayton
+2018,2,1,Marvin Bagley III,baglema01,SAC,SAC,0,PF,Fr,Duke (Fr.),Marvin Bagley III
+2018,3,1,Luka Dončić,doncilu01,ATL,DAL,1,PG/SF,,Real Madrid (Spain),Luka Dončić
+2018,4,1,Jaren Jackson Jr.,jacksja02,MEM,MEM,0,PF/C,Fr,Michigan State (Fr.),Jaren Jackson Jr.
+2018,5,1,Trae Young,youngtr01,DAL,ATL,1,PG,Fr,Oklahoma (Fr.),Trae Young
+2018,6,1,Mo Bamba,bambamo01,ORL,ORL,0,C,Fr,Texas (Fr.),Mo Bamba
+2018,7,1,Wendell Carter Jr.,cartewe01,CHI,CHI,0,C,Fr,Duke (Fr.),Wendell Carter Jr.
+2018,8,1,Collin Sexton,sextoco01,CLE,CLE,0,PG/SG,Fr,Alabama (Fr.),Collin Sexton
+2018,9,1,Kevin Knox,knoxke01,NYK,NYK,0,SF,Fr,Kentucky (Fr.),Kevin Knox II
+2018,10,1,Mikal Bridges,bridgmi01,PHI,PHO,1,SF,Jr,Villanova (Jr.),Mikal Bridges
+2018,11,1,Shai Gilgeous-Alexander,gilgesh01,BRK,LAC,1,PG/SG,Fr,Kentucky (Fr.),Shai Gilgeous-Alexander
+2018,12,1,Miles Bridges,bridgmi02,LAC,CHA,1,SF,So,Michigan State (So.),Miles Bridges
+2018,13,1,Jerome Robinson,robinje01,LAC,LAC,0,SG,Jr,Boston College (Jr.),Jerome Robinson
+2018,14,1,Michael Porter Jr.,portemi01,DEN,DEN,0,SF,Fr,Missouri (Fr.),Michael Porter Jr.
+2018,15,1,Troy Brown Jr.,browntr01,WAS,WAS,0,SF,Fr,Oregon (Fr.),Troy Brown Jr.
+2018,16,1,Zhaire Smith,smithzh01,PHO,PHI,1,SG,Fr,Texas Tech (Fr.),Zhaire Smith
+2018,17,1,Donte DiVincenzo,divindo01,MIL,MIL,0,SG,So,Villanova (So.),Donte DiVincenzo
+2018,18,1,Lonnie Walker IV,walkelo01,SAS,SAS,0,SG,Fr,Miami (Fr.),Lonnie Walker IV
+2018,19,1,Kevin Huerter,huertke01,ATL,ATL,0,SG,So,Maryland (So.),Kevin Huerter
+2018,20,1,Josh Okogie,okogijo01,MIN,MIN,0,SG,So,Georgia Tech (So.),Josh Okogie
+2018,21,1,Grayson Allen,allengr01,UTA,UTA,0,SG,Sr,Duke ((Sr.),Grayson Allen
+2018,22,1,Chandler Hutchison,hutchch01,CHI,CHI,0,SF/SG,Sr,Boise State (Sr.),Chandler Hutchison
+2018,23,1,Aaron Holiday,holidaa01,IND,IND,0,PG,Jr,UCLA (Jr.),Aaron Holiday
+2018,24,1,Anfernee Simons,simonan01,POR,POR,0,SG,,"IMG Academy (Bradenton, Florida; HSPg.)",Anfernee Simons
+2018,25,1,Moritz Wagner,wagnemo01,LAL,LAL,0,PF,Jr,Michigan (Jr.),Moritz Wagner
+2018,26,1,Landry Shamet,shamela01,PHI,PHI,0,SG,So,Wichita State (So.),Landry Shamet
+2018,27,1,Robert Williams,williro04,BOS,BOS,0,PF/C,So,Texas A&M (So.),Robert Williams III
+2018,28,1,Jacob Evans,evansja02,GSW,GSW,0,SG,Jr,Cincinnati (Jr.),Jacob Evans
+2018,29,1,Džanan Musa,musadz01,BRK,BRK,0,SF,,Cedevita Zagreb (Croatia),Džanan Musa
+2018,30,1,Omari Spellman,spellom01,ATL,ATL,0,PF,Fr,Villanova (Fr.),Omari Spellman
+2018,31,2,Elie Okobo,okoboel01,PHO,PHO,0,PG,,Pau-Lacq-Orthez (France),Élie Okobo
+2018,32,2,Jevon Carter,carteje01,MEM,MEM,0,PG,Sr,West Virginia (Sr.),Jevon Carter
+2018,33,2,Jalen Brunson,brunsja01,DAL,DAL,0,PG,Jr,Villanova (Jr.),Jalen Brunson
+2018,34,2,Devonte' Graham,grahade01,ATL,CHA,1,PG,Sr,Kansas (Sr.),Devonte' Graham
+2018,35,2,Melvin Frazier,frazime01,ORL,ORL,0,SF,Jr,Tulane (Jr.),Melvin Frazier
+2018,36,2,Mitchell Robinson,robinmi01,NYK,NYK,0,C,,"Chalmette HS (Chalmette, Louisiana; HS Sr.)",Mitchell Robinson
+2018,37,2,Gary Trent Jr.,trentga02,SAC,POR,1,SG,Fr,Duke (Fr.),Gary Trent Jr.
+2018,38,2,Khyri Thomas,thomakh01,PHI,DET,1,SG,Jr,Creighton (Jr.),Khyri Thomas
+2018,39,2,Isaac Bonga,bongais01,PHI,LAL,1,SF,,Frankfurt Skyliners (Germany),Isaac Bonga
+2018,40,2,Rodions Kurucs,kurucro01,BRK,BRK,0,SF,,FC Barcelona Lassa (Spain),Rodions Kurucs
+2018,41,2,Jarred Vanderbilt,vandeja01,ORL,DEN,1,SF,Fr,Kentucky (Fr.),Jarred Vanderbilt
+2018,42,2,Bruce Brown,brownbr01,DET,DET,0,SG,So,Miami (So.),Bruce Brown
+2018,43,2,Justin Jackson,jacksju02,DEN,ORL,1,SF,So,Maryland (So.),Justin Jackson
+2018,44,2,Issuf Sanon,sanonis01,WAS,WAS,0,PG,,Olimpija Ljubljana (Slovenia),Issuf Sanon
+2018,45,2,Hamidou Diallo,diallha01,BRK,OKC,1,SG,Fr,Kentucky (Fr.),Hamidou Diallo
+2018,46,2,De'Anthony Melton,meltode01,HOU,HOU,0,SG,So,USC (So.),De'Anthony Melton
+2018,47,2,Svi Mykhailiuk,mykhasv01,LAL,LAL,0,SG,Sr,Kansas (Sr.),Sviatoslav Mykhailiuk
+2018,48,2,Keita Bates-Diop,bateske01,MIN,MIN,0,SF,Jr,Ohio State (Jr.),Keita Bates-Diop
+2018,49,2,Chimezie Metu,metuch01,SAS,SAS,0,PF,Jr,USC (Jr.),Chimezie Metu
+2018,50,2,Alize Johnson,johnsal02,IND,IND,0,PF,Sr,Missouri State (Sr.),Alize Johnson
+2018,51,2,Tony Carr,carrto01,NOP,NOP,0,PG,So,Penn State (So.),Tony Carr
+2018,52,2,Vince Edwards,edwarvi01,UTA,HOU,1,SF,Sr,Purdue (Sr.),Vincent Edwards
+2018,53,2,Devon Hall,hallde01,OKC,OKC,0,SG,Sr,Virginia (Sr.),Devon Hall
+2018,54,2,Shake Milton,miltosh01,DAL,PHI,1,SG,Jr,SMU (Jr.),Shake Milton
+2018,55,2,Arnoldas Kulboka,kulboar01,BRK,BRK,0,SF,,Orlandina Basket (Italy),Arnoldas Kulboka
+2018,56,2,Ray Spalding,spaldra01,PHI,DAL,1,PF,Jr,Louisville (Jr.),Ray Spalding
+2018,57,2,Kevin Hervey,herveke01,OKC,OKC,0,PF,Sr,Texas-Arlington (Sr.),Kevin Hervey
+2018,58,2,Thomas Welsh,welshth01,DEN,DEN,0,C,Sr,UCLA (Sr.),Thomas Welsh
+2018,59,2,George King,kingge03,PHO,PHO,0,SG,Sr,Colorado (Sr.),George King
+2018,60,2,Kostas Antetokounmpo,antetko01,PHI,DAL,1,SF/PF,Fr,Dayton (Fr.),Kostas Antetokounmpo
+2019,1,1,Zion Williamson,willizi01,NOP,NOP,0,PF,Fr,Duke (Fr.),Zion Williamson
+2019,2,1,Ja Morant,moranja01,MEM,MEM,0,PG,So,Murray State (So.),Ja Morant
+2019,3,1,RJ Barrett,barrerj01,NYK,NYK,0,SG/SF,Fr,Duke (Fr.),RJ Barrett
+2019,4,1,De'Andre Hunter,huntede01,LAL,ATL,1,SF,So,Virginia (So.),De'Andre Hunter
+2019,5,1,Darius Garland,garlada01,CLE,CLE,0,PG,Fr,Vanderbilt (Fr.),Darius Garland
+2019,6,1,Jarrett Culver,culveja01,PHO,MIN,1,SG,So,Texas Tech (So.),Jarrett Culver
+2019,7,1,Coby White,whiteco01,CHI,CHI,0,PG,Fr,North Carolina (Fr.),Coby White
+2019,8,1,Jaxson Hayes,hayesja02,ATL,NOP,1,C,Fr,Texas (Fr.),Jaxson Hayes
+2019,9,1,Rui Hachimura,hachiru01,WAS,WAS,0,PF,Jr,Gonzaga (Jr.),Rui Hachimura
+2019,10,1,Cam Reddish,reddica01,ATL,ATL,0,SF,Fr,Duke (Fr.),Cam Reddish
+2019,11,1,Cameron Johnson,johnsca02,MIN,PHO,1,SF,Sr,North Carolina (Sr.),Cameron Johnson
+2019,12,1,P.J. Washington,washipj01,BRK,BRK,0,PF,So,Kentucky (So.),P. J. Washington
+2019,13,1,Tyler Herro,herroty01,MIA,MIA,0,SG,Fr,Kentucky (Fr.),Tyler Herro
+2019,14,1,Romeo Langford,langfro01,BOS,BOS,0,SG,Fr,Indiana (Fr.),Romeo Langford
+2019,15,1,Sekou Doumbouya,doumbse01,DET,DET,0,SF,,Limoges CSP (France),Sekou Doumbouya
+2019,16,1,Chuma Okeke,okekech01,ORL,ORL,0,PF,So,Auburn (So.),Chuma Okeke
+2019,17,1,Nickeil Alexander-Walker,alexani01,BRK,NOP,1,SG,So,Virginia Tech (So.),Nickeil Alexander-Walker
+2019,18,1,Goga Bitadze,bitadgo01,IND,IND,0,C,,Mega Bemax (Serbia),Goga Bitadze
+2019,19,1,Luka Šamanić,samanlu01,SAS,SAS,0,PF,,Olimpija Ljubljana (Slovenia),Luka Šamanić
+2019,20,1,Matisse Thybulle,thybuma01,BOS,PHI,1,SF,Sr,Washington (Sr.),Matisse Thybulle
+2019,21,1,Brandon Clarke,clarkbr01,OKC,MEM,1,PF,Jr,Gonzaga (Jr.),Brandon Clarke
+2019,22,1,Grant Williams,willigr01,BOS,BOS,0,PF,Jr,Tennessee (Jr.),Grant Williams
+2019,23,1,Darius Bazley,bazleda01,UTA,OKC,1,SF,,"Princeton HS (Sharonville, Ohio; HS Sr.)",Darius Bazley
+2019,24,1,Ty Jerome,jeromty01,PHI,PHO,1,PG,Jr,Virginia (Jr.),Ty Jerome
+2019,25,1,Nassir Little,littlna01,POR,POR,0,SF,Fr,North Carolina (Fr.),Nassir Little
+2019,26,1,Dylan Windler,windldy01,CLE,CLE,0,SF,Sr,Belmont (Sr.),Dylan Windler
+2019,27,1,Mfiondu Kabengele,kabenmf01,BRK,LAC,1,C,So,Florida State (So.),Mfiondu Kabengele
+2019,28,1,Jordan Poole,poolejo01,GSW,GSW,0,SG,So,Michigan (So.),Jordan Poole
+2019,29,1,Keldon Johnson,johnske04,SAS,SAS,0,SF,Fr,Kentucky (Fr.),Keldon Johnson
+2019,30,1,Kevin Porter Jr.,porteke02,MIL,CLE,1,SG,Fr,USC (Fr.),Kevin Porter Jr.
+2019,31,2,Nic Claxton,claxtni01,BRK,BRK,0,PF,So,Georgia (So.),Nic Claxton
+2019,32,2,KZ Okpala,okpalkz01,PHO,MIA,1,SF,So,Stanford (So.),KZ Okpala
+2019,33,2,Carsen Edwards,edwarca01,PHI,BOS,1,PG,Jr,Purdue (Jr.),Carsen Edwards
+2019,34,2,Bruno Fernando,fernabr01,PHI,ATL,1,C,So,Maryland (So.),Bruno Fernando
+2019,35,2,Didi Louzada,louzama01,ATL,NOP,1,SF,,Sesi/Franca (Brazil),Didi Louzada
+2019,36,2,Cody Martin,martico01,BRK,BRK,0,SF,Sr,Nevada (Sr.),Cody Martin
+2019,37,2,Deividas Sirvydis,sirvyde01,DAL,DET,1,SF,,Rytas Vilnius (Lithuania),Deividas Sirvydis
+2019,38,2,Daniel Gafford,gaffoda01,CHI,CHI,0,C,So,Arkansas (So.),Daniel Gafford
+2019,39,2,Alen Smailagić,smailal01,NOP,GSW,1,C,,Santa Cruz Warriors (G League),Alen Smailagić
+2019,40,2,Justin James,jamesju01,SAC,SAC,0,SG,,Wyoming (Sr.)<!--All Wyoming women's teams are Cowgirls.-->,Justin James
+2019,41,2,Eric Paschall,pascher01,GSW,GSW,0,PF,Sr,Villanova (Sr.),Eric Paschall
+2019,42,2,Admiral Schofield,schofad01,PHI,WAS,1,SF,Sr,Tennessee (Sr.),Admiral Schofield
+2019,43,2,Jaylen Nowell,nowelja01,MIN,MIN,0,SG,So,Washington (So.),Jaylen Nowell
+2019,44,2,Bol Bol,bolbo01,MIA,DEN,1,C,Fr,Oregon (Fr.),Bol Bol
+2019,45,2,Isaiah Roby,robyis01,DET,DAL,1,SF,Jr,Nebraska (Jr.),Isaiah Roby
+2019,46,2,Talen Horton-Tucker,hortota01,ORL,LAL,1,SG,Fr,Iowa State (Fr.),Talen Horton-Tucker
+2019,47,2,Ignas Brazdeikis,brazdig01,SAC,NYK,1,SF,Fr,Michigan (Fr.),Ignas Brazdeikis
+2019,48,2,Terance Mann,mannte01,LAC,LAC,0,SF,Sr,Florida State (Sr.),Terance Mann
+2019,49,2,Quinndary Weatherspoon,weathqu01,SAS,SAS,0,SG,Sr,Mississippi State (Sr.),Quinndary Weatherspoon
+2019,50,2,Jarrell Brantley,brantja01,IND,UTA,1,PF,Sr,Charleston (Sr.),Jarrell Brantley
+2019,51,2,Tremont Waters,watertr01,BOS,BOS,0,PG,So,LSU (So.),Tremont Waters
+2019,52,2,Jalen McDaniels,mcdanja01,BRK,BRK,0,PF,So,San Diego State (So.),Jalen McDaniels
+2019,53,2,Justin Wright-Foreman,wrighju02,UTA,UTA,0,PG,Sr,Hofstra (Sr.),Justin Wright-Foreman
+2019,54,2,Marial Shayok,shayoma01,PHI,PHI,0,SG,Sr,Iowa State (Sr.),Marial Shayok
+2019,55,2,Kyle Guy,guyky01,NYK,SAC,1,SG,Jr,Virginia (Jr.),Kyle Guy
+2019,56,2,Jaylen Hands,handsja01,LAC,BRK,1,PG,So,UCLA (So.),Jaylen Hands
+2019,57,2,Jordan Bone,bonejo01,NOP,DET,1,PG,Jr,Tennessee (Jr.),Jordan Bone
+2019,58,2,Miye Oni,onimi01,GSW,UTA,1,SG,Jr,Yale (Jr.),Miye Oni
+2019,59,2,Dewan Hernandez,hernade01,TOR,TOR,0,PF,Jr,Miami (Jr.),Dewan Hernandez
+2019,60,2,Vanja Marinković,marinva01,SAC,SAC,0,SG,,Partizan Belgrade (Serbia),Vanja Marinković
+2020,1,1,Anthony Edwards,edwaran01,MIN,MIN,0,SG,Fr,Georgia (Fr.),Anthony Edwards
+2020,2,1,James Wiseman,wisemja01,GSW,GSW,0,C,Fr,Memphis (Fr.),James Wiseman
+2020,3,1,LaMelo Ball,ballla01,BRK,BRK,0,PG,,Illawarra Hawks (Australia),LaMelo Ball
+2020,4,1,Patrick Williams,willipa01,CHI,CHI,0,SF,Fr,Florida State (Fr.),Patrick Williams
+2020,5,1,Isaac Okoro,okorois01,CLE,CLE,0,SF,Fr,Auburn (Fr.),Isaac Okoro
+2020,6,1,Onyeka Okongwu,okongon01,ATL,ATL,0,PF,Fr,USC (Fr.),Onyeka Okongwu
+2020,7,1,Killian Hayes,hayeski01,DET,DET,0,PG,,Ratiopharm Ulm (Germany),Killian Hayes
+2020,8,1,Obi Toppin,toppiob01,NYK,NYK,0,PF,So,Dayton (So.),Obi Toppin
+2020,9,1,Deni Avdija,avdijde01,WAS,WAS,0,SF,,Maccabi Tel Aviv (Israel),Deni Avdija
+2020,10,1,Jalen Smith,smithja04,PHO,PHO,0,PF/C,So,Maryland (So.),Jalen Smith
+2020,11,1,Devin Vassell,vassede01,SAS,SAS,0,SG,So,Florida State (So.),Devin Vassell
+2020,12,1,Tyrese Haliburton,halibty01,SAC,SAC,0,PG,So,Iowa State (So.),Tyrese Haliburton
+2020,13,1,Kira Lewis Jr.,lewiski01,NOP,NOP,0,PG,So,Alabama (So.),Kira Lewis Jr.
+2020,14,1,Aaron Nesmith,nesmiaa01,BOS,BOS,0,SF,So,Vanderbilt (So.),Aaron Nesmith
+2020,15,1,Cole Anthony,anthoco01,ORL,ORL,0,PG,Fr,North Carolina (Fr.),Cole Anthony
+2020,16,1,Isaiah Stewart,stewais01,POR,DET,1,PF/C,Fr,Washington (Fr.),Isaiah Stewart
+2020,17,1,Aleksej Pokusevski,pokusal01,MIN,OKC,1,SF/PF,,Olympiacos Piraeus B (Greece),Aleksej Pokuševski
+2020,18,1,Josh Green,greenjo02,DAL,DAL,0,SG,Fr,Arizona (Fr.),Josh Green
+2020,19,1,Saddiq Bey,beysa01,BRK,DET,1,SF,So,Villanova (So.),Saddiq Bey
+2020,20,1,Precious Achiuwa,achiupr01,MIA,MIA,0,PF,Fr,Memphis (Fr.),Precious Achiuwa
+2020,21,1,Tyrese Maxey,maxeyty01,PHI,PHI,0,PG,Fr,Kentucky (Fr.),Tyrese Maxey
+2020,22,1,Zeke Nnaji,nnajize01,DEN,DEN,0,PF/C,Fr,Arizona (Fr.),Zeke Nnaji
+2020,23,1,Leandro Bolmaro,bolmale01,NYK,MIN,1,SF,,FC Barcelona (Spain),Leandro Bolmaro
+2020,24,1,R.J. Hampton,hamptrj01,MIL,DEN,1,SG,,New Zealand Breakers (Australia),R. J. Hampton
+2020,25,1,Immanuel Quickley,quickim01,OKC,NYK,1,SG,So,Kentucky (So.),Immanuel Quickley
+2020,26,1,Payton Pritchard,pritcpa01,BOS,BOS,0,PG,Sr,Oregon (Sr.),Payton Pritchard
+2020,27,1,Udoka Azubuike,azubuud01,UTA,UTA,0,C,Sr,Kansas (Sr.),Udoka Azubuike
+2020,28,1,Jaden McDaniels,mcdanja02,LAL,MIN,1,SF,Fr,Washington (Fr.),Jaden McDaniels
+2020,29,1,Malachi Flynn,flynnma01,TOR,TOR,0,PG,Jr,San Diego State (Jr.),Malachi Flynn
+2020,30,1,Desmond Bane,banede01,BOS,MEM,1,SG,Sr,TCU (Sr.),Desmond Bane
+2020,31,2,Tyrell Terry,terryty01,DAL,DAL,0,PG,Fr,Stanford (Fr.),Tyrell Terry
+2020,32,2,Vernon Carey Jr.,careyve01,BRK,BRK,0,PF,Fr,Duke (Fr.),Vernon Carey Jr.
+2020,33,2,Daniel Oturu,oturuda01,MIN,LAC,1,C,So,Minnesota (So.),Daniel Oturu
+2020,34,2,Théo Maledon,maledth01,PHI,PHI,0,PG,,ASVEL Villeurbanne (France),Théo Maledon
+2020,35,2,Xavier Tillman Sr.,tillmxa01,SAC,MEM,1,PF,Jr,Michigan State (Jr.),Xavier Tillman
+2020,36,2,Tyler Bey,beyty01,PHI,DAL,1,SF,Jr,Colorado (Jr.),Tyler Bey
+2020,37,2,Vit Krejci,krejcvi01,WAS,OKC,1,PG,,Casademont Zaragoza (Spain),Vít Krejčí
+2020,38,2,Saben Lee,leesa01,UTA,DET,1,PG,Jr,Vanderbilt (Jr.),Saben Lee
+2020,39,2,Elijah Hughes,hugheel01,NOP,UTA,1,SF,Jr,Syracuse (Jr.),Elijah Hughes
+2020,40,2,Robert Woodard II,woodaro01,MEM,SAC,1,SF,So,Mississippi State (So.),Robert Woodard II
+2020,41,2,Tre Jones,jonestr01,SAS,SAS,0,PG,So,Duke (So.),Tre Jones
+2020,42,2,Nick Richards,richani01,NOP,CHA,1,C,Jr,Kentucky (Jr.),Nick Richards
+2020,43,2,Jahmi'us Ramsey,ramseja01,SAC,SAC,0,SG,Fr,Texas Tech (Fr.),Jahmi'us Ramsey
+2020,44,2,Marko Simonovic,simonma01,CHI,CHI,0,C,,Mega Soccerbet (Serbia),Marko Simonović
+2020,45,2,Jordan Nwora,nworajo01,MIL,MIL,0,SF,Jr,Louisville (Jr.),Jordan Nwora
+2020,46,2,CJ Elleby,ellebcj01,POR,POR,0,SG,So,Washington State (So.),C. J. Elleby
+2020,47,2,Yam Madar,madarya01,BOS,BOS,0,PG,,Hapoel Tel Aviv (Israel),Yam Madar
+2020,48,2,Nico Mannion,mannini01,GSW,GSW,0,PG,Fr,Arizona (Fr.),Nico Mannion
+2020,49,2,Isaiah Joe,joeis01,PHI,PHI,0,SG,So,Arkansas (So.),Isaiah Joe
+2020,50,2,Skylar Mays,mayssk01,ATL,ATL,0,PG,Sr,LSU (Sr.),Skylar Mays
+2020,51,2,Justinian Jessup,jessuju01,GSW,GSW,0,SG,Sr,Boise State (Sr.),Justinian Jessup
+2020,52,2,KJ Martin,martike04,SAC,HOU,1,SG,,IMG Academy (postgraduate),Kenyon Martin Jr.
+2020,53,2,Cassius Winston,winstca01,OKC,WAS,1,PG,Sr,Michigan State (Sr.),Cassius Winston
+2020,54,2,Cassius Stanley,stanlca01,IND,IND,0,SG,Fr,Duke (Fr.),Cassius Stanley
+2020,55,2,Jay Scrubb,scrubja01,BRK,LAC,1,SG,So,John A. Logan (So.),Jay Scrubb
+2020,56,2,Grant Riller,rillegr01,BRK,BRK,0,SG,Sr,College of Charleston (Sr.),Grant Riller
+2020,57,2,Reggie Perry,perryre01,LAC,BRK,1,PF,So,Mississippi State (So.),Reggie Perry
+2020,58,2,Paul Reed,reedpa01,PHI,PHI,0,PF,Jr,DePaul (Jr.),Paul Reed
+2020,59,2,Jalen Harris,harrija01,TOR,TOR,0,SG,Jr,Nevada (Jr.),Jalen Harris
+2020,60,2,Sam Merrill,merrisa01,NOP,MIL,1,SG,Sr,Utah State (Sr.),Sam Merrill
+2021,1,1,Cade Cunningham,cunnica01,DET,DET,0,PG,Fr,Oklahoma State (Fr.),Cade Cunningham
+2021,2,1,Jalen Green,greenja05,HOU,HOU,0,SG,,NBA G League Ignite (NBA G League),Jalen Green
+2021,3,1,Evan Mobley,mobleev01,CLE,CLE,0,PF/C,Fr,USC (Fr.),Evan Mobley
+2021,4,1,Scottie Barnes,barnesc01,TOR,TOR,0,SF/PF,Fr,Florida State (Fr.),Scottie Barnes
+2021,5,1,Jalen Suggs,suggsja01,ORL,ORL,0,PG,Fr,Gonzaga (Fr.),Jalen Suggs
+2021,6,1,Josh Giddey,giddejo01,OKC,OKC,0,PG/SG,,Adelaide 36ers (Australia),Josh Giddey
+2021,7,1,Jonathan Kuminga,kuminjo01,GSW,GSW,0,PF/SF,,NBA G League Ignite (NBA G League),Jonathan Kuminga
+2021,8,1,Franz Wagner,wagnefr01,ORL,ORL,0,SF,So,Michigan (So.),Franz Wagner
+2021,9,1,Davion Mitchell,mitchda01,SAC,SAC,0,PG,Jr,Baylor (Jr.),Davion Mitchell
+2021,10,1,Ziaire Williams,willizi02,NOP,MEM,0,SF/PF,Fr,Stanford (Fr.),Ziaire Williams
+2021,11,1,James Bouknight,bouknja01,BRK,BRK,0,SG,So,UConn (So.),James Bouknight
+2021,12,1,Joshua Primo,primojo01,SAS,SAS,0,SG,Fr,Alabama (Fr.),Joshua Primo
+2021,13,1,Chris Duarte,duartch01,IND,IND,0,SG,Sr,Oregon (Sr.),Chris Duarte
+2021,14,1,Moses Moody,moodymo01,GSW,GSW,0,SG,Fr,Arkansas (Fr.),Moses Moody
+2021,15,1,Corey Kispert,kispeco01,WAS,WAS,0,SF,Sr,Gonzaga (Sr.),Corey Kispert
+2021,16,1,Alperen Şengün,sengual01,OKC,HOU,1,C,,Beşiktaş (Turkey),Alperen Şengün
+2021,17,1,Trey Murphy III,murphtr02,MEM,NOP,0,SF,Jr,Virginia (Jr.),Trey Murphy III
+2021,18,1,Tre Mann,manntr01,OKC,OKC,0,PG,So,Florida (So.),Tre Mann
+2021,19,1,Kai Jones,joneska01,NYK,CHA,1,C,So,Texas (So.),Kai Jones
+2021,20,1,Jalen Johnson,johnsja05,ATL,ATL,0,SF,Fr,Duke (Fr.),Jalen Johnson
+2021,21,1,Keon Johnson,johnske07,NYK,LAC,1,SG,Fr,Tennessee<!--Women's basketball uses Lady Volunteers.--> (Fr.),Keon Johnson
+2021,22,1,Isaiah Jackson,jacksis01,LAL,IND,1,C/PF,Fr,Kentucky (Fr.),Isaiah Jackson
+2021,23,1,Usman Garuba,garubus01,HOU,HOU,0,PF/C,,Real Madrid (Spain),Usman Garuba
+2021,24,1,Josh Christopher,chrisjo01,HOU,HOU,0,SG,Fr,Arizona State (Fr.),Josh Christopher
+2021,25,1,Quentin Grimes,grimequ01,LAC,NYK,1,SG,Jr,Houston (Jr.),Quentin Grimes
+2021,26,1,Bones Hyland,hylanbo01,DEN,DEN,0,SG/PG,So,VCU (So.),Bones Hyland
+2021,27,1,Cam Thomas,thomaca02,BRK,BRK,0,SG,Fr,LSU (Fr.),Cam Thomas
+2021,28,1,Jaden Springer,sprinja01,PHI,PHI,0,SG,Fr,Tennessee (Fr.),Jaden Springer
+2021,29,1,Day'Ron Sharpe,sharpda01,PHO,BRK,1,C,Fr,North Carolina (Fr.),Day'Ron Sharpe
+2021,30,1,Santi Aldama,aldamsa01,UTA,MEM,1,PF/C,So,Loyola (MD) (So.),Santi Aldama
+2021,31,2,Isaiah Todd,toddis01,MIL,WAS,1,PF,,NBA G League Ignite (NBA G League),Isaiah Todd
+2021,32,2,Jeremiah Robinson-Earl,robinje02,NYK,OKC,1,PF/C,So,Villanova (So.),Jeremiah Robinson-Earl
+2021,33,2,Jason Preston,prestja01,ORL,LAC,1,PG,Jr,Ohio (Jr.),Jason Preston
+2021,34,2,Rokas Jokubaitis,jokubro01,OKC,NYK,1,PG,,Žalgiris Kaunas (Lithuania),Rokas Jokubaitis
+2021,35,2,Herbert Jones,joneshe01,NOP,NOP,0,SF,Sr,Alabama (Sr.),Herbert Jones
+2021,36,2,Miles McBride,mcbrimi01,OKC,NYK,1,PG,So,West Virginia (So.),Miles McBride
+2021,37,2,JT Thor,thorjt01,DET,CHA,1,PF,Fr,Auburn (Fr.),JT Thor
+2021,38,2,Ayo Dosunmu,dosunay01,CHI,CHI,0,PG/SG,Jr,Illinois (Jr.),Ayo Dosunmu
+2021,39,2,Neemias Queta,quetane01,SAC,SAC,0,C,Jr,Utah State (Jr.),Neemias Queta
+2021,40,2,Jared Butler,butleja02,NOP,UTA,0,SG,Jr,Baylor (Jr.),Jared Butler
+2021,41,2,Joe Wieskamp,wieskjo01,SAS,SAS,0,SF,Jr,Iowa (Jr.),Joe Wieskamp
+2021,42,2,Isaiah Livers,liveris01,DET,DET,0,SF,Sr,Michigan (Sr.),Isaiah Livers
+2021,43,2,Greg Brown III,browngr01,NOP,POR,1,PF,Fr,Texas (Fr.),Greg Brown
+2021,44,2,Kessler Edwards,edwarke02,BRK,BRK,0,SF,Jr,Pepperdine (Jr.),Kessler Edwards
+2021,45,2,Juhann Begarin,begarju01,BOS,BOS,0,SG,,Paris Basketball (France),Juhann Begarin
+2021,46,2,Dalano Banton,bantoda01,TOR,TOR,0,PG,So,Nebraska (So.),Dalano Banton
+2021,47,2,David Johnson,johnsda08,TOR,TOR,0,SG,So,Louisville (So.),David Johnson
+2021,48,2,Sharife Cooper,coopesh01,ATL,ATL,0,PG,Fr,Auburn (Fr.),Sharife Cooper
+2021,49,2,Marcus Zegarowski,zegarma01,BRK,BRK,0,PG,Jr,Creighton (Jr.),Marcus Zegarowski
+2021,50,2,Filip Petrušev,petrufi01,PHI,PHI,0,C,,Mega Basket (Serbia),Filip Petrušev
+2021,51,2,Brandon Boston Jr.,bostobr01,MEM,LAC,1,SG,Fr,Kentucky (Fr.),Brandon Boston Jr.
+2021,52,2,Luka Garza,garzalu01,DET,DET,0,C,Sr,Iowa (Sr.),Luka Garza
+2021,53,2,Charles Bassey,bassech01,PHI,PHI,0,C,Jr,Western Kentucky (Jr.),Charles Bassey
+2021,54,2,Sandro Mamukelashvili,mamuksa01,IND,MIL,1,PF/C,Sr,Seton Hall (Sr.),Sandro Mamukelashvili
+2021,55,2,Aaron Wiggins,wiggiaa01,OKC,OKC,0,SG,Jr,Maryland (Jr.),Aaron Wiggins
+2021,56,2,Scottie Lewis,lewissc01,BRK,BRK,0,SG,So,Florida (So.),Scottie Lewis
+2021,57,2,Balša Koprivica,kopriba01,BRK,DET,1,C,So,Florida State (So.),Balša Koprivica
+2021,58,2,Jericho Sims,simsje01,NYK,NYK,0,PF/C,Sr,Texas (Sr.),Jericho Sims
+2021,59,2,RaiQuan Gray,grayra01,BRK,BRK,0,PF,Jr,Florida State (Jr.),RaiQuan Gray
+2021,60,2,Georgios Kalaitzakis,kalaige01,IND,MIL,1,SG/SF,,Panathinaikos (Greece),Georgios Kalaitzakis
+2022,1,1,Paolo Banchero,banchpa01,ORL,ORL,0,PF,Fr,Duke (Fr.),Paolo Banchero
+2022,2,1,Chet Holmgren,holmgch01,OKC,OKC,0,PF/C,Fr,Gonzaga (Fr.),Chet Holmgren
+2022,3,1,Jabari Smith Jr.,smithja05,HOU,HOU,0,PF,Fr,Auburn (Fr.),Jabari Smith Jr.
+2022,4,1,Keegan Murray,murrake02,SAC,SAC,0,PF,So,Iowa (So.),Keegan Murray
+2022,5,1,Jaden Ivey,iveyja01,DET,DET,0,PG/SG,So,Purdue (So.),Jaden Ivey
+2022,6,1,Bennedict Mathurin,mathube01,IND,IND,0,SG/SF,So,Arizona (So.),Bennedict Mathurin
+2022,7,1,Shaedon Sharpe,sharpsh01,POR,POR,0,SG,Fr,Kentucky (Fr.),Shaedon Sharpe
+2022,8,1,Dyson Daniels,daniedy01,NOP,NOP,0,PG/SG,,NBA G League Ignite (NBA G League),Dyson Daniels
+2022,9,1,Jeremy Sochan,sochaje01,SAS,SAS,0,PF,Fr,Baylor (Fr.),Jeremy Sochan
+2022,10,1,Johnny Davis,davisjo06,WAS,WAS,0,SG,So,Wisconsin (So.),Johnny Davis
+2022,11,1,Ousmane Dieng,diengou01,NYK,OKC,1,SF,,New Zealand Breakers (New Zealand),Ousmane Dieng
+2022,12,1,Jalen Williams,willija06,OKC,OKC,0,SG/SF,Jr,Santa Clara (Jr.),Jalen Williams
+2022,13,1,Jalen Duren,durenja01,BRK,DET,1,C,Fr,Memphis (Fr.),Jalen Duren
+2022,14,1,Ochai Agbaji,agbajoc01,CLE,CLE,0,SG,Sr,Kansas (Sr.),Ochai Agbaji
+2022,15,1,Mark Williams,willima07,BRK,BRK,0,C,So,Duke (So.),Mark Williams
+2022,16,1,AJ Griffin,griffaj01,ATL,ATL,0,SF,Fr,Duke (Fr.),AJ Griffin
+2022,17,1,Tari Eason,easonta01,HOU,HOU,0,PF,So,LSU (So.),Tari Eason
+2022,18,1,Dalen Terry,terryda01,CHI,CHI,0,SG,So,Arizona (So.),Dalen Terry
+2022,19,1,Jake LaRavia,laravja01,MIN,MEM,1,SF,Jr,Wake Forest (Jr.),Jake LaRavia
+2022,20,1,Malaki Branham,branhma01,SAS,SAS,0,SG,Fr,Ohio State (Fr.),Malaki Branham
+2022,21,1,Christian Braun,braunch01,DEN,DEN,0,SG,Jr,Kansas (Jr.),Christian Braun
+2022,22,1,Walker Kessler,kesslwa01,MEM,MIN,1,C,So,Auburn (So.),Walker Kessler
+2022,23,1,David Roddy,roddyda01,PHI,MEM,1,SF,Jr,Colorado State (Jr.),David Roddy
+2022,24,1,MarJon Beauchamp,beaucma01,MIL,MIL,0,SG/SF,,NBA G League Ignite (NBA G League),MarJon Beauchamp
+2022,25,1,Blake Wesley,weslebl01,SAS,SAS,0,PG/SG,Fr,Notre Dame (Fr.),Blake Wesley
+2022,26,1,Wendell Moore Jr.,moorewe01,DAL,MIN,1,SF,Jr,Duke (Jr.),Wendell Moore Jr.
+2022,27,1,Nikola Jović,jovicni01,MIA,MIA,0,SF,,Mega Mozzart (Serbia),Nikola Jović
+2022,28,1,Patrick Baldwin Jr.,baldwpa01,GSW,GSW,0,PF,Fr,Milwaukee (Fr.),Patrick Baldwin Jr.
+2022,29,1,TyTy Washington Jr.,washity02,MEM,HOU,1,PG,Fr,Kentucky (Fr.),TyTy Washington Jr.
+2022,30,1,Peyton Watson,watsope01,OKC,DEN,0,SF,Fr,UCLA (Fr.),Peyton Watson
+2022,31,2,Andrew Nembhard,nembhan01,IND,IND,0,PG,Sr,Gonzaga (Sr.),Andrew Nembhard
+2022,32,2,Caleb Houstan,houstca01,ORL,ORL,0,SF,Fr,Michigan (Fr.),Caleb Houstan
+2022,33,2,Christian Koloko,kolokch01,TOR,TOR,0,C,Jr,Arizona (Jr.),Christian Koloko
+2022,34,2,Jaylin Williams,willija07,OKC,OKC,0,PF,So,Arkansas (So.),Jaylin Williams
+2022,35,2,Max Christie,chrisma02,LAL,LAL,0,SG,Fr,Michigan State (Fr.),Max Christie
+2022,36,2,Gabriele Procida,prociga01,POR,DET,1,SG/SF,,Fortitudo Bologna (Italy),Gabriele Procida
+2022,37,2,Jaden Hardy,hardyja02,SAC,DAL,1,SG,,NBA G League Ignite (NBA G League),Jaden Hardy
+2022,38,2,Kennedy Chandler,chandke01,SAS,MEM,1,PG,Fr,Tennessee<!--Women's basketball: Lady Volunteers--> (Fr.),Kennedy Chandler
+2022,39,2,Khalifa Diop,diopkh01,CLE,CLE,0,C,,Herbalife Gran Canaria (Spain),Khalifa Diop
+2022,40,2,Bryce McGowens,mcgowbr01,MIN,CHA,1,SG,Fr,Nebraska (Fr.),Bryce McGowens
+2022,41,2,E.J. Liddell,liddeej01,NOP,NOP,0,PF,Jr,Ohio State (Jr.),E. J. Liddell
+2022,42,2,Trevor Keels,keelstr01,NYK,NYK,0,SG,Fr,Duke (Fr.),Trevor Keels
+2022,43,2,Moussa Diabaté,diabamo01,LAC,LAC,0,PF,Fr,Michigan (Fr.),Moussa Diabaté
+2022,44,2,Ryan Rollins,rolliry01,ATL,GSW,1,SG,So,Toledo (So.),Ryan Rollins
+2022,45,2,Josh Minott,minotjo01,BRK,MIN,1,SF,Fr,Memphis (Fr.),Josh Minott
+2022,46,2,Ismael Kamagate,kamagis01,DET,DEN,1,C,,Paris Basketball (France),Ismaël Kamagate
+2022,47,2,Vince Williams Jr.,willivi01,MEM,MEM,0,SG/SF,Sr,VCU (Sr.),Vince Williams Jr.
+2022,48,2,Kendall Brown,brownke03,MIN,IND,1,SF,Fr,Baylor (Fr.),Kendall Brown
+2022,49,2,Isaiah Mobley,mobleis01,CLE,CLE,0,PF,Jr,USC (Jr.),Isaiah Mobley
+2022,50,2,Matteo Spagnolo,spagnma01,MIN,MIN,0,SG,,Vanoli Cremona (Italy),Matteo Spagnolo
+2022,51,2,Tyrese Martin,martity01,GSW,ATL,1,SG,Sr,UConn (Sr.),Tyrese Martin
+2022,52,2,Karlo Matković,matkoka01,NOP,NOP,0,C,,Mega Mozzart (Serbia),Karlo Matković
+2022,53,2,JD Davison,davisjd01,BOS,BOS,0,PG,Fr,Alabama (Fr.),JD Davison
+2022,54,2,Yannick Nzosa,nzosaya01,WAS,WAS,0,C,,Unicaja (Spain),Yannick Nzosa
+2022,55,2,Gui Santos,santogu01,GSW,GSW,0,SF,,Minas (Brazil),Gui Santos
+2022,56,2,Luke Travers,travelu01,CLE,CLE,0,SG,,Perth Wildcats (Australia),Luke Travers
+2022,57,2,Jabari Walker,walkeja01,POR,POR,0,PF,So,Colorado (So.),Jabari Walker
+2022,58,2,Hugo Besson,bessohu01,IND,MIL,1,PG,,New Zealand Breakers (Australia),Hugo Besson
+2023,1,1,Victor Wembanyama,wembavi01,SAS,SAS,0,C,,Metropolitans 92 (France),Victor Wembanyama
+2023,2,1,Brandon Miller,millebr02,BRK,BRK,0,SF,Fr,Alabama (Fr.),Brandon Miller
+2023,3,1,Scoot Henderson,hendesc01,POR,POR,0,PG,,NBA G League Ignite (NBA G League),Scoot Henderson
+2023,4,1,Amen Thompson,thompam01,HOU,HOU,0,PG/SF,,City Reapers (Overtime Elite),Amen Thompson
+2023,5,1,Ausar Thompson,thompau01,DET,DET,0,SF/SG,,City Reapers (Overtime Elite),Ausar Thompson
+2023,6,1,Anthony Black,blackan01,ORL,ORL,0,PG/SG,Fr,Arkansas (Fr.),Anthony Black
+2023,7,1,Bilal Coulibaly,coulibi01,IND,WAS,1,SF,,Metropolitans 92 (France),Bilal Coulibaly
+2023,8,1,Jarace Walker,walkeja02,WAS,IND,1,PF,Fr,Houston (Fr.),Jarace Walker
+2023,9,1,Taylor Hendricks,hendrta01,UTA,UTA,0,PF,Fr,UCF (Fr.),Taylor Hendricks
+2023,10,1,Cason Wallace,wallaca01,DAL,OKC,1,PG,Fr,Kentucky (Fr.),Cason Wallace
+2023,11,1,Jett Howard,howarje01,ORL,ORL,0,SF,Fr,Michigan (Fr.),Jett Howard
+2023,12,1,Dereck Lively II,livelde01,OKC,DAL,1,C,Fr,Duke (Fr.),Dereck Lively II
+2023,13,1,Gradey Dick,dickgr01,TOR,TOR,0,SG/SF,Fr,Kansas (Fr.),Gradey Dick
+2023,14,1,Jordan Hawkins,hawkijo01,NOP,NOP,0,SG,So,UConn (So.),Jordan Hawkins
+2023,15,1,Kobe Bufkin,bufkiko01,ATL,ATL,0,SG,So,Michigan (So.),Kobe Bufkin
+2023,16,1,Keyonte George,georgke01,UTA,UTA,0,SG,Fr,Baylor (Fr.),Keyonte George
+2023,17,1,Jalen Hood-Schifino,hoodsja01,LAL,LAL,0,PG/SG,Fr,Indiana (Fr.),Jalen Hood-Schifino
+2023,18,1,Jaime Jaquez Jr.,jaqueja01,MIA,MIA,0,SF/SG,Sr,UCLA (Sr.),Jaime Jaquez Jr.
+2023,19,1,Brandin Podziemski,podzibr01,GSW,GSW,0,SG,So,Santa Clara (So.),Brandin Podziemski
+2023,20,1,Cam Whitmore,whitmca01,HOU,HOU,0,SF,Fr,Villanova (Fr.),Cam Whitmore
+2023,21,1,Noah Clowney,clownno01,BRK,BRK,0,PF,Fr,Alabama (Fr.),Noah Clowney
+2023,22,1,Dariq Whitehead,whiteda01,BRK,BRK,0,SF,Fr,Duke (Fr.),Dariq Whitehead
+2023,23,1,Kris Murray,murrakr01,POR,POR,0,PF,Jr,Iowa (Jr.),Kris Murray
+2023,24,1,Olivier-Maxence Prosper,prospol01,SAC,DAL,1,SF/PF,Jr,Marquette (Jr.),Olivier-Maxence Prosper
+2023,25,1,Marcus Sasser,sassema01,MEM,DET,1,SG/PG,Sr,Houston (Sr.),Marcus Sasser
+2023,26,1,Ben Sheppard,sheppbe01,IND,IND,0,SG,Sr,Belmont (Sr.),Ben Sheppard
+2023,27,1,Nick Smith Jr.,smithni01,BRK,BRK,0,PG/SG,Fr,Arkansas (Fr.),Nick Smith Jr.
+2023,28,1,Brice Sensabaugh,sensabr01,UTA,UTA,0,SF,Fr,Ohio State (Fr.),Brice Sensabaugh
+2023,29,1,Julian Strawther,strawju01,IND,DEN,0,SF,Jr,Gonzaga (Jr.),Julian Strawther
+2023,30,1,Kobe Brown,brownko01,LAC,LAC,0,SG/SF,Sr,Missouri (Sr.),Kobe Brown
+2023,31,2,James Nnaji,nnajija01,DET,CHA,1,C,,FC Barcelona (Spain),James Nnaji
+2023,32,2,Jalen Pickett,pickeja02,IND,DEN,0,SG,Sr,Penn State (Sr.),Jalen Pickett
+2023,33,2,Leonard Miller,millele01,SAS,MIN,1,SF,,NBA G League Ignite (NBA G League),Leonard Miller
+2023,34,2,Colby Jones,jonesco02,BRK,SAC,1,SG,Jr,Xavier (Jr.),Colby Jones
+2023,35,2,Julian Phillips,phillju01,BOS,CHI,1,SF,Fr,Tennessee (Fr.),Julian Phillips
+2023,36,2,Andre Jackson Jr.,jacksan01,ORL,MIL,1,SG,Jr,UConn (Jr.),Andre Jackson Jr.
+2023,37,2,Hunter Tyson,tysonhu01,OKC,DEN,0,SF,Sr,Clemson (Sr.),Hunter Tyson
+2023,38,2,Jordan Walsh,walshjo01,SAC,BOS,1,SF,Fr,Arkansas (Fr.),Jordan Walsh
+2023,39,2,Mouhamed Gueye,gueyemo02,BRK,ATL,1,PF,So,Washington State (So.),Mouhamed Gueye
+2023,40,2,Maxwell Lewis,lewisma05,DEN,LAL,1,SF,So,Pepperdine (So.),Maxwell Lewis
+2023,41,2,Amari Bailey,baileam01,BRK,BRK,0,SG,Fr,UCLA (Fr.),Amari Bailey
+2023,42,2,Tristan Vukcevic,vukcetr01,WAS,WAS,0,PF/C,,Partizan Belgrade (Serbia),Tristan Vukčević
+2023,43,2,Rayan Rupert,ruperra01,POR,POR,0,SG,,New Zealand Breakers (New Zealand),Rayan Rupert
+2023,44,2,Sidy Cissoko,cissosi01,SAS,SAS,0,SG/SF,,NBA G League Ignite (NBA G League),Sidy Cissoko
+2023,45,2,GG Jackson II,jacksgg01,MEM,MEM,0,PF,Fr,South Carolina (Fr.),GG Jackson
+2023,46,2,Seth Lundy,lundyse01,ATL,ATL,0,SG,Sr,Penn State (Sr.),Seth Lundy
+2023,47,2,Mojave King,kingmo01,LAL,IND,1,SG,,NBA G League Ignite (NBA G League),Mojave King
+2023,48,2,Jordan Miller,millejo02,LAC,LAC,0,SF,Sr,Miami (Sr.),Jordan Miller
+2023,49,2,Emoni Bates,batesem01,CLE,CLE,0,SF/SG,So,Eastern Michigan (So.),Emoni Bates
+2023,50,2,Keyontae Johnson,johnske08,OKC,OKC,0,SF,Sr,Kansas State (Sr.),Keyontae Johnson
+2023,51,2,Jalen Wilson,wilsoja03,BRK,BRK,0,SF,Jr,Kansas (Jr.),Jalen Wilson
+2023,52,2,Toumani Camara,camarto01,PHO,PHO,0,SF/PF,Sr,Dayton (Sr.),Toumani Camara
+2023,53,2,Jaylen Clark,clarkja02,MIN,MIN,0,SG,Jr,UCLA (Jr.),Jaylen Clark
+2023,54,2,Jalen Slawson,slawsja01,SAC,SAC,0,SF,Sr,Furman (Sr.),Jalen Slawson
+2023,55,2,Isaiah Wong,wongis01,IND,IND,0,PG,Sr,Miami (Sr.),Isaiah Wong
+2023,56,2,Tarik Biberovic,biberta01,MEM,MEM,0,SF,,Fenerbahçe (Turkey),Tarik Biberović
+2023,57,2,Trayce Jackson-Davis,jackstr02,WAS,GSW,1,PF,Sr,Indiana (Sr.),Trayce Jackson-Davis
+2023,58,2,Chris Livingston,livinch01,MIL,MIL,0,SF,Fr,Kentucky (Fr.),Chris Livingston
+2024,1,1,Zaccharie Risacher,risacza01,ATL,ATL,0,SF,,JL Bourg (France),Zaccharie Risacher
+2024,2,1,Alex Sarr,sarral01,WAS,WAS,0,C,,Perth Wildcats (Australia),Alex Sarr
+2024,3,1,Reed Sheppard,sheppre01,HOU,HOU,0,SG/PG,Fr,Kentucky (Fr.),Reed Sheppard
+2024,4,1,Stephon Castle,castlst01,SAS,SAS,0,PG/SG,Fr,UConn (Fr.),Stephon Castle
+2024,5,1,Ron Holland,hollaro01,DET,DET,0,SF,,NBA G League Ignite (NBA G League),Ron Holland
+2024,6,1,Tidjane Salaün,salauti01,BRK,BRK,0,SF,,Cholet Basket (France),Tidjane Salaün
+2024,7,1,Donovan Clingan,clingdo01,POR,POR,0,C,So,UConn (So.),Donovan Clingan
+2024,8,1,Rob Dillingham,dilliro01,SAS,MIN,1,PG/SG,Fr,Kentucky (Fr.),Rob Dillingham
+2024,9,1,Zach Edey,edeyza01,MEM,MEM,0,C,Sr,Purdue (Sr.),Zach Edey
+2024,10,1,Cody Williams,willico04,UTA,UTA,0,SG/SF,Fr,Colorado (Fr.),Cody Williams
+2024,11,1,Matas Buzelis,buzelma01,CHI,CHI,0,SF/PF,,NBA G League Ignite (NBA G League),Matas Buzelis
+2024,12,1,Nikola Topić,topicni01,OKC,OKC,0,PG,,KK Crvena zvezda (Serbia),Nikola Topić
+2024,13,1,Devin Carter,cartede02,SAC,SAC,0,SG,Jr,Providence (Jr.),Devin Carter
+2024,14,1,Bub Carrington,carrica01,POR,WAS,1,SG,Fr,Pittsburgh (Fr.),Bub Carrington
+2024,15,1,Kel'el Ware,wareke01,MIA,MIA,0,C,So,Indiana (So.),Kel'el Ware
+2024,16,1,Jared McCain,mccaija01,PHI,PHI,0,SG,Fr,Duke (Fr.),Jared McCain
+2024,17,1,Dalton Knecht,knechda01,LAL,LAL,0,SF,Sr,Tennessee (Sr.),Dalton Knecht
+2024,18,1,Tristan Da Silva,dasiltr01,ORL,ORL,0,PF,Sr,Colorado (Sr.),Tristan da Silva
+2024,19,1,Ja'Kobe Walter,walteja01,TOR,TOR,0,SG,Fr,Baylor (Fr.),Ja'Kobe Walter
+2024,20,1,Jaylon Tyson,tysonja01,CLE,CLE,0,SF,Jr,California (Jr.),Jaylon Tyson
+2024,21,1,Yves Missi,missiyv01,NOP,NOP,0,C,Fr,Baylor (Fr.),Yves Missi
+2024,22,1,DaRon Holmes,holmeda01,PHO,DEN,1,PF,Jr,Dayton (Jr.),DaRon Holmes II
+2024,23,1,AJ Johnson,johnsaj01,MIL,MIL,0,SG,,Illawarra Hawks (Australia),AJ Johnson
+2024,24,1,Kyshawn George,georgky01,NYK,WAS,1,SG,Fr,Miami (Fr.),Kyshawn George
+2024,25,1,Pacome Dadiet,dadiepa01,NYK,NYK,0,SF,,Ratiopharm Ulm (Germany),Pacôme Dadiet
+2024,26,1,Dillon Jones,jonesdi01,WAS,OKC,1,SF,Sr,Weber State (Sr.),Dillon Jones
+2024,27,1,Terrence Shannon Jr.,shannte01,MIN,MIN,0,SG,Sr,Illinois (Sr.),Terrence Shannon Jr.
+2024,28,1,Ryan Dunn,dunnry01,DEN,PHO,1,SF,So,Virginia (So.),Ryan Dunn
+2024,29,1,Isaiah Collier,colliis01,UTA,UTA,0,PG,Fr,USC (Fr.),Isaiah Collier
+2024,30,1,Baylor Scheierman,scheiba01,BOS,BOS,0,SG/SF,Sr,Creighton (Sr.),Baylor Scheierman
+2024,31,2,Jonathan Mogbo,mogbojo01,TOR,TOR,0,PF,Jr,San Francisco (Jr.),Jonathan Mogbo
+2024,32,2,Kyle Filipowski,filipky01,UTA,UTA,0,PF/C,So,Duke (So.),Kyle Filipowski
+2024,33,2,Tyler Smith,smithty02,MIL,MIL,0,SF/PF,,NBA G League Ignite (NBA G League),Tyler Smith
+2024,34,2,Tyler Kolek,kolekty01,POR,NYK,1,PG,Sr,Marquette (Sr.),Tyler Kolek
+2024,35,2,Johnny Furphy,furphjo01,SAS,IND,1,SG/SF,Fr,Kansas (Fr.),Johnny Furphy
+2024,36,2,Juan Nunez,nunezju01,IND,SAS,1,PG,,Ratiopharm Ulm (Germany),Juan Núñez
+2024,37,2,Bobi Klintman,klintbo01,MIN,DET,1,SF/PF,,Cairns Taipans (Australia),Bobi Klintman
+2024,38,2,Ajay Mitchell,mitchaj01,NYK,OKC,1,PG/SG,Jr,UC Santa Barbara (Jr.),Ajay Mitchell
+2024,39,2,Jaylen Wells,wellsja01,MEM,MEM,0,SF,Jr,Washington State (Jr.),Jaylen Wells
+2024,40,2,Oso Ighodaro,ighodos01,POR,PHO,1,PF/C,Sr,Marquette (Sr.),Oso Ighodaro
+2024,41,2,Adem Bona,bonaad01,PHI,PHI,0,PF/C,So,UCLA (So.),Adem Bona
+2024,42,2,KJ Simpson,simpskj01,BRK,BRK,0,PG,Jr,Colorado (Jr.),KJ Simpson
+2024,43,2,Nikola Djurisic,djurini01,MIA,ATL,1,SG/SF,,KK Mega Basket (Serbia),Nikola Đurišić
+2024,44,2,Pelle Larsson,larsspe01,HOU,MIA,1,SG/SF,Sr,Arizona (Sr.),Pelle Larsson
+2024,45,2,Jamal Shead,sheadja01,SAC,TOR,1,PG,Sr,Houston (Sr.),Jamal Shead
+2024,46,2,Cam Christie,chrisca02,LAC,LAC,0,SG,Fr,Minnesota (Fr.),Cam Christie
+2024,47,2,Antonio Reeves,reevean01,ORL,NOP,1,SG/SF,Sr,Kentucky (Sr.),Antonio Reeves
+2024,48,2,Harrison Ingram,ingraha01,SAS,SAS,0,SF/PF,Jr,North Carolina (Jr.),Harrison Ingram
+2024,49,2,Tristen Newton,newtotr01,IND,IND,0,PG/SG,Sr,UConn (Sr.),Tristen Newton
+2024,50,2,Enrique Freeman,freemen01,IND,IND,0,SF/PF,Sr,Akron (Sr.),Enrique Freeman
+2024,51,2,Melvin Ajinça,ajincme01,NYK,DAL,1,SF,,Saint-Quentin BB (France),Melvin Ajinça
+2024,52,2,Quinten Post,postqu01,GSW,GSW,0,C,Sr,Boston College (Sr.),Quinten Post
+2024,53,2,Cam Spencer,spencca01,DET,MEM,1,SG,Sr,UConn (Sr.),Cam Spencer
+2024,54,2,Anton Watson,watsoan02,BOS,BOS,0,PF,Sr,Gonzaga (Sr.),Anton Watson
+2024,55,2,Bronny James,jamesbr02,LAL,LAL,0,SG,Fr,USC (Fr.),Bronny James
+2024,56,2,Kevin McCullar Jr.,mcculke01,PHO,NYK,1,SG,Sr,Kansas (Sr.),Kevin McCullar Jr.
+2024,57,2,Ulrich Chomche,chomcul01,MEM,TOR,1,PF/C,,APR BBC (Rwanda),Ulrich Chomche
+2024,58,2,Ariel Hukporti,hukpoar01,DAL,NYK,1,C,,MHP Riesen Ludwigsburg (Germany),Ariel Hukporti
+2025,1,1,Cooper Flagg,flaggco01,DAL,DAL,0,SF,Fr,Duke (Fr.),Cooper Flagg
+2025,2,1,Dylan Harper,harpedy01,SAS,SAS,0,SG/PG,Fr,Rutgers (Fr.),Dylan Harper
+2025,3,1,VJ Edgecombe,edgecvj01,PHI,PHI,0,SG,Fr,Baylor (Fr.),V. J. Edgecombe
+2025,4,1,Kon Knueppel,knuepko01,BRK,BRK,0,SF/SG,Fr,Duke (Fr.),Kon Knueppel
+2025,5,1,Ace Bailey,baileac01,UTA,UTA,0,SF,Fr,Rutgers (Fr.),Ace Bailey
+2025,6,1,Tre Johnson,johnstr03,WAS,WAS,0,SG,Fr,Texas (Fr.),Tre Johnson
+2025,7,1,Jeremiah Fears,fearsje01,NOP,NOP,0,PG,Fr,Oklahoma (Fr.),Jeremiah Fears
+2025,8,1,Egor Demin,demineg01,BRK,BRK,0,PG,Fr,BYU (Fr.),Egor Dëmin
+2025,9,1,Collin Murray-Boyles,murraco01,TOR,TOR,0,PF,So,South Carolina (So.),Collin Murray-Boyles
+2025,10,1,Khaman Maluach,maluakh01,HOU,PHO,0,C,Fr,Duke (Fr.),Khaman Maluach
+2025,11,1,Cedric Coward,cowarce01,POR,MEM,1,SG,Sr,Washington State (Sr.),Cedric Coward
+2025,12,1,Noa Essengue,essenno01,CHI,CHI,0,PF,,Ratiopharm Ulm (Germany),Noa Essengue
+2025,13,1,Derik Queen,queende01,ATL,NOP,1,C,Fr,Maryland (Fr.),Derik Queen
+2025,14,1,Carter Bryant,bryanca01,SAS,SAS,0,SF,Fr,Arizona (Fr.),Carter Bryant
+2025,15,1,Thomas Sorber,sorbeth01,OKC,OKC,0,C,Fr,Georgetown (Fr.),Thomas Sorber
+2025,16,1,Yang Hansen,yangha01,MEM,POR,1,C,,Qingdao Eagles (China),Yang Hansen
+2025,17,1,Joan Beringer,berinjo01,MIN,MIN,0,C,,Cedevita Olimpija (Slovenia),Joan Beringer
+2025,18,1,Walter Clayton,claytwa01,WAS,UTA,1,PG,Sr,Florida (Sr.),Walter Clayton Jr.
+2025,19,1,Nolan Traoré,traorno01,BRK,BRK,0,PG,,Saint-Quentin (France),Nolan Traoré
+2025,20,1,Kasparas Jakucionis,jakucka01,MIA,MIA,0,PG,Fr,Illinois (Fr.),Kasparas Jakučionis
+2025,21,1,Will Riley,rileywi01,UTA,WAS,1,SF,Fr,Illinois (Fr.),Will Riley
+2025,22,1,Drake Powell,poweldr01,ATL,BRK,0,SG,Fr,North Carolina (Fr.),Drake Powell
+2025,23,1,Asa Newell,newelas01,NOP,ATL,1,PF,Fr,Georgia (Fr.),Asa Newell
+2025,24,1,Nique Clifford,cliffni01,OKC,SAC,1,SG,Sr,Colorado State (Sr.),Nique Clifford
+2025,25,1,Jase Richardson,richaja02,ORL,ORL,0,SG,Fr,Michigan State (Fr.),Jase Richardson
+2025,26,1,Ben Saraf,sarafbe01,BRK,BRK,0,SG,,Ratiopharm Ulm (Germany),Ben Saraf
+2025,27,1,Danny Wolf,wolfda01,BRK,BRK,0,PF,Jr,Michigan (Jr.),Danny Wolf
+2025,28,1,Hugo González,gonzahu01,BOS,BOS,0,SF,,Real Madrid (Spain),Hugo González
+2025,29,1,Liam McNeeley,mcneeli01,PHO,CHA,1,SF,Fr,UConn (Fr.),Liam McNeeley
+2025,30,1,Yanic Konan Niederhauser,konanya01,LAC,LAC,0,C,Jr,Penn State (Jr.),Yanic Konan Niederhäuser
+2025,31,2,Rasheer Fleming,flemira01,MIN,PHO,1,PF,Jr,Saint Joseph's (Jr.),Rasheer Fleming
+2025,32,2,Noah Penda,pendano01,BOS,ORL,1,SF,,Le Mans Sarthe (France),Noah Penda
+2025,33,2,Sion James,jamessi01,BRK,BRK,0,SG,Sr,Duke (Sr.),Sion James
+2025,34,2,Ryan Kalkbrenner,kalkbry01,BRK,BRK,0,C,Sr,Creighton (Sr.),Ryan Kalkbrenner
+2025,35,2,Johni Broome,broomjo01,PHI,PHI,0,PF,Sr,Auburn (Sr.),Johni Broome
+2025,36,2,Adou Thiero,thierad01,BRK,LAL,1,SF,Jr,Arkansas (Jr.),Adou Thiero
+2025,37,2,Chaz Lanier,laniech01,DET,DET,0,SG,Sr,Tennessee (Sr.),Chaz Lanier
+2025,38,2,Kam Jones,joneska03,SAS,IND,1,SG,Sr,Marquette (Sr.),Kam Jones
+2025,39,2,Alijah Martin,martial01,TOR,TOR,0,SG,Sr,Florida (Sr.),Alijah Martin
+2025,40,2,Micah Peavy,peavymi01,WAS,NOP,1,SF,Sr,Georgetown (Sr.),Micah Peavy
+2025,41,2,Koby Brea,breako01,GSW,PHO,1,SG,Sr,Kentucky (Sr.),Koby Brea
+2025,42,2,Maxime Raynaud,raynama01,SAC,SAC,0,C,Sr,Stanford (Sr.),Maxime Raynaud
+2025,43,2,Jamir Watkins,watkija01,UTA,WAS,1,SG,Sr,Florida State (Sr.),Jamir Watkins
+2025,44,2,Brooks Barnhizer,barnhbr01,OKC,OKC,0,SF,Sr,Northwestern (Sr.),Brooks Barnhizer
+2025,45,2,Rocco Zikarsky,zikarro01,CHI,MIN,1,C,,Brisbane Bullets (Australia),Rocco Zikarsky
+2025,46,2,Amari Williams,william01,ORL,BOS,1,C,Sr,Kentucky (Sr.),Amari Williams
+2025,47,2,Bogoljub Markovic,markobo01,MIL,MIL,0,PF,,Mega Basket (Serbia),Bogoljub Marković
+2025,48,2,Javon Small,smallja01,MEM,MEM,0,PG,Sr,West Virginia (Sr.),Javon Small
+2025,49,2,Tyrese Proctor,proctty01,CLE,CLE,0,PG,Jr,Duke (Jr.),Tyrese Proctor
+2025,50,2,Kobe Sanders,sandeko01,NYK,LAC,1,SG/SF,Sr,Nevada (Sr.),Kobe Sanders
+2025,51,2,Mohamed Diawara,diawamo01,LAC,NYK,1,PF,,Cholet Basket (France),Mohamed Diawara
+2025,52,2,Alex Toohey,tooheal01,PHO,GSW,1,SF,,Sydney Kings (Australia),Alex Toohey
+2025,53,2,John Tonje,tonjejo01,UTA,UTA,0,SG,Sr,Wisconsin (Sr.),John Tonje
+2025,54,2,Taelon Peter,peterta01,IND,IND,0,PG,Sr,Liberty (Sr.),Taelon Peter
+2025,55,2,Lachlan Olbrich,olbrila01,LAL,CHI,1,PF,,Illawarra Hawks (Australia),Lachlan Olbrich
+2025,56,2,Will Richard,richawi02,MEM,GSW,1,PG,Sr,Florida (Sr.),Will Richard
+2025,57,2,Max Shulga,shulgma01,ORL,BOS,1,SG,Sr,VCU (Sr.),Max Shulga
+2025,58,2,Saliou Niang,niangsa01,CLE,CLE,0,SG,,Aquila Basket Trento (Italy),Saliou Niang
+2025,59,2,Jahmai Mashack,mashaja01,HOU,MEM,1,SG,Sr,Tennessee (Sr.),Jahmai Mashack
