@@ -270,7 +270,34 @@ estimated), so the test only judges skills and level.
 
 ## 5. Gates
 
-<!-- GATES -->
+- **Veterans' inputs: unchanged.** Full rebuild with the repo's builder, compared with the committed file: only the
+  50 rookies with a college season differ (their 64 skills and involvement); all 641 others byte-identical; the
+  tendency scale map identical. Veterans' displayed ratings can shift by up to 0.05 impact points because the game
+  ranks everyone against the whole league, rookies included.
+- **Real-stat scorecard** (replay of 2025-26 with real minutes, 1,230 games): **18/18** league measures in range.
+  (Rookies do not play in that replay, as expected.)
+- **Betting test** (20 runs a game, 1,231 games, 1,018 with market odds), against the last committed numbers from
+  the RATINGS-FT-TOV report: seed 1001 Brier .2040 -> .2043, log loss .5980 -> .5985, spread miss 4.16 -> 4.16,
+  total miss 5.61 -> 5.60; seed 2001 Brier .1972 -> .1971, log loss .5813 -> .5811, spread 4.00 -> 4.01, total
+  5.62 -> 5.70. Unchanged within run-to-run noise (the replay uses real rosters, where rookies play little).
+- **Tests:** 7 new (`tests/test_rookie_fit.py`); focused modules (rookie fit, builder, input estimator, imported rookie
+  ratings, real prospects, prospect realism / development / rating parity, ratings model) 161 OK, 2 skipped; core
+  suite 338 OK, 2 skipped. The full suite was not run.
+- **Not run on Azure:** the worker pool was blocked by the permission system (it would copy the Basketball Index
+  data off the laptop), so everything ran locally at low priority, one heavy job at a time.
+- **Not regenerated:** the E2 report tables (`docs/agents/tasks/e2-input-estimator.md`), built with `--no-report` to
+  stay inside this task's files. Running the builder without that flag refreshes them.
+
+**Notes for the coordinator**
+- Your starting numbers (Lendeborg 9th of rookies, 145th) did not match what I measured on the committed inputs
+  with the card's overall (28th of rookies, 518th; Peterson 1st / 69th). I used the card overall from
+  `player_profile.engine_header` throughout; the before/after table is internally consistent.
+- The level step reads the game's player-value model from the builder (`ratings_model` private caches, read only;
+  no edits to `ratings_model.py`). If the value model is refitted later, rebuild the inputs so the rookies' level
+  follows it.
+- Open choice for the user: the class is now flat (69.8-75.1) because it shows the expected first season. A wider
+  "if he plays" spread is available (`rookie_fit.py --k 250`) if wanted.
+
 
 ## 6. Files and how to refresh
 
@@ -290,7 +317,4 @@ Sources: Barttorvik player and team tables (barttorvik.com, local raw CSVs); Bas
 advanced tables and draft pages (`data/research/development_evidence.json`).
 
 ## Resume state
-- Done: fit + bundle, estimator college path, builder (rookie step last: college skills, involvement, level step,
-  analysts), inputs rebuilt (only the 50 rookies changed), snapshots, 2026 table, 2025 back-test, focused tests
-  (161 OK), core suite (338 OK).
-- Running: real-stat scorecard (replay 1,230 games). Betting-test runs not run (see Gates).
+- Done: everything above. Board row set to review. Committed on the worktree branch, not pushed.
