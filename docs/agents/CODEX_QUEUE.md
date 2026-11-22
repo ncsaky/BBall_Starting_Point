@@ -6,6 +6,43 @@ Current priority (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE now, ODDS-COA
 
 ---
 
+## Ready now (2026-11-22, later): INPUT-DATA-AUDIT (fresh chat; data audit, research only)
+
+### INPUT-DATA-AUDIT: find dead, duplicate and broken columns behind the 94 player inputs
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md (rule 1: ratings first; rule 2: keep all 94 inputs) and docs/agents/BOARD.md first. You own task
+INPUT-DATA-AUDIT (add a board row, "in progress (Codex)"). Background: a Claude agent fixing foul drawing and ball
+security found three data bugs by accident: a "drive foul rate" column that is an exact copy of another column, a
+contact-seeking column that is zero for every player in every season yet carried full weight, and a "Movement Distance
+Rating" that is zero for 96% of players but feeds the effort-allocation tendency. There are likely more.
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_audit -b codex/input-data-audit HEAD
+Symlink .venv and the git-ignored data/research/bbi/ files from the main checkout. Commit on that branch; never push,
+never commit to main. Research only: nothing under src/, gui/ or tests/ (write scripts under scripts/research/).
+
+Audit every source column that feeds the 94 inputs: the Basketball Index captures under data/research/bbi (see
+data/research/bbi/bbi_input_mapping.json for which columns feed which input), plus any other evidence files the input
+builder (scripts/build_player_inputs.py) reads. For each column and season report:
+1. Constant, all-zero, all-missing or mostly-zero/missing (>80%) columns.
+2. Exact or near duplicates (correlation > .98 with another column) and suspected unit or scale errors (values out of
+   the documented range, percent vs fraction, per-game vs per-100).
+3. Season-to-season stability (players with enough minutes in both seasons) - columns that barely repeat are weak
+   evidence; flag them with their repeatability.
+4. Columns whose direction looks reversed (e.g. a "good" metric that correlates negatively with the obvious real
+   outcome, like a shooting skill vs actual percentages).
+5. For each problem: which of the 94 inputs it feeds, its weight in the mapping, how many players it affects, and a
+   suggested fix (drop, replace with X, re-weight, check the capture). Do not apply fixes.
+Output: data/research/input_data_audit.json, scripts/research/input_data_audit.py, docs/agents/tasks/input-data-audit.md
+(plain-language TL;DR first, 5 lines; a ranked table of problems by impact; gaps). Save and commit after each part.
+Set the board row to "review" and stop.
+```
+
+---
+
 ## Ready now (2026-11-22): STAFF-TURNOVER-EVIDENCE (fresh chat; research)
 
 ### STAFF-TURNOVER-EVIDENCE: how real NBA coaching staffs change over time
