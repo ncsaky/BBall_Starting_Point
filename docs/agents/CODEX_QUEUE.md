@@ -6,6 +6,45 @@ Current priority (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE now, ODDS-COA
 
 ---
 
+## Ready now (2026-11-22): STAFF-TURNOVER-EVIDENCE (fresh chat; research)
+
+### STAFF-TURNOVER-EVIDENCE: how real NBA coaching staffs change over time
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task STAFF-TURNOVER-EVIDENCE (add a board row, "in progress
+(Codex)"). Read docs/agents/tasks/staff-life.md, docs/agents/tasks/neutral-coordinators.md and
+docs/agents/tasks/coaching-overhaul.md (how the game hires, fires and grades head coaches, coordinators and other
+staff; a known problem: AI teams replace most neutral-rated coordinators because they fall below the AI's keep
+threshold of 68) and docs/agents/tasks/rotation-evidence.md (your format: fitted on some seasons, checked on held-out
+ones).
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_staff -b codex/staff-turnover-evidence HEAD
+Commit on that branch; never push, never commit to main. Research only: nothing under src/, gui/ or tests/.
+
+From public sources (Basketball Reference coach records, team and league releases, reputable coaching-carousel
+trackers; respect robots.txt and terms; paraphrase; record sources), for about 2010-2026:
+1. Head coaches: firings per season (in-season vs offseason), what predicts a firing (record vs expectations, years
+   in the job, new front office, playoff results), tenure length, interim coaches and how often interims keep the job,
+   where fired coaches go next (another head job, assistant, TV).
+2. Lead assistants and coordinators (offensive and defensive coordinators where teams name them, top assistants):
+   how many change per team per summer, how often a new head coach brings his own staff, how often assistants are
+   promoted to head coach elsewhere, typical tenure.
+3. Other staff the game models (player development, medical and performance, scouting) where any public data exists;
+   say clearly where none does.
+4. Front-office heads (general managers / presidents): firings per season and what predicts them.
+5. Simple rules the game can use: e.g. firing odds by win share vs expectation and tenure; how many assistants a new
+   head coach replaces; a sensible "keep" bar for an average coordinator. Fit on 2010-2022, check on 2023-2026, with
+   named examples.
+Output: data/research/staff_turnover_evidence.json, scripts/research/staff_turnover_fit.py,
+docs/agents/tasks/staff-turnover-evidence.md (plain-language TL;DR first, 5 lines; tables; named examples; gaps).
+Save and commit after each part. Set the board row to "review" and stop.
+```
+
+---
+
 ## Ready now (2026-11-22, early): DEFENSIVE-SCHEME-EVIDENCE (fresh chat; research)
 
 ### DEFENSIVE-SCHEME-EVIDENCE: how real NBA teams and coaches defend screens and switch
