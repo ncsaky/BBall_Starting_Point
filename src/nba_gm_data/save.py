@@ -6731,6 +6731,50 @@ def ai_extension_pass_label(save: dict[str, Any], from_date: str, through_date: 
     return f"deadline:{deadline}" if deadline else through_date[:7]
 
 
+# SUMMER-EXTENSIONS: the monthly AI extension passes of the summer. The game jumps from the end of free agency (July 4)
+# to camp (September 1) and on to October 1 without day-by-day steps, so these passes run on their dates on the way:
+# July 6 (the window opens after the moratorium), August 1 and September 1.
+SUMMER_EXTENSION_PASS_MONTH_DAYS = ("07-06", "08-01", "09-01")
+
+
+def run_summer_extension_passes(canonical: dict[str, Any], save: dict[str, Any], through_date: str, seed: int,
+                                root: str | Path | None = None) -> int:
+    """Run each summer extension pass dated on or before ``through_date`` that has not run yet: player time moves to
+    its date (or stays on today's date when free agency already went past it), then the same AI pass as a monthly
+    day-by-day step, under the same id, so a month never gets two. The user's teams are never touched (see
+    process_ai_extensions). Returns the number of extensions signed."""
+    today = str((save.get("state") or {}).get("current_date") or "")
+    if not today:
+        return 0
+    start_year = season_start_year_from_date(today)
+    applied = 0
+    for month_day in SUMMER_EXTENSION_PASS_MONTH_DAYS:
+        pass_date = f"{start_year}-{month_day}"
+        if pass_date > through_date:
+            break
+        key = stable_id("ai_action", "extensions", pass_date[:7], seed)
+        done = {item.get("id") for name in ("pending_ai_actions", "processed_hidden_ai_actions")
+                for item in save.get(name, [])}
+        if key in done:
+            continue
+        day = max(pass_date, str((save.get("state") or {}).get("current_date") or today))
+        if day[:7] != pass_date[:7]:
+            continue   # the month went by on another path; its own pass (or none) stands
+        advance_lifecycle_to(canonical, save, day, seed, root)
+        result = process_ai_extensions(canonical, save, day, seed)
+        applied += int(result.get("applied_count") or 0)
+        save.setdefault("processed_hidden_ai_actions", []).append({
+            "id": key,
+            "date": day,
+            "action_type": "ai_extensions",
+            "status": "executed" if result.get("applied_count") else "reviewed",
+            "applied_count": result.get("applied_count", 0),
+            "refusal_count": result.get("refusal_count", 0),
+            "notes": "Summer AI extension pass (the game skips these days, so the pass runs on its date on the way).",
+        })
+    return applied
+
+
 def process_ai_extensions(
     canonical: dict[str, Any],
     save: dict[str, Any],

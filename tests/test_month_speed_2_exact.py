@@ -1,8 +1,10 @@
 """Exactness checks for the second month-speed pass (docs/agents/tasks/month-speed-2.md)."""
 from __future__ import annotations
 
+import gc
 import random
 import unittest
+import weakref
 
 from nba_gm_data import sim
 from nba_gm_data import spatial
@@ -34,9 +36,9 @@ def _fresh(league, player, include_spatial):
 class FeatureMemoTests(unittest.TestCase):
     def setUp(self):
         sim._FEATURE_MEMO.clear()
-        # The league playmaking baseline's own cache is keyed by object ids, which Python reuses after other tests'
-        # leagues are freed; clear it so identity checks here see one baseline per league (see the report's notes).
-        spatial._PLAYMAKING_MEAN_CACHE.clear()
+        # The league playmaking baseline's cache is not cleared here: it used to be keyed by bare object ids, which
+        # Python reuses once other tests' leagues are freed, so a stale baseline from another league could leak in
+        # (this test was flaky in shared processes). It now checks a weak reference to the league's trait lookup.
 
     def test_hits_across_league_views_equal_fresh_vectors(self):
         rng = random.Random(3)
@@ -82,6 +84,32 @@ class FeatureMemoTests(unittest.TestCase):
                 hit = sim.player_feature_vector(league, league["players"][1], include_spatial=include_spatial)
                 self.assertIs(hit, first)
                 self.assertEqual(hit, _fresh(league, league["players"][1], include_spatial))
+
+
+class PlaymakingBaselineCacheTests(unittest.TestCase):
+    def test_a_reused_id_never_returns_another_leagues_baseline(self):
+        """Python hands a freed league's object ids to later objects. An entry left under this league's trait-lookup
+        id by another (since freed) lookup is ignored: the weak reference shows it belongs to someone else."""
+        league = _league(random.Random(5))
+        traits = spatial._trait_index(league)
+        other = spatial._TraitIndex()
+        key = (len(league["players"]), league["meta"]["current_date"])
+        stale = {group: 99.0 for group in spatial.PLAYMAKING_GROUPS}
+        spatial._PLAYMAKING_MEAN_CACHE[id(traits)] = (weakref.ref(other), {key: stale})
+        mean = spatial.league_playmaking_mean(league)
+        self.assertNotEqual(mean, stale)
+        spatial._PLAYMAKING_MEAN_CACHE.clear()
+        self.assertEqual(mean, spatial.league_playmaking_mean(league))
+        del other
+        gc.collect()
+
+    def test_the_cache_follows_the_trait_lookup_not_its_id(self):
+        league = _league(random.Random(1))
+        first = spatial.league_playmaking_mean(league)
+        traits = spatial._trait_index(league)
+        reference, memo = spatial._PLAYMAKING_MEAN_CACHE[id(traits)]
+        self.assertIs(reference(), traits)
+        self.assertIs(next(iter(memo.values())), first)
 
 
 class SpatialSignatureMemoTests(unittest.TestCase):
