@@ -88,6 +88,29 @@ class StaffTurnoverTests(unittest.TestCase):
         self.assertLess(recs[0]["wins_vs_preseason_per_82"], -3)
         self.assertGreater(head_coach_firing_chance(10, offseason=True), 0)
 
+    def test_retained_interim_keeps_the_same_person_and_a_standard_contract(self):
+        self.save["state"].update(current_date="2027-09-30", phase="training_camp")
+        self.save["team_records"] = {team: {"wins": 41, "losses": 41} for team in self.save["team_records"]}
+        self.save["staff_slots"].remove(current_staff_slot(self.save, "team_bos", "head_coach"))
+        interim = interim_staff("team_bos", "head_coach", "2027-01-01")
+        self.save["staff_slots"].append(interim)
+        self.save["staff_firing_history"] = [
+            {"team_id": "team_bos", "slot": "head_coach", "season": "2026-27"},
+        ]
+
+        def draws(_save, _season, team_id, decision):
+            return 0.25 if team_id == "team_bos" and decision == "interim" else 0.99
+
+        with patch("nba_gm_data.staff.staff_turnover_draw", side_effect=draws):
+            recs = offseason_coaching_recommendations(self.canonical, self.save)
+        head = next(rec for rec in recs if rec["slot"] == "head_coach")
+        self.assertEqual(head["action"], "retain_interim")
+        apply_ai_staff_recommendations(self.canonical, self.save, {"recommendations": [head]}, 17)
+        staff = current_staff_slot(self.save, "team_bos", "head_coach")
+        self.assertEqual(staff["id"], interim["id"])
+        self.assertFalse(is_interim_staff(staff))
+        self.assertEqual(staff["contract"]["guarantee_level"], "standard")
+
     def test_bench_review_counts_earlier_turnover_under_a_new_head(self):
         self.save["state"].update(current_date="2027-09-30", phase="training_camp")
         self.save["team_records"] = {team: {"wins": 41, "losses": 41} for team in self.save["team_records"]}
