@@ -2,9 +2,9 @@
 
 ## TL;DR
 
-- The old rules put most neutral coordinators below the renewal bar and counted losing streaks against the assistants as well as the head coach.
-- The NBA evidence points to about two head-coach firings in season and three in summer. For assistants, the biggest signal is whether the head coach changed.
-- The game has two assistant slots. The comparison uses the proportion of the old bench that left, alongside the real-world counts.
+- AI teams kept 7 of 9 expiring neutral coordinators across the two-season probe. The starting rules kept 0 of 14.
+- Under the new rules, 21% of coordinator slots changed with a returning head coach and 88% with a new one. The NBA bench shares were 17% and 79%.
+- Each simulated season had two in-season head-coach firings and four summer firings. The NBA averages were two and just under three.
 
 ## Scope and old rules
 
@@ -47,6 +47,33 @@ env PYTHONPATH=src:scripts nice -n 10 .venv/bin/python scripts/research/staff_tu
 env PYTHONPATH=src:scripts .venv/bin/python scripts/research/staff_turnover_probe_summary.py output/staff-fit
 ```
 
+## Two-season results
+
+The seasons are 2026–27 and 2027–28, with 29 AI teams in each run. The NBA head-coach counts cover all 30 clubs in the 17-season evidence sample. The bench comparison uses the comparable 2023–25 NBA sample. [NBA staff turnover evidence](staff-turnover-evidence.md)
+
+| Measure | Before, by season | Fitted, by season | NBA evidence |
+|---|---:|---:|---|
+| Head coaches fired in season | 3 / 3 | 2 / 2 | 2.0 per season |
+| Head coaches fired in summer | 3 / 3 | 4 / 4 | 2.8 per season |
+| Coordinator slots that changed by next opening | 1 / 15 | 21 / 21 | The NBA sources group coordinators with the rest of the bench |
+| Mean changes in the two coordinator slots, returning head coach | 0.04 / 0.59 | 0.52 / 0.32 | 1.1 on the full bench, or 17% |
+| Mean changes in the two coordinator slots, different head coach | 0.00 / 0.29 | 1.50 / 2.00 | 5.5 on the full bench, or 79% |
+| Expiring originally neutral coordinators kept | 0 of 14 | 7 of 9 | No role-specific renewal series |
+
+With a returning head coach the pooled coordinator change rate was 14 of 92 slots before and 19 of 90 after. With a different head coach it was 2 of 24 before and 23 of 26 after. The fit increases league-wide coordinator movement and places most of it with incoming coaches. The expiring groups differ because decisions before expiry change who is still in those jobs. The sample is two seasons from one seed. The four summer firings in each season and complete bench turnover under all seven new heads in the second year both ran above the corresponding historical rates.
+
+Development, scouting and performance changed 0 / 1 / 1 positions in the first season on both revisions. Second-year changes in those roles were 5 / 5 / 5 before and 5 / 6 / 5 after. Trainer directories give a proxy for medical continuity, while league-wide development and scouting turnover are largely undocumented. The game models front-office strategy profiles and has no executive employment slots to count.
+
+## Scorecards and tests
+
+Both historical scorecard JSON files matched byte for byte across the two revisions. The real-minutes replay covered 1,230 games and reached all 18 league target bands. The betting replay used seed 1001 and 20 simulations per game. It covered 1,231 games, with market lines on 1,018, and returned a Brier score of 0.2041, log loss of 0.5975, spread error of 4.097 points and totals error of 5.513 points on each revision.
+
+All 37 focused staff and coaching tests passed. The core suite ran 338 tests with two skips on macOS and Azure. The older weak-coordinator test inherited Atlanta's opening-night injury burden, so its fixture now explicitly supplies a healthy team and a non-firing head-coach draw. The updated test passed locally.
+
+The full Azure Python suite ran 2,381 tests with 25 skips, one failure from the old weak-coordinator fixture, and 20 errors from missing data and release assets. The corrected coaching test passed on both macOS and Azure. With the available fixtures in place, the targeted reruns passed six experiment tests, ten Basketball Index estimator tests with one skip, and a second group of 26 experiment and rating tests. Both Windows inventory checks passed in the primary checkout, which has the startup movie and the same packaging code.
+
+Eight experimental classes still stop at setup for the missing archived mixed-possession and expanded-cohort references. The starting commit reproduced all eight setup errors. The archives are outside the staff task. Full-suite and targeted logs are under `output/staff-fit-suite`, `output/staff-fit-retest`, `output/staff-fit-input-fixture` and `output/staff-fit-tests`.
+
 ## Resume state
 
-The rules and focused coverage are in place. All 37 staff lifecycle, coaching effects, coordinator and odds-coach tests passed locally. The controlled baseline and historical scorecards are queued on Azure from the detached baseline checkout. Run the same probe on the fitted branch, compare both revisions, then run the core suite.
+Ready for review on `codex/staff-turnover-fit`. Both controlled probes and both scorecard comparisons are complete. The report, final probe setup and revised test fixture are in the working tree for the coordinator under the current repo rules.

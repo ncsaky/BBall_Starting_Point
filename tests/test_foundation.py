@@ -6354,10 +6354,10 @@ class DataFoundationTests(unittest.TestCase):
             save_path = Path(tmp) / "coordinator_weak_link.json"
             save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=420)
             team_id = "team_atl"
-            save["state"] = {"current_date": "2026-01-20", "phase": "regular_season", "legal_actions": ["staff_changes"]}
+            save["state"] = {"current_date": "2027-02-01", "phase": "regular_season", "legal_actions": ["staff_changes"]}
             save["team_records"][team_id] = {"team_id": team_id, "team_abbrev": "ATL", "wins": 10, "losses": 30}
             save["team_game_logs"] = [
-                {"team_id": team_id, "date": f"2026-01-{idx + 1:02d}", "result": "W" if idx < 2 else "L"}
+                {"team_id": team_id, "date": f"2027-01-{idx + 1:02d}", "result": "W" if idx < 2 else "L"}
                 for idx in range(17)
             ]
             for staff in save["staff_slots"]:
@@ -6369,7 +6369,13 @@ class DataFoundationTests(unittest.TestCase):
                     for key in staff.get("skill_traits", {}):
                         staff["skill_traits"][key] = 45.0
                     staff["job_security"] = 35.0
-            payload = simulate_ai_staff_changes(self.plain, save, "2026-01-01", "2026-01-20", seed=99, limit=10)
+            # Isolate the coaching decision from injuries loaded with the roster
+            # and from this month's independent head-coach firing roll.
+            with (
+                patch("nba_gm_data.staff.staff_team_injury_burden", return_value=0.0),
+                patch("nba_gm_data.staff.staff_turnover_draw", return_value=0.99),
+            ):
+                payload = simulate_ai_staff_changes(self.plain, save, "2027-01-31", "2027-02-01", seed=99, limit=10)
             atl_recs = [item for item in payload["recommendations"] if item["team_id"] == team_id]
             self.assertTrue(any(item["slot"] == "offensive_coordinator" for item in atl_recs))
             self.assertFalse(any(item["slot"] == "head_coach" for item in atl_recs))

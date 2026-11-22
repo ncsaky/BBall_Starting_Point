@@ -16,9 +16,9 @@ from nba_gm_data.sim import build_sim_indices, load_sim_context, load_sim_refere
 from nba_gm_data.staff import simulate_ai_staff_changes
 
 
-def review(canonical: dict, save: dict, previous: str, today: str, seed: int) -> None:
+def review(active: dict, canonical: dict, save: dict, previous: str, today: str, seed: int) -> None:
     career.set_save_date_phase(save, today)
-    recs = simulate_ai_staff_changes(canonical, save, previous, today, seed=seed, limit=8)
+    recs = simulate_ai_staff_changes(active, save, previous, today, seed=seed, limit=8)
     career.apply_ai_staff_recommendations(canonical, save, recs, seed)
 
 
@@ -55,10 +55,13 @@ def run(out: Path, *, seed: int, seasons: int) -> None:
     # Equal healthy-roster conditions in both versions. The career probe's markets,
     # development, injuries and playoffs are outside this staff-only comparison.
     save["health_states"] = []
+    save["injury_events"] = []
     tables = load_sim_reference(ROOT)
     start = int(save["meta"]["season"][:4])
     for year in range(start, start + seasons):
         active = career.canonical_with_save(canonical, save)
+        active["player_health_states"] = []
+        active["injury_events"] = []
         context = load_sim_context(ROOT, active, reference=tables, indices=False)
         context["schedule"] = career.schedule_for_save(ROOT, save)
         context["indices"] = build_sim_indices(context)
@@ -79,14 +82,14 @@ def run(out: Path, *, seed: int, seasons: int) -> None:
                 result = sim_game_with_context(context, str(game["externalGameId"]), mode="sandbox-sim", seed=seed)
                 career.record_game_result(save, canonical, game, to_plain(result))
             if (day.day == 1 and day.month != 10) or (day.month == 2 and day.day == 5):
-                review(active, save, (day - timedelta(days=1)).isoformat(), today, seed)
+                review(active, canonical, save, (day - timedelta(days=1)).isoformat(), today, seed)
                 context["indices"]["coach_by_team"] = career.save_coach_ratings(active, save)
                 context["sim_cache"] = {"player_pools": {}, "team_features": {}, "game_contexts": {}}
             day += timedelta(days=1)
         regular_complete(save)
         print(f"{save['meta']['season']}: all 1,230 regular-season games completed", flush=True)
         for month_day in ("06-17", "06-27", "07-01", "08-01", "09-01", "09-30"):
-            review(active, save, f"{year + 1}-{month_day}", f"{year + 1}-{month_day}", seed)
+            review(active, canonical, save, f"{year + 1}-{month_day}", f"{year + 1}-{month_day}", seed)
         advance_staff_year(canonical, save, seed, year)
     career.set_save_date_phase(save, f"{start + seasons}-10-21")
     record_staff_snapshot(out, save)
