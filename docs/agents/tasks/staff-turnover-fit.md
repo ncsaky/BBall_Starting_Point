@@ -34,6 +34,19 @@ Sources and real-world targets are in [NBA staff turnover evidence](staff-turnov
 - Preseason vacancies use existing market candidates and negotiation. A replacement needs an affordable offer and cannot be the just-dismissed incumbent. The new season's staff change allowance opens in full after a preseason vacancy fill. Role-specific support-staff review, natural retirement and the human teams' manual contract decisions keep their existing paths.
 - The new rolls use the save seed, season, team and decision name. The career retirement stream retains its draw order. Trade reviews can exit early, so the staff review now runs before those exits. Head and coordinator identities can change how games play out in a career, and future standings and decisions can therefore diverge with the same save seed. The historical 2025–26 replays install the staff for those actual coaching dates.
 
+## Measurement setup
+
+The controlled league probe uses seed 17, the current 94-input ratings, and Golden State as the human team. It runs the standard game simulation for all 1,230 regular-season games per year and verifies 82 games per team. It runs each revision's staff policy at the monthly checkpoints, in summer and at rollover. Coach ratings feed the simulated games. Fixed, healthy player rosters isolate staff decisions from trades, injuries and development. The probe excludes playoffs and uses the same summer checkpoints on each revision.
+
+Opening snapshots use person IDs and compare the same jobs across years. The assistant comparison uses the share of both coordinator slots that changed, grouped by whether the head coach changed. Raw NBA assistant counts come from larger benches. The test counts an interim as a personnel change and tracks open interim slots separately.
+
+Run on starting commit `9e0009b` and the fitted branch, using the same probe scripts on both. The direct commands are:
+
+```sh
+env PYTHONPATH=src:scripts nice -n 10 .venv/bin/python scripts/research/staff_turnover_season_probe.py --out output/staff-fit
+env PYTHONPATH=src:scripts .venv/bin/python scripts/research/staff_turnover_probe_summary.py output/staff-fit
+```
+
 ## Resume state
 
-The rules and focused coverage are in place. The baseline uses a detached copy of the starting commit. Run the same existing two-season league probe with opening staff snapshots on both revisions, compare both replay scorecards, then run the core suite. The Azure baseline is queued behind an existing job.
+The rules and focused coverage are in place. All 37 staff lifecycle, coaching effects, coordinator and odds-coach tests passed locally. The controlled baseline and historical scorecards are queued on Azure from the detached baseline checkout. Run the same probe on the fitted branch, compare both revisions, then run the core suite.
