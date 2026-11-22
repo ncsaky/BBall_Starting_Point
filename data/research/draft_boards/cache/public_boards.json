@@ -1,0 +1,9283 @@
+[
+  {
+    "id": "war",
+    "year": 2012,
+    "publisher": "War Room Sports",
+    "published": "2012-06-28",
+    "url": "https://warroomsports.com/blog/2012/06/28/final-top-60-nba-draft-big-board/",
+    "ranks": [
+      [
+        1,
+        "Anthony Davis"
+      ],
+      [
+        2,
+        "Bradley Beal"
+      ],
+      [
+        3,
+        "Micheal Kidd-Gilchrist"
+      ],
+      [
+        4,
+        "Thomas Robinson"
+      ],
+      [
+        5,
+        "Perry Jones III"
+      ],
+      [
+        6,
+        "Harrison Barnes"
+      ],
+      [
+        7,
+        "Andre Drummond"
+      ],
+      [
+        8,
+        "Jeremy Lamb"
+      ],
+      [
+        9,
+        "Dion Waiters"
+      ],
+      [
+        10,
+        "Damian Lillard"
+      ],
+      [
+        11,
+        "Arnett Moultrie"
+      ],
+      [
+        12,
+        "Austin Rivers"
+      ],
+      [
+        13,
+        "Terrence Jones"
+      ],
+      [
+        14,
+        "Meyers Leonard"
+      ],
+      [
+        15,
+        "Jared Sullinger"
+      ],
+      [
+        16,
+        "Terrence Ross"
+      ],
+      [
+        17,
+        "Tyler Zeller"
+      ],
+      [
+        18,
+        "QuincyMiller"
+      ],
+      [
+        19,
+        "KendallMarshall6-4"
+      ],
+      [
+        20,
+        "Moe Harkless"
+      ],
+      [
+        21,
+        "John Henson"
+      ],
+      [
+        22,
+        "Andrew Nicholson"
+      ],
+      [
+        23,
+        "Royce White"
+      ],
+      [
+        24,
+        "Fab Melo"
+      ],
+      [
+        25,
+        "Doron Lamb"
+      ],
+      [
+        26,
+        "Festus Ezili"
+      ],
+      [
+        27,
+        "Jeff Taylor"
+      ],
+      [
+        28,
+        "John Jenkins"
+      ],
+      [
+        29,
+        "Marquis Teague"
+      ],
+      [
+        30,
+        "William Buford"
+      ],
+      [
+        31,
+        "Tony Wroten Jr."
+      ],
+      [
+        32,
+        "Tyshawn Taylor"
+      ],
+      [
+        33,
+        "Will Barton"
+      ],
+      [
+        34,
+        "Scott Machado"
+      ],
+      [
+        35,
+        "Darius Miller"
+      ],
+      [
+        36,
+        "Kevin Jones"
+      ],
+      [
+        37,
+        "Draymond Green"
+      ],
+      [
+        38,
+        "Jared Cunningham"
+      ],
+      [
+        39,
+        "Khris Middleton"
+      ],
+      [
+        40,
+        "Mike Scott"
+      ],
+      [
+        41,
+        "Marcus Denmon"
+      ],
+      [
+        42,
+        "JaMychal Green"
+      ],
+      [
+        43,
+        "Herb Pope"
+      ],
+      [
+        44,
+        "Kim English"
+      ],
+      [
+        45,
+        "Henry Sims"
+      ],
+      [
+        46,
+        "Rakim Sanders"
+      ],
+      [
+        47,
+        "Quincy Acy"
+      ],
+      [
+        48,
+        "Robert Sacre"
+      ],
+      [
+        49,
+        "Yancy Gates"
+      ],
+      [
+        50,
+        "Kris Joseph"
+      ],
+      [
+        51,
+        "Ricardo Ratliffe"
+      ],
+      [
+        52,
+        "Bradford Burgess"
+      ],
+      [
+        53,
+        "Miles Plumlee"
+      ],
+      [
+        54,
+        "Ramone Moore"
+      ],
+      [
+        55,
+        "Darius Johson-Odom"
+      ],
+      [
+        56,
+        "Zack Rosen"
+      ],
+      [
+        57,
+        "Maalik Wayns"
+      ],
+      [
+        58,
+        "Jae Crowder"
+      ],
+      [
+        59,
+        "Garrett Stutz"
+      ],
+      [
+        60,
+        "Drew Gordon"
+      ]
+    ]
+  },
+  {
+    "id": "dave",
+    "year": 2012,
+    "publisher": "Dave Lee",
+    "published": "2012-06-28",
+    "url": "https://sfdavid.blogspot.com/2012/06/",
+    "ranks": [
+      [
+        1,
+        "Anthony Davis"
+      ],
+      [
+        2,
+        "Michael Kidd-Gilchrist"
+      ],
+      [
+        3,
+        "Bradley Beal"
+      ],
+      [
+        4,
+        "Harrison Barnes"
+      ],
+      [
+        5,
+        "Thomas Robinson"
+      ],
+      [
+        6,
+        "Andre Drummond"
+      ],
+      [
+        7,
+        "Jeremy Lamb"
+      ],
+      [
+        8,
+        "Damian Lillard"
+      ],
+      [
+        9,
+        "John Henson"
+      ],
+      [
+        10,
+        "Dion Waiters"
+      ],
+      [
+        11,
+        "Myers Leonard"
+      ],
+      [
+        12,
+        "Tyler Zeller"
+      ],
+      [
+        13,
+        "Kendall Marshall"
+      ],
+      [
+        14,
+        "Terrence Jones"
+      ],
+      [
+        15,
+        "Perry Jones III"
+      ],
+      [
+        16,
+        "Terrence Ross"
+      ],
+      [
+        17,
+        "Austin Rivers"
+      ],
+      [
+        18,
+        "Jared Sullinger"
+      ],
+      [
+        19,
+        "Quincy Miller"
+      ],
+      [
+        20,
+        "Moe Harkless"
+      ],
+      [
+        21,
+        "Arnett Moultrie"
+      ],
+      [
+        22,
+        "Tony Wroten"
+      ],
+      [
+        23,
+        "Marquis Teague"
+      ],
+      [
+        24,
+        "Andrew Nicholson"
+      ],
+      [
+        25,
+        "Evan Fournier"
+      ],
+      [
+        26,
+        "Royce White"
+      ],
+      [
+        27,
+        "Doron Lamb"
+      ],
+      [
+        28,
+        "Jeff Taylor"
+      ],
+      [
+        29,
+        "Will Barton"
+      ],
+      [
+        30,
+        "Fab Melo"
+      ],
+      [
+        31,
+        "Festus Ezeli"
+      ],
+      [
+        32,
+        "Orlando Johnson"
+      ],
+      [
+        33,
+        "John Jenkins"
+      ],
+      [
+        34,
+        "Tyshawn Taylor"
+      ],
+      [
+        35,
+        "Darius Miller"
+      ],
+      [
+        36,
+        "Draymond Green"
+      ],
+      [
+        37,
+        "Drew Gordon"
+      ],
+      [
+        38,
+        "Darius Johnson-Odom"
+      ],
+      [
+        39,
+        "Jared Cunningham"
+      ],
+      [
+        40,
+        "Kevin Murphy"
+      ],
+      [
+        41,
+        "Furkan Aldemir"
+      ],
+      [
+        42,
+        "Jae Crowder"
+      ],
+      [
+        43,
+        "Khris Middleton"
+      ],
+      [
+        44,
+        "Scott Machado"
+      ],
+      [
+        45,
+        "Miles Plumlee"
+      ],
+      [
+        46,
+        "Tomas Satoransky"
+      ],
+      [
+        47,
+        "William Buford"
+      ],
+      [
+        48,
+        "Kris Joseph"
+      ],
+      [
+        49,
+        "Xavier PG Tu Holloway"
+      ],
+      [
+        50,
+        "Kyle O'Quinn"
+      ],
+      [
+        51,
+        "Kim English"
+      ],
+      [
+        52,
+        "Kevin Jones"
+      ],
+      [
+        53,
+        "Bernard James"
+      ],
+      [
+        54,
+        "JaMychal Green"
+      ],
+      [
+        55,
+        "Mike Scott"
+      ],
+      [
+        56,
+        "Hollis Thompson"
+      ],
+      [
+        57,
+        "Tony Mitchell"
+      ],
+      [
+        58,
+        "Henry Sims"
+      ],
+      [
+        59,
+        "Robert Sacre"
+      ],
+      [
+        60,
+        "Marcus Denmon"
+      ],
+      [
+        61,
+        "Robbie Hummel"
+      ],
+      [
+        62,
+        "Casper Ware"
+      ],
+      [
+        63,
+        "Ricardo Ratliffe"
+      ],
+      [
+        64,
+        "Quincy Acy"
+      ],
+      [
+        65,
+        "Jordan Taylor"
+      ],
+      [
+        66,
+        "Justin Hamilton"
+      ]
+    ]
+  },
+  {
+    "id": "koc",
+    "year": 2013,
+    "publisher": "Kevin O’Connor, CelticsBlog",
+    "published": "2013-06-26",
+    "url": "https://www.celticsblog.com/2013/6/26/4465108/2013-nba-draft-kevin-oconnor-top-50-big-board-prospects-oladipo-noel-mclemore-len-bennett-porter",
+    "ranks": [
+      [
+        1,
+        "Victor Oladipo"
+      ],
+      [
+        2,
+        "Nerlens Noel"
+      ],
+      [
+        3,
+        "Ben McLemore"
+      ],
+      [
+        4,
+        "Anthony Bennett"
+      ],
+      [
+        5,
+        "Alex Len"
+      ],
+      [
+        6,
+        "Otto Porter"
+      ],
+      [
+        7,
+        "Trey Burke"
+      ],
+      [
+        8,
+        "CJ McCollum"
+      ],
+      [
+        9,
+        "Giannis Antetokounmpo"
+      ],
+      [
+        10,
+        "Shabazz Muhammad"
+      ],
+      [
+        11,
+        "Dennis Schroeder"
+      ],
+      [
+        12,
+        "Cody Zeller"
+      ],
+      [
+        13,
+        "Kentavious Caldwell-Pope"
+      ],
+      [
+        14,
+        "Gorgui Dieng"
+      ],
+      [
+        15,
+        "Erick Green"
+      ],
+      [
+        16,
+        "Jamaal Franklin"
+      ],
+      [
+        17,
+        "Lucas Nogueria"
+      ],
+      [
+        18,
+        "Jeff Withey"
+      ],
+      [
+        19,
+        "Ricky Ledo"
+      ],
+      [
+        20,
+        "Sergey Karasev"
+      ],
+      [
+        21,
+        "Kelly Olynyk"
+      ],
+      [
+        22,
+        "Tony Snell"
+      ],
+      [
+        23,
+        "Glen Rice Jr."
+      ],
+      [
+        24,
+        "Mason Plumlee"
+      ],
+      [
+        25,
+        "Myck Kabongo"
+      ],
+      [
+        26,
+        "Livio Jean-Charles"
+      ],
+      [
+        27,
+        "Reggie Bullock"
+      ],
+      [
+        28,
+        "Archie Goodwin"
+      ],
+      [
+        29,
+        "Mike Muscala"
+      ],
+      [
+        30,
+        "Shane Larkin"
+      ],
+      [
+        31,
+        "Steven Adams"
+      ],
+      [
+        32,
+        "Tony Mitchell"
+      ],
+      [
+        33,
+        "Michael Carter-Williams"
+      ],
+      [
+        34,
+        "Tim Hardaway Jr."
+      ],
+      [
+        35,
+        "Rudy Gobert"
+      ],
+      [
+        36,
+        "Allen Crabbe"
+      ],
+      [
+        37,
+        "Lorenzo Brown"
+      ],
+      [
+        38,
+        "C.J. Leslie"
+      ],
+      [
+        39,
+        "Jackie Carmichael"
+      ],
+      [
+        40,
+        "Isaiah Canaan"
+      ],
+      [
+        41,
+        "Solomon Hill"
+      ],
+      [
+        42,
+        "Grant Jerrett"
+      ],
+      [
+        43,
+        "Trevor Mbakwe"
+      ],
+      [
+        44,
+        "James Ennis"
+      ],
+      [
+        45,
+        "Pierre Jackson"
+      ],
+      [
+        46,
+        "DeShaun Thomas"
+      ],
+      [
+        47,
+        "Colton Iverson"
+      ],
+      [
+        48,
+        "Nate Wolters"
+      ],
+      [
+        49,
+        "Kenny Kadji"
+      ],
+      [
+        50,
+        "Ray McCallum"
+      ]
+    ]
+  },
+  {
+    "id": "fansided",
+    "year": 2013,
+    "publisher": "FanSided",
+    "published": "2013-06-27",
+    "url": "https://fansided.com/2013/06/27/nba-draft-2013-big-board/",
+    "ranks": [
+      [
+        1,
+        "Ben McLemore"
+      ],
+      [
+        2,
+        "Otto Porter"
+      ],
+      [
+        3,
+        "Nerlen Noels"
+      ],
+      [
+        4,
+        "Alex Len"
+      ],
+      [
+        5,
+        "Victor Oladipo"
+      ],
+      [
+        6,
+        "Trey Burke"
+      ],
+      [
+        7,
+        "Cody Zeller"
+      ],
+      [
+        8,
+        "C.J. McCollum"
+      ],
+      [
+        9,
+        "Anthony Bennett"
+      ],
+      [
+        10,
+        "Jamaal Franklin"
+      ],
+      [
+        11,
+        "Michael Carter-Williams"
+      ],
+      [
+        12,
+        "Shane Larkin"
+      ],
+      [
+        13,
+        "Dennis Schroeder"
+      ],
+      [
+        14,
+        "Kentavious Caldwell-Pope"
+      ],
+      [
+        15,
+        "Mason Plumlee"
+      ],
+      [
+        16,
+        "Shabazz Muhammad"
+      ],
+      [
+        17,
+        "Steven Adams"
+      ],
+      [
+        18,
+        "Lucas Nogueira"
+      ],
+      [
+        19,
+        "Sergey Karasev"
+      ],
+      [
+        20,
+        "Glen Rice Jr"
+      ],
+      [
+        21,
+        "Giannis Antetokounmpo"
+      ],
+      [
+        22,
+        "Ricky Ledo"
+      ],
+      [
+        23,
+        "Allen Crabbe"
+      ],
+      [
+        24,
+        "Tony Mitchell"
+      ],
+      [
+        25,
+        "Isaiah Canaan"
+      ],
+      [
+        26,
+        "Kelly Olynyk"
+      ],
+      [
+        27,
+        "Erik Green"
+      ],
+      [
+        28,
+        "Livio Jean-Charles"
+      ],
+      [
+        29,
+        "Tony Snell"
+      ],
+      [
+        30,
+        "Gorgui Dieng"
+      ]
+    ]
+  },
+  {
+    "id": "dean2014",
+    "year": 2014,
+    "publisher": "Dean Demakis, Dean on Draft",
+    "published": "2014-06-26",
+    "url": "https://deanondraft.com/2014/06/26/mega-board/",
+    "ranks": [
+      [
+        1,
+        "Joel Embiid"
+      ],
+      [
+        2,
+        "Dante Exum"
+      ],
+      [
+        3,
+        "Marcus Smart"
+      ],
+      [
+        4,
+        "Aaron Gordon"
+      ],
+      [
+        5,
+        "Jusuf Nurkic"
+      ],
+      [
+        6,
+        "Clint Capela"
+      ],
+      [
+        7,
+        "Andrew Wiggins"
+      ],
+      [
+        8,
+        "Jabari Parker"
+      ],
+      [
+        9,
+        "Tyler Ennis"
+      ],
+      [
+        10,
+        "Noah Vonleh"
+      ],
+      [
+        11,
+        "Elfrid Payton"
+      ],
+      [
+        12,
+        "Damien Inglis"
+      ],
+      [
+        13,
+        "KJ McDaniels"
+      ],
+      [
+        14,
+        "Nik Stauskas"
+      ],
+      [
+        15,
+        "Kyle Anderson"
+      ],
+      [
+        16,
+        "Nikola Jokic"
+      ],
+      [
+        17,
+        "Spencer Dinwiddie"
+      ],
+      [
+        18,
+        "Jarnell Stokes"
+      ],
+      [
+        19,
+        "Jordan Adams"
+      ],
+      [
+        20,
+        "PJ Hairston"
+      ],
+      [
+        21,
+        "Vasilije Micic"
+      ],
+      [
+        22,
+        "Julius Randle"
+      ],
+      [
+        23,
+        "Dario Saric"
+      ],
+      [
+        24,
+        "Gary Harris"
+      ],
+      [
+        25,
+        "Mitch McGary"
+      ],
+      [
+        26,
+        "Javon McCrea"
+      ],
+      [
+        27,
+        "James Young"
+      ],
+      [
+        28,
+        "TJ Warren"
+      ],
+      [
+        29,
+        "Kendrick Perry"
+      ],
+      [
+        30,
+        "Walter Tavares"
+      ],
+      [
+        31,
+        "Glenn Robinson"
+      ],
+      [
+        32,
+        "Semaj Christon"
+      ],
+      [
+        33,
+        "Adreian Payne"
+      ],
+      [
+        34,
+        "Doug McDermott"
+      ],
+      [
+        35,
+        "Zach LaVine"
+      ],
+      [
+        36,
+        "Bogdan Bogdanovic"
+      ],
+      [
+        37,
+        "Shabazz Napier"
+      ],
+      [
+        38,
+        "Jerami Grant"
+      ],
+      [
+        39,
+        "Artem Klimenko"
+      ],
+      [
+        40,
+        "Russ Smith"
+      ],
+      [
+        41,
+        "Dwight Powell"
+      ],
+      [
+        42,
+        "Nick Johnson"
+      ],
+      [
+        43,
+        "Chris Udofia"
+      ],
+      [
+        44,
+        "Isaiah Sykes"
+      ],
+      [
+        45,
+        "Scottie Wilbekin"
+      ],
+      [
+        46,
+        "Sim Bhullar"
+      ],
+      [
+        47,
+        "Khem Birch"
+      ],
+      [
+        48,
+        "Okaro White"
+      ],
+      [
+        49,
+        "Bryce Cotton"
+      ],
+      [
+        50,
+        "Daniel Miller"
+      ],
+      [
+        51,
+        "Roy Devyn Marble"
+      ],
+      [
+        52,
+        "Jordan Clarkson"
+      ],
+      [
+        53,
+        "Patric Young"
+      ],
+      [
+        54,
+        "Lamar Patterson"
+      ],
+      [
+        55,
+        "Fuquan Edwin"
+      ],
+      [
+        56,
+        "Kendall Williams"
+      ],
+      [
+        57,
+        "Rodney Hood"
+      ],
+      [
+        58,
+        "Ioannis Papapetrou"
+      ],
+      [
+        59,
+        "Alec Brown"
+      ],
+      [
+        60,
+        "Markel Brown"
+      ],
+      [
+        61,
+        "Thanasis Antetokounmpo"
+      ],
+      [
+        62,
+        "Cristiano Felicio"
+      ],
+      [
+        63,
+        "James Michael McAdoo"
+      ],
+      [
+        64,
+        "Deonte Burton"
+      ],
+      [
+        65,
+        "TJ Bray"
+      ],
+      [
+        66,
+        "Troy Huff"
+      ],
+      [
+        67,
+        "Davion Berry"
+      ],
+      [
+        68,
+        "Alessandro Gentile"
+      ],
+      [
+        69,
+        "Casey Prather"
+      ],
+      [
+        70,
+        "DeAndre Daniels"
+      ],
+      [
+        71,
+        "Aaron Craft"
+      ],
+      [
+        72,
+        "Langston Galloway"
+      ],
+      [
+        73,
+        "Cleanthony Early"
+      ],
+      [
+        74,
+        "CJ Wilcox"
+      ],
+      [
+        75,
+        "Juvonte Reddic"
+      ],
+      [
+        76,
+        "Taylor Braun"
+      ],
+      [
+        77,
+        "Trevor Releford"
+      ],
+      [
+        78,
+        "Cory Jefferson"
+      ],
+      [
+        79,
+        "Jerrelle Benimon"
+      ],
+      [
+        80,
+        "Xavier Thames"
+      ]
+    ]
+  },
+  {
+    "id": "ha2014",
+    "year": 2014,
+    "publisher": "Ed Weiland, Hoops Analyst",
+    "published": "2014-06-26",
+    "url": "https://hoopsanalyst.com/nba-draft-2014-final-top-60/",
+    "ranks": [
+      [
+        1,
+        "Joel Embiid"
+      ],
+      [
+        2,
+        "Marcus Smart"
+      ],
+      [
+        3,
+        "Jabari Parker"
+      ],
+      [
+        4,
+        "Dante Exum"
+      ],
+      [
+        5,
+        "Aaron Gordon"
+      ],
+      [
+        6,
+        "Jordan Adams"
+      ],
+      [
+        7,
+        "Kyle Anderson"
+      ],
+      [
+        8,
+        "Elfrid Payton"
+      ],
+      [
+        9,
+        "Dario Saric"
+      ],
+      [
+        10,
+        "Andrew Wiggins"
+      ],
+      [
+        11,
+        "PJ Hairston"
+      ],
+      [
+        12,
+        "Clint Capela"
+      ],
+      [
+        13,
+        "KJ McDaniels"
+      ],
+      [
+        14,
+        "Jusuf Nurkic"
+      ],
+      [
+        15,
+        "Mitch McGary"
+      ],
+      [
+        16,
+        "Noah Vonleh"
+      ],
+      [
+        17,
+        "Adreian Payne"
+      ],
+      [
+        18,
+        "Gary Harris"
+      ],
+      [
+        19,
+        "Nik Stauskas"
+      ],
+      [
+        20,
+        "Tyler Ennis"
+      ],
+      [
+        21,
+        "Doug McDermott"
+      ],
+      [
+        22,
+        "TJ Warren"
+      ],
+      [
+        23,
+        "Russ Smith"
+      ],
+      [
+        24,
+        "Jarnell Stokes"
+      ],
+      [
+        25,
+        "Shabazz Napier"
+      ],
+      [
+        26,
+        "Zach LaVine"
+      ],
+      [
+        27,
+        "Julius Randle"
+      ],
+      [
+        28,
+        "Khem Birch"
+      ],
+      [
+        29,
+        "Walter Taveres"
+      ],
+      [
+        30,
+        "Eric Moreland"
+      ],
+      [
+        31,
+        "Jerami Grant"
+      ],
+      [
+        32,
+        "Sim Bhullar"
+      ],
+      [
+        33,
+        "CJ Wilcox"
+      ],
+      [
+        34,
+        "Javon McCrea"
+      ],
+      [
+        35,
+        "Markel Brown"
+      ],
+      [
+        36,
+        "Justin Jackson"
+      ],
+      [
+        37,
+        "Tymell Murphy"
+      ],
+      [
+        38,
+        "Halil Kanacevic"
+      ],
+      [
+        39,
+        "Jordan McRae"
+      ],
+      [
+        40,
+        "JJ Mann"
+      ],
+      [
+        41,
+        "CleAnthony Early"
+      ],
+      [
+        42,
+        "Patric Young"
+      ],
+      [
+        43,
+        "DeAndre Kane"
+      ],
+      [
+        44,
+        "Mike Moser"
+      ],
+      [
+        45,
+        "Nick Johnson"
+      ],
+      [
+        46,
+        "Aaron Craft"
+      ],
+      [
+        47,
+        "Cory Jefferson"
+      ],
+      [
+        48,
+        "Taylor Braun"
+      ],
+      [
+        49,
+        "Kendrick Perry"
+      ],
+      [
+        50,
+        "Thanasis Antekuonmpo"
+      ],
+      [
+        51,
+        "Shawn Jones"
+      ],
+      [
+        52,
+        "Glenn Robinson III"
+      ],
+      [
+        53,
+        "Alex Kirk"
+      ],
+      [
+        54,
+        "Richard Solomon"
+      ],
+      [
+        55,
+        "Troy Huff"
+      ],
+      [
+        56,
+        "Spencer Dinwiddie"
+      ],
+      [
+        57,
+        "Fuquan Edwin"
+      ],
+      [
+        58,
+        "Rodney Hood"
+      ],
+      [
+        59,
+        "Sean Kilpatrick"
+      ],
+      [
+        60,
+        "Jordan Bachynski C Arizona State"
+      ]
+    ]
+  },
+  {
+    "id": "br2014",
+    "year": 2014,
+    "publisher": "Tyler Conway, Bleacher Report",
+    "published": "2014-06-19",
+    "url": "https://bleacherreport.com/articles/2094259-2014-nba-draft-final-big-board-prospect-outlook-with-one-week-remaining",
+    "ranks": [
+      [
+        1,
+        "Andrew Wiggins"
+      ],
+      [
+        2,
+        "Jabari Parker"
+      ],
+      [
+        3,
+        "Joel Embiid"
+      ],
+      [
+        4,
+        "Dante Exum"
+      ],
+      [
+        5,
+        "Noah Vonleh"
+      ],
+      [
+        6,
+        "Marcus Smart"
+      ],
+      [
+        7,
+        "Julius Randle"
+      ],
+      [
+        8,
+        "Aaron Gordon"
+      ],
+      [
+        9,
+        "Nik Stauskas"
+      ],
+      [
+        10,
+        "Gary Harris"
+      ],
+      [
+        11,
+        "Zach LaVine"
+      ],
+      [
+        12,
+        "Dario Saric"
+      ],
+      [
+        13,
+        "Adreian Payne"
+      ],
+      [
+        14,
+        "James Young"
+      ],
+      [
+        15,
+        "Doug McDermott"
+      ],
+      [
+        16,
+        "Rodney Hood"
+      ],
+      [
+        17,
+        "Tyler Ennis"
+      ],
+      [
+        18,
+        "Elfrid Payton"
+      ],
+      [
+        19,
+        "Jusuf Nurkic"
+      ],
+      [
+        20,
+        "P.J. Hairston"
+      ],
+      [
+        21,
+        "Kyle Anderson"
+      ],
+      [
+        22,
+        "Clint Capela"
+      ],
+      [
+        23,
+        "Jerami Grant"
+      ],
+      [
+        24,
+        "Shabazz Napier"
+      ],
+      [
+        25,
+        "T.J. Warren"
+      ],
+      [
+        26,
+        "Jarnell Stokes"
+      ],
+      [
+        27,
+        "C.J. Wilcox"
+      ],
+      [
+        28,
+        "Cleanthony Early"
+      ],
+      [
+        29,
+        "Glenn Robinson III"
+      ],
+      [
+        30,
+        "Spencer Dinwiddie"
+      ],
+      [
+        31,
+        "Jordan Clarkson"
+      ],
+      [
+        32,
+        "K.J. McDaniels"
+      ],
+      [
+        33,
+        "Jordan Adams"
+      ],
+      [
+        34,
+        "Mitch McGary"
+      ],
+      [
+        35,
+        "DeAndre Daniels"
+      ],
+      [
+        36,
+        "Jahii Carson"
+      ],
+      [
+        37,
+        "Vasilije Micic"
+      ],
+      [
+        38,
+        "Bogdan Bogdanovic"
+      ],
+      [
+        39,
+        "Nick Johnson"
+      ],
+      [
+        40,
+        "Joe Harris"
+      ],
+      [
+        41,
+        "Russ Smith"
+      ],
+      [
+        42,
+        "Patric Young"
+      ],
+      [
+        43,
+        "Dwight Powell"
+      ],
+      [
+        44,
+        "Semaj Christon"
+      ],
+      [
+        45,
+        "Lamar Patterson"
+      ],
+      [
+        46,
+        "Jabari Brown"
+      ],
+      [
+        47,
+        "Artem Klimenko"
+      ],
+      [
+        48,
+        "Deonte Burton"
+      ],
+      [
+        49,
+        "Damian Inglis"
+      ],
+      [
+        50,
+        "Jordan McRae"
+      ],
+      [
+        51,
+        "Roy Devyn Marble"
+      ],
+      [
+        52,
+        "DeAndre Kane"
+      ],
+      [
+        53,
+        "Nikola Jokic"
+      ],
+      [
+        54,
+        "Thanasis Antetokounmpo"
+      ],
+      [
+        55,
+        "Josh Huestis"
+      ],
+      [
+        56,
+        "Walter Tavares"
+      ],
+      [
+        57,
+        "Alec Brown"
+      ],
+      [
+        58,
+        "James Michael McAdoo"
+      ],
+      [
+        59,
+        "LaQuinton Ross"
+      ],
+      [
+        60,
+        "Alessandro Gentile"
+      ]
+    ]
+  },
+  {
+    "id": "dean2015",
+    "year": 2015,
+    "publisher": "Dean Demakis, Dean on Draft",
+    "published": "2015-06-25",
+    "url": "https://deanondraft.com/2015/06/25/2015-final-big-board/",
+    "ranks": [
+      [
+        1,
+        "Karl Towns"
+      ],
+      [
+        2,
+        "D’Angelo Russell"
+      ],
+      [
+        3,
+        "Justise Winslow"
+      ],
+      [
+        4,
+        "Jahlil Okafor"
+      ],
+      [
+        5,
+        "Emmanuel Mudiay"
+      ],
+      [
+        6,
+        "Willie Cauley-Stein"
+      ],
+      [
+        7,
+        "Stanley Johnson"
+      ],
+      [
+        8,
+        "Kelly Oubre"
+      ],
+      [
+        9,
+        "Rondae Hollis-Jefferson"
+      ],
+      [
+        10,
+        "Frank Kaminsky"
+      ],
+      [
+        11,
+        "Mario Hezonja ###"
+      ],
+      [
+        12,
+        "Kristaps Porzingis"
+      ],
+      [
+        13,
+        "Kevon Looney ###"
+      ],
+      [
+        14,
+        "Bobby Portis ###"
+      ],
+      [
+        15,
+        "Trey Lyles"
+      ],
+      [
+        16,
+        "Delon Wright"
+      ],
+      [
+        17,
+        "Tyus Jones"
+      ],
+      [
+        18,
+        "Justin Anderson"
+      ],
+      [
+        19,
+        "Sam Dekker"
+      ],
+      [
+        20,
+        "Myles Turner"
+      ],
+      [
+        21,
+        "Jerian Grant"
+      ],
+      [
+        22,
+        "Devin Booker"
+      ],
+      [
+        23,
+        "Cameron Payne"
+      ],
+      [
+        24,
+        "Christian Wood"
+      ],
+      [
+        25,
+        "RJ Hunter"
+      ],
+      [
+        26,
+        "Rashad Vaughn"
+      ],
+      [
+        27,
+        "Chris McCullough"
+      ],
+      [
+        28,
+        "Nikola Milutinov"
+      ],
+      [
+        29,
+        "Cliff Alexander"
+      ],
+      [
+        30,
+        "Josh Richardson"
+      ],
+      [
+        31,
+        "Robert Upshaw"
+      ],
+      [
+        32,
+        "Larry Nance Jr."
+      ],
+      [
+        33,
+        "Norman Powell"
+      ],
+      [
+        34,
+        "Jarell Martin"
+      ],
+      [
+        35,
+        "Dakari Johnson"
+      ],
+      [
+        36,
+        "Montrezl Harrell"
+      ],
+      [
+        37,
+        "Richaun Holmes"
+      ],
+      [
+        38,
+        "Jordan Mickey"
+      ],
+      [
+        39,
+        "Olivier Hanlan"
+      ],
+      [
+        40,
+        "Michael Qualls"
+      ],
+      [
+        41,
+        "Anthony Brown"
+      ],
+      [
+        42,
+        "Vince Hunter"
+      ],
+      [
+        43,
+        "Michael Frazier"
+      ],
+      [
+        44,
+        "Pat Connaughton"
+      ],
+      [
+        45,
+        "JP Tokoto"
+      ],
+      [
+        46,
+        "Dez Wells"
+      ],
+      [
+        47,
+        "Branden Dawson"
+      ],
+      [
+        48,
+        "Cedi Osman"
+      ],
+      [
+        49,
+        "Mouhammadou Jaiteh"
+      ],
+      [
+        50,
+        "Terry Rozier"
+      ]
+    ]
+  },
+  {
+    "id": "si2015",
+    "year": 2015,
+    "publisher": "Sports Illustrated staff",
+    "published": "2015-06-23",
+    "url": "https://www.si.com/nba/2015/06/23/nba-draft-player-rankings-big-board-karl-anthony-towns-jahlil-okafor",
+    "ranks": [
+      [
+        1,
+        "Karl-Anthony Towns"
+      ],
+      [
+        2,
+        "Jahlil Okafor"
+      ],
+      [
+        3,
+        "D'Angelo Russell"
+      ],
+      [
+        4,
+        "Emmanuel Mudiay"
+      ],
+      [
+        5,
+        "Mario Hezonja"
+      ],
+      [
+        6,
+        "Stanley Johnson"
+      ],
+      [
+        7,
+        "Justise Winslow"
+      ],
+      [
+        8,
+        "Willie Cauley-Stein"
+      ],
+      [
+        9,
+        "Frank Kaminsky"
+      ],
+      [
+        10,
+        "Kristaps Porzingis"
+      ],
+      [
+        11,
+        "Myles Turner"
+      ],
+      [
+        12,
+        "Devin Booker"
+      ],
+      [
+        13,
+        "Sam Dekker"
+      ],
+      [
+        14,
+        "Rondae Hollis-Jefferson"
+      ],
+      [
+        15,
+        "Bobby Portis"
+      ],
+      [
+        16,
+        "Jerian Grant"
+      ],
+      [
+        17,
+        "Kevon Looney"
+      ],
+      [
+        18,
+        "Tyus Jones"
+      ],
+      [
+        19,
+        "Trey Lyles"
+      ],
+      [
+        20,
+        "Justin Anderson"
+      ],
+      [
+        21,
+        "Montrezl Harrell"
+      ],
+      [
+        22,
+        "Kelly Oubre Jr."
+      ],
+      [
+        23,
+        "Cameron Payne"
+      ],
+      [
+        24,
+        "Jonathan Holmes"
+      ],
+      [
+        25,
+        "R.J. Hunter"
+      ],
+      [
+        26,
+        "Christian Wood"
+      ],
+      [
+        27,
+        "Delon Wright"
+      ],
+      [
+        28,
+        "Rashad Vaughn"
+      ],
+      [
+        29,
+        "Robert Upshaw"
+      ],
+      [
+        30,
+        "Jarell Martin"
+      ],
+      [
+        31,
+        "Jordan Mickey"
+      ],
+      [
+        32,
+        "Richaun Holmes"
+      ],
+      [
+        33,
+        "Chris McCullough"
+      ],
+      [
+        34,
+        "Michael Frazier"
+      ],
+      [
+        35,
+        "Cliff Alexander"
+      ],
+      [
+        36,
+        "Terry Rozier"
+      ],
+      [
+        37,
+        "Nikola Milutinov"
+      ],
+      [
+        38,
+        "Norman Powell"
+      ],
+      [
+        39,
+        "Mouhammadou Jaiteh"
+      ],
+      [
+        40,
+        "Dakari Johnson"
+      ],
+      [
+        41,
+        "Guillermo Hernangomez"
+      ],
+      [
+        42,
+        "J.P. Tokoto"
+      ],
+      [
+        43,
+        "Rakeem Christmas"
+      ],
+      [
+        44,
+        "Olivier Hanlan"
+      ],
+      [
+        45,
+        "Alan Williams"
+      ],
+      [
+        46,
+        "Andrew Harrison"
+      ],
+      [
+        47,
+        "Joseph Young"
+      ],
+      [
+        48,
+        "Aaron White"
+      ],
+      [
+        49,
+        "Arturas Gudaitis"
+      ],
+      [
+        50,
+        "Daniel Diez"
+      ],
+      [
+        51,
+        "Tyler Harvey"
+      ],
+      [
+        52,
+        "T.J. McConnell"
+      ],
+      [
+        53,
+        "Dez Wells"
+      ],
+      [
+        54,
+        "Quinn Cook"
+      ],
+      [
+        55,
+        "Vince Hunter"
+      ],
+      [
+        56,
+        "Cedi Osman"
+      ],
+      [
+        57,
+        "Chris Walker"
+      ],
+      [
+        58,
+        "Brandon Ashley"
+      ],
+      [
+        59,
+        "Ryan Boatright"
+      ],
+      [
+        60,
+        "Terran Petteway"
+      ]
+    ]
+  },
+  {
+    "id": "si2016",
+    "year": 2016,
+    "publisher": "Jeremy Woo, Sports Illustrated",
+    "published": "2016-06-20",
+    "url": "https://www.si.com/nba/2016/06/20/nba-draft-rankings-prospects-ben-simmons-brandon-ingram",
+    "ranks": [
+      [
+        1,
+        "Brandon ingram"
+      ],
+      [
+        2,
+        "Ben simmons"
+      ],
+      [
+        3,
+        "DRAGAN BENDER"
+      ],
+      [
+        4,
+        "JAMAL MURRAY"
+      ],
+      [
+        5,
+        "kris dunn"
+      ],
+      [
+        6,
+        "henry ellenson"
+      ],
+      [
+        7,
+        "BUDDY HIELD"
+      ],
+      [
+        8,
+        "MARQUESE CHRISS"
+      ],
+      [
+        9,
+        "Jakob poeltl"
+      ],
+      [
+        10,
+        "jaylen brown"
+      ],
+      [
+        11,
+        "TIMOTHE LUWAWU"
+      ],
+      [
+        12,
+        "deyonta davis"
+      ],
+      [
+        13,
+        "domantas sabonis"
+      ],
+      [
+        14,
+        "FURKAN KORKMAZ"
+      ],
+      [
+        15,
+        "skal labissiere"
+      ],
+      [
+        16,
+        "DENZEL VALENTINE"
+      ],
+      [
+        17,
+        "DEMETRIUS JACKSON"
+      ],
+      [
+        18,
+        "WADE BALDWIN"
+      ],
+      [
+        19,
+        "ANTE Zizic"
+      ],
+      [
+        20,
+        "DEJOUNTE MURRAY"
+      ],
+      [
+        21,
+        "TAUREAN PRINCE"
+      ],
+      [
+        22,
+        "TYLER ULIS"
+      ],
+      [
+        23,
+        "cheick diallo"
+      ],
+      [
+        24,
+        "deandre bembry"
+      ],
+      [
+        25,
+        "ivica zubac"
+      ],
+      [
+        26,
+        "Thon maker"
+      ],
+      [
+        27,
+        "Juan Hernangomez"
+      ],
+      [
+        28,
+        "a.j. hammons"
+      ],
+      [
+        29,
+        "Malik Beasley"
+      ],
+      [
+        30,
+        "Stephen Zimmerman"
+      ],
+      [
+        31,
+        "Diamond Stone"
+      ],
+      [
+        32,
+        "Pat McCaw"
+      ],
+      [
+        33,
+        "Caris LeVert"
+      ],
+      [
+        34,
+        "Malachi Richardson"
+      ],
+      [
+        35,
+        "Damian Jones"
+      ],
+      [
+        36,
+        "Malcolm Brogdon"
+      ],
+      [
+        37,
+        "Ben Bentil"
+      ],
+      [
+        38,
+        "Brice Johnson"
+      ],
+      [
+        39,
+        "Petr Cornelie"
+      ],
+      [
+        40,
+        "Zhou Qi"
+      ],
+      [
+        41,
+        "Chinanu Onuaku"
+      ],
+      [
+        42,
+        "Gary Payton II"
+      ],
+      [
+        43,
+        "Robert Carter Jr."
+      ],
+      [
+        44,
+        "Paul Zipser"
+      ],
+      [
+        45,
+        "Joel Bolomboy"
+      ],
+      [
+        46,
+        "Pascal Siakam"
+      ],
+      [
+        47,
+        "Guerschon Yabusele"
+      ],
+      [
+        48,
+        "Michael Gbinije"
+      ],
+      [
+        49,
+        "Isaiah Whitehead"
+      ],
+      [
+        50,
+        "Rade Zagorac"
+      ],
+      [
+        51,
+        "Isaia Cordinier"
+      ],
+      [
+        52,
+        "Georgios Papagiannis"
+      ],
+      [
+        53,
+        "Jake Layman"
+      ],
+      [
+        54,
+        "Prince Ibeh"
+      ],
+      [
+        55,
+        "Dorian Finney-Smith"
+      ],
+      [
+        56,
+        "Kay Felder"
+      ],
+      [
+        57,
+        "Cat Barber"
+      ],
+      [
+        58,
+        "Wayne Selden"
+      ],
+      [
+        59,
+        "Jarrod Uthoff"
+      ],
+      [
+        60,
+        "AJ English"
+      ]
+    ]
+  },
+  {
+    "id": "cbs2017",
+    "year": 2017,
+    "publisher": "Reid Forgrave, CBS Sports",
+    "published": "2017-06-20",
+    "url": "https://www.cbssports.com/nba/news/nba-draft-2017-big-board-final-rankings-of-the-top-100-best-players-available",
+    "ranks": [
+      [
+        1,
+        "Markelle Fultz"
+      ],
+      [
+        2,
+        "Lonzo Ball"
+      ],
+      [
+        3,
+        "De'Aaron Fox"
+      ],
+      [
+        4,
+        "Jayson Tatum"
+      ],
+      [
+        5,
+        "Josh Jackson"
+      ],
+      [
+        6,
+        "Jonathan Isaac"
+      ],
+      [
+        7,
+        "Lauri Markkanen"
+      ],
+      [
+        8,
+        "Malik Monk"
+      ],
+      [
+        9,
+        "Dennis Smith Jr."
+      ],
+      [
+        10,
+        "Zach Collins"
+      ],
+      [
+        11,
+        "Luke Kennard"
+      ],
+      [
+        12,
+        "Frank Ntilikina"
+      ],
+      [
+        13,
+        "John Collins"
+      ],
+      [
+        14,
+        "Donovan Mitchell"
+      ],
+      [
+        15,
+        "OG Anunoby"
+      ],
+      [
+        16,
+        "Justin Jackson"
+      ],
+      [
+        17,
+        "Harry Giles"
+      ],
+      [
+        18,
+        "Jarrett Allen"
+      ],
+      [
+        19,
+        "Justin Patton"
+      ],
+      [
+        20,
+        "Ike Anigbogu"
+      ],
+      [
+        21,
+        "Edrice Adebayo"
+      ],
+      [
+        22,
+        "Terrance Ferguson"
+      ],
+      [
+        23,
+        "Caleb Swanigan"
+      ],
+      [
+        24,
+        "TJ Leaf"
+      ],
+      [
+        25,
+        "Johnathan Motley"
+      ],
+      [
+        26,
+        "Jordan Bell"
+      ],
+      [
+        27,
+        "Ivan Rabb"
+      ],
+      [
+        28,
+        "Alec Peters"
+      ],
+      [
+        29,
+        "Derrick White"
+      ],
+      [
+        30,
+        "Kyle Kuzma"
+      ],
+      [
+        31,
+        "Jonathan Jeanne"
+      ],
+      [
+        32,
+        "Jawun Evans"
+      ],
+      [
+        33,
+        "Josh Hart"
+      ],
+      [
+        34,
+        "Tyler Dorsey"
+      ],
+      [
+        35,
+        "Isaiah Hartenstein"
+      ],
+      [
+        36,
+        "Tyler Lydon"
+      ],
+      [
+        37,
+        "Thomas Bryant"
+      ],
+      [
+        38,
+        "Semi Ojeleye"
+      ],
+      [
+        39,
+        "Edmond Sumner"
+      ],
+      [
+        40,
+        "Jonah Bolden"
+      ],
+      [
+        41,
+        "Frank Jackson"
+      ],
+      [
+        42,
+        "D.J. Wilson"
+      ],
+      [
+        43,
+        "Dwayne Bacon"
+      ],
+      [
+        44,
+        "Cameron Oliver"
+      ],
+      [
+        45,
+        "Monte Morris"
+      ],
+      [
+        46,
+        "Sindarius Thornwell"
+      ],
+      [
+        47,
+        "Jaron Blossomgame"
+      ],
+      [
+        48,
+        "Wesley Iwundu"
+      ],
+      [
+        49,
+        "Tony Bradley"
+      ],
+      [
+        50,
+        "PJ Dozier"
+      ],
+      [
+        51,
+        "Nigel Williams-Goss"
+      ],
+      [
+        52,
+        "Frank Mason III"
+      ],
+      [
+        53,
+        "Dillon Brooks"
+      ],
+      [
+        54,
+        "Melo Trimble"
+      ],
+      [
+        55,
+        "Kennedy Meeks"
+      ],
+      [
+        56,
+        "Isaiah Briscoe"
+      ],
+      [
+        57,
+        "Nigel Hayes"
+      ],
+      [
+        58,
+        "L.J. Peak"
+      ],
+      [
+        59,
+        "Kobi Simmons"
+      ],
+      [
+        60,
+        "Devin Robinson"
+      ],
+      [
+        61,
+        "Mathias Lessort"
+      ],
+      [
+        62,
+        "Peter Jok"
+      ],
+      [
+        63,
+        "Luke Kornet"
+      ],
+      [
+        64,
+        "Charles Cooke"
+      ],
+      [
+        65,
+        "Damyean Dotson"
+      ],
+      [
+        66,
+        "Chance Comanche"
+      ],
+      [
+        67,
+        "Kris Jenkins"
+      ],
+      [
+        68,
+        "Antonio Blakeney"
+      ],
+      [
+        69,
+        "Isaac Humphries"
+      ],
+      [
+        70,
+        "Deonte Burton"
+      ],
+      [
+        71,
+        "Luke Fischer"
+      ],
+      [
+        72,
+        "Austin Nichols"
+      ],
+      [
+        73,
+        "Andrew White III"
+      ],
+      [
+        74,
+        "Marcus Marshall"
+      ],
+      [
+        75,
+        "Sterling Brown"
+      ],
+      [
+        76,
+        "Eric Mika"
+      ],
+      [
+        77,
+        "Anzejs Pasecniks"
+      ],
+      [
+        78,
+        "Maurice Watson Jr."
+      ],
+      [
+        79,
+        "Jacob Wiley"
+      ],
+      [
+        80,
+        "Isaiah Hicks"
+      ],
+      [
+        81,
+        "Alpha Kaba"
+      ],
+      [
+        82,
+        "Marcus Keene"
+      ],
+      [
+        83,
+        "Kadeem Allen"
+      ],
+      [
+        84,
+        "Jordan Mathews"
+      ],
+      [
+        85,
+        "Zak Irvin"
+      ],
+      [
+        86,
+        "Derrick Walton Jr."
+      ],
+      [
+        87,
+        "James Blackmon Jr."
+      ],
+      [
+        88,
+        "V.J. Beachem"
+      ],
+      [
+        89,
+        "Jaylen Johnson"
+      ],
+      [
+        90,
+        "Paris Bass"
+      ],
+      [
+        91,
+        "Davon Reed"
+      ],
+      [
+        92,
+        "Michael Young"
+      ],
+      [
+        93,
+        "Landen Lucas"
+      ],
+      [
+        94,
+        "Amida Brimah"
+      ],
+      [
+        95,
+        "Malcolm Hill"
+      ],
+      [
+        96,
+        "Chris Boucher"
+      ],
+      [
+        97,
+        "George de Paula"
+      ],
+      [
+        98,
+        "Przemek Karnowski"
+      ],
+      [
+        99,
+        "Vlatko Cancar"
+      ],
+      [
+        100,
+        "Aleksandar Vezenkov"
+      ]
+    ]
+  },
+  {
+    "id": "br2018",
+    "year": 2018,
+    "publisher": "Jonathan Wasserman, Bleacher Report",
+    "published": "2018-06-20",
+    "url": "https://bleacherreport.com/articles/2781782-final-2018-nba-draft-big-board-who-will-take-our-top-prospect-luka-doncic",
+    "ranks": [
+      [
+        1,
+        "Luka Doncic"
+      ],
+      [
+        2,
+        "Jaren Jackson Jr."
+      ],
+      [
+        3,
+        "Deandre Ayton"
+      ],
+      [
+        4,
+        "Mohamed Bamba"
+      ],
+      [
+        5,
+        "Trae Young"
+      ],
+      [
+        6,
+        "Marvin Bagley III"
+      ],
+      [
+        7,
+        "Wendell Carter Jr."
+      ],
+      [
+        8,
+        "Mikal Bridges"
+      ],
+      [
+        9,
+        "Michael Porter Jr."
+      ],
+      [
+        10,
+        "Zhaire Smith"
+      ],
+      [
+        11,
+        "Kevin Knox"
+      ],
+      [
+        12,
+        "Shai Gilgeous-Alexander"
+      ],
+      [
+        13,
+        "Jerome Robinson"
+      ],
+      [
+        14,
+        "Kevin Huerter"
+      ],
+      [
+        15,
+        "Miles Bridges"
+      ],
+      [
+        16,
+        "Lonnie Walker"
+      ],
+      [
+        17,
+        "Collin Sexton"
+      ],
+      [
+        18,
+        "Robert Williams"
+      ],
+      [
+        19,
+        "Donte DiVincenzo"
+      ],
+      [
+        20,
+        "Aaron Holiday"
+      ],
+      [
+        21,
+        "Josh Okogie"
+      ],
+      [
+        22,
+        "Chandler Hutchison"
+      ],
+      [
+        23,
+        "De'Anthony Melton"
+      ],
+      [
+        24,
+        "Troy Brown"
+      ],
+      [
+        25,
+        "Dzanan Musa"
+      ],
+      [
+        26,
+        "Elie Okobo"
+      ],
+      [
+        27,
+        "Jacob Evans"
+      ],
+      [
+        28,
+        "Khyri Thomas"
+      ],
+      [
+        29,
+        "Keita Bates-Diop"
+      ],
+      [
+        30,
+        "Grayson Allen"
+      ],
+      [
+        31,
+        "Mitchell Robinson"
+      ],
+      [
+        32,
+        "Anfernee Simons"
+      ],
+      [
+        33,
+        "Melvin Frazier"
+      ],
+      [
+        34,
+        "Jalen Brunson"
+      ],
+      [
+        35,
+        "Jevon Carter"
+      ],
+      [
+        36,
+        "Kevin Hervey"
+      ],
+      [
+        37,
+        "Bruce Brown"
+      ],
+      [
+        38,
+        "Moritz Wagner"
+      ],
+      [
+        39,
+        "Gary Trent Jr."
+      ],
+      [
+        40,
+        "Hamidou Diallo"
+      ],
+      [
+        41,
+        "Devonte' Graham"
+      ],
+      [
+        42,
+        "Malik Newman"
+      ],
+      [
+        43,
+        "Rodions Kurucs"
+      ],
+      [
+        44,
+        "Chimezie Metu"
+      ],
+      [
+        45,
+        "Omari Spellman"
+      ],
+      [
+        46,
+        "Landry Shamet"
+      ],
+      [
+        47,
+        "Rawle Alkins"
+      ],
+      [
+        48,
+        "Kenrich Williams"
+      ],
+      [
+        49,
+        "Alize Johnson"
+      ],
+      [
+        50,
+        "Arnoldas Kulboka"
+      ]
+    ]
+  },
+  {
+    "id": "si2019",
+    "year": 2019,
+    "publisher": "Jeremy Woo, Sports Illustrated",
+    "published": "2019-06-05",
+    "url": "https://www.si.com/nba/2019/06/05/nba-draft-big-board-top-100-player-rankings",
+    "ranks": [
+      [
+        1,
+        "Zion Williamson"
+      ],
+      [
+        2,
+        "Ja Morant"
+      ],
+      [
+        3,
+        "Jarrett Culver"
+      ],
+      [
+        4,
+        "R.J. Barrett"
+      ],
+      [
+        5,
+        "Coby White"
+      ],
+      [
+        6,
+        "Darius Garland"
+      ],
+      [
+        7,
+        "De’Andre Hunter"
+      ],
+      [
+        8,
+        "Goga Bitadze"
+      ],
+      [
+        9,
+        "Sekou Doumbouya"
+      ],
+      [
+        10,
+        "Cam Reddish"
+      ],
+      [
+        11,
+        "Jaxson Hayes"
+      ],
+      [
+        12,
+        "Rui Hachimura"
+      ],
+      [
+        13,
+        "Kevin Porter Jr."
+      ],
+      [
+        14,
+        "Nassir Little"
+      ],
+      [
+        15,
+        "Tyler Herro"
+      ],
+      [
+        16,
+        "P.J. Washington"
+      ],
+      [
+        17,
+        "Keldon Johnson"
+      ],
+      [
+        18,
+        "Nickeil Alexander-Walker"
+      ],
+      [
+        19,
+        "Nic Claxton"
+      ],
+      [
+        20,
+        "Bol Bol"
+      ],
+      [
+        21,
+        "Bruno Fernando"
+      ],
+      [
+        22,
+        "Romeo Langford"
+      ],
+      [
+        23,
+        "Brandon Clarke"
+      ],
+      [
+        24,
+        "Cameron Johnson"
+      ],
+      [
+        25,
+        "Mfiondu Kabengele"
+      ],
+      [
+        26,
+        "Ty Jerome"
+      ],
+      [
+        27,
+        "KZ Okpala"
+      ],
+      [
+        28,
+        "Carsen Edwards"
+      ],
+      [
+        29,
+        "Luka Samanic"
+      ],
+      [
+        30,
+        "Matisse Thybulle"
+      ],
+      [
+        31,
+        "Chuma Okeke"
+      ],
+      [
+        32,
+        "Luguentz Dort"
+      ],
+      [
+        33,
+        "Talen Horton-Tucker"
+      ],
+      [
+        34,
+        "Grant Williams"
+      ],
+      [
+        35,
+        "Jontay Porter"
+      ],
+      [
+        36,
+        "Darius Bazley"
+      ],
+      [
+        37,
+        "Daniel Gafford"
+      ],
+      [
+        38,
+        "Dylan Windler"
+      ],
+      [
+        39,
+        "Jalen Lecque"
+      ],
+      [
+        40,
+        "Eric Paschall"
+      ],
+      [
+        41,
+        "Naz Reid"
+      ],
+      [
+        42,
+        "Louis King"
+      ],
+      [
+        43,
+        "Isaiah Roby"
+      ],
+      [
+        44,
+        "Jordan Bone"
+      ],
+      [
+        45,
+        "Deividas Sirvydis"
+      ],
+      [
+        46,
+        "Quinndary Weatherspoon"
+      ],
+      [
+        47,
+        "Zach Norvell Jr."
+      ],
+      [
+        48,
+        "Admiral Schofield"
+      ],
+      [
+        49,
+        "Jaylen Nowell"
+      ],
+      [
+        50,
+        "Tremont Waters"
+      ],
+      [
+        51,
+        "DaQuan Jeffries"
+      ],
+      [
+        52,
+        "Miye Oni"
+      ],
+      [
+        53,
+        "Jordan Poole"
+      ],
+      [
+        54,
+        "Terence Davis"
+      ],
+      [
+        55,
+        "Marcos Louzada Silva"
+      ],
+      [
+        56,
+        "Shamorie Ponds"
+      ],
+      [
+        57,
+        "Jaylen Hoard"
+      ],
+      [
+        58,
+        "Jarrey Foster"
+      ],
+      [
+        59,
+        "Terance Mann"
+      ],
+      [
+        60,
+        "Zylan Cheatham"
+      ],
+      [
+        61,
+        "Ethan Happ"
+      ],
+      [
+        62,
+        "Ky Bowman"
+      ],
+      [
+        63,
+        "Charles Matthews"
+      ],
+      [
+        64,
+        "Jalen McDaniels"
+      ],
+      [
+        65,
+        "Cody Martin"
+      ],
+      [
+        66,
+        "Dedric Lawson"
+      ],
+      [
+        67,
+        "Ignas Brazdeikis"
+      ],
+      [
+        68,
+        "Justin Robinson"
+      ],
+      [
+        69,
+        "Adam Mokoka"
+      ],
+      [
+        70,
+        "Marial Shayok"
+      ],
+      [
+        71,
+        "Max Strus"
+      ],
+      [
+        72,
+        "Jordan Caroline"
+      ],
+      [
+        73,
+        "Yovel Zoosman"
+      ],
+      [
+        74,
+        "Kris Wilkes"
+      ],
+      [
+        75,
+        "Alen Smailagic"
+      ],
+      [
+        76,
+        "Joshua Obiesie"
+      ],
+      [
+        77,
+        "Tacko Fall"
+      ],
+      [
+        78,
+        "Amir Coffey"
+      ],
+      [
+        79,
+        "Justin Foreman"
+      ],
+      [
+        80,
+        "Kenny Wooten"
+      ],
+      [
+        81,
+        "Jaylen Hands"
+      ],
+      [
+        82,
+        "Chris Clemons"
+      ],
+      [
+        83,
+        "Brian Bowen"
+      ],
+      [
+        84,
+        "Jared Harper"
+      ],
+      [
+        85,
+        "Dewan Hernandez"
+      ],
+      [
+        86,
+        "Milik Yarbrough"
+      ],
+      [
+        87,
+        "Moses Brown"
+      ],
+      [
+        88,
+        "Tyler Cook"
+      ],
+      [
+        89,
+        "Aubrey Dawkins"
+      ],
+      [
+        90,
+        "Tyus Battle"
+      ],
+      [
+        91,
+        "Kyle Guy"
+      ],
+      [
+        92,
+        "Simi Shittu"
+      ],
+      [
+        93,
+        "Oshae Brissett"
+      ],
+      [
+        94,
+        "Rayjon Tucker"
+      ],
+      [
+        95,
+        "Kerwin Roach"
+      ],
+      [
+        96,
+        "Juwan Morgan"
+      ],
+      [
+        97,
+        "Dean Wade"
+      ],
+      [
+        98,
+        "Garrison Mathews"
+      ],
+      [
+        99,
+        "Zach Hankins"
+      ],
+      [
+        100,
+        "Corey Davis,"
+      ]
+    ]
+  },
+  {
+    "id": "si2020",
+    "year": 2020,
+    "publisher": "Jeremy Woo, Sports Illustrated",
+    "published": "2020-11-09",
+    "url": "https://www.si.com/nba/2020/11/09/nba-draft-big-board-top-80-rankings",
+    "ranks": [
+      [
+        1,
+        "Anthony Edwards"
+      ],
+      [
+        2,
+        "LaMelo Ball"
+      ],
+      [
+        3,
+        "James Wiseman"
+      ],
+      [
+        4,
+        "Tyrese Haliburton"
+      ],
+      [
+        5,
+        "Killian Hayes"
+      ],
+      [
+        6,
+        "Onyeka Okongwu"
+      ],
+      [
+        7,
+        "Obi Toppin"
+      ],
+      [
+        8,
+        "Deni Avdija"
+      ],
+      [
+        9,
+        "Patrick Williams"
+      ],
+      [
+        10,
+        "Isaac Okoro"
+      ],
+      [
+        11,
+        "Devin Vassell"
+      ],
+      [
+        12,
+        "Tyrese Maxey"
+      ],
+      [
+        13,
+        "Kira Lewis Jr."
+      ],
+      [
+        14,
+        "Aaron Nesmith"
+      ],
+      [
+        15,
+        "Tyrell Terry"
+      ],
+      [
+        16,
+        "Saddiq Bey"
+      ],
+      [
+        17,
+        "Precious Achiuwa"
+      ],
+      [
+        18,
+        "R.J. Hampton"
+      ],
+      [
+        19,
+        "Théo Maledon"
+      ],
+      [
+        20,
+        "Aleksej Pokusevski"
+      ],
+      [
+        21,
+        "Cole Anthony"
+      ],
+      [
+        22,
+        "Isaiah Stewart"
+      ],
+      [
+        23,
+        "Jaden McDaniels"
+      ],
+      [
+        24,
+        "Malachi Flynn"
+      ],
+      [
+        25,
+        "Leandro Bolmaro"
+      ],
+      [
+        26,
+        "Xavier Tillman"
+      ],
+      [
+        27,
+        "Vernon Carey Jr."
+      ],
+      [
+        28,
+        "Josh Green"
+      ],
+      [
+        29,
+        "Desmond Bane"
+      ],
+      [
+        30,
+        "Jalen Smith"
+      ],
+      [
+        31,
+        "Tyler Bey"
+      ],
+      [
+        32,
+        "Nico Mannion"
+      ],
+      [
+        33,
+        "Jahmi’us Ramsey"
+      ],
+      [
+        34,
+        "Immanuel Quickley"
+      ],
+      [
+        35,
+        "Zeke Nnaji"
+      ],
+      [
+        36,
+        "Tre Jones"
+      ],
+      [
+        37,
+        "Cassius Winston"
+      ],
+      [
+        38,
+        "Grant Riller"
+      ],
+      [
+        39,
+        "Isaiah Joe"
+      ],
+      [
+        40,
+        "Payton Pritchard"
+      ],
+      [
+        41,
+        "Robert Woodard"
+      ],
+      [
+        42,
+        "Udoka Azubuike"
+      ],
+      [
+        43,
+        "Jordan Nwora"
+      ],
+      [
+        44,
+        "Cassius Stanley"
+      ],
+      [
+        45,
+        "Daniel Oturu"
+      ],
+      [
+        46,
+        "Devon Dotson"
+      ],
+      [
+        47,
+        "Kaleb Wesson"
+      ],
+      [
+        48,
+        "Paul Reed"
+      ],
+      [
+        49,
+        "Sam Merrill"
+      ],
+      [
+        50,
+        "Skylar Mays"
+      ],
+      [
+        51,
+        "Killian Tillie"
+      ],
+      [
+        52,
+        "Reggie Perry"
+      ],
+      [
+        53,
+        "Elijah Hughes"
+      ],
+      [
+        54,
+        "Paul Eboua"
+      ],
+      [
+        55,
+        "Ashton Hagans"
+      ],
+      [
+        56,
+        "Markus Howard"
+      ],
+      [
+        57,
+        "Ty-Shon Alexander"
+      ],
+      [
+        58,
+        "Yam Madar"
+      ],
+      [
+        59,
+        "Josh Hall"
+      ],
+      [
+        60,
+        "Trent Forrest"
+      ],
+      [
+        61,
+        "Mason Jones"
+      ],
+      [
+        62,
+        "Myles Powell"
+      ],
+      [
+        63,
+        "Nathan Knight"
+      ],
+      [
+        64,
+        "Naji Marshall"
+      ],
+      [
+        65,
+        "Trevelin Queen"
+      ],
+      [
+        66,
+        "Nate Hinton"
+      ],
+      [
+        67,
+        "Abdoulaye N’Doye"
+      ],
+      [
+        68,
+        "C.J. Elleby"
+      ],
+      [
+        69,
+        "Jalen Harris"
+      ],
+      [
+        70,
+        "Nick Richards"
+      ],
+      [
+        71,
+        "Malik Fitts"
+      ],
+      [
+        72,
+        "Mamadi Diakite"
+      ],
+      [
+        73,
+        "Jay Scrubb"
+      ],
+      [
+        74,
+        "Yoeli Childs"
+      ],
+      [
+        75,
+        "Jordan Ford"
+      ],
+      [
+        76,
+        "Austin Wiley"
+      ],
+      [
+        77,
+        "Vit Krejci"
+      ],
+      [
+        78,
+        "Isiaha Mike"
+      ],
+      [
+        79,
+        "Saben Lee"
+      ],
+      [
+        80,
+        "Kenyon Martin Jr."
+      ]
+    ]
+  },
+  {
+    "id": "si2021",
+    "year": 2021,
+    "publisher": "Jeremy Woo, Sports Illustrated",
+    "published": "2021-07-08",
+    "url": "https://www.si.com/nba/2021/07/08/nba-draft-big-board-top-80-prospect-rankings-cade-cunningham-evan-mobley",
+    "ranks": [
+      [
+        1,
+        "Cade Cunningham"
+      ],
+      [
+        2,
+        "Evan Mobley"
+      ],
+      [
+        3,
+        "Jalen Green"
+      ],
+      [
+        4,
+        "Jalen Suggs"
+      ],
+      [
+        5,
+        "Scottie Barnes"
+      ],
+      [
+        6,
+        "Jonathan Kuminga"
+      ],
+      [
+        7,
+        "James Bouknight"
+      ],
+      [
+        8,
+        "Joshua Giddey"
+      ],
+      [
+        9,
+        "Keon Johnson"
+      ],
+      [
+        10,
+        "Franz Wagner"
+      ],
+      [
+        11,
+        "Alperen Sengün"
+      ],
+      [
+        12,
+        "Jalen Johnson"
+      ],
+      [
+        13,
+        "Corey Kispert"
+      ],
+      [
+        14,
+        "Kai Jones"
+      ],
+      [
+        15,
+        "Usman Garuba"
+      ],
+      [
+        16,
+        "Davion Mitchell"
+      ],
+      [
+        17,
+        "Moses Moody"
+      ],
+      [
+        18,
+        "Jared Butler"
+      ],
+      [
+        19,
+        "Chris Duarte"
+      ],
+      [
+        20,
+        "Trey Murphy"
+      ],
+      [
+        21,
+        "Joshua Primo"
+      ],
+      [
+        22,
+        "Ziaire Williams"
+      ],
+      [
+        23,
+        "Tre Mann"
+      ],
+      [
+        24,
+        "Day’Ron Sharpe"
+      ],
+      [
+        25,
+        "Joel Ayayi"
+      ],
+      [
+        26,
+        "Jaden Springer"
+      ],
+      [
+        27,
+        "Isaiah Jackson"
+      ],
+      [
+        28,
+        "Cameron Thomas"
+      ],
+      [
+        29,
+        "Jason Preston"
+      ],
+      [
+        30,
+        "Quentin Grimes"
+      ],
+      [
+        31,
+        "Sharife Cooper"
+      ],
+      [
+        32,
+        "JT Thor"
+      ],
+      [
+        33,
+        "Miles McBride"
+      ],
+      [
+        34,
+        "Nah’shon “Bones” Hyland"
+      ],
+      [
+        35,
+        "Ayo Dosunmu"
+      ],
+      [
+        36,
+        "Josh Christopher"
+      ],
+      [
+        37,
+        "Roko Prkačin"
+      ],
+      [
+        38,
+        "David Johnson"
+      ],
+      [
+        39,
+        "Juhann Begarin"
+      ],
+      [
+        40,
+        "Isaiah Todd"
+      ],
+      [
+        41,
+        "Aaron Henry"
+      ],
+      [
+        42,
+        "Brandon Boston Jr."
+      ],
+      [
+        43,
+        "Joe Wieskamp"
+      ],
+      [
+        44,
+        "Jeremiah Robinson-Earl"
+      ],
+      [
+        45,
+        "Charles Bassey"
+      ],
+      [
+        46,
+        "Herbert Jones"
+      ],
+      [
+        47,
+        "Austin Reaves"
+      ],
+      [
+        48,
+        "Neemias Queta"
+      ],
+      [
+        49,
+        "Jose Alvarado"
+      ],
+      [
+        50,
+        "Justin Champagnie"
+      ],
+      [
+        51,
+        "Kessler Edwards"
+      ],
+      [
+        52,
+        "Ariel Hukporti"
+      ],
+      [
+        53,
+        "Filip Petrušev"
+      ],
+      [
+        54,
+        "Isaiah Livers"
+      ],
+      [
+        55,
+        "A.J. Lawson"
+      ],
+      [
+        56,
+        "Dalano Banton"
+      ],
+      [
+        57,
+        "Rokas Jokubaitis"
+      ],
+      [
+        58,
+        "Greg Brown III"
+      ],
+      [
+        59,
+        "Daishen Nix"
+      ],
+      [
+        60,
+        "Jericho Sims"
+      ],
+      [
+        61,
+        "Luka Garza"
+      ],
+      [
+        62,
+        "Carlik Jones"
+      ],
+      [
+        63,
+        "Sandro Mamukelashvili"
+      ],
+      [
+        64,
+        "RaiQuan Gray"
+      ],
+      [
+        65,
+        "Chaundee Brown"
+      ],
+      [
+        66,
+        "Duane Washington"
+      ],
+      [
+        67,
+        "Vrenz Blijenbergh"
+      ],
+      [
+        68,
+        "Moses Wright"
+      ],
+      [
+        69,
+        "McKinley Wright"
+      ],
+      [
+        70,
+        "Sam Hauser"
+      ],
+      [
+        71,
+        "Yves Pons"
+      ],
+      [
+        72,
+        "Oscar da Silva"
+      ],
+      [
+        73,
+        "Aaron Wiggins"
+      ],
+      [
+        74,
+        "Matthew Hurt"
+      ],
+      [
+        75,
+        "David Duke"
+      ],
+      [
+        76,
+        "Ibou Dianko Badji"
+      ],
+      [
+        77,
+        "Jay Huff"
+      ],
+      [
+        78,
+        "EJ Onu"
+      ],
+      [
+        79,
+        "Eugene Omoruyi"
+      ],
+      [
+        80,
+        "Santiago Aldama"
+      ]
+    ]
+  },
+  {
+    "id": "si2022",
+    "year": 2022,
+    "publisher": "Jeremy Woo, Sports Illustrated",
+    "published": "2022-06-15",
+    "url": "https://www.si.com/nba/2022/06/15/nba-draft-big-board-jabari-smith-paolo-banchero-top-100-rankings",
+    "ranks": [
+      [
+        1,
+        "Jabari Smith Jr."
+      ],
+      [
+        2,
+        "Paolo Banchero"
+      ],
+      [
+        3,
+        "Jaden Ivey"
+      ],
+      [
+        4,
+        "Chet Holmgren"
+      ],
+      [
+        5,
+        "Dyson Daniels"
+      ],
+      [
+        6,
+        "Keegan Murray"
+      ],
+      [
+        7,
+        "Jeremy Sochan"
+      ],
+      [
+        8,
+        "Shaedon Sharpe"
+      ],
+      [
+        9,
+        "Johnny Davis"
+      ],
+      [
+        10,
+        "Bennedict Mathurin"
+      ],
+      [
+        11,
+        "A.J. Griffin"
+      ],
+      [
+        12,
+        "Ousmane Dieng"
+      ],
+      [
+        13,
+        "Mark Williams"
+      ],
+      [
+        14,
+        "Jalen Duren"
+      ],
+      [
+        15,
+        "Malaki Branham"
+      ],
+      [
+        16,
+        "Ochai Agbaji"
+      ],
+      [
+        17,
+        "Wendell Moore"
+      ],
+      [
+        18,
+        "Patrick Baldwin Jr."
+      ],
+      [
+        19,
+        "Jalen Williams"
+      ],
+      [
+        20,
+        "Jaden Hardy"
+      ],
+      [
+        21,
+        "E.J. Liddell"
+      ],
+      [
+        22,
+        "Tari Eason"
+      ],
+      [
+        23,
+        "Blake Wesley"
+      ],
+      [
+        24,
+        "TyTy Washington"
+      ],
+      [
+        25,
+        "Nikola Jovic"
+      ],
+      [
+        26,
+        "Jake LaRavia"
+      ],
+      [
+        27,
+        "Dalen Terry"
+      ],
+      [
+        28,
+        "Justin Lewis"
+      ],
+      [
+        29,
+        "Walker Kessler"
+      ],
+      [
+        30,
+        "David Roddy"
+      ],
+      [
+        31,
+        "Kendall Brown"
+      ],
+      [
+        32,
+        "Michael Foster Jr."
+      ],
+      [
+        33,
+        "Andrew Nembhard"
+      ],
+      [
+        34,
+        "Marjon Beauchamp"
+      ],
+      [
+        35,
+        "Max Christie"
+      ],
+      [
+        36,
+        "Bryce McGowens"
+      ],
+      [
+        37,
+        "Peyton Watson"
+      ],
+      [
+        38,
+        "Christian Koloko"
+      ],
+      [
+        39,
+        "Trevor Keels"
+      ],
+      [
+        40,
+        "Kennedy Chandler"
+      ],
+      [
+        41,
+        "Tyrese Martin"
+      ],
+      [
+        42,
+        "Christian Braun"
+      ],
+      [
+        43,
+        "John Butler Jr."
+      ],
+      [
+        44,
+        "Ryan Rollins"
+      ],
+      [
+        45,
+        "Keon Ellis"
+      ],
+      [
+        46,
+        "Caleb Houstan"
+      ],
+      [
+        47,
+        "Ismael Kamagate"
+      ],
+      [
+        48,
+        "Josh Minott"
+      ],
+      [
+        49,
+        "Jaylin Williams"
+      ],
+      [
+        50,
+        "Gabriele Procida"
+      ],
+      [
+        51,
+        "Julian Champagnie"
+      ],
+      [
+        52,
+        "Khalifa Diop"
+      ],
+      [
+        53,
+        "Dominick Barlow"
+      ],
+      [
+        54,
+        "Jean Montero"
+      ],
+      [
+        55,
+        "Dereon Seabron"
+      ],
+      [
+        56,
+        "Alondes Williams"
+      ],
+      [
+        57,
+        "J.D. Davison"
+      ],
+      [
+        58,
+        "Jabari Walker"
+      ],
+      [
+        59,
+        "Yannick Nzosa"
+      ],
+      [
+        60,
+        "Bryson Williams"
+      ],
+      [
+        61,
+        "Trevion Williams"
+      ],
+      [
+        62,
+        "Jared Rhoden"
+      ],
+      [
+        63,
+        "Lucas Williamson"
+      ],
+      [
+        64,
+        "Jamaree Bouyea"
+      ],
+      [
+        65,
+        "Moussa Diabate"
+      ],
+      [
+        66,
+        "Darius Days"
+      ],
+      [
+        67,
+        "Kenneth Lofton Jr."
+      ],
+      [
+        68,
+        "Scotty Pippen Jr."
+      ],
+      [
+        69,
+        "Vince Williams"
+      ],
+      [
+        70,
+        "Hugo Besson"
+      ],
+      [
+        71,
+        "Colin Gillespie"
+      ],
+      [
+        72,
+        "Aminu Mohammed"
+      ],
+      [
+        73,
+        "Ron Harper Jr."
+      ],
+      [
+        74,
+        "Ziga Samar"
+      ],
+      [
+        75,
+        "Karlo Matkovic"
+      ],
+      [
+        76,
+        "Stanley Umude"
+      ],
+      [
+        77,
+        "Quenton Jackson"
+      ],
+      [
+        78,
+        "Gui Santos"
+      ],
+      [
+        79,
+        "Orlando Robinson"
+      ],
+      [
+        80,
+        "Gabe Brown"
+      ],
+      [
+        81,
+        "Johnny Juzang"
+      ],
+      [
+        82,
+        "Tevin Brown"
+      ],
+      [
+        83,
+        "Izaiah Brockington"
+      ],
+      [
+        84,
+        "Matteo Spagnolo"
+      ],
+      [
+        85,
+        "Jordan Hall"
+      ],
+      [
+        86,
+        "Isaiah Mobley"
+      ],
+      [
+        87,
+        "Buddy Boeheim"
+      ],
+      [
+        88,
+        "Brady Manek"
+      ],
+      [
+        89,
+        "Jules Bernard"
+      ],
+      [
+        90,
+        "Hyunjung Lee"
+      ],
+      [
+        91,
+        "Kofi Cockburn"
+      ],
+      [
+        92,
+        "AJ Green"
+      ],
+      [
+        93,
+        "Jaden Shackelford"
+      ],
+      [
+        94,
+        "Justin Bean"
+      ],
+      [
+        95,
+        "Javon Freeman-Liberty"
+      ],
+      [
+        96,
+        "Trevor Hudgins"
+      ],
+      [
+        97,
+        "Marcus Bingham"
+      ],
+      [
+        98,
+        "Ibou Dianko Badji"
+      ],
+      [
+        99,
+        "Luke Travers"
+      ],
+      [
+        100,
+        "Pavel Savkov"
+      ]
+    ]
+  },
+  {
+    "id": "clutch2023",
+    "year": 2023,
+    "publisher": "Brett Siegel, ClutchPoints",
+    "published": "2023-06-21",
+    "url": "https://clutchpoints.com/nba/nba-stories/brett-siegel-2023-nba-draft-big-board-5-0-top-100-rankings",
+    "ranks": [
+      [
+        1,
+        "Victor Wembanyama"
+      ],
+      [
+        2,
+        "Scoot Henderson"
+      ],
+      [
+        3,
+        "Brandon Miller"
+      ],
+      [
+        4,
+        "Amen Thompson"
+      ],
+      [
+        5,
+        "Ausar Thompson"
+      ],
+      [
+        6,
+        "Anthony Black"
+      ],
+      [
+        7,
+        "Cam Whitmore"
+      ],
+      [
+        8,
+        "Taylor Hendricks"
+      ],
+      [
+        9,
+        "Jarace Walker"
+      ],
+      [
+        10,
+        "Dereck Lively II"
+      ],
+      [
+        11,
+        "Keyonte George"
+      ],
+      [
+        12,
+        "Bilal Coulibaly"
+      ],
+      [
+        13,
+        "Gradey Dick"
+      ],
+      [
+        14,
+        "Nick Smith Jr."
+      ],
+      [
+        15,
+        "Leonard Miller"
+      ],
+      [
+        16,
+        "Jalen Hood-Schifino"
+      ],
+      [
+        17,
+        "Kris Murray"
+      ],
+      [
+        18,
+        "Kobe Bufkin"
+      ],
+      [
+        19,
+        "Cason Wallace"
+      ],
+      [
+        20,
+        "Jordan Hawkins"
+      ],
+      [
+        21,
+        "Noah Clowney"
+      ],
+      [
+        22,
+        "Rayan Rupert"
+      ],
+      [
+        23,
+        "Dariq Whitehead"
+      ],
+      [
+        24,
+        "Jett Howard"
+      ],
+      [
+        25,
+        "Olivier-Maxence Prosper"
+      ],
+      [
+        26,
+        "G.G. Jackson"
+      ],
+      [
+        27,
+        "Brice Sensabaugh"
+      ],
+      [
+        28,
+        "Maxwell Lewis"
+      ],
+      [
+        29,
+        "Ben Sheppard"
+      ],
+      [
+        30,
+        "Brandin Podziemski"
+      ],
+      [
+        31,
+        "Sidy Cissoko"
+      ],
+      [
+        32,
+        "James Nnaji"
+      ],
+      [
+        33,
+        "Colby Jones"
+      ],
+      [
+        34,
+        "Jaime Jaquez Jr."
+      ],
+      [
+        35,
+        "Andre Jackson Jr."
+      ],
+      [
+        36,
+        "Tristan Vukcevic"
+      ],
+      [
+        37,
+        "Julian Phillips"
+      ],
+      [
+        38,
+        "Terquavion Smith"
+      ],
+      [
+        39,
+        "Trayce Jackson-Davis"
+      ],
+      [
+        40,
+        "Chris Livingston"
+      ],
+      [
+        41,
+        "Jordan Walsh"
+      ],
+      [
+        42,
+        "Jalen Wilson"
+      ],
+      [
+        43,
+        "Marcus Sasser"
+      ],
+      [
+        44,
+        "Mouhamed Gueye"
+      ],
+      [
+        45,
+        "Julian Strawther"
+      ],
+      [
+        47,
+        "Keyontae Johnson"
+      ],
+      [
+        48,
+        "Seth Lundy"
+      ],
+      [
+        49,
+        "Kobe Brown"
+      ],
+      [
+        50,
+        "Toumani Camara"
+      ],
+      [
+        51,
+        "Emoni Bates"
+      ],
+      [
+        52,
+        "Jordan Miller"
+      ],
+      [
+        53,
+        "Jaylen Clark"
+      ],
+      [
+        54,
+        "Ricky Council IV"
+      ],
+      [
+        55,
+        "Oscar Tshiebwe"
+      ],
+      [
+        56,
+        "Mike Miles Jr."
+      ],
+      [
+        57,
+        "Hunter Tyson"
+      ],
+      [
+        58,
+        "Colin Castleton"
+      ],
+      [
+        59,
+        "Mojave King"
+      ],
+      [
+        60,
+        "Adama Sanogo"
+      ],
+      [
+        61,
+        "Isaiah Wong"
+      ],
+      [
+        62,
+        "Jalen Pickett"
+      ],
+      [
+        63,
+        "Omari Moore"
+      ],
+      [
+        64,
+        "Charles Bediako"
+      ],
+      [
+        65,
+        "Tosan Evbuomwam"
+      ],
+      [
+        66,
+        "Jalen Slawson"
+      ],
+      [
+        67,
+        "Adam Flagler"
+      ],
+      [
+        68,
+        "Markquis Nowell"
+      ],
+      [
+        69,
+        "Nadir Hifi"
+      ],
+      [
+        70,
+        "Jazian Gortman"
+      ],
+      [
+        71,
+        "Azuolas Tubelis"
+      ],
+      [
+        72,
+        "Drew Timme"
+      ],
+      [
+        73,
+        "Malcolm Cazalon"
+      ],
+      [
+        74,
+        "Drew Peterson"
+      ],
+      [
+        75,
+        "Sir’Jabari Rice"
+      ],
+      [
+        76,
+        "Justin Powell"
+      ],
+      [
+        77,
+        "Landers Nolley II"
+      ],
+      [
+        78,
+        "Kendric Davis"
+      ],
+      [
+        79,
+        "Marcus Bagley"
+      ],
+      [
+        80,
+        "Alex Fudge"
+      ],
+      [
+        81,
+        "Jaylen Martin"
+      ],
+      [
+        82,
+        "Justyn Mutts"
+      ],
+      [
+        83,
+        "D’Moi Hodge"
+      ],
+      [
+        84,
+        "Leaky Black"
+      ],
+      [
+        85,
+        "Tyger Campbell"
+      ],
+      [
+        86,
+        "Antoine Davis"
+      ],
+      [
+        87,
+        "Liam Robbins"
+      ],
+      [
+        88,
+        "Joey Hauser"
+      ],
+      [
+        89,
+        "Damion Baugh"
+      ],
+      [
+        90,
+        "Matthew Mayer"
+      ],
+      [
+        91,
+        "Chase Audige"
+      ],
+      [
+        92,
+        "Tevian Jones"
+      ],
+      [
+        93,
+        "Nikos Rogkavopoulos"
+      ],
+      [
+        94,
+        "Tyree Appleby"
+      ],
+      [
+        95,
+        "Taevion Kinsey"
+      ],
+      [
+        96,
+        "Grant Sherfield"
+      ],
+      [
+        97,
+        "Enzo Shahrvin"
+      ],
+      [
+        98,
+        "Armaan Franklin"
+      ],
+      [
+        99,
+        "Nathan Mensah"
+      ],
+      [
+        100,
+        "Manny Bates"
+      ]
+    ]
+  },
+  {
+    "id": "clutch2024",
+    "year": 2024,
+    "publisher": "Brett Siegel, ClutchPoints",
+    "published": "2024-06-25",
+    "url": "https://clutchpoints.com/2024-nba-draft-big-board-5-0-zaccharie-risacher-alex-sarr-top-100-rankings",
+    "ranks": [
+      [
+        1,
+        "Zaccharie Risacher"
+      ],
+      [
+        2,
+        "Alex Sarr"
+      ],
+      [
+        3,
+        "Donovan Clingan"
+      ],
+      [
+        4,
+        "Ron Holland"
+      ],
+      [
+        5,
+        "Stephon Castle"
+      ],
+      [
+        6,
+        "Nikola Topic"
+      ],
+      [
+        7,
+        "Matas Buzelis"
+      ],
+      [
+        8,
+        "Reed Sheppard"
+      ],
+      [
+        9,
+        "Tidjane Salaun"
+      ],
+      [
+        10,
+        "Devin Carter"
+      ],
+      [
+        11,
+        "Dalton Knecht"
+      ],
+      [
+        12,
+        "Cody Williams"
+      ],
+      [
+        13,
+        "Rob Dillingham"
+      ],
+      [
+        14,
+        "Ja'Kobe Walter"
+      ],
+      [
+        15,
+        "Jared McCain"
+      ],
+      [
+        16,
+        "Isaiah Collier"
+      ],
+      [
+        17,
+        "Kel'el Ware"
+      ],
+      [
+        18,
+        "Tristan da Silva"
+      ],
+      [
+        19,
+        "Kyle Filipowski"
+      ],
+      [
+        20,
+        "Yves Missi"
+      ],
+      [
+        21,
+        "Kyshawn George"
+      ],
+      [
+        22,
+        "Bobi Klintman"
+      ],
+      [
+        23,
+        "Carlton Carrington"
+      ],
+      [
+        24,
+        "Baylor Scheierman"
+      ],
+      [
+        25,
+        "Tyler Kolek"
+      ],
+      [
+        26,
+        "Ryan Dunn"
+      ],
+      [
+        27,
+        "DaRon Holmes II"
+      ],
+      [
+        28,
+        "Tyler Smith"
+      ],
+      [
+        29,
+        "Johnny Furphy"
+      ],
+      [
+        30,
+        "Terrence Shannon Jr."
+      ],
+      [
+        31,
+        "Zach Edey"
+      ],
+      [
+        32,
+        "Jaylon Tyson"
+      ],
+      [
+        33,
+        "Pacôme Dadiet"
+      ],
+      [
+        34,
+        "AJ Johnson"
+      ],
+      [
+        35,
+        "Kevin McCullar Jr."
+      ],
+      [
+        36,
+        "Ajay Mitchell"
+      ],
+      [
+        37,
+        "Jamal Shead"
+      ],
+      [
+        38,
+        "Justin Edwards"
+      ],
+      [
+        39,
+        "Harrison Ingram"
+      ],
+      [
+        40,
+        "Ulrich Chomche"
+      ],
+      [
+        41,
+        "Jonathan Mogbo"
+      ],
+      [
+        42,
+        "KJ Simpson"
+      ],
+      [
+        43,
+        "Cam Christie"
+      ],
+      [
+        44,
+        "Melvin Ajinca"
+      ],
+      [
+        45,
+        "Nikola Djurisic"
+      ],
+      [
+        46,
+        "Trentyn Flowers"
+      ],
+      [
+        47,
+        "Juan Nunez"
+      ],
+      [
+        48,
+        "Oso Ighodaro"
+      ],
+      [
+        49,
+        "Adem Bona"
+      ],
+      [
+        50,
+        "Enrique Freeman"
+      ],
+      [
+        51,
+        "Keshad Johnson"
+      ],
+      [
+        52,
+        "Dillon Jones"
+      ],
+      [
+        53,
+        "Jalen Bridges"
+      ],
+      [
+        54,
+        "Jaylen Wells"
+      ],
+      [
+        55,
+        "Bronny James"
+      ],
+      [
+        56,
+        "Tristan Newton"
+      ],
+      [
+        57,
+        "Pelle Larsson"
+      ],
+      [
+        58,
+        "Antonio Reeves"
+      ],
+      [
+        59,
+        "Cam Spencer"
+      ],
+      [
+        60,
+        "Ariel Hukporti"
+      ],
+      [
+        61,
+        "PJ Hall"
+      ],
+      [
+        62,
+        "Trey Alexander"
+      ],
+      [
+        63,
+        "Isaac Jones"
+      ],
+      [
+        64,
+        "Quinten Post"
+      ],
+      [
+        65,
+        "Isaiah Crawford"
+      ],
+      [
+        66,
+        "Mantas Rubštavičius"
+      ],
+      [
+        67,
+        "Reece Beekman"
+      ],
+      [
+        68,
+        "Armel Traore"
+      ],
+      [
+        69,
+        "N'Faly Dante"
+      ],
+      [
+        70,
+        "Boogie Ellis"
+      ],
+      [
+        71,
+        "Judah Mintz"
+      ],
+      [
+        72,
+        "Jesse Edwards"
+      ],
+      [
+        73,
+        "Riley Minix"
+      ],
+      [
+        74,
+        "Zyon Pullin"
+      ],
+      [
+        75,
+        "Emmanuel Miller"
+      ],
+      [
+        76,
+        "Blake Hinson"
+      ],
+      [
+        77,
+        "Anton Watson"
+      ],
+      [
+        78,
+        "Babacar Sane"
+      ],
+      [
+        79,
+        "Yannick Kraag"
+      ],
+      [
+        80,
+        "Spencer Jones"
+      ],
+      [
+        81,
+        "Malevy Leons"
+      ],
+      [
+        82,
+        "Nae'Qwan Tomlin"
+      ],
+      [
+        83,
+        "Quinn Ellis"
+      ],
+      [
+        84,
+        "Dylan Disu"
+      ],
+      [
+        85,
+        "Taran Armstrong"
+      ],
+      [
+        86,
+        "Jaedon LeDee"
+      ],
+      [
+        87,
+        "David Jones"
+      ],
+      [
+        88,
+        "Isaiah Stevens"
+      ],
+      [
+        89,
+        "Allen Flanigan"
+      ],
+      [
+        90,
+        "Adama Bal"
+      ],
+      [
+        91,
+        "Marcus Domask"
+      ],
+      [
+        92,
+        "Eric Gains"
+      ],
+      [
+        93,
+        "Tre Mitchell"
+      ],
+      [
+        94,
+        "Josiah-Jordan James"
+      ],
+      [
+        95,
+        "Jermaine Couisnard"
+      ],
+      [
+        96,
+        "Armando Bacot"
+      ],
+      [
+        97,
+        "Jaylin Williams"
+      ],
+      [
+        98,
+        "DJ Burns Jr."
+      ],
+      [
+        99,
+        "Branden Carlson"
+      ],
+      [
+        100,
+        "Kevin Cross"
+      ]
+    ]
+  },
+  {
+    "id": "cbs2025",
+    "year": 2025,
+    "publisher": "Kyle Boone, CBS Sports",
+    "published": "2025-06-24",
+    "url": "https://www.cbssports.com/nba/news/2025-nba-draft-top-100-prospect-rankings-scouting-reports-for-top-players-on-final-big-board/",
+    "ranks": [
+      [
+        1,
+        "Cooper Flagg"
+      ],
+      [
+        2,
+        "Dylan Harper"
+      ],
+      [
+        3,
+        "Tre Johnson"
+      ],
+      [
+        4,
+        "Ace Bailey"
+      ],
+      [
+        5,
+        "VJ Edgecombe"
+      ],
+      [
+        6,
+        "Kon Knueppel"
+      ],
+      [
+        7,
+        "Kasparas Jakucionis"
+      ],
+      [
+        8,
+        "Khaman Maluach"
+      ],
+      [
+        9,
+        "Derik Queen"
+      ],
+      [
+        10,
+        "Carter Bryant"
+      ]
+    ]
+  },
+  {
+    "id": "sbn2025",
+    "year": 2025,
+    "publisher": "Ricky O’Donnell, SB Nation",
+    "published": "2025-06-24",
+    "url": "https://www.sbnation.com/nba/2025/6/24/24452806/nba-draft-2025-rankings-big-board-best-players-top-60-prospects",
+    "ranks": [
+      [
+        1,
+        "Cooper Flagg"
+      ],
+      [
+        2,
+        "Dylan Harper"
+      ],
+      [
+        3,
+        "Khaman Maluach"
+      ],
+      [
+        4,
+        "Kon Knueppel"
+      ],
+      [
+        5,
+        "VJ Edgecombe"
+      ],
+      [
+        6,
+        "Collin Murray-Boyles"
+      ],
+      [
+        7,
+        "Jeremiah Fears"
+      ],
+      [
+        8,
+        "Tre Johnson"
+      ],
+      [
+        9,
+        "Ace Bailey"
+      ],
+      [
+        10,
+        "Noa Essengue"
+      ],
+      [
+        11,
+        "Derik Queen"
+      ],
+      [
+        12,
+        "Kasparas Jakucionis"
+      ],
+      [
+        13,
+        "Jase Richardson"
+      ],
+      [
+        14,
+        "Thomas Sorber"
+      ],
+      [
+        15,
+        "Carter Bryant"
+      ],
+      [
+        16,
+        "Nique Clifford"
+      ],
+      [
+        17,
+        "Walter Clayton Jr."
+      ],
+      [
+        18,
+        "Asa Newell"
+      ],
+      [
+        19,
+        "Rasheer Fleming"
+      ],
+      [
+        20,
+        "Will Riley"
+      ],
+      [
+        21,
+        "Ryan Kalbrenner"
+      ],
+      [
+        22,
+        "Adou Thiero"
+      ],
+      [
+        23,
+        "Noah Penda"
+      ],
+      [
+        24,
+        "Cedric Coward"
+      ],
+      [
+        25,
+        "Kam Jones"
+      ],
+      [
+        26,
+        "Drake Powell"
+      ],
+      [
+        27,
+        "Egor Demin"
+      ],
+      [
+        28,
+        "Joan Beringer"
+      ],
+      [
+        29,
+        "Liam McNeely"
+      ],
+      [
+        30,
+        "Danny Wolf"
+      ],
+      [
+        31,
+        "Nolan Traore"
+      ],
+      [
+        32,
+        "Ben Saraf"
+      ],
+      [
+        33,
+        "Hugo Gonzalez"
+      ],
+      [
+        34,
+        "Hansen Yang"
+      ],
+      [
+        35,
+        "Johni Broome"
+      ],
+      [
+        36,
+        "Bogoljub Marković"
+      ],
+      [
+        37,
+        "Maxime Raynaud"
+      ],
+      [
+        38,
+        "Amari Williams"
+      ],
+      [
+        39,
+        "Vlad Goldin"
+      ],
+      [
+        40,
+        "Sion James"
+      ],
+      [
+        41,
+        "Koby Brea"
+      ],
+      [
+        42,
+        "Alijah Martin"
+      ],
+      [
+        43,
+        "Tyrese Proctor"
+      ],
+      [
+        44,
+        "Javon Small"
+      ],
+      [
+        45,
+        "Eric Dixon"
+      ],
+      [
+        46,
+        "Max Shulga"
+      ],
+      [
+        47,
+        "Grant Nelson"
+      ],
+      [
+        48,
+        "Chucky Hepburn"
+      ],
+      [
+        49,
+        "John Tonje"
+      ],
+      [
+        50,
+        "Brice Williams"
+      ],
+      [
+        51,
+        "Dylan Cardwell"
+      ],
+      [
+        52,
+        "Rocco Zikarsky"
+      ],
+      [
+        53,
+        "Alex Toohey"
+      ],
+      [
+        54,
+        "Yanic Konan Niederhauser"
+      ],
+      [
+        55,
+        "Izan Almansa"
+      ],
+      [
+        56,
+        "Kadary Richmond"
+      ],
+      [
+        57,
+        "Kobe Sanders"
+      ],
+      [
+        58,
+        "Ryan Nembhard"
+      ],
+      [
+        59,
+        "Jamir Watkins"
+      ],
+      [
+        60,
+        "Jahmai Mashack"
+      ]
+    ]
+  },
+  {
+    "id": "nbasl-2017",
+    "year": 2017,
+    "publisher": "NBA Scouting Live composite",
+    "published": "2017-06-22",
+    "url": "https://www.nbascoutinglive.com/true-draft-worth-rankings/",
+    "ranks": [
+      [
+        1,
+        "Markelle Fultz"
+      ],
+      [
+        2,
+        "Lonzo Ball"
+      ],
+      [
+        3,
+        "Josh Jackson"
+      ],
+      [
+        4,
+        "Jayson Tatum"
+      ],
+      [
+        5,
+        "De’Aaron Fox"
+      ],
+      [
+        6,
+        "Dennis Smith Jr."
+      ],
+      [
+        7,
+        "Jonathan Isaac"
+      ],
+      [
+        8,
+        "Malik Monk"
+      ],
+      [
+        9,
+        "Lauri Markkanen"
+      ],
+      [
+        10,
+        "Frank Ntilikina"
+      ],
+      [
+        11,
+        "Zach Collins"
+      ],
+      [
+        12,
+        "OG Anunoby"
+      ],
+      [
+        13,
+        "John Collins"
+      ],
+      [
+        14,
+        "Donovan Mitchell"
+      ],
+      [
+        15,
+        "Luke Kennard"
+      ],
+      [
+        16,
+        "Jarrett Allen"
+      ],
+      [
+        17,
+        "Justin Jackson"
+      ],
+      [
+        18,
+        "Justin Patton"
+      ],
+      [
+        19,
+        "Terrance Ferguson"
+      ],
+      [
+        20,
+        "Harry Giles"
+      ],
+      [
+        21,
+        "T.J. Leaf"
+      ],
+      [
+        22,
+        "Bam Adebayo"
+      ],
+      [
+        23,
+        "Caleb Swanigan"
+      ],
+      [
+        24,
+        "Jawun Evans"
+      ],
+      [
+        25,
+        "Ike Anigbogu"
+      ],
+      [
+        26,
+        "Tyler Lydon"
+      ],
+      [
+        27,
+        "Isaiah Hartenstein"
+      ],
+      [
+        28,
+        "Ivan Rabb"
+      ],
+      [
+        29,
+        "Jordan Bell"
+      ],
+      [
+        30,
+        "Derrick White"
+      ],
+      [
+        31,
+        "D.J. Wilson"
+      ],
+      [
+        32,
+        "Semi Ojeleye"
+      ],
+      [
+        33,
+        "Frank Jackson"
+      ],
+      [
+        34,
+        "Anzejs Pasecniks"
+      ],
+      [
+        35,
+        "Frank Mason III"
+      ],
+      [
+        36,
+        "Josh Hart"
+      ],
+      [
+        37,
+        "Jonah Bolden"
+      ],
+      [
+        38,
+        "Dillon Brooks"
+      ],
+      [
+        39,
+        "Tyler Dorsey"
+      ],
+      [
+        40,
+        "Cameron Oliver"
+      ],
+      [
+        41,
+        "Tony Bradley"
+      ],
+      [
+        42,
+        "Thomas Bryant"
+      ],
+      [
+        43,
+        "Monte Morris"
+      ],
+      [
+        44,
+        "Sterling Brown"
+      ],
+      [
+        45,
+        "Johnathan Motley"
+      ],
+      [
+        46,
+        "Sindarius Thornwell"
+      ],
+      [
+        47,
+        "Kyle Kuzma"
+      ],
+      [
+        48,
+        "Mathias Lessort"
+      ],
+      [
+        49,
+        "Alec Peters"
+      ],
+      [
+        50,
+        "Wesley Iwundu"
+      ],
+      [
+        51,
+        "Devin Robinson"
+      ],
+      [
+        52,
+        "Dwayne Bacon"
+      ],
+      [
+        53,
+        "P.J. Dozier"
+      ],
+      [
+        54,
+        "Davon Reed"
+      ],
+      [
+        55,
+        "Nigel Williams-Goss"
+      ],
+      [
+        56,
+        "Jaron Blossomgame"
+      ],
+      [
+        57,
+        "Damyean Dotson"
+      ],
+      [
+        58,
+        "Kobi Simmons"
+      ],
+      [
+        59,
+        "Derrick Walton Jr."
+      ],
+      [
+        60,
+        "Edmond Sumner"
+      ],
+      [
+        61,
+        "Chris Boucher"
+      ],
+      [
+        62,
+        "L.J. Peak"
+      ],
+      [
+        63,
+        "Aleksandar Vezenkov"
+      ],
+      [
+        64,
+        "Jonathan Jeanne"
+      ],
+      [
+        65,
+        "Isaiah Hicks"
+      ],
+      [
+        66,
+        "Kennedy Meeks"
+      ],
+      [
+        67,
+        "Alpha Kaba"
+      ],
+      [
+        68,
+        "V.J. Beachem"
+      ],
+      [
+        69,
+        "Andrew White"
+      ],
+      [
+        70,
+        "Isaiah Briscoe"
+      ],
+      [
+        71,
+        "Melo Trimble"
+      ],
+      [
+        72,
+        "Nigel Hayes"
+      ],
+      [
+        73,
+        "Kadeem Allen"
+      ],
+      [
+        74,
+        "Eric Mika"
+      ],
+      [
+        75,
+        "Vlatko Cancar"
+      ],
+      [
+        76,
+        "Antonius Cleveland"
+      ],
+      [
+        77,
+        "George De Paula"
+      ],
+      [
+        78,
+        "Luke Kornet"
+      ],
+      [
+        79,
+        "James Blackmon Jr."
+      ],
+      [
+        80,
+        "Peter Jok"
+      ],
+      [
+        81,
+        "Malcolm Hill"
+      ],
+      [
+        82,
+        "Jamel Artis"
+      ],
+      [
+        83,
+        "Amida Brimah"
+      ],
+      [
+        84,
+        "Przemek Karnowski"
+      ],
+      [
+        85,
+        "Marcus Keene"
+      ],
+      [
+        86,
+        "Wesley Alves Da Silva"
+      ],
+      [
+        87,
+        "Isaac Humphries"
+      ],
+      [
+        88,
+        "Antonio Blakeney"
+      ],
+      [
+        89,
+        "Ognjen Jaramaz"
+      ],
+      [
+        90,
+        "Youssoupha Fall"
+      ],
+      [
+        91,
+        "Kris Jenkins"
+      ],
+      [
+        92,
+        "Jeremy Morgan"
+      ],
+      [
+        93,
+        "Amile Jefferson"
+      ],
+      [
+        94,
+        "Jajuan Johnson"
+      ],
+      [
+        95,
+        "Alberto Abalde"
+      ],
+      [
+        96,
+        "Moses Kingsley"
+      ],
+      [
+        97,
+        "Trevor Thompson"
+      ],
+      [
+        98,
+        "Jabari Bird"
+      ],
+      [
+        99,
+        "Lucas Dias Silva"
+      ],
+      [
+        100,
+        "Zak Irvin"
+      ]
+    ]
+  },
+  {
+    "id": "nbasl-2018",
+    "year": 2018,
+    "publisher": "NBA Scouting Live composite",
+    "published": "2018-06-21",
+    "url": "https://www.nbascoutinglive.com/2018-rankings/",
+    "ranks": [
+      [
+        1,
+        "DeAndre Ayton"
+      ],
+      [
+        2,
+        "Luka Doncic"
+      ],
+      [
+        3,
+        "Marvin Bagley III"
+      ],
+      [
+        4,
+        "Jaren Jackson Jr."
+      ],
+      [
+        5,
+        "Mohamed Bamba"
+      ],
+      [
+        6,
+        "Michael Porter Jr."
+      ],
+      [
+        7,
+        "Trae Young"
+      ],
+      [
+        8,
+        "Wendell Carter Jr."
+      ],
+      [
+        9,
+        "Mikal Bridges"
+      ],
+      [
+        10,
+        "Collin Sexton"
+      ],
+      [
+        11,
+        "Kevin Knox"
+      ],
+      [
+        12,
+        "Miles Bridges"
+      ],
+      [
+        13,
+        "Shai Gilgeous-Alexander"
+      ],
+      [
+        14,
+        "Zhaire Smith"
+      ],
+      [
+        15,
+        "Robert Williams"
+      ],
+      [
+        16,
+        "Lonnie Walker"
+      ],
+      [
+        17,
+        "Josh Okogie"
+      ],
+      [
+        18,
+        "Donte DiVincenzo"
+      ],
+      [
+        19,
+        "Mitchell Robinson"
+      ],
+      [
+        20,
+        "Elie Okobo"
+      ],
+      [
+        21,
+        "Chandler Hutchison"
+      ],
+      [
+        22,
+        "Troy Brown"
+      ],
+      [
+        23,
+        "Dzanan Musa"
+      ],
+      [
+        24,
+        "Kevin Huerter"
+      ],
+      [
+        25,
+        "Jacob Evans"
+      ],
+      [
+        26,
+        "Melvin Frazier"
+      ],
+      [
+        27,
+        "Shake Milton"
+      ],
+      [
+        28,
+        "Moritz Wagner"
+      ],
+      [
+        29,
+        "Omari Spellman"
+      ],
+      [
+        30,
+        "Anfernee Simons"
+      ],
+      [
+        31,
+        "Aaron Holiday"
+      ],
+      [
+        32,
+        "Keita Bates-Diop"
+      ],
+      [
+        33,
+        "Jalen Brunson"
+      ],
+      [
+        34,
+        "Gary Trent Jr."
+      ],
+      [
+        35,
+        "Jerome Robinson"
+      ],
+      [
+        36,
+        "Khyri Thomas"
+      ],
+      [
+        37,
+        "Isaac Bonga"
+      ],
+      [
+        38,
+        "Grayson Allen"
+      ],
+      [
+        39,
+        "Bruce Brown"
+      ],
+      [
+        40,
+        "De’Anthony Melton"
+      ],
+      [
+        41,
+        "Chimezie Metu"
+      ],
+      [
+        42,
+        "Hamidou Diallo"
+      ],
+      [
+        43,
+        "Devonte’ Graham"
+      ],
+      [
+        44,
+        "Rawle Alkins"
+      ],
+      [
+        45,
+        "Landry Shamet"
+      ],
+      [
+        46,
+        "Trevon Duval"
+      ],
+      [
+        47,
+        "Rodions Kurucs"
+      ],
+      [
+        48,
+        "Jevon Carter"
+      ],
+      [
+        49,
+        "Gary Clark"
+      ],
+      [
+        50,
+        "Ray Spalding"
+      ],
+      [
+        51,
+        "Malik Newman"
+      ],
+      [
+        52,
+        "Kevin Hervey"
+      ],
+      [
+        53,
+        "Jarred Vanderbilt"
+      ],
+      [
+        54,
+        "Brandon McCoy"
+      ],
+      [
+        55,
+        "Tony Carr"
+      ],
+      [
+        56,
+        "Alize Johnson"
+      ],
+      [
+        57,
+        "Allonzo Trier"
+      ],
+      [
+        58,
+        "Justin Jackson"
+      ],
+      [
+        59,
+        "Arnoldas Kulboka"
+      ],
+      [
+        60,
+        "Svi Mykhailiuk"
+      ],
+      [
+        61,
+        "Vince Edwards"
+      ],
+      [
+        62,
+        "Kenrich Williams"
+      ],
+      [
+        63,
+        "George King"
+      ],
+      [
+        64,
+        "Kostas Antetokounmpo"
+      ],
+      [
+        65,
+        "Trevon Bluiett"
+      ],
+      [
+        66,
+        "Bonzie Colson"
+      ],
+      [
+        67,
+        "Devon Hall"
+      ],
+      [
+        68,
+        "D.J. Hogg"
+      ],
+      [
+        69,
+        "Theo Pinson"
+      ],
+      [
+        70,
+        "Billy Preston"
+      ],
+      [
+        71,
+        "Yante Maten"
+      ],
+      [
+        72,
+        "Jaylen Barford"
+      ],
+      [
+        73,
+        "Keenan Evans"
+      ],
+      [
+        74,
+        "Jock Landale"
+      ],
+      [
+        75,
+        "Issuf Sanon"
+      ],
+      [
+        76,
+        "Deng Adel"
+      ],
+      [
+        77,
+        "Isaac Haas"
+      ],
+      [
+        78,
+        "Donte Grantham"
+      ],
+      [
+        79,
+        "Angel Delgado"
+      ],
+      [
+        80,
+        "Malik Pope"
+      ],
+      [
+        81,
+        "Joel Berry II"
+      ],
+      [
+        82,
+        "Ajdin Penava"
+      ],
+      [
+        83,
+        "Bryant Crawford"
+      ],
+      [
+        84,
+        "Wenyen Gabriel"
+      ],
+      [
+        85,
+        "Jaylen Adams"
+      ],
+      [
+        86,
+        "Tryggvi Hlinason"
+      ],
+      [
+        87,
+        "Egor Koulechov"
+      ],
+      [
+        88,
+        "Elijah Stewart"
+      ],
+      [
+        89,
+        "Tyler Davis"
+      ],
+      [
+        90,
+        "MiKyle McIntosh"
+      ],
+      [
+        91,
+        "Anas Mahmoud"
+      ],
+      [
+        92,
+        "Yuta Watanabe"
+      ],
+      [
+        93,
+        "Aleksandar Lazic"
+      ],
+      [
+        94,
+        "Jo Lual-Acuil"
+      ],
+      [
+        95,
+        "Thomas Wilder"
+      ],
+      [
+        96,
+        "Andrew Rowsey"
+      ],
+      [
+        97,
+        "Marcus Lee"
+      ],
+      [
+        98,
+        "Rob Gray"
+      ],
+      [
+        99,
+        "Kendrick Nunn"
+      ],
+      [
+        100,
+        "Johnathan Williams"
+      ]
+    ]
+  },
+  {
+    "id": "nbasl-2019",
+    "year": 2019,
+    "publisher": "NBA Scouting Live composite",
+    "published": "2019-06-19",
+    "url": "https://www.nbascoutinglive.com/2019-rankings/",
+    "ranks": [
+      [
+        1,
+        "Zion Williamson"
+      ],
+      [
+        2,
+        "Ja Morant"
+      ],
+      [
+        3,
+        "R.J. Barrett"
+      ],
+      [
+        4,
+        "Jarrett Culver"
+      ],
+      [
+        5,
+        "De’Andre Hunter"
+      ],
+      [
+        6,
+        "Cam Reddish"
+      ],
+      [
+        7,
+        "Darius Garland"
+      ],
+      [
+        8,
+        "Coby White"
+      ],
+      [
+        9,
+        "Romeo Langford"
+      ],
+      [
+        10,
+        "Bol Bol"
+      ],
+      [
+        11,
+        "Brandon Clarke"
+      ],
+      [
+        12,
+        "P.J. Washington"
+      ],
+      [
+        13,
+        "Sekou Doumbouya"
+      ],
+      [
+        14,
+        "Tyler Herro"
+      ],
+      [
+        15,
+        "Nickeil Alexander-Walker"
+      ],
+      [
+        16,
+        "Nassir Little"
+      ],
+      [
+        17,
+        "Jaxson Hayes"
+      ],
+      [
+        18,
+        "Keldon Johnson"
+      ],
+      [
+        19,
+        "Goga Bitadze"
+      ],
+      [
+        20,
+        "Rui Hachimura"
+      ],
+      [
+        21,
+        "Chuma Okeke"
+      ],
+      [
+        22,
+        "Bruno Fernando"
+      ],
+      [
+        23,
+        "Ty Jerome"
+      ],
+      [
+        24,
+        "Cameron Johnson"
+      ],
+      [
+        25,
+        "Mfiondu Kabengele"
+      ],
+      [
+        26,
+        "Kevin Porter Jr."
+      ],
+      [
+        27,
+        "KZ Okpala"
+      ],
+      [
+        28,
+        "Dylan Windler"
+      ],
+      [
+        29,
+        "Carsen Edwards"
+      ],
+      [
+        30,
+        "Matisse Thybulle"
+      ],
+      [
+        31,
+        "Luka Samanic"
+      ],
+      [
+        32,
+        "Jontay Porter"
+      ],
+      [
+        33,
+        "Daniel Gafford"
+      ],
+      [
+        34,
+        "Darius Bazley"
+      ],
+      [
+        35,
+        "Louis King"
+      ],
+      [
+        36,
+        "Nicolas Claxton"
+      ],
+      [
+        37,
+        "Grant Williams"
+      ],
+      [
+        38,
+        "Naz Reid"
+      ],
+      [
+        39,
+        "Luguentz Dort"
+      ],
+      [
+        40,
+        "Talen Horton-Tucker"
+      ],
+      [
+        41,
+        "Shamorie Ponds"
+      ],
+      [
+        42,
+        "Isaiah Roby"
+      ],
+      [
+        43,
+        "Admiral Schofield"
+      ],
+      [
+        44,
+        "Jalen Lecque"
+      ],
+      [
+        45,
+        "Eric Paschall"
+      ],
+      [
+        46,
+        "Jalen McDaniels"
+      ],
+      [
+        47,
+        "Ignas Brazdeikis"
+      ],
+      [
+        48,
+        "Terence Davis"
+      ],
+      [
+        49,
+        "Deividas Sirvydis"
+      ],
+      [
+        50,
+        "Miye Oni"
+      ],
+      [
+        51,
+        "DaQuan Jeffries"
+      ],
+      [
+        52,
+        "Tremont Waters"
+      ],
+      [
+        53,
+        "Joshua Obiesie"
+      ],
+      [
+        54,
+        "Tacko Fall"
+      ],
+      [
+        55,
+        "Jordan Poole"
+      ],
+      [
+        56,
+        "Kyle Guy"
+      ],
+      [
+        57,
+        "Marcos Louzada Silva"
+      ],
+      [
+        58,
+        "Ky Bowman"
+      ],
+      [
+        59,
+        "Dedric Lawson"
+      ],
+      [
+        60,
+        "Terance Mann"
+      ],
+      [
+        61,
+        "Yovel Zoosman"
+      ],
+      [
+        62,
+        "Quinndary Weatherspoon"
+      ],
+      [
+        63,
+        "Jaylen Hoard"
+      ],
+      [
+        64,
+        "Zach Norvell"
+      ],
+      [
+        65,
+        "Simi Shittu"
+      ],
+      [
+        66,
+        "Brian Bowen"
+      ],
+      [
+        67,
+        "Charles Matthews"
+      ],
+      [
+        68,
+        "Jaylen Nowell"
+      ],
+      [
+        69,
+        "Aubrey Dawkins"
+      ],
+      [
+        70,
+        "Alen Smailagic"
+      ],
+      [
+        71,
+        "Cody Martin"
+      ],
+      [
+        72,
+        "Jaylen Hands"
+      ],
+      [
+        73,
+        "Kris Wilkes"
+      ],
+      [
+        74,
+        "Dewan Hernandez"
+      ],
+      [
+        75,
+        "Tyus Battle"
+      ],
+      [
+        76,
+        "Zylan Cheatham"
+      ],
+      [
+        77,
+        "Kerwin Roach"
+      ],
+      [
+        78,
+        "Jordan Bone"
+      ],
+      [
+        79,
+        "Robert Franks"
+      ],
+      [
+        80,
+        "Aric Holman"
+      ],
+      [
+        81,
+        "Josh Reaves"
+      ],
+      [
+        82,
+        "Caleb Martin"
+      ],
+      [
+        83,
+        "Amir Hinton"
+      ],
+      [
+        84,
+        "Chris Clemons"
+      ],
+      [
+        85,
+        "Vanja Marinkovic"
+      ],
+      [
+        86,
+        "Jared Harper"
+      ],
+      [
+        87,
+        "Sagaba Konate"
+      ],
+      [
+        88,
+        "Bennie Boatwright"
+      ],
+      [
+        89,
+        "Mike Daum"
+      ],
+      [
+        90,
+        "John Konchar"
+      ],
+      [
+        91,
+        "Charlie Brown"
+      ],
+      [
+        92,
+        "Justin Robinson"
+      ],
+      [
+        93,
+        "Kenny Wooten"
+      ],
+      [
+        94,
+        "Justin Wright-Foreman"
+      ],
+      [
+        95,
+        "Amine Noua"
+      ],
+      [
+        96,
+        "Adam Mokoka"
+      ],
+      [
+        97,
+        "Moses Brown"
+      ],
+      [
+        98,
+        "Markis McDuffie"
+      ],
+      [
+        99,
+        "Oshae Brissett"
+      ],
+      [
+        100,
+        "Karim Jallow"
+      ]
+    ]
+  },
+  {
+    "id": "nbasl-2020",
+    "year": 2020,
+    "publisher": "NBA Scouting Live composite",
+    "published": "2020-11-17",
+    "url": "https://www.nbascoutinglive.com/2020-rankings/",
+    "ranks": [
+      [
+        1,
+        "Anthony Edwards"
+      ],
+      [
+        2,
+        "James Wiseman"
+      ],
+      [
+        3,
+        "LaMelo Ball"
+      ],
+      [
+        4,
+        "Tyrese Haliburton"
+      ],
+      [
+        5,
+        "Deni Avdija"
+      ],
+      [
+        6,
+        "Obi Toppin"
+      ],
+      [
+        7,
+        "Onyeka Okongwu"
+      ],
+      [
+        8,
+        "Isaac Okoro"
+      ],
+      [
+        9,
+        "Killian Hayes"
+      ],
+      [
+        10,
+        "Devin Vassell"
+      ],
+      [
+        11,
+        "R.J. Hampton"
+      ],
+      [
+        12,
+        "Precious Achiuwa"
+      ],
+      [
+        13,
+        "Patrick Williams"
+      ],
+      [
+        14,
+        "Josh Green"
+      ],
+      [
+        15,
+        "Cole Anthony"
+      ],
+      [
+        16,
+        "Saddiq Bey"
+      ],
+      [
+        17,
+        "Aaron Nesmith"
+      ],
+      [
+        18,
+        "Jalen Smith"
+      ],
+      [
+        19,
+        "Tyrese Maxey"
+      ],
+      [
+        20,
+        "Theo Maledon"
+      ],
+      [
+        21,
+        "Cassius Stanley"
+      ],
+      [
+        22,
+        "Jaden McDaniels"
+      ],
+      [
+        23,
+        "Nico Mannion"
+      ],
+      [
+        24,
+        "Tyler Bey"
+      ],
+      [
+        25,
+        "Paul Reed"
+      ],
+      [
+        26,
+        "Aleksej Pokusevski"
+      ],
+      [
+        27,
+        "Tyrell Terry"
+      ],
+      [
+        28,
+        "Desmond Bane"
+      ],
+      [
+        29,
+        "Devon Dotson"
+      ],
+      [
+        30,
+        "Vernon Carey Jr."
+      ],
+      [
+        31,
+        "Kira Lewis"
+      ],
+      [
+        32,
+        "Tre Jones"
+      ],
+      [
+        33,
+        "Cassius Winston"
+      ],
+      [
+        34,
+        "Leandro Bolmaro"
+      ],
+      [
+        35,
+        "Malachi Flynn"
+      ],
+      [
+        36,
+        "Isaiah Stewart"
+      ],
+      [
+        37,
+        "Daniel Oturu"
+      ],
+      [
+        38,
+        "Zeke Nnaji"
+      ],
+      [
+        39,
+        "Jahmi’us Ramsey"
+      ],
+      [
+        40,
+        "Jordan Nwora"
+      ],
+      [
+        41,
+        "Mason Jones"
+      ],
+      [
+        42,
+        "Payton Pritchard"
+      ],
+      [
+        43,
+        "Reggie Perry"
+      ],
+      [
+        44,
+        "Xavier Tillman"
+      ],
+      [
+        45,
+        "Udoka Azubuike"
+      ],
+      [
+        46,
+        "Robert Woodard"
+      ],
+      [
+        47,
+        "Abdoulaye N’Doye"
+      ],
+      [
+        48,
+        "Immanuel Quickley"
+      ],
+      [
+        49,
+        "Killian Tillie"
+      ],
+      [
+        50,
+        "Nick Richards"
+      ],
+      [
+        51,
+        "Elijah Hughes"
+      ],
+      [
+        52,
+        "Markus Howard"
+      ],
+      [
+        53,
+        "Ty-Shon Alexander"
+      ],
+      [
+        54,
+        "Grant Riller"
+      ],
+      [
+        55,
+        "Ashton Hagans"
+      ],
+      [
+        56,
+        "Mamadi Diakite"
+      ],
+      [
+        57,
+        "Paul Eboua"
+      ],
+      [
+        58,
+        "Yam Madar"
+      ],
+      [
+        59,
+        "Kenyon Martin Jr."
+      ],
+      [
+        60,
+        "Kaleb Wesson"
+      ],
+      [
+        61,
+        "Naji Marshall"
+      ],
+      [
+        62,
+        "Nathan Knight"
+      ],
+      [
+        63,
+        "Trevelin Queen"
+      ],
+      [
+        64,
+        "Borisa Simanic"
+      ],
+      [
+        65,
+        "Sam Merrill"
+      ],
+      [
+        66,
+        "Lamar Stevens"
+      ],
+      [
+        67,
+        "Karim Mane"
+      ],
+      [
+        68,
+        "Lamine Diane"
+      ],
+      [
+        69,
+        "Trent Forrest"
+      ],
+      [
+        70,
+        "Omer Yurtseven"
+      ],
+      [
+        71,
+        "Yoeli Childs"
+      ],
+      [
+        72,
+        "Kristian Doolittle"
+      ],
+      [
+        73,
+        "Jarron Cumberland"
+      ],
+      [
+        74,
+        "Freddie Gillespie"
+      ],
+      [
+        75,
+        "Rayshaun Hammonds"
+      ],
+      [
+        76,
+        "Myles Powell"
+      ],
+      [
+        77,
+        "Josh Hall"
+      ],
+      [
+        78,
+        "Isaiah Joe"
+      ],
+      [
+        79,
+        "Jay Scrubb"
+      ],
+      [
+        80,
+        "Skylar Mays"
+      ],
+      [
+        81,
+        "Nate Hinton"
+      ],
+      [
+        82,
+        "Emmitt Williams"
+      ],
+      [
+        83,
+        "Aleksa Radanov"
+      ],
+      [
+        84,
+        "Gytis Masiulis"
+      ],
+      [
+        85,
+        "Quinton Rose"
+      ],
+      [
+        86,
+        "Jalen Harris"
+      ],
+      [
+        87,
+        "Marko Simonovic"
+      ],
+      [
+        88,
+        "Kahlil Whitney"
+      ],
+      [
+        89,
+        "Tres Tinkle"
+      ],
+      [
+        90,
+        "Jon Axel Gudmundsson"
+      ],
+      [
+        91,
+        "C.J. Elleby"
+      ],
+      [
+        92,
+        "Saben Lee"
+      ],
+      [
+        93,
+        "Austin Wiley"
+      ],
+      [
+        94,
+        "Malik Fitts"
+      ],
+      [
+        95,
+        "Braxton Key"
+      ],
+      [
+        96,
+        "Nenad Dimitrijevic"
+      ],
+      [
+        97,
+        "Louis Olinde"
+      ],
+      [
+        98,
+        "Nate Darling"
+      ],
+      [
+        99,
+        "Sacha Killeya-Jones"
+      ],
+      [
+        100,
+        "Anfernee McLemore"
+      ]
+    ]
+  },
+  {
+    "id": "nbasl-2021",
+    "year": 2021,
+    "publisher": "NBA Scouting Live composite",
+    "published": "2021-07-28",
+    "url": "https://www.nbascoutinglive.com/2021-rankings/",
+    "ranks": [
+      [
+        1,
+        "Cade Cunningham"
+      ],
+      [
+        2,
+        "Jalen Suggs"
+      ],
+      [
+        3,
+        "Evan Mobley"
+      ],
+      [
+        4,
+        "Jalen Green"
+      ],
+      [
+        5,
+        "Scottie Barnes"
+      ],
+      [
+        6,
+        "Jonathan Kuminga"
+      ],
+      [
+        7,
+        "Jalen Johnson"
+      ],
+      [
+        8,
+        "James Bouknight"
+      ],
+      [
+        9,
+        "Davion Mitchell"
+      ],
+      [
+        10,
+        "Franz Wagner"
+      ],
+      [
+        11,
+        "Corey Kispert"
+      ],
+      [
+        12,
+        "Alperen Sengun"
+      ],
+      [
+        13,
+        "Jared Butler"
+      ],
+      [
+        14,
+        "Josh Giddey"
+      ],
+      [
+        15,
+        "Moses Moody"
+      ],
+      [
+        16,
+        "Isaiah Jackson"
+      ],
+      [
+        17,
+        "Keon Johnson"
+      ],
+      [
+        18,
+        "Chris Duarte"
+      ],
+      [
+        19,
+        "Jaden Springer"
+      ],
+      [
+        20,
+        "Cam Thomas"
+      ],
+      [
+        21,
+        "Trey Murphy"
+      ],
+      [
+        22,
+        "Kai Jones"
+      ],
+      [
+        23,
+        "Tre Mann"
+      ],
+      [
+        24,
+        "Usman Garuba"
+      ],
+      [
+        25,
+        "Ayo Dosunmu"
+      ],
+      [
+        26,
+        "Sharife Cooper"
+      ],
+      [
+        27,
+        "Quentin Grimes"
+      ],
+      [
+        28,
+        "Nah’Shon Hyland"
+      ],
+      [
+        29,
+        "Ziaire Williams"
+      ],
+      [
+        30,
+        "Filip Petrusev"
+      ],
+      [
+        31,
+        "Joel Ayayi"
+      ],
+      [
+        32,
+        "Josh Christopher"
+      ],
+      [
+        33,
+        "Miles McBride"
+      ],
+      [
+        34,
+        "Neemias Queta"
+      ],
+      [
+        35,
+        "B.J. Boston"
+      ],
+      [
+        36,
+        "Charles Bassey"
+      ],
+      [
+        37,
+        "Isaiah Todd"
+      ],
+      [
+        38,
+        "J.T. Thor"
+      ],
+      [
+        39,
+        "Day’Ron Sharpe"
+      ],
+      [
+        40,
+        "Jeremiah Robinson-Earl"
+      ],
+      [
+        41,
+        "Isaiah Livers"
+      ],
+      [
+        42,
+        "Greg Brown"
+      ],
+      [
+        43,
+        "Matthew Hurt"
+      ],
+      [
+        44,
+        "Luka Garza"
+      ],
+      [
+        45,
+        "RaiQuan Gray"
+      ],
+      [
+        46,
+        "Austin Reaves"
+      ],
+      [
+        47,
+        "David Johnson"
+      ],
+      [
+        48,
+        "Daishen Nix"
+      ],
+      [
+        49,
+        "Rokas Jokubaitis"
+      ],
+      [
+        50,
+        "Aaron Henry"
+      ],
+      [
+        51,
+        "Sam Hauser"
+      ],
+      [
+        52,
+        "John Petty"
+      ],
+      [
+        53,
+        "Juhann Begarin"
+      ],
+      [
+        54,
+        "Herb Jones"
+      ],
+      [
+        55,
+        "Sandro Mamukelashvili"
+      ],
+      [
+        56,
+        "Joe Wieskamp"
+      ],
+      [
+        57,
+        "Scottie Lewis"
+      ],
+      [
+        58,
+        "Kessler Edwards"
+      ],
+      [
+        59,
+        "Jason Preston"
+      ],
+      [
+        60,
+        "Vrenz Bleijenbergh"
+      ],
+      [
+        61,
+        "Marcus Zegarowski"
+      ],
+      [
+        62,
+        "Trendon Watford"
+      ],
+      [
+        63,
+        "Marcus Garrett"
+      ],
+      [
+        64,
+        "McKinley Wright"
+      ],
+      [
+        65,
+        "Dave Duke"
+      ],
+      [
+        66,
+        "Josh Primo"
+      ],
+      [
+        67,
+        "Derrick Alston Jr."
+      ],
+      [
+        68,
+        "DeJon Jarreau"
+      ],
+      [
+        69,
+        "D.J. Steward"
+      ],
+      [
+        70,
+        "Moses Wright"
+      ],
+      [
+        71,
+        "Aamir Simms"
+      ],
+      [
+        72,
+        "Justin Champagnie"
+      ],
+      [
+        73,
+        "A.J. Lawson"
+      ],
+      [
+        74,
+        "Amar Sylla"
+      ],
+      [
+        75,
+        "Aaron Wiggins"
+      ],
+      [
+        76,
+        "MaCio Teague"
+      ],
+      [
+        77,
+        "Ethan Thompson"
+      ],
+      [
+        78,
+        "Yves Pons"
+      ],
+      [
+        79,
+        "Jericho Sims"
+      ],
+      [
+        80,
+        "Jordan Schakel"
+      ],
+      [
+        81,
+        "Jay Huff"
+      ],
+      [
+        82,
+        "Feron Hunt"
+      ],
+      [
+        83,
+        "Chaundee Brown"
+      ],
+      [
+        84,
+        "Romeo Weems"
+      ],
+      [
+        85,
+        "Matt Mitchell"
+      ],
+      [
+        86,
+        "Eugene Omoruyi"
+      ],
+      [
+        87,
+        "Mark Vital"
+      ],
+      [
+        88,
+        "Cameron Krutwig"
+      ],
+      [
+        89,
+        "JaQuori McLaughlin"
+      ],
+      [
+        90,
+        "Mac McClung"
+      ],
+      [
+        91,
+        "Chris Smith"
+      ],
+      [
+        92,
+        "Ja’Vonte Smart"
+      ],
+      [
+        93,
+        "Olivier Sarr"
+      ],
+      [
+        94,
+        "Carlik Jones"
+      ],
+      [
+        95,
+        "Justin Gorham"
+      ],
+      [
+        96,
+        "Terry Taylor"
+      ],
+      [
+        97,
+        "Duane Washington Jr."
+      ],
+      [
+        98,
+        "R.J. Nembhard"
+      ],
+      [
+        99,
+        "Oscar Da Silva"
+      ],
+      [
+        100,
+        "Mitchell Ballock"
+      ]
+    ]
+  },
+  {
+    "id": "nbasl-2022",
+    "year": 2022,
+    "publisher": "NBA Scouting Live composite",
+    "published": "2022-06-22",
+    "url": "https://www.nbascoutinglive.com/2022-rankings/",
+    "ranks": [
+      [
+        1,
+        "Jabari Smith"
+      ],
+      [
+        2,
+        "Chet Holmgren"
+      ],
+      [
+        3,
+        "Paolo Banchero"
+      ],
+      [
+        4,
+        "Jaden Ivey"
+      ],
+      [
+        5,
+        "Keegan Murray"
+      ],
+      [
+        6,
+        "A.J. Griffin"
+      ],
+      [
+        7,
+        "Dyson Daniels"
+      ],
+      [
+        8,
+        "Shaedon Sharpe"
+      ],
+      [
+        9,
+        "Bennedict Mathurin"
+      ],
+      [
+        10,
+        "Jalen Duren"
+      ],
+      [
+        11,
+        "Johnny Davis"
+      ],
+      [
+        12,
+        "Mark Williams"
+      ],
+      [
+        13,
+        "Jeremy Sochan"
+      ],
+      [
+        14,
+        "Ochai Agbaji"
+      ],
+      [
+        15,
+        "TyTy Washington"
+      ],
+      [
+        16,
+        "Tari Eason"
+      ],
+      [
+        17,
+        "Malaki Branham"
+      ],
+      [
+        18,
+        "Kennedy Chandler"
+      ],
+      [
+        19,
+        "Walker Kessler"
+      ],
+      [
+        20,
+        "E.J. Liddell"
+      ],
+      [
+        21,
+        "Ousmane Dieng"
+      ],
+      [
+        22,
+        "Nikola Jovic"
+      ],
+      [
+        23,
+        "Christian Koloko"
+      ],
+      [
+        24,
+        "Christian Braun"
+      ],
+      [
+        25,
+        "MarJon Beauchamp"
+      ],
+      [
+        26,
+        "Wendell Moore"
+      ],
+      [
+        27,
+        "Jaden Hardy"
+      ],
+      [
+        28,
+        "Ismael Kamagate"
+      ],
+      [
+        29,
+        "David Roddy"
+      ],
+      [
+        30,
+        "Kendall Brown"
+      ],
+      [
+        31,
+        "Dalen Terry"
+      ],
+      [
+        32,
+        "J.D. Davison"
+      ],
+      [
+        33,
+        "Trevor Keels"
+      ],
+      [
+        34,
+        "Patrick Baldwin Jr."
+      ],
+      [
+        35,
+        "Jake LaRavia"
+      ],
+      [
+        36,
+        "Blake Wesley"
+      ],
+      [
+        37,
+        "Jalen Williams"
+      ],
+      [
+        38,
+        "Gabriele Procida"
+      ],
+      [
+        39,
+        "Bryce McGowens"
+      ],
+      [
+        40,
+        "Hugo Besson"
+      ],
+      [
+        41,
+        "Orlando Robinson"
+      ],
+      [
+        42,
+        "Josh Minott"
+      ],
+      [
+        43,
+        "Jean Montero"
+      ],
+      [
+        44,
+        "Ron Harper Jr."
+      ],
+      [
+        45,
+        "Andrew Nembhard"
+      ],
+      [
+        46,
+        "Caleb Houstan"
+      ],
+      [
+        47,
+        "John Butler"
+      ],
+      [
+        48,
+        "Max Christie"
+      ],
+      [
+        49,
+        "Justin Lewis"
+      ],
+      [
+        50,
+        "Ryan Rollins"
+      ],
+      [
+        51,
+        "Peyton Watson"
+      ],
+      [
+        52,
+        "Alondes Williams"
+      ],
+      [
+        53,
+        "Jaylin Williams"
+      ],
+      [
+        54,
+        "Michael Foster"
+      ],
+      [
+        55,
+        "Johnny Juzang"
+      ],
+      [
+        56,
+        "Tevin Brown"
+      ],
+      [
+        57,
+        "Trevion Williams"
+      ],
+      [
+        58,
+        "Khalifa Diop"
+      ],
+      [
+        59,
+        "Keon Ellis"
+      ],
+      [
+        60,
+        "Dereon Seabron"
+      ],
+      [
+        61,
+        "Kenneth Lofton"
+      ],
+      [
+        62,
+        "Yannick Nzosa"
+      ],
+      [
+        63,
+        "Jabari Walker"
+      ],
+      [
+        64,
+        "Matteo Spagnolo"
+      ],
+      [
+        65,
+        "Kofi Cockburn"
+      ],
+      [
+        66,
+        "Julian Champagnie"
+      ],
+      [
+        67,
+        "Jordan Hall"
+      ],
+      [
+        68,
+        "Jamaree Bouyea"
+      ],
+      [
+        69,
+        "Dominick Barlow"
+      ],
+      [
+        70,
+        "Tyrese Martin"
+      ],
+      [
+        71,
+        "Brady Manek"
+      ],
+      [
+        72,
+        "Aminu Mohammed"
+      ],
+      [
+        73,
+        "Iverson Molinar"
+      ],
+      [
+        74,
+        "Michael Devoe"
+      ],
+      [
+        75,
+        "Scotty Pippen Jr."
+      ],
+      [
+        76,
+        "Ziga Samar"
+      ],
+      [
+        77,
+        "Quenton Jackson"
+      ],
+      [
+        78,
+        "Kai Sotto"
+      ],
+      [
+        79,
+        "Karlo Matkovic"
+      ],
+      [
+        80,
+        "Gabe Brown"
+      ],
+      [
+        81,
+        "Hyunjung Lee"
+      ],
+      [
+        82,
+        "Moussa Diabate"
+      ],
+      [
+        83,
+        "Isaiah Mobley"
+      ],
+      [
+        84,
+        "Yoan Makoundou"
+      ],
+      [
+        85,
+        "Darius Days"
+      ],
+      [
+        86,
+        "Jared Rhoden"
+      ],
+      [
+        87,
+        "Fanbo Zeng"
+      ],
+      [
+        88,
+        "David McCormack"
+      ],
+      [
+        89,
+        "Marcus Bingham"
+      ],
+      [
+        90,
+        "Collin Gillespie"
+      ],
+      [
+        91,
+        "Keve Aluma"
+      ],
+      [
+        92,
+        "Jeenathan Williams"
+      ],
+      [
+        93,
+        "Vince Williams"
+      ],
+      [
+        94,
+        "Remy Martin"
+      ],
+      [
+        95,
+        "Bryson Williams"
+      ],
+      [
+        96,
+        "Izaiah Brockington"
+      ],
+      [
+        97,
+        "Buddy Boeheim"
+      ],
+      [
+        98,
+        "James Akinjo"
+      ],
+      [
+        99,
+        "Makur Maker"
+      ],
+      [
+        100,
+        "Jules Bernard"
+      ]
+    ]
+  },
+  {
+    "id": "nbasl-2023",
+    "year": 2023,
+    "publisher": "NBA Scouting Live composite",
+    "published": "2023-06-20",
+    "url": "https://www.nbascoutinglive.com/2023-rankings/",
+    "ranks": [
+      [
+        1,
+        "Victor Wembanyama"
+      ],
+      [
+        2,
+        "Scoot Henderson"
+      ],
+      [
+        3,
+        "Brandon Miller"
+      ],
+      [
+        4,
+        "Ausar Thompson"
+      ],
+      [
+        5,
+        "Amen Thompson"
+      ],
+      [
+        6,
+        "Taylor Hendricks"
+      ],
+      [
+        7,
+        "Jarace Walker"
+      ],
+      [
+        8,
+        "Cam Whitmore"
+      ],
+      [
+        9,
+        "Anthony Black"
+      ],
+      [
+        10,
+        "Gradey Dick"
+      ],
+      [
+        11,
+        "Cason Wallace"
+      ],
+      [
+        12,
+        "Jordan Hawkins"
+      ],
+      [
+        13,
+        "Jett Howard"
+      ],
+      [
+        14,
+        "Dereck Lively"
+      ],
+      [
+        15,
+        "Keyonte George"
+      ],
+      [
+        16,
+        "Nick Smith"
+      ],
+      [
+        17,
+        "Bilal Coulibaly"
+      ],
+      [
+        18,
+        "Jalen Hood-Schifino"
+      ],
+      [
+        19,
+        "Leonard Miller"
+      ],
+      [
+        20,
+        "Dariq Whitehead"
+      ],
+      [
+        21,
+        "Kris Murray"
+      ],
+      [
+        22,
+        "Kobe Bufkin"
+      ],
+      [
+        23,
+        "G.G. Jackson"
+      ],
+      [
+        24,
+        "Brice Sensabaugh"
+      ],
+      [
+        25,
+        "Rayan Rupert"
+      ],
+      [
+        26,
+        "Noah Clowney"
+      ],
+      [
+        27,
+        "Maxwell Lewis"
+      ],
+      [
+        28,
+        "Andre Jackson"
+      ],
+      [
+        29,
+        "Colby Jones"
+      ],
+      [
+        30,
+        "James Nnaji"
+      ],
+      [
+        31,
+        "Jaime Jaquez Jr."
+      ],
+      [
+        32,
+        "Sidy Cissoko"
+      ],
+      [
+        33,
+        "Brandin Podziemski"
+      ],
+      [
+        34,
+        "Terquavion Smith"
+      ],
+      [
+        35,
+        "Marcus Sasser"
+      ],
+      [
+        36,
+        "Kobe Brown"
+      ],
+      [
+        37,
+        "Olivier-Maxence Prosper"
+      ],
+      [
+        38,
+        "Amari Bailey"
+      ],
+      [
+        39,
+        "Keyontae Johnson"
+      ],
+      [
+        40,
+        "Emoni Bates"
+      ],
+      [
+        41,
+        "Jalen Wilson"
+      ],
+      [
+        42,
+        "Julian Phillips"
+      ],
+      [
+        43,
+        "Trayce Jackson-Davis"
+      ],
+      [
+        44,
+        "Ricky Council IV"
+      ],
+      [
+        45,
+        "Tristan Vukcevic"
+      ],
+      [
+        46,
+        "Jordan Walsh"
+      ],
+      [
+        47,
+        "Jaylen Clark"
+      ],
+      [
+        48,
+        "Julian Strawther"
+      ],
+      [
+        49,
+        "Ben Sheppard"
+      ],
+      [
+        50,
+        "Adama Sanogo"
+      ],
+      [
+        51,
+        "Malcolm Cazalon"
+      ],
+      [
+        52,
+        "Azuolas Tubelis"
+      ],
+      [
+        53,
+        "Isaiah Wong"
+      ],
+      [
+        54,
+        "Oscar Tshiebwe"
+      ],
+      [
+        55,
+        "Drew Timme"
+      ],
+      [
+        56,
+        "Mike Miles"
+      ],
+      [
+        57,
+        "Jordan Miller"
+      ],
+      [
+        58,
+        "Seth Lundy"
+      ],
+      [
+        59,
+        "Nadir Hifi"
+      ],
+      [
+        60,
+        "Hunter Tyson"
+      ],
+      [
+        61,
+        "Charles Bediako"
+      ],
+      [
+        62,
+        "Toumani Camara"
+      ],
+      [
+        63,
+        "Jalen Pickett"
+      ],
+      [
+        64,
+        "Mojave King"
+      ],
+      [
+        65,
+        "Omari Moore"
+      ],
+      [
+        66,
+        "Drew Peterson"
+      ],
+      [
+        67,
+        "Adam Flagler"
+      ],
+      [
+        68,
+        "Tosan Evbuomwan"
+      ],
+      [
+        69,
+        "Landers Nolley II"
+      ],
+      [
+        70,
+        "Jalen Slawson"
+      ],
+      [
+        71,
+        "Mouhamed Gueye"
+      ],
+      [
+        72,
+        "Justyn Mutts"
+      ],
+      [
+        73,
+        "Matthew Mayer"
+      ],
+      [
+        74,
+        "Chris Livingston"
+      ],
+      [
+        75,
+        "Sir’Jabari Rice"
+      ],
+      [
+        76,
+        "Tevian Jones"
+      ],
+      [
+        77,
+        "Alex Fudge"
+      ],
+      [
+        78,
+        "DeAndre Williams"
+      ],
+      [
+        79,
+        "Grant Sherfield"
+      ],
+      [
+        80,
+        "D’Moi Hodge"
+      ],
+      [
+        81,
+        "Colin Castleton"
+      ],
+      [
+        82,
+        "Leaky Black"
+      ],
+      [
+        83,
+        "Vincent Valerio-Bodon"
+      ],
+      [
+        84,
+        "KJ Williams"
+      ],
+      [
+        85,
+        "Efe Abogidi"
+      ],
+      [
+        86,
+        "Tyger Campbell"
+      ],
+      [
+        87,
+        "Jacob Toppin"
+      ],
+      [
+        88,
+        "Nate Laszewski"
+      ],
+      [
+        89,
+        "Taevion Kinsey"
+      ],
+      [
+        90,
+        "Nikos Rogkavopoulos"
+      ],
+      [
+        91,
+        "Markquis Nowell"
+      ],
+      [
+        92,
+        "Jake Stephens"
+      ],
+      [
+        93,
+        "Caleb McConnell"
+      ],
+      [
+        94,
+        "Kendric Davis"
+      ],
+      [
+        95,
+        "Tom Digbeu"
+      ],
+      [
+        96,
+        "Jazian Gortman"
+      ],
+      [
+        97,
+        "Hunter Maldonado"
+      ],
+      [
+        98,
+        "Jaylen Martin"
+      ],
+      [
+        99,
+        "Liam Robbins"
+      ],
+      [
+        100,
+        "Antoine Davis"
+      ]
+    ]
+  },
+  {
+    "id": "nbasl-2024",
+    "year": 2024,
+    "publisher": "NBA Scouting Live composite",
+    "published": "2024-06-25",
+    "url": "https://www.nbascoutinglive.com/2024-rankings/",
+    "ranks": [
+      [
+        1,
+        "Zaccharie Risacher"
+      ],
+      [
+        2,
+        "Alex Sarr"
+      ],
+      [
+        3,
+        "Stephon Castle"
+      ],
+      [
+        4,
+        "Cody Williams"
+      ],
+      [
+        5,
+        "Matas Buzelis"
+      ],
+      [
+        6,
+        "Donovan Clingan"
+      ],
+      [
+        7,
+        "Reed Sheppard"
+      ],
+      [
+        8,
+        "Ron Holland"
+      ],
+      [
+        9,
+        "Robert Dillingham"
+      ],
+      [
+        10,
+        "Dalton Knecht"
+      ],
+      [
+        11,
+        "Nikola Topic"
+      ],
+      [
+        12,
+        "Ja’Kobe Walter"
+      ],
+      [
+        13,
+        "Tidjane Salaun"
+      ],
+      [
+        14,
+        "Kel’el Ware"
+      ],
+      [
+        15,
+        "Devin Carter"
+      ],
+      [
+        16,
+        "Terrence Shannon Jr."
+      ],
+      [
+        17,
+        "Isaiah Collier"
+      ],
+      [
+        18,
+        "Kyle Filipowski"
+      ],
+      [
+        19,
+        "Jared McCain"
+      ],
+      [
+        20,
+        "Zach Edey"
+      ],
+      [
+        21,
+        "Tristan da Silva"
+      ],
+      [
+        22,
+        "Kevin McCullar"
+      ],
+      [
+        23,
+        "Ryan Dunn"
+      ],
+      [
+        24,
+        "DaRon Holmes II"
+      ],
+      [
+        25,
+        "Baylor Scheierman"
+      ],
+      [
+        26,
+        "Tyler Smith"
+      ],
+      [
+        27,
+        "Justin Edwards"
+      ],
+      [
+        28,
+        "Yves Missi"
+      ],
+      [
+        29,
+        "Tyler Kolek"
+      ],
+      [
+        30,
+        "Carlton Carrington"
+      ],
+      [
+        31,
+        "Harrison Ingram"
+      ],
+      [
+        32,
+        "Cam Spencer"
+      ],
+      [
+        33,
+        "Pacome Dadiet"
+      ],
+      [
+        34,
+        "Kyshawn George"
+      ],
+      [
+        35,
+        "Adem Bona"
+      ],
+      [
+        36,
+        "Cameron Christie"
+      ],
+      [
+        37,
+        "Jaylen Wells"
+      ],
+      [
+        38,
+        "Jalen Bridges"
+      ],
+      [
+        39,
+        "Bobi Klintman"
+      ],
+      [
+        40,
+        "Jamal Shead"
+      ],
+      [
+        41,
+        "Tristen Newton"
+      ],
+      [
+        42,
+        "Ulrich Chomche"
+      ],
+      [
+        43,
+        "Melvin Ajinca"
+      ],
+      [
+        44,
+        "Jonathan Mogbo"
+      ],
+      [
+        45,
+        "Dillon Jones"
+      ],
+      [
+        46,
+        "Johnny Furphy"
+      ],
+      [
+        47,
+        "Trentyn Flowers"
+      ],
+      [
+        48,
+        "AJ Johnson"
+      ],
+      [
+        49,
+        "K.J. Simpson"
+      ],
+      [
+        50,
+        "Jaylon Tyson"
+      ],
+      [
+        51,
+        "Oso Ighodaro"
+      ],
+      [
+        52,
+        "Antonio Reeves"
+      ],
+      [
+        53,
+        "Juan Nunez"
+      ],
+      [
+        54,
+        "Pelle Larsson"
+      ],
+      [
+        55,
+        "Isaiah Crawford"
+      ],
+      [
+        56,
+        "Nikola Djurisic"
+      ],
+      [
+        57,
+        "Keshad Johnson"
+      ],
+      [
+        58,
+        "Malevy Leons"
+      ],
+      [
+        59,
+        "Enrique Freeman"
+      ],
+      [
+        60,
+        "Ajay Mitchell"
+      ],
+      [
+        61,
+        "Reece Beekman"
+      ],
+      [
+        62,
+        "PJ Hall"
+      ],
+      [
+        63,
+        "N’Faly Dante"
+      ],
+      [
+        64,
+        "Trey Alexander"
+      ],
+      [
+        65,
+        "Isaac Jones"
+      ],
+      [
+        66,
+        "Judah Mintz"
+      ],
+      [
+        67,
+        "Quinten Post"
+      ],
+      [
+        68,
+        "Branden Carlson"
+      ],
+      [
+        69,
+        "Tristan Enaruna"
+      ],
+      [
+        70,
+        "Bronny James"
+      ],
+      [
+        71,
+        "Anton Watson"
+      ],
+      [
+        72,
+        "Riley Minix"
+      ],
+      [
+        73,
+        "Ariel Hukporti"
+      ],
+      [
+        74,
+        "Josiah Jordan-James"
+      ],
+      [
+        75,
+        "Babacar Sane"
+      ],
+      [
+        76,
+        "RaeQuan Battle"
+      ],
+      [
+        77,
+        "Mantas Rubstavicius"
+      ],
+      [
+        78,
+        "Allen Flanigan"
+      ],
+      [
+        79,
+        "Nae’Qwan Tomlin"
+      ],
+      [
+        80,
+        "Zyon Pullin"
+      ],
+      [
+        81,
+        "Quinn Ellis"
+      ],
+      [
+        82,
+        "Boogie Ellis"
+      ],
+      [
+        83,
+        "Jaedon LeDee"
+      ],
+      [
+        84,
+        "Blake Hinson"
+      ],
+      [
+        85,
+        "Spencer Jones"
+      ],
+      [
+        86,
+        "David Jones"
+      ],
+      [
+        87,
+        "Aaron Estrada"
+      ],
+      [
+        88,
+        "Jesse Edwards"
+      ],
+      [
+        89,
+        "Armel Traore"
+      ],
+      [
+        90,
+        "Yannick Kraag"
+      ],
+      [
+        91,
+        "Jamison Battle"
+      ],
+      [
+        92,
+        "Isaiah Stevens"
+      ],
+      [
+        93,
+        "Drew Pember"
+      ],
+      [
+        94,
+        "Jalen Lewis"
+      ],
+      [
+        95,
+        "Dylan Disu"
+      ],
+      [
+        96,
+        "Tre Mitchell"
+      ],
+      [
+        97,
+        "Jaylin Williams"
+      ],
+      [
+        98,
+        "Alex Ducas"
+      ],
+      [
+        99,
+        "Keion Brooks"
+      ],
+      [
+        100,
+        "Jermaine Couisnard"
+      ]
+    ]
+  },
+  {
+    "id": "nbasl-2025",
+    "year": 2025,
+    "publisher": "NBA Scouting Live composite",
+    "published": "2025-06-24",
+    "url": "https://www.nbascoutinglive.com/2025-rankings/",
+    "ranks": [
+      [
+        1,
+        "Cooper Flagg"
+      ],
+      [
+        2,
+        "Dylan Harper"
+      ],
+      [
+        3,
+        "V.J. Edgecombe"
+      ],
+      [
+        4,
+        "Ace Bailey"
+      ],
+      [
+        5,
+        "Khaman Maluach"
+      ],
+      [
+        6,
+        "Derik Queen"
+      ],
+      [
+        7,
+        "Tre Johnson"
+      ],
+      [
+        8,
+        "Kon Knueppel"
+      ],
+      [
+        9,
+        "Egor Demin"
+      ],
+      [
+        10,
+        "Kasparas Jakucionis"
+      ],
+      [
+        11,
+        "Asa Newell"
+      ],
+      [
+        12,
+        "Noa Essengue"
+      ],
+      [
+        13,
+        "Carter Bryant"
+      ],
+      [
+        14,
+        "Jeremiah Fears"
+      ],
+      [
+        15,
+        "Nique Clifford"
+      ],
+      [
+        16,
+        "Collin Murray-Boyles"
+      ],
+      [
+        17,
+        "Jase Richardson"
+      ],
+      [
+        18,
+        "Danny Wolf"
+      ],
+      [
+        19,
+        "Noah Penda"
+      ],
+      [
+        20,
+        "Walter Clayton Jr."
+      ],
+      [
+        21,
+        "Liam McNeeley"
+      ],
+      [
+        22,
+        "Nolan Traore"
+      ],
+      [
+        23,
+        "Rasheer Fleming"
+      ],
+      [
+        24,
+        "Tyrese Proctor"
+      ],
+      [
+        25,
+        "Ben Saraf"
+      ],
+      [
+        26,
+        "Drake Powell"
+      ],
+      [
+        27,
+        "Cedric Coward"
+      ],
+      [
+        28,
+        "Bogoljub Markovic"
+      ],
+      [
+        29,
+        "Hugo Gonzalez"
+      ],
+      [
+        30,
+        "Thomas Sorber"
+      ],
+      [
+        31,
+        "Will Riley"
+      ],
+      [
+        32,
+        "Joan Beringer"
+      ],
+      [
+        33,
+        "Yang Hansen "
+      ],
+      [
+        34,
+        "Ryan Kalkbrenner"
+      ],
+      [
+        35,
+        "Johni Broome"
+      ],
+      [
+        36,
+        "Maxime Raynaud"
+      ],
+      [
+        37,
+        "Adou Thiero"
+      ],
+      [
+        38,
+        "Kam Jones"
+      ],
+      [
+        39,
+        "Alijah Martin"
+      ],
+      [
+        40,
+        "Dink Pate"
+      ],
+      [
+        41,
+        "Will Richard"
+      ],
+      [
+        42,
+        "John Tonje"
+      ],
+      [
+        43,
+        "Rocco Zikarsky"
+      ],
+      [
+        44,
+        "Sion James"
+      ],
+      [
+        45,
+        "Eric Dixon"
+      ],
+      [
+        46,
+        "Chaz Lanier"
+      ],
+      [
+        47,
+        "Koby Brea"
+      ],
+      [
+        48,
+        "Max Shulga"
+      ],
+      [
+        49,
+        "Amari Williams"
+      ],
+      [
+        50,
+        "Hunter Sallis"
+      ],
+      [
+        51,
+        "Alex Toohey"
+      ],
+      [
+        52,
+        "Brice Williams"
+      ],
+      [
+        53,
+        "LJ Cryer"
+      ],
+      [
+        54,
+        "Javon Small"
+      ],
+      [
+        55,
+        "Tamar Bates"
+      ],
+      [
+        56,
+        "Moussa Cisse"
+      ],
+      [
+        57,
+        "Caleb Love"
+      ],
+      [
+        58,
+        "Ryan Nembhard"
+      ],
+      [
+        59,
+        "Curtis Jones"
+      ],
+      [
+        60,
+        "Grant Nelson"
+      ],
+      [
+        61,
+        "Sean Pedulla"
+      ],
+      [
+        62,
+        "Mark Sears"
+      ],
+      [
+        63,
+        "Micah Peavy"
+      ],
+      [
+        64,
+        "Dawson Garcia"
+      ],
+      [
+        65,
+        "Nelly Junior Joseph"
+      ],
+      [
+        66,
+        "Izan Almansa"
+      ],
+      [
+        67,
+        "Kobe Sanders"
+      ],
+      [
+        68,
+        "Julian Reese"
+      ],
+      [
+        69,
+        "Jamir Watkins"
+      ],
+      [
+        70,
+        "Yanic Konan Niederhauser"
+      ],
+      [
+        71,
+        "J’Wan Roberts"
+      ],
+      [
+        72,
+        "Jaxson Robinson"
+      ],
+      [
+        73,
+        "John Poulakidas"
+      ],
+      [
+        74,
+        "Lachlan Olbrich"
+      ],
+      [
+        75,
+        "Kadary Richmond"
+      ],
+      [
+        76,
+        "Adama-Alpha Bal"
+      ],
+      [
+        77,
+        "Eli John N’diaye"
+      ],
+      [
+        78,
+        "Vladislav Goldin"
+      ],
+      [
+        79,
+        "Jalon Moore"
+      ],
+      [
+        80,
+        "Wooga Poplar"
+      ],
+      [
+        81,
+        "Viktor Lakhin"
+      ],
+      [
+        82,
+        "Saliou Niang"
+      ],
+      [
+        83,
+        "R.J. Davis"
+      ],
+      [
+        84,
+        "Dylan Cardwell"
+      ],
+      [
+        85,
+        "RJ Felton"
+      ],
+      [
+        86,
+        "Isaac Nogues"
+      ],
+      [
+        87,
+        "Chucky Hepburn"
+      ],
+      [
+        88,
+        "Arthur Kaluma"
+      ],
+      [
+        89,
+        "RJ Luis"
+      ],
+      [
+        90,
+        "Igor Milicic Jr."
+      ],
+      [
+        91,
+        "Miles Kelly"
+      ],
+      [
+        92,
+        "Kadin Shedrick"
+      ],
+      [
+        93,
+        "Jacksen Moni"
+      ],
+      [
+        94,
+        "Steve Settle III"
+      ],
+      [
+        95,
+        "Clifford Omoruyi"
+      ],
+      [
+        96,
+        "Norchad Omier"
+      ],
+      [
+        97,
+        "Ousmane N’Diaye"
+      ],
+      [
+        98,
+        "Cam Carter"
+      ],
+      [
+        99,
+        "Tyrese Hunter"
+      ],
+      [
+        100,
+        "Coleman Hawkins"
+      ]
+    ]
+  }
+]
