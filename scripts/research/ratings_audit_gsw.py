@@ -398,8 +398,27 @@ def compare(before_path: str, after_path: str, team_abbr: str | None = None, nam
           f"by 1.0+: {sum(1 for m in moved if m >= 1.0)}; largest {max(moved):.1f}")
 
 
+def sim_minutes(*probe_dirs: str) -> None:
+    """Warriors' minutes per game in simulated stretches (rookie_season_probe.py output), side by side."""
+    runs = [json.loads((Path(d) / "rookies.json").read_text())["league_stats"] for d in probe_dirs]
+    ids = sorted({p for run in runs for p in run if p.startswith("player_gsw-")},
+                 key=lambda p: -(runs[-1].get(p, {}).get("minutes") or 0))
+    print("| Player | " + " | ".join(f"{Path(d).name}: games, minutes a game" for d in probe_dirs) + " |")
+    print("|---|" + "---:|" * len(runs))
+    for p in ids:
+        cells = []
+        for run in runs:
+            s = run.get(p, {})
+            g = s.get("games") or 0
+            cells.append(f"{g}, {(s.get('minutes') or 0) / g:.1f}" if g else "-")
+        print(f"| {p.split('-', 1)[1].replace('-', ' ').title()} | " + " | ".join(cells) + " |")
+
+
 def main() -> None:
     cmd = sys.argv[1]
+    if cmd == "sim":
+        sim_minutes(*sys.argv[2:])
+        return
     if cmd == "compare":
         compare(sys.argv[2], sys.argv[3], team_abbr=sys.argv[4] if len(sys.argv) > 4 and sys.argv[4] != "-" else None,
                 names=sys.argv[5:] or None)
