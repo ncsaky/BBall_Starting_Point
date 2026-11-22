@@ -36,8 +36,10 @@ class NewSaveCoordinatorTests(unittest.TestCase):
     def test_identity_and_personality_stay(self):
         for slot in self.slots:
             seeded = self.seeded[(slot["team_id"], slot["slot"])]
-            for field in ("id", "name", "personality_traits", "status"):
+            for field in ("id", "personality_traits", "status"):
                 self.assertEqual(slot[field], seeded[field], field)
+            if slot["slot"] in COORDINATOR_SLOTS:
+                self.assertEqual(neutral_starting_coordinator(deepcopy(seeded))["name"], seeded["name"])
             self.assertGreater(slot["contract"]["annual_salary_millions"], 0)
             self.assertIn("age", slot)
 

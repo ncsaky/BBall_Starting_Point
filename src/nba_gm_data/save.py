@@ -45,8 +45,15 @@ from .narrative import (
 from .schema import CANONICAL_SEASON, CANONICAL_START_DATE, CoachRating, DevelopmentEvent, to_plain
 from .sim import build_sim_indices, espn_team_id_map, invalidate_sim_cache, load_sim_context, load_sim_reference, sim_game_with_context
 from .spatial import invalidate_spatial_cache, team_spatial_profile
-from .staff import ROLE_LABELS, STAFF_SLOTS, apply_head_coach_reputation, fire_staff_from_save, hire_staff_from_save, initialize_staff_season_changes, initialize_save_staff_slots, interim_staff, is_interim_staff, negotiate_staff_hire, simulate_ai_staff_changes, staff_action_permissions, staff_budget_for_team, staff_budget_salary, staff_contract, staff_grade
-from .staff_lifecycle import roll_staff_lifecycle
+from .staff import (
+    COACHING_SLOTS, COORDINATOR_SLOTS, ROLE_LABELS, STAFF_SLOTS, apply_head_coach_reputation,
+    coordinator_meets_keep_bar, current_staff_slot, fire_staff_from_save, hire_staff_from_save,
+    initialize_staff_season_changes, initialize_save_staff_slots, interim_staff, is_interim_staff,
+    negotiate_staff_hire, offseason_coaching_recommendations, remember_opening_coaching_staff,
+    simulate_ai_staff_changes, staff_action_permissions, staff_budget_for_team, staff_budget_salary,
+    staff_contract, staff_grade,
+)
+from .staff_lifecycle import roll_staff_lifecycle, staff_win_expectations
 from .utils import clamp, copy_plain, maybe_float, normalize_name, stable_id
 from .baselines import baseline_for_save
 
@@ -210,6 +217,7 @@ def _create_league_save(
         "league_exit_records": [],
         "roster_cutdown_baselines": initial_roster_cutdown_baselines(canonical),
         "staff_slots": initialize_save_staff_slots(canonical, seed),
+        "staff_preseason_expectations": {CANONICAL_SEASON: staff_win_expectations(canonical.get("team_strategic_states", []))},
         "former_staff": [],
         "pending_staff_negotiations": [],
         "staff_market": [],
@@ -2727,7 +2735,10 @@ def trade_asset_identity_keys(proposal: dict[str, Any]) -> set[str]:
     return proposal_asset_identity_keys(proposal)
 
 
-def apply_ai_staff_recommendations(canonical: dict[str, Any], save: dict[str, Any], payload: dict[str, Any], seed: int) -> dict[str, Any]:
+def apply_ai_staff_recommendations(
+    canonical: dict[str, Any], save: dict[str, Any], payload: dict[str, Any], seed: int,
+    *, offseason_appointment: bool = False,
+) -> dict[str, Any]:
     human_team_ids = human_controlled_team_ids(save)
     signed_staff_candidate_ids: set[str] = set()
     applied: list[dict[str, Any]] = []
@@ -2738,28 +2749,48 @@ def apply_ai_staff_recommendations(canonical: dict[str, Any], save: dict[str, An
         if team_id in human_team_ids:
             continue
         action = recommendation.get("action") or "hire_replacement"
+        current = current_staff_slot(save, team_id, slot)
+        reviewed_id = (recommendation.get("current_staff") or {}).get("id")
+        if reviewed_id and (current or {}).get("id") != reviewed_id:
+            continue
+        if action == "retain_interim":
+            if not is_interim_staff(current):
+                continue
+            current["status"] = "fictional_gameplay_staff_retained"
+            current["contract"].update(years_remaining=3, guarantee_level="standard")
+            current["job_security"] = 55.0
+            current["archetype"] = "promoted interim coach"
+            current["style_tags"] = [tag for tag in current.get("style_tags", []) if tag != "interim"]
+            current["notes"] = "Interim head coach retained after the season review."
+            save.setdefault("staff_interim_review_due", {}).pop(f"{team_id}:{slot}", None)
+            add_news(save, "staff_hire", f"{team_id_to_abbrev(team_id)} retains {current['name']} as head coach.", date_value=date_value)
+            applied.append({"status": "applied", "staff": current})
+            continue
         if action in {"fire_then_hire", "fire_only"}:
             reason = recommendation.get("firing_reason")
             fire_result = fire_staff_from_save(save, team_id, slot, reason=reason)
             applied.append(fire_result)
-            if fire_result.get("status") == "applied":
-                save.setdefault("staff_firing_history", []).append(
-                    {
-                        "id": stable_id("staff_firing_history", date_value, team_id, slot, (fire_result.get("fired_staff") or {}).get("id")),
-                        "date": date_value,
-                        "season": save.get("meta", {}).get("season"),
-                        "team_id": team_id,
-                        "slot": slot,
-                        "staff_id": (fire_result.get("fired_staff") or {}).get("id"),
-                        "staff_name": (fire_result.get("fired_staff") or {}).get("name"),
-                        "reason": reason,
-                    }
-                )
-                try:
-                    review_due = (parse_date(date_value) + timedelta(days=24)).isoformat()
-                except (TypeError, ValueError):
-                    review_due = date_value
-                save.setdefault("staff_interim_review_due", {})[f"{team_id}:{slot}"] = review_due
+            if fire_result.get("status") != "applied":
+                continue
+            save.setdefault("staff_firing_history", []).append(
+                {
+                    "id": stable_id("staff_firing_history", date_value, team_id, slot, (fire_result.get("fired_staff") or {}).get("id")),
+                    "date": date_value,
+                    "season": save.get("meta", {}).get("season"),
+                    "team_id": team_id,
+                    "slot": slot,
+                    "staff_id": (fire_result.get("fired_staff") or {}).get("id"),
+                    "staff_name": (fire_result.get("fired_staff") or {}).get("name"),
+                    "reason": reason,
+                    "review_period": recommendation.get("review_period"),
+                    "wins_vs_preseason_per_82": recommendation.get("wins_vs_preseason_per_82"),
+                }
+            )
+            try:
+                review_due = (parse_date(date_value) + timedelta(days=24)).isoformat()
+            except (TypeError, ValueError):
+                review_due = date_value
+            save.setdefault("staff_interim_review_due", {})[f"{team_id}:{slot}"] = review_due
             if action == "fire_only" or not recommendation.get("candidate_id"):
                 continue
         if recommendation.get("candidate_id") in signed_staff_candidate_ids:
@@ -2783,7 +2814,9 @@ def apply_ai_staff_recommendations(canonical: dict[str, Any], save: dict[str, An
         if not negotiation.get("accepted"):
             applied.append({"status": "rejected", "negotiation": negotiation})
             continue
-        applied_result = hire_staff_from_save(save, negotiation["id"], canonical=canonical)
+        applied_result = hire_staff_from_save(
+            save, negotiation["id"], canonical=canonical, offseason_appointment=offseason_appointment,
+        )
         if applied_result.get("status") == "applied":
             signed_staff_candidate_ids.add(recommendation.get("candidate_id"))
             save.setdefault("staff_interim_review_due", {}).pop(f"{team_id}:{slot}", None)
@@ -4670,6 +4703,9 @@ def complete_offseason_and_rollover(
         "development_months": sorted(save.get("applied_development_months", [])),
     }
     save.setdefault("season_history", []).append(history_entry)
+    # Review the completed season before its records and staff change limits reset.
+    staff_recommendations = offseason_coaching_recommendations(canonical, save)
+    apply_ai_staff_recommendations(canonical, save, {"recommendations": staff_recommendations}, seed)
     review = build_year_in_review(canonical, save, save.get("meta", {}).get("user_team_id"), current_season)
     if review:
         upsert_by_id(save, "year_reviews", review)
@@ -4712,6 +4748,12 @@ def complete_offseason_and_rollover(
     # Offseason and training-camp injuries; the season just played already carries its own long injuries over.
     apply_season_start_injuries(root, canonical_with_save(canonical, save), save, generated, seed, carried=False)
     age_staff_contracts(save, canonical, seed=seed)
+    opening_date = save["state"]["current_date"]
+    staff_vacancies = simulate_ai_staff_changes(
+        canonical, save, opening_date, opening_date, seed=seed, limit=len(save.get("staff_slots", [])),
+        vacancies_only=True,
+    )
+    apply_ai_staff_recommendations(canonical, save, staff_vacancies, seed, offseason_appointment=True)
     advance_lifecycle_to(canonical, save, f"{next_start}-10-01", seed, root)
     save["applied_development_months"] = [m for m in save.get("applied_development_months", []) if m >= f"{next_start}-10"]
     refresh_roster_cutdowns(canonical, save)
@@ -6300,6 +6342,34 @@ def queue_ai_recommendations(
                     "notes": "AI extension decisions process quietly from core/depth role, ask, age, performance, and team context.",
                 }
             )
+    # Trade reviews can return early even on a staff checkpoint. Process staff independently.
+    if phase == "regular_season":
+        remember_opening_coaching_staff(save)
+    staff_review_due = (
+        from_date[:7] != through_date[:7]
+        or phase in {"training_camp", "offseason", "draft_lottery", "draft", "re_signing", "free_agency"}
+        or through_date.endswith("-02-05")
+    )
+    if staff_review_due:
+        action_id = stable_id("ai_action", "staff", through_date[:7], phase, seed)
+        if action_id not in queued_keys:
+            payload = simulate_ai_staff_changes(canonical, save, from_date, through_date, seed=seed, limit=8)
+            if payload.get("recommendations"):
+                # Staff evaluation should use the live team context above, but
+                # the spending ceiling is a stable franchise constraint. Save-
+                # enriched strategy states must not silently raise that ceiling.
+                result = apply_ai_staff_recommendations(authoritative_canonical, save, payload, seed)
+                save.setdefault("processed_hidden_ai_actions", []).append(
+                    {
+                        "id": action_id,
+                        "date": through_date,
+                        "action_type": "staff_change_recommendations",
+                        "status": "executed" if result.get("applied_count") else "reviewed",
+                        "applied_count": result.get("applied_count", 0),
+                        "notes": "Leaguewide AI staff changes process quietly; user-team staff moves remain manual.",
+                    }
+                )
+
     from .trade_calendar import market_day
     start_year = season_start_year_from_date(through_date)
     trade_deadline = trade_deadline_date(start_year)
@@ -6414,31 +6484,6 @@ def queue_ai_recommendations(
                     "notes": "Draft window marker. Use simulate-draft or pick-recommendations for explicit draft-night decisions.",
                 }
             )
-    staff_review_due = (
-        from_date[:7] != through_date[:7]
-        or phase in {"training_camp", "offseason", "draft_lottery", "draft", "re_signing", "free_agency"}
-        or through_date.endswith("-02-05")
-    )
-    if staff_review_due:
-        action_id = stable_id("ai_action", "staff", through_date[:7], phase, seed)
-        if action_id not in queued_keys:
-            payload = simulate_ai_staff_changes(canonical, save, from_date, through_date, seed=seed, limit=8)
-            if payload.get("recommendations"):
-                # Staff evaluation should use the live team context above, but
-                # the spending ceiling is a stable franchise constraint. Save-
-                # enriched strategy states must not silently raise that ceiling.
-                result = apply_ai_staff_recommendations(authoritative_canonical, save, payload, seed)
-                save.setdefault("processed_hidden_ai_actions", []).append(
-                    {
-                        "id": action_id,
-                        "date": through_date,
-                        "action_type": "staff_change_recommendations",
-                        "status": "executed" if result.get("applied_count") else "reviewed",
-                        "applied_count": result.get("applied_count", 0),
-                        "notes": "Leaguewide AI staff changes process quietly; user-team staff moves remain manual.",
-                    }
-                )
-
 
 def queue_user_trade_offers(save: dict[str, Any], offers: list[dict[str, Any]], date_value: str) -> None:
     from .transactions import trade_offer_fingerprint
@@ -11777,6 +11822,7 @@ def age_staff_contracts(save: dict[str, Any], canonical: dict[str, Any] | None =
     expired_count = 0
     date_value = save.get("state", {}).get("current_date") or "season_rollover"
     original_slots = list(save.get("staff_slots", []))
+    human_teams = human_controlled_team_ids(save)
     roster_ids_by_team: dict[str, set[str]] = {}
     if canonical is not None:
         staff_active = canonical_with_save(canonical, save)
@@ -11796,7 +11842,11 @@ def age_staff_contracts(save: dict[str, Any], canonical: dict[str, Any] | None =
             team_id = staff.get("team_id")
             slot = staff.get("slot")
             if team_id and slot:
-                if team_id in human_controlled_team_ids(save) and not is_interim_staff(staff):
+                if team_id not in human_teams and slot in COACHING_SLOTS and is_interim_staff(staff):
+                    contract["years_remaining"] = 1
+                    updated.append(staff)
+                    continue
+                if team_id in human_teams and not is_interim_staff(staff):
                     add_staff_retention_window(save, staff, date_value)
                     staff["market_status"] = "contract_expired_pending_user_decision"
                     staff["job_security"] = min(float(staff.get("job_security") or 50.0), 45.0)
@@ -11817,6 +11867,8 @@ def age_staff_contracts(save: dict[str, Any], canonical: dict[str, Any] | None =
                     former = deepcopy(staff)
                     former["market_status"] = "expired_contract"
                     former["team_id"] = None
+                    former["last_team_id"] = team_id
+                    former["staff_left_on"] = date_value
                     save.setdefault("former_staff", []).append(former)
                     team_abbrev = str(team_id).replace("team_", "").upper()
                     add_news(
@@ -11867,9 +11919,12 @@ def ai_staff_retention_contract(
     )
     available = budget - other_spend
     if ask > available:
-        if grade < 88.0 or available < current_salary * 0.96:
+        if slot in COACHING_SLOTS and available + 0.001 >= current_salary:
+            ask = current_salary
+        elif grade >= 88.0 and available >= current_salary * 0.96:
+            ask = max(0.8, available)
+        else:
             return None
-        ask = max(0.8, available)
     retained = deepcopy(staff)
     retained["market_status"] = "employed"
     retained["status"] = retained.get("status") or "fictional_gameplay_staff_retained"
@@ -11902,6 +11957,14 @@ def ai_staff_retention_context(
     team_id = staff.get("team_id")
     slot = staff.get("slot")
     grade = staff_grade(staff)
+    # The standalone summer review sets head-coach turnover; an expiry alone doesn't
+    # count as an extra firing. Coordinators are evaluated on the role, not team wins.
+    # docs/agents/tasks/staff-turnover-evidence.md, sections 1, 2 and 5.
+    if slot == "head_coach":
+        return {"retain": True, "reason": "head coach kept after season review"}
+    if slot in COORDINATOR_SLOTS:
+        retained = coordinator_meets_keep_bar(staff)
+        return {"retain": retained, "reason": "stable staff fit" if retained else "staff contract allowed to expire"}
     underperforming = team_underperformed_staff_expectation(canonical, save, team_id)
     triggered_failure = staff_slot_failure_signal(
         canonical,
@@ -11910,12 +11973,9 @@ def ai_staff_retention_context(
         slot,
         roster_ids_by_team=roster_ids_by_team,
     )
-    threshold = 76.0 if slot in {"head_coach", "offensive_coordinator", "defensive_coordinator"} else 72.0
     if triggered_failure and grade < 82.0:
         return {"retain": False, "reason": triggered_failure}
-    if underperforming and slot in {"head_coach", "offensive_coordinator", "defensive_coordinator"} and grade < 88.0:
-        return {"retain": False, "reason": "team underperformed expectations"}
-    if grade >= threshold:
+    if grade >= 72.0:
         return {"retain": True, "reason": "strong staff grade and no unresolved performance trigger"}
     if grade >= 68.0 and not underperforming and not triggered_failure:
         return {"retain": True, "reason": "stable staff fit"}
