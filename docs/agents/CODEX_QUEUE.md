@@ -6,6 +6,49 @@ Current priority (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE now, ODDS-COA
 
 ---
 
+## Ready now (2026-11-22, later): STAFF-TURNOVER-FIT (fresh chat; code task with tests)
+
+### STAFF-TURNOVER-FIT: AI staff decisions follow the real turnover evidence
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task STAFF-TURNOVER-FIT (add a board row, "in progress
+(Codex)"). Read your own docs/agents/tasks/staff-turnover-evidence.md and data/research/staff_turnover_evidence.json,
+plus docs/agents/tasks/staff-life.md, docs/agents/tasks/neutral-coordinators.md and docs/agents/tasks/coaching-overhaul.md.
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_staff_fit -b codex/staff-turnover-fit HEAD
+Symlink .venv and the git-ignored data files the tests need from the main checkout (see how earlier worktrees did it:
+data/research/barttorvik/raw, data/research/bbi, universe_2026_27_offseason.sqlite, data/canonical/
+injury_player_evidence_v4.json, output/settlement-materialization-pass; then gunzip -kf
+data/canonical/player_inputs_2026_27.json.gz). Commit on that branch; never push, never commit to main.
+
+Goal: AI teams' staff decisions match your evidence. Known problem: AI teams replace most of the new neutral-rated
+coordinators each summer because they sit under the AI's keep threshold (68); your evidence says a bar near 60 fits.
+1. Find where AI teams keep, fire and hire head coaches, coordinators and other staff (staff.py, staff_lifecycle.py,
+   and their callers). List every threshold and rate.
+2. Change them to follow the evidence, citing it in comments: head-coach firings (about 2 in-season and 3 in the
+   summer per season, more likely when wins fall short of expectations), the coordinator keep bar, assistant turnover
+   under a returning vs a new head coach (about 1 vs 5-6), front-office firings if the game models them. Keep the
+   user's own team untouched (the user decides their own staff). Use separate random streams for new draws; say which
+   outcomes change.
+3. Measure over at least two simulated seasons with the existing staff or league probe tools (check
+   docs/agents/tasks/staff-life.md for how it was measured before). Heavy runs: one at a time with `nice -n 10`; if
+   the laptop is busy (`uptime` 1-minute load above 20), run them on the Azure worker instead:
+   .venv/bin/python scripts/azure_worker.py run --name staff-fit --dir <your worktree> --fetch <output path> -- env PYTHONPATH=src <command>
+   Compare firings, coordinator turnover and assistant changes per season with the evidence (before / after / real).
+4. Tests: update or add focused tests (staff lifecycle, coaching), run them and the core suite
+   (bash scripts/run_core_tests.sh). Both scorecards should be unchanged unless staff ratings feed games; if they do,
+   run scripts/calibration_report.py --games 1230 --mode replay-real-minutes and say so.
+Files you may touch: staff.py, staff_lifecycle.py and the staff-decision code they call, tests, research scripts,
+docs/agents/tasks/staff-turnover-fit.md (plain-language TL;DR first). Do not touch contract, ratings, development,
+Stage 2, sim.py or GUI files (other agents are working there). Commit after each step. Set the board row to "review"
+and stop.
+```
+
+---
+
 ## Ready now (2026-11-22, later): INPUT-DATA-AUDIT (fresh chat; data audit, research only)
 
 ### INPUT-DATA-AUDIT: find dead, duplicate and broken columns behind the 94 player inputs
