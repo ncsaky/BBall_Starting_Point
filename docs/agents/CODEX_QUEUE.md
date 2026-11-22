@@ -6,6 +6,124 @@ Current priority (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE now, ODDS-COA
 
 ---
 
+## Ready now (2026-11-22): STAFF-TURNOVER-EVIDENCE (fresh chat; research)
+
+### STAFF-TURNOVER-EVIDENCE: how real NBA coaching staffs change over time
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task STAFF-TURNOVER-EVIDENCE (add a board row, "in progress
+(Codex)"). Read docs/agents/tasks/staff-life.md, docs/agents/tasks/neutral-coordinators.md and
+docs/agents/tasks/coaching-overhaul.md (how the game hires, fires and grades head coaches, coordinators and other
+staff; a known problem: AI teams replace most neutral-rated coordinators because they fall below the AI's keep
+threshold of 68) and docs/agents/tasks/rotation-evidence.md (your format: fitted on some seasons, checked on held-out
+ones).
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_staff -b codex/staff-turnover-evidence HEAD
+Commit on that branch; never push, never commit to main. Research only: nothing under src/, gui/ or tests/.
+
+From public sources (Basketball Reference coach records, team and league releases, reputable coaching-carousel
+trackers; respect robots.txt and terms; paraphrase; record sources), for about 2010-2026:
+1. Head coaches: firings per season (in-season vs offseason), what predicts a firing (record vs expectations, years
+   in the job, new front office, playoff results), tenure length, interim coaches and how often interims keep the job,
+   where fired coaches go next (another head job, assistant, TV).
+2. Lead assistants and coordinators (offensive and defensive coordinators where teams name them, top assistants):
+   how many change per team per summer, how often a new head coach brings his own staff, how often assistants are
+   promoted to head coach elsewhere, typical tenure.
+3. Other staff the game models (player development, medical and performance, scouting) where any public data exists;
+   say clearly where none does.
+4. Front-office heads (general managers / presidents): firings per season and what predicts them.
+5. Simple rules the game can use: e.g. firing odds by win share vs expectation and tenure; how many assistants a new
+   head coach replaces; a sensible "keep" bar for an average coordinator. Fit on 2010-2022, check on 2023-2026, with
+   named examples.
+Output: data/research/staff_turnover_evidence.json, scripts/research/staff_turnover_fit.py,
+docs/agents/tasks/staff-turnover-evidence.md (plain-language TL;DR first, 5 lines; tables; named examples; gaps).
+Save and commit after each part. Set the board row to "review" and stop.
+```
+
+---
+
+## Ready now (2026-11-22, early): DEFENSIVE-SCHEME-EVIDENCE (fresh chat; research)
+
+### DEFENSIVE-SCHEME-EVIDENCE: how real NBA teams and coaches defend screens and switch
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task DEFENSIVE-SCHEME-EVIDENCE (add a board row, "in progress
+(Codex)"). Read docs/agents/tasks/s2-totals-matchups.md (the new possession engine; it has man-to-man matchups but no
+switching, no drop/hedge coverage and no double teams, because the game's coach inputs have no scheme habits) and
+docs/agents/tasks/rotation-evidence.md (your last task; same format: fitted on 2023-25, checked on 2025-26).
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_schemes -b codex/defensive-scheme-evidence HEAD
+Symlink .venv and the git-ignored data/research/bbi/ files from the main checkout (Basketball Index has defensive
+role and matchup data under data/research/bbi). Commit on that branch; never push, never commit to main. Research only:
+nothing under src/, gui/ or tests/.
+
+From public sources (NBA stats tracking and play type pages via public URLs, Basketball Index, team and coach
+coverage in reputable analysis; respect robots.txt, rate limits and terms; paraphrase; record sources), for 2023-24
+to 2025-26:
+1. Pick-and-roll coverage by team (and coach): drop, switch, hedge/show, blitz/trap, at-level, ice; how often each.
+   Where direct coverage data is missing, use proxies (switch rate from matchup data, big-man distance from the rim on
+   screens) and say so.
+2. Switching: share of screens switched by team; which player types get switched onto (guards onto bigs) and how
+   often teams hunt those mismatches on offense, and how efficient that is.
+3. Double teams and help: post-up double rate, rim help and how often help comes from the strong vs weak side, and
+   zone usage by team.
+4. Screens on offense: screens per 100 possessions by team and by player (screen assists exist in the game already),
+   handoffs, off-ball screens.
+5. How stable these are year to year for the same coach and team, and what they correlate with (roster size and
+   mobility of bigs, coach identity) - so the game can give each coach a scheme habit and each team a likely coverage.
+Fit simple rules where the data allow and check on 2025-26. Output: data/research/defensive_scheme_evidence.json,
+scripts/research/defensive_scheme_fit.py, docs/agents/tasks/defensive-scheme-evidence.md (plain-language TL;DR first,
+5 lines; tables; named examples; gaps). Save and commit after each part. Set the board row to "review" and stop.
+```
+
+---
+
+## Ready now (2026-11-21, late night): ROTATION-EVIDENCE (fresh chat; research)
+
+### ROTATION-EVIDENCE: how real NBA coaches run rotations and make in-game decisions
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task ROTATION-EVIDENCE (add a board row, "in progress
+(Codex)"). Read docs/agents/tasks/s2-totals-matchups.md (the new possession engine; its next piece is a proper coach:
+rotations and in-game decisions) and docs/agents/tasks/offseason-decisions-evidence.md (your format: rules fitted on
+some seasons, tested on held-out ones).
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_rotations -b codex/rotation-evidence HEAD
+Symlink .venv from the main checkout. Commit on that branch; never push, never commit to main. Research only: nothing
+under src/, gui/ or tests/.
+
+From public play-by-play for 2023-24 to 2025-26 (the NBA's own play-by-play and box score endpoints via public URLs, or
+pbpstats-style public data; respect robots.txt, rate limits and terms; record sources; check the repo's existing
+game logs under data/ first), measure:
+1. Stints: how long players stay in (median and spread) by role (starter, sixth man, bench, star), when starters first
+   sit (game clock), how long they rest, when they return, and how many players a team uses by game state.
+2. Minutes shape: starters' minutes by quarter; closing lineups (who is on the floor in the last 5 minutes of close
+   games vs the starting five); the share of the regular top-8 used in the playoffs.
+3. Game-state decisions: blowouts (when starters are pulled, by margin and time), foul trouble (when a player with 2
+   fouls in the first quarter, 3 in the first half, 4 or 5 sits, and for how long; stars vs others), fatigue and
+   back-to-backs.
+4. Timeouts: how often and when (after opponent runs of 6-0, 8-0, 10-0; end of game), and whether runs stop after them.
+5. End of game: fouling when behind (margin and seconds left), fouling up three, hack-a-player frequency,
+   two-for-one attempts.
+6. Coach differences: which of these vary most by coach (e.g. starters' minutes, rotation depth, foul-trouble
+   patience), with named examples.
+Fit simple rules where the data allow (e.g. "a starter with 2 fouls in the first quarter sits until about X") and
+check them on a held-out season. Output: data/research/rotation_evidence.json, scripts/research/rotation_evidence_fit.py,
+docs/agents/tasks/rotation-evidence.md (plain-language TL;DR first, 5 lines; tables; named examples; gaps).
+Save and commit after each part so a usage limit loses nothing. Set the board row to "review" and stop.
+```
+
+---
+
 ## Ready now (2026-11-21, night): CONTRACT-STRUCTURE-EVIDENCE (fresh chat; research, no image tool)
 
 ### CONTRACT-STRUCTURE-EVIDENCE: how real NBA contracts are shaped, and how options get decided

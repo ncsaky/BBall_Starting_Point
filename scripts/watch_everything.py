@@ -265,6 +265,8 @@ def board() -> list[str]:
         word = (bold.group(1) if bold else status).lower()
         if any(key in word for key in ("in progress", "queued", "review", "running", "ready")):
             task = cells[0].split(" ", 1)[0]
+            if "-" not in task:
+                continue                       # old short-id rows (historical)
             owner = cells[1].split("(")[0].strip()
             out.append(f"  {task:<26} {clip(bold.group(1) if bold else status, 34):<34} {clip(owner, 50)}")
     return ["Board (open tasks):"] + (out or ["  nothing open"])
@@ -395,29 +397,38 @@ def test_bars(procs) -> list[str]:
     return out
 
 
-CODEX_BATCH_TARGET = 30 * 3 + 12 * 3 + 20 * 4   # HEADSHOT-GEN-LIBRARY batch 1: 206 portraits
-
-
 def codex_bars() -> list[str]:
-    out = []
-    for folder in glob.glob(str(ROOT.parent / "BBall_codex_*")):
+    """Codex: a bar while it is making portraits (count so far), otherwise a pulse for any worktree it committed to
+    in the last 3 hours, with its latest commit message."""
+    out, now = [], time.time()
+    for folder in sorted(glob.glob(str(ROOT.parent / "BBall_codex_*"))):
         images = glob.glob(f"{folder}/output/headshots-gen-library/game/*/*.jpg")
-        if "headshot" in folder:
-            people = len({(Path(p).parent.name, Path(p).name.split("-")[0]) for p in images})
-            recent = max((os.path.getmtime(p) for p in images), default=0)
-            note = f"{len(images)} of {CODEX_BATCH_TARGET} portraits, {people} people" + (f", newest {ago(time.time() - recent)}" if recent else ", none yet")
-            out.append(bar(len(images) / CODEX_BATCH_TARGET, "Codex: face library batch 1", note, "\033[35m"))
+        recent_image = max((os.path.getmtime(p) for p in images), default=0)
+        log = run(["git", "-C", folder, "log", "-1", "--format=%ct|%s"]).strip()
+        stamp, _, subject = log.partition("|")
+        last = max(recent_image, float(stamp or 0))
+        if now - last > 3 * 3600:
+            continue
+        name = Path(folder).name.replace("BBall_codex_", "")
+        if images and now - recent_image < 3600:
+            out.append(bar(None, f"Codex: faces ({name})", f"{len(images)} portraits so far, newest {ago(now - recent_image)}"))
+        else:
+            out.append(bar(None, f"Codex: {name}", f"last commit {ago(now - float(stamp or now))}: {clip(subject, 50)}"))
     return out
 
 
 def agent_bars() -> list[str]:
     """Claude agents active in the last 2 hours and not finished: no percentage exists, so a pulse with time active."""
     rows, now, out = board_rows(), time.time(), []
-    busy = {where(pid).split(" ", 1)[1] for pid, _, _ in processes() if where(pid).startswith("agent ")}
+    busy = set()
+    for pid, _, _ in processes():
+        place = where(pid)                     # once: a process can end between two looks
+        if place.startswith("agent ") and " " in place:
+            busy.add(place.split(" ", 1)[1])
     for path in glob.glob(TASK_GLOB):
         name = Path(path).stem
         age = now - os.path.getmtime(path)
-        if not name.startswith("a") or finished(path) or not (age < 1200 or name[:8] in busy):
+        if not name.startswith("a") or finished(path) or not (age < 3 * 3600 or name[:8] in busy):
             continue
         note, cwd = last_note(path)
         label = task_name_for(cwd, rows) if "agent-" in cwd else ""
@@ -456,11 +467,24 @@ def gauges() -> list[str]:
             bar(disk.used / disk.total, "Disk", f"{disk.free / 1e9:.0f} GB free", colour(disk.used / disk.total))]
 
 
+def safe(section, *args) -> list[str]:
+    """One broken section must never stop the whole view (a job can vanish mid-read)."""
+    try:
+        return section(*args)
+    except Exception as exc:  # noqa: BLE001 - a watcher keeps going
+        return [f"  ({section.__name__} skipped this refresh: {type(exc).__name__})"]
+
+
 def snapshot() -> str:
-    procs = processes()
-    progress = league_run_bars(procs) + azure_bars(procs) + test_bars(procs) + codex_bars() + agent_bars()
+    try:
+        procs = processes()
+    except Exception:  # noqa: BLE001
+        procs = []
+    progress = (safe(league_run_bars, procs) + safe(azure_bars, procs) + safe(test_bars, procs) + safe(codex_bars)
+                + safe(agent_bars))
     head = f"{BOLD}NBA GM Sandbox: live progress{RESET} · {datetime.now():%a %H:%M:%S} · refreshes every 15 s · Ctrl-C stops watching"
-    sections = [["Progress"] + (progress or ["  nothing running"]), ["Laptop"] + gauges(), jobs(), codex(), azure(), board()]
+    sections = [["Progress"] + (progress or ["  nothing running"]), ["Laptop"] + safe(gauges), safe(jobs), safe(codex),
+                safe(azure), safe(board)]
     return "\n".join([head, ""] + ["\n".join(s) + "\n" for s in sections])
 
 
@@ -480,7 +504,10 @@ def main() -> int:
         return 0
     try:
         while True:
-            text = snapshot()
+            try:
+                text = snapshot()
+            except Exception as exc:  # noqa: BLE001 - keep watching
+                text = f"(refresh failed: {type(exc).__name__}: {exc}; retrying)\n"
             sys.stdout.write("\033[2J\033[H" + text)
             sys.stdout.flush()
             time.sleep(args.every)
