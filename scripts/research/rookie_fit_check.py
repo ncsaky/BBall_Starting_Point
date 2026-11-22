@@ -24,6 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts" / "research"))
 sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT))
 
 import real_prospects as rp  # noqa: E402
 from nba_gm_data import ratings_model  # noqa: E402
@@ -45,6 +46,7 @@ def snapshot(overrides: dict[str, dict] | None = None) -> list[dict]:
         for pid, records in overrides.items():
             patched[pid] = {**league[pid], **records}
         ratings_model._INPUT_CACHE[key] = patched
+    ratings_model._FITTED_CACHE.clear()   # league tables refitted on these inputs, as a new save would
     canonical = load_app_canonical(ROOT)
     ratings_model.install_inputs_model(canonical, ROOT)
     rows = []
@@ -123,6 +125,14 @@ def backtest(bundle_path: str) -> None:
         b = est.estimate_player_inputs(player, prospect=True, college=entry).to_dict()["inputs"]
         old[pid] = {iid: a[iid] for iid in TECHNIQUE}
         new[pid] = {iid: b[iid] for iid in TECHNIQUE}
+    # The college method's level step, exactly as the builder runs it for the 2026 class.
+    from scripts.build_player_inputs import level_rookies
+    _, league = ratings_model._load_inputs_keyed(ROOT)
+    section = {"players": {pid: {"inputs": {**records, **new.get(pid, {})}} for pid, records in league.items()}}
+    level = level_rookies(section, college, ROOT)
+    print("level step:", json.dumps(level))
+    new = {pid: {iid: section["players"][pid]["inputs"][iid] for iid in TECHNIQUE} for pid in college}
+    ratings_model._INPUT_CACHE.clear()
     real = rookie_lebron("2026")
     now = {r["id"]: r for r in snapshot()}
     results = {"old": {r["id"]: r for r in snapshot(old)}, "new": {r["id"]: r for r in snapshot(new)}}
