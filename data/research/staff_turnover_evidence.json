@@ -1050,7 +1050,7 @@
             "successor": "Mark Jackson",
             "phase": "offseason",
             "kind": "nonrenewal",
-            "source": "https://www.espn.com/nba/news/story?id=6431241"
+            "source": "https://cdn.nba.com/teams/uploads/sites/1610612744/2023/12/2324-gsw-media-guide.pdf"
           }
         ],
         "team_wins_vs_expectation_per_82": 5.5,
@@ -2815,8 +2815,8 @@
             "coach": "Jim Boylan",
             "successor": "Larry Drew",
             "phase": "offseason",
-            "kind": "interim_fired",
-            "source": "http://www.nba.com/bucks/news/milwaukee-bucks-seek-new-head-coach"
+            "kind": "interim_nonrenewal",
+            "source": "https://www.nba.com/bucks/news/milwaukee-bucks-seek-new-head-coach"
           }
         ],
         "team_wins_vs_expectation_per_82": 1.5,
@@ -7030,7 +7030,7 @@
             "successor": "Jim Boylen",
             "phase": "in_season",
             "kind": "fired",
-            "source": "https://www.espn.com/nba/story/_/id/25441889"
+            "source": "https://www.nba.com/bulls/news/fred-hoiberg-era-ends-chicago"
           }
         ],
         "team_wins_vs_expectation_per_82": -8.0,
@@ -7057,7 +7057,7 @@
             "wins": 19,
             "losses": 57,
             "career_games_with_team": 76,
-            "started_interim": false,
+            "started_interim": true,
             "permanent_before_offseason": true
           }
         ],
@@ -7068,14 +7068,14 @@
             "successor": "Larry Drew",
             "phase": "in_season",
             "kind": "fired",
-            "source": "https://www.nba.com/cavaliers/releases/coaching-change-181028"
+            "source": "https://www.nba.com/news/cleveland-cavaliers-fire-tyronn-lue-official-release"
           },
           {
             "coach": "Larry Drew",
             "successor": "John Beilein",
             "phase": "offseason",
             "kind": "mutual",
-            "source": "https://www.nba.com/cavaliers/releases/coach-drew-190411"
+            "source": "https://www.si.com/nba/2019/04/11/larry-drew-cavaliers-mutually-part-ways"
           }
         ],
         "team_wins_vs_expectation_per_82": -11.5,
@@ -9795,8 +9795,8 @@
             "coach": "Alvin Gentry",
             "successor": "Mike Brown",
             "phase": "offseason",
-            "kind": "interim_replaced",
-            "source": "https://www.nba.com/kings/news/interim-head-coach-alvin-gentry-relieved-coaching-duties"
+            "kind": "interim_fired",
+            "source": "https://www.nba.com/news/kings-move-on-from-alvin-gentry-begin-coaching-search"
           }
         ],
         "team_wins_vs_expectation_per_82": -6.5,
@@ -12091,7 +12091,7 @@
             "successor": "Mitch Johnson",
             "phase": "in_season",
             "kind": "medical",
-            "source": "https://www.nba.com/spurs/news/gregg-popovich-transitions-to-spurs-president-of-basketball-operations"
+            "source": "https://apnews.com/article/d721a3d62bcdbb3946f0c3a23b1f096d"
           }
         ],
         "team_wins_vs_expectation_per_82": -1.5,
@@ -17196,12 +17196,21 @@
     ],
     "head_coach_destination_examples": [
       {
+        "season": 2010,
+        "coach": "Mike Brown",
+        "team": "CLE",
+        "next_role": "broadcast",
+        "destination": "ESPN before coaching the Lakers in 2011–12",
+        "source": "https://cdn.nba.com/teams/uploads/sites/1610612758/2022/10/22-23SacramentoKingsMediaGuide.pdf",
+        "within_following_opening": true
+      },
+      {
         "season": 2014,
         "coach": "Mark Jackson",
         "team": "GSW",
         "next_role": "broadcast",
         "destination": "ESPN/ABC",
-        "source": "https://espnpressroom.com/us/press-releases/2014/05/mark-jackson-returns-to-espn-as-nba-game-analyst/",
+        "source": "https://espnpressroom.com/press-release/mark-jackson-returns-to-espn-with-new-multi-year/",
         "within_following_opening": true
       },
       {
@@ -18181,6 +18190,77 @@
         "incoming": "Mike Gansey",
         "source": "https://www.nba.com/sixers/news/philadelphia-76ers-and-daryl-morey-part-ways"
       }
+    ],
+    "older_assistant_staff_examples": [
+      {
+        "summer": 2013,
+        "team": "SAC",
+        "outgoing": "Keith Smart",
+        "incoming": "Michael Malone",
+        "prior_assistants": 4,
+        "retained_assistants": 0,
+        "source": "https://cdn.nba.com/teams/uploads/sites/1610612758/2022/10/22-23SacramentoKingsMediaGuide.pdf"
+      },
+      {
+        "summer": 2016,
+        "team": "LAL",
+        "outgoing": "Byron Scott",
+        "incoming": "Luke Walton",
+        "prior_assistants": 3,
+        "retained_assistants": 1,
+        "retained_names": [
+          "Mark Madsen"
+        ],
+        "source": "https://lalweb.blob.core.windows.net/public/lakers/media-relations/2025-26-Lakers-Media-Guide.pdf"
+      },
+      {
+        "summer": 2018,
+        "team": "LAL",
+        "outgoing": "Luke Walton",
+        "incoming": "Luke Walton",
+        "prior_assistants": 6,
+        "retained_assistants": 5,
+        "source": "https://lalweb.blob.core.windows.net/public/lakers/media-relations/2025-26-Lakers-Media-Guide.pdf"
+      },
+      {
+        "summer": 2019,
+        "team": "LAL",
+        "outgoing": "Luke Walton",
+        "incoming": "Frank Vogel",
+        "prior_assistants": 5,
+        "retained_assistants": 1,
+        "retained_names": [
+          "Miles Simon"
+        ],
+        "source": "https://lalweb.blob.core.windows.net/public/lakers/media-relations/2025-26-Lakers-Media-Guide.pdf"
+      }
+    ],
+    "front_office_examples": [
+      {
+        "season": 2024,
+        "team": "DET",
+        "example": "Detroit hired Trajan Langdon before dismissing Monty Williams after a 14–68 season. Weaver had just left the front office.",
+        "source": "https://apnews.com/article/9a458faa93eac2bb380f8fe910fe7ff6"
+      },
+      {
+        "season": 2025,
+        "team": "DEN",
+        "example": "Josh Kroenke removed Michael Malone with three regular-season games left and announced the decision against extending Calvin Booth on the same day.",
+        "source": "https://www.nba.com/nuggets/news/denver-nuggets-relieve-head-coach-michael-malone-of-duties-will-not-extend-calvin-booth"
+      },
+      {
+        "season": 2026,
+        "team": "DAL",
+        "example": "Nico Harrison was fired in November, after the Luka Dončić trade and an early losing start. Masai Ujiri took charge in May, then Dallas announced its mutual split with Jason Kidd two weeks later.",
+        "source": "https://www.nba.com/news/mavs-part-ways-jason-kidd",
+        "followup_source": "https://www.nba.com/news/masai-ujiri-ready-for-challenge"
+      },
+      {
+        "season": 2022,
+        "team": "POR",
+        "example": "Portland dismissed Neil Olshey after a workplace investigation, after eight consecutive seasons of making the playoffs.",
+        "source": "https://www.nba.com/news/blazers-fire-neil-olshey-due-to-violation-of-teams-code-of-conduct"
+      }
     ]
   },
   "head_coaches": {
@@ -18237,7 +18317,7 @@
         "offseason_fired": 5,
         "in_season_interim_replaced": 1,
         "in_season_mutual": 2,
-        "offseason_interim_fired": 1,
+        "offseason_interim_nonrenewal": 1,
         "offseason_stepped_down": 1
       },
       "2014": {
@@ -18304,9 +18384,9 @@
         "in_season_fired": 3,
         "offseason_changes": 5,
         "offseason_mutual": 2,
-        "offseason_fired": 3,
-        "interims": 1,
-        "interims_kept_next_opening": 1
+        "interims": 2,
+        "interims_kept_next_opening": 1,
+        "offseason_fired": 3
       },
       "2020": {
         "team_seasons": 30,
@@ -18342,7 +18422,7 @@
         "offseason_fired": 2,
         "in_season_changes": 1,
         "in_season_fired": 1,
-        "offseason_interim_replaced": 1,
+        "offseason_interim_fired": 1,
         "interims": 1,
         "interims_kept_next_opening": 0,
         "offseason_stepped_down": 1
@@ -18401,8 +18481,8 @@
     "interims_still_head_at_next_opening": {
       "fit": {
         "events": 10,
-        "cases": 32,
-        "rate": 0.3125
+        "cases": 33,
+        "rate": 0.30303
       },
       "holdout": {
         "events": 7,
@@ -20250,13 +20330,19 @@
           "rate": 0.277778
         }
       },
-      "selected_destination_counts_over_nonuniform_followup": {
-        "broadcast": 3,
-        "high_school": 1,
-        "nba_assistant": 3,
-        "nba_consultant": 1,
-        "nba_head_coach": 4,
-        "nba_head_coach_after_gap": 1
+      "known_first_roles_or_staff_listing_by_following_opening_since_2020": {
+        "fit": {
+          "nba_assistant": 3,
+          "unverified": 8
+        },
+        "holdout": {
+          "broadcast": 2,
+          "high_school": 1,
+          "nba_assistant": 2,
+          "nba_consultant": 1,
+          "nba_head_coach": 5,
+          "unverified": 7
+        }
       }
     }
   },
@@ -25399,7 +25485,33 @@
         "head_coach_previous_nba_bench": null,
         "arrivals_listed_on_same_prior_bench": []
       }
-    ]
+    ],
+    "two_slot_assistant_proxy": {
+      "fit": {
+        "returning": {
+          "replace_neither": 0.6119,
+          "replace_one": 0.29368,
+          "replace_both": 0.09442
+        },
+        "new": {
+          "replace_neither": 0.10621,
+          "replace_one": 0.37474,
+          "replace_both": 0.51905
+        }
+      },
+      "holdout": {
+        "returning": {
+          "replace_neither": 0.70593,
+          "replace_one": 0.24184,
+          "replace_both": 0.05223
+        },
+        "new": {
+          "replace_neither": 0.07846,
+          "replace_one": 0.27172,
+          "replace_both": 0.64982
+        }
+      }
+    }
   },
   "front_office": {
     "known_case_ledger": true,

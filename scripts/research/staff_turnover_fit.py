@@ -7,9 +7,11 @@ that just ended. This script uses only the standard library and no network.
 
 import argparse
 import json
+from math import comb
 from collections import Counter, defaultdict
 from pathlib import Path
 from statistics import mean, median
+from tempfile import NamedTemporaryFile
 import unicodedata
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -379,22 +381,46 @@ def compare_assistants(snapshots, head_rows):
     }
 
 
-def head_coach_next_jobs(rows, examples):
+def head_coach_next_jobs(rows, examples, snapshots):
     opening = defaultdict(dict)
     for row in rows:
         opening[row["season"]][person_key(row["opening_coach_next_year"])] = row["team"]
-    sample = defaultdict(list)
+    assistants = defaultdict(dict)
+    for snapshot in snapshots:
+        for name in snapshot["assistants"]:
+            assistants[snapshot["season"] - 1][person_key(name)] = snapshot["team"]
+    documented_other_destinations = {
+        (r["season"], r["team"], person_key(r["coach"])): r["next_role"]
+        for r in examples if r["within_following_opening"]
+    }
+    head_job = defaultdict(list)
+    recent_destinations = defaultdict(Counter)
     for row in rows:
+        year, team = row["season"], row["team"]
+        cohort = "fit" if year <= LAST_FIT else "holdout"
         for change in row["changes"]:
             if change["kind"] != "fired":
                 continue
-            team = row["team"]
-            next_team = opening[row["season"]].get(person_key(change["coach"]))
-            cohort = "fit" if row["season"] <= LAST_FIT else "holdout"
-            sample[cohort].append(bool(next_team and team != next_team))
+            coach = person_key(change["coach"])
+            next_team = opening[year].get(coach)
+            switched = bool(next_team and team != next_team)
+            head_job[cohort].append(switched)
+            if year < 2020:
+                continue
+            destination = documented_other_destinations.get((year, team, coach))
+            if destination is None:
+                if switched:
+                    destination = "nba_head_coach"
+                elif assistants[year].get(coach):
+                    destination = "nba_assistant"
+                else:
+                    destination = "unverified"
+            recent_destinations[cohort][destination] += 1
     return {
-        "other_nba_head_job_by_next_opening": {label: bin_rate(values) for label, values in sample.items()},
-        "selected_destination_counts_over_nonuniform_followup": histogram([r["next_role"] for r in examples]),
+        "other_nba_head_job_by_next_opening": {label: bin_rate(values) for label, values in head_job.items()},
+        "known_first_roles_or_staff_listing_by_following_opening_since_2020": {
+            label: dict(sorted(counts.items())) for label, counts in recent_destinations.items()
+        },
     }
 
 
@@ -445,6 +471,29 @@ def front_office_summary(rows, changes):
     }, office_changed_by_regular_end
 
 
+def two_slot_proxy(comparisons):
+    """Draw two distinct names from each old bench and average the turnover odds."""
+    by_status = defaultdict(list)
+    for row in comparisons:
+        sample = "fit" if row["season"] <= LAST_FIT else "holdout"
+        old_count, gone = row["prior_count"], row["departed"]
+        if old_count < 2 or row["season"] == LAST:
+            continue
+        options = comb(old_count, 2)
+        kept = old_count - gone
+        by_status[sample, row["head_status"]].append(
+            [comb(kept, 2) / options, kept * gone / options, comb(gone, 2) / options]
+        )
+    return {
+        label: {
+            status: dict(zip(("replace_neither", "replace_one", "replace_both"),
+                             [round(mean(probs), 5) for probs in zip(*by_status[label, status])]))
+            for status in ("returning", "new")
+        }
+        for label in ("fit", "holdout")
+    }
+
+
 def build(evidence):
     observations = evidence["observations"]
     rows = observations["head_coach_team_seasons"]
@@ -452,8 +501,13 @@ def build(evidence):
     executive_changes = observations["front_office_lead_changes"]
     evidence["front_office"], front_changes = front_office_summary(rows, executive_changes)
     evidence["head_coaches"]["checks"] = head_coach_fit(rows, front_changes)
-    evidence["head_coaches"]["destinations"] = head_coach_next_jobs(rows, observations["head_coach_destination_examples"])
-    evidence["assistants_and_support_staff"] = compare_assistants(observations["assistant_staff_snapshots"], rows)
+    snapshots = observations["assistant_staff_snapshots"]
+    evidence["head_coaches"]["destinations"] = head_coach_next_jobs(
+        rows, observations["head_coach_destination_examples"], snapshots
+    )
+    assistants = compare_assistants(snapshots, rows)
+    assistants["two_slot_assistant_proxy"] = two_slot_proxy(assistants["paired_observations"])
+    evidence["assistants_and_support_staff"] = assistants
     return evidence
 
 
@@ -463,7 +517,15 @@ def main():
     parser.add_argument("--output", type=Path, default=EVIDENCE, help="Destination for the rebuilt evidence JSON")
     args = parser.parse_args()
     evidence = build(json.loads(args.input.read_text(encoding="utf-8")))
-    args.output.write_text(json.dumps(evidence, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    formatted = json.dumps(evidence, indent=2, ensure_ascii=False) + "\n"
+    with NamedTemporaryFile(mode="w", dir=args.output.parent, encoding="utf-8", delete=False) as output:
+        path = Path(output.name)
+        try:
+            output.write(formatted)
+            output.close()
+            path.replace(args.output)
+        finally:
+            path.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":
