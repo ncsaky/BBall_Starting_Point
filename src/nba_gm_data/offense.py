@@ -107,6 +107,32 @@ def _screen_assist_rate(canonical, player):
     return screen_assists_per36_from_inputs(inputs)
 
 
+# Players without a full NBA shooting record take their three-point volume from their inputs (input_three_volume).
+INPUT_SHOT_VOLUME = True
+
+
+def input_three_volume(inputs, profile):
+    """Three-point attempts per 36 from a player's inputs, or None. profile: his three_pct, two_pct and ft_pct.
+
+    For a player without an NBA shooting record (every rookie). His shot-location habit (T02 three share) times the
+    field-goal attempts his fitted points per 36 imply at his percentages and free-throw rate, so his own shots add up
+    to his fitted points (box_rates.shot_points_blend then leaves those points alone). The old fallback read only the
+    shooting-range rating and gave this year's top rookie guards 2-3 threes per 36 (real Acuff: 9)."""
+    from .box_rates import fta_per_point_from_inputs, points_per36_from_inputs, tendency_from_inputs
+    if not inputs:
+        return None
+    share = tendency_from_inputs(inputs, 'T02.three')
+    points = points_per36_from_inputs(inputs)
+    if share is None or points is None:
+        return None
+    share = clamp(float(share), 0.0, 0.95)
+    free = min(.5, max(0.0, float(fta_per_point_from_inputs(inputs) or 0.0)) * float(profile['ft_pct']) * FT_LEVEL)
+    per_shot = (1 - share) * 2 * float(profile['two_pct']) + share * 3 * float(profile['three_pct'])
+    if per_shot <= 0:
+        return None
+    return clamp(share * points * (1 - free) / per_shot, 0, 14)
+
+
 def offensive_profile(canonical, player, traits):
     """Current, evolving facets. Frozen evidence is adjusted by actual skill deltas."""
     get = lambda key: float(traits.get(key, 50))
@@ -154,6 +180,18 @@ def offensive_profile(canonical, player, traits):
     else:
         two_pct = two_base
     fallback_threes = clamp(.55*(max(0, get('shooting_range')-28)/10)**1.7, 0, 12)
+    three_pct = prior.get('three_pct', .28+max(0, get('shooting_range')-35)*.002)
+    three_pct += delta('shooting_range')*.0015+delta('release_speed')*.0005
+    ft_pct = prior.get('ft_pct', .64+get('release_speed')*.0018)+delta('release_speed')*.001
+    if INPUT_SHOT_VOLUME and prior.get('volume_weight', 0) < 1:
+        # New ratings, no full NBA shooting record (every rookie): his shot volume from his own inputs (ROOKIE-SEASON,
+        # 2026-11-22; input_three_volume). On veterans with a record it tracks their real three-point attempts per 36
+        # far better than the range formula (r 0.97 vs 0.81, mean miss 0.55 vs 1.81).
+        from .ratings_model import effective_inputs
+        estimate = input_three_volume(effective_inputs(canonical, player.get('id')),
+                                      {'three_pct': three_pct, 'two_pct': two_pct, 'ft_pct': ft_pct})
+        if estimate is not None:
+            fallback_threes = estimate
     three_per36 = fallback_threes
     if 'three_per36' in prior:
         observed = max(0, prior['three_per36']+delta('shooting_range')*.14+delta('release_speed')*.025)
@@ -161,9 +199,6 @@ def offensive_profile(canonical, player, traits):
         three_per36 = fallback_threes*(1-vw)+observed*vw
         if prior['three_per36'] <= .15 and abs(delta('shooting_range')) < 2 and abs(delta('release_speed')) < 2:
             three_per36 = min(three_per36, prior['three_per36']+.04)
-    three_pct = prior.get('three_pct', .28+max(0, get('shooting_range')-35)*.002)
-    three_pct += delta('shooting_range')*.0015+delta('release_speed')*.0005
-    ft_pct = prior.get('ft_pct', .64+get('release_speed')*.0018)+delta('release_speed')*.001
     shooting = (get('shooting_range')+versatility+get('release_speed'))/3
     creation = (get('handle_pressure')+passing+rim+versatility)/4
     legacy = .35*shooting+.32*creation+.18*passing+.15*rim
