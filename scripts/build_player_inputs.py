@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Build canonical inputs from local evidence; no simulation or network access.
+"""Build canonical inputs from local evidence; no simulation or network access (the 2026 rookies' level step reads
+the game's player-value model, never a simulated game).
 
 Run from any directory with PYTHONPATH=src. The generated JSON is a validated
 player_model input section. Re-running also refreshes the bounded evidence tables
@@ -14,7 +15,7 @@ from pathlib import Path
 import time
 
 from nba_gm_data.input_estimator import (
-    DEFINITIONS, InputEstimator, METHOD_VERSION,
+    DEFINITIONS, InputEstimator, METHOD_VERSION, apply_rookie_involvement, load_rookie_college,
     UNIVERSE_PATH, canonical_json, coverage_counts, estimation_status,
     load_reference_cells, validation_comparison, source_join_audit, rotation_input_spread,
 )
@@ -26,8 +27,8 @@ TECHNIQUE_INPUTS = tuple(iid for iid, definition in DEFINITIONS.items()
                          if definition["kind"] == "grade")
 
 
-def estimate_startup_inputs(estimator: InputEstimator, universe: dict) -> dict:
-    section = estimator.estimate_universe(universe)
+def startup_rookies(estimator: InputEstimator, universe: dict):
+    """2026 draftees without a completed NBA season."""
     for player in universe["players"]:
         if player.get("draft_year") != 2026 or player.get("draft_status") != "drafted":
             continue
@@ -35,11 +36,195 @@ def estimate_startup_inputs(estimator: InputEstimator, universe: dict) -> dict:
         if any(row.get("season") and row["season"] < "2026-27" and (row.get("games") or 0) > 0
                for row in career.get("seasons", [])):
             continue
-        rookie_inputs = estimator.estimate_player_inputs(player, prospect=True).to_dict()["inputs"]
+        yield player
+
+
+def estimate_startup_inputs(estimator: InputEstimator, universe: dict, college: dict | None = None) -> dict:
+    """Veterans: the full evidence path. 2026 rookies (no NBA season yet): rookie technique; with `college`
+    (ROOKIE-FIT), the technique of a rookie with a final college season comes from that season's evidence and his
+    projected rookie-year impact. Physical tools and tendencies keep the original estimates before the overlays.
+    The canonical build passes no `college` here and uses apply_rookie_college as its last step instead."""
+    section = estimator.estimate_universe(universe)
+    for player in startup_rookies(estimator, universe):
+        rookie_inputs = estimator.estimate_player_inputs(
+            player, prospect=True, college=(college or {}).get(player["id"])).to_dict()["inputs"]
         inputs = section["players"][player["id"]]["inputs"]
         # Keep the original physical and tendency estimates before the evidence overlays.
         inputs.update({iid: rookie_inputs[iid] for iid in TECHNIQUE_INPUTS})
     return section
+
+
+def apply_rookie_college(section: dict, estimator: InputEstimator, universe: dict, college: dict, root: Path,
+                         analysts: bool = True) -> dict:
+    """ROOKIE-FIT, last build step: the 2026 rookies with a final college season get their technique from that
+    season's evidence and their projected rookie-year impact, and involvement from college usage. Order: college
+    technique and involvement, then the level step (level_rookies), then the rookies' analyst claims.
+
+    It runs after every league-wide step on purpose. Several overlays read league distributions (Basketball
+    Index grades kept on the estimator's scale, the measured-tendency map, analyst percentiles), so changing the
+    rookies earlier would shift veterans too. Here only the rookies change: their analyst claims are re-applied to
+    the new technique and involvement (their other inputs are restored, so no claim counts twice)."""
+    rookies = [p for p in startup_rookies(estimator, universe) if p["id"] in college]
+    for player in rookies:
+        new = estimator.estimate_player_inputs(player, prospect=True, college=college[player["id"]]).to_dict()["inputs"]
+        section["players"][player["id"]]["inputs"].update({iid: new[iid] for iid in TECHNIQUE_INPUTS})
+    summary = {"rookies": len(rookies),
+               "involvement": apply_rookie_involvement(section, {p["id"]: college[p["id"]] for p in rookies})}
+    summary["level"] = level_rookies(section, {p["id"]: college[p["id"]] for p in rookies}, root)
+    # Analysts last, as for every player (where they disagree with the measures, analysts lead), so a rookie with
+    # analyst claims can end slightly off his projected level.
+    if analysts:
+        from nba_gm_data.analyst_evidence import apply_analyst_evidence, load_claims
+        ids = {p["id"] for p in rookies}
+        keep = {pid: {iid: rec for iid, rec in section["players"][pid]["inputs"].items()
+                      if iid not in TECHNIQUE_INPUTS and iid != "T08"} for pid in ids}
+        result = apply_analyst_evidence(section, root, [c for c in load_claims(root) if c.get("player_id") in ids])
+        for pid, records in keep.items():
+            section["players"][pid]["inputs"].update(records)
+        summary["analyst_changes"] = sum(1 for c in result["analyst_changes"]
+                                         if c["input"] in TECHNIQUE_INPUTS or c["input"] == "T08")
+    return summary
+
+
+# ROOKIE-FIT level step. The college evidence fixes each rookie's SHAPE (which skills are strengths); the
+# translation fit fixes his LEVEL: his projected rookie-year impact, offense and defense, placed on the game's
+# value scale by the same line that links veterans' real single-season impact to the game's value of their
+# inputs. One log-odds shift per side (all offensive technique / all defensive technique, free throws excepted)
+# moves his technique until the game values him at that level. Tools, tendencies and coach usage never move.
+LEVEL_TOLERANCE = 0.02           # impact points per 100 possessions
+LEVEL_MAX_SHIFT = 2.5            # log-odds; a rookie needing more than this is reported, never forced further
+LEVEL_FALLBACK_LINES = {"offense": (0.859, 0.795), "defense": (0.743, 0.710)}   # 2026-11-21 calibration
+
+
+def _channel_inputs() -> dict[str, tuple[str, ...]]:
+    from nba_gm_data.input_estimator import FAMILY_CONTEXT, FAMILY_TECHNIQUES
+    out = {"offense": [], "defense": []}
+    for family, ids in FAMILY_TECHNIQUES.items():
+        out[FAMILY_CONTEXT[family][0]].extend(ids)
+    return {k: tuple(v) for k, v in out.items()}
+
+
+def _game_values(section: dict, root: Path, base: dict, ids) -> dict[str, dict]:
+    """The game's own value of each listed player (offense / defense impact per 100) for this input section."""
+    import copy
+    from nba_gm_data import ratings_model
+    from nba_gm_data.impact_value import player_impact
+    key, _ = ratings_model._load_inputs_keyed(root)
+    # Fresh dict objects every call: the ratings model memoizes derived ratings per inputs object.
+    ratings_model._INPUT_CACHE[key] = {pid: dict(doc["inputs"]) for pid, doc in section["players"].items()}
+    ratings_model._FITTED_CACHE.clear()
+    canonical = copy.deepcopy(base)
+    ratings_model.install_inputs_model(canonical, root)
+    players = {p["id"]: p for p in canonical["players"]}
+    out = {}
+    for pid in ids:
+        value = player_impact(canonical, players[pid]) if pid in players else None
+        if value is not None:
+            out[pid] = value
+    return out
+
+
+def _value_lines(values: dict[str, dict], universe: dict, root: Path, exclude=frozenset()) -> dict[str, tuple[float, float]]:
+    """game value = a + b x real single-season O-/D-LEBRON, veterans with 1000+ minutes in 2025-26."""
+    import csv
+    import statistics
+    from nba_gm_data.input_estimator import _normalize
+    lebron = root / "data/research/bbi/captures/fanspo_tools/lebron/lebron_separate-seasons_raw_all-2010-2026.csv"
+    evidence = root / "data/research/development_evidence.json"
+    if not lebron.exists() or not evidence.exists():
+        return dict(LEVEL_FALLBACK_LINES)
+    real = {}
+    with lebron.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            if row["Season"] == "2026":
+                real[_normalize(row["Player"])] = (float(row["O-LEBRON"]), float(row["D-LEBRON"]))
+    minutes = {_normalize(r[2]): r[4] for r in json.loads(evidence.read_text())["public_inputs"]["seasons"] if r[0] == 2026}
+    pairs = []
+    for player in universe["players"]:
+        name = _normalize(player["name"])
+        if (player["id"] in values and player["id"] not in exclude and name in real and minutes.get(name, 0) >= 1000
+                and player.get("draft_year") != 2026):
+            pairs.append((real[name], values[player["id"]]))
+    lines = {}
+    for i, side in enumerate(("offense", "defense")):
+        xs, ys = [p[0][i] for p in pairs], [p[1][side] for p in pairs]
+        slope = statistics.covariance(xs, ys) / statistics.variance(xs)
+        lines[side] = (round(statistics.fmean(ys) - slope * statistics.fmean(xs), 4), round(slope, 4))
+    lines["players"] = len(pairs)
+    return lines
+
+
+def _shifted(record: dict, delta: float, note: dict) -> dict:
+    import math
+    out = json.loads(json.dumps(record))
+    grade = out["value"]["grade"]
+    new = 100 / (1 + math.exp(-(math.log(grade / (100 - grade)) + delta)))
+    out["value"]["grade"] = round(new, 6)
+    notes = json.loads(out["uncertainty"]["notes"])
+    if "interval" in notes:
+        low, high = notes["interval"]
+        notes["interval"] = [round(max(0.0, min(low + new - grade, new)), 6), round(min(100.0, max(high + new - grade, new)), 6)]
+    out["uncertainty"]["notes"] = json.dumps(notes, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    out["evidence"] = [*out["evidence"], {"source": "data/research/rookie_translation_2026.json",
+        "method": "rookie_translation_v1 level: projected rookie-year impact placed on the game's value scale "
+                  "(veteran real-impact line); one log-odds shift per side of the ball",
+        "shared_evidence_id": "rookie_level:" + note["player_id"],
+        "notes": json.dumps(note, sort_keys=True, separators=(",", ":"))}]
+    return out
+
+
+def level_rookies(section: dict, college: dict, root: Path, iterations: int = 25) -> dict:
+    from nba_gm_data.app_actions import load_app_canonical
+    if not college:
+        return {"rookies": 0}
+    universe = json.loads((root / UNIVERSE_PATH).read_text())
+    base = load_app_canonical(root)
+    channels = _channel_inputs()
+    ids = sorted(college)
+    original = {pid: {iid: section["players"][pid]["inputs"][iid] for side in channels for iid in channels[side]}
+                for pid in ids}
+    league = _game_values(section, root, base, [p["id"] for p in universe["players"]])
+    lines = _value_lines(league, universe, root, exclude=set(ids))
+    target = {pid: {side: lines[side][0] + lines[side][1] * float(college[pid]["projection"]["o" if side == "offense" else "d"])
+                    for side in channels} for pid in ids}
+    delta = {pid: {side: 0.0 for side in channels} for pid in ids}
+    history = {pid: {side: [] for side in channels} for pid in ids}
+    values = {pid: league[pid] for pid in ids}
+    for step in range(iterations):
+        worst = max(abs(target[p][s] - values[p][s]) for p in ids for s in channels)
+        if worst < LEVEL_TOLERANCE:
+            break
+        for pid in ids:
+            for side in channels:
+                error = target[pid][side] - values[pid][side]
+                hist = history[pid][side]
+                hist.append((delta[pid][side], values[pid][side]))
+                if len(hist) >= 2 and abs(hist[-1][1] - hist[-2][1]) > 1e-6 and hist[-1][0] != hist[-2][0]:
+                    slope = (hist[-1][1] - hist[-2][1]) / (hist[-1][0] - hist[-2][0])
+                    slope = max(0.5, slope)        # a better skill never lowers value; keep steps finite
+                else:
+                    slope = 4.0                    # about 4 impact points per log-odds unit (measured on rookies)
+                move = max(-1.0, min(1.0, error / slope))
+                delta[pid][side] = max(-LEVEL_MAX_SHIFT, min(LEVEL_MAX_SHIFT, delta[pid][side] + move))
+        for pid in ids:
+            note = {"player_id": pid, "target_offense": round(target[pid]["offense"], 4),
+                    "target_defense": round(target[pid]["defense"], 4),
+                    "projected_rookie_offense": college[pid]["projection"]["o"],
+                    "projected_rookie_defense": college[pid]["projection"]["d"],
+                    "shift_offense": round(delta[pid]["offense"], 4), "shift_defense": round(delta[pid]["defense"], 4),
+                    "value_line": {k: lines[k] for k in channels}}
+            for side, inputs in channels.items():
+                for iid in inputs:
+                    section["players"][pid]["inputs"][iid] = _shifted(original[pid][iid], delta[pid][side], note)
+        values = _game_values(section, root, base, ids)
+    from nba_gm_data import ratings_model
+    ratings_model._INPUT_CACHE.clear()
+    ratings_model._FITTED_CACHE.clear()
+    errors = [abs(target[p][s] - values[p][s]) for p in ids for s in channels]
+    return {"rookies": len(ids), "iterations": step + 1, "value_lines": lines, "max_error": round(max(errors), 4),
+            "shift_range": {s: [round(min(delta[p][s] for p in ids), 3), round(max(delta[p][s] for p in ids), 3)]
+                            for s in channels},
+            "at_shift_limit": sorted(p for p in ids for s in channels if abs(delta[p][s]) >= LEVEL_MAX_SHIFT)}
 
 
 def report_tables(universe: dict, section: dict, comparison: dict, elapsed: float,
@@ -179,6 +364,7 @@ def main() -> None:
     started=time.perf_counter()
     universe=json.loads((root/UNIVERSE_PATH).read_text())
     estimator=InputEstimator.from_local(root)
+    college=load_rookie_college(root)
     section=estimate_startup_inputs(estimator,universe)
     bbi_summary=None
     if not args.no_bbi and (root/'data/research/bbi/normalized.json').exists() and (root/'data/research/bbi/bbi_input_mapping.json').exists():
@@ -202,7 +388,12 @@ def main() -> None:
         analyst=apply_analyst_evidence(section,root)
         analyst.pop('analyst_changes')
         bbi_summary|=analyst
-    baseline=estimate_startup_inputs(InputEstimator.from_local(root,use_expert=False),universe)
+    # 2026 rookies with a college season: technique and involvement from college evidence (ROOKIE-FIT). Last, so
+    # no league-wide step sees the change and every veteran stays exactly as before. Involvement is set on the
+    # measured scale, which exists only after the Basketball Index step.
+    if not args.no_bbi:
+        bbi_summary['rookie_college']=apply_rookie_college(section,estimator,universe,college,root,not args.no_analysts)
+    baseline=estimate_startup_inputs(InputEstimator.from_local(root,use_expert=False),universe,college)
     comparison=validation_comparison(section,load_reference_cells(root),baseline)
     payload=canonical_json(section)
     output.parent.mkdir(parents=True,exist_ok=True)
