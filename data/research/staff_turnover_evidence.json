@@ -14,7 +14,9 @@
       "Sacramento 2022–23 media guide franchise coaching records": "https://cdn.nba.com/teams/uploads/sites/1610612758/2022/10/22-23SacramentoKingsMediaGuide.pdf",
       "Lakers 2025–26 guide management history": "https://lalweb.blob.core.windows.net/public/lakers/media-relations/2025-26-Lakers-Media-Guide.pdf",
       "Cleveland 2022–23 guide assistant coaches": "https://cdn.nba.com/teams/uploads/sites/1610612739/2022/10/10-history.pdf"
-    }
+    },
+    "front_office_scope_cross_check": "https://www.basketball-reference.com/executives/",
+    "front_office_published_study": "https://www.emerald.com/sbm/article/14/1/1/1221463/General-manager-and-head-coach-exits-in-the-NBA"
   },
   "observations": {
     "head_coach_team_seasons": [
@@ -17199,7 +17201,8 @@
         "team": "GSW",
         "next_role": "broadcast",
         "destination": "ESPN/ABC",
-        "source": "https://espnpressroom.com/us/press-releases/2014/05/mark-jackson-returns-to-espn-as-nba-game-analyst/"
+        "source": "https://espnpressroom.com/us/press-releases/2014/05/mark-jackson-returns-to-espn-as-nba-game-analyst/",
+        "within_following_opening": true
       },
       {
         "season": 2018,
@@ -17207,7 +17210,8 @@
         "team": "TOR",
         "next_role": "nba_head_coach",
         "destination": "Detroit",
-        "source": "https://www.nba.com/cavaliers/news/features/movement-180919"
+        "source": "https://www.nba.com/cavaliers/news/features/movement-180919",
+        "within_following_opening": true
       },
       {
         "season": 2021,
@@ -17215,7 +17219,8 @@
         "team": "ATL",
         "next_role": "nba_assistant",
         "destination": "Indiana",
-        "source": "https://www.nba.com/pacers/news/pacers-hire-four-assistant-coaches"
+        "source": "https://www.nba.com/pacers/news/pacers-hire-four-assistant-coaches",
+        "within_following_opening": true
       },
       {
         "season": 2023,
@@ -17223,7 +17228,8 @@
         "team": "PHI",
         "next_role": "broadcast",
         "destination": "ESPN/ABC, then Milwaukee during the following season",
-        "source": "https://www.nba.com/news/doris-burke-doc-rivers-added-to-espns-top-crew"
+        "source": "https://www.nba.com/news/doris-burke-doc-rivers-added-to-espns-top-crew",
+        "within_following_opening": true
       },
       {
         "season": 2023,
@@ -17231,7 +17237,8 @@
         "team": "TOR",
         "next_role": "nba_head_coach",
         "destination": "Philadelphia",
-        "source": "https://www.nba.com/news/philadelphia-76ers-hire-nick-nurse-as-head-coach"
+        "source": "https://www.nba.com/news/philadelphia-76ers-hire-nick-nurse-as-head-coach",
+        "within_following_opening": true
       },
       {
         "season": 2023,
@@ -17239,7 +17246,8 @@
         "team": "PHX",
         "next_role": "nba_head_coach",
         "destination": "Detroit",
-        "source": "https://www.nba.com/pistons/news/detroit-pistons-name-monty-williams-as-head-coach"
+        "source": "https://www.nba.com/pistons/news/detroit-pistons-name-monty-williams-as-head-coach",
+        "within_following_opening": true
       },
       {
         "season": 2024,
@@ -17247,7 +17255,8 @@
         "team": "DET",
         "next_role": "high_school",
         "destination": "TMI Episcopal",
-        "source": "https://abcnews.com/amp/Sports/monty-williams-coach-sons-san-antonio-prep-school/story?id=114974182"
+        "source": "https://abcnews.com/amp/Sports/monty-williams-coach-sons-san-antonio-prep-school/story?id=114974182",
+        "within_following_opening": true
       },
       {
         "season": 2024,
@@ -17255,7 +17264,8 @@
         "team": "LAL",
         "next_role": "nba_assistant",
         "destination": "Milwaukee",
-        "source": "https://www.nba.com/bucks/news/milwaukee-bucks-introduce-assistant-coaching-staff-for-2024-25-season"
+        "source": "https://www.nba.com/bucks/news/milwaukee-bucks-introduce-assistant-coaching-staff-for-2024-25-season",
+        "within_following_opening": true
       },
       {
         "season": 2024,
@@ -17263,7 +17273,8 @@
         "team": "PHX",
         "next_role": "nba_consultant",
         "destination": "Dallas consultant, later associate head coach",
-        "source": "https://www.nba.com/news/frank-vogel-dallas-mavericks-assistant-coach"
+        "source": "https://www.nba.com/news/frank-vogel-dallas-mavericks-assistant-coach",
+        "within_following_opening": true
       },
       {
         "season": 2025,
@@ -17271,7 +17282,8 @@
         "team": "DEN",
         "next_role": "broadcast",
         "destination": "ESPN, then University of North Carolina in 2026",
-        "source": "https://espnpressroom.com/press-release/transcript-2025-26-nba-season-preview-with-espn-nba-analysts-richard-jefferson-and-tim-legler-and-espn-senior-vice-president-sports-production-tim-corrigan/"
+        "source": "https://espnpressroom.com/press-release/transcript-2025-26-nba-season-preview-with-espn-nba-analysts-richard-jefferson-and-tim-legler-and-espn-senior-vice-president-sports-production-tim-corrigan/",
+        "within_following_opening": true
       },
       {
         "season": 2025,
@@ -17279,7 +17291,8 @@
         "team": "MEM",
         "next_role": "nba_head_coach_after_gap",
         "destination": "Milwaukee in April 2026",
-        "source": "https://www.nba.com/news/closer-look-new-coaches-2026-27"
+        "source": "https://www.nba.com/news/closer-look-new-coaches-2026-27",
+        "within_following_opening": false
       },
       {
         "season": 2026,
@@ -17287,7 +17300,8 @@
         "team": "NOP",
         "next_role": "nba_assistant",
         "destination": "Dallas lead assistant",
-        "source": "https://www.nba.com/mavs/news/with-training-camp-set-heres-a-look-at-the-mavericks-roster-by-the-numbers"
+        "source": "https://www.nba.com/mavs/news/with-training-camp-set-heres-a-look-at-the-mavericks-roster-by-the-numbers",
+        "within_following_opening": true
       },
       {
         "season": 2026,
@@ -17295,7 +17309,8 @@
         "team": "ORL",
         "next_role": "nba_head_coach",
         "destination": "New Orleans",
-        "source": "https://apnews.com/article/aa1b989eb9534650811ca5620c5f63e8"
+        "source": "https://apnews.com/article/aa1b989eb9534650811ca5620c5f63e8",
+        "within_following_opening": true
       }
     ],
     "support_staff_examples": [
@@ -17434,6 +17449,737 @@
         "role": "incoming head coach",
         "detail": "Kept Darvin Ham, reunited with Memphis and Milwaukee colleague Pat St. Andrews, and retained Jack Herum in a hybrid development role.",
         "source": "https://www.nba.com/news/milwaukee-bucks-finalize-coaching-staff-2026-27"
+      }
+    ],
+    "front_office_lead_changes": [
+      {
+        "season": 2010,
+        "team": "BKN",
+        "phase": "offseason",
+        "kind": "stepped_down",
+        "outgoing": "Rod Thorn",
+        "incoming": "Billy King",
+        "source": "https://en.wikipedia.org/wiki/List_of_2010%E2%80%9311_NBA_season_transactions"
+      },
+      {
+        "season": 2010,
+        "team": "CLE",
+        "phase": "offseason",
+        "kind": "stepped_down",
+        "outgoing": "Danny Ferry",
+        "incoming": "Chris Grant",
+        "source": "https://en.wikipedia.org/wiki/List_of_2010%E2%80%9311_NBA_season_transactions"
+      },
+      {
+        "season": 2010,
+        "team": "DEN",
+        "phase": "offseason",
+        "kind": "nonrenewal",
+        "outgoing": "Mark Warkentien",
+        "incoming": "Masai Ujiri",
+        "source": "https://en.wikipedia.org/wiki/List_of_2010%E2%80%9311_NBA_season_transactions"
+      },
+      {
+        "season": 2010,
+        "team": "LAC",
+        "phase": "in_season",
+        "kind": "fired",
+        "outgoing": "Mike Dunleavy Sr.",
+        "incoming": "Neil Olshey",
+        "source": "https://www.latimes.com/archives/la-xpm-2010-mar-09-la-sp-clippers-dunleavy-20100310-story.html"
+      },
+      {
+        "season": 2010,
+        "team": "NOP",
+        "phase": "offseason",
+        "kind": "stepped_down",
+        "outgoing": "Jeff Bower",
+        "incoming": "Dell Demps",
+        "source": "https://cdn.nba.com/teams/uploads/sites/1610612740/2025/10/2025-26-Pelicans-Media-Guide-v2.pdf"
+      },
+      {
+        "season": 2010,
+        "team": "PHI",
+        "phase": "offseason",
+        "kind": "authority_reassigned",
+        "outgoing": "Ed Stefanski",
+        "incoming": "Rod Thorn",
+        "source": "https://cdn.nba.com/teams/uploads/sites/1610612755/2023/10/Full_Media_Guide_23-24-1.pdf"
+      },
+      {
+        "season": 2010,
+        "team": "PHX",
+        "phase": "offseason",
+        "kind": "stepped_down",
+        "outgoing": "Steve Kerr",
+        "incoming": "Lance Blanks",
+        "source": "https://en.wikipedia.org/wiki/List_of_2010%E2%80%9311_NBA_season_transactions"
+      },
+      {
+        "season": 2010,
+        "team": "POR",
+        "phase": "offseason",
+        "kind": "fired",
+        "outgoing": "Kevin Pritchard",
+        "incoming": "Rich Cho",
+        "source": "https://www.oregonencyclopedia.org/articles/portland_trail_blazers/pdf/"
+      },
+      {
+        "season": 2011,
+        "team": "NYK",
+        "phase": "offseason",
+        "kind": "stepped_down",
+        "outgoing": "Donnie Walsh",
+        "incoming": "Glen Grunwald",
+        "source": "https://ak-static-int.nba.com/wp-content/uploads/sites/3/2017/10/2017-18-Media-Guide-Knicks.pdf"
+      },
+      {
+        "season": 2011,
+        "team": "POR",
+        "phase": "offseason",
+        "kind": "fired",
+        "outgoing": "Rich Cho",
+        "incoming": "Chad Buchanan (interim)",
+        "source": "https://www.nbcsports.com/nba/news/blazers-surprisingly-release-gm-rich-cho-after-one-year"
+      },
+      {
+        "season": 2012,
+        "team": "ATL",
+        "phase": "offseason",
+        "kind": "unclear_departure",
+        "outgoing": "Rick Sund",
+        "incoming": "Danny Ferry",
+        "source": "https://en.wikipedia.org/wiki/List_of_2012%E2%80%9313_NBA_season_transactions"
+      },
+      {
+        "season": 2012,
+        "team": "GSW",
+        "phase": "offseason",
+        "kind": "authority_reassigned",
+        "outgoing": "Larry Riley",
+        "incoming": "Bob Myers",
+        "source": "https://en.wikipedia.org/wiki/List_of_2011%E2%80%9312_NBA_season_transactions"
+      },
+      {
+        "season": 2012,
+        "team": "IND",
+        "phase": "offseason",
+        "kind": "stepped_down",
+        "outgoing": "Larry Bird",
+        "incoming": "Donnie Walsh",
+        "source": "https://cdn.nba.com/teams/uploads/sites/1610612754/2025/10/2025-26-Indiana-Pacers-Media-Guide-web.pdf"
+      },
+      {
+        "season": 2012,
+        "team": "LAC",
+        "phase": "offseason",
+        "kind": "hired_elsewhere",
+        "outgoing": "Neil Olshey",
+        "incoming": "Gary Sacks",
+        "source": "https://en.wikipedia.org/wiki/List_of_2012%E2%80%9313_NBA_season_transactions"
+      },
+      {
+        "season": 2012,
+        "team": "ORL",
+        "phase": "offseason",
+        "kind": "mutual",
+        "outgoing": "Otis Smith",
+        "incoming": "Rob Hennigan",
+        "source": "https://library.sfo2.cdn.digitaloceanspaces.com/publications/basketball/yearbooks/KORLMMG-2018.pdf"
+      },
+      {
+        "season": 2012,
+        "team": "UTA",
+        "phase": "offseason",
+        "kind": "authority_reassigned",
+        "outgoing": "Kevin O'Connor",
+        "incoming": "Dennis Lindsey",
+        "source": "https://en.wikipedia.org/wiki/List_of_2012%E2%80%9313_NBA_season_transactions"
+      },
+      {
+        "season": 2013,
+        "team": "DEN",
+        "phase": "offseason",
+        "kind": "hired_elsewhere",
+        "outgoing": "Masai Ujiri",
+        "incoming": "Tim Connelly",
+        "source": "https://en.wikipedia.org/wiki/List_of_2013%E2%80%9314_NBA_season_transactions"
+      },
+      {
+        "season": 2013,
+        "team": "IND",
+        "phase": "offseason",
+        "kind": "authority_reassigned",
+        "outgoing": "Donnie Walsh",
+        "incoming": "Larry Bird",
+        "source": "https://cdn.nba.com/teams/uploads/sites/1610612754/2025/10/2025-26-Indiana-Pacers-Media-Guide-web.pdf"
+      },
+      {
+        "season": 2013,
+        "team": "LAC",
+        "phase": "offseason",
+        "kind": "authority_reassigned",
+        "outgoing": "Gary Sacks",
+        "incoming": "Doc Rivers",
+        "source": "https://www.nba.com/clippers/news/clippers-restructure-basketball-operations-department"
+      },
+      {
+        "season": 2013,
+        "team": "MIN",
+        "phase": "offseason",
+        "kind": "nonrenewal",
+        "outgoing": "David Kahn",
+        "incoming": "Flip Saunders",
+        "source": "https://en.wikipedia.org/wiki/List_of_2013%E2%80%9314_NBA_season_transactions"
+      },
+      {
+        "season": 2013,
+        "team": "NYK",
+        "phase": "offseason",
+        "kind": "authority_reassigned",
+        "outgoing": "Glen Grunwald",
+        "incoming": "Steve Mills",
+        "source": "https://ak-static-int.nba.com/wp-content/uploads/sites/3/2017/10/2017-18-Media-Guide-Knicks.pdf"
+      },
+      {
+        "season": 2013,
+        "team": "PHI",
+        "phase": "offseason",
+        "kind": "authority_reassigned",
+        "outgoing": "Rod Thorn and Tony DiLeo",
+        "incoming": "Sam Hinkie",
+        "source": "https://cdn.nba.com/teams/uploads/sites/1610612755/2023/10/Full_Media_Guide_23-24-1.pdf"
+      },
+      {
+        "season": 2013,
+        "team": "PHX",
+        "phase": "offseason",
+        "kind": "fired",
+        "outgoing": "Lance Blanks",
+        "incoming": "Ryan McDonough",
+        "source": "https://sunsdigital.com/pdf/2019-20%20Suns%20Media%20Guide-FL.pdf"
+      },
+      {
+        "season": 2013,
+        "team": "SAC",
+        "phase": "offseason",
+        "kind": "nonrenewal",
+        "outgoing": "Geoff Petrie",
+        "incoming": "Pete D'Alessandro",
+        "source": "https://en.wikipedia.org/wiki/List_of_2013%E2%80%9314_NBA_season_transactions"
+      },
+      {
+        "season": 2013,
+        "team": "TOR",
+        "phase": "offseason",
+        "kind": "nonrenewal",
+        "outgoing": "Bryan Colangelo",
+        "incoming": "Masai Ujiri",
+        "source": "https://en.wikipedia.org/wiki/List_of_2013%E2%80%9314_NBA_season_transactions"
+      },
+      {
+        "season": 2014,
+        "team": "CHA",
+        "phase": "offseason",
+        "kind": "stepped_down",
+        "outgoing": "Rod Higgins",
+        "incoming": "Rich Cho",
+        "source": "https://www.nba.com/hornets/hornets-not-extend-contract-gm-rich-cho"
+      },
+      {
+        "season": 2014,
+        "team": "CLE",
+        "phase": "in_season",
+        "kind": "fired",
+        "outgoing": "Chris Grant",
+        "incoming": "David Griffin",
+        "source": "https://www.nba.com/cavaliers/releases/front-office-change-140206"
+      },
+      {
+        "season": 2014,
+        "team": "DET",
+        "phase": "offseason",
+        "kind": "nonrenewal",
+        "outgoing": "Joe Dumars",
+        "incoming": "Stan Van Gundy",
+        "source": "https://www.nbcsports.com/nba/news/pistons-officially-done-with-joe-dumars-as-general-manager"
+      },
+      {
+        "season": 2014,
+        "team": "NYK",
+        "phase": "in_season",
+        "kind": "authority_reassigned",
+        "outgoing": "Steve Mills",
+        "incoming": "Phil Jackson",
+        "source": "https://en.wikipedia.org/wiki/List_of_2013%E2%80%9314_NBA_season_transactions"
+      },
+      {
+        "season": 2015,
+        "team": "ATL",
+        "phase": "offseason",
+        "kind": "stepped_down",
+        "outgoing": "Danny Ferry",
+        "incoming": "Mike Budenholzer and Wes Wilcox",
+        "source": "https://en.wikipedia.org/wiki/List_of_2015%E2%80%9316_NBA_season_transactions"
+      },
+      {
+        "season": 2015,
+        "team": "MIN",
+        "phase": "offseason",
+        "kind": "medical",
+        "outgoing": "Flip Saunders",
+        "incoming": "Milt Newton (acting)",
+        "source": "https://cdn.nba.com/teams/uploads/sites/1610612750/2022/03/2021-22_Timberwolves_Media_Guide.pdf"
+      },
+      {
+        "season": 2015,
+        "team": "SAC",
+        "phase": "in_season",
+        "kind": "authority_reassigned",
+        "outgoing": "Pete D'Alessandro",
+        "incoming": "Vlade Divac",
+        "source": "https://en.wikipedia.org/wiki/List_of_2015%E2%80%9316_NBA_season_transactions"
+      },
+      {
+        "season": 2016,
+        "team": "BKN",
+        "phase": "in_season",
+        "kind": "authority_reassigned",
+        "outgoing": "Billy King",
+        "incoming": "Sean Marks",
+        "source": "https://en.wikipedia.org/wiki/List_of_2015%E2%80%9316_NBA_season_transactions"
+      },
+      {
+        "season": 2016,
+        "team": "MIN",
+        "phase": "offseason",
+        "kind": "authority_reassigned",
+        "outgoing": "Milt Newton (acting)",
+        "incoming": "Tom Thibodeau",
+        "source": "https://cdn.nba.com/teams/uploads/sites/1610612750/2022/03/2021-22_Timberwolves_Media_Guide.pdf"
+      },
+      {
+        "season": 2016,
+        "team": "PHI",
+        "phase": "in_season",
+        "kind": "stepped_down",
+        "outgoing": "Sam Hinkie",
+        "incoming": "Bryan Colangelo",
+        "source": "https://en.wikipedia.org/wiki/List_of_2015%E2%80%9316_NBA_season_transactions"
+      },
+      {
+        "season": 2017,
+        "team": "ATL",
+        "phase": "offseason",
+        "kind": "authority_reassigned",
+        "outgoing": "Mike Budenholzer",
+        "incoming": "Travis Schlenk",
+        "source": "https://abcnews.com/Sports/doc-rivers-leaving-front-office-role-focusing-coaching/story?id=49038620"
+      },
+      {
+        "season": 2017,
+        "team": "CLE",
+        "phase": "offseason",
+        "kind": "mutual",
+        "outgoing": "David Griffin",
+        "incoming": "Koby Altman",
+        "source": "https://www.nba.com/news/cleveland-cavaliers-and-general-manager-david-griffin-part-ways"
+      },
+      {
+        "season": 2017,
+        "team": "IND",
+        "phase": "offseason",
+        "kind": "stepped_down",
+        "outgoing": "Larry Bird",
+        "incoming": "Kevin Pritchard",
+        "source": "https://cdn.nba.com/teams/uploads/sites/1610612754/2025/10/2025-26-Indiana-Pacers-Media-Guide-web.pdf"
+      },
+      {
+        "season": 2017,
+        "team": "LAC",
+        "phase": "offseason",
+        "kind": "authority_reassigned",
+        "outgoing": "Doc Rivers",
+        "incoming": "Lawrence Frank",
+        "source": "https://www.nba.com/news/la-clippers-announce-separate-roles-doc-rivers-lawrence-frank"
+      },
+      {
+        "season": 2017,
+        "team": "LAL",
+        "phase": "in_season",
+        "kind": "fired",
+        "outgoing": "Jim Buss and Mitch Kupchak",
+        "incoming": "Magic Johnson",
+        "source": "https://www.nba.com/lakers/news/170221-jeanie-buss-magic-johnson-spectrum-interview"
+      },
+      {
+        "season": 2017,
+        "team": "MIL",
+        "phase": "offseason",
+        "kind": "hired_elsewhere",
+        "outgoing": "John Hammond",
+        "incoming": "Jon Horst",
+        "source": "https://en.wikipedia.org/wiki/List_of_2017%E2%80%9318_NBA_season_transactions"
+      },
+      {
+        "season": 2017,
+        "team": "NYK",
+        "phase": "offseason",
+        "kind": "mutual",
+        "outgoing": "Phil Jackson",
+        "incoming": "Steve Mills",
+        "source": "https://www.nba.com/news/reports-new-york-knicks-plan-part-phil-jackson"
+      },
+      {
+        "season": 2017,
+        "team": "ORL",
+        "phase": "offseason",
+        "kind": "fired",
+        "outgoing": "Rob Hennigan",
+        "incoming": "Jeff Weltman",
+        "source": "https://www.nba.com/magic/news/magic-dismiss-rob-hennigan-general-manager"
+      },
+      {
+        "season": 2018,
+        "team": "CHA",
+        "phase": "in_season",
+        "kind": "nonrenewal",
+        "outgoing": "Rich Cho",
+        "incoming": "Mitch Kupchak",
+        "source": "https://www.nba.com/hornets/hornets-not-extend-contract-gm-rich-cho"
+      },
+      {
+        "season": 2018,
+        "team": "DET",
+        "phase": "offseason",
+        "kind": "fired",
+        "outgoing": "Stan Van Gundy",
+        "incoming": "Ed Stefanski",
+        "source": "https://www.nba.com/pistons/news/stan-van-gundy-be-replaced-head-coach-and-president-of-basketball-operations"
+      },
+      {
+        "season": 2018,
+        "team": "PHI",
+        "phase": "offseason",
+        "kind": "stepped_down",
+        "outgoing": "Bryan Colangelo",
+        "incoming": "Elton Brand",
+        "source": "https://en.wikipedia.org/wiki/List_of_2018%E2%80%9319_NBA_season_transactions"
+      },
+      {
+        "season": 2018,
+        "team": "PHX",
+        "phase": "offseason",
+        "kind": "fired",
+        "outgoing": "Ryan McDonough",
+        "incoming": "James Jones and Trevor Bukstein (interim)",
+        "source": "https://www.nba.com/news/suns-part-ways-gm-ryan-mcdonough"
+      },
+      {
+        "season": 2019,
+        "team": "LAL",
+        "phase": "in_season",
+        "kind": "stepped_down",
+        "outgoing": "Magic Johnson",
+        "incoming": "Rob Pelinka",
+        "source": "https://www.nba.com/news/magic-johnson-steps-down-lakers-president-basketball-operations"
+      },
+      {
+        "season": 2019,
+        "team": "MEM",
+        "phase": "offseason",
+        "kind": "authority_reassigned",
+        "outgoing": "Chris Wallace",
+        "incoming": "Zach Kleiman",
+        "source": "https://www.nba.com/news/memphis-grizzlies-front-office-shakeup"
+      },
+      {
+        "season": 2019,
+        "team": "MIN",
+        "phase": "in_season",
+        "kind": "fired",
+        "outgoing": "Tom Thibodeau",
+        "incoming": "Scott Layden (acting), then Gersson Rosas",
+        "source": "https://www.nba.com/news/timberwolves-fire-tom-thibodeau-after-win-over-lakers"
+      },
+      {
+        "season": 2019,
+        "team": "NOP",
+        "phase": "in_season",
+        "kind": "mutual",
+        "outgoing": "Dell Demps",
+        "incoming": "Danny Ferry (interim), then David Griffin",
+        "source": "https://www.nba.com/pelicans/new-orleans-pelicans-part-ways-dell-demps"
+      },
+      {
+        "season": 2019,
+        "team": "SAS",
+        "phase": "offseason",
+        "kind": "authority_reassigned",
+        "outgoing": "R.C. Buford",
+        "incoming": "Brian Wright",
+        "source": "https://en.wikipedia.org/wiki/List_of_2019%E2%80%9320_NBA_season_transactions"
+      },
+      {
+        "season": 2019,
+        "team": "WAS",
+        "phase": "in_season",
+        "kind": "fired",
+        "outgoing": "Ernie Grunfeld",
+        "incoming": "Tommy Sheppard",
+        "source": "https://www.nba.com/news/washington-wizards-ernie-grunfeld-fired-report"
+      },
+      {
+        "season": 2020,
+        "team": "CHI",
+        "phase": "offseason",
+        "kind": "authority_reassigned",
+        "outgoing": "John Paxson and Gar Forman",
+        "incoming": "Artūras Karnišovas",
+        "source": "https://www.nba.com/news/bulls-hire-karnasovas-fire-forman-reassign-paxson"
+      },
+      {
+        "season": 2020,
+        "team": "DET",
+        "phase": "offseason",
+        "kind": "authority_reassigned",
+        "outgoing": "Ed Stefanski (acting)",
+        "incoming": "Troy Weaver",
+        "source": "https://en.wikipedia.org/wiki/List_of_2019%E2%80%9320_NBA_season_transactions"
+      },
+      {
+        "season": 2020,
+        "team": "HOU",
+        "phase": "offseason",
+        "kind": "stepped_down",
+        "outgoing": "Daryl Morey",
+        "incoming": "Rafael Stone",
+        "source": "https://www.nba.com/news/rockets-introduce-new-head-coach-silas-gm-stone"
+      },
+      {
+        "season": 2020,
+        "team": "NYK",
+        "phase": "in_season",
+        "kind": "fired",
+        "outgoing": "Steve Mills",
+        "incoming": "Leon Rose",
+        "source": "https://www.nba.com/news/new-york-knicks-scott-perry-one-year-deal"
+      },
+      {
+        "season": 2020,
+        "team": "PHI",
+        "phase": "offseason",
+        "kind": "authority_reassigned",
+        "outgoing": "Elton Brand",
+        "incoming": "Daryl Morey",
+        "source": "https://cdn.nba.com/teams/uploads/sites/1610612755/2024/01/23-24-76ers-Media-Guide-Update-compressed.pdf"
+      },
+      {
+        "season": 2020,
+        "team": "SAC",
+        "phase": "offseason",
+        "kind": "stepped_down",
+        "outgoing": "Vlade Divac",
+        "incoming": "Monte McNair",
+        "source": "https://en.wikipedia.org/wiki/List_of_2020%E2%80%9321_NBA_season_transactions"
+      },
+      {
+        "season": 2021,
+        "team": "BOS",
+        "phase": "offseason",
+        "kind": "retired",
+        "outgoing": "Danny Ainge",
+        "incoming": "Brad Stevens",
+        "source": "https://en.wikipedia.org/wiki/List_of_2021%E2%80%9322_NBA_season_transactions"
+      },
+      {
+        "season": 2021,
+        "team": "DAL",
+        "phase": "offseason",
+        "kind": "mutual",
+        "outgoing": "Donnie Nelson",
+        "incoming": "Nico Harrison",
+        "source": "https://en.wikipedia.org/wiki/List_of_2021%E2%80%9322_NBA_season_transactions"
+      },
+      {
+        "season": 2021,
+        "team": "MIN",
+        "phase": "offseason",
+        "kind": "fired",
+        "outgoing": "Gersson Rosas",
+        "incoming": "Sachin Gupta (interim)",
+        "source": "https://www.nba.com/news/gersson-rosas-out-as-timberwolves-president-of-basketball-operations"
+      },
+      {
+        "season": 2021,
+        "team": "UTA",
+        "phase": "offseason",
+        "kind": "stepped_down",
+        "outgoing": "Dennis Lindsey",
+        "incoming": "Justin Zanik",
+        "source": "https://www.nba.com/news/jazz-dennis-lindsey-to-transition-to-advisory-role"
+      },
+      {
+        "season": 2022,
+        "team": "DEN",
+        "phase": "offseason",
+        "kind": "hired_elsewhere",
+        "outgoing": "Tim Connelly",
+        "incoming": "Calvin Booth",
+        "source": "https://www.nba.com/news/nuggets-sign-gm-calvin-booth-to-multiyear-extension"
+      },
+      {
+        "season": 2022,
+        "team": "POR",
+        "phase": "in_season",
+        "kind": "fired",
+        "outgoing": "Neil Olshey",
+        "incoming": "Joe Cronin",
+        "source": "https://www.nba.com/news/blazers-fire-neil-olshey-due-to-violation-of-teams-code-of-conduct"
+      },
+      {
+        "season": 2022,
+        "team": "UTA",
+        "phase": "in_season",
+        "kind": "authority_reassigned",
+        "outgoing": "Justin Zanik",
+        "incoming": "Danny Ainge",
+        "source": "https://www.nba.com/news/danny-ainge-joins-utah-jazz-as-ceo-of-basketball-operations"
+      },
+      {
+        "season": 2023,
+        "team": "ATL",
+        "phase": "in_season",
+        "kind": "stepped_down",
+        "outgoing": "Travis Schlenk",
+        "incoming": "Landry Fields",
+        "source": "https://www.nba.com/hawks/news/travis-schlenk-to-step-down-as-president-of-basketball-operations"
+      },
+      {
+        "season": 2023,
+        "team": "GSW",
+        "phase": "offseason",
+        "kind": "stepped_down",
+        "outgoing": "Bob Myers",
+        "incoming": "Mike Dunleavy Jr.",
+        "source": "https://en.wikipedia.org/wiki/List_of_2023%E2%80%9324_NBA_season_transactions"
+      },
+      {
+        "season": 2023,
+        "team": "WAS",
+        "phase": "offseason",
+        "kind": "fired",
+        "outgoing": "Tommy Sheppard",
+        "incoming": "Michael Winger",
+        "source": "https://www.nba.com/news/wizards-part-ways-with-gm-tommy-sheppard"
+      },
+      {
+        "season": 2024,
+        "team": "CHA",
+        "phase": "in_season",
+        "kind": "authority_reassigned",
+        "outgoing": "Mitch Kupchak",
+        "incoming": "Jeff Peterson",
+        "source": "https://cdn.nba.com/teams/uploads/sites/1610612766/2026/04/2025-26_CHA_MediaGuide_NEW.pdf"
+      },
+      {
+        "season": 2024,
+        "team": "DET",
+        "phase": "offseason",
+        "kind": "unclear_departure",
+        "outgoing": "Troy Weaver",
+        "incoming": "Trajan Langdon",
+        "source": "https://www.nba.com/news/pistons-name-trajan-langdon-president-of-basketball-operations"
+      },
+      {
+        "season": 2025,
+        "team": "ATL",
+        "phase": "offseason",
+        "kind": "fired",
+        "outgoing": "Landry Fields",
+        "incoming": "Onsi Saleh",
+        "source": "https://www.nba.com/hawks/news/atlanta-hawks-initiate-search-for-president-of-basketball-operations-saleh-promoted-to-general-manager"
+      },
+      {
+        "season": 2025,
+        "team": "DEN",
+        "phase": "in_season",
+        "kind": "nonrenewal",
+        "outgoing": "Calvin Booth",
+        "incoming": "Ben Tenzer and Jon Wallace",
+        "source": "https://www.nba.com/nuggets/news/denver-nuggets-relieve-head-coach-michael-malone-of-duties-will-not-extend-calvin-booth"
+      },
+      {
+        "season": 2025,
+        "team": "NOP",
+        "phase": "offseason",
+        "kind": "fired",
+        "outgoing": "David Griffin",
+        "incoming": "Joe Dumars",
+        "source": "https://www.nba.com/news/pelicans-part-ways-david-griffin-2025"
+      },
+      {
+        "season": 2025,
+        "team": "PHX",
+        "phase": "offseason",
+        "kind": "authority_reassigned",
+        "outgoing": "James Jones",
+        "incoming": "Brian Gregory",
+        "source": "https://www.nba.com/news/suns-announce-basketball-operations-changes"
+      },
+      {
+        "season": 2025,
+        "team": "SAC",
+        "phase": "offseason",
+        "kind": "mutual",
+        "outgoing": "Monte McNair",
+        "incoming": "Scott Perry",
+        "source": "https://www.nba.com/kings/news/sacramento-kings-and-monte-mcnair-part-ways"
+      },
+      {
+        "season": 2025,
+        "team": "TOR",
+        "phase": "offseason",
+        "kind": "fired",
+        "outgoing": "Masai Ujiri",
+        "incoming": "Bobby Webster",
+        "source": "https://www.nba.com/news/raptors-part-ways-masai-ujiri"
+      },
+      {
+        "season": 2025,
+        "team": "UTA",
+        "phase": "offseason",
+        "kind": "authority_reassigned",
+        "outgoing": "Danny Ainge",
+        "incoming": "Austin Ainge",
+        "source": "https://www.deseret.com/sports/2025/06/02/austin-ainge-to-have-final-say-utah-jazz-justin-zanik-danny-ainge/"
+      },
+      {
+        "season": 2026,
+        "team": "CHI",
+        "phase": "in_season",
+        "kind": "fired",
+        "outgoing": "Artūras Karnišovas",
+        "incoming": "Bryson Graham",
+        "source": "https://www.nba.com/news/chicago-bulls-part-ways-karnisovas-eversley"
+      },
+      {
+        "season": 2026,
+        "team": "DAL",
+        "phase": "in_season",
+        "kind": "fired",
+        "outgoing": "Nico Harrison",
+        "incoming": "Michael Finley and Matt Riccardi (interim), then Masai Ujiri",
+        "source": "https://cdn.nba.com/teams/uploads/sites/1610612742/2025/11/Open-Letter-From-Patrick-Dumont-Letter.pdf"
+      },
+      {
+        "season": 2026,
+        "team": "PHI",
+        "phase": "offseason",
+        "kind": "fired",
+        "outgoing": "Daryl Morey",
+        "incoming": "Mike Gansey",
+        "source": "https://www.nba.com/sixers/news/philadelphia-76ers-and-daryl-morey-part-ways"
       }
     ]
   },
@@ -18348,6 +19094,183 @@
                 "cases": 28
               }
             }
+          },
+          "recorded_front_office_change": {
+            "columns": [
+              "front_office_change"
+            ],
+            "fit": {
+              "none_recorded": {
+                "events": 27,
+                "cases": 284,
+                "rate": 0.09507,
+                "fitted_probability": 0.095186
+              },
+              "recorded": {
+                "events": 6,
+                "cases": 53,
+                "rate": 0.113208,
+                "fitted_probability": 0.110386
+              }
+            },
+            "holdout": {
+              "none_recorded": {
+                "events": 11,
+                "cases": 100,
+                "rate": 0.11
+              },
+              "recorded": {
+                "events": 0,
+                "cases": 12,
+                "rate": 0.0
+              }
+            },
+            "holdout_predicted_events": 10.843,
+            "holdout_brier": 0.088912,
+            "by_holdout_season": {
+              "2023": {
+                "actual": 4,
+                "predicted": 2.886,
+                "cases": 30
+              },
+              "2024": {
+                "actual": 4,
+                "predicted": 2.696,
+                "cases": 28
+              },
+              "2025": {
+                "actual": 2,
+                "predicted": 2.49,
+                "cases": 26
+              },
+              "2026": {
+                "actual": 1,
+                "predicted": 2.772,
+                "cases": 28
+              }
+            }
+          },
+          "expectation_and_front_office_change": {
+            "columns": [
+              "expectation",
+              "front_office_change"
+            ],
+            "fit": {
+              "above_plus_3 | none_recorded": {
+                "events": 4,
+                "cases": 97,
+                "rate": 0.041237,
+                "fitted_probability": 0.047478
+              },
+              "above_plus_3 | recorded": {
+                "events": 0,
+                "cases": 12,
+                "rate": 0.0,
+                "fitted_probability": 0.048961
+              },
+              "below_minus_8 | none_recorded": {
+                "events": 5,
+                "cases": 39,
+                "rate": 0.128205,
+                "fitted_probability": 0.12108
+              },
+              "below_minus_8 | recorded": {
+                "events": 3,
+                "cases": 13,
+                "rate": 0.230769,
+                "fitted_probability": 0.167003
+              },
+              "minus_3_to_plus_3 | none_recorded": {
+                "events": 11,
+                "cases": 94,
+                "rate": 0.117021,
+                "fitted_probability": 0.114859
+              },
+              "minus_3_to_plus_3 | recorded": {
+                "events": 1,
+                "cases": 19,
+                "rate": 0.052632,
+                "fitted_probability": 0.070164
+              },
+              "minus_8_to_below_minus_3 | none_recorded": {
+                "events": 7,
+                "cases": 54,
+                "rate": 0.12963,
+                "fitted_probability": 0.123865
+              },
+              "minus_8_to_below_minus_3 | recorded": {
+                "events": 2,
+                "cases": 9,
+                "rate": 0.222222,
+                "fitted_probability": 0.151194
+              }
+            },
+            "holdout": {
+              "above_plus_3 | none_recorded": {
+                "events": 2,
+                "cases": 37,
+                "rate": 0.054054
+              },
+              "above_plus_3 | recorded": {
+                "events": 0,
+                "cases": 4,
+                "rate": 0.0
+              },
+              "below_minus_8 | none_recorded": {
+                "events": 2,
+                "cases": 17,
+                "rate": 0.117647
+              },
+              "below_minus_8 | recorded": {
+                "events": 0,
+                "cases": 3,
+                "rate": 0.0
+              },
+              "minus_3_to_plus_3 | none_recorded": {
+                "events": 4,
+                "cases": 27,
+                "rate": 0.148148
+              },
+              "minus_3_to_plus_3 | recorded": {
+                "events": 0,
+                "cases": 4,
+                "rate": 0.0
+              },
+              "minus_8_to_below_minus_3 | none_recorded": {
+                "events": 3,
+                "cases": 19,
+                "rate": 0.157895
+              },
+              "minus_8_to_below_minus_3 | recorded": {
+                "events": 0,
+                "cases": 1,
+                "rate": 0.0
+              }
+            },
+            "holdout_predicted_events": 10.398,
+            "holdout_brier": 0.08732,
+            "by_holdout_season": {
+              "2023": {
+                "actual": 4,
+                "predicted": 2.928,
+                "cases": 30
+              },
+              "2024": {
+                "actual": 4,
+                "predicted": 2.546,
+                "cases": 28
+              },
+              "2025": {
+                "actual": 2,
+                "predicted": 2.235,
+                "cases": 26
+              },
+              "2026": {
+                "actual": 1,
+                "predicted": 2.69,
+                "cases": 28
+              }
+            }
           }
         }
       },
@@ -19008,6 +19931,183 @@
               "2026": {
                 "actual": 1,
                 "predicted": 3.65,
+                "cases": 28
+              }
+            }
+          },
+          "recorded_front_office_change": {
+            "columns": [
+              "front_office_change"
+            ],
+            "fit": {
+              "none_recorded": {
+                "events": 36,
+                "cases": 284,
+                "rate": 0.126761,
+                "fitted_probability": 0.126915
+              },
+              "recorded": {
+                "events": 8,
+                "cases": 53,
+                "rate": 0.150943,
+                "fitted_probability": 0.147181
+              }
+            },
+            "holdout": {
+              "none_recorded": {
+                "events": 12,
+                "cases": 100,
+                "rate": 0.12
+              },
+              "recorded": {
+                "events": 0,
+                "cases": 12,
+                "rate": 0.0
+              }
+            },
+            "holdout_predicted_events": 14.458,
+            "holdout_brier": 0.096649,
+            "by_holdout_season": {
+              "2023": {
+                "actual": 5,
+                "predicted": 3.848,
+                "cases": 30
+              },
+              "2024": {
+                "actual": 4,
+                "predicted": 3.594,
+                "cases": 28
+              },
+              "2025": {
+                "actual": 2,
+                "predicted": 3.32,
+                "cases": 26
+              },
+              "2026": {
+                "actual": 1,
+                "predicted": 3.695,
+                "cases": 28
+              }
+            }
+          },
+          "expectation_and_front_office_change": {
+            "columns": [
+              "expectation",
+              "front_office_change"
+            ],
+            "fit": {
+              "above_plus_3 | none_recorded": {
+                "events": 8,
+                "cases": 97,
+                "rate": 0.082474,
+                "fitted_probability": 0.087768
+              },
+              "above_plus_3 | recorded": {
+                "events": 1,
+                "cases": 12,
+                "rate": 0.083333,
+                "fitted_probability": 0.106949
+              },
+              "below_minus_8 | none_recorded": {
+                "events": 6,
+                "cases": 39,
+                "rate": 0.153846,
+                "fitted_probability": 0.148368
+              },
+              "below_minus_8 | recorded": {
+                "events": 3,
+                "cases": 13,
+                "rate": 0.230769,
+                "fitted_probability": 0.182671
+              },
+              "minus_3_to_plus_3 | none_recorded": {
+                "events": 13,
+                "cases": 94,
+                "rate": 0.138298,
+                "fitted_probability": 0.137422
+              },
+              "minus_3_to_plus_3 | recorded": {
+                "events": 2,
+                "cases": 19,
+                "rate": 0.105263,
+                "fitted_probability": 0.115057
+              },
+              "minus_8_to_below_minus_3 | none_recorded": {
+                "events": 9,
+                "cases": 54,
+                "rate": 0.166667,
+                "fitted_probability": 0.160103
+              },
+              "minus_8_to_below_minus_3 | recorded": {
+                "events": 2,
+                "cases": 9,
+                "rate": 0.222222,
+                "fitted_probability": 0.169846
+              }
+            },
+            "holdout": {
+              "above_plus_3 | none_recorded": {
+                "events": 2,
+                "cases": 37,
+                "rate": 0.054054
+              },
+              "above_plus_3 | recorded": {
+                "events": 0,
+                "cases": 4,
+                "rate": 0.0
+              },
+              "below_minus_8 | none_recorded": {
+                "events": 2,
+                "cases": 17,
+                "rate": 0.117647
+              },
+              "below_minus_8 | recorded": {
+                "events": 0,
+                "cases": 3,
+                "rate": 0.0
+              },
+              "minus_3_to_plus_3 | none_recorded": {
+                "events": 5,
+                "cases": 27,
+                "rate": 0.185185
+              },
+              "minus_3_to_plus_3 | recorded": {
+                "events": 0,
+                "cases": 4,
+                "rate": 0.0
+              },
+              "minus_8_to_below_minus_3 | none_recorded": {
+                "events": 3,
+                "cases": 19,
+                "rate": 0.157895
+              },
+              "minus_8_to_below_minus_3 | recorded": {
+                "events": 0,
+                "cases": 1,
+                "rate": 0.0
+              }
+            },
+            "holdout_predicted_events": 14.128,
+            "holdout_brier": 0.094682,
+            "by_holdout_season": {
+              "2023": {
+                "actual": 5,
+                "predicted": 3.911,
+                "cases": 30
+              },
+              "2024": {
+                "actual": 4,
+                "predicted": 3.471,
+                "cases": 28
+              },
+              "2025": {
+                "actual": 2,
+                "predicted": 3.107,
+                "cases": 26
+              },
+              "2026": {
+                "actual": 1,
+                "predicted": 3.639,
                 "cases": 28
               }
             }
@@ -24300,5 +25400,678 @@
         "arrivals_listed_on_same_prior_bench": []
       }
     ]
+  },
+  "front_office": {
+    "known_case_ledger": true,
+    "per_season": {
+      "2010": {
+        "in_season_fired": 1,
+        "offseason_fired": 1,
+        "in_season_nonrenewal": 0,
+        "offseason_nonrenewal": 1,
+        "offseason_stepped_down": 4,
+        "known_lead_changes": 8,
+        "offseason_authority_reassigned": 1
+      },
+      "2011": {
+        "in_season_fired": 0,
+        "offseason_fired": 1,
+        "in_season_nonrenewal": 0,
+        "offseason_nonrenewal": 0,
+        "offseason_stepped_down": 1,
+        "known_lead_changes": 2
+      },
+      "2012": {
+        "in_season_fired": 0,
+        "offseason_fired": 0,
+        "in_season_nonrenewal": 0,
+        "offseason_nonrenewal": 0,
+        "offseason_unclear_departure": 1,
+        "known_lead_changes": 6,
+        "offseason_authority_reassigned": 2,
+        "offseason_stepped_down": 1,
+        "offseason_hired_elsewhere": 1,
+        "offseason_mutual": 1
+      },
+      "2013": {
+        "in_season_fired": 0,
+        "offseason_fired": 1,
+        "in_season_nonrenewal": 0,
+        "offseason_nonrenewal": 3,
+        "offseason_hired_elsewhere": 1,
+        "known_lead_changes": 9,
+        "offseason_authority_reassigned": 4
+      },
+      "2014": {
+        "in_season_fired": 1,
+        "offseason_fired": 0,
+        "in_season_nonrenewal": 0,
+        "offseason_nonrenewal": 1,
+        "offseason_stepped_down": 1,
+        "known_lead_changes": 4,
+        "in_season_authority_reassigned": 1
+      },
+      "2015": {
+        "in_season_fired": 0,
+        "offseason_fired": 0,
+        "in_season_nonrenewal": 0,
+        "offseason_nonrenewal": 0,
+        "offseason_stepped_down": 1,
+        "known_lead_changes": 3,
+        "offseason_medical": 1,
+        "in_season_authority_reassigned": 1
+      },
+      "2016": {
+        "in_season_fired": 0,
+        "offseason_fired": 0,
+        "in_season_nonrenewal": 0,
+        "offseason_nonrenewal": 0,
+        "in_season_authority_reassigned": 1,
+        "known_lead_changes": 3,
+        "offseason_authority_reassigned": 1,
+        "in_season_stepped_down": 1
+      },
+      "2017": {
+        "in_season_fired": 1,
+        "offseason_fired": 1,
+        "in_season_nonrenewal": 0,
+        "offseason_nonrenewal": 0,
+        "offseason_authority_reassigned": 2,
+        "known_lead_changes": 8,
+        "offseason_mutual": 2,
+        "offseason_stepped_down": 1,
+        "offseason_hired_elsewhere": 1
+      },
+      "2018": {
+        "in_season_fired": 0,
+        "offseason_fired": 2,
+        "in_season_nonrenewal": 1,
+        "offseason_nonrenewal": 0,
+        "known_lead_changes": 4,
+        "offseason_stepped_down": 1
+      },
+      "2019": {
+        "in_season_fired": 2,
+        "offseason_fired": 0,
+        "in_season_nonrenewal": 0,
+        "offseason_nonrenewal": 0,
+        "in_season_stepped_down": 1,
+        "known_lead_changes": 6,
+        "offseason_authority_reassigned": 2,
+        "in_season_mutual": 1
+      },
+      "2020": {
+        "in_season_fired": 1,
+        "offseason_fired": 0,
+        "in_season_nonrenewal": 0,
+        "offseason_nonrenewal": 0,
+        "offseason_authority_reassigned": 3,
+        "known_lead_changes": 6,
+        "offseason_stepped_down": 2
+      },
+      "2021": {
+        "in_season_fired": 0,
+        "offseason_fired": 1,
+        "in_season_nonrenewal": 0,
+        "offseason_nonrenewal": 0,
+        "offseason_retired": 1,
+        "known_lead_changes": 4,
+        "offseason_mutual": 1,
+        "offseason_stepped_down": 1
+      },
+      "2022": {
+        "in_season_fired": 1,
+        "offseason_fired": 0,
+        "in_season_nonrenewal": 0,
+        "offseason_nonrenewal": 0,
+        "offseason_hired_elsewhere": 1,
+        "known_lead_changes": 3,
+        "in_season_authority_reassigned": 1
+      },
+      "2023": {
+        "in_season_fired": 0,
+        "offseason_fired": 1,
+        "in_season_nonrenewal": 0,
+        "offseason_nonrenewal": 0,
+        "in_season_stepped_down": 1,
+        "known_lead_changes": 3,
+        "offseason_stepped_down": 1
+      },
+      "2024": {
+        "in_season_fired": 0,
+        "offseason_fired": 0,
+        "in_season_nonrenewal": 0,
+        "offseason_nonrenewal": 0,
+        "in_season_authority_reassigned": 1,
+        "known_lead_changes": 2,
+        "offseason_unclear_departure": 1
+      },
+      "2025": {
+        "in_season_fired": 0,
+        "offseason_fired": 3,
+        "in_season_nonrenewal": 1,
+        "offseason_nonrenewal": 0,
+        "known_lead_changes": 7,
+        "offseason_authority_reassigned": 2,
+        "offseason_mutual": 1
+      },
+      "2026": {
+        "in_season_fired": 2,
+        "offseason_fired": 1,
+        "in_season_nonrenewal": 0,
+        "offseason_nonrenewal": 0,
+        "known_lead_changes": 3
+      }
+    },
+    "reported_offseason_dismissal_checks": {
+      "strict": {
+        "fit": {
+          "events": 6,
+          "cases": 330,
+          "rate": 0.018182
+        },
+        "holdout": {
+          "events": 5,
+          "cases": 120,
+          "rate": 0.041667
+        },
+        "rules": {
+          "league_rate": {
+            "columns": [],
+            "fit": {
+              "all": {
+                "events": 6,
+                "cases": 330,
+                "rate": 0.018182,
+                "fitted_probability": 0.018182
+              }
+            },
+            "holdout": {
+              "all": {
+                "events": 5,
+                "cases": 120,
+                "rate": 0.041667
+              }
+            },
+            "holdout_predicted_events": 2.182,
+            "holdout_brier": 0.040482,
+            "by_holdout_season": {
+              "2023": {
+                "actual": 1,
+                "predicted": 0.545,
+                "cases": 30
+              },
+              "2024": {
+                "actual": 0,
+                "predicted": 0.545,
+                "cases": 30
+              },
+              "2025": {
+                "actual": 3,
+                "predicted": 0.545,
+                "cases": 30
+              },
+              "2026": {
+                "actual": 1,
+                "predicted": 0.545,
+                "cases": 30
+              }
+            }
+          },
+          "win_record": {
+            "columns": [
+              "result"
+            ],
+            "fit": {
+              "350_to_below_500": {
+                "events": 2,
+                "cases": 81,
+                "rate": 0.024691,
+                "fitted_probability": 0.023851
+              },
+              "500_plus": {
+                "events": 1,
+                "cases": 185,
+                "rate": 0.005405,
+                "fitted_probability": 0.006184
+              },
+              "below_350": {
+                "events": 3,
+                "cases": 64,
+                "rate": 0.046875,
+                "fitted_probability": 0.042344
+              }
+            },
+            "holdout": {
+              "350_to_below_500": {
+                "events": 3,
+                "cases": 24,
+                "rate": 0.125
+              },
+              "500_plus": {
+                "events": 1,
+                "cases": 71,
+                "rate": 0.014085
+              },
+              "below_350": {
+                "events": 1,
+                "cases": 25,
+                "rate": 0.04
+              }
+            },
+            "holdout_predicted_events": 2.07,
+            "holdout_brier": 0.040175,
+            "by_holdout_season": {
+              "2023": {
+                "actual": 1,
+                "predicted": 0.471,
+                "cases": 30
+              },
+              "2024": {
+                "actual": 0,
+                "predicted": 0.509,
+                "cases": 30
+              },
+              "2025": {
+                "actual": 3,
+                "predicted": 0.561,
+                "cases": 30
+              },
+              "2026": {
+                "actual": 1,
+                "predicted": 0.528,
+                "cases": 30
+              }
+            }
+          },
+          "wins_vs_expectation": {
+            "columns": [
+              "expectation"
+            ],
+            "fit": {
+              "above_plus_3": {
+                "events": 0,
+                "cases": 102,
+                "rate": 0.0,
+                "fitted_probability": 0.001914
+              },
+              "below_minus_8": {
+                "events": 2,
+                "cases": 53,
+                "rate": 0.037736,
+                "fitted_probability": 0.034126
+              },
+              "minus_3_to_plus_3": {
+                "events": 1,
+                "cases": 109,
+                "rate": 0.009174,
+                "fitted_probability": 0.010068
+              },
+              "minus_8_to_below_minus_3": {
+                "events": 3,
+                "cases": 66,
+                "rate": 0.045455,
+                "fitted_probability": 0.041259
+              }
+            },
+            "holdout": {
+              "above_plus_3": {
+                "events": 1,
+                "cases": 42,
+                "rate": 0.02381
+              },
+              "below_minus_8": {
+                "events": 1,
+                "cases": 21,
+                "rate": 0.047619
+              },
+              "minus_3_to_plus_3": {
+                "events": 3,
+                "cases": 34,
+                "rate": 0.088235
+              },
+              "minus_8_to_below_minus_3": {
+                "events": 0,
+                "cases": 23,
+                "rate": 0.0
+              }
+            },
+            "holdout_predicted_events": 2.088,
+            "holdout_brier": 0.041123,
+            "by_holdout_season": {
+              "2023": {
+                "actual": 1,
+                "predicted": 0.606,
+                "cases": 30
+              },
+              "2024": {
+                "actual": 0,
+                "predicted": 0.52,
+                "cases": 30
+              },
+              "2025": {
+                "actual": 3,
+                "predicted": 0.442,
+                "cases": 30
+              },
+              "2026": {
+                "actual": 1,
+                "predicted": 0.521,
+                "cases": 30
+              }
+            }
+          },
+          "two_straight_playoff_misses": {
+            "columns": [
+              "two_straight_misses"
+            ],
+            "fit": {
+              "other": {
+                "events": 1,
+                "cases": 224,
+                "rate": 0.004464,
+                "fitted_probability": 0.005162
+              },
+              "two_or_more": {
+                "events": 5,
+                "cases": 106,
+                "rate": 0.04717,
+                "fitted_probability": 0.044222
+              }
+            },
+            "holdout": {
+              "other": {
+                "events": 2,
+                "cases": 84,
+                "rate": 0.02381
+              },
+              "two_or_more": {
+                "events": 3,
+                "cases": 36,
+                "rate": 0.083333
+              }
+            },
+            "holdout_predicted_events": 2.026,
+            "holdout_brier": 0.039889,
+            "by_holdout_season": {
+              "2023": {
+                "actual": 1,
+                "predicted": 0.506,
+                "cases": 30
+              },
+              "2024": {
+                "actual": 0,
+                "predicted": 0.506,
+                "cases": 30
+              },
+              "2025": {
+                "actual": 3,
+                "predicted": 0.545,
+                "cases": 30
+              },
+              "2026": {
+                "actual": 1,
+                "predicted": 0.467,
+                "cases": 30
+              }
+            }
+          }
+        }
+      },
+      "with_nonrenewal": {
+        "fit": {
+          "events": 10,
+          "cases": 330,
+          "rate": 0.030303
+        },
+        "holdout": {
+          "events": 5,
+          "cases": 120,
+          "rate": 0.041667
+        },
+        "rules": {
+          "league_rate": {
+            "columns": [],
+            "fit": {
+              "all": {
+                "events": 10,
+                "cases": 330,
+                "rate": 0.030303,
+                "fitted_probability": 0.030303
+              }
+            },
+            "holdout": {
+              "all": {
+                "events": 5,
+                "cases": 120,
+                "rate": 0.041667
+              }
+            },
+            "holdout_predicted_events": 3.636,
+            "holdout_brier": 0.04006,
+            "by_holdout_season": {
+              "2023": {
+                "actual": 1,
+                "predicted": 0.909,
+                "cases": 30
+              },
+              "2024": {
+                "actual": 0,
+                "predicted": 0.909,
+                "cases": 30
+              },
+              "2025": {
+                "actual": 3,
+                "predicted": 0.909,
+                "cases": 30
+              },
+              "2026": {
+                "actual": 1,
+                "predicted": 0.909,
+                "cases": 30
+              }
+            }
+          },
+          "win_record": {
+            "columns": [
+              "result"
+            ],
+            "fit": {
+              "350_to_below_500": {
+                "events": 5,
+                "cases": 81,
+                "rate": 0.061728,
+                "fitted_probability": 0.057674
+              },
+              "500_plus": {
+                "events": 1,
+                "cases": 185,
+                "rate": 0.005405,
+                "fitted_probability": 0.006922
+              },
+              "below_350": {
+                "events": 4,
+                "cases": 64,
+                "rate": 0.0625,
+                "fitted_probability": 0.057416
+              }
+            },
+            "holdout": {
+              "350_to_below_500": {
+                "events": 3,
+                "cases": 24,
+                "rate": 0.125
+              },
+              "500_plus": {
+                "events": 1,
+                "cases": 71,
+                "rate": 0.014085
+              },
+              "below_350": {
+                "events": 1,
+                "cases": 25,
+                "rate": 0.04
+              }
+            },
+            "holdout_predicted_events": 3.311,
+            "holdout_brier": 0.039091,
+            "by_holdout_season": {
+              "2023": {
+                "actual": 1,
+                "predicted": 0.816,
+                "cases": 30
+              },
+              "2024": {
+                "actual": 0,
+                "predicted": 0.764,
+                "cases": 30
+              },
+              "2025": {
+                "actual": 3,
+                "predicted": 0.967,
+                "cases": 30
+              },
+              "2026": {
+                "actual": 1,
+                "predicted": 0.764,
+                "cases": 30
+              }
+            }
+          },
+          "wins_vs_expectation": {
+            "columns": [
+              "expectation"
+            ],
+            "fit": {
+              "above_plus_3": {
+                "events": 0,
+                "cases": 102,
+                "rate": 0.0,
+                "fitted_probability": 0.00319
+              },
+              "below_minus_8": {
+                "events": 4,
+                "cases": 53,
+                "rate": 0.075472,
+                "fitted_probability": 0.067133
+              },
+              "minus_3_to_plus_3": {
+                "events": 3,
+                "cases": 109,
+                "rate": 0.027523,
+                "fitted_probability": 0.027799
+              },
+              "minus_8_to_below_minus_3": {
+                "events": 3,
+                "cases": 66,
+                "rate": 0.045455,
+                "fitted_probability": 0.043124
+              }
+            },
+            "holdout": {
+              "above_plus_3": {
+                "events": 1,
+                "cases": 42,
+                "rate": 0.02381
+              },
+              "below_minus_8": {
+                "events": 1,
+                "cases": 21,
+                "rate": 0.047619
+              },
+              "minus_3_to_plus_3": {
+                "events": 3,
+                "cases": 34,
+                "rate": 0.088235
+              },
+              "minus_8_to_below_minus_3": {
+                "events": 0,
+                "cases": 23,
+                "rate": 0.0
+              }
+            },
+            "holdout_predicted_events": 3.481,
+            "holdout_brier": 0.040472,
+            "by_holdout_season": {
+              "2023": {
+                "actual": 1,
+                "predicted": 0.908,
+                "cases": 30
+              },
+              "2024": {
+                "actual": 0,
+                "predicted": 0.852,
+                "cases": 30
+              },
+              "2025": {
+                "actual": 3,
+                "predicted": 0.821,
+                "cases": 30
+              },
+              "2026": {
+                "actual": 1,
+                "predicted": 0.901,
+                "cases": 30
+              }
+            }
+          },
+          "two_straight_playoff_misses": {
+            "columns": [
+              "two_straight_misses"
+            ],
+            "fit": {
+              "other": {
+                "events": 1,
+                "cases": 224,
+                "rate": 0.004464,
+                "fitted_probability": 0.005778
+              },
+              "two_or_more": {
+                "events": 9,
+                "cases": 106,
+                "rate": 0.084906,
+                "fitted_probability": 0.079353
+              }
+            },
+            "holdout": {
+              "other": {
+                "events": 2,
+                "cases": 84,
+                "rate": 0.02381
+              },
+              "two_or_more": {
+                "events": 3,
+                "cases": 36,
+                "rate": 0.083333
+              }
+            },
+            "holdout_predicted_events": 3.342,
+            "holdout_brier": 0.039419,
+            "by_holdout_season": {
+              "2023": {
+                "actual": 1,
+                "predicted": 0.836,
+                "cases": 30
+              },
+              "2024": {
+                "actual": 0,
+                "predicted": 0.836,
+                "cases": 30
+              },
+              "2025": {
+                "actual": 3,
+                "predicted": 0.909,
+                "cases": 30
+              },
+              "2026": {
+                "actual": 1,
+                "predicted": 0.762,
+                "cases": 30
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }

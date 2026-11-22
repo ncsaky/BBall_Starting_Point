@@ -178,7 +178,7 @@ def head_coach_summary(rows):
     }
 
 
-def head_coach_fit(rows):
+def head_coach_fit(rows, office_changed_by_regular_end):
     season_end = []
     season_open = []
     for row in rows:
@@ -204,6 +204,7 @@ def head_coach_fit(rows):
             "tenure": tenure_band(final["career_games_with_team"]),
             "record": record_band(row["team_wins"] / (row["team_wins"] + row["team_losses"])),
             "playoffs": playoff_band(row),
+            "front_office_change": "recorded" if (y, row["team"]) in office_changed_by_regular_end else "none_recorded",
         })
     rules = {
         "win_record": ("record",),
@@ -212,6 +213,8 @@ def head_coach_fit(rows):
         "playoffs": ("playoffs",),
         "expectation_and_tenure": ("expectation", "tenure"),
         "expectation_and_playoffs": ("expectation", "playoffs"),
+        "recorded_front_office_change": ("front_office_change",),
+        "expectation_and_front_office_change": ("expectation", "front_office_change"),
     }
     return {
         "smoothing_cases": PRIOR_CASES,
@@ -395,11 +398,60 @@ def head_coach_next_jobs(rows, examples):
     }
 
 
+def front_office_summary(rows, changes):
+    season_counts = {str(y): Counter({"in_season_fired": 0, "offseason_fired": 0,
+                                      "in_season_nonrenewal": 0, "offseason_nonrenewal": 0})
+                     for y in range(FIRST, LAST + 1)}
+    fired_or_not_renewed = defaultdict(set)
+    office_changed_by_regular_end = set()
+    recognized = {(r["season"], r["team"]) for r in rows}
+    for event in changes:
+        year, team, phase, kind = (event[k] for k in ("season", "team", "phase", "kind"))
+        if (year, team) not in recognized or phase not in {"in_season", "offseason"}:
+            raise ValueError(f"Invalid executive change {event}")
+        season_counts[str(year)][f"{phase}_{kind}"] += 1
+        season_counts[str(year)]["known_lead_changes"] += 1
+        if phase == "in_season":
+            office_changed_by_regular_end.add((year, team))
+        elif year < LAST:
+            office_changed_by_regular_end.add((year + 1, team))
+        if phase == "offseason" and kind in {"fired", "nonrenewal"}:
+            fired_or_not_renewed[year, team].add(kind)
+
+    previous = {(r["season"], r["team"]): r for r in rows}
+    outlook = []
+    for row in rows:
+        y, team = row["season"], row["team"]
+        if y <= FIRST or row["team_wins_vs_expectation_per_82"] is None:
+            continue
+        kinds = fired_or_not_renewed[y, team]
+        current_miss = playoff_band(row) == "missed_playoffs"
+        previous_miss = playoff_band(previous[y - 1, team]) == "missed_playoffs"
+        outlook.append({
+            "season": y, "reported_firing": "fired" in kinds, "reported_firing_or_nonrenewal": bool(kinds),
+            "result": record_band(row["team_wins"] / (row["team_wins"] + row["team_losses"])),
+            "expectation": win_band(row["team_wins_vs_expectation_per_82"]),
+            "two_straight_misses": "two_or_more" if current_miss and previous_miss else "other",
+        })
+    rules = {"win_record": ("result",), "wins_vs_expectation": ("expectation",),
+             "two_straight_playoff_misses": ("two_straight_misses",)}
+    return {
+        "known_case_ledger": True,
+        "per_season": {y: dict(counter) for y, counter in season_counts.items()},
+        "reported_offseason_dismissal_checks": {
+            "strict": binary_checks(outlook, "reported_firing", rules),
+            "with_nonrenewal": binary_checks(outlook, "reported_firing_or_nonrenewal", rules),
+        },
+    }, office_changed_by_regular_end
+
+
 def build(evidence):
     observations = evidence["observations"]
     rows = observations["head_coach_team_seasons"]
     evidence["head_coaches"] = head_coach_summary(rows)
-    evidence["head_coaches"]["checks"] = head_coach_fit(rows)
+    executive_changes = observations["front_office_lead_changes"]
+    evidence["front_office"], front_changes = front_office_summary(rows, executive_changes)
+    evidence["head_coaches"]["checks"] = head_coach_fit(rows, front_changes)
     evidence["head_coaches"]["destinations"] = head_coach_next_jobs(rows, observations["head_coach_destination_examples"])
     evidence["assistants_and_support_staff"] = compare_assistants(observations["assistant_staff_snapshots"], rows)
     return evidence
