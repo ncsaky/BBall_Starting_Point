@@ -6914,6 +6914,118 @@
    "notes": "Season review of the Lakers stint. Applied to positioning only given the smaller and weaker subsequent Houston sample.",
    "support": "single_analyst",
    "context": "regular_season"
+  },
+  {
+   "id": "scouting_lendeborg_wasserman_shooting",
+   "player": "Yaxel Lendeborg",
+   "player_id": "player_gsw-yaxel-lendeborg",
+   "source": "Jonathan Wasserman, Bleacher Report",
+   "episode": "2026 NBA Draft scouting report: Golden State Warriors No. 11 pick Yaxel Lendeborg",
+   "url": "https://bleacherreport.com/articles/25407729-2026-nba-draft-scouting-report-golden-state-warriors-no-11-pick-yaxel-lendeborg",
+   "published": "2026-04-07",
+   "support": "single_analyst",
+   "context": "general",
+   "locator": "Strengths: improved shooting",
+   "claim": "His shooting improved into a strength: about 42% on spot-up threes and 40% on pull-up threes in his Michigan season.",
+   "inputs": [
+    "S01",
+    "S02"
+   ],
+   "level": "above_average",
+   "notes": "College season (Michigan 2025-26). Added by RATINGS-AUDIT-GSW (2026-11-22). NBA so far: about 39% from three over 14 games (NBA.com Kia Rookie Ladder, 2026-11-18)."
+  },
+  {
+   "id": "scouting_lendeborg_wasserman_burst",
+   "player": "Yaxel Lendeborg",
+   "player_id": "player_gsw-yaxel-lendeborg",
+   "source": "Jonathan Wasserman, Bleacher Report",
+   "episode": "2026 NBA Draft scouting report: Golden State Warriors No. 11 pick Yaxel Lendeborg",
+   "url": "https://bleacherreport.com/articles/25407729-2026-nba-draft-scouting-report-golden-state-warriors-no-11-pick-yaxel-lendeborg",
+   "published": "2026-04-07",
+   "support": "single_analyst",
+   "context": "general",
+   "locator": "Weaknesses: burst and athleticism",
+   "claim": "His athletic tools lag his size and skill; limited burst means he will not regularly beat NBA wings off the dribble.",
+   "inputs": [
+    "P05"
+   ],
+   "level": "below_average",
+   "notes": "Pre-draft scouting. Added by RATINGS-AUDIT-GSW (2026-11-22)."
+  },
+  {
+   "id": "scouting_lendeborg_wasserman_self_creation",
+   "player": "Yaxel Lendeborg",
+   "player_id": "player_gsw-yaxel-lendeborg",
+   "source": "Jonathan Wasserman, Bleacher Report",
+   "episode": "2026 NBA Draft scouting report: Golden State Warriors No. 11 pick Yaxel Lendeborg",
+   "url": "https://bleacherreport.com/articles/25407729-2026-nba-draft-scouting-report-golden-state-warriors-no-11-pick-yaxel-lendeborg",
+   "published": "2026-04-07",
+   "support": "single_analyst",
+   "context": "general",
+   "locator": "Weaknesses: self-creation",
+   "claim": "A weak one-on-one scorer: little shiftiness and a thin pull-up package (3 of 14 in isolation at Michigan).",
+   "inputs": [
+    "S16",
+    "S18"
+   ],
+   "level": "below_average",
+   "notes": "Pre-draft scouting, college isolation sample. Added by RATINGS-AUDIT-GSW (2026-11-22)."
+  },
+  {
+   "id": "scouting_lendeborg_wasserman_defense",
+   "player": "Yaxel Lendeborg",
+   "player_id": "player_gsw-yaxel-lendeborg",
+   "source": "Jonathan Wasserman, Bleacher Report",
+   "episode": "2026 NBA Draft scouting report: Golden State Warriors No. 11 pick Yaxel Lendeborg",
+   "url": "https://bleacherreport.com/articles/25407729-2026-nba-draft-scouting-report-golden-state-warriors-no-11-pick-yaxel-lendeborg",
+   "published": "2026-04-07",
+   "support": "single_analyst",
+   "context": "general",
+   "locator": "Strengths: defensive versatility",
+   "claim": "Can defend both forward spots and makes plays on the ball.",
+   "inputs": [
+    "S33",
+    "S42"
+   ],
+   "level": "above_average",
+   "notes": "Pre-draft scouting; college steal and block rates. Added by RATINGS-AUDIT-GSW (2026-11-22)."
+  },
+  {
+   "id": "journalism_lendeborg_emerman_connector",
+   "player": "Yaxel Lendeborg",
+   "player_id": "player_gsw-yaxel-lendeborg",
+   "source": "Danny Emerman, The San Francisco Standard",
+   "episode": "Yaxel Lendeborg Warriors rookie season feature",
+   "url": "https://www.sfstandard.com/2026/10/01/yaxel-lendeborg-warriors-rookie-season-feature/",
+   "published": "2026-10-01",
+   "support": "single_analyst",
+   "context": "general",
+   "locator": "Steve Kerr on his passing and role",
+   "claim": "Kerr describes him as a connector and a really good passer and ball handler who can start the fast break.",
+   "inputs": [
+    "F01.recognition"
+   ],
+   "level": "strong",
+   "notes": "The coach's view as reported by a beat writer, at training camp. Added by RATINGS-AUDIT-GSW (2026-11-22)."
+  },
+  {
+   "id": "journalism_lendeborg_emerman_versatility",
+   "player": "Yaxel Lendeborg",
+   "player_id": "player_gsw-yaxel-lendeborg",
+   "source": "Danny Emerman, The San Francisco Standard",
+   "episode": "Yaxel Lendeborg Warriors rookie season feature",
+   "url": "https://www.sfstandard.com/2026/10/01/yaxel-lendeborg-warriors-rookie-season-feature/",
+   "published": "2026-10-01",
+   "support": "single_analyst",
+   "context": "general",
+   "locator": "Steve Kerr on who he can guard",
+   "claim": "Kerr says he can guard both bigs and wings; multi-position defense is central to his role.",
+   "inputs": [
+    "S33",
+    "S36"
+   ],
+   "level": "above_average",
+   "notes": "The coach's view as reported by a beat writer, at training camp. Added by RATINGS-AUDIT-GSW (2026-11-22)."
   }
  ]
 }

@@ -156,7 +156,7 @@ def _value_lines(values: dict[str, dict], universe: dict, root: Path, exclude=fr
     return lines
 
 
-def _shifted(record: dict, delta: float, note: dict) -> dict:
+def _shifted(record: dict, delta: float, note: dict, evidence: dict | None = None) -> dict:
     import math
     out = json.loads(json.dumps(record))
     grade = out["value"]["grade"]
@@ -167,12 +167,12 @@ def _shifted(record: dict, delta: float, note: dict) -> dict:
         low, high = notes["interval"]
         notes["interval"] = [round(max(0.0, min(low + new - grade, new)), 6), round(min(100.0, max(high + new - grade, new)), 6)]
     out["uncertainty"]["notes"] = json.dumps(notes, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
-    out["evidence"] = [*out["evidence"], {"source": "data/research/rookie_translation_2026.json",
+    evidence = evidence or {"source": "data/research/rookie_translation_2026.json",
         "method": "rookie_translation_v2 level: day-one ability (impact if he plays: college fit on rookies who "
                   "played, scouts' rank, readiness notes, this season's games by minutes) placed on the game's value "
                   "scale (veteran real-impact line); one log-odds shift per side of the ball",
-        "shared_evidence_id": "rookie_level:" + note["player_id"],
-        "notes": json.dumps(note, sort_keys=True, separators=(",", ":"))}]
+        "shared_evidence_id": "rookie_level:" + note["player_id"]}
+    out["evidence"] = [*out["evidence"], {**evidence, "notes": json.dumps(note, sort_keys=True, separators=(",", ":"))}]
     return out
 
 
@@ -236,6 +236,179 @@ def level_rookies(section: dict, college: dict, root: Path, iterations: int = 25
             "shift_range": {s: [round(min(delta[p][s] for p in ids), 3), round(max(delta[p][s] for p in ids), 3)]
                             for s in channels},
             "at_shift_limit": sorted(p for p in ids for s in channels if abs(delta[p][s]) >= LEVEL_MAX_SHIFT)}
+
+
+# Veterans' opening-day level (RATINGS-AUDIT-GSW, 2026-11-22). Two evidence-based steps, solved together after
+# the rookies' step (the rookies' level is already a rookie-year forecast and is not touched):
+#
+# 1. Age projection. A veteran's inputs measure the level he showed over 2023-24 to 2025-26 (season weights
+#    1 / 0.7 / 0.45), and a new career starts on opening day with no development in between, so every veteran started
+#    at a level about a season and a half old: young players below what they will show, older players above.
+#    Real evidence (data/research/age_projection_2026_27.json, Basketball Index LEBRON 2010-2026 with Basketball
+#    Reference ages): from that measured blend to the next season's opening day, players gain about +0.5 points per
+#    100 possessions at 20-21 and +0.3 at 23, hold at 26-28, and lose about -0.3 at 32 and -0.6 at 37-40 (offense
+#    carries most of it). Each veteran moves by that amount, plus one season of change for each recent season he
+#    missed entirely (his measured level is a season older), centred so the league's average player does not move.
+# 2. No NBA track record. Players with no NBA minutes in 2023-24 to 2025-26 (two-way and fringe signings, players
+#    back from Europe; 2026 rookies and first-round picks excepted) had no evidence of level, and their technique sat
+#    at the average of established players in their listed role: a "primary ball handler" with no NBA minutes was
+#    rated above most measured bench guards. Real evidence (data/research/no_track_record_level_2026_27.json): such
+#    players, in the seasons they did get 250+ minutes (2011-2026), averaged -1.15 offense / -0.28 defense (LEBRON);
+#    that is an upper bound, since most never got the minutes. Each is placed at that level; his shape (which skills
+#    are strengths) is kept.
+# Both use the rookies' mechanism: the game's value scale by the veteran real-impact line, one log-odds shift per side
+# of the ball on technique. Physical tools, tendencies and coach usage never move.
+AGE_PROJECTION_PATH = "data/research/age_projection_2026_27.json"
+NO_TRACK_RECORD_PATH = "data/research/no_track_record_level_2026_27.json"
+AGE_MEASURED_MINUTES = 250.0     # a season counts as measured with this many minutes (same as the curve's evidence)
+AGE_LEVEL_TOLERANCE = 0.02       # value points; same as the rookies' level step
+AGE_MAX_SHIFT = 2.5              # log-odds (as the rookies' step); reported, never forced further
+
+
+def _evidence_name(name: str) -> str:
+    """Name key for Basketball Reference rows, which often drop or add Jr./II/III ("Jimmy Butler III")."""
+    import re
+    from nba_gm_data.input_estimator import _normalize
+    key = _normalize(re.sub(r"(?i)[ ,]+(jr|sr|ii|iii|iv)\.?$", "", name.strip()))
+    return {"ronaldholland": "ronholland"}.get(key, key)
+
+
+def _recent_minutes(root: Path) -> dict[tuple[str, int], float]:
+    minutes: dict[tuple[str, int], float] = {}
+    for r in json.loads((root / "data/research/development_evidence.json").read_text())["public_inputs"]["seasons"]:
+        if r[0] in (2024, 2025, 2026) and r[4] is not None:
+            key = (_evidence_name(r[2]), r[0])
+            minutes[key] = minutes.get(key, 0.0) + float(r[4])
+    return minutes
+
+
+def age_projection_targets(universe: dict, root: Path) -> dict[str, dict]:
+    """{player_id: {offense, defense (LEBRON points to add), age, missed}} for veterans with recent NBA minutes."""
+    curve = json.loads((root / AGE_PROJECTION_PATH).read_text())
+    minutes = _recent_minutes(root)
+    ages = sorted(int(a) for a in curve["shift"]["offense"])
+    out, weights = {}, {}
+    for player in universe["players"]:
+        if player.get("draft_year") == 2026 or player.get("age") is None:
+            continue
+        name = _evidence_name(player["name"])
+        played = [minutes.get((name, y), 0.0) >= AGE_MEASURED_MINUTES for y in (2026, 2025, 2024)]
+        if not any(played):
+            continue
+        missed = played.index(True)            # recent seasons with no measurement (0, 1 or 2)
+        age = min(max(int(round(float(player["age"]))), ages[0]), ages[-1])
+        row = {"age": age, "missed": missed}
+        for side in ("offense", "defense"):
+            value = curve["shift"][side][str(age)]
+            for k in range(1, missed + 1):     # the change during each missed season (age then: age - k)
+                value += curve["annual"][side][str(max(ages[0], age - k))]
+            row[side] = value
+        out[player["id"]] = row
+        weights[player["id"]] = float(player.get("minutes_projection") or 0.0)
+    total = sum(weights.values()) or 1.0
+    for side in ("offense", "defense"):
+        centre = sum(out[p][side] * weights[p] for p in out) / total
+        for p in out:
+            out[p]["uncentred_" + side] = round(out[p][side], 4)
+            out[p][side] = round(out[p][side] - centre, 4)
+            out[p]["centre_" + side] = round(centre, 4)
+    return out
+
+
+def no_track_record_players(universe: dict, root: Path) -> list[str]:
+    """Veterans with no NBA minutes in 2023-24 to 2025-26 (not 2026 rookies, not first-round picks)."""
+    minutes = _recent_minutes(root)
+    out = []
+    for player in universe["players"]:
+        if player.get("draft_year") == 2026:
+            continue
+        if player.get("draft_round") == 1 or (player.get("draft_position") or 99) <= 30:
+            continue
+        name = _evidence_name(player["name"])
+        if not any(minutes.get((name, y), 0.0) > 0 for y in (2026, 2025, 2024)):
+            out.append(player["id"])
+    return out
+
+
+def project_veterans(section: dict, universe: dict, root: Path, iterations: int = 12) -> dict:
+    from nba_gm_data.app_actions import load_app_canonical
+    age_targets = age_projection_targets(universe, root) if (root / AGE_PROJECTION_PATH).exists() else {}
+    fringe = no_track_record_players(universe, root) if (root / NO_TRACK_RECORD_PATH).exists() else []
+    if not age_targets and not fringe:
+        return {"players": 0}
+    base = load_app_canonical(root)
+    channels = _channel_inputs()
+    rookies = {p["id"] for p in universe["players"] if p.get("draft_year") == 2026}
+    league = _game_values(section, root, base, [p["id"] for p in universe["players"]])
+    lines = _value_lines(league, universe, root, exclude=rookies)
+    ids = sorted(pid for pid in set(age_targets) | set(fringe) if pid in league)
+    target, notes, evidence = {}, {}, {}
+    if fringe:
+        level = json.loads((root / NO_TRACK_RECORD_PATH).read_text())["level"]
+    for pid in ids:
+        if pid in age_targets:
+            t = age_targets[pid]
+            target[pid] = {side: league[pid][side] + lines[side][1] * t[side] for side in channels}
+            notes[pid] = {"player_id": pid, "age": t["age"], "missed_recent_seasons": t["missed"],
+                          "projected_change_offense": t["offense"], "projected_change_defense": t["defense"],
+                          "uncentred_offense": t["uncentred_offense"], "uncentred_defense": t["uncentred_defense"]}
+            evidence[pid] = {"source": AGE_PROJECTION_PATH, "shared_evidence_id": "age_projection:" + pid,
+                "method": "age_projection_v1: measured 2023-26 level carried to opening day 2026-27 by the real change "
+                          "from that blend to the next season at his age (Basketball Index LEBRON 2010-2026, Basketball "
+                          "Reference ages), plus each missed recent season, centred on the league; placed on the "
+                          "game's value scale (veteran real-impact line); one log-odds shift per side of the ball"}
+        else:
+            target[pid] = {side: lines[side][0] + lines[side][1] * level[side] for side in channels}
+            notes[pid] = {"player_id": pid, "level_offense": level["offense"], "level_defense": level["defense"]}
+            evidence[pid] = {"source": NO_TRACK_RECORD_PATH, "shared_evidence_id": "no_track_record:" + pid,
+                "method": "no_track_record_level_v1: no NBA minutes in 2023-24 to 2025-26, so his level is that of "
+                          "such players when they did play (Basketball Index LEBRON 2011-2026, an upper bound); placed "
+                          "on the game's value scale (veteran real-impact line); one log-odds shift per side of the "
+                          "ball, his skill shape kept"}
+    original = {pid: {iid: section["players"][pid]["inputs"][iid] for side in channels for iid in channels[side]
+                      if isinstance((section["players"][pid]["inputs"][iid].get("value") or {}).get("grade"), (int, float))}
+                for pid in ids}
+    delta = {pid: {side: 0.0 for side in channels} for pid in ids}
+    history = {pid: {side: [] for side in channels} for pid in ids}
+    values = {pid: league[pid] for pid in ids}
+    step = 0
+    for step in range(iterations):
+        worst = max(abs(target[p][s] - values[p][s]) for p in ids for s in channels)
+        if worst < AGE_LEVEL_TOLERANCE:
+            break
+        for pid in ids:
+            for side in channels:
+                error = target[pid][side] - values[pid][side]
+                hist = history[pid][side]
+                hist.append((delta[pid][side], values[pid][side]))
+                if len(hist) >= 2 and abs(hist[-1][1] - hist[-2][1]) > 1e-6 and hist[-1][0] != hist[-2][0]:
+                    slope = max(0.5, (hist[-1][1] - hist[-2][1]) / (hist[-1][0] - hist[-2][0]))
+                else:
+                    slope = 4.0
+                move = max(-1.0, min(1.0, error / slope))
+                delta[pid][side] = max(-AGE_MAX_SHIFT, min(AGE_MAX_SHIFT, delta[pid][side] + move))
+        for pid in ids:
+            note = {**notes[pid], "target_offense": round(target[pid]["offense"], 4),
+                    "target_defense": round(target[pid]["defense"], 4),
+                    "shift_offense": round(delta[pid]["offense"], 4), "shift_defense": round(delta[pid]["defense"], 4),
+                    "value_line": {k: lines[k] for k in channels}}
+            for side, inputs in channels.items():
+                for iid in inputs:
+                    if iid in original[pid]:
+                        section["players"][pid]["inputs"][iid] = _shifted(original[pid][iid], delta[pid][side], note,
+                                                                          evidence[pid])
+        values = _game_values(section, root, base, ids)
+    from nba_gm_data import ratings_model
+    ratings_model._INPUT_CACHE.clear()
+    ratings_model._FITTED_CACHE.clear()
+    errors = {p: max(abs(target[p][s] - values[p][s]) for s in channels) for p in ids}
+    any_age = next(iter(age_targets.values()), {})
+    return {"players": len(ids), "age_projection": sum(1 for p in ids if p in age_targets),
+            "no_track_record": sum(1 for p in ids if p not in age_targets), "iterations": step + 1,
+            "max_error": round(max(errors.values()), 4), "mean_error": round(sum(errors.values()) / len(errors), 4),
+            "worst": sorted(errors, key=errors.get)[-3:], "value_lines": lines,
+            "centre": {s: any_age.get("centre_" + s) for s in channels},
+            "at_shift_limit": sorted(p for p in ids for s in channels if abs(delta[p][s]) >= AGE_MAX_SHIFT)}
 
 
 def report_tables(universe: dict, section: dict, comparison: dict, elapsed: float,
@@ -368,6 +541,7 @@ def main() -> None:
     parser.add_argument('--no-report',action='store_true')
     parser.add_argument('--no-bbi',action='store_true',help='Skip the Basketball Index evidence overlay')
     parser.add_argument('--no-analysts',action='store_true',help='Skip the attributed analyst-claim evidence')
+    parser.add_argument('--no-age-projection',action='store_true',help='Skip the veterans opening-day level step (age projection, no NBA track record)')
     args=parser.parse_args()
     root=args.root.resolve()
     output=args.output or root/'data/canonical/player_inputs_2026_27.json'
@@ -404,6 +578,10 @@ def main() -> None:
     # measured scale, which exists only after the Basketball Index step.
     if not args.no_bbi:
         bbi_summary['rookie_college']=apply_rookie_college(section,estimator,universe,college,root,not args.no_analysts)
+    # Veterans' opening-day level: age projection and players with no NBA track record (RATINGS-AUDIT-GSW).
+    # After the rookies' step, so the rookies' forecast level (already a rookie-year projection) is not touched.
+    if not args.no_bbi and not args.no_age_projection:
+        bbi_summary['veteran_levels']=project_veterans(section,universe,root)
     baseline=estimate_startup_inputs(InputEstimator.from_local(root,use_expert=False),universe,college)
     comparison=validation_comparison(section,load_reference_cells(root),baseline)
     payload=canonical_json(section)
