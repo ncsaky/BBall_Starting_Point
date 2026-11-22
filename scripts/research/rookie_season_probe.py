@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import gc
 import json
+import shutil
 import sys
 import time
 from pathlib import Path
@@ -32,19 +33,34 @@ STAT_KEYS = ("games", "minutes", "points", "rebounds", "assists", "turnovers", "
              "fg3a", "ftm", "fta")
 
 
-def rookie_state(runner, save) -> dict:
+YOUNG_CLASSES = ("2024", "2025", "2027", "2028")   # ROOKIE-SEASON: second/third-year players and later classes
+
+
+def rookie_state(runner, save, classes=("2026",)) -> dict:
     active = canonical_with_save(runner.canonical, save)
     out = {}
     stats = save.get("player_season_stats", {})
     for p in active.get("players", []):
-        if str(p.get("draft_year")) != "2026":
+        if str(p.get("draft_year")) not in classes:
             continue
         head = engine_header(active, p["id"]) or {}
         totals = stats.get(p["id"], {})
-        out[p["id"]] = {"name": p.get("name"), "team": p.get("team_abbrev"), "pick": p.get("draft_position"),
+        out[p["id"]] = {"name": p.get("name"), "team": p.get("team_abbrev"),
+                        "pick": p.get("draft_position") or p.get("draft_pick"), "draft_year": str(p.get("draft_year")),
                         "ovr": head.get("ovr"), "impact": head.get("impact"),
                         "stats": {k: totals.get(k) for k in STAT_KEYS if totals.get(k) is not None}}
     return out
+
+
+def step_state(runner, save) -> dict:
+    active = canonical_with_save(runner.canonical, save)
+    ages = {p["id"]: float(p.get("age") or 0) for p in active.get("players", [])
+            if p.get("draft_year") is None or str(p.get("draft_year")) < "2022"}
+    stats = save.get("player_season_stats", {})
+    vets = {pid: {"draft_year": None, "stats": {k: t.get(k) for k in STAT_KEYS if t.get(k) is not None}}
+            for pid, t in stats.items() if 26 <= ages.get(pid, 0) <= 30}
+    return {"date": save["state"]["current_date"], "phase": save["state"]["phase"],
+            "rookies": rookie_state(runner, save), "young": rookie_state(runner, save, YOUNG_CLASSES), "vets": vets}
 
 
 def league_stats(save) -> dict:
@@ -67,8 +83,7 @@ def main() -> None:
         raise RuntimeError(f"{live} exists; use a fresh output directory")
     runner.action("create_save", team=args.team, seed=args.seed, save_name="league", ratings_model="inputs_v1")
     saved = runner.load()
-    timeline = [{"date": saved["state"]["current_date"], "phase": saved["state"]["phase"],
-                 "rookies": rookie_state(runner, saved)}]
+    timeline = [step_state(runner, saved)]
     started = time.monotonic()
     while saved["state"]["current_date"] < args.target:
         runner.resolve_user_staff_retention()
@@ -79,8 +94,15 @@ def main() -> None:
         saved = runner.load()
         if marker(before) == marker(saved):
             raise RuntimeError(f"No calendar/phase progress: {action}")
-        timeline.append({"date": saved["state"]["current_date"], "phase": saved["state"]["phase"],
-                         "rookies": rookie_state(runner, saved)})
+        if before["state"]["phase"] == "regular_season" and saved["state"]["phase"] != "regular_season":
+            # A copy of the save at each regular season's end (season stats, records, team plans) for the
+            # development-minutes measurement (rookie_dev_minutes_sim.py).
+            end = out / f"season_end_{saved['state']['current_date'][:4]}" / "saves"
+            end.mkdir(parents=True, exist_ok=True)
+            for item in live.parent.iterdir():
+                if item.is_file() and not item.name.startswith("."):
+                    shutil.copy2(item, end / item.name)
+        timeline.append(step_state(runner, saved))
         print(json.dumps({"to": saved["state"]["current_date"], "phase": saved["state"]["phase"], "action": action,
                           "elapsed": round(time.monotonic() - started, 1)}), flush=True)
         fixture.write_json(out / "rookies.json", {"seed": args.seed, "timeline": timeline,

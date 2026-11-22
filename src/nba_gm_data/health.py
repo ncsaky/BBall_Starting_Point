@@ -95,6 +95,17 @@ INPUTS_GROWTH_CAP_SCALE = 2.5
 # slowdown at high ratings, the full multipliers (up to 3.8x) turned most top-20 picks into stars: in the probe, half
 # of picks 4-10 reached today's top-10 level against 9% of real picks 4-10 (2005-2019 drafts). The order is kept.
 INPUTS_UPSIDE_POWER = 0.25
+# When in the year growth happens (ROOKIE-SEASON, 2026-11-22). Share of a year's growth (94-input ratings) handed out
+# in the six development events that cover the regular season (dated November-April; each event covers the month
+# before it); the other six (May-October) share the rest. 0.5 = spread evenly, as before. The yearly total is unchanged
+# (each July-June year keeps its sum). By the player's season in the NBA (draft year = season 1); others use the default.
+# Evidence: real game logs 2015-16 .. 2025-26 (scripts/research/rookie_halves.py; 250 rookie seasons, 303 second-year,
+# 310 veterans as the league's second-half swing). First-year players: about 70-80% of their year's improvement in box
+# impact (at fixed minutes) comes during the season (0.68 with shot volume held fixed, 0.83 without; 80% ranges
+# 0.28-1.06 and 0.52-1.14). Second-year players: no clear lean (0.21 / 0.49, ranges spanning 0 to 1), so even.
+INPUTS_IN_SEASON_SHARE = 0.5
+INPUTS_IN_SEASON_SHARE_BY_NBA_YEAR: dict[int, float] = {1: 0.75}
+IN_SEASON_EVENT_MONTHS = frozenset({11, 12, 1, 2, 3, 4})
 # Monthly decline: (slope per year past onset, onset age, extra slope past the late onset, late onset, largest).
 LEGACY_DECLINE = {"offense": (0.033, 25.5, 0.030, 32.0, 0.45), "physical": (0.021, 28.5, 0.028, 32.0, 0.36),
                   "other": (0.019, 29.5, 0.022, 32.0, 0.24)}
@@ -1668,6 +1679,8 @@ def monthly_trait_delta(
         growth += (max(0.0, ceiling - current) * .05 * raw_learning * window
                    * role_factor * focus_multiplier * float(staff.get("development_multiplier", 1.0))
                    * float(staff.get("patience_multiplier", 1.0)))
+    timing = development_month_weight(month, player) if inputs_curve else 1.0
+    growth *= timing
     health_penalty = health_drag * (0.04 if trait_key in PHYSICAL_TRAITS else 0.022)
     if age <= 30:
         # Short injuries interrupt development; they should not permanently
@@ -1707,6 +1720,8 @@ def monthly_trait_delta(
     if inputs_curve and ceiling is None:
         # Real players' fastest young growth (made-up draftees keep their own capacity-based limit).
         growth_cap *= INPUTS_GROWTH_CAP_SCALE
+    # The monthly limit moves with the season timing, so a month's share of the year is the same for capped growth.
+    growth_cap *= timing
     delta = min(growth + noise, growth_cap) + season_change
     if delta <= 0.0:
         return delta
@@ -1714,6 +1729,26 @@ def monthly_trait_delta(
         # Slow gains near the top of the stored scale before the writer's bound (older ratings only).
         delta *= clamp((stored_bound - current) / 10.0, 0.0, 1.0)
     return min(delta, max(0.0, ceiling - current)) if ceiling is not None else delta
+
+
+def development_month_weight(month: str | None, player: dict[str, Any] | None = None) -> float:
+    """This month's share of a year's growth, times 12 (the 94-input ratings; each July-June year keeps its total).
+
+    A development event dated the first of a month covers the month before it: events dated November through April
+    cover the regular season (October to March), May through October the end of the season and the summer. The
+    share depends on the player's season in the NBA (INPUTS_IN_SEASON_SHARE_BY_NBA_YEAR; his draft year's season is
+    season 1)."""
+    try:
+        year, number = int(str(month)[:4]), int(str(month)[5:7])
+    except (TypeError, ValueError):
+        return 1.0
+    share = INPUTS_IN_SEASON_SHARE
+    try:
+        nba_year = (year if number >= 7 else year - 1) - int((player or {}).get("draft_year")) + 1
+        share = INPUTS_IN_SEASON_SHARE_BY_NBA_YEAR.get(nba_year, share)
+    except (TypeError, ValueError):
+        pass
+    return 2.0 * share if number in IN_SEASON_EVENT_MONTHS else 2.0 * (1.0 - share)
 
 
 def development_upside_multiplier(player: dict[str, Any], seed: int) -> float:

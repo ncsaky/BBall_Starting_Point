@@ -194,7 +194,8 @@ def main() -> None:
     as_of = json.loads(LINES.read_text())["season_2027"]["as_of"]
     runs = []
     for d in args.probe_dirs:
-        timeline = json.loads((d / "rookies.json").read_text())["timeline"]
+        # The rookies' first season only (probes may run on into later seasons).
+        timeline = [e for e in json.loads((d / "rookies.json").read_text())["timeline"] if e["date"] <= "2027-04-13"]
         start = next(e for e in timeline if e["date"] >= "2026-10-20")
         rows = sim_rows(timeline[-1], start["rookies"])
         runs.append({"dir": str(d), "through": timeline[-1]["date"], "rows": rows,
