@@ -261,6 +261,12 @@ _FEATURE_MEMO: dict[bytes, tuple[Any, SimFeatureVector]] = {}
 _FEATURE_MEMO_LIMIT = 40_000
 _FEATURE_MEMO_AUDIT = __import__("os").environ.get("NBA_GM_RUNTIME_AUDIT") == "1"
 _NO_VALUE = "__no_value__"
+# Player fields no feature or rotation calculation reads (checked by search, MONTH-SPEED-2): the season box totals
+# (new after every game; only a zone profile's signature text reads them) and the daily minutes refresh's own outputs
+# (the coach's fill-in minutes for absent teammates and their size, the trade-value minutes of injured players, the
+# rotation note). Left out of the memo keys so yesterday's outputs don't split today's identical inputs.
+MEMO_IGNORED_PLAYER_FIELDS = frozenset({"_save_stats", "_absence_fill", "_fill_size", "_trade_value_unavailable",
+                                        "_trade_value_minutes_projection", "rotation_note"})
 
 
 def _feature_memo_key(canonical: dict[str, Any], cache: dict[str, Any], player: dict[str, Any],
@@ -282,7 +288,7 @@ def _feature_memo_key(canonical: dict[str, Any], cache: dict[str, Any], player: 
     traits = cache["traits_by_player"].get(pid, {})
     meta = canonical.get("meta") or {}
     model = canonical.get(MODEL_KEY) or {}
-    record = {k: v for k, v in player.items() if k != "_save_stats"}
+    record = {k: v for k, v in player.items() if k not in MEMO_IGNORED_PLAYER_FIELDS}
     try:
         return pickle.dumps((
             "player_features_v1", include_spatial, record,

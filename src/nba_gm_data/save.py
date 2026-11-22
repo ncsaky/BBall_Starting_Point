@@ -7629,19 +7629,21 @@ _ROTATION_MEMO_LIMIT = 6000
 
 def _rotation_memo_key(canonical: dict[str, Any], save: dict[str, Any], team_id: str, integer: bool,
                        roster: list[dict[str, Any]], health_by_player: dict[Any, Any]) -> bytes | None:
-    """Everything the automatic projection reads: the roster's player records in league order (not their season box
-    totals, which nothing here reads) and rating summaries, their health rows, the GM's minute requests, the coach's
-    baselines, the AI role state, whether the team is human-run, the season, the team's window phase and its head
-    coach. None when it cannot be keyed (computed as before)."""
+    """Everything the automatic projection reads: the roster's player records in league order (without the fields
+    nothing here reads: box totals and the minutes refresh's own outputs) and rating summaries, whether each player
+    is available (the only health fact it reads), the GM's minute requests, the coach's baselines, the AI role state,
+    whether the team is human-run, the season, the team's window phase and its head coach. None when it cannot be
+    keyed (computed as before)."""
+    from .sim import MEMO_IGNORED_PLAYER_FIELDS
     ids = [player.get("id") for player in roster]
     recommendations = save.get("rotation_recommendations") or {}
     baselines = save.get("rotation_baselines") or {}
     try:
         return pickle.dumps((
             "rotation_projection_v1", team_id, bool(integer),
-            [{k: v for k, v in player.items() if k != "_save_stats"} for player in roster],
+            [{k: v for k, v in player.items() if k not in MEMO_IGNORED_PLAYER_FIELDS} for player in roster],
             [player_attribute_summary(canonical, pid) for pid in ids],
-            [health_by_player.get(pid) for pid in ids],
+            [player_unavailable_for_rotation(health_by_player.get(pid)) for pid in ids],  # the only health fact read
             [recommendations.get(pid) for pid in ids], [baselines.get(pid) for pid in ids],
             (save.get("ai_role_state") or {}).get(team_id), team_id in human_controlled_team_ids(save),
             (save.get("meta") or {}).get("season"), save_active_contract_season(save),

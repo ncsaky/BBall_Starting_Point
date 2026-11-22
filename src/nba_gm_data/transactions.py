@@ -354,7 +354,8 @@ def _valuation_features(canonical: dict[str, Any], player: dict[str, Any], inclu
     # (_save_stats, which change after every game), so the key holds just those: same results, a smaller key and
     # far fewer misses.
     rows = canonical_sim_cache(canonical)["traits_by_player"].get(pid, {})
-    record = {k: v for k, v in player.items() if k != "_save_stats"}
+    from .sim import MEMO_IGNORED_PLAYER_FIELDS
+    record = {k: v for k, v in player.items() if k not in MEMO_IGNORED_PLAYER_FIELDS}
     try:
         key = pickle.dumps((
             "valuation_features_v2", record,

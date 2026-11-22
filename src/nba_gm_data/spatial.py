@@ -46,6 +46,8 @@ _TEAM_PROFILE_CACHE: dict[tuple[str, str], dict[str, Any]] = {}
 _SIGNATURE_BY_INPUTS: dict[bytes, tuple[Any, tuple[str, str]]] = {}
 _SIGNATURE_BY_INPUTS_LIMIT = 50_000
 _SIGNATURE_AUDIT = __import__("os").environ.get("NBA_GM_RUNTIME_AUDIT") == "1"
+_SIGNATURE_IGNORED_FIELDS = frozenset({"_absence_fill", "_fill_size", "_trade_value_unavailable",
+                                       "_trade_value_minutes_projection", "rotation_note"})
 
 
 def _effective_inputs_for(canonical: dict[str, Any], player_id: str) -> Any:
@@ -68,8 +70,11 @@ def _signature_fast_key(canonical: dict[str, Any], player: dict[str, Any], playe
     model = canonical.get(MODEL_KEY) or {}
     pid = player["id"]
     try:
+        # The daily minutes refresh's own outputs are never read here (the season box totals are: they enter the
+        # signature, so they stay in the key).
+        record = {k: v for k, v in player.items() if k not in _SIGNATURE_IGNORED_FIELDS}
         return pickle.dumps((
-            "spatial_signature_v1", player, tuple(traits.items()), offense_enabled(canonical),
+            "spatial_signature_v1", record, tuple(traits.items()), offense_enabled(canonical),
             (meta.get("offensive_profiles") or {}).get(pid) if offense_enabled(canonical) else None,
             model.get("mode"), model.get("inputs_key"),
             (model.get("input_deltas") or {}).get(pid), (model.get("generated") or {}).get(pid),

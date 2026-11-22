@@ -34,6 +34,9 @@ def _fresh(league, player, include_spatial):
 class FeatureMemoTests(unittest.TestCase):
     def setUp(self):
         sim._FEATURE_MEMO.clear()
+        # The league playmaking baseline's own cache is keyed by object ids, which Python reuses after other tests'
+        # leagues are freed; clear it so identity checks here see one baseline per league (see the report's notes).
+        spatial._PLAYMAKING_MEAN_CACHE.clear()
 
     def test_hits_across_league_views_equal_fresh_vectors(self):
         rng = random.Random(3)
