@@ -1,0 +1,39 @@
+{
+ "version": "no_track_record_level_v1_2026_11_22",
+ "method": "Real impact of players with little or no NBA track record, when they do play (Basketball Index LEBRON). For each player-season s (2011-2026, 250+ minutes): the player's NBA minutes in the three seasons before s (Basketball Reference). Groups: none (<1), thin (1-249), 250-999, 1000-1999, 2000+. First-round picks are left out of the first two groups (they are the rookie translation's job). Mean O-/D-LEBRON in s, unweighted. Players who never got 250 minutes are missing, so the low groups' means are an upper bound on their level.",
+ "sources": [
+  "Basketball Index LEBRON by season 2010-2026 (fanspo tools capture, local)",
+  "Basketball Reference minutes and draft (data/research/development_evidence.json)"
+ ],
+ "groups": {
+  "2000+": {
+   "n": 4262,
+   "offense": -0.015,
+   "defense": 0.028
+  },
+  "1000-1999": {
+   "n": 725,
+   "offense": -0.819,
+   "defense": 0.031
+  },
+  "none": {
+   "n": 542,
+   "offense": -1.153,
+   "defense": -0.277
+  },
+  "250-999": {
+   "n": 523,
+   "offense": -0.916,
+   "defense": -0.117
+  },
+  "thin": {
+   "n": 172,
+   "offense": -0.988,
+   "defense": -0.089
+  }
+ },
+ "level": {
+  "offense": -1.153,
+  "defense": -0.277
+ }
+}
