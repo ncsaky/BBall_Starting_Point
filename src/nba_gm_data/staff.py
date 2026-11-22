@@ -7,7 +7,9 @@ from typing import Any
 from . import faces
 from .faces import draw_staff_identity
 from .schema import TransactionLog, to_plain
-from .staff_lifecycle import initialize_staff_bio, staff_bio_evidence, staff_person_id, staff_win_expectations
+from .staff_lifecycle import (
+    initialize_staff_bio, staff_bio_evidence, staff_person_id, staff_retires_after_season, staff_win_expectations,
+)
 from .utils import clamp, normalize_name as evidence_name, stable_id
 
 
@@ -1372,6 +1374,7 @@ def offseason_coaching_recommendations(canonical: dict[str, Any], save: dict[str
     expectations = (save.get("staff_preseason_expectations") or {}).get(season)
     if expectations is None:
         expectations = staff_win_expectations(canonical.get("team_strategic_states", []))
+    seed = staff_save_seed(save)
     opening = save.get("staff_opening_coaches") or {}
     opening_heads = opening["teams"] if opening.get("season") == season else {}
     recommendations = []
@@ -1400,6 +1403,8 @@ def offseason_coaching_recommendations(canonical: dict[str, Any], save: dict[str
                 recommendations.append(staff_turnover_recommendation(
                     team, head, date, "retain_interim", "interim kept after season review", review_period="offseason",
                 ))
+        elif staff_retires_after_season(head, seed, season):
+            new_head = True
         elif staff_change_permission(save, team_id, "head_coach")["can_fire"]:
             if staff_turnover_draw(save, season, team_id, "summer_head") < head_coach_firing_chance(gap, offseason=True):
                 recommendations.append(staff_turnover_recommendation(
@@ -1409,13 +1414,18 @@ def offseason_coaching_recommendations(canonical: dict[str, Any], save: dict[str
 
         target = coordinator_departure_target(staff_turnover_draw(save, season, team_id, "summer_bench"), new_head)
         remaining = target - len(season_firings.intersection(COORDINATOR_SLOTS))
+        assistants = []
+        for slot in COORDINATOR_SLOTS:
+            staff = current_staff_slot(save, team_id, slot)
+            if slot in season_firings or not staff:
+                continue
+            expires = int((staff.get("contract") or {}).get("years_remaining") or 1) <= 1
+            if is_interim_staff(staff) or (expires and not coordinator_meets_keep_bar(staff)) or staff_retires_after_season(staff, seed, season):
+                remaining -= 1
+            elif staff_change_permission(save, team_id, slot)["can_fire"]:
+                assistants.append(staff)
         if remaining <= 0:
             continue
-        assistants = [
-            staff for slot in COORDINATOR_SLOTS
-            if slot not in season_firings and (staff := current_staff_slot(save, team_id, slot))
-            and staff_change_permission(save, team_id, slot)["can_fire"]
-        ]
         # Lower grades move first. The independent tie-break avoids bias toward either side of the ball.
         assistants.sort(key=lambda staff: (
             staff_grade(staff) + 8 * staff_turnover_draw(save, season, team_id, staff["slot"]),

@@ -6,6 +6,7 @@ import json
 import random
 import re
 from collections import Counter
+from copy import deepcopy
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
@@ -155,6 +156,18 @@ def _age_ratings(
     staff["years_experience"] = entry["years_experience"]
     staff.setdefault("rating_change_log", []).append(entry)
     return entry
+
+
+def staff_retires_after_season(staff: dict[str, Any], seed: int, season: str) -> bool:
+    # The summer bench review needs to count an upcoming retirement as one departure.
+    # Reuse the career stream and its rating draws so the lifecycle keeps the same outcomes.
+    next_age = int(staff.get("age") or 0) + 1
+    chance = retirement_probability(next_age, staff.get("market_status", ""))
+    if chance <= 0:
+        return False
+    rng = random.Random(f"{seed}:{season}:{staff_person_id(staff)}:staff_lifecycle")
+    _age_ratings(deepcopy(staff), season, rng, employed=False)
+    return rng.random() < chance
 
 
 def staff_win_expectations(strategic_states: list[dict[str, Any]]) -> dict[str, float]:

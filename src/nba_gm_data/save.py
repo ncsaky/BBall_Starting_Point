@@ -6307,6 +6307,34 @@ def queue_ai_recommendations(
                     "notes": "AI extension decisions process quietly from core/depth role, ask, age, performance, and team context.",
                 }
             )
+    # Trade reviews can return early even on a staff checkpoint. Process staff independently.
+    if phase == "regular_season":
+        remember_opening_coaching_staff(save)
+    staff_review_due = (
+        from_date[:7] != through_date[:7]
+        or phase in {"training_camp", "offseason", "draft_lottery", "draft", "re_signing", "free_agency"}
+        or through_date.endswith("-02-05")
+    )
+    if staff_review_due:
+        action_id = stable_id("ai_action", "staff", through_date[:7], phase, seed)
+        if action_id not in queued_keys:
+            payload = simulate_ai_staff_changes(canonical, save, from_date, through_date, seed=seed, limit=8)
+            if payload.get("recommendations"):
+                # Staff evaluation should use the live team context above, but
+                # the spending ceiling is a stable franchise constraint. Save-
+                # enriched strategy states must not silently raise that ceiling.
+                result = apply_ai_staff_recommendations(authoritative_canonical, save, payload, seed)
+                save.setdefault("processed_hidden_ai_actions", []).append(
+                    {
+                        "id": action_id,
+                        "date": through_date,
+                        "action_type": "staff_change_recommendations",
+                        "status": "executed" if result.get("applied_count") else "reviewed",
+                        "applied_count": result.get("applied_count", 0),
+                        "notes": "Leaguewide AI staff changes process quietly; user-team staff moves remain manual.",
+                    }
+                )
+
     from .trade_calendar import market_day
     start_year = season_start_year_from_date(through_date)
     trade_deadline = trade_deadline_date(start_year)
@@ -6421,33 +6449,6 @@ def queue_ai_recommendations(
                     "notes": "Draft window marker. Use simulate-draft or pick-recommendations for explicit draft-night decisions.",
                 }
             )
-    if phase == "regular_season":
-        remember_opening_coaching_staff(save)
-    staff_review_due = (
-        from_date[:7] != through_date[:7]
-        or phase in {"training_camp", "offseason", "draft_lottery", "draft", "re_signing", "free_agency"}
-        or through_date.endswith("-02-05")
-    )
-    if staff_review_due:
-        action_id = stable_id("ai_action", "staff", through_date[:7], phase, seed)
-        if action_id not in queued_keys:
-            payload = simulate_ai_staff_changes(canonical, save, from_date, through_date, seed=seed, limit=8)
-            if payload.get("recommendations"):
-                # Staff evaluation should use the live team context above, but
-                # the spending ceiling is a stable franchise constraint. Save-
-                # enriched strategy states must not silently raise that ceiling.
-                result = apply_ai_staff_recommendations(authoritative_canonical, save, payload, seed)
-                save.setdefault("processed_hidden_ai_actions", []).append(
-                    {
-                        "id": action_id,
-                        "date": through_date,
-                        "action_type": "staff_change_recommendations",
-                        "status": "executed" if result.get("applied_count") else "reviewed",
-                        "applied_count": result.get("applied_count", 0),
-                        "notes": "Leaguewide AI staff changes process quietly; user-team staff moves remain manual.",
-                    }
-                )
-
 
 def queue_user_trade_offers(save: dict[str, Any], offers: list[dict[str, Any]], date_value: str) -> None:
     from .transactions import trade_offer_fingerprint
