@@ -48,6 +48,14 @@ SCENARIOS: dict[str, dict] = {
                         "base": "nov-legacy",
                         "steps": [{"to_date": "2027-02-10"},
                                   {"to_date": "2027-02-10", "trade_deadline_confirmed": "2027-02-05"}]},
+    # MONTH-SPEED-2 (2026-11-22): the GUI default is now the 94-input ratings, so the second seed and the
+    # deadline month run on them too.
+    "nov-inputs-b": {"team": "BOS", "seed": 55, "model": "inputs_v1", "start": "2026-11-01",
+                     "steps": [{"to_date": "2026-12-01"}]},
+    "deadline-inputs": {"team": "BOS", "seed": 55, "model": "inputs_v1", "start": "2027-01-10",
+                        "base": "nov-inputs-b",
+                        "steps": [{"to_date": "2027-02-10"},
+                                  {"to_date": "2027-02-10", "trade_deadline_confirmed": "2027-02-05"}]},
 }
 DEFAULT_SCENARIOS = ["nov-legacy", "nov-inputs"]
 
@@ -242,6 +250,13 @@ def compare(first: str, second: str, names: list[str]) -> int:
 def _code_tree(ref: str) -> Path:
     """Extract ``src/`` at a git ref next to links to this checkout's data, so resources resolve the same way."""
     target = OUT / "code" / ref
+    frozen = ROOT / "speedbase" / ref / "src"   # a pre-extracted copy (remote workers have no .git)
+    if not (target / "src").exists() and frozen.exists():
+        target.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(frozen, target / "src")
+        for entry in ROOT.iterdir():
+            if entry.name not in {"src", "output", ".git", "speedbase"} and not (target / entry.name).exists():
+                (target / entry.name).symlink_to(entry)
     if not (target / "src").exists():
         target.mkdir(parents=True, exist_ok=True)
         archive = subprocess.run(["git", "-C", str(ROOT), "archive", ref, "src"], check=True, capture_output=True).stdout
