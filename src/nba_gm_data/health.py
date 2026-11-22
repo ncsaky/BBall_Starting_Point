@@ -73,9 +73,11 @@ LEGACY_DEVELOPMENT_SEASON_VOLATILITY = 0.36   # older trait-only ratings
 INPUTS_CURVE = "inputs"
 LEGACY_CURVE = "legacy"
 # Growth multiplier by age (straight lines between the points). Large at 19-21 because the 94 inputs, re-derived into
-# hidden ratings and then player value, turn a hidden-rating point into less value than the older ratings did.
-INPUTS_AGE_FACTOR = ((19.0, 4.0), (20.0, 3.6), (21.0, 1.9), (22.0, 0.85), (23.0, 0.5), (24.0, 0.38), (25.0, 0.18),
-                     (26.0, 0.1), (27.0, 0.07), (29.0, 0.05), (31.0, 0.02), (33.0, 0.0))
+# hidden ratings and then player value, turn a hidden-rating point into less value than the older ratings did. Ages
+# 21-24 sit a little above the probe's target: in played seasons (injuries, fatigue, the coach's minutes) young
+# players grew about a third less than in the development-only probe.
+INPUTS_AGE_FACTOR = ((19.0, 4.0), (20.0, 3.6), (21.0, 2.5), (22.0, 1.35), (23.0, 0.8), (24.0, 0.55), (25.0, 0.25),
+                     (26.0, 0.12), (27.0, 0.07), (29.0, 0.05), (31.0, 0.02), (33.0, 0.0))
 # The extra growth of young players fades out over these ages (legacy: gone at 24, over the two years before).
 INPUTS_YOUTH_END = 25.0
 INPUTS_YOUTH_SPAN = 3.0
@@ -91,9 +93,10 @@ INPUTS_UPSIDE_POWER = 0.25
 # Monthly decline: (slope per year past onset, onset age, extra slope past the late onset, late onset, largest).
 LEGACY_DECLINE = {"offense": (0.033, 25.5, 0.030, 32.0, 0.45), "physical": (0.021, 28.5, 0.028, 32.0, 0.36),
                   "other": (0.019, 29.5, 0.022, 32.0, 0.24)}
-# Slightly earlier and steeper than the older curve: real decline is about -0.2 a season at 30-32 (it was -0.15).
-INPUTS_DECLINE = {"offense": (0.036, 26.0, 0.035, 31.0, 0.50), "physical": (0.034, 28.0, 0.030, 32.0, 0.40),
-                  "other": (0.030, 29.0, 0.025, 32.0, 0.30)}
+# Slightly earlier and steeper than the older curve at 28-32 (real decline is about -0.2 a season at 30-32; it was
+# -0.15), gentler past 32: in played seasons, injuries add about -0.1 a season at 33-35 on top of this.
+INPUTS_DECLINE = {"offense": (0.036, 26.0, 0.015, 31.0, 0.50), "physical": (0.034, 28.0, 0.015, 32.0, 0.40),
+                  "other": (0.030, 29.0, 0.012, 32.0, 0.30)}
 SEASON_FORM_TRAIT_WEIGHTS = {
     "foot_speed_lateral_agility": 0.35,
     "passing_reads": 0.55,
