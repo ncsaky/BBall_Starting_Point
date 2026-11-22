@@ -7036,6 +7036,10 @@ def finish_free_agency_phase(canonical: dict[str, Any], save_path: Path, *, root
     if user_pending(save) and not let_sheets_expire:
         write_save(save_path, save)
         return {"status": "decision_needed", "offer_sheets_due": [s["id"] for s in user_pending(save)]}
+    # SUMMER-EXTENSIONS: AI extension passes on July 6, August 1 and September 1 on the way (the jumps below skip the
+    # day-by-day steps that run them the rest of the year). July 6 comes before the July 15 offer-sheet pass.
+    from .save import run_summer_extension_passes
+    run_summer_extension_passes(canonical, save, f"{end_year}-07-06", seed, root)
     if str(save.get("state", {}).get("current_date") or "") < f"{end_year}-08-01":
         late = late_pass(canonical, save, seed, root)
         if late["user_pending"]:
@@ -7048,6 +7052,7 @@ def finish_free_agency_phase(canonical: dict[str, Any], save_path: Path, *, root
     # TRADE-VOLUME-2: the game skips from the end of free agency to September 1, so the late-July and August trade
     # market runs once on August 1 on the way.
     if str(save.get("state", {}).get("current_date") or "") < f"{end_year}-08-01":
+        run_summer_extension_passes(canonical, save, f"{end_year}-08-01", seed, root)
         advance_lifecycle_to(canonical, save, f"{end_year}-08-01", seed, root)
         run_late_summer_ai_trades(canonical, save, seed, end_year)
         # FA-REAL slice 4: late-summer sign-and-trades for free agents still unsigned.
@@ -7057,6 +7062,7 @@ def finish_free_agency_phase(canonical: dict[str, Any], save_path: Path, *, root
         # FA-REAL slice 2: unsigned restricted free agents settle with their teams, or take the qualifying offer.
         from .offseason_decisions import restricted_summer_pass
         restricted_summer_pass(canonical, save, final=False)
+    run_summer_extension_passes(canonical, save, f"{end_year}-09-01", seed, root)
     advance_lifecycle_to(canonical, save, f"{end_year}-09-01", seed, root)
     save.setdefault("free_agency_state", {})["status"] = "completed"
     add_news(save, "free_agency", "Free agency period closed. Training camp is next.", date_value=f"{end_year}-09-01")

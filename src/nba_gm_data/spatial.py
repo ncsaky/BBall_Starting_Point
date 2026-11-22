@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import weakref
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterable
@@ -160,6 +161,12 @@ def _player_visual_pockets(
     return output
 
 
+class _TraitIndex(dict):
+    """A league's trait lookup (player id -> trait values). A plain dict that can also be weakly referenced, so a cache
+    keyed on it can tell when it is gone (Python reuses an object's id once it is freed). No __slots__, so it pickles
+    and copies at every protocol like a plain dict."""
+
+
 def _trait_index(canonical: dict[str, Any]) -> dict[str, dict[str, float]]:
     cache_key = id(canonical)
     traits = canonical.get("traits", [])
@@ -167,7 +174,7 @@ def _trait_index(canonical: dict[str, Any]) -> dict[str, dict[str, float]]:
     cached = canonical.get("_spatial_trait_index") if owned else _SPATIAL_INDEX_CACHE.get(cache_key)
     if cached and cached.get("owner_id") == cache_key and cached.get("traits_source") is traits:
         return cached["traits"]
-    output: dict[str, dict[str, float]] = {}
+    output: dict[str, dict[str, float]] = _TraitIndex()
     for row in canonical.get("traits", []):
         player_id = str(row.get("player_id") or "")
         key = str(row.get("trait_key") or "")
@@ -185,7 +192,11 @@ def _trait_index(canonical: dict[str, Any]) -> dict[str, dict[str, float]]:
     return output
 
 
-_PLAYMAKING_MEAN_CACHE: dict[tuple, dict[str, float]] = {}
+# SUMMER-EXTENSIONS: the baseline is remembered per trait lookup (by its id, with a weak reference that proves the
+# lookup is still the same object: an id alone can belong to a later league copy once the first one is freed), then
+# by roster size and date, as before.
+_PLAYMAKING_MEAN_CACHE: dict[int, tuple[weakref.ref, dict[tuple[int, str], dict[str, float]]]] = {}
+_PLAYMAKING_MEAN_CACHE_LIMIT = 8
 
 
 def league_playmaking_mean(canonical: dict[str, Any]) -> dict[str, float]:
@@ -193,8 +204,19 @@ def league_playmaking_mean(canonical: dict[str, Any]) -> dict[str, float]:
     point, so the playmaking term moves teams relative to each other without shifting league scoring."""
     traits = _trait_index(canonical)
     players = canonical.get("players", [])
-    key = (id(traits), len(players), str((canonical.get("meta") or {}).get("current_date")))
-    cached = _PLAYMAKING_MEAN_CACHE.get(key)
+    slot = _PLAYMAKING_MEAN_CACHE.get(id(traits))
+    if slot is None or slot[0]() is not traits:
+        if len(_PLAYMAKING_MEAN_CACHE) >= _PLAYMAKING_MEAN_CACHE_LIMIT:
+            _PLAYMAKING_MEAN_CACHE.clear()
+        try:
+            reference = weakref.ref(traits)
+        except TypeError:   # a lookup that cannot be weakly referenced is never remembered
+            reference = None
+        slot = (reference, {}) if reference is not None else None
+        if slot is not None:
+            _PLAYMAKING_MEAN_CACHE[id(traits)] = slot
+    key = (len(players), str((canonical.get("meta") or {}).get("current_date")))
+    cached = slot[1].get(key) if slot is not None else None
     if cached is not None:
         return cached
     totals = {group: 0.0 for group in PLAYMAKING_GROUPS}
@@ -209,9 +231,10 @@ def league_playmaking_mean(canonical: dict[str, Any]) -> dict[str, float]:
             totals[group] += lifts[group] * minutes
         weight_total += minutes
     mean = {group: round(totals[group] / weight_total, 3) if weight_total else 0.0 for group in PLAYMAKING_GROUPS}
-    if len(_PLAYMAKING_MEAN_CACHE) >= 8:
-        _PLAYMAKING_MEAN_CACHE.clear()
-    _PLAYMAKING_MEAN_CACHE[key] = mean
+    if slot is not None:
+        if len(slot[1]) >= _PLAYMAKING_MEAN_CACHE_LIMIT:
+            slot[1].clear()
+        slot[1][key] = mean
     return mean
 
 
