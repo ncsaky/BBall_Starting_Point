@@ -78,6 +78,11 @@ LEGACY_CURVE = "legacy"
 # players grew about a third less than in the development-only probe.
 INPUTS_AGE_FACTOR = ((19.0, 4.0), (20.0, 3.6), (21.0, 2.5), (22.0, 1.35), (23.0, 0.8), (24.0, 0.55), (25.0, 0.25),
                      (26.0, 0.12), (27.0, 0.07), (29.0, 0.05), (31.0, 0.02), (33.0, 0.0))
+# Made-up draftees (career-capacity profiles) add their own learning runway into the mid-twenties, so they keep the
+# smaller 21-24 factors: with the larger ones, 30% of made-up top-10 picks were top-25 players by year four (real
+# 2015-2021 classes: 1-20%, tests/test_prospect_realism.py).
+INPUTS_DRAFTEE_AGE_FACTOR = ((19.0, 4.0), (20.0, 3.6), (21.0, 1.9), (22.0, 0.85), (23.0, 0.5), (24.0, 0.38), (25.0, 0.18),
+                             (26.0, 0.1), (27.0, 0.07), (29.0, 0.05), (31.0, 0.02), (33.0, 0.0))
 # The extra growth of young players fades out over these ages (legacy: gone at 24, over the two years before).
 INPUTS_YOUTH_END = 25.0
 INPUTS_YOUTH_SPAN = 3.0
@@ -1594,7 +1599,7 @@ def monthly_trait_delta(
     depend on how good a player already is, and young players keep growing into their mid-twenties."""
     age = 27.0 if age is None else age
     inputs_curve = curve != LEGACY_CURVE
-    age_factor = development_age_factor(age, player=player, seed=seed, curve=curve)
+    age_factor = development_age_factor(age, player=player, seed=seed, curve=curve, draftee=bool(trait_context))
     if inputs_curve and trait_key in PHYSICAL_TRAITS:
         # Young players' extra growth in the new curve is skill growth. Physical capacities (conditioning, speed,
         # strength) keep the older, gentler youth curve: with the new curve's young growth on top, a 19-year-old's
@@ -1811,8 +1816,9 @@ def development_trait_focus(player: dict[str, Any], staff: dict[str, Any], playe
 
 
 def development_age_factor(age: float, *, player: dict[str, Any] | None = None, seed: int = 1,
-                           curve: str = LEGACY_CURVE) -> float:
-    """Vary promising prospects' maturation, never delay veteran decline."""
+                           curve: str = LEGACY_CURVE, draftee: bool = False) -> float:
+    """Vary promising prospects' maturation, never delay veteran decline. draftee: a made-up draftee with a career
+    capacity profile (its own learning runway; see INPUTS_DRAFTEE_AGE_FACTOR)."""
     pace = 1.0
     if (player is not None and age < 30
             and maybe_float(player.get("current_ability")) is not None
@@ -1824,7 +1830,8 @@ def development_age_factor(age: float, *, player: dict[str, Any] | None = None, 
         elif timing >= 0.80:
             age, pace = age - 2.0, 0.88
     if curve != LEGACY_CURVE:
-        return _interpolate(INPUTS_AGE_FACTOR, age) * (pace if age <= 30 else 1.0)
+        table = INPUTS_DRAFTEE_AGE_FACTOR if draftee else INPUTS_AGE_FACTOR
+        return _interpolate(table, age) * (pace if age <= 30 else 1.0)
     if age <= 20:
         return 1.25 * pace
     if age <= 23:
