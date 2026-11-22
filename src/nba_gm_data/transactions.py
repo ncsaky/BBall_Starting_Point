@@ -238,11 +238,13 @@ def build_transaction_context(canonical: dict[str, Any] | Any, config: dict[str,
               build_team_strategic_states(working, valuations, config, _final_needs_only=True))
     working["team_strategic_states"] = [to_plain(state) for state in states]
     trade_block = build_trade_block_entries(working, states, valuations, config)
+    # The plain copies made for the working view above are returned as they are (the trade block only reads them),
+    # instead of converting every state and valuation a second time (MONTH-SPEED-2).
     return {
         "_strategy_model_version": STRATEGY_MODEL_VERSION,
         "front_office_profiles": front_offices,
-        "team_strategic_states": [to_plain(state) for state in states],
-        "player_asset_valuations": [to_plain(value) for value in valuations],
+        "team_strategic_states": working["team_strategic_states"],
+        "player_asset_valuations": working["player_asset_valuations"],
         "trade_block_entries": [to_plain(entry) for entry in trade_block],
     }
 
@@ -348,9 +350,16 @@ def _valuation_features(canonical: dict[str, Any], player: dict[str, Any], inclu
     meta = canonical.get("meta") or {}
     model = canonical.get(MODEL_KEY) or {}
     pid = player.get("id")
+    # MONTH-SPEED-2: the strength-only features read only each trait row's value and never the season box totals
+    # (_save_stats, which change after every game), so the key holds just those: same results, a smaller key and
+    # far fewer misses.
+    rows = canonical_sim_cache(canonical)["traits_by_player"].get(pid, {})
+    from .sim import MEMO_IGNORED_PLAYER_FIELDS
+    record = {k: v for k, v in player.items() if k not in MEMO_IGNORED_PLAYER_FIELDS}
     try:
         key = pickle.dumps((
-            "valuation_features_v1", player, canonical_sim_cache(canonical)["traits_by_player"].get(pid, {}),
+            "valuation_features_v2", record,
+            tuple((name, row.get("value", "__no_value__") if isinstance(row, dict) else row) for name, row in rows.items()),
             meta.get("talent_model_version"), meta.get("offense_model_version"),
             (meta.get("offensive_profiles") or {}).get(pid),
             [model.get(field) for field in ("mode", "inputs_key", "fitted_key", "impact_tables_key")],
@@ -3116,6 +3125,12 @@ def annotate_pick_value_context(canonical: dict[str, Any]) -> None:
     }
     active_season = str(canonical.get("meta", {}).get("active_season") or CANONICAL_SEASON)
     current_start = season_start_from_label(active_season)
+    # Each team's roster facts are gathered once for all its picks (they were rebuilt per pick; MONTH-SPEED-2).
+    values = {value.get("player_id"): value for value in canonical.get("player_asset_valuations", [])}
+    rosters: dict[Any, list[dict[str, Any]]] = {}
+    for player in canonical.get("players", []):
+        rosters.setdefault(player.get("team_id"), []).append(player)
+    facts: dict[Any, tuple[str, float, float]] = {}
     for pick in canonical.get("draft_picks", []):
         original = pick.get("original_team_id")
         if not original:
@@ -3128,16 +3143,21 @@ def annotate_pick_value_context(canonical: dict[str, Any]) -> None:
             continue
         base_slot = int(projected_slots.get(original, 18))
         distance = max(0, (pick_start or current_start + 1) - current_start)
-        pick["projected_pick_slot"] = int(round(future_adjusted_pick_slot(canonical, original, base_slot, distance)))
+        if distance > 0 and original not in facts:
+            facts[original] = _future_slot_facts(canonical, original, values, rosters.get(original, []))
+        pick["projected_pick_slot"] = int(round(future_adjusted_pick_slot(canonical, original, base_slot, distance,
+                                                                          facts=facts.get(original))))
         pick["_future_distance_years"] = distance
 
 
-def future_adjusted_pick_slot(canonical: dict[str, Any], team_id: str, base_slot: int, distance: int) -> float:
-    if distance <= 0:
-        return clamp(float(base_slot), 1, 30)
+def _future_slot_facts(canonical: dict[str, Any], team_id: str, values: dict[str, Any] | None = None,
+                       roster: list[dict[str, Any]] | None = None) -> tuple[str, float, float]:
+    """A team's phase, its top three players' average age and its young players' development (for pick slots)."""
     state = next((item for item in canonical.get("team_strategic_states", []) if item.get("team_id") == team_id), {})
-    values = {value.get("player_id"): value for value in canonical.get("player_asset_valuations", [])}
-    roster = [player for player in canonical.get("players", []) if player.get("team_id") == team_id]
+    if values is None:
+        values = {value.get("player_id"): value for value in canonical.get("player_asset_valuations", [])}
+    if roster is None:
+        roster = [player for player in canonical.get("players", []) if player.get("team_id") == team_id]
     top_players = sorted(
         roster,
         key=lambda player: float((values.get(player.get("id")) or fallback_asset_valuation(player)).get("player_value") or 0.0),
@@ -3154,7 +3174,14 @@ def future_adjusted_pick_slot(canonical: dict[str, Any], team_id: str, base_slot
         for player in roster
         if (maybe_float(player.get("age")) or 99.0) <= 24.0
     )
-    phase = str(state.get("phase") or "balanced")
+    return str(state.get("phase") or "balanced"), avg_top_age, youth_score
+
+
+def future_adjusted_pick_slot(canonical: dict[str, Any], team_id: str, base_slot: int, distance: int, *,
+                              facts: tuple[str, float, float] | None = None) -> float:
+    if distance <= 0:
+        return clamp(float(base_slot), 1, 30)
+    phase, avg_top_age, youth_score = facts if facts is not None else _future_slot_facts(canonical, team_id)
     mean_pull = min(0.58, distance * 0.10)
     slot = float(base_slot) * (1.0 - mean_pull) + 15.5 * mean_pull
     movement = 0.0

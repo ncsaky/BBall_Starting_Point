@@ -69,6 +69,9 @@ class SimulationMemoryTests(unittest.TestCase):
             self.assertIs(first[1], self.fill(active)[1])
             sim.invalidate_sim_cache(active)
             spatial.invalidate_spatial_cache(active)
+            # The cross-league memo (MONTH-SPEED-2) would hand back the same vector for identical inputs; clear it so
+            # this checks a true rebuild.
+            sim._FEATURE_MEMO.clear()
             rebuilt = self.fill(active)
             self.assertEqual(first, rebuilt)
             self.assertIsNot(first[0], rebuilt[0])

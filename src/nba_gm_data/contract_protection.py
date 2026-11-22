@@ -248,6 +248,9 @@ def roster_signing_plan(canonical, save, player, team_id, annual_millions, years
     targets, _ = ai_role_targets(trial, trial['players'], {})
     for p in trial['players']:
         p['minutes_projection'] = targets.get(p['id'], 0)
+    # Each score looks up the player's contract and health row; index both lists once (MONTH-SPEED-2).
+    from .roster_forecast import first_row_index
+    trial['_first_row_index'] = first_row_index(trial['contracts'], save.get('health_states', []))
     # Nothing below changes the trial, the save or a player, so each player's score is computed once
     # (the two rankings and the gain used to score the same players again).
     scores = {}

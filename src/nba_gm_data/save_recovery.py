@@ -20,7 +20,6 @@ import uuid
 import zipfile
 import zlib
 from contextlib import closing, contextmanager
-from copy import deepcopy
 from typing import Any, BinaryIO
 
 from .save_locking import fsync_directory, save_lock
@@ -109,8 +108,9 @@ def _write_archive(path: Path, output: BinaryIO, *, local: bool = False, restore
                         destination.execute("DELETE FROM history_records WHERE revision > ?", (revision,))
                         if destination.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='history_commits'").fetchone():
                             destination.execute("DELETE FROM history_commits WHERE revision > ?", (revision,))
-            checked = deepcopy(save)
-            checked["history_store"]["path"] = snapshot.name
+            # Only the history path differs from the save, and the copy is only serialized: a shallow copy with its
+            # own history_store dict gives the same text as the deep copy did (MONTH-SPEED-2).
+            checked = {**save, "history_store": {**save["history_store"], "path": snapshot.name}}
             staged_manifest = snapshot.parent / "save.json"
             staged_manifest.write_text(json.dumps(checked), encoding="utf-8")
             load_save(staged_manifest)

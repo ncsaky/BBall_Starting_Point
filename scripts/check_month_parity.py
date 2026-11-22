@@ -48,6 +48,15 @@ SCENARIOS: dict[str, dict] = {
                         "base": "nov-legacy",
                         "steps": [{"to_date": "2027-02-10"},
                                   {"to_date": "2027-02-10", "trade_deadline_confirmed": "2027-02-05"}]},
+    # MONTH-SPEED-2 (2026-11-22): the GUI default is now the 94-input ratings, so the second seed and the
+    # deadline month run on them too.
+    # Boston has rookie-scale options to decide: the GUI stops on the Nov 2 deadline and the user clicks on.
+    "nov-inputs-b": {"team": "BOS", "seed": 55, "model": "inputs_v1", "start": "2026-11-01",
+                     "steps": [{"to_date": "2026-12-01"}, {"to_date": "2026-12-01"}]},
+    "deadline-inputs": {"team": "BOS", "seed": 55, "model": "inputs_v1", "start": "2027-01-10",
+                        "base": "nov-inputs-b",
+                        "steps": [{"to_date": "2027-02-10"},
+                                  {"to_date": "2027-02-10", "trade_deadline_confirmed": "2027-02-05"}]},
 }
 DEFAULT_SCENARIOS = ["nov-legacy", "nov-inputs"]
 
@@ -131,6 +140,15 @@ def _scrub(value):
     return value
 
 
+def _warm(canonical: dict, save_path: Path) -> None:
+    """MONTH_SPEED_WARM=1: build the save's league once, untimed and unsaved, before the timed action. The GUI's
+    server has already done this (the dashboard) when the user clicks, so module-level caches are warm."""
+    if os.environ.get("MONTH_SPEED_WARM") != "1":
+        return
+    from nba_gm_data.save import canonical_with_save, ensure_league_save_defaults, load_save
+    canonical_with_save(canonical, ensure_league_save_defaults(load_save(save_path), canonical))
+
+
 def run(names: list[str], label: str, profile: bool) -> None:
     canonical = _canonical()
     for name in names:
@@ -142,6 +160,7 @@ def run(names: list[str], label: str, profile: bool) -> None:
         for path in _save_files(OUT / "seeds" / name):
             shutil.copy2(path, work / path.name)
         save_path = work / "month.json"
+        _warm(canonical, save_path)
         results = []
         profiler = None
         if profile:
@@ -242,6 +261,13 @@ def compare(first: str, second: str, names: list[str]) -> int:
 def _code_tree(ref: str) -> Path:
     """Extract ``src/`` at a git ref next to links to this checkout's data, so resources resolve the same way."""
     target = OUT / "code" / ref
+    frozen = ROOT / "speedbase" / ref / "src"   # a pre-extracted copy (remote workers have no .git)
+    if not (target / "src").exists() and frozen.exists():
+        target.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(frozen, target / "src")
+        for entry in ROOT.iterdir():
+            if entry.name not in {"src", "output", ".git", "speedbase"} and not (target / entry.name).exists():
+                (target / entry.name).symlink_to(entry)
     if not (target / "src").exists():
         target.mkdir(parents=True, exist_ok=True)
         archive = subprocess.run(["git", "-C", str(ROOT), "archive", ref, "src"], check=True, capture_output=True).stdout
@@ -345,6 +371,7 @@ def season_step(model: str, index: int, label: str, profile: bool) -> None:
     # compared between engines. Harness only.
     from nba_gm_data import save as save_module
     save_module.lottery_seed = lambda seed=None: int(seed) if seed is not None else 20270622
+    _warm(canonical, save_path)
     profiler = None
     if profile:
         import cProfile

@@ -5422,8 +5422,10 @@ def record_game_result(save: dict[str, Any], canonical: dict[str, Any], game: di
     update_team_record(save, canonical, game, home_id, away_id, home_points, away_points, is_home=True)
     update_team_record(save, canonical, game, away_id, home_id, away_points, home_points, is_home=False)
     top_minutes_ids = team_top_minutes_ids(result.get("player_lines", []))
+    # The ids of the season's game logs, gathered once per game instead of once per player line (MONTH-SPEED-2).
+    log_ids = {item.get("id") for item in save.get("player_game_logs") or []}
     for line in result.get("player_lines", []):
-        update_player_stats(save, line, game, top_minutes_ids)
+        update_player_stats(save, line, game, top_minutes_ids, log_ids=log_ids)
         team_points = home_points if line.get("team_id") == home_id else away_points
         opp_points = away_points if line.get("team_id") == home_id else home_points
         update_player_game_morale(save, line, team_points > opp_points, abs(team_points - opp_points))
@@ -5605,14 +5607,19 @@ def count_award_game(totals: dict[str, Any], line: dict[str, Any], top_minutes_i
         totals[key] = int(totals.get(key) or 0) + 1
 
 
-def update_player_stats(save: dict[str, Any], line: dict[str, Any], game: dict[str, Any], top_minutes_ids: set[str] | None = None) -> None:
+def update_player_stats(save: dict[str, Any], line: dict[str, Any], game: dict[str, Any], top_minutes_ids: set[str] | None = None,
+                        *, log_ids: set[Any] | None = None) -> None:
+    """log_ids: the ids already in save["player_game_logs"] (kept up to date here); gathered fresh when not given."""
     player_id = line.get("player_id")
     if not player_id:
         return
     game_id = str(game.get("externalGameId"))
     log_id = stable_id("player_game_log", game_id, player_id)
     logs = save.setdefault("player_game_logs", [])
-    if log_id not in {item.get("id") for item in logs}:
+    if log_ids is None:
+        log_ids = {item.get("id") for item in logs}
+    if log_id not in log_ids:
+        log_ids.add(log_id)
         logs.append(
             {
                 "id": log_id,
@@ -7717,15 +7724,17 @@ def apply_save_rotation_projection(canonical: dict[str, Any], save: dict[str, An
         player.setdefault("_rotation_role_prior", opening_workload)
         baseline = baselines.setdefault(player["id"], opening_workload)
         player["minutes_projection"] = float(baseline or 0.0)
+    # Each team's players in league order, gathered once (nothing below moves a player between teams).
+    by_team: dict[Any, list[dict[str, Any]]] = {}
+    for player in canonical.get("players", []):
+        by_team.setdefault(player.get("team_id"), []).append(player)
     for team_id in sorted(teams):
         fills: dict[str, dict[str, float]] = {}
         projection = team_rotation_projection(canonical, save, team_id, integer=False, fill_out=fills)
         if not projection:
             continue
         # The coach's fill-in minutes for absent teammates; a game re-points them for its opponent (absence_fill).
-        for player in canonical.get("players", []):
-            if player.get("team_id") != team_id:
-                continue
+        for player in by_team.get(team_id, []):
             fill = fills.get(player["id"])
             if fill:
                 player["_absence_fill"], player["_fill_size"] = round(fill["minutes"], 2), round(fill["size"], 3)
@@ -7736,9 +7745,7 @@ def apply_save_rotation_projection(canonical: dict[str, Any], save: dict[str, An
             player_id: round(float(minutes), 2)
             for player_id, minutes in projection.items()
         }
-        for player in canonical.get("players", []):
-            if player.get("team_id") != team_id:
-                continue
+        for player in by_team.get(team_id, []):
             baseline = float(baselines.get(player["id"], display_minutes_projection(player)) or 0.0)
             unavailable = player_unavailable_for_rotation(health_by_player.get(player["id"]))
             player.pop("_trade_value_unavailable", None)
@@ -7769,6 +7776,64 @@ def team_rotation_projection(canonical: dict[str, Any], save: dict[str, Any], te
         projection = user_rotation_override_projection(roster, health_by_player, user_override,
                                                        canonical=canonical, save=save, team_id=team_id, fill_out=fill_out)
         return projection if integer else {player_id: float(value) for player_id, value in projection.items()}
+    # MONTH-SPEED-2: the coach's projection is remembered by every input it reads (_rotation_memo_key); each league
+    # rebuild and each daily refresh projected all 30 teams again although most rosters had not changed.
+    key = _rotation_memo_key(canonical, save, team_id, integer, roster, health_by_player)
+    remembered = _ROTATION_MEMO.get(key) if key is not None else None
+    if remembered is not None and not _RUNTIME_AUDIT:
+        projection, fills = pickle.loads(remembered)
+        if fill_out is not None:
+            fill_out.update(fills)
+        return projection
+    fills: dict[str, dict[str, float]] = {}
+    projection = _team_rotation_projection(canonical, save, team_id, integer, roster, health_by_player, fills)
+    if key is not None:
+        stored = pickle.dumps((projection, fills), protocol=pickle.HIGHEST_PROTOCOL)
+        if remembered is not None and remembered != stored:
+            raise AssertionError(f"rotation projection memo disagrees for {team_id}")
+        if len(_ROTATION_MEMO) >= _ROTATION_MEMO_LIMIT:
+            _ROTATION_MEMO.pop(next(iter(_ROTATION_MEMO)))
+        _ROTATION_MEMO[key] = stored
+    if fill_out is not None:
+        fill_out.update(fills)
+    return projection
+
+
+_ROTATION_MEMO: dict[bytes, bytes] = {}
+_ROTATION_MEMO_LIMIT = 6000
+
+
+def _rotation_memo_key(canonical: dict[str, Any], save: dict[str, Any], team_id: str, integer: bool,
+                       roster: list[dict[str, Any]], health_by_player: dict[Any, Any]) -> bytes | None:
+    """Everything the automatic projection reads: the roster's player records in league order (without the fields
+    nothing here reads: box totals and the minutes refresh's own outputs) and rating summaries, whether each player
+    is available (the only health fact it reads), the GM's minute requests, the coach's baselines, the AI role state,
+    whether the team is human-run, the season, the team's window phase and its head coach. None when it cannot be
+    keyed (computed as before)."""
+    from .sim import MEMO_IGNORED_PLAYER_FIELDS
+    ids = [player.get("id") for player in roster]
+    recommendations = save.get("rotation_recommendations") or {}
+    baselines = save.get("rotation_baselines") or {}
+    try:
+        return pickle.dumps((
+            "rotation_projection_v1", team_id, bool(integer),
+            [{k: v for k, v in player.items() if k not in MEMO_IGNORED_PLAYER_FIELDS} for player in roster],
+            [player_attribute_summary(canonical, pid) for pid in ids],
+            [player_unavailable_for_rotation(health_by_player.get(pid)) for pid in ids],  # the only health fact read
+            [recommendations.get(pid) for pid in ids], [baselines.get(pid) for pid in ids],
+            (save.get("ai_role_state") or {}).get(team_id), team_id in human_controlled_team_ids(save),
+            (save.get("meta") or {}).get("season"), save_active_contract_season(save),
+            ((save.get("team_plans") or {}).get(team_id) or {}).get("window_phase"),
+            next((slot for slot in save.get("staff_slots") or []
+                  if slot.get("team_id") == team_id and slot.get("slot") == "head_coach"), None),
+        ), protocol=pickle.HIGHEST_PROTOCOL)
+    except (pickle.PicklingError, TypeError, AttributeError, KeyError, ValueError):
+        return None
+
+
+def _team_rotation_projection(canonical: dict[str, Any], save: dict[str, Any], team_id: str, integer: bool,
+                              roster: list[dict[str, Any]], health_by_player: dict[Any, Any],
+                              fill_out: dict[str, dict[str, float]] | None) -> dict[str, float]:
     recommendations = save.get("rotation_recommendations") or {}
     baselines = save.get("rotation_baselines") or {}
     ai_role = (save.get("ai_role_state") or {}).get(team_id) if team_id not in human_controlled_team_ids(save) else None

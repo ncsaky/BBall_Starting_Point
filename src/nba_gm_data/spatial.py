@@ -42,6 +42,46 @@ _SPATIAL_INDEX_CACHE: dict[int, dict[str, Any]] = {}
 _SPATIAL_INDEX_CACHE_LIMIT = 4
 _PLAYER_PROFILE_CACHE: dict[tuple[str, str], dict[str, Any]] = {}
 _TEAM_PROFILE_CACHE: dict[tuple[str, str], dict[str, Any]] = {}
+# MONTH-SPEED-2: a player profile's cache key, remembered by the inputs that decide it (player_spatial_profile).
+_SIGNATURE_BY_INPUTS: dict[bytes, tuple[Any, tuple[str, str]]] = {}
+_SIGNATURE_BY_INPUTS_LIMIT = 50_000
+_SIGNATURE_AUDIT = __import__("os").environ.get("NBA_GM_RUNTIME_AUDIT") == "1"
+_SIGNATURE_IGNORED_FIELDS = frozenset({"_absence_fill", "_fill_size", "_trade_value_unavailable",
+                                       "_trade_value_minutes_projection", "rotation_note"})
+
+
+def _effective_inputs_for(canonical: dict[str, Any], player_id: str) -> Any:
+    from .ratings_model import effective_inputs
+    return effective_inputs(canonical, player_id)
+
+
+def _signature_fast_key(canonical: dict[str, Any], player: dict[str, Any], player_id: str,
+                        traits: dict[str, float], playmaking_zero: dict[str, float]) -> bytes | None:
+    """Everything the profile signature is computed from: the player record, his trait values, the offence model
+    switch, his frozen offensive priors and the new-ratings switches and his input deltas (his effective inputs are
+    compared by identity by the caller), the league playmaking baseline and the official zone prior. None when the
+    record cannot be keyed or has no id (the signature path then runs as before)."""
+    if "id" not in player or str(player.get("id")) != player_id:
+        return None
+    import pickle
+    from .offense import enabled as offense_enabled
+    from .ratings_model import MODEL_KEY
+    meta = canonical.get("meta") or {}
+    model = canonical.get(MODEL_KEY) or {}
+    pid = player["id"]
+    try:
+        # The daily minutes refresh's own outputs are never read here (the season box totals are: they enter the
+        # signature, so they stay in the key).
+        record = {k: v for k, v in player.items() if k not in _SIGNATURE_IGNORED_FIELDS}
+        return pickle.dumps((
+            "spatial_signature_v1", record, tuple(traits.items()), offense_enabled(canonical),
+            (meta.get("offensive_profiles") or {}).get(pid) if offense_enabled(canonical) else None,
+            model.get("mode"), model.get("inputs_key"),
+            (model.get("input_deltas") or {}).get(pid), (model.get("generated") or {}).get(pid),
+            playmaking_zero, official_spatial_priors().get(normalize_name(player.get("name", ""))),
+        ), protocol=pickle.HIGHEST_PROTOCOL)
+    except (pickle.PicklingError, TypeError, AttributeError):
+        return None
 
 
 def invalidate_spatial_cache(canonical: dict[str, Any]) -> None:
@@ -189,6 +229,20 @@ def player_spatial_profile(canonical: dict[str, Any], player: dict[str, Any] | s
         player = next((row for row in canonical.get("players", []) if str(row.get("id")) == player), {})
     player_id = str(player.get("id") or player.get("player_id") or player.get("name") or "unknown")
     traits = _trait_index(canonical).get(player_id, {})
+    # MONTH-SPEED-2: the signature below costs an offensive profile and a JSON hash on every call. Equal inputs give
+    # an equal signature, so the signature is remembered by its inputs (the whole player record, his trait values,
+    # the offence model switch and his frozen priors, his effective inputs by identity, the league playmaking
+    # baseline) and the lookup below goes on exactly as before.
+    playmaking_zero = league_playmaking_mean(canonical)
+    fast_key = _signature_fast_key(canonical, player, player_id, traits, playmaking_zero)
+    remembered = _SIGNATURE_BY_INPUTS.get(fast_key) if fast_key is not None else None
+    if not _SIGNATURE_AUDIT and remembered is not None and remembered[0] is _effective_inputs_for(canonical, player_id):
+        cache_key = remembered[1]
+        if cache_key in _PLAYER_PROFILE_CACHE:
+            cached = _PLAYER_PROFILE_CACHE[cache_key]
+            if include_chart and "shot_chart" not in cached:
+                cached["shot_chart"] = project_player_chart(player, traits, cached)
+            return cached
     get = lambda key, default=50.0: float(traits.get(key, default))
     shooting = (get("shooting_range") * 0.45 + get("shot_versatility") * 0.35 + get("release_speed") * 0.20)
     creation = (get("handle_pressure") * 0.48 + get("shot_versatility") * 0.37 + get("passing_reads") * 0.15)
@@ -210,7 +264,6 @@ def player_spatial_profile(canonical: dict[str, Any], player: dict[str, Any] | s
     }
     from .offense import enabled as offense_enabled, offensive_profile
     offensive = offensive_profile(canonical, player, traits) if offense_enabled(canonical) else None
-    playmaking_zero = league_playmaking_mean(canonical)
     signature = hashlib.sha256(json.dumps({
         "version": SPATIAL_PROFILE_VERSION,
         "defensive_components": COMPONENT_VERSION,
@@ -226,6 +279,13 @@ def player_spatial_profile(canonical: dict[str, Any], player: dict[str, Any] | s
         **({'offensive_profile': offensive} if offensive else {}),
     }, sort_keys=True, default=str).encode("utf-8")).hexdigest()
     cache_key = (player_id, signature)
+    if fast_key is not None:
+        if _SIGNATURE_AUDIT and remembered is not None and remembered[0] is _effective_inputs_for(canonical, player_id) \
+                and remembered[1] != cache_key:
+            raise AssertionError(f"spatial signature memo disagrees for {player_id}")
+        if len(_SIGNATURE_BY_INPUTS) >= _SIGNATURE_BY_INPUTS_LIMIT:
+            _SIGNATURE_BY_INPUTS.pop(next(iter(_SIGNATURE_BY_INPUTS)))
+        _SIGNATURE_BY_INPUTS[fast_key] = (_effective_inputs_for(canonical, player_id), cache_key)
     if cache_key in _PLAYER_PROFILE_CACHE:
         cached = _PLAYER_PROFILE_CACHE[cache_key]
         if include_chart and "shot_chart" not in cached:
@@ -551,6 +611,24 @@ def flatten_spatial_profile(profile: dict[str, Any]) -> dict[str, float]:
         for metric in ("frequency_influence", "contest", "suppression", "intensity"):
             flat[f"sp_def_{key}_{metric}"] = float(profile["defense"][key][metric])
     return flat
+
+
+def spatial_zones_from_features(features: dict[str, float]) -> dict[str, Any]:
+    """Only the zone grids of spatial_profile_from_features (offense and defense per zone), without the display parts
+    (visual pockets, shot chart) the game's shot diet never reads (MONTH-SPEED-2). Same values."""
+    frequency = 1.0 / len(ZONE_KEYS)
+    offense = {key: {"frequency": frequency, "efficiency": 50.0, "gravity": 50.0, "intensity": 50.0} for key in ZONE_KEYS}
+    defense = {key: {"frequency_influence": 50.0, "contest": 50.0, "suppression": 50.0, "intensity": 50.0} for key in ZONE_KEYS}
+    for key in ZONE_KEYS:
+        for metric in offense[key]:
+            feature_key = f"sp_off_{key}_{metric}"
+            if feature_key in features:
+                offense[key][metric] = float(features[feature_key])
+        for metric in defense[key]:
+            feature_key = f"sp_def_{key}_{metric}"
+            if feature_key in features:
+                defense[key][metric] = float(features[feature_key])
+    return {"offense": offense, "defense": defense}
 
 
 def spatial_profile_from_features(features: dict[str, float], entity_id: str = "features") -> dict[str, Any]:
