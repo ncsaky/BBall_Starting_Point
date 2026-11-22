@@ -71,6 +71,7 @@ class Evidence:
         self.values = defaultdict(list)
         self.coaches = defaultdict(lambda: defaultdict(list))
         self.fits = defaultdict(list)
+        self.examples = defaultdict(list)
 
     def add(self, game, metric, group, value):
         self.values[game.year, game.phase, metric, group].append(value)
@@ -581,6 +582,173 @@ def collect_timeouts(evidence, game):
         run = after
 
 
+Possession = namedtuple("Possession", "start end rows")
+
+
+def period_possessions(game, rows):
+    """Use the archive's possession endings, moving a missed-shot handoff to the rebound."""
+    previous = rows[0]
+    pending = []
+    for event in rows:
+        pending.append(event)
+        if not event.ends or event.offense not in game.teams:
+            continue
+        start = previous
+        if previous.kind in {2, 3} and previous.offense != event.offense:
+            for row in pending:
+                if row.kind == 4 and row.team == event.offense:
+                    start = row
+                    break
+                if row.kind in {1, 2, 5, 6, 10}:
+                    break
+        yield Possession(start, event, pending)
+        previous, pending = event, []
+
+
+def late_seconds_bucket(left):
+    return "0_10s" if left <= 10 else "10_24s" if left <= 24 else "24_60s"
+
+
+def trailing_margin_bucket(margin):
+    if margin >= -1:
+        return "1"
+    if margin >= -3:
+        return "2_3"
+    if margin >= -6:
+        return "4_6"
+    return "7_10" if margin >= -10 else "11_plus"
+
+
+def take_foul(event, defense):
+    return event.kind == 6 and event.subtype == 28 and event.team == defense
+
+
+def collect_late_fouling(evidence, game, period, rows, possessions):
+    add = lambda metric, group, value: evidence.add(game, metric, group, value)
+    end = period_end(period)
+    times = [event.t for event in rows]
+    for event in rows:
+        left = end - event.t
+        if event.team not in game.teams or not take_foul(event, event.team) or not 0 < left <= 60:
+            continue
+        margin = team_margin(game, event.team, event)
+        if margin < 0:
+            add("trailing_take_foul_event_seconds_left", str(-margin), left)
+        if margin == 3 and left <= 24:
+            add("up_three_take_foul_event_seconds_left", "all", left)
+
+    for start, finish, events in possessions:
+        # Enter at gain of possession or at 60 seconds if the offense already had the ball.
+        entry = max(start.t, end - 60)
+        if finish.t <= end - 60 or entry >= end:
+            continue
+        defense = opponent(game, finish.offense)
+        anchor = rows[bisect_right(times, entry) - 1] if entry > start.t else start
+        margin = team_margin(game, defense, anchor)
+        left = end - entry
+        if margin >= 0 and (margin != 3 or left > 24):
+            continue
+        eligible = [event for event in events if event.t >= entry and event.kind == 6
+                    and event.team == defense and event.subtype in {1, 28}
+                    and event.offense == finish.offense and team_margin(game, defense, event) == margin]
+        narrow = any(take_foul(event, defense) for event in eligible)
+        broad = narrow or any(event.t - entry <= 5 for event in eligible)
+        band = late_seconds_bucket(left)
+        if margin < 0:
+            group = f"down_{trailing_margin_bucket(margin)}|{band}"
+            metric = "trailing_take_foul_per_opponent_possession"
+        else:
+            group = band
+            metric = "up_three_take_foul_per_opponent_possession"
+        add(metric, group, narrow)
+        add(metric + "_including_early_personal", group, broad)
+        if game.phase == "regular":
+            evidence.fit(game, metric, group, narrow)
+
+
+def collect_two_for_one(evidence, game, period, possessions):
+    add = lambda metric, group, value: evidence.add(game, metric, group, value)
+    end = period_end(period)
+    for i, (start, finish, events) in enumerate(possessions):
+        left = end - start.t
+        if not 30 <= left <= 42 or i == 0 or possessions[i - 1].end.offense == finish.offense:
+            continue
+        first_shot = next((event for event in events if event.kind in {1, 2}
+                           and event.team == finish.offense and event.t >= start.t), None)
+        time_of_shot = end - first_shot.t if first_shot else 0
+        early = time_of_shot >= 25
+        close = period >= 4 and abs(team_margin(game, finish.offense, start)) <= 5
+        clock = "30_34s" if left < 35 else "35_38s" if left < 39 else "39_42s"
+        group = f"{'late_close' if close else 'other'}|{clock}"
+        add("two_for_one_early_shot", group, early)
+        add("two_for_one_early_shot_at_24s", group, time_of_shot >= 24)
+        add("two_for_one_early_shot_at_27s", group, time_of_shot >= 27)
+        if game.phase == "regular":
+            evidence.fit(game, "two_for_one_early_shot", group, early)
+        if not early:
+            continue
+        next_sides = [p.end.offense for p in possessions[i + 1:i + 3]]
+        regained = (next_sides == [opponent(game, finish.offense), finish.offense]
+                    and possessions[i + 2].start.t < end)
+        add("two_for_one_second_possession_after_early_shot", group, regained)
+        if regained:
+            second = possessions[i + 2]
+            shot = any(event.kind in {1, 2} and event.team == finish.offense for event in second.rows)
+            add("two_for_one_second_shot_if_regained", group, shot)
+
+
+def collect_hacking(evidence, game, period, rows, priors, player_names):
+    targets = defaultdict(list)
+    end = period_end(period)
+    for i, event in enumerate(rows):
+        if event.kind != 6 or event.subtype not in {6, 28} or end - event.t <= 120:
+            continue
+        if event.team not in game.teams or event.offense != opponent(game, event.team):
+            continue
+        drawn = event.drawn or player_id(event.third)
+        if not drawn:
+            continue
+        # Require a free throw by the recipient at this whistle.
+        for following in rows[i + 1:]:
+            if following.t != event.t or following.kind == 6:
+                break
+            if following.kind == 3 and player_id(following.player) == drawn:
+                targets[event.team, drawn].append(event.t)
+                break
+    found = []
+    for (defense, pid), times in targets.items():
+        prior = priors[pid]
+        if prior.ft_attempts < 30 or prior.ft_made / prior.ft_attempts >= 0.65:
+            continue
+        paired = [(a, b) for a, b in zip(times, times[1:]) if b - a <= 180]
+        if paired:
+            first, second = paired[0]
+            found.append((defense, pid))
+            label = f"{game.year}_{game.phase}"
+            evidence.examples[label].append({
+                "game": game.id, "fouling_team": defense, "recipient": player_names.get(pid, str(pid)),
+                "quarter": period, "first_seconds_left": round(end - first, 2),
+                "second_seconds_left": round(end - second, 2),
+                "prior_ft_attempts": prior.ft_attempts,
+                "prior_ft_share": round(prior.ft_made / prior.ft_attempts, 4),
+            })
+    return found
+
+
+def collect_end_game(evidence, game, priors, player_names):
+    hacked = Counter()
+    for period, period_rows in groupby(game.events, key=lambda event: event.period):
+        rows = list(period_rows)
+        possessions = list(period_possessions(game, rows))
+        collect_two_for_one(evidence, game, period, possessions)
+        if period >= 4:
+            collect_late_fouling(evidence, game, period, rows, possessions)
+        hacked.update(team for team, _ in collect_hacking(evidence, game, period, rows, priors, player_names))
+    for team in game.teams:
+        evidence.add(game, "hack_proxy_sequences_per_team_game", "all", hacked[team])
+        evidence.add(game, "hack_proxy_team_game_with_sequence", "all", hacked[team] > 0)
+
+
 def collect_games(connection, cache):
     evidence = Evidence()
     coverage = {}
@@ -609,6 +777,7 @@ def collect_games(connection, cache):
                         pid = player_id(field)
                         if pid:
                             player_names[pid] = field.split(" ", 1)[1]
+                collect_end_game(evidence, game, priors, player_names)
                 scoring = Counter()
                 for event, pts in points(game):
                     pid = player_id(event.player)
@@ -712,6 +881,7 @@ def main():
         "schema_version": 1, "fit_seasons": [2024, 2025], "holdout_season": 2026,
         "coverage": coverage, "box_score_check": dict(sorted(audit.items())),
         "observations": evidence.describe(), "held_out_fits": evaluate_fits(evidence.fits),
+        "hack_proxy_examples_by_season": dict(sorted(evidence.examples.items())),
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     temporary = args.output.with_suffix(".tmp")

@@ -19,3 +19,7 @@ Added foul trouble around the actual whistle and permanent fourth-quarter starte
 ### Timeout checkpoint
 
 Measured roughly 5.5 logged timeouts per team in a regular-season game. About one in five scoreless runs drew an immediate timeout when the opponent first reached six, eight or ten points. The next scorer was about as likely to stop the run in the games where a timeout was called as in those where play continued. This is a comparison of observed decisions and is affected by when coaches choose to call timeouts.
+
+### End-game checkpoint
+
+Added possession-level evidence for trailing take fouls, fouling while ahead by three and quick shots that leave time to get the ball back. Explicit take-foul tags give a strict count. The data also include a broader non-shooting-foul count. A strict repeated-foul pattern on weak free-throw shooters picked up 12 regular-season sequences and nine playoff sequences, including Golden State targeting Steven Adams in 2025.
