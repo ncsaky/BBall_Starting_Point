@@ -5,7 +5,12 @@ agents (with their latest note), Codex's work, the Azure worker and the board. R
   .venv/bin/python scripts/watch_everything.py            # Ctrl-C to stop watching (nothing else stops)
   .venv/bin/python scripts/watch_everything.py --once     # print one snapshot
 
-Read-only: it never starts, stops or changes anything. Standard library only.
+Read-only: it never starts, stops or changes anything (it only keeps its own job-timing history in
+output/tracker_job_history.json, for time estimates). Standard library only.
+
+Every row has a real bar: game date toward the target for simulations, test-file timings for test runs, the
+worker's own "Progress: N/M - step" line in its task file for agents and Codex, and otherwise elapsed time against
+how long the same kind of job took before (marked "time estimate").
 """
 from __future__ import annotations
 
@@ -248,7 +253,12 @@ def azure() -> list[str]:
         stop = datetime.fromisoformat(interval["stop"]) if interval.get("stop") else datetime.now(start.tzinfo)
         if start.strftime("%Y-%m") == month:
             hours += (stop - start).total_seconds() / 3600
-    running = sorted({i.get("vm", "bball-worker") for i in intervals if not i.get("stop")})
+    # An entry left open for more than 12 hours is a crashed run's leftover (machines switch off after each job):
+    # count it as off. A claim file means a job really holds a machine right now.
+    claims = glob.glob(str(ROOT / "output" / "azure_claims" / "*.json"))
+    recent = [i for i in intervals if not i.get("stop")
+              and (datetime.now(timezone.utc) - datetime.fromisoformat(i["start"])).total_seconds() < 12 * 3600]
+    running = sorted({i.get("vm") or "worker" for i in recent} | {Path(c).stem for c in claims})
     state = f"{len(running)} machine(s) on: {', '.join(running)}" if running else "all machines off (not billing)"
     return [f"Azure workers: {state} · this month {hours:.1f} machine-hours (about US${hours * 0.147:.2f})"]
 
@@ -340,7 +350,8 @@ def league_run_bars(procs) -> list[str]:
             eta = f", about {left / 3600:.1f} h left" if left else ""
             out.append(bar(frac, label, f"game date {day}, running {elapsed / 3600:.1f} h{eta}"))
         else:
-            out.append(bar(None, label, f"running {elapsed / 3600:.1f} h"))
+            frac, est = time_estimate(time.time() - elapsed, 1.3 * seasons)   # about 1.3 h a season on the laptop
+            out.append(bar(frac, label, f"no saved game date yet; {est}", "\033[36m"))
     return out
 
 
@@ -372,7 +383,8 @@ def azure_bars(procs) -> list[str]:
         if day:
             out.append(bar(season_fraction(day, 2026, seasons), label, f"game date {day}, running {elapsed / 3600:.1f} h", "\033[36m"))
         else:
-            out.append(bar(None, label, f"running {elapsed / 3600:.1f} h (no progress line yet)"))
+            frac, est = time_estimate(time.time() - elapsed, 0.8 * seasons)
+            out.append(bar(frac, label, f"no progress line yet; {est}", "\033[36m"))
     return out
 
 
@@ -386,20 +398,186 @@ def test_bars(procs) -> list[str]:
         if "run_tests_parallel.py" not in cmd or "--worker " in cmd:
             continue
         workers = int((re.search(r"--workers\s+(\d+)", cmd) or [0, 3])[1])
+        match = re.search(r"--match\s+(\S+)", cmd)
         if "--all" in cmd:
-            mods = [k for k in durations if k.startswith("tests.")]
+            mods = [k.split(".")[-1] for k in durations]
+        elif match:
+            # the same modules the runner picks: test files whose source matches the pattern (cached 5 minutes)
+            key = "match:" + match.group(1)
+            if key not in _cache or time.time() - _cache[key][0] > 300:
+                pattern = re.compile(match.group(1).strip("'\""))
+                _cache[key] = (time.time(), [Path(p).stem for p in glob.glob(str(ROOT / "tests" / "test_*.py"))
+                                             if pattern.search(Path(p).read_text(encoding="utf-8", errors="ignore"))])
+            mods = _cache[key][1]
         else:
-            mods = ["tests." + m.split(".")[-1] for m in re.findall(r"\b(test_\w+)", cmd)]
-        times = [float(durations.get(m, 30)) for m in mods] or [60.0]
+            mods = [m.split(".")[-1] for m in re.findall(r"\b(test_\w+)", cmd)]
+        times = [float(durations.get(m, durations.get("tests." + m, 30))) for m in mods] or [60.0]
         expected = max(max(times), sum(times) / max(1, workers)) * 1.15
         frac = elapsed / expected
         note = f"{len(mods)} test files, running {elapsed // 60} min (usually ~{expected / 60:.0f} min)"
         if frac > 1:   # past its usual time: no honest percentage, so a pulse and the overrun
             note = f"OVER usual time: {elapsed // 60} min vs ~{expected / 60:.0f}; the laptop is likely short of memory"
-            out.append(bar(None, f"Test run ({where(pid)})", YELLOW + note + RESET))
+            out.append(bar(0.99, f"Test run ({where(pid)})", YELLOW + note + RESET, YELLOW))
         else:
             out.append(bar(frac, f"Test run ({where(pid)})", note))
     return out
+
+
+HISTORY = ROOT / "output" / "tracker_job_history.json"
+# First-run guesses (minutes) by script, used until a job of that kind has finished once on this laptop.
+FIRST_GUESS = {"calibration_report.py": 8, "validate-season-probabilities": 25, "build_player_inputs.py": 4,
+               "check_month_parity.py": 6, "run_core_tests.sh": 4}
+_seen: dict[str, tuple[str, int]] = {}
+
+
+def job_signature(cmd: str) -> str:
+    """What kind of job this is: its script plus its flags, without paths, seeds or dates."""
+    script = re.search(r"((?:scripts|src)/[\w/.-]+\.py|-m [\w.]+|[\w-]+\.sh)", cmd)
+    flags = sorted(set(re.findall(r"(--[\w-]+)", cmd)) - {"--seed", "--output", "--output-dir", "--target", "--label"})
+    sub = re.search(r"nba_gm_data\.cli\s+([\w-]+)", cmd)
+    return " ".join(filter(None, [script.group(1) if script else cmd[:40], sub.group(1) if sub else "", *flags]))
+
+
+def load_history() -> dict[str, list[float]]:
+    try:
+        return json.loads(HISTORY.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def remember_finished(procs) -> None:
+    """Jobs seen last refresh and gone now finished: keep their run time (the last 5 per kind) for the next estimate."""
+    alive = {pid for pid, _, _ in procs}
+    gone = [(sig, elapsed) for pid, (sig, elapsed) in _seen.items() if pid not in alive]
+    for pid in [p for p in _seen if p not in alive]:
+        del _seen[pid]
+    if not gone:
+        return
+    history = load_history()
+    for sig, elapsed in gone:
+        if elapsed >= 30:
+            history[sig] = (history.get(sig, []) + [float(elapsed)])[-5:]
+    try:
+        HISTORY.write_text(json.dumps(history, indent=1, sort_keys=True))
+    except OSError:
+        pass
+
+
+def newest_game_date(base: Path, outdir: str) -> str | None:
+    """The latest game date in any save a run is writing under its output folder (checked once a minute)."""
+    key = f"date:{base}/{outdir}"
+    cached = _cache.get(key)
+    if cached and time.time() - cached[0] < 60:
+        return cached[1]
+    day = None
+    folder = base / outdir
+    saves = sorted(glob.glob(str(folder / "**" / "*.json"), recursive=True), key=os.path.getmtime)[-6:]
+    for save in saves:
+        try:
+            with open(save, "rb") as handle:
+                head = handle.read(400_000)
+        except OSError:
+            continue
+        found = re.search(rb'"current_date":\s*"(\d{4}-\d{2}-\d{2})"', head)
+        if found and (day is None or found.group(1).decode() > day):
+            day = found.group(1).decode()
+    _cache[key] = (time.time(), day)
+    return day
+
+
+def log_dates(pid: str) -> tuple[str | None, str | None]:
+    """First and latest game dates a job printed to the file its output goes to ("to"/"date"/"current_date")."""
+    key = f"log:{pid}"
+    cached = _cache.get(key)
+    if cached and time.time() - cached[0] < 30:
+        return cached[1]
+    out = run(["lsof", "-a", "-d", "1", "-p", pid, "-Fn"])
+    path = next((line[1:] for line in out.splitlines() if line.startswith("n")), "")
+    first = last = None
+    pattern = rb'"(?:to|date|current_date|to_date)":\s*"(\d{4}-\d{2}-\d{2})'
+    if path and os.path.isfile(path):
+        try:
+            with open(path, "rb") as handle:
+                head = handle.read(20_000)
+                handle.seek(max(0, os.path.getsize(path) - 20_000))
+                tail = handle.read()
+            dates = re.findall(pattern, head)
+            first = dates[0].decode() if dates else None
+            dates = re.findall(pattern, tail)
+            last = dates[-1].decode() if dates else None
+        except OSError:
+            pass
+    _cache[key] = (time.time(), (first, last))
+    return first, last
+
+
+def other_job_bars(procs) -> list[str]:
+    """Every other project job gets a bar: by game date when it is simulating toward a target date, otherwise by
+    elapsed time against how long the same kind of job took before (or a first-run guess), marked as an estimate."""
+    from datetime import date
+    history, out, grouped = load_history(), [], {}
+    for pid, elapsed, cmd in procs:
+        if ("watch_everything" in cmd or "app_server" in cmd or "run_tests_parallel" in cmd or "unittest" in cmd
+                or "league_health_audit.py" in cmd or "azure_worker" in cmd or "--worker " in cmd):
+            continue
+        if "BBall" not in cmd and "scripts/" not in cmd and "nba_gm_data" not in cmd:
+            continue
+        sig = job_signature(cmd)
+        _seen[pid] = (sig, elapsed)
+        key = (where(pid), sig)
+        if key not in grouped or grouped[key][1] < elapsed:     # one bar per job, not per helper process
+            grouped[key] = (pid, elapsed, cmd)
+    for (place, sig), (pid, elapsed, cmd) in sorted(grouped.items()):
+        name = re.sub(r"^(scripts/research/|scripts/|src/nba_gm_data/)", "", sig.split(" ")[0])
+        label = clip(f"{name} ({place})", 30)
+        target = re.search(r"--target\s+(\d{4}-\d{2}-\d{2})", cmd)
+        outdir = re.search(r"--output(?:-dir)?\s+(\S+)", cmd)
+        frac = None
+        if target:
+            first, day = log_dates(pid)
+            if not day and outdir:
+                cwd = run(["lsof", "-a", "-d", "cwd", "-p", pid, "-Fn"]).splitlines()
+                base = Path(next((l[1:] for l in cwd if l.startswith("n")), str(ROOT)))
+                day = newest_game_date(base, outdir.group(1))
+            if day:
+                start = first or _cache.setdefault(f"start:{pid}", (time.time(), day))[1]
+                span = (date.fromisoformat(target.group(1)) - date.fromisoformat(start)).days
+                frac = (date.fromisoformat(day) - date.fromisoformat(start)).days / span if span > 0 else None
+                if frac is not None:
+                    left = elapsed / frac - elapsed if frac > 0.03 else None
+                    eta = f", about {left / 60:.0f} min left" if left else ""
+                    out.append(bar(frac, label, f"game date {day} of {target.group(1)}, running {elapsed // 60} min{eta}"))
+                    continue
+        past = history.get(sig)
+        guess = next((m for k, m in FIRST_GUESS.items() if k in cmd), 10) * 60
+        expected = sorted(past)[len(past) // 2] if past else guess
+        basis = f"past runs ~{expected / 60:.0f} min" if past else f"first run, guessing ~{expected / 60:.0f} min"
+        frac = elapsed / expected
+        if frac > 1:
+            out.append(bar(0.99, label, YELLOW + f"running {elapsed // 60} min, longer than usual ({basis})" + RESET, YELLOW))
+        else:
+            out.append(bar(frac, label, f"time estimate: {elapsed // 60} of ~{expected / 60:.0f} min ({basis})", "\033[36m"))
+    return out
+
+
+def progress_line(folder: str) -> tuple[float, str] | None:
+    """A worker's own step count: a line 'Progress: 3/7 - what it is doing' in its newest task file."""
+    files = sorted(glob.glob(f"{folder}/docs/agents/tasks/*.md"), key=os.path.getmtime, reverse=True)[:3]
+    for path in files:
+        try:
+            text = Path(path).read_text(errors="replace")
+        except OSError:
+            continue
+        found = re.search(r"^\**Progress:?\**:?\s*(\d+)\s*(?:/|of)\s*(\d+)\s*[-–—:·]?\s*(.*)$", text, re.M | re.I)
+        if found and int(found.group(2)) > 0:
+            return int(found.group(1)) / int(found.group(2)), f"step {found.group(1)} of {found.group(2)}: {found.group(3).strip()}"
+    return None
+
+
+def time_estimate(started: float, typical_hours: float) -> tuple[float, str]:
+    hours = (time.time() - started) / 3600
+    frac = min(0.95, hours / typical_hours)
+    return frac, f"time estimate ({hours:.1f} of a typical ~{typical_hours:.0f} h; no step count yet)"
 
 
 def codex_bars() -> list[str]:
@@ -416,9 +594,20 @@ def codex_bars() -> list[str]:
             continue
         name = Path(folder).name.replace("BBall_codex_", "")
         if images and now - recent_image < 3600:
-            out.append(bar(None, f"Codex: faces ({name})", f"{len(images)} portraits so far, newest {ago(now - recent_image)}"))
+            people = len({(Path(p).parent.name, Path(p).name.split("-")[0]) for p in images})
+            out.append(bar(people / 125, f"Codex: faces ({name})",
+                           f"{people} of ~125 people, {len(images)} portraits, newest {ago(now - recent_image)}"))
+            continue
+        steps = progress_line(folder)
+        if steps:
+            out.append(bar(steps[0], f"Codex: {name}", clip(steps[1], 70)))
         else:
-            out.append(bar(None, f"Codex: {name}", f"last commit {ago(now - float(stamp or now))}: {clip(subject, 50)}"))
+            try:
+                started = os.stat(folder).st_birthtime
+            except (OSError, AttributeError):
+                started = os.path.getctime(folder)
+            frac, note = time_estimate(started, 2.0)
+            out.append(bar(frac, f"Codex: {name}", f"{note}; last commit {ago(now - float(stamp or now))}", "\033[36m"))
     return out
 
 
@@ -444,7 +633,14 @@ def agent_bars() -> list[str]:
             started = datetime.fromisoformat(stamp.replace("Z", "+00:00")).timestamp()
         except (OSError, ValueError, AttributeError):
             started = os.path.getmtime(path)
-        out.append(bar(None, f"Agent: {label}", f"{(now - started) / 3600:.1f} h in, last active {ago(age)}: {clip(note, 48)}"))
+        root = cwd.split("/.claude/worktrees/")[0] + "/.claude/worktrees/" + cwd.split("/.claude/worktrees/")[1].split("/")[0] \
+            if "/.claude/worktrees/" in cwd else ""
+        steps = progress_line(root) if root else None
+        if steps:
+            out.append(bar(steps[0], f"Agent: {label}", clip(f"{steps[1]} · active {ago(age)}", 70)))
+        else:
+            frac, est = time_estimate(started, 4.0)
+            out.append(bar(frac, f"Agent: {label}", clip(f"{est} · last active {ago(age)}: {note}", 70), "\033[36m"))
     return out
 
 
@@ -485,8 +681,9 @@ def snapshot() -> str:
         procs = processes()
     except Exception:  # noqa: BLE001
         procs = []
-    progress = (safe(league_run_bars, procs) + safe(azure_bars, procs) + safe(test_bars, procs) + safe(codex_bars)
-                + safe(agent_bars))
+    safe(remember_finished, procs)
+    progress = (safe(league_run_bars, procs) + safe(azure_bars, procs) + safe(test_bars, procs)
+                + safe(other_job_bars, procs) + safe(codex_bars) + safe(agent_bars))
     head = f"{BOLD}NBA GM Sandbox: live progress{RESET} · {datetime.now():%a %H:%M:%S} · refreshes every 15 s · Ctrl-C stops watching"
     sections = [["Progress"] + (progress or ["  nothing running"]), ["Laptop"] + safe(gauges), safe(jobs), safe(codex),
                 safe(azure), safe(board)]
