@@ -1,0 +1,918 @@
+{
+ "definitions": {
+  "rebuilding": "win share < 0.4",
+  "contending": "win share >= 0.58",
+  "steady_bpm": "box plus-minus shrunk toward -2.0 with 400 minutes"
+ },
+ "groups": {
+  "top-10 picks, years 1-2 | kind": {
+   "rebuilding": {
+    "n": 88,
+    "extra_mpg": 6.78,
+    "mpg": 27.5,
+    "steady_bpm": -2.4,
+    "mean_rank": 11.9
+   },
+   "middle": {
+    "n": 86,
+    "extra_mpg": 2.23,
+    "mpg": 25.8,
+    "steady_bpm": -0.91,
+    "mean_rank": 9.1
+   },
+   "contending": {
+    "n": 34,
+    "extra_mpg": 1.36,
+    "mpg": 22.5,
+    "steady_bpm": -0.94,
+    "mean_rank": 10.5
+   }
+  },
+  "top-10 picks, years 1-2 | prev_kind": {
+   "rebuilding": {
+    "n": 108,
+    "extra_mpg": 6.89,
+    "mpg": 27.6,
+    "steady_bpm": -1.77,
+    "mean_rank": 10.5
+   },
+   "middle": {
+    "n": 63,
+    "extra_mpg": 0.66,
+    "mpg": 23.5,
+    "steady_bpm": -1.16,
+    "mean_rank": 10.5
+   },
+   "contending": {
+    "n": 21,
+    "extra_mpg": 2.3,
+    "mpg": 24.3,
+    "steady_bpm": -1.32,
+    "mean_rank": 11.2
+   }
+  },
+  "other young players, years 1-2 | kind": {
+   "rebuilding": {
+    "n": 427,
+    "extra_mpg": -0.5,
+    "mpg": 20.5,
+    "steady_bpm": -2.46,
+    "mean_rank": 12.4
+   },
+   "middle": {
+    "n": 472,
+    "extra_mpg": -5.09,
+    "mpg": 16.4,
+    "steady_bpm": -1.88,
+    "mean_rank": 12.2
+   },
+   "contending": {
+    "n": 395,
+    "extra_mpg": -5.0,
+    "mpg": 14.4,
+    "steady_bpm": -1.66,
+    "mean_rank": 12.4
+   }
+  },
+  "other young players, years 1-2 | prev_kind": {
+   "rebuilding": {
+    "n": 320,
+    "extra_mpg": -0.49,
+    "mpg": 19.4,
+    "steady_bpm": -2.14,
+    "mean_rank": 11.9
+   },
+   "middle": {
+    "n": 465,
+    "extra_mpg": -4.18,
+    "mpg": 17.2,
+    "steady_bpm": -1.91,
+    "mean_rank": 12.4
+   },
+   "contending": {
+    "n": 434,
+    "extra_mpg": -4.54,
+    "mpg": 15.6,
+    "steady_bpm": -2.02,
+    "mean_rank": 12.8
+   }
+  },
+  "veterans (check) | kind": {
+   "rebuilding": {
+    "n": 879,
+    "extra_mpg": 0.21,
+    "mpg": 24.0,
+    "steady_bpm": -1.29,
+    "mean_rank": 8.6
+   },
+   "middle": {
+    "n": 1451,
+    "extra_mpg": -0.18,
+    "mpg": 24.7,
+    "steady_bpm": -0.37,
+    "mean_rank": 8.0
+   },
+   "contending": {
+    "n": 1355,
+    "extra_mpg": 0.03,
+    "mpg": 24.5,
+    "steady_bpm": 0.36,
+    "mean_rank": 7.9
+   }
+  },
+  "veterans (check) | prev_kind": {
+   "rebuilding": {
+    "n": 658,
+    "extra_mpg": 0.34,
+    "mpg": 24.0,
+    "steady_bpm": -0.74,
+    "mean_rank": 8.1
+   },
+   "middle": {
+    "n": 1338,
+    "extra_mpg": -0.08,
+    "mpg": 24.7,
+    "steady_bpm": -0.31,
+    "mean_rank": 8.2
+   },
+   "contending": {
+    "n": 1251,
+    "extra_mpg": 0.0,
+    "mpg": 24.9,
+    "steady_bpm": 0.12,
+    "mean_rank": 8.0
+   }
+  }
+ },
+ "lines": {
+  "top-10 picks yrs 1-2 | rebuilding": {
+   "n": 88,
+   "a": 29.98,
+   "b": 1.02,
+   "at": {
+    "-4": 25.9,
+    "-2": 27.9,
+    "0": 30.0,
+    "2": 32.0
+   }
+  },
+  "top-10 picks yrs 1-2 | middle": {
+   "n": 86,
+   "a": 27.04,
+   "b": 1.41,
+   "at": {
+    "-4": 21.4,
+    "-2": 24.2,
+    "0": 27.0,
+    "2": 29.9
+   }
+  },
+  "top-10 picks yrs 1-2 | contending": {
+   "n": 34,
+   "a": 25.29,
+   "b": 2.93,
+   "at": {
+    "-4": 13.6,
+    "-2": 19.4,
+    "0": 25.3,
+    "2": 31.2
+   }
+  },
+  "veterans | rebuilding": {
+   "n": 879,
+   "a": 26.59,
+   "b": 2.0,
+   "at": {
+    "-4": 18.6,
+    "-2": 22.6,
+    "0": 26.6,
+    "2": 30.6
+   }
+  },
+  "veterans | middle": {
+   "n": 1451,
+   "a": 25.56,
+   "b": 2.27,
+   "at": {
+    "-4": 16.5,
+    "-2": 21.0,
+    "0": 25.6,
+    "2": 30.1
+   }
+  },
+  "veterans | contending": {
+   "n": 1355,
+   "a": 23.84,
+   "b": 1.93,
+   "at": {
+    "-4": 16.1,
+    "-2": 20.0,
+    "0": 23.8,
+    "2": 27.7
+   }
+  }
+ },
+ "by_pick_band": {
+  "picks 1-3 year 1": {
+   "rebuilding": {
+    "n": 15,
+    "mpg": 30.6,
+    "extra_mpg": 8.64
+   },
+   "middle": {
+    "n": 11,
+    "mpg": 30.3,
+    "extra_mpg": 5.66
+   },
+   "contending": {
+    "n": 5,
+    "mpg": 21.3,
+    "extra_mpg": 0.37
+   }
+  },
+  "picks 1-3 year 2": {
+   "rebuilding": {
+    "n": 7,
+    "mpg": 31.3,
+    "extra_mpg": 5.17
+   },
+   "middle": {
+    "n": 15,
+    "mpg": 31.8,
+    "extra_mpg": 5.13
+   },
+   "contending": {
+    "n": 5,
+    "mpg": 30.1,
+    "extra_mpg": 5.8
+   }
+  },
+  "picks 1-3 year 3": {
+   "rebuilding": {
+    "n": 5,
+    "mpg": 28.1,
+    "extra_mpg": 3.93
+   },
+   "middle": {
+    "n": 12,
+    "mpg": 31.5,
+    "extra_mpg": 6.08
+   },
+   "contending": {
+    "n": 8,
+    "mpg": 30.9,
+    "extra_mpg": 3.04
+   }
+  },
+  "picks 4-10 year 1": {
+   "rebuilding": {
+    "n": 39,
+    "mpg": 26.7,
+    "extra_mpg": 7.35
+   },
+   "middle": {
+    "n": 27,
+    "mpg": 20.6,
+    "extra_mpg": -0.91
+   },
+   "contending": {
+    "n": 12,
+    "mpg": 21.4,
+    "extra_mpg": 1.65
+   }
+  },
+  "picks 4-10 year 2": {
+   "rebuilding": {
+    "n": 27,
+    "mpg": 25.8,
+    "extra_mpg": 4.94
+   },
+   "middle": {
+    "n": 33,
+    "mpg": 25.9,
+    "extra_mpg": 2.49
+   },
+   "contending": {
+    "n": 12,
+    "mpg": 20.9,
+    "extra_mpg": -0.49
+   }
+  },
+  "picks 4-10 year 3": {
+   "rebuilding": {
+    "n": 21,
+    "mpg": 24.6,
+    "extra_mpg": 2.1
+   },
+   "middle": {
+    "n": 36,
+    "mpg": 26.2,
+    "extra_mpg": 2.42
+   },
+   "contending": {
+    "n": 12,
+    "mpg": 25.5,
+    "extra_mpg": 0.93
+   }
+  },
+  "picks 11-14 year 1": {
+   "rebuilding": {
+    "n": 9,
+    "mpg": 26.3,
+    "extra_mpg": 4.06
+   },
+   "middle": {
+    "n": 22,
+    "mpg": 19.1,
+    "extra_mpg": -2.29
+   },
+   "contending": {
+    "n": 10,
+    "mpg": 19.9,
+    "extra_mpg": -0.49
+   }
+  },
+  "picks 11-14 year 2": {
+   "rebuilding": {
+    "n": 17,
+    "mpg": 27.5,
+    "extra_mpg": 5.84
+   },
+   "middle": {
+    "n": 15,
+    "mpg": 22.2,
+    "extra_mpg": -0.45
+   },
+   "contending": {
+    "n": 9,
+    "mpg": 23.8,
+    "extra_mpg": 2.0
+   }
+  },
+  "picks 11-14 year 3": {
+   "rebuilding": {
+    "n": 10,
+    "mpg": 26.2,
+    "extra_mpg": 1.43
+   },
+   "middle": {
+    "n": 12,
+    "mpg": 21.2,
+    "extra_mpg": -3.17
+   },
+   "contending": {
+    "n": 9,
+    "mpg": 27.9,
+    "extra_mpg": 0.5
+   }
+  },
+  "picks 15-20 year 1": {
+   "rebuilding": {
+    "n": 22,
+    "mpg": 22.4,
+    "extra_mpg": 1.3
+   },
+   "middle": {
+    "n": 25,
+    "mpg": 16.6,
+    "extra_mpg": -4.42
+   },
+   "contending": {
+    "n": 12,
+    "mpg": 12.3,
+    "extra_mpg": -6.11
+   }
+  },
+  "picks 15-20 year 2": {
+   "rebuilding": {
+    "n": 17,
+    "mpg": 25.9,
+    "extra_mpg": 3.29
+   },
+   "middle": {
+    "n": 24,
+    "mpg": 18.3,
+    "extra_mpg": -4.08
+   },
+   "contending": {
+    "n": 15,
+    "mpg": 19.1,
+    "extra_mpg": -2.07
+   }
+  },
+  "picks 15-20 year 3": {
+   "rebuilding": {
+    "n": 12,
+    "mpg": 25.2,
+    "extra_mpg": 0.69
+   },
+   "middle": {
+    "n": 22,
+    "mpg": 23.3,
+    "extra_mpg": 0.35
+   },
+   "contending": {
+    "n": 15,
+    "mpg": 21.4,
+    "extra_mpg": -3.34
+   }
+  },
+  "picks 21-30 year 1": {
+   "rebuilding": {
+    "n": 35,
+    "mpg": 20.6,
+    "extra_mpg": 1.73
+   },
+   "middle": {
+    "n": 29,
+    "mpg": 16.6,
+    "extra_mpg": -5.2
+   },
+   "contending": {
+    "n": 35,
+    "mpg": 13.4,
+    "extra_mpg": -4.45
+   }
+  },
+  "picks 21-30 year 2": {
+   "rebuilding": {
+    "n": 32,
+    "mpg": 19.6,
+    "extra_mpg": -1.02
+   },
+   "middle": {
+    "n": 27,
+    "mpg": 20.2,
+    "extra_mpg": -2.33
+   },
+   "contending": {
+    "n": 35,
+    "mpg": 18.3,
+    "extra_mpg": -1.62
+   }
+  },
+  "picks 21-30 year 3": {
+   "rebuilding": {
+    "n": 22,
+    "mpg": 23.9,
+    "extra_mpg": 1.28
+   },
+   "middle": {
+    "n": 28,
+    "mpg": 20.2,
+    "extra_mpg": -3.97
+   },
+   "contending": {
+    "n": 29,
+    "mpg": 21.3,
+    "extra_mpg": -0.78
+   }
+  }
+ },
+ "examples_rebuilding_recent": [
+  {
+   "name": "Cade Cunningham",
+   "year": 2022,
+   "team": "DET",
+   "pick": 1,
+   "exp": 1,
+   "mpg": 32.62,
+   "bpm": -1.6,
+   "steady": -1.66,
+   "rank": 9,
+   "win": 0.28
+  },
+  {
+   "name": "Jalen Green",
+   "year": 2022,
+   "team": "HOU",
+   "pick": 2,
+   "exp": 1,
+   "mpg": 31.91,
+   "bpm": -2.9,
+   "steady": -2.76,
+   "rank": 12,
+   "win": 0.24
+  },
+  {
+   "name": "Jalen Suggs",
+   "year": 2022,
+   "team": "ORL",
+   "pick": 5,
+   "exp": 1,
+   "mpg": 27.23,
+   "bpm": -5.5,
+   "steady": -4.68,
+   "rank": 16,
+   "win": 0.27
+  },
+  {
+   "name": "Josh Giddey",
+   "year": 2022,
+   "team": "OKC",
+   "pick": 6,
+   "exp": 1,
+   "mpg": 31.48,
+   "bpm": -0.9,
+   "steady": -1.11,
+   "rank": 5,
+   "win": 0.29
+  },
+  {
+   "name": "Killian Hayes",
+   "year": 2022,
+   "team": "DET",
+   "pick": 7,
+   "exp": 2,
+   "mpg": 24.95,
+   "bpm": -3.5,
+   "steady": -3.21,
+   "rank": 17,
+   "win": 0.28
+  },
+  {
+   "name": "Franz Wagner",
+   "year": 2022,
+   "team": "ORL",
+   "pick": 8,
+   "exp": 1,
+   "mpg": 30.75,
+   "bpm": -0.7,
+   "steady": -0.88,
+   "rank": 5,
+   "win": 0.27
+  },
+  {
+   "name": "Davion Mitchell",
+   "year": 2022,
+   "team": "SAC",
+   "pick": 9,
+   "exp": 1,
+   "mpg": 27.68,
+   "bpm": -3.8,
+   "steady": -3.51,
+   "rank": 22,
+   "win": 0.37
+  },
+  {
+   "name": "Jalen Smith",
+   "year": 2022,
+   "team": "IND",
+   "pick": 10,
+   "exp": 2,
+   "mpg": 24.68,
+   "bpm": 0.8,
+   "steady": -0.39,
+   "rank": 6,
+   "win": 0.3
+  },
+  {
+   "name": "Cade Cunningham",
+   "year": 2023,
+   "team": "DET",
+   "pick": 1,
+   "exp": 2,
+   "mpg": 33.33,
+   "bpm": -0.7,
+   "steady": -1.35,
+   "rank": 6,
+   "win": 0.21
+  },
+  {
+   "name": "Jalen Green",
+   "year": 2023,
+   "team": "HOU",
+   "pick": 2,
+   "exp": 2,
+   "mpg": 34.24,
+   "bpm": -2.1,
+   "steady": -2.09,
+   "rank": 9,
+   "win": 0.27
+  },
+  {
+   "name": "Jabari Smith Jr.",
+   "year": 2023,
+   "team": "HOU",
+   "pick": 3,
+   "exp": 1,
+   "mpg": 31.03,
+   "bpm": -3.6,
+   "steady": -3.38,
+   "rank": 13,
+   "win": 0.27
+  },
+  {
+   "name": "Jaden Ivey",
+   "year": 2023,
+   "team": "DET",
+   "pick": 5,
+   "exp": 1,
+   "mpg": 31.14,
+   "bpm": -3.3,
+   "steady": -3.11,
+   "rank": 15,
+   "win": 0.21
+  },
+  {
+   "name": "Jeremy Sochan",
+   "year": 2023,
+   "team": "SAS",
+   "pick": 9,
+   "exp": 1,
+   "mpg": 26.04,
+   "bpm": -3.9,
+   "steady": -3.49,
+   "rank": 18,
+   "win": 0.27
+  },
+  {
+   "name": "Victor Wembanyama",
+   "year": 2024,
+   "team": "SAS",
+   "pick": 1,
+   "exp": 1,
+   "mpg": 29.66,
+   "bpm": 5.2,
+   "steady": 4.05,
+   "rank": 1,
+   "win": 0.27
+  },
+  {
+   "name": "Brandon Miller",
+   "year": 2024,
+   "team": "CHO",
+   "pick": 2,
+   "exp": 1,
+   "mpg": 32.2,
+   "bpm": -2.5,
+   "steady": -2.43,
+   "rank": 13,
+   "win": 0.26
+  },
+  {
+   "name": "Scoot Henderson",
+   "year": 2024,
+   "team": "POR",
+   "pick": 3,
+   "exp": 1,
+   "mpg": 28.47,
+   "bpm": -5.7,
+   "steady": -5.02,
+   "rank": 18,
+   "win": 0.26
+  },
+  {
+   "name": "Ausar Thompson",
+   "year": 2024,
+   "team": "DET",
+   "pick": 5,
+   "exp": 1,
+   "mpg": 25.13,
+   "bpm": -2.2,
+   "steady": -2.16,
+   "rank": 12,
+   "win": 0.17
+  },
+  {
+   "name": "Jaden Ivey",
+   "year": 2024,
+   "team": "DET",
+   "pick": 5,
+   "exp": 2,
+   "mpg": 28.79,
+   "bpm": -3.1,
+   "steady": -2.93,
+   "rank": 18,
+   "win": 0.17
+  },
+  {
+   "name": "Bilal Coulibaly",
+   "year": 2024,
+   "team": "WAS",
+   "pick": 7,
+   "exp": 1,
+   "mpg": 27.22,
+   "bpm": -4.1,
+   "steady": -3.7,
+   "rank": 20,
+   "win": 0.18
+  },
+  {
+   "name": "Shaedon Sharpe",
+   "year": 2024,
+   "team": "POR",
+   "pick": 7,
+   "exp": 2,
+   "mpg": 33.09,
+   "bpm": -2.8,
+   "steady": -2.58,
+   "rank": 9,
+   "win": 0.26
+  },
+  {
+   "name": "Jeremy Sochan",
+   "year": 2024,
+   "team": "SAS",
+   "pick": 9,
+   "exp": 2,
+   "mpg": 29.64,
+   "bpm": -3.3,
+   "steady": -3.1,
+   "rank": 14,
+   "win": 0.27
+  },
+  {
+   "name": "Taylor Hendricks",
+   "year": 2024,
+   "team": "UTA",
+   "pick": 9,
+   "exp": 1,
+   "mpg": 21.4,
+   "bpm": -1.6,
+   "steady": -1.73,
+   "rank": 9,
+   "win": 0.38
+  },
+  {
+   "name": "Johnny Davis",
+   "year": 2024,
+   "team": "WAS",
+   "pick": 10,
+   "exp": 2,
+   "mpg": 12.26,
+   "bpm": -6.5,
+   "steady": -4.72,
+   "rank": 22,
+   "win": 0.18
+  },
+  {
+   "name": "Alex Sarr",
+   "year": 2025,
+   "team": "WAS",
+   "pick": 2,
+   "exp": 1,
+   "mpg": 27.07,
+   "bpm": -3.3,
+   "steady": -3.07,
+   "rank": 14,
+   "win": 0.22
+  },
+  {
+   "name": "Brandon Miller",
+   "year": 2025,
+   "team": "CHO",
+   "pick": 2,
+   "exp": 2,
+   "mpg": 34.22,
+   "bpm": 0.0,
+   "steady": -0.6,
+   "rank": 6,
+   "win": 0.23
+  },
+  {
+   "name": "Tidjane Sala\u00fcn",
+   "year": 2025,
+   "team": "CHO",
+   "pick": 6,
+   "exp": 1,
+   "mpg": 20.73,
+   "bpm": -5.2,
+   "steady": -4.42,
+   "rank": 19,
+   "win": 0.23
+  },
+  {
+   "name": "Bilal Coulibaly",
+   "year": 2025,
+   "team": "WAS",
+   "pick": 7,
+   "exp": 2,
+   "mpg": 33.02,
+   "bpm": -3.7,
+   "steady": -3.41,
+   "rank": 17,
+   "win": 0.22
+  },
+  {
+   "name": "Cody Williams",
+   "year": 2025,
+   "team": "UTA",
+   "pick": 10,
+   "exp": 1,
+   "mpg": 21.2,
+   "bpm": -7.3,
+   "steady": -5.85,
+   "rank": 19,
+   "win": 0.21
+  },
+  {
+   "name": "Cooper Flagg",
+   "year": 2026,
+   "team": "DAL",
+   "pick": 1,
+   "exp": 1,
+   "mpg": 33.49,
+   "bpm": 1.4,
+   "steady": 0.9,
+   "rank": 1,
+   "win": 0.32
+  },
+  {
+   "name": "Alex Sarr",
+   "year": 2026,
+   "team": "WAS",
+   "pick": 2,
+   "exp": 2,
+   "mpg": 27.19,
+   "bpm": 0.7,
+   "steady": 0.07,
+   "rank": 1,
+   "win": 0.21
+  },
+  {
+   "name": "Ace Bailey",
+   "year": 2026,
+   "team": "UTA",
+   "pick": 5,
+   "exp": 1,
+   "mpg": 27.61,
+   "bpm": -4.4,
+   "steady": -4.0,
+   "rank": 17,
+   "win": 0.27
+  },
+  {
+   "name": "Tre Johnson",
+   "year": 2026,
+   "team": "WAS",
+   "pick": 6,
+   "exp": 1,
+   "mpg": 24.05,
+   "bpm": -5.0,
+   "steady": -4.35,
+   "rank": 20,
+   "win": 0.21
+  },
+  {
+   "name": "Jeremiah Fears",
+   "year": 2026,
+   "team": "NOP",
+   "pick": 7,
+   "exp": 1,
+   "mpg": 25.76,
+   "bpm": -2.7,
+   "steady": -2.59,
+   "rank": 11,
+   "win": 0.32
+  },
+  {
+   "name": "Rob Dillingham",
+   "year": 2026,
+   "team": "CHI",
+   "pick": 8,
+   "exp": 2,
+   "mpg": 21.47,
+   "bpm": -6.8,
+   "steady": -4.96,
+   "rank": 21,
+   "win": 0.38
+  },
+  {
+   "name": "Egor D\u00ebmin",
+   "year": 2026,
+   "team": "BRK",
+   "pick": 8,
+   "exp": 1,
+   "mpg": 25.15,
+   "bpm": -1.6,
+   "steady": -1.69,
+   "rank": 7,
+   "win": 0.24
+  },
+  {
+   "name": "Zach Edey",
+   "year": 2026,
+   "team": "MEM",
+   "pick": 9,
+   "exp": 2,
+   "mpg": 25.82,
+   "bpm": 0.5,
+   "steady": -0.96,
+   "rank": 9,
+   "win": 0.3
+  },
+  {
+   "name": "Cody Williams",
+   "year": 2026,
+   "team": "UTA",
+   "pick": 10,
+   "exp": 2,
+   "mpg": 24.34,
+   "bpm": -5.5,
+   "steady": -4.81,
+   "rank": 19,
+   "win": 0.27
+  }
+ ]
+}

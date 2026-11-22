@@ -7599,9 +7599,10 @@ def _slot_score_row(player: dict[str, Any], attrs: dict[str, Any]) -> tuple[tupl
 def ai_role_targets(
     canonical: dict[str, Any], roster: list[dict[str, Any]], priors: dict[str, float],
     *, opening_workloads: dict[str, float] | None = None, newcomers: frozenset[str] | set[str] = frozenset(),
-    star_workload: float = 0.0,
+    star_workload: float = 0.0, development: dict[str, float] | None = None,
 ) -> tuple[dict[str, float], list[str]]:
-    """Build a healthy two-deep rotation from current, workload-neutral skills."""
+    """Build a healthy two-deep rotation from current, workload-neutral skills. development: the coach's extra
+    priority for young high picks on this team (development_minutes_priority)."""
     attrs = {p["id"]: player_attribute_summary(canonical, p["id"]) for p in roster}
     quality = {p["id"]: attrs[p["id"]]["overall"] + min(32, max(0, float(priors.get(p["id"], 0)))) * .05 for p in roster}
     remaining = sorted(roster, key=lambda p: p["id"])
@@ -7642,7 +7643,7 @@ def ai_role_targets(
         remaining = [p for p in remaining if p["id"] not in chosen]
     selected = [pid for group in groups for pid in group if pid]
     if opening_workloads is not None:
-        return ai_coach_workloads(attrs, groups[0], opening_workloads, newcomers, star_workload), selected
+        return ai_coach_workloads(attrs, groups[0], opening_workloads, newcomers, star_workload, development), selected
     desired = {p["id"]: 0.0 for p in roster}
     for first, second in zip(*groups):
         if first and second:
@@ -7666,6 +7667,42 @@ ROTATION_TALENT_MARGIN = 2.0
 ROTATION_TALENT_PENALTY = 2.0
 
 
+# Development minutes (ROOKIE-SEASON, 2026-11-22). Real rebuilding teams play their young first-round picks more than a
+# veteran of the same team rank and impact gets: 2015-16 .. 2025-26, first-round picks in years 1 / 2 / 3 got about +6 /
+# +3.5 / +1.5 minutes a game more on rebuilding teams (under .400) than on other teams, measured against veterans of the
+# same rank and box plus-minus on the same kind of team (scripts/research/rookie_dev_minutes.py). Contending and middle
+# teams show no such lean. Extra coach priority (workload minutes) for a first-round pick on a rebuilding team, by his
+# season in the league; picks 21-30 get half. A player's carried-over workload already holds his own coach's choices,
+# so the priority fills only the part of his workload that is not his own NBA minutes (a draftee's opening workload is
+# a draft-slot placeholder).
+DEVELOPMENT_PRIORITY_REBUILDING = {1: 0.0, 2: 0.0, 3: 0.0}
+DEVELOPMENT_PRIORITY_LATE_FIRST = 0.5
+
+
+def development_minutes_priority(player: dict[str, Any], phase: str | None, season_year: int,
+                                 canonical_year: int) -> float:
+    """The coach's extra rotation priority (workload minutes) for a young first-round pick on a rebuilding team."""
+    if phase != "rebuilding":
+        return 0.0
+    try:
+        pick = int(player.get("draft_pick") or player.get("draft_position") or 0)
+        year = season_year - int(player.get("draft_year")) + 1
+    except (TypeError, ValueError):
+        return 0.0
+    bonus = DEVELOPMENT_PRIORITY_REBUILDING.get(year, 0.0)
+    if not bonus or not 0 < pick <= 30:
+        return 0.0
+    if pick > 20:
+        bonus *= DEVELOPMENT_PRIORITY_LATE_FIRST
+    # Share of his opening workload that is his own real NBA minutes (real players drafted before the save's first
+    # season), fading as the workload itself fades (reassess_ai_roles).
+    drafted = int(player.get("draft_year"))
+    real_share = 0.0
+    if player.get("source_kind") != "generated_rookie" and drafted < canonical_year:
+        real_share = clamp(1 - .25 * (season_year - canonical_year), 0.0, 1.0)
+    return round(bonus * (1.0 - real_share), 3)
+
+
 def carried_workload_earned_elsewhere(player: dict[str, Any], team_abbrev: str | None) -> bool:
     """True when a player's carried-over minutes (his season before the game's start) came with other teams."""
     from .career_stats import career_record
@@ -7682,11 +7719,14 @@ def carried_workload_earned_elsewhere(player: dict[str, Any], team_abbrev: str |
 def ai_coach_workloads(
     attrs: dict[str, dict[str, float]], starters: tuple[str, ...], opening_workloads: dict[str, float],
     newcomers: frozenset[str] | set[str] = frozenset(), star_workload: float = 0.0,
+    development: dict[str, float] | None = None,
 ) -> dict[str, float]:
     """Plan a team's minutes across positions, with short stints for the tail.
 
     The head coach's star workload (minutes, staff.coach_star_workload) moves his two best players' plan up or down
-    and his third player's by half as much; the next three rotation players give or take the difference."""
+    and his third player's by half as much; the next three rotation players give or take the difference.
+    development: extra priority for young high picks (development_minutes_priority), in workload minutes."""
+    development = development or {}
     # Workload history supplies role context alongside current quality, creation
     # and stamina. The depth chart supplies positional coverage without setting
     # aside a large block of minutes for a dedicated backup at each position.
@@ -7705,9 +7745,9 @@ def ai_coach_workloads(
 
     def guarded(pid: str) -> float:
         if pid not in newcomers:
-            return priority(pid)
+            return priority(pid) + development.get(pid, 0.0)
         shortfall = max(0.0, line - attrs[pid]["overall"])
-        return priority(pid) - min(opening_workloads[pid], ROTATION_TALENT_PENALTY * shortfall)
+        return priority(pid) - min(opening_workloads[pid], ROTATION_TALENT_PENALTY * shortfall) + development.get(pid, 0.0)
 
     order = sorted(attrs, key=lambda pid: (-guarded(pid), pid))
     curve = star_workload_curve(star_workload)
@@ -7790,8 +7830,12 @@ def reassess_ai_roles(active: dict[str, Any], save: dict[str, Any], stamp: str, 
         newcomers = {p["id"] for p in roster if workloads[p["id"]] > 0
                      and carried_workload_earned_elsewhere(p, abbrevs.get(team))}
         from .staff import coach_star_workload
+        phase = ((save.get("team_plans") or {}).get(team) or {}).get("window_phase")
+        development = {p["id"]: bonus for p in roster
+                       if (bonus := development_minutes_priority(p, phase, season_year, canonical_year))}
         targets, selected = ai_role_targets(neutral, roster, priors, opening_workloads=workloads, newcomers=newcomers,
-                                            star_workload=coach_star_workload(team_head_coach(save, team)))
+                                            star_workload=coach_star_workload(team_head_coach(save, team)),
+                                            development=development)
         total = sum(priors.values())
         blended = {
             pid: target * .8 + (priors[pid] * 240 / total if total else target) * .2
