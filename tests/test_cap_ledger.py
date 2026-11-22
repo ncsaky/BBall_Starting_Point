@@ -75,6 +75,13 @@ class LinesAndSalaries(unittest.TestCase):
         star = {"id": "s", "age": 26, "minutes_projection": 34, "_star_ask_millions": 30.0, "draft_year": 2020,
                 "_bird": {"level": "full"}}
         terms = sv.ai_re_signing_contract_terms({"player_season_stats": {}}, star, SEASON)
+        # CONTRACT-TERMS: AI deals take a salary path at the real shares (this one draws flat); each path is the legal
+        # schedule off year one (8% with Bird rights).
+        expected = {"rising": [30_000_000, 32_400_000, 34_800_000], "flat": [30_000_000] * 3,
+                    "declining": [30_000_000, 27_600_000, 25_200_000]}[terms["salary_path"]]
+        self.assertEqual([r["salary"] for r in terms["seasons"]][:3], expected)
+        with patch("nba_gm_data.contract_terms.ai_structure", return_value={"path": "rising", "option": "none"}):
+            terms = sv.ai_re_signing_contract_terms({"player_season_stats": {}}, star, SEASON)
         self.assertEqual([r["salary"] for r in terms["seasons"]][:3], [30_000_000, 32_400_000, 34_800_000])
 
     def test_trade_dates_for_new_signings(self):

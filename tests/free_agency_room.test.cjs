@@ -61,6 +61,8 @@ function builderScope() {
   vm.runInContext(slice('function freeAgencyRoomState(', 'function ensureFreeAgencySelection('), scope);
   vm.runInContext(slice('function freeAgencyMinimum(', 'function phaseFreeAgencyMarketCard('), scope);
   vm.runInContext(slice('function roundOfferTenth(', 'function freeAgencyOfferBuilderPanel('), scope);
+  scope.CONTRACT_PATH_LABELS = {rising: 'Rising', flat: 'Flat', declining: 'Declining'};
+  scope.CONTRACT_OPTION_LABELS = {none: 'None', player: 'Player option', team: 'Team option'};
   return scope;
 }
 
@@ -83,11 +85,13 @@ test('the cap verdict is the engine quote: pending until it arrives, blocked wit
   assert.match(paid.message, /full mid-level/);
   // Unreviewed waived salary blocks every signing.
   assert.equal(freeAgencyCapVerdict({ok: true}, {blocked_reason: 'Waived salary requires review.'}).ok, false);
-  // One cached quote per offer: salary, years, route and raise all change the key.
+  // One cached quote per offer: salary, years, route, salary path, option and guarantee all change the key.
   const key = scope.freeAgencyQuoteKey(miller, {aav: 20, years: 3});
   assert.notEqual(key, scope.freeAgencyQuoteKey(miller, {aav: 20.1, years: 3}));
   assert.notEqual(key, scope.freeAgencyQuoteKey(miller, {aav: 20, years: 3, route: 'cap_room'}));
-  assert.notEqual(key, scope.freeAgencyQuoteKey(miller, {aav: 20, years: 3, raise: '0'}));
+  assert.notEqual(key, scope.freeAgencyQuoteKey(miller, {aav: 20, years: 3, path: 'flat'}));
+  assert.notEqual(key, scope.freeAgencyQuoteKey(miller, {aav: 20, years: 3, option: 'player'}));
+  assert.notEqual(key, scope.freeAgencyQuoteKey(miller, {aav: 20, years: 3, guaranteed: false}));
 });
 
 test('the verdict uses the salary he needs from you today (the rival bids\' rule), the length, the guarantee and his retirement', () => {
@@ -117,6 +121,30 @@ test('the verdict uses the salary he needs from you today (the rival bids\' rule
   assert.equal(blocked.canSubmit, false);
   assert.equal(blocked.verdict.tone, 'blocked');
   assert.equal(freeAgencyOfferPreview({...miller, signing_blocked_reason: 'stretched'}, r, {aav: 20, years: 1}).canSubmit, false);
+});
+
+// CONTRACT-TERMS: a salary path or option other than the usual waits for the engine's answer (its value to him and the
+// first-year salary he needs on these terms), then uses it; an option on a one-season deal is blocked.
+test('salary path and option: the verdict uses the engine price for these terms', () => {
+  const scope = builderScope();
+  const r = room();
+  const draft = {aav: 31.0, years: 4, guaranteed: true, path: 'flat', option: 'team'};
+  const pending = scope.freeAgencyOfferPreview(miller, r, draft);
+  assert.equal(pending.verdict.headline, 'Checking his answer…');
+  assert.equal(pending.accepts, false);
+  quoteFor(scope, miller, draft, {ok: true, label: 'cap room', schedule: [], player_terms: {factor: 0.82, floor_millions: 37.8,
+    accepts: false, option_problem: null, path: 'flat', option: 'team', words: 'The same salary every season, team option on the last season',
+    effect: 'Flat pay gives him less money than the usual raises; a team option means he may never be paid the last season: he counts it as 18% less than the same first-year salary on the usual terms.'}});
+  const answered = scope.freeAgencyOfferPreview(miller, r, draft);
+  assert.equal(answered.accepts, false);
+  assert.match(answered.verdict.detail, /from \$37\.8M in the first year on these terms/);
+  assert.match(answered.verdict.detail, /18% less/);
+  assert.match(scope.freeAgencyShapeNote(answered, draft), /counts these terms as 18% less/);
+  const usual = scope.freeAgencyOfferPreview(miller, r, {aav: 31.0, years: 4, guaranteed: true, path: 'rising', option: 'none'});
+  assert.equal(usual.accepts, true, 'the usual terms use the room floor right away');
+  const oneSeason = scope.freeAgencyOfferPreview(miller, r, {aav: 40, years: 1, guaranteed: true, path: 'rising', option: 'player'});
+  assert.equal(oneSeason.verdict.tone, 'blocked');
+  assert.equal(oneSeason.canSubmit, false);
 });
 
 // FA-REAL slice 3: another team's restricted free agent signs only an offer sheet: 2-4 years, guaranteed, his price now,

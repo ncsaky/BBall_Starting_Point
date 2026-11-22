@@ -1,0 +1,76 @@
+{
+ "source": "data/canonical/universe_2025_26_preseason.json (HoopsHype salary pages, April 2026)",
+ "method": "How real NBA contracts are shaped: salary path (rising, flat, declining) and final-season options (CONTRACT-TERMS).",
+ "bands": {
+  "$3M-$15M": {
+   "contracts": 89,
+   "path_share": {
+    "rising": 0.596,
+    "flat": 0.213,
+    "declining": 0.191
+   },
+   "option_share": {
+    "none": 0.483,
+    "player": 0.258,
+    "team": 0.258
+   },
+   "median_raise": 0.069
+  },
+  "all": {
+   "contracts": 272,
+   "path_share": {
+    "rising": 0.761,
+    "flat": 0.129,
+    "declining": 0.11
+   },
+   "option_share": {
+    "none": 0.426,
+    "player": 0.239,
+    "team": 0.335
+   },
+   "median_raise": 0.08
+  },
+  "$15M-$35M": {
+   "contracts": 56,
+   "path_share": {
+    "rising": 0.607,
+    "flat": 0.25,
+    "declining": 0.143
+   },
+   "option_share": {
+    "none": 0.5,
+    "player": 0.375,
+    "team": 0.125
+   },
+   "median_raise": 0.0745
+  },
+  "minimum (under $3M)": {
+   "contracts": 83,
+   "path_share": {
+    "rising": 0.964,
+    "flat": 0.0,
+    "declining": 0.036
+   },
+   "option_share": {
+    "none": 0.229,
+    "player": 0.036,
+    "team": 0.735
+   },
+   "median_raise": 0.4262
+  },
+  "$35M and up": {
+   "contracts": 44,
+   "path_share": {
+    "rising": 0.909,
+    "flat": 0.045,
+    "declining": 0.045
+   },
+   "option_share": {
+    "none": 0.591,
+    "player": 0.409,
+    "team": 0.0
+   },
+   "median_raise": 0.0741
+  }
+ }
+}

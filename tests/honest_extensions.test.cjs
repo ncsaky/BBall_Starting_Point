@@ -58,7 +58,7 @@ test('extension preview follows the payload price, term limit and hard-cap limit
   vm.runInContext(slice('function extensionCandidate(', 'function extensionVerdictMarkup('), s);
   const c = candidate();
   assert.equal(s.extensionOfferPreview(c, room, { years: 4, aav: 19.2, guaranteed: true }).verdict.tone, 'no');
-  assert.match(s.extensionOfferPreview(c, room, { years: 4, aav: 19.2, guaranteed: true }).verdict.detail, /from \$19\.3M a season/);
+  assert.match(s.extensionOfferPreview(c, room, { years: 4, aav: 19.2, guaranteed: true }).verdict.detail, /from \$19\.3M in the first season/);
   assert.equal(s.extensionOfferPreview(c, room, { years: 4, aav: 19.3, guaranteed: true }).verdict.tone, 'yes');
   assert.equal(s.extensionOfferPreview(c, room, { years: 4, aav: 19.3, guaranteed: false }).verdict.tone, 'no', 'non-guaranteed costs more');
   const tooLong = s.extensionOfferPreview(c, room, { years: 5, aav: 25, guaranteed: true });
@@ -88,6 +88,7 @@ test('extension cap table applies the offer from its start season and charges th
 
 test('extension page shows the engine numbers and no invented interest bars', () => {
   const s = scope();
+  vm.runInContext(slice('const CONTRACT_PATH_LABELS', 'function freeAgencyQuoteKey('), s);
   vm.runInContext(slice('function extensionCandidate(', 'function extensionDeparturePanel('), s);
   const html = s.extensionNegotiationPage({ ...room, candidates: [candidate()] }, 'p1');
   assert.match(html, /Signs with you from/);
@@ -101,6 +102,28 @@ test('extension page shows the engine numbers and no invented interest bars', ()
   assert.match(html, /data-extension-offer-form/);
   assert.doesNotMatch(html, /Interest|Team direction|Player timeline/);
   assert.doesNotMatch(app, /\["Team direction",64\]/);
+});
+
+test('CONTRACT-TERMS: extension salary path and option change the schedule, the limit and his price', () => {
+  const s = scope();
+  vm.runInContext(slice('const CONTRACT_PATH_LABELS', 'function freeAgencyQuoteKey('), s);
+  vm.runInContext(slice('function extensionCandidate(', 'function extensionDeparturePanel('), s);
+  const factors = { rising: { none: { 2: 1.04 }, team: { 2: 0.85 } }, flat: { none: { 2: 1 }, player: { 2: 1.07 } } };
+  const c = candidate({ terms_factors: factors, max_raise_pct: 8, first_year_limit_millions: 30,
+    max_aav_by_path: { rising: { 1: 28, 2: 27 }, flat: { 1: 29, 2: 29 }, declining: { 1: 29, 2: 29 } } });
+  const rising = s.extensionOfferPreview(c, room, { years: 2, aav: 20, guaranteed: true, path: 'rising', option: 'none' });
+  assert.deepEqual(rising.seasons.map((row) => row.salary), [0, 20, 21.6]);
+  assert.equal(rising.maximum, 27);
+  assert.ok(rising.price < 19.3, 'a rising deal is worth more to him: a lower first-season price');
+  assert.match(rising.verdict.detail, /counts it as 4% more/);
+  const team = s.extensionOfferPreview(c, room, { years: 2, aav: 20, guaranteed: true, path: 'rising', option: 'team' });
+  assert.equal(team.verdict.tone, 'no'); assert.ok(team.price > 22);
+  const oneYearOption = s.extensionOfferPreview(c, room, { years: 1, aav: 25, guaranteed: true, path: 'flat', option: 'player' });
+  assert.equal(oneYearOption.verdict.tone, 'blocked'); assert.equal(oneYearOption.canSubmit, false);
+  const html = s.extensionNegotiationPage({ ...room, candidates: [c] }, 'p1');
+  assert.match(html, /Salary path/); assert.match(html, /Option on the last season/);
+  assert.match(html, /data-extension-path-choice="declining"/); assert.match(html, /data-extension-option-choice="team"/);
+  assert.doesNotMatch(html, /Extensions in this game have no player or team options/);
 });
 
 test('signing wire never dates an applied move after today and names other years', () => {

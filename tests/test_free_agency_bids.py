@@ -24,7 +24,7 @@ class FreeAgencyBidTests(unittest.TestCase):
         self.stack.enter_context(patch.object(play,'extension_safe_year_limit',return_value=4))
         self.stack.enter_context(patch.object(play,'build_free_agency_offer_record',side_effect=self.offer))
 
-    def offer(self,c,s,p,t,years,aav,ask,seed,source):
+    def offer(self,c,s,p,t,years,aav,ask,seed,source,terms=None):  # terms: salary path / option (CONTRACT-TERMS)
         return {'id':f"{s['free_agency_state']['day']}:{p['id']}:{t['id']}",'player_id':p['id'],'team_id':t['id'],
                 'years':years,'aav_millions':aav,'source':source,'status':'active','interest_score':90,'season':'2026-27'}
 

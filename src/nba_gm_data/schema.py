@@ -555,6 +555,12 @@ class ExtensionCandidate:
     confidence: float
     source_ids: list[str]
     notes: str
+    # CONTRACT-TERMS: the CBA rule that decided eligibility, in plain words, and the extension's limits.
+    extension_kind: str | None = None
+    eligibility_text: str | None = None
+    max_new_years: int | None = None
+    signed_season: str | None = None
+    history_known: bool | None = None
 
 
 @dataclass(frozen=True)

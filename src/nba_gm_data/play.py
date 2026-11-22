@@ -2101,15 +2101,19 @@ def extensions_room(canonical: dict[str, Any], save_path: Path, user_team: str, 
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     current = save.get("state", {}).get("current_date") or "2025-10-01"
     phase = save.get("state", {}).get("phase")
-    deadline = extension_deadline_date(season_start_year_from_date(current))
+    # CONTRACT-TERMS: extensions follow the league calendar (July 6 to the June 17 switch) and each player's own
+    # deadline (the day before opening night for rookie-scale deals and deals with more than a season left).
+    from .contract_ai import extension_window_open_on
+    from .save import extension_window_closed_for_player
+    deadline = "July 6"
     offseason_window = phase in {"draft_lottery", "draft", "offseason"}
-    if current > deadline and not offseason_window:
-        pause(f"Extension deadline passed on {deadline}.")
+    if not extension_window_open_on(current):
+        pause("Extensions are closed from the June 17 switch until July 6 (the July moratorium).")
         return
     active = canonical_with_save(canonical, save)
     report = extension_candidates_report(active, user_team)
     roster = report.get("candidates", [])
-    print_title(f"Contract Extensions | {'offseason window' if offseason_window else 'deadline ' + deadline}")
+    print_title("Contract Extensions | each player's deadline is shown when you choose him")
     if not roster:
         print("No contracted players are available for extension review.")
         wait()
@@ -2117,7 +2121,7 @@ def extensions_room(canonical: dict[str, Any], save_path: Path, user_team: str, 
     print(" #  Player                     Pos  Ask / years       Eligibility")
     for idx, item in enumerate(roster, start=1):
         eligible = item.get("eligible") and not item.get("manual_review_required")
-        status = style("eligible", "good") if eligible else style(clean_label(item.get("eligibility_status")), "muted")
+        status = style("eligible", "good") if eligible else style(str(item.get("eligibility_text") or clean_label(item.get("eligibility_status")))[:60], "muted")
         print(
             f"{idx:>2}. {item['name']:<26} {item.get('position') or '-':<3} "
             f"${float(item.get('projected_aav_millions') or 0):>5.1f}M/{item.get('projected_years')}y      {status}"
@@ -2129,13 +2133,16 @@ def extensions_room(canonical: dict[str, Any], save_path: Path, user_team: str, 
         return
     player = roster[choice - 1]
     if not player.get("eligible") or player.get("manual_review_required"):
-        pause(f"{player['name']} cannot negotiate an extension: {clean_label(player.get('eligibility_status'))}.")
+        pause(f"{player['name']} cannot negotiate an extension: {player.get('eligibility_text') or clean_label(player.get('eligibility_status'))}")
         return
     roster_player = next((item for item in active.get("players", []) if item.get("id") == player.get("player_id")), player)
+    if extension_window_closed_for_player(save, active, roster_player, current):
+        pause(f"{player['name']}'s extension window has closed for this season.")
+        return
     ask_millions = float(player.get("projected_aav_millions") or 0.0)
     preferred_years = int(player.get("projected_years") or 3)
     start_season = extension_start_season_for_date(current)
-    safe_years = extension_safe_year_limit(roster_player, start_season, 5)
+    safe_years = extension_safe_year_limit(roster_player, start_season, min(5, int(player.get("max_new_years") or 5)))
     if safe_years < 1:
         pause(f"{player['name']} is projected to retire before an extension season would begin.")
         return
@@ -5532,6 +5539,8 @@ def process_ai_free_agency_offers_for_day_state(
             paid = ai_bid_payment(active, save, team, player, aav, team_years, lower, bird)
             if paid is not None:
                 aav, team_years = paid["aav"], paid["years"]
+                # CONTRACT-TERMS: the bid's shape (salary path, final-season option) at the real shares.
+                paid = ai_shape_bid(active, save, team, player, paid, bird, start_season)
             from .contract_protection import roster_signing_plan
             plan = roster_signing_plan(active, save, player, team['id'], aav, team_years)
             from .roster_space import remember_target
@@ -5549,7 +5558,8 @@ def process_ai_free_agency_offers_for_day_state(
             )
             if not tax_plan["ok"]:
                 continue
-            offer = build_free_agency_offer_record(active, save, player, team, team_years, aav, ask, seed, "ai")
+            offer = build_free_agency_offer_record(active, save, player, team, team_years, aav, ask, seed, "ai",
+                                                   terms=paid.get("terms"))
             offer['roster_plan'] = plan
             from .cap_ledger import reserve
             reserve(offer, paid["quote"]["payment"])
@@ -5644,6 +5654,34 @@ def ai_bid_payment(active: dict[str, Any], save: dict[str, Any], team: dict[str,
         if retry["ok"]:
             return {"aav": capacity, "years": yrs, "quote": retry}
     return None
+
+
+def ai_shape_bid(active: dict[str, Any], save: dict[str, Any], team: dict[str, Any], player: dict[str, Any],
+                 paid: dict[str, Any], bird: dict[str, Any] | None, season: str) -> dict[str, Any]:
+    """CONTRACT-TERMS: an AI bid's salary path and option, drawn at the real shares for its salary band
+    (contract_terms.ai_structure), re-checked with the money calculator; the rising, option-free bid stands when the
+    other path isn't legal. Adds ``terms`` (path, option, value factor) and puts the shape on the payment."""
+    from . import cap_ledger
+    from .contract_terms import ai_structure, deal_kind, path_rate, value_factor
+    payment = dict((paid.get("quote") or {}).get("payment") or {})
+    route = payment.get("route")
+    years = int(paid["years"])
+    shape = ai_structure(float(paid["aav"]) * 1_000_000, years, player_id=str(player.get("id")), team_id=str(team["id"]),
+                         season=season, bird_level=(bird or {}).get("level"), minimum=route == "minimum",
+                         kind=deal_kind(route, float(paid["aav"]) * 1_000_000))
+    top = cap_ledger._route_raise(route or "cap_room", bird)
+    quote = paid["quote"]
+    if shape["path"] != "rising":
+        retry = cap_ledger.quote(active, save, team["id"], player, float(paid["aav"]) * 1_000_000, years, season=season,
+                                 route=route, raise_rate=path_rate(shape["path"], top), bird=bird,
+                                 team_abbrev=team.get("abbrev"))
+        if retry.get("ok"):
+            quote = retry
+        else:
+            shape = {**shape, "path": "rising"}
+    quote = {**quote, "payment": {**(quote.get("payment") or {}), "option": shape["option"], "salary_path": shape["path"]}}
+    factor = value_factor(years, shape["path"], shape["option"], top, "rising")
+    return {**paid, "quote": quote, "terms": {**shape, "factor": factor, "max_raise": top}}
 
 
 def restricted_keep_cost(active: dict[str, Any], save: dict[str, Any], team_id: str,
@@ -5828,11 +5866,14 @@ def build_free_agency_offer_record(
     ask_millions: float,
     seed: int,
     source: str,
+    terms: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     day = int((save.get("free_agency_state") or {}).get("day") or 1)
     preferred_years = free_agency_preferred_years(player,ask_millions)
     context = free_agency_offer_context_score(canonical, save, player, team, years, source)
-    interest = offer_interest_score(aav_millions, ask_millions, years, preferred_years, float(context["context_score"]))
+    # CONTRACT-TERMS: the player judges the bid by what its shape is worth to him (salary path and option).
+    factor = float((terms or {}).get("factor") or 1.0)
+    interest = offer_interest_score(aav_millions * factor, ask_millions, years, preferred_years, float(context["context_score"]))
     offer_id = stable_id("fa_offer", save.get("free_agency_state", {}).get("season"), day, source, team["id"], player["id"], years, round(aav_millions * 10))
     return {
         "id": offer_id,
@@ -5849,6 +5890,12 @@ def build_free_agency_offer_record(
         "interest_context": context,
         "status": "active",
         "created_date": save.get("state", {}).get("current_date"),
+        "salary_path": (terms or {}).get("path") or "rising",
+        "option": (terms or {}).get("option") or "none",
+        "terms_factor": factor,
+        # The raise the contract is written with when the bid is accepted (None: the largest legal raise).
+        "raise_rate": (None if ((terms or {}).get("path") or "rising") == "rising"
+                       else 0.0 if (terms or {}).get("path") == "flat" else -float((terms or {}).get("max_raise") or 0.05)),
     }
 
 
@@ -6566,7 +6613,8 @@ def upgrade_free_agency_offer_after_dump_state(
     from .cap_ledger import reserve
     reserve(offer, bumped_check["payment"])
     context_score = float((offer.get("interest_context") or {}).get("context_score") or 55.0)
-    offer["interest_score"] = offer_interest_score(bumped, ask, int(offer.get("years") or 1), int(offer.get("years") or 1), context_score)
+    offer["interest_score"] = offer_interest_score(bumped * float(offer.get("terms_factor") or 1.0), ask,
+                                                   int(offer.get("years") or 1), int(offer.get("years") or 1), context_score)
     offer.setdefault("notes", "AI cleared salary and improved this free-agency offer.")
     return True
 
@@ -6743,7 +6791,9 @@ def apply_free_agency_offer_state(
     if not cap.get("ok"):
         offer["status"] = "withdrawn_cap_blocked"
         return {"status": "blocked", "notes": cap.get("message")}
-    offer["payment"] = cap["payment"]
+    # CONTRACT-TERMS: the contract keeps the bid's shape (salary path, final-season option).
+    offer["payment"] = {**cap["payment"], "option": offer.get("option") or "none",
+                        "salary_path": offer.get("salary_path") or "rising"}
     if offer.get('source') == 'ai':
         from .contract_protection import roster_signing_plan
         plan = roster_signing_plan(active, save, player, team_id, float(offer.get('aav_millions') or 0), int(offer.get('years') or 1))
@@ -7500,7 +7550,10 @@ def user_offer_market_terms(canonical: dict[str, Any], save: dict[str, Any], pla
     return {"mode": mode, "day": day, "ask_millions": round(ask, 1), "preferred_years": preferred, "bar": bar,
             "salary_bounds_millions": free_agency_fitted_bounds(save, player_id),
             "best_rival": ({"team_id": best.get("team_id"), "interest": float(best.get("interest_score") or 0),
-                            "aav_millions": float(best.get("aav_millions") or 0), "years": int(best.get("years") or 1)}
+                            "aav_millions": float(best.get("aav_millions") or 0), "years": int(best.get("years") or 1),
+                            # CONTRACT-TERMS: what the rival bid is worth to him (its shape's value factor).
+                            "value_millions": float(best.get("aav_millions") or 0) * float(best.get("terms_factor") or 1.0),
+                            "salary_path": best.get("salary_path") or "rising", "option": best.get("option") or "none"}
                            if best else None)}
 
 
@@ -7519,19 +7572,23 @@ def user_offer_context(canonical: dict[str, Any], save: dict[str, Any], player: 
     return user_offer_contexts(canonical, save, player, team)[max(1, min(5, int(years)))]
 
 
-def user_offer_effective_salary(player: dict[str, Any], aav_millions: float, guaranteed: bool) -> float:
+def user_offer_effective_salary(player: dict[str, Any], aav_millions: float, guaranteed: bool,
+                                factor: float = 1.0) -> float:
+    """What he counts the offer as: the first-year salary times the shape's value to him (CONTRACT-TERMS
+    contract_terms.value_factor: salary path and option against the usual rising, option-free deal), less the
+    premium he asks without a guarantee."""
     from .contract_protection import security_penalty
-    return float(aav_millions) / (1 + security_penalty(player, guaranteed) / 100)
+    return float(aav_millions) * float(factor) / (1 + security_penalty(player, guaranteed) / 100)
 
 
 def user_offer_interest(player: dict[str, Any], aav_millions: float, years: int, guaranteed: bool,
-                        terms: dict[str, Any], context: float) -> float:
-    effective = user_offer_effective_salary(player, aav_millions, guaranteed)
+                        terms: dict[str, Any], context: float, factor: float = 1.0) -> float:
+    effective = user_offer_effective_salary(player, aav_millions, guaranteed, factor)
     return float(offer_interest_score(effective, terms["ask_millions"], years, terms["preferred_years"], context))
 
 
 def user_offer_verdict(interest: float, aav_millions: float, terms: dict[str, Any],
-                       effective_millions: float | None = None) -> str:
+                       effective_millions: float | None = None, factor: float = 1.0) -> str:
     """Check salary bounds, then compare interest and money in end-of-day order."""
     bounds = terms.get("salary_bounds_millions")
     if bounds and not bounds[0] <= aav_millions <= bounds[1]:
@@ -7540,25 +7597,25 @@ def user_offer_verdict(interest: float, aav_millions: float, terms: dict[str, An
     if interest < terms["bar"] or effective < USER_OFFER_MIN_SHARE_OF_ASK * terms["ask_millions"] - 1e-9:
         return "below_todays_bar"
     best = terms.get("best_rival")
-    if best and (interest, float(aav_millions)) <= (best["interest"], best["aav_millions"]):
+    if best and (interest, float(aav_millions) * float(factor)) <= (best["interest"], best.get("value_millions", best["aav_millions"])):
         return "prefers_rival_bid"
     return "accept"
 
 
 def user_offer_floor(player: dict[str, Any], years: int, guaranteed: bool, terms: dict[str, Any],
-                     context: float) -> float | None:
+                     context: float, factor: float = 1.0) -> float | None:
     """The smallest offer ($0.1M steps, from the league minimum) he accepts today for these years, or None when no
     salary wins him today (his interest saturates at 1.3x his ask)."""
     from .contract_protection import security_penalty
     minimum, maximum = terms.get("salary_bounds_millions") or (league_minimum_aav_millions(), math.inf)
-    top = terms["ask_millions"] * 1.3 * (1 + security_penalty(player, guaranteed) / 100) + 2 * USER_OFFER_SALARY_STEP
+    top = terms["ask_millions"] * 1.3 * (1 + security_penalty(player, guaranteed) / 100) / max(0.3, float(factor)) + 2 * USER_OFFER_SALARY_STEP
     if terms.get("best_rival"):
-        top = max(top, terms["best_rival"]["aav_millions"] + 2 * USER_OFFER_SALARY_STEP)
+        top = max(top, terms["best_rival"]["aav_millions"] / max(0.3, float(factor)) + 2 * USER_OFFER_SALARY_STEP)
     steps = max(0, int(math.ceil((min(top, maximum) - minimum) / USER_OFFER_SALARY_STEP)))
     offer = lambda k: min(maximum, round(minimum + k * USER_OFFER_SALARY_STEP, 1))
-    passes = lambda k: user_offer_verdict(user_offer_interest(player, offer(k), years, guaranteed, terms, context),
+    passes = lambda k: user_offer_verdict(user_offer_interest(player, offer(k), years, guaranteed, terms, context, factor),
                                           offer(k), terms,
-                                          user_offer_effective_salary(player, offer(k), guaranteed)) == "accept"
+                                          user_offer_effective_salary(player, offer(k), guaranteed, factor), factor) == "accept"
     if not passes(steps):
         return None
     low, high = 0, steps
@@ -7572,18 +7629,34 @@ def user_offer_floor(player: dict[str, Any], years: int, guaranteed: bool, terms
 
 
 def user_offer_decision(canonical: dict[str, Any], save: dict[str, Any], player: dict[str, Any], team: dict[str, Any],
-                        years: int, aav_millions: float, guaranteed: bool) -> dict[str, Any]:
+                        years: int, aav_millions: float, guaranteed: bool, factor: float = 1.0) -> dict[str, Any]:
     terms = user_offer_market_terms(canonical, save, player, team)
     context = user_offer_context(canonical, save, player, team, years)
-    interest = user_offer_interest(player, aav_millions, years, guaranteed, terms, context)
-    return {"terms": terms, "context": context, "interest": interest,
+    interest = user_offer_interest(player, aav_millions, years, guaranteed, terms, context, factor)
+    return {"terms": terms, "context": context, "interest": interest, "factor": factor,
             "verdict": user_offer_verdict(interest, aav_millions, terms,
-                                          user_offer_effective_salary(player, aav_millions, guaranteed)),
-            "floor_millions": user_offer_floor(player, years, guaranteed, terms, context)}
+                                          user_offer_effective_salary(player, aav_millions, guaranteed, factor), factor),
+            "floor_millions": user_offer_floor(player, years, guaranteed, terms, context, factor)}
+
+
+def user_offer_shape(payment: dict[str, Any] | None, bird: dict[str, Any] | None, years: int, salary_path: Any,
+                     option: Any) -> dict[str, Any]:
+    """CONTRACT-TERMS: the offer's salary path and option, the raise limit that applies to it (the payment route's:
+    8% with Bird rights, else 5%) and what the shape is worth to him (contract_terms.value_factor)."""
+    from . import cap_ledger
+    from .contract_terms import describe, normalize_option, normalize_path, value_factor
+    path = normalize_path(salary_path)
+    option = normalize_option(option) if int(years) >= 2 else "none"
+    route = (payment or {}).get("route") or ("bird" if bird else "cap_room")
+    top = cap_ledger._route_raise(route, bird)
+    factor = value_factor(int(years), path, option, top, "rising")
+    return {"path": path, "option": option, "max_raise": top, "factor": factor,
+            "words": describe(path, option, top, int(years))}
 
 
 def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player: dict[str, Any], team_abbrev: str, years: int, aav_millions: float, seed: int, *, guaranteed: bool = True,
-                             route: str | None = None, raise_rate: float | None = None) -> dict[str, Any]:
+                             route: str | None = None, raise_rate: float | None = None, salary_path: str | None = None,
+                             option: str = "none") -> dict[str, Any]:
     """The user's offer to a free agent (``aav_millions`` is the first-year salary). FA-REAL: it must be legal for the
     team (cap_ledger: Bird rights, room, the minimum, an exception; ``route`` picks one), and the accepted offer carries
     its year-by-year schedule and payment so the save writes exactly what the offer screen showed."""
@@ -7592,13 +7665,20 @@ def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player:
     team = resolve_team(canonical, team_abbrev)
     save_for_start = load_save(save_path)
     annual = float(aav_millions) * 1_000_000
-    judged = user_offer_decision(canonical, save_for_start, player, team, years, float(aav_millions), guaranteed)
-    floor = judged["floor_millions"]
-    ask_threshold = floor if floor is not None else float("inf")
     retirement_blocked = extension_retirement_blocked(player, contract_start_season_for_signing(save_for_start), years)
     legal = signing_cap_check(canonical, save_for_start, team_abbrev, float(aav_millions), player=player, years=years,
                               route=route, raise_rate=raise_rate)
     payment = legal.get("payment") if legal.get("ok") else None
+    # CONTRACT-TERMS: the shape (salary path, final-season option) and what it is worth to him.
+    shape = user_offer_shape(payment, incumbent_bird_rights(canonical, save_for_start, player, team["id"]), years,
+                             salary_path or ("flat" if raise_rate == 0 else "declining" if (raise_rate or 0) < 0 else "rising"),
+                             option)
+    if payment:
+        payment = {**payment, "option": shape["option"], "salary_path": shape["path"]}
+    judged = user_offer_decision(canonical, save_for_start, player, team, years, float(aav_millions), guaranteed,
+                                 shape["factor"])
+    floor = judged["floor_millions"]
+    ask_threshold = floor if floor is not None else float("inf")
     accepted = judged["verdict"] == "accept" and not retirement_blocked and payment is not None
     rejection = ("retirement_risk" if retirement_blocked
                  else "outside_salary_bounds" if judged["verdict"] == "outside_salary_bounds"
@@ -7620,6 +7700,9 @@ def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player:
         "role_promise": "rotation_compete",
         "status": "accepted" if accepted else "rejected",
         "notes": "Interactive save-pool free-agent offer.",
+        "salary_path": shape["path"],
+        "option": shape["option"],
+        "terms_factor": shape["factor"],
     }
     if payment:
         from .cap_ledger import contract_terms
@@ -9450,6 +9533,13 @@ def extension_max_legal_aav(active: dict[str, Any], save: dict[str, Any], team_i
         hard_room = float(cap.get("hard_cap_space_millions") or 0.0)
         replaced_salary = player_salary_millions_for_season(active, player_id, season)
         spaces.append(max(0.0, hard_room + replaced_salary))
+    # CONTRACT-TERMS: also the CBA's first-year limit (his max; for a veteran 140% of the greater of his salary and the
+    # average salary), the same limit the browser's extension page uses.
+    from .contract_ai import extension_contract_window, extension_first_year_limit
+    contract = contract_for_player(active, player_id) if player_id else None
+    player = next((p for p in active.get("players", []) if p.get("id") == player_id), {})
+    kind = str(extension_contract_window(contract, player).get("extension_kind") or "veteran")
+    spaces.append(extension_first_year_limit(contract, player, start_season, kind) / 1_000_000)
     return round(min(spaces) if spaces else 0.0, 2)
 
 

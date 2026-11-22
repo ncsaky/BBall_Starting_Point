@@ -87,7 +87,10 @@ MAJOR_FREE_AGENT_AAV_THRESHOLD = 25_000_000
 MAJOR_PLAYER_MPG_THRESHOLD = 29.0
 MAJOR_INJURY_GAMES_THRESHOLD = 41
 MAJOR_STAFF_GRADE_THRESHOLD = 82.0
-AI_EXTENSION_BUCKET_LIMIT = 15
+AI_EXTENSION_BUCKET_LIMIT = 15   # kept for older callers; the limits by kind are below
+# CONTRACT-TERMS: a ceiling per contract season at the top of the real range (2023-26: 7-14 rookie-scale extensions a
+# year; 17-27 veteran extensions a league year), so the AI's own appetite decides the count inside it.
+AI_EXTENSION_LIMITS = {"rookie_scale": 14, "veteran": 27}
 OFFSEASON_FREE_AGENT_POOL_TARGET = 120
 MAJOR_STAT_LINE_THRESHOLDS = {
     "points": 49,
@@ -1679,6 +1682,8 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
                 "original_contract_years": int(override.get("original_contract_years") or override.get("years") or override.get("term_years") or len(seasons)),
                 "signed_season": override.get("signed_season") or override.get("start_season"),
                 "extension_eligibility": dict(override.get("extension_eligibility") or {}),
+                # CONTRACT-TERMS: a contract the game wrote replaces the real one's signing history.
+                "contract_history": override.get("contract_history"),
                 # FA-REAL: how the deal was paid for and when he can first be traded (cap_ledger).
                 "payment_route": override.get("payment_route"),
                 "trade_eligible_date": override.get("trade_eligible_date"),
@@ -2410,8 +2415,9 @@ def advance_save_day(
         # (see queue_ai_recommendations), so it needs no isolation either.
         market = market_day(target, effective_seed, start_year, trade_deadline_date(start_year))
         isolate = (
-            (target <= extension_deadline_date(start_year)
-             and stable_id("ai_action", "extensions", target[:7], effective_seed) not in queued_keys)
+            (ai_extension_pass_due(save, save.get("state", {}).get("phase"), current, target)
+             and stable_id("ai_action", "extensions", ai_extension_pass_label(save, current, target), effective_seed)
+             not in queued_keys)
             or (market["review"] and bool(market["slots"] or (market["offer_slots"] and human_controlled_team_ids(save))))
             or current[:7] != target[:7] or target.endswith("-02-05")
             or any(action.get("status") not in {"processed", "executed", "rejected", "draft_attention_required"}
@@ -3347,8 +3353,10 @@ def league_event_kind_matches(event: dict[str, Any], kind: str) -> bool:
     requested = str(kind or "").strip().lower()
     event_kind = str(event.get("kind") or "").strip().lower()
     groups = {
-        "transactions": {"trade", "trade_demand", "free_agent_signing", "free_agency_signing", "extension", "staff_hire", "staff_fire"},
-        "all_transactions": {"trade", "trade_demand", "free_agent_signing", "free_agency_signing", "extension", "staff_hire", "staff_fire"},
+        "transactions": {"trade", "trade_demand", "free_agent_signing", "free_agency_signing", "extension", "staff_hire", "staff_fire",
+                         "option_decision"},
+        "all_transactions": {"trade", "trade_demand", "free_agent_signing", "free_agency_signing", "extension", "staff_hire", "staff_fire",
+                             "option_decision"},
         "trades": {"trade"},
         "trade_demands": {"trade_demand"},
         "extensions": {"extension"},
@@ -4895,7 +4903,7 @@ def team_dashboard(
         for player in roster
         if extension_window_open
         and (contract := contracts_by_player.get(player["id"]))
-        and extension_contract_window(contract)["eligible"]
+        and extension_contract_window(contract, player)["eligible"]
     }
     asset_value_by_player = {
         str(item.get("player_id")): item
@@ -5221,11 +5229,12 @@ def legal_actions_for_date(value: str) -> list[str]:
     phase = phase_for_date(value)
     actions = list(legal_actions_for_phase(phase))
     start_year = season_start_year_from_date(value)
-    if phase in {"preseason", "regular_season"}:
-        if value <= extension_deadline_date(start_year) and "extensions" not in actions:
-            actions.insert(1 if "trades" in actions else 0, "extensions")
-        if value > extension_deadline_date(start_year) and "extensions" in actions:
-            actions.remove("extensions")
+    # CONTRACT-TERMS: extensions follow the league calendar, not the game phase: from July 6 (after the moratorium)
+    # to the June 17 contract-season switch. Each player's own deadline (player_extension_deadline) applies on top.
+    from .contract_ai import extension_window_open_on
+    actions = [action for action in actions if action != "extensions"]
+    if extension_window_open_on(value):
+        actions.insert(1 if "trades" in actions else 0, "extensions")
     if phase in {"preseason", "regular_season"} and "trades" in actions and value > trade_deadline_date(start_year):
         actions.remove("trades")
     return actions
@@ -5243,27 +5252,42 @@ def season_start_year_from_date(value: str) -> int:
 
 def player_extension_deadline(save: dict[str, Any], player: dict[str, Any], start_year: int,
                               contract: dict[str, Any] | None = None) -> str:
-    """FA-REAL slice 2: a first-round pick entering the last year of his rookie deal can be extended until the day
-    before opening night (CBA Art. XI, the rookie-scale extension window); others keep the game's January window."""
-    from .offseason_decisions import is_rookie_scale_final_year
-    from .offseason_calendar import roster_deadline
+    """CONTRACT-TERMS: the last day he can sign an extension this contract season (CBA): the day before opening night
+    for a rookie-scale deal or a deal with more than one season left; June 16 (the day before the game's contract
+    season switch) for a player in the last season of his deal (contract_ai.extension_deadline_for)."""
+    from .contract_ai import extension_deadline_for
     if contract is None:
         contract = (save.get("contract_overrides") or {}).get(str(player.get("id") or ""))
-    if is_rookie_scale_final_year(player, contract, int(start_year)):
-        return roster_deadline(int(start_year), save).isoformat()
-    return extension_deadline_date(start_year)
+    return extension_deadline_for(contract, player, int(start_year), save)
+
+
+def extension_contract_start_year(save: dict[str, Any], day: str) -> int:
+    """The contract season (start year) the extension rules count on ``day`` (the June 17 switch)."""
+    from .offseason_calendar import contract_season
+    try:
+        return int(contract_season(save, str(day))[:4])
+    except (TypeError, ValueError):
+        return season_start_year_from_date(str(day))
+
+
+def extension_window_closed_for_player(save: dict[str, Any], active: dict[str, Any], player: dict[str, Any], day: str) -> bool:
+    """Whether the date is outside his extension window: before July 6, from the June 17 switch, or after his
+    deadline (player_extension_deadline)."""
+    from .contract_ai import extension_window_open_on
+    if not extension_window_open_on(str(day)):
+        return True
+    contract = next((c for c in active.get("contracts", []) if c.get("player_id") == player.get("id")), None)
+    return str(day) > player_extension_deadline(save, player, extension_contract_start_year(save, day), contract)
 
 
 def rookie_extension_window_closed(save: dict[str, Any], active: dict[str, Any], player: dict[str, Any], day: str) -> bool:
-    from .offseason_decisions import is_rookie_scale_final_year
-    from .offseason_calendar import roster_deadline
-    start = season_start_year_from_date(str(day))
-    contract = next((c for c in active.get("contracts", []) if c.get("player_id") == player.get("id")), None)
-    return (is_rookie_scale_final_year(player, contract, start)
-            and str(day) > roster_deadline(start, save).isoformat())
+    """Kept name (FA-REAL slice 2 callers): every extension now has its own deadline."""
+    return extension_window_closed_for_player(save, active, player, day)
 
 
 def extension_deadline_date(start_year: int) -> str:
+    """The AI front offices' last regular extension pass (January 15). Not a league rule: real players in the last
+    season of their deal can extend until June 30; the per-player rule is player_extension_deadline."""
     return f"{start_year + 1}-01-15"
 
 
@@ -6243,13 +6267,13 @@ def queue_ai_recommendations(
     authoritative_canonical = authoritative_canonical or canonical
     phase = save.get("state", {}).get("phase")
     queued_keys = {item.get("id") for item in save.get("pending_ai_actions", [])} | {item.get("id") for item in save.get("processed_hidden_ai_actions", [])}
-    if phase in {"preseason", "regular_season"} and through_date <= extension_deadline_date(season_start_year_from_date(through_date)):
-        extension_key = stable_id("ai_action", "extensions", through_date[:7], seed)
+    if ai_extension_pass_due(save, phase, from_date, through_date):
+        extension_key = stable_id("ai_action", "extensions", ai_extension_pass_label(save, from_date, through_date), seed)
         if extension_key not in queued_keys:
             extension_result = process_ai_extensions(
                 canonical,
                 save,
-                through_date,
+                _deadline_pass_date(save, from_date, through_date) or through_date,
                 seed,
                 prepared_active=True,
                 baseline=authoritative_canonical,
@@ -6590,6 +6614,67 @@ def extension_headline_with_terms(team_abbrev: str | None, player_name: str | No
     return f"{team_label} extends {player_label}."
 
 
+AI_ROOKIE_SCALE_EXTENSION_PRIORITY = 55.0   # set so about 40% of eligible rookie-scale players extend (real 2023-26: 41 of 96, 7-14 a year)
+AI_EXTENSION_MODEL_UNDERPRICE = 1.45        # see the pay-cut bar in process_ai_extensions
+AI_VETERAN_EXTENSION_PRIORITY = 50.0       # was 78; with 78 the second probe season had 8 veteran extensions (real 17-27)
+
+
+def ai_extension_rescue_offer(result: dict[str, Any], contract: dict[str, Any] | None, player: dict[str, Any],
+                              candidate: dict[str, Any]) -> dict[str, Any] | None:
+    """CONTRACT-TERMS: talks the AI negotiation drops because its offers start from the contract model's price (about
+    1.45x below real deals for players under contract) end with the team offering what he asks or his no-pay-cut bar,
+    whichever is higher, when that is still within 1.45x his model price. Otherwise None (he waits)."""
+    negotiation = result.get("negotiation") or {}
+    offers = [o for o in negotiation.get("offers") or [] if o.get("annual_salary")]
+    if not offers or negotiation.get("status") != "no_agreement":
+        return None
+    ask = float((negotiation.get("player_ask") or {}).get("aav_millions") or 0.0) * 1e6
+    current_pay = max([float(r.get("salary") or 0.0) for r in (contract or {}).get("seasons") or []] or [0.0])
+    age = float(player.get("display_age", player.get("age")) or 27.0)
+    bar = current_pay * (0.95 if age < 31 else 0.80)
+    worth = float(candidate.get("projected_aav") or 0.0) or float(candidate.get("projected_aav_millions") or 0.0) * 1e6
+    price = max(ask, bar)
+    if not worth or not price or price > AI_EXTENSION_MODEL_UNDERPRICE * worth:
+        return None
+    return {**offers[-1], "annual_salary": round(price, 2), "status": "accepted", "rescued_from_walkaway": True}
+
+
+def ai_extension_pass_horizon(save: dict[str, Any], player: dict[str, Any], through_date: str,
+                              contract: dict[str, Any] | None) -> str:
+    """CONTRACT-TERMS: AI teams review extensions once a month, so a pass handles every decision due before the next
+    one (and never past his deadline or the January 15 end of the regular passes): a decision due January 5 is made
+    in the January pass instead of falling after the last one."""
+    start = season_start_year_from_date(through_date)
+    horizon = (parse_date(through_date) + timedelta(days=30)).isoformat()
+    deadline = player_extension_deadline(save, player, extension_contract_start_year(save, through_date), contract)
+    return min(horizon, max(through_date, min(deadline, extension_deadline_date(start))))
+
+
+def ai_extension_pass_due(save: dict[str, Any], phase: Any, from_date: str, through_date: str) -> bool:
+    """CONTRACT-TERMS: AI teams review extensions once a month from July 6 through January 15 (their habit: the
+    regular in-season passes stop mid-January), in the late summer, camp, preseason and regular season, plus one pass
+    on the opening-roster deadline itself (the last day for rookie-scale extensions)."""
+    from .contract_ai import extension_window_open_on
+    if phase not in {"offseason", "training_camp", "preseason", "regular_season"}:
+        return False
+    if not extension_window_open_on(through_date):
+        return False
+    start_year = season_start_year_from_date(through_date)
+    return through_date <= extension_deadline_date(start_year) or bool(_deadline_pass_date(save, from_date, through_date))
+
+
+def _deadline_pass_date(save: dict[str, Any], from_date: str, through_date: str) -> str | None:
+    from .offseason_calendar import roster_deadline
+    deadline = roster_deadline(season_start_year_from_date(through_date), save).isoformat()
+    return deadline if str(from_date) <= deadline <= str(through_date) else None
+
+
+def ai_extension_pass_label(save: dict[str, Any], from_date: str, through_date: str) -> str:
+    """One pass a month, and a separate one on the opening-roster deadline."""
+    deadline = _deadline_pass_date(save, from_date, through_date)
+    return f"deadline:{deadline}" if deadline else through_date[:7]
+
+
 def process_ai_extensions(
     canonical: dict[str, Any],
     save: dict[str, Any],
@@ -6612,7 +6697,9 @@ def process_ai_extensions(
     refusals = 0
     players = {player["id"]: player for player in active.get("players", [])}
     teams = {team["id"]: team for team in active.get("teams", [])}
-    season = str(save.get("meta", {}).get("season") or CANONICAL_SEASON)
+    # CONTRACT-TERMS: the contract season of the pass (summer passes from July 6 belong to the coming season; the
+    # save's season label only changes at the October rollover).
+    season = season_label_from_start(extension_contract_start_year(save, through_date))
     volume_by_season = save.setdefault("ai_extension_volume", {})
     if season not in volume_by_season:
         reconstructed = {"rookie_scale": 0, "veteran": 0}
@@ -6634,10 +6721,20 @@ def process_ai_extensions(
             reconstructed[bucket] = int(reconstructed.get(bucket) or 0) + 1
         volume_by_season[season] = reconstructed
     volume = volume_by_season[season]
+    # Measurement only: a caller may put a dict in save["_extension_diagnostics"] to count why candidates stop.
+    diagnostics = save.get("_extension_diagnostics")
+
+    def note(candidate: dict[str, Any], reason: str) -> None:
+        if isinstance(diagnostics, dict):
+            name = f"{candidate.get('extension_kind') or 'veteran'}:{reason}"
+            diagnostics[name] = int(diagnostics.get(name) or 0) + 1
+            if isinstance(diagnostics.get("_detail"), list):
+                diagnostics["_detail"].append((through_date, candidate.get("name"), reason))
+
     for candidate in report.get("candidates", []):
         player_id = candidate.get("player_id")
         team_id = candidate.get("team_id")
-        key = stable_id("ai_extension", save.get("meta", {}).get("season"), team_id, player_id)
+        key = stable_id("ai_extension", season, team_id, player_id)
         if not player_id or not team_id or key in processed or team_id in human_team_ids:
             continue
         if not candidate.get("eligible") or candidate.get("manual_review_required"):
@@ -6648,10 +6745,17 @@ def process_ai_extensions(
             continue
         if rookie_extension_window_closed(save, active, player, through_date):
             continue   # FA-REAL slice 2: rookie-scale extensions close the day before opening night
+        if (season == CANONICAL_SEASON and through_date[:4] == CANONICAL_SEASON[:4]
+                and candidate.get("extension_kind") != "rookie_scale"
+                and int(candidate.get("years_remaining") or 0) > 1):
+            # CONTRACT-TERMS: a new career opens on the opening-roster deadline with the real October contracts: real
+            # teams already had the whole 2026 summer to extend these players (deadline-day rookie-scale deals stay).
+            continue
         priority = ai_extension_priority(save, candidate, player, team_id, seed)
-        due_date = ai_extension_due_date(save, candidate, player, priority, seed,
-                                         next((c for c in active.get("contracts", []) if c.get("player_id") == player_id), None))
-        if through_date < due_date:
+        contract_now = next((c for c in active.get("contracts", []) if c.get("player_id") == player_id), None)
+        due_date = ai_extension_due_date(save, candidate, player, priority, seed, contract_now)
+        if due_date > ai_extension_pass_horizon(save, player, through_date, contract_now):
+            note(candidate, "not due yet")
             continue
         team_pass = ai_extension_team_pass_outlook(save, candidate, player, team_id, priority)
         if team_pass:
@@ -6681,24 +6785,83 @@ def process_ai_extensions(
                 },
             )
             processed.add(key)
+            note(candidate, "team passes")
             continue
-        bucket = "rookie_scale" if float(player.get("display_age", player.get("age")) or 27.0) <= 25.0 else "veteran"
-        if int(volume.get(bucket) or 0) >= AI_EXTENSION_BUCKET_LIMIT:
+        bucket = "rookie_scale" if candidate.get("extension_kind") == "rookie_scale" else "veteran"
+        if int(volume.get(bucket) or 0) >= AI_EXTENSION_LIMITS.get(bucket, AI_EXTENSION_BUCKET_LIMIT):
             processed.add(key)
+            note(candidate, "season ceiling")
             continue
-        if priority < 78.0:
+        if priority < (AI_ROOKIE_SCALE_EXTENSION_PRIORITY if bucket == "rookie_scale" else AI_VETERAN_EXTENSION_PRIORITY):
             # Fringe or bad-fit cases stay live for later checkpoints instead of being
             # burned for the full season before their role/team context has settled.
+            note(candidate, "low priority")
             continue
         result = negotiate_extension(active, player_id, team_id, seed=seed, max_rounds=3, date=through_date)
-        if result.get("accepted") and (result.get("decision") or {}).get("accepted_offer"):
+        rescued = None if result.get("accepted") else ai_extension_rescue_offer(result, contract_now, player, candidate)
+        if rescued or (result.get("accepted") and (result.get("decision") or {}).get("accepted_offer")):
             negotiation = result.get("negotiation") or {}
-            offer = dict((result.get("decision") or {}).get("accepted_offer") or {})
+            offer = dict(rescued or (result.get("decision") or {}).get("accepted_offer") or {})
             offer.setdefault("team_id", team_id)
             offer.setdefault("start_season", extension_start_season_from_date_save(through_date))
+            # CONTRACT-TERMS: an extension is signed in the season of its date (its anniversaries count from there).
+            from .contract_ai import signing_season_for_date
+            offer["signed_season"] = signing_season_for_date(through_date)
+            from .contract_ai import extension_first_year_limit
+            current_contract = next((c for c in active.get("contracts", []) if c.get("player_id") == player_id), None)
+            limit = extension_first_year_limit(current_contract, player, str(offer.get("start_season") or ""),
+                                               str(candidate.get("extension_kind") or "veteran"))
             offer = ai_adjust_extension_offer_for_current_season(save, candidate, player, offer, priority)
+            if limit and offer.get("annual_salary"):
+                # CONTRACT-TERMS: an extension's first year is at most 140% of the greater of his salary and the
+                # average salary (veterans), and never above his max.
+                offer = {**offer, "annual_salary": round(min(float(offer["annual_salary"]), float(limit)), 2)}
+            # CONTRACT-TERMS: the extension's shape (salary path, final-season option) at the real shares for the
+            # salary he ends up with (his pay-cut bar below, when the team meets it).
+            from .contract_ai import EXTENSION_MAX_RAISE
+            from .contract_terms import ai_structure
+            annual_dollars = float(offer.get("annual_salary") or 0.0)
+            annual_dollars *= 1_000_000 if 0 < annual_dollars < 1_000_000 else 1
+            pay_before = max([float(r.get("salary") or 0.0) for r in (current_contract or {}).get("seasons") or []
+                              if str(r.get("season") or "") <= str(offer.get("start_season") or "")] or [0.0])
+            age_before = float(player.get("display_age", player.get("age")) or 27.0)
+            annual_dollars = max(annual_dollars, pay_before * (0.95 if age_before < 31 else 0.80))
+            from .contract_terms import deal_kind
+            shape = ai_structure(annual_dollars, int(offer.get("years") or 1), player_id=str(player_id),
+                                 team_id=str(team_id), season=f"ext:{through_date[:4]}",
+                                 kind=deal_kind(None, annual_dollars, extension=True))
+            # The negotiated salary stays the average: a rising deal starts lower, a declining one higher.
+            from .contract_terms import multipliers, path_rate
+            steps = multipliers(int(offer.get("years") or 1), path_rate(shape["path"], EXTENSION_MAX_RAISE))
+            first = float(offer.get("annual_salary") or 0.0) * len(steps) / sum(steps)
+            if limit:
+                first = min(first, float(limit))
+            # CONTRACT-TERMS: a player doesn't extend for a pay cut while he can still earn more: under 31 the new deal
+            # must average at least 95% of his current salary, from 31 on 80% (he waits for free agency instead).
+            current_pay = max([float(r.get("salary") or 0.0) for r in (current_contract or {}).get("seasons") or []
+                               if str(r.get("season") or "") <= str(offer.get("start_season") or "")] or [0.0])
+            age_now = float(player.get("display_age", player.get("age")) or 27.0)
+            average = first * sum(steps) / len(steps)
+            bar = current_pay * (0.95 if age_now < 31 else 0.80)
+            if current_pay and average < bar:
+                # A team that wants to keep him meets that bar when it is within what he is really worth: the contract
+                # model prices players under contract about 1.45x below their real deals (Trae Young $38.6M against a
+                # real $53.0M, Austin Reaves $31.8M against $46.25M: TRADE-VOLUME-2), so a bar up to 1.45x his model
+                # price is still a fair price. Above that he waits for free agency.
+                worth = float(candidate.get("projected_aav") or 0.0) or float(candidate.get("projected_aav_millions") or 0.0) * 1e6
+                if bar > AI_EXTENSION_MODEL_UNDERPRICE * worth:
+                    processed.add(key)
+                    note(candidate, "pay-cut bar above his worth")
+                    continue
+                first = bar * len(steps) / sum(steps)
+                if limit and first > float(limit) + 1.0:
+                    processed.add(key)
+                    continue
+            offer = {**offer, "annual_salary": round(first, 2), "salary_path": shape["path"], "option": shape["option"],
+                     "max_raise": EXTENSION_MAX_RAISE}
             offer = merge_extension_offer_with_existing_contract(offer, negotiation)
             if not extension_offer_fits_hard_cap(baseline if baseline is not None else canonical, save, player_id, offer):
+                note(candidate, "hard cap")
                 continue
             from .contract_ai import keep_bird_clock
             keep_bird_clock(save, player, team_id, str(offer.get("signed_season") or ""))   # extensions keep it
@@ -6738,8 +6901,10 @@ def process_ai_extensions(
                 },
             )
             applied += 1
+            note(candidate, "extended")
             volume[bucket] = int(volume.get(bucket) or 0) + 1
         else:
+            note(candidate, "negotiation fails")
             outlook = ai_extension_refusal_outlook(save, candidate, player, team_id, priority)
             if outlook.get("is_trade_demand"):
                 pressure = set(save.setdefault("ai_trade_pressure_player_ids", []))
@@ -6840,8 +7005,15 @@ def ai_extension_priority(save: dict[str, Any], candidate: dict[str, Any], playe
 def ai_extension_due_date(save: dict[str, Any], candidate: dict[str, Any], player: dict[str, Any], priority: float, seed: int,
                           contract: dict[str, Any] | None = None) -> str:
     current = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
-    start_year = season_start_year_from_date(str(current))
-    if priority >= 82.0:
+    start_year = extension_contract_start_year(save, str(current))
+    deadline_text = player_extension_deadline(save, player, start_year, contract)
+    summer_deadline = deadline_text < f"{start_year + 1}-01-01"
+    if summer_deadline:
+        # CONTRACT-TERMS: rookie-scale players and players with more than one season left must sign by the day
+        # before opening night, so their teams decide in late summer and camp (real rookie extensions mostly land
+        # between July and the October deadline).
+        month_day = "08-01" if priority >= 82.0 else "09-01" if priority >= 72.0 else "10-01" if priority >= 62.0 else "10-08"
+    elif priority >= 82.0:
         month_day = "10-01"
     elif priority >= 72.0:
         month_day = "11-10"
@@ -6853,7 +7025,7 @@ def ai_extension_due_date(save: dict[str, Any], candidate: dict[str, Any], playe
     try:
         due_year = start_year + 1 if month_day.startswith("01-") else start_year
         base = parse_date(f"{due_year}-{month_day}") + timedelta(days=jitter)
-        deadline = parse_date(player_extension_deadline(save, player, start_year, contract))
+        deadline = parse_date(deadline_text)
         return min(base, deadline).isoformat()
     except (TypeError, ValueError):
         return f"{start_year}-{month_day}"
@@ -6877,6 +7049,8 @@ def ai_adjust_extension_offer_for_current_season(save: dict[str, Any], candidate
         years = min(years, 2 if priority < 84.0 else 3)
     elif age >= 29:
         years = min(years, 3 if priority >= 78.0 else 2)
+    if candidate.get("max_new_years"):
+        years = min(years, int(candidate["max_new_years"]))   # CONTRACT-TERMS: five seasons including this one
     adjusted["years"] = max(1, years)
     adjusted["original_contract_years"] = adjusted["years"]
     return adjusted
@@ -7069,6 +7243,8 @@ def backfill_contract_metadata(contract: dict[str, Any], active_season: str) -> 
     )
     if not seasons:
         return
+    if contract.get("contract_history"):
+        return   # CONTRACT-TERMS: real contracts carry their evidence-based history (an unknown length stays unknown)
     if contract.get("original_contract_years"):
         try:
             contract["original_contract_years"] = int(contract.get("original_contract_years") or 0)
@@ -8689,7 +8865,8 @@ def offer_to_contract_seasons(offer: dict[str, Any]) -> list[dict[str, Any]]:
             row["cap_charge"] = int(round(float(charges[offset])))
         seasons.append(row)
     from .contract_protection import negotiated_seasons
-    return negotiated_seasons(offer, seasons)
+    from .contract_terms import apply_option
+    return apply_option(negotiated_seasons(offer, seasons), offer.get("option") or "none")   # CONTRACT-TERMS
 
 
 def initial_team_morale(canonical: dict[str, Any]) -> dict[str, dict[str, float]]:
@@ -10302,6 +10479,12 @@ def ai_re_signing_contract_terms(save: dict[str, Any], player: dict[str, Any], n
     salary = max(salary, minimum_salary(next_season, service_years(player, next_season)))
     if (player.get("_bird") or {}).get("level") == "early":
         years = max(2, years)
+    # CONTRACT-TERMS: the deal's shape (salary path, final-season option) at the real shares for its salary band.
+    from .contract_terms import ai_structure, apply_option, deal_kind, path_rate
+    shape = ai_structure(float(salary), years, player_id=str(player.get("id")), team_id=str(player.get("team_id") or ""),
+                         season=next_season, bird_level=(player.get("_bird") or {}).get("level"),
+                         kind=deal_kind("bird", float(salary)))
+    raise_rate = path_rate(shape["path"], raise_rate)
     seasons = [
         {
             "season": season_label_from_start(season_start_year(next_season) + offset),
@@ -10313,7 +10496,9 @@ def ai_re_signing_contract_terms(save: dict[str, Any], player: dict[str, Any], n
         }
         for offset, amount in enumerate(raise_schedule(salary, years, raise_rate))
     ]
-    return {"salary": salary, "years": years, "seasons": seasons, "score": score, "raise_rate": raise_rate}
+    apply_option(seasons, shape["option"])
+    return {"salary": salary, "years": years, "seasons": seasons, "score": score, "raise_rate": raise_rate,
+            "salary_path": shape["path"], "option": shape["option"]}
 
 
 def re_signing_within_bird_rights(player: dict[str, Any], salary: float) -> bool:
@@ -10342,7 +10527,10 @@ def ai_re_signing_fits_hard_cap(
     from .cap_ledger import quote
     result = quote(active, save, str(team_id), player, float(terms["salary"]), int(terms["years"]), season=next_season,
                    bird=player.get("_bird") or None, raise_rate=terms.get("raise_rate"), include_reservations=False)
-    player["_re_signing_payment"] = result.get("payment")
+    payment = result.get("payment")
+    if payment:
+        payment = {**payment, "option": terms.get("option") or "none", "salary_path": terms.get("salary_path") or "rising"}
+    player["_re_signing_payment"] = payment
     return bool(result["ok"])
 
 

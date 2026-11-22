@@ -43,7 +43,6 @@ from .utils import clamp, maybe_float, stable_id
 
 
 CONTRACT_MARKET_CONFIG_FILE = Path("data/overrides/contract_market_config.json")
-EXTENSION_ELIGIBLE_MAX_REMAINING_SEASONS = 2
 
 
 def default_contract_market_config() -> dict[str, Any]:
@@ -288,7 +287,7 @@ def build_extension_candidates(
         contract = contract_for_player(canonical, player["id"]) or {}
         profile = profiles[player["id"]]
         valuation = valuations.get(player["id"]) or fallback_player_valuation(player)
-        window = extension_contract_window(contract)
+        window = extension_contract_window(contract, player)
         remaining = int(window["years_remaining"])
         manual = bool(window["manual_review_required"])
         eligible = bool(window["eligible"]) and player.get("team_id") is not None
@@ -310,7 +309,13 @@ def build_extension_candidates(
                 reasons=reasons,
                 confidence=round(min(profile.confidence, 0.7 if eligible else 0.48), 3),
                 source_ids=["src_contract_market_config_v1", *list(contract.get("source_ids") or [])],
-                notes="Extension candidate v1 is limited to the final two active contract seasons and uses practical options heuristics rather than full CBA eligibility.",
+                notes="Extension eligibility follows the CBA rules in contract_ai.extension_contract_window (rookie-scale "
+                      "final year; veteran deals of three or more seasons after the second or third anniversary).",
+                extension_kind=window.get("extension_kind"),
+                eligibility_text=window.get("eligibility_text"),
+                max_new_years=int(window.get("max_new_years") or 0),
+                signed_season=window.get("signed_season"),
+                history_known=bool(window.get("history_known")),
             )
         )
     return sorted(output, key=lambda item: (item.priority, item.projected_aav, item.player_id), reverse=True)
@@ -616,6 +621,9 @@ def apply_contract_to_save_state(
         return {"status": "not_applied", "negotiation_id": negotiation_id, "issues": issues, "notes": " ".join(issues)}
     if accepted_offer:
         accepted_offer = dict(accepted_offer)
+        if negotiation_payload.get("negotiation_type") == "extension":
+            # CONTRACT-TERMS: an extension is signed in the season of its date, not the season it starts paying.
+            accepted_offer["signed_season"] = signing_season_for_date(date)
         accepted_offer.setdefault("original_contract_years", int(accepted_offer.get("years") or accepted_offer.get("term_years") or 1))
         accepted_offer.setdefault("signed_season", str(accepted_offer.get("start_season") or extension_start_season_from_date(date)))
     if accepted_offer and negotiation_payload.get("negotiation_type") == "extension":
@@ -797,6 +805,18 @@ def extension_start_season_from_date(date_value: str) -> str:
     return f"{start}-{str(start + 1)[-2:]}"
 
 
+def signing_season_for_date(date_value: str) -> str:
+    """CONTRACT-TERMS: the contract season a signing on this date belongs to (from July on, the season that starts that
+    year; earlier, the one that started the year before). Extensions are closed from the June 17 switch to July 6."""
+    try:
+        year = int(str(date_value)[:4])
+        month = int(str(date_value)[5:7])
+    except (TypeError, ValueError):
+        return CANONICAL_SEASON
+    start = year if month >= 7 else year - 1
+    return f"{start}-{str(start + 1)[-2:]}"
+
+
 def merge_extension_offer_with_existing_contract(offer: dict[str, Any], negotiation_payload: dict[str, Any]) -> dict[str, Any]:
     start_season = str(offer.get("start_season") or extension_start_season_from_date(str(negotiation_payload.get("date") or CANONICAL_START_DATE)))
     requested_start_year = season_start_year_for_contract(start_season)
@@ -837,17 +857,21 @@ def offer_contract_seasons(offer: dict[str, Any], start_season: str, guarantee_s
         start = int(start_season.split("-")[0])
     except (ValueError, AttributeError):
         start = 2026
+    # CONTRACT-TERMS: the salary path (rising, flat or declining by the extension limit, 8% of year one) when the
+    # offer carries one; flat otherwise.
+    from .contract_terms import apply_option, normalize_path, path_rate
+    rate = path_rate(normalize_path(offer.get("salary_path"), "flat"), float(offer.get("max_raise") or EXTENSION_MAX_RAISE))
     seasons = [
         {
             "season": f"{start + offset}-{str(start + offset + 1)[-2:]}",
-            "salary": int(round(annual)),
+            "salary": int(round(annual * (1.0 + rate * offset))),
             "option_type": offer.get("option_type"),
             "guarantee_status": guarantee_status,
         }
         for offset in range(max(1, years))
     ]
     from .contract_protection import negotiated_seasons
-    return negotiated_seasons(offer, seasons)
+    return apply_option(negotiated_seasons(offer, seasons), offer.get("option") or "none")
 
 
 def projected_retirement_start_year(player: dict[str, Any], active_start_year: int | None = None) -> int | None:
@@ -1472,36 +1496,213 @@ def salary_seasons_remaining(contract: dict[str, Any]) -> int:
     return sum(1 for season in contract.get("seasons", []) if str(season.get("season", "")) >= active_season and season.get("salary") is not None)
 
 
-def extension_contract_window(contract: dict[str, Any] | None) -> dict[str, Any]:
-    """Return the shared final-two-seasons extension eligibility decision."""
+# ---------------------------------------------------------------------------------------------------------------------
+# Extension eligibility (CONTRACT-TERMS part 1), from the 2023 CBA as summarised in docs/agents/tasks/fa-realism-research.md
+# and the Hoops Rumors veteran-extension glossary (https://www.hoopsrumors.com/2024/12/hoops-rumors-glossary-veteran-contract-extension-4.html):
+# - Rookie scale: a first-round pick can extend only in the summer before the fourth and last year of his rookie deal
+#   (July 6 to the day before opening night), for up to five new seasons, first year up to his max.
+# - Veteran: a contract that covers only one or two seasons can't be extended. A three- or four-season deal can be
+#   extended from the second anniversary of its signing, a five- or six-season deal from the third. The extension may
+#   reach five seasons including the current one; its first year is at most 140% of the greater of his last salary
+#   and the league's estimated average salary (and his max); raises up to 8% of the first year.
+# - Timing: from July 6 (the end of the July moratorium); a player with more than one season left must sign by the day
+#   before opening night; one in the last season of his deal can extend all season (the game's contract season
+#   switches on June 17, so through June 16; the real league year ends June 30).
+# The old game rule "the last two seasons of the contract" was a stand-in for the anniversary rule; it is kept only
+# when the signing date of a real contract is not on record (contract_history), where it is the rule for a four-season
+# deal, the most common veteran length.
+EXTENSION_ELIGIBLE_MAX_REMAINING_SEASONS = 2       # fallback only (see above)
+EXTENSION_MAX_TOTAL_SEASONS = 5                    # veteran: including the current season
+ROOKIE_EXTENSION_MAX_NEW_SEASONS = 5
+EXTENSION_FIRST_YEAR_SHARE = 1.40                  # 140% of the greater of last salary and the average salary
+EXTENSION_MAX_RAISE = 0.08
+EXTENSION_OPENS_MONTH_DAY = "07-06"
+ROOKIE_SCALE_SEASONS = 4
+
+EXTENSION_REASONS = {
+    "eligible_rookie_scale": "Rookie-scale extension: first-round picks can extend in the summer before the last year of their rookie deal, until the day before opening night.",
+    "eligible_extension_window": "Veteran extension: {anniversary} of his {length}-season deal (signed {signed}) has passed.",
+    "not_in_extension_window_unknown": "His deal has run at least {length} seasons and when it was signed isn't on record, so the game uses the rule for a four-season deal: he can extend only in its last two seasons.",
+    "eligible_history_unknown": "When his deal was signed isn't on record (it has run at least {min_years} seasons), so the game uses the rule for a four-season deal: he can extend in its last two seasons.",
+    "rookie_scale_not_final_year": "First-round picks can extend only in the summer before the last year of their rookie deal ({final}).",
+    "rookie_option_declined": "His team declined his rookie-scale option, so he becomes a free agent when this deal ends and can't extend it.",
+    "original_contract_shorter_than_three_years": "A contract of one or two seasons can't be extended; he can re-sign when it ends.",
+    "not_in_extension_window": "A {length}-season deal can be extended from {anniversary} of its signing ({signed}): from {opens}.",
+    "term_full": "His deal already runs {remaining} seasons from this one; an extension may reach at most five including this season.",
+    "no_salary_seasons_remaining": "His contract has no seasons left to extend.",
+    "manual_review_required": "His current contract is not fully known, so the game cannot extend it.",
+    "not_extension_eligible": "He is not eligible for an extension.",
+}
+
+
+def _first_round_pick(player: dict[str, Any] | None) -> bool:
+    player = player or {}
+    if player.get("draft_round") not in (None, ""):
+        return int(maybe_float(player.get("draft_round")) or 0) == 1
+    pick = int(maybe_float(player.get("overall_pick") or player.get("draft_pick") or player.get("draft_position")) or 0)
+    return 1 <= pick <= 30
+
+
+def _season_number(label: Any) -> int | None:
+    text = str(label or "")[:4]
+    return int(text) if len(text) == 4 and text.isnumeric() else None
+
+
+def _paid_seasons(contract: dict[str, Any]) -> list[str]:
+    return sorted(str(r.get("season")) for r in contract.get("seasons", [])
+                  if r.get("salary") is not None and _season_number(r.get("season")) is not None
+                  and r.get("option_type") != "qualifying_offer")
+
+
+def is_rookie_scale_contract(contract: dict[str, Any] | None, player: dict[str, Any] | None) -> bool:
+    """A first-round pick's rookie-scale deal: from the real draft (contract_history) or the game's own draft (a
+    first-round pick's four-season deal signed in his draft season)."""
+    contract = contract or {}
+    history = contract.get("contract_history") or {}
+    if history.get("kind") == "rookie_scale":
+        return True
+    if history:
+        return False
+    if not _first_round_pick(player):
+        return False
+    draft_year = int(maybe_float((player or {}).get("draft_year")) or 0)
+    signed = str(contract.get("signed_season") or "")
+    paid = _paid_seasons(contract)
+    return (bool(draft_year) and signed[:4] == str(draft_year)
+            and int(contract.get("original_contract_years") or 0) == ROOKIE_SCALE_SEASONS
+            and bool(paid) and int(paid[-1][:4]) <= draft_year + ROOKIE_SCALE_SEASONS - 1)
+
+
+def _anniversary_words(years_needed: int) -> str:
+    return "the third anniversary" if years_needed >= 3 else "the second anniversary"
+
+
+def extension_contract_window(contract: dict[str, Any] | None, player: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Whether this contract can be extended this contract season, and on what terms (see the section notes).
+
+    Keys: eligible, eligibility_status, eligibility_text (plain words), extension_kind ('rookie_scale' or 'veteran'),
+    years_remaining (including this season), max_new_years, original_contract_years, signed_season,
+    history_known (whether the signing season is on record), manual_review_required."""
     contract = contract or {}
     remaining = salary_seasons_remaining(contract)
     manual = contract_needs_manual_review(contract)
-    original_years = int(contract.get("original_contract_years") or 0)
-    eligible = (
-        not manual
-        and original_years >= 3
-        and 1 <= remaining <= EXTENSION_ELIGIBLE_MAX_REMAINING_SEASONS
-    )
-    if manual:
-        status = "manual_review_required"
-    elif original_years < 3:
-        status = "original_contract_shorter_than_three_years"
-    elif remaining > EXTENSION_ELIGIBLE_MAX_REMAINING_SEASONS:
-        status = "not_in_extension_window"
-    elif remaining < 1:
-        status = "no_salary_seasons_remaining"
-    elif eligible:
-        status = "eligible_extension_window"
-    else:
-        status = "not_extension_eligible"
-    return {
-        "eligible": eligible,
-        "eligibility_status": status,
-        "years_remaining": remaining,
-        "original_contract_years": original_years,
-        "manual_review_required": manual,
+    original_years = contract.get("original_contract_years")
+    active = contract_active_season(contract)
+    current = int(active[:4])
+    paid = _paid_seasons(contract)
+    last = int(paid[-1][:4]) if paid else current - 1
+    history = contract.get("contract_history") or {}
+    signed = str(contract.get("signed_season") or "")
+    result: dict[str, Any] = {
+        "eligible": False, "years_remaining": remaining, "original_contract_years": original_years,
+        "signed_season": signed or None, "history_known": True, "manual_review_required": manual,
+        "extension_kind": "veteran", "max_new_years": 0,
     }
+
+    def done(status: str, **words: Any) -> dict[str, Any]:
+        result["eligibility_status"] = status
+        result["eligible"] = status.startswith("eligible")
+        try:
+            result["eligibility_text"] = EXTENSION_REASONS[status].format(**words)
+        except (KeyError, IndexError):
+            result["eligibility_text"] = EXTENSION_REASONS.get(status, "")
+        if not result["eligible"]:
+            result["max_new_years"] = 0
+        return result
+
+    if manual:
+        return done("manual_review_required")
+    if remaining < 1:
+        return done("no_salary_seasons_remaining")
+    if is_rookie_scale_contract(contract, player):
+        result["extension_kind"] = "rookie_scale"
+        draft_year = int(maybe_float((player or {}).get("draft_year")) or history.get("draft_year")
+                         or _season_number(signed) or current)
+        final = draft_year + ROOKIE_SCALE_SEASONS - 1
+        if history.get("option_declined") or last < final:
+            return done("rookie_option_declined")
+        if current != final:
+            return done("rookie_scale_not_final_year", final=season_label_from_start_year(final))
+        result["max_new_years"] = ROOKIE_EXTENSION_MAX_NEW_SEASONS
+        return done("eligible_rookie_scale")
+    result["max_new_years"] = max(0, EXTENSION_MAX_TOTAL_SEASONS - remaining)
+    # The signing season: exact, or a range when the evidence only bounds it (contract_history).
+    earliest = _season_number(history.get("signed_season_earliest") or signed)
+    latest = _season_number(history.get("signed_season_latest") or signed)
+    if earliest is None or latest is None:
+        # No history at all (e.g. an unlabelled scaffold contract): the game's long-standing last-two-seasons rule.
+        result["history_known"] = False
+        if int(original_years or 0) and int(original_years or 0) < 3:
+            return done("original_contract_shorter_than_three_years")
+        if remaining > EXTENSION_ELIGIBLE_MAX_REMAINING_SEASONS:
+            done("not_in_extension_window_unknown", length=remaining)
+            result["eligibility_status"] = "not_in_extension_window"
+            return result
+        return done("eligible_history_unknown", min_years=max(remaining, int(original_years or remaining)))
+    outcomes = []
+    for signed_start in range(earliest, latest + 1):
+        length = last - signed_start + 1
+        needed = 3 if length >= 5 else 2
+        outcomes.append((length >= 3 and current - signed_start >= needed, signed_start, length, needed))
+    if len(outcomes) > 1:
+        result["history_known"] = False
+    if all(ok for ok, *_ in outcomes):
+        if result["max_new_years"] <= 0:
+            return done("term_full", remaining=remaining)
+        _ok, signed_start, length, needed = outcomes[-1]
+        return done("eligible_extension_window", anniversary=_anniversary_words(needed),
+                    length=length, signed=season_label_from_start_year(signed_start))
+    if not any(ok for ok, *_ in outcomes):
+        _ok, signed_start, length, needed = outcomes[-1]
+        if length < 3:
+            return done("original_contract_shorter_than_three_years")
+        return done("not_in_extension_window", length=length, anniversary=_anniversary_words(needed),
+                    signed=season_label_from_start_year(signed_start),
+                    opens=f"the {season_label_from_start_year(signed_start + needed)} season")
+    # The evidence allows both answers: the signing date isn't on record.
+    if remaining > EXTENSION_ELIGIBLE_MAX_REMAINING_SEASONS:
+        _ok, signed_start, length, needed = outcomes[-1]
+        done("not_in_extension_window_unknown", length=length)
+        result["eligibility_status"] = "not_in_extension_window"
+        return result
+    if result["max_new_years"] <= 0:
+        return done("term_full", remaining=remaining)
+    return done("eligible_history_unknown",
+                min_years=int(history.get("original_contract_years_min") or (last - latest + 1)))
+
+
+def extension_first_year_limit(contract: dict[str, Any] | None, player: dict[str, Any] | None, start_season: str,
+                               kind: str = "veteran") -> float:
+    """The most an extension's first season may pay (CBA): his max, and for a veteran also 140% of the greater of
+    his last salary and the league's estimated average salary."""
+    from .cap_rules import AVERAGE_SALARY_CAP_SHARE, cap_lines_for_season, max_salary
+    rows = [r for r in (contract or {}).get("seasons", []) if r.get("salary") is not None
+            and _season_number(r.get("season")) is not None]
+    last_salary = float(sorted(rows, key=lambda r: str(r.get("season")))[-1].get("salary") or 0.0) if rows else 0.0
+    service = years_of_service(player or {}, start_season)
+    ceiling = max_salary(start_season, service, last_salary)
+    if kind == "rookie_scale":
+        return ceiling
+    average = cap_lines_for_season(start_season)["salary_cap"] * AVERAGE_SALARY_CAP_SHARE
+    return min(ceiling, EXTENSION_FIRST_YEAR_SHARE * max(last_salary, average))
+
+
+def extension_deadline_for(contract: dict[str, Any] | None, player: dict[str, Any] | None, season_start_year: int,
+                           save: dict[str, Any] | None = None) -> str:
+    """The last day he can sign an extension this contract season (see the section notes): the day before opening
+    night for a rookie-scale deal or a deal with more than one season left; else June 16, the day before the game's
+    contract-season switch."""
+    from .offseason_calendar import roster_deadline
+    window = extension_contract_window(contract, player)
+    if window.get("extension_kind") == "rookie_scale" or int(window.get("years_remaining") or 0) > 1:
+        return roster_deadline(int(season_start_year), save).isoformat()
+    return f"{int(season_start_year) + 1}-06-16"
+
+
+def extension_window_open_on(day: str) -> bool:
+    """Extensions can be signed from July 6 (after the moratorium) until the June 17 contract-season switch."""
+    month_day = str(day)[5:10]
+    return not ("06-17" <= month_day < EXTENSION_OPENS_MONTH_DAY)
 
 
 def contract_needs_manual_review(contract: dict[str, Any] | None) -> bool:

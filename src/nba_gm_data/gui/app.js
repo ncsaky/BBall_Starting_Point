@@ -5923,6 +5923,66 @@ function offseasonItemActions(item, editable) {
   return "";
 }
 
+// CONTRACT-TERMS part 3: the Option Decisions card. Player options are the player's call (with his reason: the money
+// available, his role, age or an injury); your team options wait for your Keep or Decline. Notable decisions around
+// the league are listed below yours. Every row is a record the engine wrote (offseason_decisions.option_decisions_view).
+const OPTION_ITEM_KINDS = new Set(["team_option", "rookie_option", "player_option_result"]);
+
+function optionDecisionWords(row) {
+  if (row.status === "pending") return "Your decision";
+  if (row.decided_by === "player") return row.status === "exercised" ? "Opted in" : "Opted out";
+  if (row.decided_by === "default") return "Lapsed";
+  return row.status === "exercised" ? "Kept" : "Declined";
+}
+
+function optionDecisionWho(row) {
+  if (row.decided_by === "player") return "The player";
+  if (row.decided_by === "user" || row.status === "pending") return "You";
+  if (row.decided_by === "default") return "Deadline passed";
+  return "The team";
+}
+
+function optionDecisionsMarkup(view, editable) {
+  const yours = view?.yours || [];
+  const league = view?.league || [];
+  if (!yours.length && !league.length) return "";
+  const chipTone = (row) => row.status === "pending" ? "pending" : row.status === "exercised" ? "exercised" : "declined";
+  const actions = (row) => editable && row.status === "pending" && ["team_option", "rookie_option"].includes(row.kind)
+    ? `<button type="button" class="ui-command" data-offseason-option="exercise" data-player-id="${escapeAttr(row.player_id || "")}">Keep him</button>
+       <button type="button" class="ui-command" data-offseason-option="decline" data-player-id="${escapeAttr(row.player_id || "")}">Decline</button>` : "";
+  const name = (row) => `<button type="button" class="fa-player-name" data-fa-player-card="${escapeAttr(row.player_id || "")}">${escapeHtml(row.name || "")}</button>`;
+  const yourRows = yours.map((row) => `<tr class="${row.status === "pending" ? "is-pending" : ""}">
+      <th scope="row" class="offseason-player">${name(row)}</th>
+      <td>${escapeHtml(row.kind_words.replace(/^./, (c) => c.toUpperCase()))}<small>${escapeHtml(shortSeasonLabel(row.season))}</small></td>
+      <td class="offseason-money">${money(row.salary_millions)}</td>
+      <td>${escapeHtml(optionDecisionWho(row))}</td>
+      <td class="offseason-status"><span class="offseason-chip is-${chipTone(row)}">${escapeHtml(optionDecisionWords(row))}</span></td>
+      <td class="offseason-text">${escapeHtml(row.reason || "")}${row.status === "pending" ? `<small>${escapeHtml(`Due ${shortDate(row.deadline)}; declined if you do nothing.`)}</small>` : ""}</td>
+      <td class="offseason-actions">${actions(row)}</td>
+    </tr>`).join("");
+  const leagueRows = league.map((row) => `<tr>
+      <th scope="row" class="offseason-player">${name(row)}</th>
+      <td>${escapeHtml(row.team_abbrev || "")}</td>
+      <td>${escapeHtml(row.kind_words.replace(/^./, (c) => c.toUpperCase()))}</td>
+      <td class="offseason-money">${money(row.salary_millions)}</td>
+      <td class="offseason-status"><span class="offseason-chip is-${chipTone(row)}">${escapeHtml(optionDecisionWords(row))}</span></td>
+      <td class="offseason-text">${escapeHtml(row.reason || "")}</td>
+    </tr>`).join("");
+  const counts = view.counts || {};
+  const summary = `Around the league: ${counts.player_opted_out || 0} player${counts.player_opted_out === 1 ? "" : "s"} opted out and ${counts.player_opted_in || 0} opted in; teams kept ${counts.team_kept || 0} options and declined ${counts.team_declined || 0}.`;
+  return `<section class="option-decisions" data-option-decisions aria-label="Option decisions">
+    <header><h4>Option Decisions · ${escapeHtml(shortSeasonLabel(view.season || ""))}</h4><span>Player options are the player's call; team options are yours.</span></header>
+    ${yours.length ? `<table class="offseason-table option-decisions-table" aria-label="Your team's option decisions">
+      <colgroup><col style="width:150px"><col style="width:118px"><col style="width:82px"><col style="width:96px"><col style="width:96px"><col><col style="width:176px"></colgroup>
+      <thead><tr><th scope="col">Player</th><th scope="col">Option</th><th scope="col">Salary</th><th scope="col">Who decides</th><th scope="col">Decision</th><th scope="col">Why</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+      <tbody>${yourRows}</tbody></table>` : `<p class="offseason-empty">No options on your team this time.</p>`}
+    ${league.length ? `<p class="option-decisions-summary">${escapeHtml(summary)}</p><table class="offseason-table option-decisions-table" aria-label="Notable option decisions around the league">
+      <colgroup><col style="width:150px"><col style="width:58px"><col style="width:118px"><col style="width:82px"><col style="width:96px"><col></colgroup>
+      <thead><tr><th scope="col">Player</th><th scope="col">Team</th><th scope="col">Option</th><th scope="col">Salary</th><th scope="col">Decision</th><th scope="col">Why</th></tr></thead>
+      <tbody>${leagueRows}</tbody></table>` : ""}
+  </section>`;
+}
+
 function offseasonChecklistTable(items, editable) {
   if (!items.length) return `<p class="offseason-empty">Nothing to decide here.</p>`;
   const rows = items.map((item) => `<tr class="${item.status === "pending" ? "is-pending" : ""}">
@@ -6056,7 +6116,7 @@ function offseasonChecklistPanel(room = state.data.freeagency || {}) {
       <div class="offseason-cap">${list.cap_room_millions != null ? `<span class="fa-cap-chip${Number(list.cap_room_millions) < 0 ? " is-over" : ""}"><small>Cap room</small><strong>${escapeHtml(signedMoney(list.cap_room_millions))}</strong></span>` : ""}${list.holds_millions ? `<span class="fa-cap-chip"><small>Cap holds</small><strong>${escapeHtml(money(list.holds_millions))}</strong></span>` : ""}</div>
     </header>
     ${offseasonStopTimeline(stop, dates)}
-    <div class="offseason-scroll">${offerSheetDecisionMarkup(room)}${stop === "finalize" ? signingDayRecap(room) : ""}${offseasonChecklistTable(items, editable)}</div>
+    <div class="offseason-scroll">${offerSheetDecisionMarkup(room)}${stop === "finalize" ? signingDayRecap(room) : ""}${optionDecisionsMarkup(list.option_decisions, editable)}${offseasonChecklistTable(list.option_decisions ? items.filter((item) => !OPTION_ITEM_KINDS.has(item.kind)) : items, editable)}</div>
   </section>`;
 }
 
@@ -6070,7 +6130,7 @@ function setRosterChecklistPanel(list = state.data.setRoster || {}) {
       <span>${escapeHtml(`Opening rosters (15 players) and rookie-scale extensions are due ${shortDate(list.roster_deadline)}, the day before opening night. Rookie-scale options for next season are due ${shortDate(list.rookie_option_deadline)}.`)}</span></div>
     </header>
     ${offseasonStopTimeline("set_the_roster", dates)}
-    <div class="offseason-scroll">${offseasonChecklistTable(items, !state.hydrating)}</div>
+    <div class="offseason-scroll">${optionDecisionsMarkup(list.option_decisions, !state.hydrating)}${offseasonChecklistTable(list.option_decisions ? items.filter((item) => !OPTION_ITEM_KINDS.has(item.kind)) : items, !state.hydrating)}</div>
   </section>`;
 }
 
@@ -6424,16 +6484,35 @@ function freeAgencyOfferDraft(player, room = state.data.freeagency || {}) {
       backload: false,  // FA-REAL slice 3: the Arenas year-3 jump (offer sheets to players with 1-2 years in the league)
       guaranteed: true,
       route: "",       // "" = the best legal way to pay (cap_ledger.quote picks it)
-      raise: "max",    // "max" = the largest legal raise; "0" = the same salary every season
+      // CONTRACT-TERMS: the salary path ("rising" = the largest legal raise, "flat", "declining" = the largest legal
+      // decrease) and the final-season option ("none", "player", "team").
+      path: "rising",
+      option: "none",
     };
   }
   return state.freeAgentOfferDrafts[key];
 }
 
+const CONTRACT_PATH_LABELS = { rising: "Rising", flat: "Flat", declining: "Declining" };
+const CONTRACT_OPTION_LABELS = { none: "None", player: "Player option", team: "Team option" };
+
+// Plain words for a salary path and option (the engine's contract_terms.describe says the same).
+function contractShapeTitle(path, pct) {
+  if (path === "flat") return "The same salary every season";
+  if (path === "declining") return `The salary falls by ${pct}% of the first year each season (the largest legal decrease)`;
+  return `The salary rises by ${pct}% of the first year each season (the largest legal raise)`;
+}
+
+function contractOptionTitle(option) {
+  if (option === "player") return "Player option on the last season: he decides whether to play it (players like this)";
+  if (option === "team") return "Team option on the last season: you decide whether to keep him (players count it as less money)";
+  return "Every season is part of the deal";
+}
+
 // FA-REAL: legality comes from the engine's money calculator (action free_agent_offer_quote -> cap_ledger.quote), the
 // same call submit_free_agent_offer makes, so the screen and the save agree. The room caches one quote per offer.
 function freeAgencyQuoteKey(player, draft = {}) {
-  return [state.currentSave || "", player?.id || "", roundOfferTenth(draft.aav).toFixed(1), Number(draft.years || 1), draft.route || "", draft.raise || "max", draft.backload ? "b" : ""].join("|");
+  return [state.currentSave || "", player?.id || "", roundOfferTenth(draft.aav).toFixed(1), Number(draft.years || 1), draft.route || "", draft.path || "rising", draft.option || "none", draft.guaranteed === false ? "n" : "g", draft.backload ? "b" : ""].join("|");
 }
 
 function freeAgencyQuote(player, draft = {}) {
@@ -6441,7 +6520,7 @@ function freeAgencyQuote(player, draft = {}) {
 }
 
 function freeAgencyRaisePct(player, draft = {}) {
-  return draft.raise === "0" ? 0 : null;
+  return (draft.path || "rising") === "flat" ? 0 : null;
 }
 
 function freeAgencyCapVerdict(quote, rules = {}) {
@@ -6462,10 +6541,11 @@ function requestFreeAgencyQuote(player, draft, done) {
       const result = await action("free_agent_offer_quote", {
         ...savePayload(), team: userTeam(), player_id: player.id, years: Number(draft.years || 1),
         aav_millions: roundOfferTenth(draft.aav), route: draft.route || "", raise_pct: freeAgencyRaisePct(player, draft),
+        salary_path: draft.path || "rising", option: draft.option || "none", guaranteed: draft.guaranteed !== false,
         backload: Boolean(draft.backload),
       });
       state.freeAgentQuotes ||= {};
-      state.freeAgentQuotes[key] = result.quote ? { ...result.quote, offer_sheet: result.offer_sheet || null } : null;
+      state.freeAgentQuotes[key] = result.quote ? { ...result.quote, offer_sheet: result.offer_sheet || null, player_terms: result.player_terms || null } : null;
       if (freeAgencyQuoteKey(player, draft) === key) done?.();
     } catch (error) {
       console.warn("free_agent_offer_quote failed", error);
@@ -6498,13 +6578,19 @@ function freeAgencyOfferPreview(player, room = {}, draft = {}) {
   const key = guaranteed ? "guaranteed" : "non_guaranteed";
   // The engine's floor for this length and guarantee (the AI bids' rule: today's bar and the best rival bid); null means
   // no salary wins him from you today.
-  const floor = freeAgencyAcceptFloor(player, years, key);
-  const floorOffer = floor;
   const safe = Number.isFinite(Number(player?.safe_years)) ? Number(player.safe_years) : 5;
   const quote = freeAgencyQuote(player, { ...draft, aav, years });
+  // CONTRACT-TERMS: with a salary path or option other than the usual (rising, no option) the engine's quote says what
+  // the shape is worth to him and the first-year salary he needs on these terms (play.user_offer_decision).
+  const terms = sheetTerms ? null : quote?.player_terms || null;
+  const usual = (draft.path || "rising") === "rising" && (draft.option || "none") === "none";
+  const floor = terms ? (terms.floor_millions === null || terms.floor_millions === undefined ? Infinity : Number(terms.floor_millions))
+    : usual ? freeAgencyAcceptFloor(player, years, key) : NaN;
+  const floorOffer = floor;
   const cap = freeAgencyCapVerdict(quote, rules);
   const retires = years > safe;
-  const accepts = Number.isFinite(floor) && aav >= floor && !retires;
+  const optionProblem = terms?.option_problem || ((draft.option || "none") !== "none" && years < 2 ? "An option needs a contract of at least two seasons (the option is the last one)." : "");
+  const accepts = !optionProblem && Number.isFinite(floor) && aav >= floor && !retires;
   const ratio = Number.isFinite(floor) && floor > 0 ? aav / floor : 0;
   const schedule = quote?.schedule || [];
   // The ledger's books by season (cap_ledger.cap_table): this season's cap payroll counts holds and empty-spot charges.
@@ -6535,15 +6621,29 @@ function freeAgencyOfferPreview(player, room = {}, draft = {}) {
     return { aav, years, maxYears, minYears, guaranteed, total, floor, floorOffer, safe, cap, quote, retires: false, accepts: signs && cap.ok, ratio, seasons, verdict,
       canSubmit: cap.ok && !sheetTerms.blocked_reason, offerSheet: sheetTerms };
   }
+  const effect = terms?.effect ? ` ${terms.effect}` : "";
   if (player?.signing_blocked_reason) verdict = { tone: "blocked", headline: "Can't sign him", detail: player.signing_blocked_reason };
+  else if (optionProblem) verdict = { tone: "blocked", headline: "Option not allowed", detail: optionProblem };
   else if (!cap.ok) verdict = { tone: "blocked", headline: "Blocked by the cap", detail: cap.message };
+  else if (Number.isNaN(floor)) verdict = { tone: "pending", headline: "Checking his answer…", detail: "Working out what these terms are worth to him." };
   else if (retires) verdict = safe < 1
     ? { tone: "no", headline: "He turns this down", detail: "He plans to retire before the season starts; he will not sign a new contract." }
     : { tone: "no", headline: "He turns this down", detail: `He plans to retire after ${safe} season${safe === 1 ? "" : "s"}. Offer ${safe} year${safe === 1 ? "" : "s"} or fewer.` };
   else if (!accepts && !Number.isFinite(floor)) verdict = { tone: "no", headline: "He turns this down", detail: `No salary wins him from you today${player?.offer_rule?.best_rival ? `: ${player.offer_rule.best_rival.team_abbrev || "a rival"}'s bid interests him more` : ""}. His bar drops each day.` };
-  else if (!accepts) verdict = { tone: "no", headline: "He turns this down", detail: `He signs with you from ${money(floorOffer)} a season${guaranteed ? "" : " non-guaranteed"}. You are ${money(Math.max(0, floorOffer - aav))} short.` };
-  else verdict = { tone: "yes", headline: "He signs", detail: `${money(aav)} a season meets the ${money(floorOffer)} he needs from you${guaranteed ? "" : " without a guarantee"}.${cap.message ? ` ${cap.message}` : ""}` };
-  return { aav, years, maxYears, guaranteed, total, floor, floorOffer, safe, cap, quote, retires, accepts, ratio, seasons, verdict, canSubmit: cap.ok && !player?.signing_blocked_reason };
+  else if (!accepts) verdict = { tone: "no", headline: "He turns this down", detail: `He signs with you from ${money(floorOffer)} in the first year on these terms${guaranteed ? "" : " (non-guaranteed)"}. You are ${money(Math.max(0, floorOffer - aav))} short.${effect}` };
+  else verdict = { tone: "yes", headline: "He signs", detail: `${money(aav)} in the first year meets the ${money(floorOffer)} he needs from you on these terms${guaranteed ? "" : " without a guarantee"}.${effect}${cap.message ? ` ${cap.message}` : ""}` };
+  return { aav, years, maxYears, guaranteed, total, floor, floorOffer, safe, cap, quote, retires, accepts, ratio, seasons, verdict, terms,
+    canSubmit: cap.ok && !player?.signing_blocked_reason && !optionProblem };
+}
+
+// CONTRACT-TERMS: one line under the selectors: the shape in words and what it does to his answer.
+function freeAgencyShapeNote(preview, draft = {}) {
+  const terms = preview.terms;
+  const words = terms?.words || (preview.years < 2 ? "One season" : `${CONTRACT_PATH_LABELS[draft.path || "rising"]} salary, ${CONTRACT_OPTION_LABELS[draft.option || "none"].toLowerCase()}`);
+  const value = terms && Math.abs(Number(terms.factor || 1) - 1) >= 0.005
+    ? ` He counts these terms as ${Math.round(Math.abs(Number(terms.factor) - 1) * 100)}% ${Number(terms.factor) > 1 ? "more" : "less"} than the same first-year salary with the usual raises and no option.`
+    : "";
+  return `${words}. Salaries are saved year by year and the cap, tax and roster plans use them.${value}`;
 }
 
 // Only a team with full Bird rights may offer a fifth year (submit_free_agent_offer_action); everyone else offers four.
@@ -6610,9 +6710,18 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
         <div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferYearsLabel">Years</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferYearsLabel">${[1, 2, 3, 4, 5].map((years) => radio("years", years, String(years), preview.years === years, years > preview.maxYears || years < (preview.minYears || 1), sheet && (years > preview.maxYears || years < preview.minYears) ? `An offer sheet runs ${preview.minYears} to ${preview.maxYears} seasons` : years > preview.maxYears ? "Only a team with full Bird rights can offer a fifth year" : years > safe ? `He plans to retire after ${safe} season${safe === 1 ? "" : "s"}; he refuses ${years} years` : "")).join("")}</div></div>
         <div class="fa-offer-field"><small id="faOfferGuaranteeLabel">Guarantee</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferGuaranteeLabel">${radio("guarantee", "true", "Guaranteed", preview.guaranteed)}${radio("guarantee", "false", "Non-guaranteed", !preview.guaranteed, Boolean(sheet), sheet ? "Offer sheets are fully guaranteed" : "")}</div>
           <p class="fa-offer-note">${preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on ${escapeHtml(room.offer_rules?.non_guaranteed_until || "January 10")}; release him before then and you owe nothing. He asks more for this.`}</p></div></div>
-        <div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferRaiseLabel">Raises</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferRaiseLabel">${radio("raise", "max", "Largest legal", (draft.raise || "max") === "max", false, player.bird_rights && ["full", "early"].includes(player.bird_rights.level) ? "8% of the first year added each season (Bird rights)" : "5% of the first year added each season")}${radio("raise", "0", "None", draft.raise === "0")}</div></div>
-        <div class="fa-offer-field"><label for="faOfferRoute"><small>How you pay</small></label><select id="faOfferRoute" data-fa-offer-route aria-describedby="faOfferRouteHelp"><option value="">Best legal way</option>${routes.map((row) => `<option value="${escapeAttr(row.route)}" ${draft.route === row.route ? "selected" : ""}>${escapeHtml(row.short)}</option>`).join("")}</select><p id="faOfferRouteHelp" class="fa-offer-note">Bird rights, cap room, the minimum, the mid-level or the bi-annual. The engine picks the first legal one unless you choose.</p></div></div>
-        <p class="fa-offer-note fa-offer-options"><b>Options:</b> none. Each season adds the raise to the first year's salary (up to 5%, or 8% with Bird rights); the contract is saved year by year.</p>
+        ${(() => {
+          // CONTRACT-TERMS: salary path and final-season option selectors (offer sheets stay rising or flat, no option).
+          const pct = Number(preview.terms?.max_raise ? Math.round(preview.terms.max_raise * 100) : (player.bird_rights && ["full", "early"].includes(player.bird_rights.level) ? 8 : 5));
+          const path = draft.path || "rising";
+          const option = draft.option || "none";
+          const pathButtons = ["rising", "flat", "declining"].map((value) => radio("path", value, CONTRACT_PATH_LABELS[value], path === value, Boolean(sheet) && value === "declining", sheet && value === "declining" ? "Offer sheets rise or stay flat" : contractShapeTitle(value, pct))).join("");
+          const optionButtons = ["none", "player", "team"].map((value) => radio("option", value, CONTRACT_OPTION_LABELS[value], option === value, Boolean(sheet) && value !== "none", sheet && value !== "none" ? "Offer sheets in this game carry no option" : contractOptionTitle(value))).join("");
+          return `<div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferPathLabel">Salary path</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferPathLabel" data-fa-path-group>${pathButtons}</div></div>
+            <div class="fa-offer-field"><small id="faOfferOptionLabel">Option on the last season</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferOptionLabel" data-fa-option-group>${optionButtons}</div></div></div>`;
+        })()}
+        <div class="fa-offer-field"><label for="faOfferRoute"><small>How you pay</small></label><select id="faOfferRoute" data-fa-offer-route aria-describedby="faOfferRouteHelp"><option value="">Best legal way</option>${routes.map((row) => `<option value="${escapeAttr(row.route)}" ${draft.route === row.route ? "selected" : ""}>${escapeHtml(row.short)}</option>`).join("")}</select><p id="faOfferRouteHelp" class="fa-offer-note">Bird rights, cap room, the minimum, the mid-level or the bi-annual. The engine picks the first legal one unless you choose.</p></div>
+        <p class="fa-offer-note fa-offer-options" data-fa-offer-shape>${escapeHtml(freeAgencyShapeNote(preview, draft))}</p>
         ${sheet ? freeAgencyOfferSheetMarkup(player, draft, preview) : ""}
       </section>
       <div data-fa-offer-preview>${freeAgencyOfferPreviewMarkup(preview)}</div>
@@ -6781,7 +6890,7 @@ function freeAgencyOfferPreviewMarkup(preview) {
   const paidWith = !quote ? `<p class="fa-muted fa-pay-pending">Checking how you can pay…</p>` : quote.ok
     ? `<dl class="fa-pay-terms">
         <div><dt>Paid with</dt><dd><strong>${escapeHtml(quote.label || "")}</strong></dd></div>
-        <div><dt>Salary by year</dt><dd>${quote.schedule.map((row) => `<span title="${escapeAttr(row.cap_charge_millions !== row.salary_millions ? `Counts ${money(row.cap_charge_millions)} on the cap: the league pays the rest of a veteran's one-year minimum` : "")}">${escapeHtml(shortSeasonLabel(row.season))} ${money(row.salary_millions)}</span>`).join(" · ")}<small>${escapeHtml(money(quote.total_millions))} total${quote.raise_pct ? `, ${quote.raise_pct}% raises` : ""}</small></dd></div>
+        <div><dt>Salary by year</dt><dd>${quote.schedule.map((row) => `<span title="${escapeAttr(row.cap_charge_millions !== row.salary_millions ? `Counts ${money(row.cap_charge_millions)} on the cap: the league pays the rest of a veteran's one-year minimum` : "")}">${escapeHtml(shortSeasonLabel(row.season))} ${money(row.salary_millions)}</span>`).join(" · ")}<small>${escapeHtml(money(quote.total_millions))} total${Number(quote.raise_pct) > 0 ? `, ${quote.raise_pct}% raises` : Number(quote.raise_pct) < 0 ? `, ${-quote.raise_pct}% decreases` : ", flat"}${preview.terms?.option && preview.terms.option !== "none" ? `, ${CONTRACT_OPTION_LABELS[preview.terms.option].toLowerCase()} on ${escapeHtml(shortSeasonLabel(quote.schedule[quote.schedule.length - 1]?.season || ""))}` : ""}</small></dd></div>
         ${quote.locks ? `<div><dt>Locks in</dt><dd class="${quote.hard_cap ? "fa-pay-lock" : ""}">${escapeHtml(quote.locks)}</dd></div>` : ""}
         <div><dt>Tradable from</dt><dd>${escapeHtml(quote.trade_eligible_date || "—")}</dd></div>
       </dl>`
@@ -9233,10 +9342,16 @@ function wireFreeAgencyBuilderPanel(panel) {
       const active = (button.dataset.faOfferGuarantee === "true") === preview.guaranteed;
       button.classList.toggle("is-active", active); button.setAttribute("aria-checked", String(active)); button.tabIndex = active ? 0 : -1;
     });
-    panel.querySelectorAll("[data-fa-offer-raise]").forEach((button) => {
-      const active = button.dataset.faOfferRaise === (draft.raise || "max");
+    panel.querySelectorAll("[data-fa-offer-path]").forEach((button) => {
+      const active = button.dataset.faOfferPath === (draft.path || "rising");
       button.classList.toggle("is-active", active); button.setAttribute("aria-checked", String(active)); button.tabIndex = active ? 0 : -1;
     });
+    panel.querySelectorAll("[data-fa-offer-option]").forEach((button) => {
+      const active = button.dataset.faOfferOption === (draft.option || "none");
+      button.classList.toggle("is-active", active); button.setAttribute("aria-checked", String(active)); button.tabIndex = active ? 0 : -1;
+    });
+    const shape = panel.querySelector("[data-fa-offer-shape]");
+    if (shape) shape.textContent = freeAgencyShapeNote(preview, draft);
     const note = panel.querySelector("[data-fa-offer-guarantee]")?.closest(".fa-offer-field")?.querySelector(".fa-offer-note");
     if (note) note.textContent = preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on ${room.offer_rules?.non_guaranteed_until || "January 10"}; release him before then and you owe nothing. He asks more for this.`;
   };
@@ -9268,7 +9383,8 @@ function wireFreeAgencyBuilderPanel(panel) {
   };
   wireRadios("[data-fa-offer-years]", (button) => { draft.years = Number(button.dataset.faOfferYears || 1); });
   wireRadios("[data-fa-offer-guarantee]", (button) => { draft.guaranteed = button.dataset.faOfferGuarantee === "true"; });
-  wireRadios("[data-fa-offer-raise]", (button) => { draft.raise = button.dataset.faOfferRaise || "max"; });
+  wireRadios("[data-fa-offer-path]", (button) => { draft.path = button.dataset.faOfferPath || "rising"; });
+  wireRadios("[data-fa-offer-option]", (button) => { draft.option = button.dataset.faOfferOption || "none"; });
   wireRadios("[data-fa-offer-backload]", (button) => {
     draft.backload = button.dataset.faOfferBackload === "1";
     if (draft.backload && player.offer_sheet?.first_year_limit_millions) {
@@ -10286,7 +10402,8 @@ async function submitFreeAgentOffer(playerId = state.selectedFreeAgent) {
   const draft = freeAgencyOfferDraft(player, room);
   const quote = preview.quote;
   const byYear = quote?.schedule?.length ? quote.schedule.map((row) => money(row.salary_millions)).join(", ") : `${money(preview.aav)} a season`;
-  const terms = `${byYear} over ${preview.years} season${preview.years === 1 ? "" : "s"} (${money(preview.total)} total, ${preview.guaranteed ? "guaranteed" : "non-guaranteed"})`;
+  const optionWords = preview.years >= 2 && (draft.option || "none") !== "none" ? `, ${CONTRACT_OPTION_LABELS[draft.option].toLowerCase()} on the last season` : "";
+  const terms = `${byYear} over ${preview.years} season${preview.years === 1 ? "" : "s"} (${money(preview.total)} total, ${preview.guaranteed ? "guaranteed" : "non-guaranteed"}${optionWords})`;
   const paid = quote?.ok ? `\n\nPaid with ${quote.label}.${quote.locks ? ` ${quote.locks}` : ""}` : "";
   const question = preview.offerSheet
     ? `Sign ${player.name} to an offer sheet: ${terms}?${paid}\n\n${player.restricted?.team_abbrev || "His team"} can match it by the end of the next day. If it does, he stays there; if not, he joins you. This cannot be undone.`
@@ -10294,7 +10411,7 @@ async function submitFreeAgentOffer(playerId = state.selectedFreeAgent) {
     ? `${exclusive ? "Re-sign" : "Sign"} ${player.name}: ${terms}?${paid}\n\nThis cannot be undone.`
     : `Offer ${player.name} ${terms}?${paid}\n\n${preview.verdict.detail}`;
   if (!await askConfirm(question)) return;
-  const result = await action("submit_free_agent_offer", { ...savePayload(), player_id: player.id, team: userTeam(), years: preview.years, guaranteed: preview.guaranteed, aav_millions: preview.aav, route: draft.route || "", raise_pct: freeAgencyRaisePct(player, draft), backload: Boolean(draft.backload), auto_apply: true, seed: 7 });
+  const result = await action("submit_free_agent_offer", { ...savePayload(), player_id: player.id, team: userTeam(), years: preview.years, guaranteed: preview.guaranteed, aav_millions: preview.aav, route: draft.route || "", raise_pct: freeAgencyRaisePct(player, draft), salary_path: draft.path || "rising", option: draft.option || "none", backload: Boolean(draft.backload), auto_apply: true, seed: 7 });
   state.freeAgentQuotes = {};
   if (result.offer_sheet) {
     // FA-REAL slice 3: an offer sheet is signed when he agrees; his team then has a day to match.
@@ -11581,8 +11698,22 @@ function extensionMinimum(room = {}) {
   return Number(room.offer_rules?.minimum_aav_millions ?? 1.8);
 }
 
-function extensionMaximum(candidate, years) {
-  return Number(candidate?.max_aav_by_years?.[String(years)] || 0);
+// CONTRACT-TERMS: the most the first season may pay for this salary path and length (every season under the hard
+// cap; the first season under the CBA's extension limit), from extension_room.
+function extensionMaximum(candidate, years, path = "flat") {
+  const byPath = candidate?.max_aav_by_path?.[path];
+  return Number((byPath || candidate?.max_aav_by_years || {})[String(years)] || 0);
+}
+
+// What the shape (salary path, option) is worth to him against the flat, option-free extension his price was set on.
+function extensionTermsFactor(candidate, draft, years) {
+  const value = candidate?.terms_factors?.[draft.path || "flat"]?.[draft.option || "none"]?.[String(years)];
+  return Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : 1;
+}
+
+function extensionPathRate(candidate, path) {
+  const pct = Number(candidate?.max_raise_pct ?? 8) / 100;
+  return path === "rising" ? pct : path === "declining" ? -pct : 0;
 }
 
 // The largest offer on the builder's $0.1M steps that stays under that limit.
@@ -11595,9 +11726,9 @@ function extensionDefaultDraft(candidate, room = {}) {
   const safe = Math.max(1, Number(candidate?.safe_years || 1));
   const years = Math.max(1, Math.min(safe, Number(candidate?.preferred_years || 1)));
   const minimum = extensionMinimum(room);
-  const maximum = Math.max(minimum, extensionOfferCeiling(extensionMaximum(candidate, years)));
+  const maximum = Math.max(minimum, extensionOfferCeiling(extensionMaximum(candidate, years, "flat")));
   const ask = Number(candidate?.market_ask_millions ?? candidate?.projected_aav_millions ?? minimum);
-  return { years, aav: roundOfferTenth(clampNumber(ask, minimum, maximum)), guaranteed: true };
+  return { years, aav: roundOfferTenth(clampNumber(ask, minimum, maximum)), guaranteed: true, path: "flat", option: "none" };
 }
 
 // The luxury tax the game charges on a season's payroll (trade_tax.luxury_tax_bill): brackets of about 3.33% of the
@@ -11632,14 +11763,27 @@ function extensionOfferPreview(candidate, room = {}, draft = {}) {
   const guaranteed = draft.guaranteed !== false;
   const key = guaranteed ? "guaranteed" : "non_guaranteed";
   const line = Number(candidate?.accept_line_millions?.[key]);
-  const price = Number(candidate?.accept_offer_millions?.[key]);
-  const maximum = extensionMaximum(candidate, years);
-  const accepts = Number.isFinite(line) && Math.round(aav * 100) / 100 + margin >= line;
+  const path = draft.path || "flat";
+  const option = years >= 2 ? (draft.option || "none") : "none";
+  const optionProblem = (draft.option || "none") !== "none" && years < 2 ? "An option needs a contract of at least two seasons (the option is the last one)." : "";
+  // The engine's test (submit_extension_offer): first-year salary x the shape's value to him must reach his price.
+  const factor = extensionTermsFactor(candidate, { path, option }, years);
+  const passes = (offer) => Math.round(offer * factor * 100) / 100 + margin >= line;
+  let price = Number(candidate?.accept_offer_millions?.[key]);
+  if (Number.isFinite(line) && Math.abs(factor - 1) > 1e-9) {
+    price = Math.ceil(((line - margin) / factor) * 10 - 1e-6) / 10;
+    while (!passes(price)) price = roundOfferTenth(price + 0.1);
+    while (price - 0.1 > 0 && passes(roundOfferTenth(price - 0.1))) price = roundOfferTenth(price - 0.1);
+    price = Math.max(minimum, price);
+  }
+  const maximum = extensionMaximum(candidate, years, path);
+  const accepts = Number.isFinite(line) && passes(aav) && !optionProblem;
+  const rate = extensionPathRate(candidate, path);
   const start = Number.parseInt(candidate?.start_season, 10);
   const seasons = (candidate?.cap_table || []).map((row) => {
     const year = Number.parseInt(row.season, 10);
     const inDeal = Number.isFinite(start) && year >= start && year < start + years;
-    const salary = inDeal ? aav : 0;
+    const salary = inDeal ? Math.round(aav * (1 + rate * (year - start)) * 100) / 100 : 0;
     const payroll = Number(row.salary_total_millions || 0);
     const after = payroll + salary;
     const rule = row.tax_rule || {};
@@ -11658,16 +11802,28 @@ function extensionOfferPreview(candidate, room = {}, draft = {}) {
   let verdict;
   if (!candidate) verdict = { tone: "blocked", headline: "No player selected", detail: "Choose an extension-eligible player." };
   else if (candidate.eligibility_reason || !candidate.eligible) verdict = { tone: "blocked", headline: "Can't extend him now", detail: candidate.eligibility_reason || "He is not eligible for an extension." };
+  else if (optionProblem) verdict = { tone: "blocked", headline: "Option not allowed", detail: optionProblem };
   else if (years > safe) verdict = { tone: "no", headline: "He turns this down", detail: `He plans to retire after ${safe} season${safe === 1 ? "" : "s"} of a new deal. Offer ${safe} year${safe === 1 ? "" : "s"} or fewer.` };
   else if (aav < minimum - 1e-9) verdict = { tone: "blocked", headline: "Below the minimum", detail: `Extensions start at ${money(minimum)} a season.` };
-  else if (aav > maximum + 0.001) verdict = { tone: "blocked", headline: "Blocked by the hard cap", detail: `A ${years}-year extension must fit under the hard cap in every season it covers: at most ${money(maximum)} a season.` };
-  else if (!accepts) verdict = { tone: "no", headline: "He turns this down", detail: `He signs an extension with you from ${money(price)} a season${guaranteed ? "" : " without a guarantee"}. You are ${money(Math.max(0, price - aav))} short.` };
+  else if (aav > maximum + 0.001) verdict = { tone: "blocked", headline: "Over the limit", detail: `A ${years}-year extension must fit under the hard cap in every season it covers, and its first season under the league's extension limit (${money(candidate.first_year_limit_millions)}): at most ${money(maximum)} in the first season on this salary path.` };
+  else if (!accepts) verdict = { tone: "no", headline: "He turns this down", detail: `He signs this extension with you from ${money(price)} in the first season${guaranteed ? "" : " without a guarantee"}. You are ${money(Math.max(0, price - aav))} short.${extensionShapeEffect(factor, path, option)}` };
   else verdict = {
     tone: "yes", headline: "He signs",
-    detail: `${money(aav)} a season meets the ${money(price)} he needs from you${guaranteed ? "" : " without a guarantee"}.${overTax.length ? ` Puts you over the tax in ${overTax.map((row) => shortSeasonLabel(row.season)).join(", ")} (allowed for extensions; the bill is in the cap table).` : ""}`,
+    detail: `${money(aav)} in the first season meets the ${money(price)} he needs from you on these terms${guaranteed ? "" : " without a guarantee"}.${extensionShapeEffect(factor, path, option)}${overTax.length ? ` Puts you over the tax in ${overTax.map((row) => shortSeasonLabel(row.season)).join(", ")} (allowed for extensions; the bill is in the cap table).` : ""}`,
   };
-  const canSubmit = Boolean(candidate?.eligible) && !candidate?.eligibility_reason && years <= safe && aav >= minimum - 1e-9 && aav <= maximum + 0.001;
-  return { aav, years, guaranteed, total: aav * years, line, price, maximum, minimum, safe, accepts, ratio: Number.isFinite(price) && price > 0 ? aav / price : 0, seasons, verdict, canSubmit };
+  const canSubmit = Boolean(candidate?.eligible) && !candidate?.eligibility_reason && !optionProblem && years <= safe && aav >= minimum - 1e-9 && aav <= maximum + 0.001;
+  const total = Array.from({ length: years }, (_, k) => aav * (1 + rate * k)).reduce((sum, value) => sum + value, 0);
+  return { aav, years, guaranteed, total, line, price, maximum, minimum, safe, accepts, ratio: Number.isFinite(price) && price > 0 ? aav / price : 0, seasons, verdict, canSubmit, path, option, factor };
+}
+
+function extensionShapeEffect(factor, path, option) {
+  if (Math.abs(factor - 1) < 0.005) return "";
+  const pieces = [];
+  if (path === "rising") pieces.push("rising pay gives him more money in later years");
+  if (path === "declining") pieces.push("falling pay gives him less in later years");
+  if (option === "player") pieces.push("a player option lets him choose the last season");
+  if (option === "team") pieces.push("a team option means he may never be paid the last season");
+  return ` ${pieces.join("; ").replace(/^./, (c) => c.toUpperCase())}: he counts it as ${Math.round(Math.abs(factor - 1) * 100)}% ${factor > 1 ? "more" : "less"} than the same first-season salary, flat with no option.`;
 }
 
 function extensionVerdictMarkup(preview) {
@@ -11713,7 +11869,8 @@ function extensionCapTableMarkup(preview, candidate) {
 function extensionOfferFootMarkup(preview, legal = true) {
   const label = preview.accepts && preview.canSubmit ? `Sign for ${money(preview.aav)} × ${preview.years}` : "Make Offer";
   const disabled = !legal || !preview.canSubmit;
-  return `<div><strong>${escapeHtml(money(preview.aav))} × ${escapeHtml(preview.years)} yr${preview.years === 1 ? "" : "s"} · ${escapeHtml(money(preview.total))} total</strong><span>${escapeHtml(`${preview.guaranteed ? "Guaranteed" : "Non-guaranteed"} · same salary every season · ${preview.verdict.headline.toLowerCase()}`)}</span></div>
+  const shape = `${CONTRACT_PATH_LABELS[preview.path || "flat"].toLowerCase()} salary${preview.option && preview.option !== "none" ? `, ${CONTRACT_OPTION_LABELS[preview.option].toLowerCase()}` : ""}`;
+  return `<div><strong>${escapeHtml(money(preview.aav))} first season × ${escapeHtml(preview.years)} yr${preview.years === 1 ? "" : "s"} · ${escapeHtml(money(preview.total))} total</strong><span>${escapeHtml(`${preview.guaranteed ? "Guaranteed" : "Non-guaranteed"} · ${shape} · ${preview.verdict.headline.toLowerCase()}`)}</span></div>
     <button type="submit" class="ui-command fa-submit extension-submit${preview.accepts && !disabled ? " is-ready" : ""}" ${disabled ? "disabled" : ""}>${escapeHtml(label)}</button>`;
 }
 
@@ -11744,10 +11901,10 @@ function extensionNegotiationPage(room, selectedPlayerId, response = null, detai
           </dl></section>
           <section class="approved-card-panel fa-builder-offer"><header>Your Offer</header>
             <div class="fa-offer-field fa-offer-salary">
-              <label for="extensionOfferAav"><small>Salary per season</small></label>
+              <label for="extensionOfferAav"><small>First-season salary</small></label>
               <span class="money-input"><b>$</b><input id="extensionOfferAav" type="number" inputmode="decimal" min="${minimum.toFixed(1)}" max="${sliderMax.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-extension-aav aria-describedby="extensionOfferAavHelp" required><b>M</b></span>
-              <input type="range" min="${minimum.toFixed(1)}" max="${sliderMax.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-extension-aav-range aria-label="Salary per season, in millions" />
-              <small id="extensionOfferAavHelp" data-extension-limit>${money(minimum)} minimum to ${money(extensionOfferCeiling(preview.maximum))} (room under the hard cap for ${preview.years} year${preview.years === 1 ? "" : "s"})</small>
+              <input type="range" min="${minimum.toFixed(1)}" max="${sliderMax.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-extension-aav-range aria-label="First-season salary, in millions" />
+              <small id="extensionOfferAavHelp" data-extension-limit>${money(minimum)} minimum to ${money(extensionOfferCeiling(preview.maximum))} in the first season (hard-cap room for ${preview.years} year${preview.years === 1 ? "" : "s"} and the league's extension limit)</small>
               <div class="fa-offer-quick" role="group" aria-label="Quick salary">
                 <button type="button" class="ui-command" data-extension-offer-set="price">His price from you</button>
                 <button type="button" class="ui-command" data-extension-offer-set="${escapeAttr(ask)}">Market ask</button>
@@ -11757,7 +11914,9 @@ function extensionNegotiationPage(room, selectedPlayerId, response = null, detai
             <div class="fa-offer-pair"><div class="fa-offer-field"><small id="extensionYearsLabel">Years</small><div class="fa-segmented" role="radiogroup" aria-labelledby="extensionYearsLabel" data-extension-radiogroup="years">${[1, 2, 3, 4, 5].map((years) => radio("years", years, String(years), preview.years === years, years > Math.max(1, safe), years > safe ? `He plans to retire after ${safe} season${safe === 1 ? "" : "s"} of a new deal` : `At most ${money(extensionMaximum(candidate, years))} a season for ${years} year${years === 1 ? "" : "s"}`)).join("")}</div><input type="hidden" data-extension-years value="${preview.years}"></div>
             <div class="fa-offer-field"><small id="extensionGuaranteeLabel">Guarantee</small><div class="fa-segmented" role="radiogroup" aria-labelledby="extensionGuaranteeLabel" data-extension-radiogroup="guarantee">${radio("guarantee", "true", "Guaranteed", preview.guaranteed)}${radio("guarantee", "false", "Non-guaranteed", !preview.guaranteed)}</div>
               <p class="fa-offer-note" data-extension-guarantee-note>${preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on January 10; release him before then and you owe nothing. He asks ${Number.isFinite(premium) ? `${premium.toFixed(1)}%` : ""} more for this.`}</p></div></div>
-            <p class="fa-offer-note fa-offer-options"><b>Options:</b> none. Extensions in this game have no player or team options, and the salary is the same every season.</p>
+            <div class="fa-offer-pair"><div class="fa-offer-field"><small id="extensionPathLabel">Salary path</small><div class="fa-segmented" role="radiogroup" aria-labelledby="extensionPathLabel" data-extension-radiogroup="path">${["rising", "flat", "declining"].map((value) => radio("path", value, CONTRACT_PATH_LABELS[value], preview.path === value, false, contractShapeTitle(value, Number(candidate.max_raise_pct ?? 8)))).join("")}</div></div>
+            <div class="fa-offer-field"><small id="extensionOptionLabel">Option on the last season</small><div class="fa-segmented" role="radiogroup" aria-labelledby="extensionOptionLabel" data-extension-radiogroup="option">${["none", "player", "team"].map((value) => radio("option", value, CONTRACT_OPTION_LABELS[value], (offer.option || "none") === value, false, contractOptionTitle(value))).join("")}</div></div></div>
+            <p class="fa-offer-note fa-offer-options" data-extension-shape-note>${escapeHtml(extensionShapeNote(candidate, preview))}</p>
           </section>
           ${status}
         </div>
@@ -11770,6 +11929,13 @@ function extensionNegotiationPage(room, selectedPlayerId, response = null, detai
       </div>
     </div>
   </section>`;
+}
+
+function extensionShapeNote(candidate, preview) {
+  const pct = Number(candidate?.max_raise_pct ?? 8);
+  const path = preview.path || "flat";
+  const words = preview.years < 2 ? "One season" : `${contractShapeTitle(path, pct)}${preview.option && preview.option !== "none" ? `; ${CONTRACT_OPTION_LABELS[preview.option].toLowerCase()} on the last season` : ""}`;
+  return `${words}. The extension is saved year by year; the cap table shows each season.${candidate?.contract_history_text ? ` His current deal: ${candidate.contract_history_text}.` : ""}`;
 }
 
 function extensionDeparturePanel(candidate) {
@@ -11899,7 +12065,7 @@ function updateExtensionPreview(modal = state.modal, root = els.modalRoot) {
   const yearsInput = root.querySelector("[data-extension-years]");
   if (yearsInput) yearsInput.value = String(preview.years);
   const limit = root.querySelector("[data-extension-limit]");
-  if (limit) limit.textContent = `${money(minimum)} minimum to ${money(extensionOfferCeiling(preview.maximum))} (room under the hard cap for ${preview.years} year${preview.years === 1 ? "" : "s"})`;
+  if (limit) limit.textContent = `${money(minimum)} minimum to ${money(extensionOfferCeiling(preview.maximum))} in the first season (hard-cap room for ${preview.years} year${preview.years === 1 ? "" : "s"} and the league's extension limit)`;
   root.querySelectorAll("[data-extension-years-choice]").forEach((button) => {
     const checked = Number(button.dataset.extensionYearsChoice) === preview.years;
     button.setAttribute("aria-checked", String(checked)); button.classList.toggle("is-active", checked); button.tabIndex = checked ? 0 : -1;
@@ -11908,6 +12074,16 @@ function updateExtensionPreview(modal = state.modal, root = els.modalRoot) {
     const checked = (button.dataset.extensionGuaranteeChoice === "true") === preview.guaranteed;
     button.setAttribute("aria-checked", String(checked)); button.classList.toggle("is-active", checked); button.tabIndex = checked ? 0 : -1;
   });
+  root.querySelectorAll("[data-extension-path-choice]").forEach((button) => {
+    const checked = button.dataset.extensionPathChoice === (draft.path || "flat");
+    button.setAttribute("aria-checked", String(checked)); button.classList.toggle("is-active", checked); button.tabIndex = checked ? 0 : -1;
+  });
+  root.querySelectorAll("[data-extension-option-choice]").forEach((button) => {
+    const checked = button.dataset.extensionOptionChoice === (draft.option || "none");
+    button.setAttribute("aria-checked", String(checked)); button.classList.toggle("is-active", checked); button.tabIndex = checked ? 0 : -1;
+  });
+  const shapeNote = root.querySelector("[data-extension-shape-note]");
+  if (shapeNote) shapeNote.textContent = extensionShapeNote(candidate, preview);
   const note = root.querySelector("[data-extension-guarantee-note]");
   const premium = Number(candidate.security_premium_pct?.non_guaranteed);
   if (note) note.textContent = preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on January 10; release him before then and you owe nothing. He asks ${Number.isFinite(premium) ? `${premium.toFixed(1)}%` : ""} more for this.`;
@@ -11978,7 +12154,7 @@ function wireExtensionNegotiationModal(root = els.modalRoot, modal = state.modal
   const range = root.querySelector("[data-extension-aav-range]");
   const setAav = (value) => {
     const minimum = extensionMinimum(modal.room);
-    const maximum = Math.max(minimum, extensionOfferCeiling(extensionMaximum(candidate, modal.draft.years)));
+    const maximum = Math.max(minimum, extensionOfferCeiling(extensionMaximum(candidate, modal.draft.years, modal.draft.path || "flat")));
     modal.draft.aav = roundOfferTenth(clampNumber(Number(value) || 0, minimum, maximum));
   };
   aavInput?.addEventListener("input", () => {
@@ -11991,7 +12167,7 @@ function wireExtensionNegotiationModal(root = els.modalRoot, modal = state.modal
   range?.addEventListener("input", () => { setAav(range.value); if (aavInput) aavInput.value = modal.draft.aav.toFixed(1); updateExtensionPreview(modal, root); });
   root.querySelectorAll("[data-extension-offer-set]").forEach((button) => button.addEventListener("click", () => {
     const key = modal.draft.guaranteed !== false ? "guaranteed" : "non_guaranteed";
-    setAav(button.dataset.extensionOfferSet === "price" ? candidate.accept_offer_millions?.[key] : button.dataset.extensionOfferSet);
+    setAav(button.dataset.extensionOfferSet === "price" ? extensionOfferPreview(candidate, modal.room, modal.draft).price ?? candidate.accept_offer_millions?.[key] : button.dataset.extensionOfferSet);
     if (aavInput) aavInput.value = modal.draft.aav.toFixed(1);
     updateExtensionPreview(modal, root);
   }));
@@ -12001,11 +12177,19 @@ function wireExtensionNegotiationModal(root = els.modalRoot, modal = state.modal
       // A shorter or longer term can change the hard-cap limit: keep the salary inside it.
       setAav(modal.draft.aav);
       if (aavInput) aavInput.value = modal.draft.aav.toFixed(1);
+    } else if (group === "path") {
+      modal.draft.path = value;
+      setAav(modal.draft.aav);   // a rising path can lower the first-season limit (later seasons are larger)
+      if (aavInput) aavInput.value = modal.draft.aav.toFixed(1);
+    } else if (group === "option") {
+      modal.draft.option = value;
     } else {
       modal.draft.guaranteed = value === "true";
     }
     updateExtensionPreview(modal, root);
   };
+  root.querySelectorAll("[data-extension-path-choice]").forEach((button) => button.addEventListener("click", () => choose("path", button.dataset.extensionPathChoice)));
+  root.querySelectorAll("[data-extension-option-choice]").forEach((button) => button.addEventListener("click", () => choose("option", button.dataset.extensionOptionChoice)));
   root.querySelectorAll("[data-extension-years-choice]").forEach((button) => button.addEventListener("click", () => choose("years", button.dataset.extensionYearsChoice)));
   root.querySelectorAll("[data-extension-guarantee-choice]").forEach((button) => button.addEventListener("click", () => choose("guarantee", button.dataset.extensionGuaranteeChoice)));
   // Arrow keys move through a radio group (skipping disabled choices), like the free-agency builder.
@@ -12019,7 +12203,8 @@ function wireExtensionNegotiationModal(root = els.modalRoot, modal = state.modal
     const next = event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1
       : clampNumber(index + (["ArrowLeft", "ArrowUp"].includes(event.key) ? -1 : 1), 0, buttons.length - 1);
     const target = buttons[next];
-    choose(name, name === "years" ? target.dataset.extensionYearsChoice : target.dataset.extensionGuaranteeChoice);
+    choose(name, name === "years" ? target.dataset.extensionYearsChoice : name === "path" ? target.dataset.extensionPathChoice
+      : name === "option" ? target.dataset.extensionOptionChoice : target.dataset.extensionGuaranteeChoice);
     target.focus();
   }));
   updateExtensionPreview(modal, root);
@@ -12040,11 +12225,13 @@ function wireExtensionNegotiationModal(root = els.modalRoot, modal = state.modal
         years: preview.years,
         aav_millions: preview.aav,
         guaranteed: preview.guaranteed,
+        salary_path: preview.path || "flat",
+        option: preview.option || "none",
       });
       if (result.status === "applied") {
         modal.submitting = false;
         modal.extensionApplied = true;
-        modal.outcome = { kind: "accepted", title: "Extension signed", message: `${result.player_name || modal.detail?.name || "Player"} signed a ${preview.years}-year extension: ${money(preview.aav)} a season, ${money(preview.total)} total.` };
+        modal.outcome = { kind: "accepted", title: "Extension signed", message: `${result.player_name || modal.detail?.name || "Player"} signed a ${preview.years}-year extension: ${money(preview.aav)} in the first season (${CONTRACT_PATH_LABELS[preview.path || "flat"].toLowerCase()} salary${preview.option && preview.option !== "none" ? `, ${CONTRACT_OPTION_LABELS[preview.option].toLowerCase()}` : ""}), ${money(preview.total)} total.` };
         mountPlayerExtensionOutcome(root, modal, close);
         return;
       }
@@ -15449,6 +15636,13 @@ function syncAssistantGMPhone() {
         showTradeDeadlinePrompt();
       } else if (message.target === "trade-market") {
         await openTradeMarketBoard();
+      } else if (message.target === "option-decisions") {
+        // CONTRACT-TERMS: open the offseason checklist on its Option Decisions card.
+        state.view = "dashboard";
+        await loadDashboardSnapshot(userTeam());
+        render();
+        window.CardBoard?.open(state.data.freeagency ? "phase-free_agency-checklist" : "phase-set_roster-checklist");
+        document.querySelector("[data-option-decisions]")?.scrollIntoView?.({ block: "start", behavior: "smooth" });
       } else if (message.target === "offer-sheet") {
         // FA-REAL slice 3: open the room on the Match or Pass decision.
         state.view = "dashboard";

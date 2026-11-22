@@ -31,8 +31,8 @@ function context() {
   vm.createContext(ctx);
   const names = ['shortDate', 'offseasonStopTimeline', 'offseasonItemStatus', 'offseasonItemMoney', 'offseasonItemActions',
     'offseasonChecklistTable', 'signingDayRecap', 'offseasonChecklistPanel', 'offerSheetStillOpen', 'offerSheetStatusWords',
-    'offerSheetDecisionMarkup', 'shortSeasonLabel'];
-  vm.runInContext(`${extract('OFFSEASON_STOPS', 'const')}\n${extract('OFFSEASON_ITEM_LABELS', 'const')}\n${names.map((n) => extract(n)).join('\n')}
+    'offerSheetDecisionMarkup', 'shortSeasonLabel', 'optionDecisionWords', 'optionDecisionWho', 'optionDecisionsMarkup'];
+  vm.runInContext(`${extract('OFFSEASON_STOPS', 'const')}\n${extract('OFFSEASON_ITEM_LABELS', 'const')}\n${extract('OPTION_ITEM_KINDS', 'const')}\n${names.map((n) => extract(n)).join('\n')}
 this.offseasonChecklistPanel = offseasonChecklistPanel; this.shortDate = shortDate;`, ctx);
   return ctx;
 }
@@ -132,4 +132,25 @@ test('signing day still-open box lists decided sheets and your own pending sheet
   const html = context().offseasonChecklistPanel({...room, stop: 'finalize', offer_sheets: {for_you: [], yours: [mine], league: [matched, mine]}});
   assert.match(html, /Your sheets:<\/b> Target \(OKC decides by Jul 3; your the full mid-level exception stays reserved\)/);
   assert.match(html, /Other Guy <small>NYK sheet · \$37\.8M over 3 years · DAL matched/);
+});
+
+// CONTRACT-TERMS part 3: the Option Decisions card: the player's own choice with his reason, your team options with
+// Keep/Decline, and the notable decisions around the league; the main table no longer repeats the option rows.
+test('option decisions card: who decides, the decision, why, and your buttons', () => {
+  const view = {season: '2027-28', counts: {player_opted_out: 7, player_opted_in: 9, team_kept: 5, team_declined: 6},
+    yours: [
+      {player_id: 'a', name: 'Option Guy', kind: 'team_option', kind_words: 'team option', salary_millions: 9.5, season: '2027-28',
+       status: 'pending', decided_by: 'user', deadline: '2027-06-29', reason: 'Your decision.'},
+      {player_id: 'c', name: 'Vet', kind: 'player_option', kind_words: 'player option', salary_millions: 20, season: '2027-28',
+       status: 'declined', decided_by: 'player', reason: 'He becomes a free agent: as a 27-year-old starter he expects about $24.0M.'}],
+    league: [{player_id: 'z', name: 'Big Star', team_abbrev: 'LAL', kind: 'player_option', kind_words: 'player option',
+      salary_millions: 48, status: 'exercised', decided_by: 'player', reason: 'He keeps his $48.0M option.'}]};
+  const html = context().offseasonChecklistPanel({...room, offseason_checklist: {...room.offseason_checklist, option_decisions: view}});
+  assert.match(html, /Option Decisions · 27-28/);
+  assert.match(html, /The player<\/td>[\s\S]*is-declined">Opted out/);
+  assert.match(html, /as a 27-year-old starter/);
+  assert.match(html, /data-offseason-option="exercise" data-player-id="a">Keep him/);
+  assert.match(html, /Big Star[\s\S]*LAL[\s\S]*Opted in/);
+  assert.match(html, /7 players opted out and 9 opted in/);
+  assert.equal((html.match(/data-player-id="a">Keep him/g) || []).length, 1, 'the option is not repeated in the main table');
 });
