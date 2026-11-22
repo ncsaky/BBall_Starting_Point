@@ -6231,8 +6231,48 @@ class DataFoundationTests(unittest.TestCase):
                 save_dir=save_dir,
                 canonical=self.plain,
             )
-            self.assertFalse(dashboard["extension_window_open"])
+            # Past the trade deadline the stale cached list must not reopen trades.
             self.assertNotIn("trades", dashboard["legal_actions"])
+            # CONTRACT-TERMS: the league's extension calendar runs from July 6 to the June 17 switch (a player in the
+            # last season of his deal can extend all season), so February is open; each player's own deadline (the day
+            # before opening night for anyone with more seasons left) decides who is highlighted, by the same rule as
+            # the extension screen.
+            self.assertTrue(dashboard["extension_window_open"])
+            room = dispatch_app_action(
+                "extension_room",
+                {"save_path": save_path, "team": "GSW"},
+                root=ROOT,
+                save_dir=save_dir,
+                canonical=self.plain,
+            )
+            self.assertEqual(room["status"], "open")
+            self.assertEqual(
+                {player["id"] for player in dashboard["rotation"] if player["extension_eligible"]},
+                {candidate["player_id"] for candidate in room["candidates"] if candidate["eligible"]},
+            )
+            for candidate in room["candidates"]:
+                if candidate["eligible"]:
+                    self.assertGreaterEqual(candidate["extension_deadline"], "2027-02-06")
+
+            # Between the June 17 switch and July 6 extensions are closed for everyone, whatever the cached list says.
+            save = load_save(save_path)
+            save["state"].update(
+                {
+                    "current_date": "2027-06-20",
+                    "phase": "re_signing",
+                    "legal_actions": ["trades", "extensions", "staff_changes", "advance"],
+                }
+            )
+            write_save(save_path, save)
+            dashboard = dispatch_app_action(
+                "team_dashboard",
+                {"save_path": save_path, "team": "GSW"},
+                root=ROOT,
+                save_dir=save_dir,
+                canonical=self.plain,
+            )
+            self.assertFalse(dashboard["extension_window_open"])
+            self.assertNotIn("extensions", dashboard["legal_actions"])
             self.assertFalse(any(player["extension_eligible"] for player in dashboard["rotation"]))
 
             room = dispatch_app_action(
@@ -6267,14 +6307,18 @@ class DataFoundationTests(unittest.TestCase):
             save_path = Path(tmp) / "ai_extensions.json"
             canonical = json.loads(json.dumps(self.plain))
             current_start = int(CANONICAL_SEASON.split("-")[0])
-            extension_seasons = [
-                f"{start}-{str(start + 1)[-2:]}"
-                for start in (current_start, current_start + 1)
-            ]
+            # CONTRACT-TERMS: in mid-season only a player in the last season of his deal can still extend (anyone with
+            # more seasons left had to sign by the day before opening night), and a veteran deal can be extended only
+            # after its second anniversary. So every non-Warriors veteran is put in the final season of a four-season
+            # deal signed three seasons ago, which makes the whole league eligible on January 10 under the CBA rules.
+            # Rookie-scale deals keep their real draft history (their window closed before opening night).
+            signed_season = f"{current_start - 3}-{str(current_start - 2)[-2:]}"
             players = {player["id"]: player for player in canonical["players"]}
             for contract in canonical["contracts"]:
                 player = players.get(contract.get("player_id"))
                 if not player or player.get("team_id") == "team_gsw":
+                    continue
+                if str((contract.get("contract_history") or {}).get("kind") or "").startswith("rookie"):
                     continue
                 salary_rows = [
                     row for row in contract.get("seasons", [])
@@ -6286,15 +6330,21 @@ class DataFoundationTests(unittest.TestCase):
                     str(row.get("season")): float(row["salary"])
                     for row in salary_rows
                 }
-                baseline = salaries.get(extension_seasons[0], float(salary_rows[0]["salary"]))
                 contract["_active_season"] = CANONICAL_SEASON
-                contract["original_contract_years"] = max(3, int(contract.get("original_contract_years") or 0))
+                contract["original_contract_years"] = 4
+                contract["signed_season"] = signed_season
+                contract["contract_history"] = {
+                    "kind": "reported",
+                    "original_contract_years": 4,
+                    "signed_season": signed_season,
+                    "signed_season_earliest": signed_season,
+                    "signed_season_latest": signed_season,
+                }
                 contract["seasons"] = [
                     {
-                        "season": season,
-                        "salary": salaries.get(season, baseline * (1.0 + 0.04 * index)),
+                        "season": CANONICAL_SEASON,
+                        "salary": salaries.get(CANONICAL_SEASON, float(salary_rows[0]["salary"])),
                     }
-                    for index, season in enumerate(extension_seasons)
                 ]
             save = create_league_save(ROOT, canonical, "GSW", save_path, seed=123)
             good_teams = {"team_phi", "team_lac", "team_phx", "team_mil", "team_bos", "team_nyk", "team_okc", "team_cle"}
@@ -6310,6 +6360,8 @@ class DataFoundationTests(unittest.TestCase):
                 }
             result = process_ai_extensions(canonical, save, "2027-01-10", seed=123, limit=24)
             self.assertGreaterEqual(result["applied_count"], 18)
+            # The per-pass limit holds (a CONTRACT-TERMS local variable had shadowed it, so a pass never stopped).
+            self.assertLessEqual(result["applied_count"], 24)
             self.assertGreaterEqual(result["refusal_count"], 0)
             self.assertGreaterEqual(
                 len([log for log in save.get("transaction_logs", []) if log.get("transaction_type") == "extension"]),
@@ -6317,11 +6369,12 @@ class DataFoundationTests(unittest.TestCase):
             )
             process_ai_extensions(canonical, save, "2027-02-05", seed=123, limit=100)
             volume = save.get("ai_extension_volume", {}).get(CANONICAL_SEASON, {})
-            self.assertLessEqual(int(volume.get("rookie_scale") or 0), 15)
-            self.assertLessEqual(int(volume.get("veteran") or 0), 15)
+            # The season ceilings by kind (CONTRACT-TERMS: the top of the real range, 14 rookie-scale and 27 veteran).
+            self.assertLessEqual(int(volume.get("rookie_scale") or 0), save_module.AI_EXTENSION_LIMITS["rookie_scale"])
+            self.assertLessEqual(int(volume.get("veteran") or 0), save_module.AI_EXTENSION_LIMITS["veteran"])
             self.assertLessEqual(
                 len([log for log in save.get("transaction_logs", []) if log.get("transaction_type") == "extension"]),
-                30,
+                sum(save_module.AI_EXTENSION_LIMITS.values()),
             )
 
     def test_ai_extension_timing_and_older_player_caution(self):

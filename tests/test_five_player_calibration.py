@@ -16,6 +16,22 @@ def filled_measurements(old_players,new_players):
  new={p['id']:p for p in new_players}
  return [{**p,**{k:new[p['id']][k] for k in MEASUREMENTS if p.get(k) is None and p['id'] in new}} for p in old_players]
 
+CONTRACT_HISTORY_FIELDS=('signed_season','original_contract_years','contract_history')
+
+
+def rebuilt_contract_history(old_contracts,new_contracts):
+ """Old contract rows with only the signing season, original length and contract-history record taken from the new
+ rows (CONTRACT-TERMS, 2026-11-22: each real contract's signing season and length rebuilt from evidence). Salaries,
+ seasons, teams and every other contract field still have to match the old rows exactly."""
+ new={c['id']:c for c in new_contracts}
+ out=[]
+ for c in old_contracts:
+  row={k:v for k,v in c.items() if k not in CONTRACT_HISTORY_FIELDS}
+  n=new.get(c['id'],{})
+  row.update({k:n[k] for k in CONTRACT_HISTORY_FIELDS if k in n})
+  out.append(row)
+ return out
+
 class FivePlayerCalibrationTests(unittest.TestCase):
  @classmethod
  def setUpClass(cls):
@@ -27,7 +43,7 @@ class FivePlayerCalibrationTests(unittest.TestCase):
   expected={(r['player_id'],k):(v['expected'],v['target']) for r in self.payload['players'] for k,v in r['traits'].items()}
   expected[('player_sas-victor-wembanyama','rim_deterrence')]=(99.0,100.0)
   self.assertEqual({k:(v,new[k]) for k,v in old.items() if new[k]!=v},expected)
-  self.assertEqual(filled_measurements(self.old['players'],self.current['players']),self.current['players']);self.assertEqual(self.old['contracts'],self.current['contracts'])
+  self.assertEqual(filled_measurements(self.old['players'],self.current['players']),self.current['players']);self.assertEqual(rebuilt_contract_history(self.old['contracts'],self.current['contracts']),self.current['contracts'])
  def test_absolute_idempotent_and_stale_identity_or_baseline_rejected(self):
   ps=[Player(**p) for p in self.old['players']];ts=[TraitValue(**t) for t in self.old['traits']];once=apply_calibration(ps,ts,self.payload);self.assertEqual(once,apply_calibration(ps,once,self.payload))
   # The later single rim-anchor review is independent of this eleven-target

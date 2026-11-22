@@ -149,14 +149,27 @@ class IncumbentYearsTests(unittest.TestCase):
         saved = {"player_season_stats": {}}
         star = {"id": "s", "team_id": "a", "age": 25, "minutes_projection": 34, "_star_ask_millions": 33.0,
                 "_bird": bird("full", 50e6)}
-        terms = sv.ai_re_signing_contract_terms(saved, star, "2028-29")
-        self.assertEqual(terms["years"], 5)
-        self.assertEqual(terms["seasons"][1]["salary"], round(33e6 * 1.08))
-        non = sv.ai_re_signing_contract_terms(saved, {**star, "_bird": bird("non", 50e6, 1)}, "2028-29")
-        self.assertEqual(non["years"], 4)
-        self.assertEqual(non["seasons"][1]["salary"], round(33e6 * 1.05))
-        older = sv.ai_re_signing_contract_terms(saved, {**star, "age": 33}, "2028-29")
-        self.assertEqual(older["years"], 3)
+        # CONTRACT-TERMS: AI deals now pick a salary path (rising, flat, declining) at the real shares, so the raise
+        # rule is checked on a rising deal, where the Bird level sets the size of the raise.
+        from nba_gm_data import contract_terms
+        rising = {"path": "rising", "option": "none"}
+        with patch.object(contract_terms, "ai_structure", return_value=rising):
+            terms = sv.ai_re_signing_contract_terms(saved, star, "2028-29")
+            self.assertEqual(terms["years"], 5)
+            self.assertEqual(terms["seasons"][1]["salary"], round(33e6 * 1.08))
+            non = sv.ai_re_signing_contract_terms(saved, {**star, "_bird": bird("non", 50e6, 1)}, "2028-29")
+            self.assertEqual(non["years"], 4)
+            self.assertEqual(non["seasons"][1]["salary"], round(33e6 * 1.05))
+            older = sv.ai_re_signing_contract_terms(saved, {**star, "age": 33}, "2028-29")
+            self.assertEqual(older["years"], 3)
+        # Whatever path the AI picks, the years stay and the yearly change is the Bird raise in that direction.
+        for player in (star, {**star, "_bird": bird("non", 50e6, 1)}):
+            free = sv.ai_re_signing_contract_terms(saved, player, "2028-29")
+            self.assertEqual(free["years"], 5 if player is star else 4)
+            limit = cap_rules.bird_raise(player["_bird"]["level"])
+            self.assertEqual(free["raise_rate"], contract_terms.path_rate(free["salary_path"], limit))
+            self.assertAlmostEqual(free["seasons"][1]["salary"] - free["seasons"][0]["salary"],
+                                   33e6 * free["raise_rate"], delta=1)
 
     def test_the_offer_screen_mirrors_the_years_rule(self):
         import pathlib

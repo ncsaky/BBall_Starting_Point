@@ -1000,7 +1000,12 @@ def load_or_build(root: Path, out: Path) -> dict[str, Any]:
         required = ["draft_classes", "draft_prospects", "draft_prospect_traits", "scouting_reports", "draft_board_entries"]
         if all(key in data for key in required) and not canonical_export_is_stale(root, json_path):
             return data
-    return to_plain(build_universe(root))
+    data = to_plain(build_universe(root))
+    # CONTRACT-TERMS: a rebuilt league carries the same evidence-based contract history as the stored file (each real
+    # contract's signing season and length), or extension eligibility would differ from the stored league.
+    from .contract_history import apply_contract_history
+    apply_contract_history(data, root)
+    return data
 
 
 def canonical_export_is_stale(root: Path, json_path: Path) -> bool:
