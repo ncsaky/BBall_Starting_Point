@@ -2,7 +2,65 @@
 
 Paste one prompt into a **fresh** Codex chat. One task per chat keeps it from drifting after context compaction. Each prompt is self-contained. Claude reviews the result and updates `BOARD.md`.
 
-Current priority (2026-11-22): DRAFT-DECISIONS-EVIDENCE now. GUI tasks are parked at the bottom.
+Current priority (2026-11-22, evening): DRAFT-DISAGREEMENT now. GUI tasks are parked at the bottom.
+
+---
+
+## Ready now (2026-11-22, evening): DRAFT-DISAGREEMENT (fresh chat; code task with tests)
+
+### DRAFT-DISAGREEMENT: AI teams' scouts disagree like real front offices, so drafts stray from the board like real ones
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task DRAFT-DISAGREEMENT (the board row exists; set it to
+"in progress (Codex)" when you start). Read your own report docs/agents/tasks/draft-decisions-evidence.md and
+data/research/draft_decisions_evidence.json first: this task acts on it.
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_draft_disagreement -b codex/draft-disagreement HEAD
+Symlink .venv and the git-ignored data the tests need from the main checkout (as last time). Commit on that branch;
+never push, never commit to main.
+
+Boundaries: you may edit src/nba_gm_data/draft_scouting.py, src/nba_gm_data/draft.py (the GM_* weights, gm_rows,
+and the draft-night selection path), scripts/research/draft_decisions_fit.py, draft tests, and your report. Do NOT
+touch src/nba_gm_data/input_estimator.py, scripts/build_player_inputs.py or data/canonical/: a Claude agent
+(ROOKIE-FIT-2) is rebuilding the rookies' ratings there.
+
+The problem (your evidence): after the top five, real teams stray from the consensus board far more than the game's
+AI teams (typical gap 6 spots in picks 15-30 and 9-10 in the second round, versus 2-4 in the game; about 14 of 100
+real top-ten prospects slide 5+ spots, far fewer in the game). Setting the reach penalty to zero only helped a little.
+The likely cause: every AI team's scouts see almost the same thing. In draft_scouting.py team reports differ through
+POT_NOISE 1.10, CUR_NOISE 0.50, TRAIT_NOISE 0.45, staff quality (staff_noise, coverage_pct, WIDTH_FLOOR/SLOPE) and
+staff taste (TASTE_SCALE 1.20, TASTE_GROUPS). Real disagreement comes from scouting quality, coverage (how much a
+team watched a player, larger for lower-ranked prospects), and taste (what a front office values), not pure dice.
+
+Do:
+1. Measure where the game's team-to-team disagreement comes from today (noise vs coverage vs taste vs GM phase/need)
+   on the 2026 class and the generated classes your probe used.
+2. Make teams disagree realistically: more disagreement on lower-ranked prospects (less coverage) than on the top
+   five; driven by each team's scouting staff quality and taste, so better scouting departments are measurably more
+   accurate about the true values (keep that true and report it). Re-test the reach penalty (your trial said 0) and
+   tolerance together with the new disagreement, fitting on 2012-2021 targets and the first two generated classes,
+   checking on 2022-2025 and the third class, as before.
+3. Targets (held-out): typical gap and 5+/10+ reach rates by pick range, top-ten slides 5+ spots, falls out of the
+   lottery. The top five should stay close to the board, as in reality. Report before / after / real side by side.
+4. Outcome sanity: in the game, do reaches pay off worse on average, as they did in the NBA (by the prospects' true
+   values, since the game knows them)? Report it.
+5. What the user sees must match what the AI uses (AGENTS.md rule 4): the user's own scouting reports come from the
+   same machinery; check the user's board still reads sensibly and their staff quality still matters.
+6. Also fix tests/test_draft_year_gate.py: it fails to import league_health_audit (lives in scripts/); make the test
+   find it the way other tests import from scripts/.
+7. Speed: draft day and monthly scouting should not get noticeably slower; measure it.
+
+Gates: all draft and scouting tests (PYTHONPATH=src:tests .venv/bin/python -m unittest discover -s tests -p
+"test_draft*.py", plus any test touching draft_scouting), bash scripts/run_core_tests.sh, and the real-stat scorecard
+must stay 18/18 (PYTHONPATH=src .venv/bin/python scripts/calibration_report.py --games 1230 --mode
+replay-real-minutes). Keep laptop load light: nice -n 10, at most two heavy jobs on the machine.
+
+Report: docs/agents/tasks/draft-disagreement.md, plain everyday language, 3-line TL;DR first, no jargon or internal
+IDs. Set the board row to "review" and stop.
+```
 
 ---
 
