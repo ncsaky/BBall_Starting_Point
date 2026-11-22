@@ -40,6 +40,8 @@ MONTH_LABELS = ("preseason", "November", "December", "January", "February", "Mar
 MOVE_INFO = 0.25
 MOVE_NOISE = 3.5
 GAP_CLIP = 9.0
+# An imported late-season board already reflects a year's observations. Its strongest signal is in the lottery.
+ARCHIVED_BOARD_SHARE = ((1, 0.80), (14, 0.80), (30, 0.40), (35, 0.0))
 # A team's estimation error, as a share of its scouting noise (draft.scouting_noise, 3 to 11 points), and how much
 # full coverage removes. Current level is easier to see than upside.
 POT_NOISE = 1.10
@@ -185,17 +187,31 @@ def hidden_gap(prospect: dict[str, Any], reference_potential: float) -> float:
     return clamp(float(prospect.get("potential") or 0.0) - tail - reference_potential, -GAP_CLIP, GAP_CLIP)
 
 
-def public_view(prospect: dict[str, Any], month: int, class_seed: int) -> dict[str, float]:
+def public_view(prospect: dict[str, Any], month: int, class_seed: int, *,
+                archived_board: bool = False) -> dict[str, float]:
     """The league's public read of a prospect in a given month (current level, upside, ceiling)."""
+    board_share = board_grade = 0.0
+    if archived_board:
+        from .draft import PROFILE_CURRENT, PROFILE_POTENTIAL, _slot_value
+
+        # The range holds the mock and the independent board ranks, or the mock alone.
+        rank = prospect["rank"]
+        bounds = prospect.get("rank_range") or {}
+        rank = (bounds.get("low", rank) + bounds.get("high", rank)) / 2
+        board_share = _slot_value(ARCHIVED_BOARD_SHARE, rank)
+        slot_current = _slot_value(PROFILE_CURRENT, rank)
+        slot_potential = _slot_value(PROFILE_POTENTIAL, rank)
+        board_grade = scout_grade({"weights": DEFAULT_WEIGHTS}, slot_current, slot_potential,
+                                  slot_potential + 5.0, slot_current - 8.0, 20.0, 0.0)
     base_potential = public_value(prospect, "potential")
     base_ceiling = public_value(prospect, "ceiling") or base_potential + 5.0
     rng = random.Random(f"{prospect.get('draft_year')}:{class_seed}:{prospect.get('id')}:season_move_v1")
     total = MOVE_INFO * hidden_gap(prospect, base_potential) + MOVE_NOISE * rng.gauss(0.0, 1.0)
-    delta = total * movement_fraction(month)
+    delta = total * movement_fraction(month) * (1.0 - board_share)
     current = float(prospect.get("current_ability") or 0.0)
     potential = max(current + 1.0, base_potential + delta)
     return {"current": current, "potential": potential, "ceiling": max(potential, base_ceiling + delta),
-            "delta": delta}
+            "delta": delta, "board_share": board_share, "board_grade": board_grade}
 
 
 # ---------------------------------------------------------------------------------------------- the staff
@@ -327,6 +343,8 @@ def team_report(prospect: dict[str, Any], traits: dict[str, float], staff: dict[
     grade = scout_grade(staff, current, potential, ceiling, floor, volatility, medical)
     # Prefer different player profiles when the evidence is thinner. Keep that preference out of the rating estimates.
     grade += (0.15 + uncovered) * taste_bias(staff, estimates)
+    # Public ranks already weigh production, age and upside alongside the evidence in our scouting estimates.
+    grade += public["board_share"] * (public["board_grade"] - grade)
     half = max(1.2, noise * width)
     upside_half = max(1.2, noise * upside_width)
     return {
@@ -350,10 +368,14 @@ def class_scouting(canonical: dict[str, Any], year: Any, month: int | None = Non
         month, ahead = canonical_month(canonical, year)
     else:
         ahead = 0
+    from .draft import ARCHIVED_PUBLIC_CLASS_TYPE
+
     prospects, traits, class_seed = class_records(canonical, year)
+    archived_board = any(str(record.get("season")) == year and record.get("class_type") == ARCHIVED_PUBLIC_CLASS_TYPE
+                         for record in canonical.get("draft_classes") or [])
     teams = [t["id"] for t in canonical.get("teams") or []]
     staffs = {team_id: staff_profile(canonical, team_id) for team_id in teams}
-    key = (year, class_seed, int(month), ahead, tuple(sorted(p["id"] for p in prospects)),
+    key = (year, class_seed, int(month), ahead, archived_board, tuple(sorted(p["id"] for p in prospects)),
            tuple((t, staff["key"], staff["talent_eval"], staff["risk_modeling"],
                   staff["international_coverage"], staff["archetype"]) for t, staff in staffs.items()))
     hit = _CACHE.get(key)
@@ -362,7 +384,7 @@ def class_scouting(canonical: dict[str, Any], year: Any, month: int | None = Non
     reports: dict[str, dict[str, dict[str, Any]]] = {}
     boards: dict[str, list[str]] = {}
     ranks: dict[str, dict[str, int]] = {}
-    public = {p["id"]: public_view(p, month, class_seed) for p in prospects}
+    public = {p["id"]: public_view(p, month, class_seed, archived_board=archived_board) for p in prospects}
     for team_id in teams:
         team_reports = {p["id"]: team_report(p, traits.get(p["id"], {}), staffs[team_id], team_id, month,
                                              class_seed, ahead, public=public[p["id"]]) for p in prospects}

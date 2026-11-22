@@ -4,6 +4,7 @@ import statistics
 import unittest
 from copy import deepcopy
 from pathlib import Path
+from unittest.mock import patch
 
 from nba_gm_data import draft as D
 from nba_gm_data import draft_scouting as S
@@ -108,20 +109,59 @@ class DraftBoardTests(unittest.TestCase):
             return statistics.mean(misses)
         self.assertLess(error(85), error(50))
 
+    def test_late_lottery_gm_uses_the_league_as_a_second_opinion(self):
+        scouting = S.class_scouting(self.canonical, "2031", S.DRAFT_MONTH)
+        team_id = self.team["id"]
+        pid = max(scouting["reports"][team_id], key=lambda pid: abs(
+            scouting["consensus"][pid]["grade"] - scouting["reports"][team_id][pid]["scouted_grade"]))
+        team_grade = scouting["reports"][team_id][pid]["scouted_grade"]
+        consensus_grade = scouting["consensus"][pid]["grade"]
+        for slot in (5, 6, 14, 15, 35):
+            with self.subTest(slot=slot):
+                row = D.gm_rows(self.canonical, scouting, team_id, slot, [pid])[0]
+                with patch.object(D, "GM_LOTTERY_CONSENSUS_SHARE", 0):
+                    old = D.gm_rows(self.canonical, scouting, team_id, slot, [pid])[0]
+                expected = D.GM_LOTTERY_CONSENSUS_SHARE * (consensus_grade - team_grade) if 6 <= slot <= 14 else 0
+                self.assertAlmostEqual(row["score"] - old["score"], expected, places=3)
+                self.assertEqual(row["scout_grade"], old["scout_grade"])
+
+    def test_archived_board_uses_the_late_season_evidence(self):
+        team_id = self.team["id"]
+        year, seed = "2026", 2026
+        context = {**self.canonical, "draft_classes": [{"season": year, "seed": seed}],
+                   "draft_prospect_traits": [], "draft_prospects": [
+                       {"id": "archive_a", "name": "Prospect A", "draft_year": year, "rank": 2,
+                        "current_ability": 51, "potential": 76, "ceiling": 83, "floor": 41},
+                       {"id": "archive_b", "name": "Prospect B", "draft_year": year, "rank": 12,
+                        "current_ability": 61, "potential": 78, "ceiling": 83, "floor": 52},
+                   ]}
+        original = S.class_scouting(context, year, S.DRAFT_MONTH)
+        archive = {**context, "draft_classes": [
+            {**context["draft_classes"][0], "class_type": D.ARCHIVED_PUBLIC_CLASS_TYPE}
+        ]}
+        adjusted = S.class_scouting(archive, year, S.DRAFT_MONTH)
+        self.assertEqual(original["prospects"], adjusted["prospects"])
+        self.assertEqual(original["boards"][team_id][0], "archive_b")
+        self.assertEqual(adjusted["boards"][team_id][0], "archive_a")
+        for p in context["draft_prospects"]:
+            standard = S.public_view(p, S.DRAFT_MONTH, seed)
+            sourced = S.public_view(p, S.DRAFT_MONTH, seed, archived_board=True)
+            self.assertLess(abs(sourced["delta"]), abs(standard["delta"]))
+
     def test_user_board_uses_the_same_grades_as_pick_selection(self):
         year = "2031"
         team_id = self.team["id"]
         board = D.draft_board_report(self.canonical, self.team["abbrev"], year, month=S.DRAFT_MONTH)
         scouting = S.class_scouting(self.canonical, year, S.DRAFT_MONTH)
         ids = [entry["prospect_id"] for entry in board["entries"]]
-        gm_rows = D.gm_rows(self.canonical, scouting, team_id, 20, ids)
+        gm_rows = D.gm_rows(self.canonical, scouting, team_id, 14, ids)
         gm_by_prospect = {row["prospect_id"]: row for row in gm_rows}
         for rank, entry in enumerate(board["entries"], 1):
             gm = gm_by_prospect[entry["prospect_id"]]
             self.assertEqual(entry["scout_grade"], gm["scout_grade"])
             self.assertEqual(entry["scout_rank"], gm["scout_rank"])
             self.assertEqual(entry["scout_rank"], rank)
-        best = D.preferred_prospect_for_pick(self.canonical, year, team_id, 20,
+        best = D.preferred_prospect_for_pick(self.canonical, year, team_id, 14,
                                              [scouting["prospects"][pid] for pid in ids], seed=17)
         self.assertEqual(best["id"], gm_rows[0]["prospect_id"])
 
