@@ -39,3 +39,8 @@ _Owner: Claude (Opus agent, worktree branch `worktree-agent-a9faafaa376e62df1`).
   come from ESPN's public game-log API (`scripts/research/rookie_halves_fetch.py`, cached in
   `output/rookie-season/espn/`, ~1,670 logs, 3.1 s apart, running in background). `output/rookie-fit-2` is a symlink
   to the main checkout's folder (Basketball Reference season pages).
+- 16:45: checkpoint commit a0d3a52a (shot volume on; timing share 0.5 and development priority 0 = off). Base-commit
+  source extracted to `output/rookie-season/base` (data symlinked) for "before" runs. Baseline two-season probe seed 17
+  at `output/rookie-season/before_s17` (season-end saves in `season_end_<year>/`). Scorecard with shot volume 18/18
+  (`output/rookie-season/calibration_volume.txt`; base `calibration_base.txt`). Next: base seed 18, decide timing share
+  from full real halves, calibrate development priority (constants in `save.py` DEVELOPMENT_PRIORITY_REBUILDING).

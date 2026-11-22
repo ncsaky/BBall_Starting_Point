@@ -469,6 +469,125 @@
    }
   }
  },
+ "rebuilding_vs_other": {
+  "picks 1-10 year 1": {
+   "rebuilding": {
+    "n": 54,
+    "mpg": 27.9,
+    "extra_mpg": 7.74
+   },
+   "other": {
+    "n": 55,
+    "mpg": 22.7,
+    "extra_mpg": 1.03
+   },
+   "premium": 6.71
+  },
+  "picks 1-10 year 2": {
+   "rebuilding": {
+    "n": 34,
+    "mpg": 26.9,
+    "extra_mpg": 4.98
+   },
+   "other": {
+    "n": 65,
+    "mpg": 26.6,
+    "extra_mpg": 2.79
+   },
+   "premium": 2.19
+  },
+  "picks 1-10 year 3": {
+   "rebuilding": {
+    "n": 26,
+    "mpg": 25.2,
+    "extra_mpg": 2.39
+   },
+   "other": {
+    "n": 68,
+    "mpg": 27.6,
+    "extra_mpg": 2.86
+   },
+   "premium": -0.47
+  },
+  "picks 11-20 year 1": {
+   "rebuilding": {
+    "n": 31,
+    "mpg": 23.6,
+    "extra_mpg": 2.15
+   },
+   "other": {
+    "n": 69,
+    "mpg": 17.4,
+    "extra_mpg": -3.27
+   },
+   "premium": 5.42
+  },
+  "picks 11-20 year 2": {
+   "rebuilding": {
+    "n": 34,
+    "mpg": 26.7,
+    "extra_mpg": 4.51
+   },
+   "other": {
+    "n": 63,
+    "mpg": 20.2,
+    "extra_mpg": -1.77
+   },
+   "premium": 6.28
+  },
+  "picks 11-20 year 3": {
+   "rebuilding": {
+    "n": 22,
+    "mpg": 25.6,
+    "extra_mpg": 1.0
+   },
+   "other": {
+    "n": 58,
+    "mpg": 23.2,
+    "extra_mpg": -1.27
+   },
+   "premium": 2.27
+  },
+  "picks 21-30 year 1": {
+   "rebuilding": {
+    "n": 35,
+    "mpg": 20.6,
+    "extra_mpg": 1.73
+   },
+   "other": {
+    "n": 64,
+    "mpg": 14.9,
+    "extra_mpg": -4.8
+   },
+   "premium": 6.53
+  },
+  "picks 21-30 year 2": {
+   "rebuilding": {
+    "n": 32,
+    "mpg": 19.6,
+    "extra_mpg": -1.02
+   },
+   "other": {
+    "n": 62,
+    "mpg": 19.2,
+    "extra_mpg": -1.96
+   },
+   "premium": 0.94
+  },
+  "picks 21-30 year 3": {
+   "rebuilding": {
+    "n": 22,
+    "mpg": 23.9,
+    "extra_mpg": 1.28
+   },
+   "other": {
+    "n": 57,
+    "mpg": 20.8,
+    "extra_mpg": -2.27
+   },
+   "premium": 3.55
+  }
+ },
  "examples_rebuilding_recent": [
   {
    "name": "Cade Cunningham",

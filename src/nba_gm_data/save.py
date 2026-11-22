@@ -7675,7 +7675,7 @@ ROTATION_TALENT_PENALTY = 2.0
 # season in the league; picks 21-30 get half. A player's carried-over workload already holds his own coach's choices,
 # so the priority fills only the part of his workload that is not his own NBA minutes (a draftee's opening workload is
 # a draft-slot placeholder).
-DEVELOPMENT_PRIORITY_REBUILDING = {1: 0.0, 2: 0.0, 3: 0.0}
+DEVELOPMENT_PRIORITY_REBUILDING = {1: 6.0, 2: 4.0, 3: 2.0}
 DEVELOPMENT_PRIORITY_LATE_FIRST = 0.5
 
 

@@ -73,7 +73,7 @@ def parse_log(path: Path) -> list[dict]:
                 out.append({"date": str(meta.get("gameDate") or "")[:10], "min": minutes, "fgm": fgm, "fga": fga,
                             "f3m": f3m, "f3a": f3a, "ftm": ftm, "fta": fta, "reb": float(s[7]), "ast": float(s[8]),
                             "blk": float(s[9]), "stl": float(s[10]), "pf": float(s[11]), "tov": float(s[12]),
-                            "pts": float(s[13])})
+                            "pts": float(s[13]), "team": str((meta.get("team") or {}).get("id") or "")})
     return out
 
 
@@ -81,7 +81,7 @@ def totals(games: list[dict]) -> dict:
     t = defaultdict(float)
     for g in games:
         for k, v in g.items():
-            if k != "date":
+            if k not in ("date", "team"):
                 t[k] += v
     t["g"] = len(games)
     return dict(t)
@@ -136,6 +136,20 @@ def summarize(changes: list[dict]) -> dict:
     return out
 
 
+def team_records(year: int) -> dict[str, float]:
+    """ESPN team id -> winning share that season (rookie_halves_fetch.py standings)."""
+    try:
+        data = json.loads((CACHE / f"standings_{year}.json").read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+    out = {}
+    for conf in data.get("children", []):
+        for entry in conf["standings"]["entries"]:
+            stats = {x["name"]: x.get("value") for x in entry["stats"]}
+            out[str(entry["team"]["id"])] = float(stats.get("winPercent") or 0.0)
+    return out
+
+
 def real_panel() -> dict:
     classes = rookie_classes()
     names = {}
@@ -162,8 +176,12 @@ def real_panel() -> dict:
         t1, t2, tall = totals(first), totals(second), totals(games)
         rookie = classes.get(norm(names.get((pid, year)) or ""))
         exp = None if rookie is None else year - rookie + 1
+        teams = defaultdict(int)
+        for g in games:
+            teams[g["team"]] += 1
+        win = team_records(year).get(max(teams, key=teams.get)) if teams else None
         halves[(pid, year)] = {"t1": t1, "t2": t2, "mpg": tall["min"] / tall["g"], "exp": exp,
-                               "name": names.get((pid, year))}
+                               "name": names.get((pid, year)), "win": win}
     return {"halves": halves, "mid": mid}
 
 
@@ -176,15 +194,68 @@ def real_tables(panel: dict) -> dict:
     inseason, summer = defaultdict(list), defaultdict(list)
     for (pid, year), h in halves.items():
         if h["t1"]["min"] >= MIN_HALF and h["t2"]["min"] >= MIN_HALF:
-            inseason[cohort(h["exp"])].append(change(rates(h["t1"], h["mpg"], volume(h["t1"], h["t2"])),
-                                                     rates(h["t2"], h["mpg"], volume(h["t1"], h["t2"]))))
+            c = change(rates(h["t1"], h["mpg"], volume(h["t1"], h["t2"])),
+                       rates(h["t2"], h["mpg"], volume(h["t1"], h["t2"])))
+            inseason[cohort(h["exp"])].append(c)
+            if h["exp"] == 1 and h["win"] is not None:
+                inseason["first, team <.400" if h["win"] < 0.4 else "first, team .400+"].append(c)
         nxt = halves.get((pid, year + 1))
         if nxt and h["t2"]["min"] >= MIN_HALF and nxt["t1"]["min"] >= MIN_HALF:
             mpg = (h["mpg"] + nxt["mpg"]) / 2
             summer[cohort(h["exp"])].append(change(rates(h["t2"], mpg, volume(h["t2"], nxt["t1"])),
                                                    rates(nxt["t1"], mpg, volume(h["t2"], nxt["t1"]))))
     return {"in_season": {k: summarize(v) for k, v in inseason.items()},
-            "summer": {k: summarize(v) for k, v in summer.items()}, "split_dates": panel["mid"]}
+            "summer": {k: summarize(v) for k, v in summer.items()}, "split_dates": panel["mid"],
+            "timing": timing(inseason, summer), "timing_box": timing(inseason, summer, "box"),
+            "timing_points": timing(inseason, summer, "pts")}
+
+
+def timing(inseason: dict, summer: dict, key: str = "box_skill", draws: int = 400) -> dict:
+    """Share of a young player's yearly growth that happens in the regular season.
+
+    Between the middles of the two halves lie three monthly steps, all in the season; between this season's second
+    half and next season's first half lie nine: three in the season (April, November, December) and six in the
+    off-season. Veterans give the league's seasonal swing s (both halves of every season share it) and their own
+    aging rate a: in = 3a + s, summer = 9a - s. For a young group: in = 3r + s and summer = 3r + 6q - s, with r the
+    growth per in-season step and q per off-season step; the in-season share of the year is 6r / (6r + 6q).
+    Bootstrap over players for the spread (400 draws)."""
+    import random
+    rng = random.Random(7)
+
+    def solve(vi, vs, yi, ys):
+        a = (vi + vs) / 12.0
+        sw = vi - 3 * a
+        r = (yi - sw) / 3.0
+        q = (ys + sw - 3 * r) / 6.0
+        year = 6 * r + 6 * q
+        return {"swing": sw, "per_step_in_season": r, "per_step_off_season": q, "year": year,
+                "in_season_share": 6 * r / year if abs(year) > 1e-9 else None}
+
+    mean = lambda rows: statistics.fmean(c[key] for c in rows)
+    out = {}
+    vets_i, vets_s = inseason.get("veterans 26-30", []), summer.get("veterans 26-30", [])
+    groups = {"first year": ["first year"], "second year": ["second year"],
+              "first and second year": ["first year", "second year"]}
+    for label, names in groups.items():
+        yi = [c for n in names for c in inseason.get(n, [])]
+        ys = [c for n in names for c in summer.get(n, [])]
+        if not (yi and ys and vets_i and vets_s):
+            continue
+        point = solve(mean(vets_i), mean(vets_s), mean(yi), mean(ys))
+        shares, years = [], []
+        for _ in range(draws):
+            pick = lambda rows: [rows[rng.randrange(len(rows))] for _ in rows]
+            b = solve(mean(pick(vets_i)), mean(pick(vets_s)), mean(pick(yi)), mean(pick(ys)))
+            if b["in_season_share"] is not None and b["year"] > 0:
+                shares.append(b["in_season_share"])
+            years.append(b["year"])
+        shares.sort()
+        years.sort()
+        point = {k: round(v, 3) for k, v in point.items() if v is not None}
+        point["share_80pct_range"] = [round(shares[int(0.1 * len(shares))], 2), round(shares[int(0.9 * len(shares))], 2)]
+        point["year_80pct_range"] = [round(years[int(0.1 * len(years))], 2), round(years[int(0.9 * len(years))], 2)]
+        out[label] = point
+    return out
 
 
 def sim_tables(dirs: list[Path]) -> dict:
@@ -230,7 +301,8 @@ def show(title: str, table: dict) -> None:
     print(f"\n{title}")
     print(f"  {'group':16s} {'n':>4s} {'pts36':>6s} {'(vol':>6s} {'eff)':>6s} {'reb36':>6s} {'ast36':>6s} {'stl36':>6s} "
           f"{'blk36':>6s} {'tov36':>6s} {'TS':>6s} {'shots':>6s} {'mpg':>6s} {'box':>6s} {'skill':>6s}")
-    for group in ("first year", "second year", "third year", "veterans 26-30"):
+    for group in ("first year", "first, team <.400", "first, team .400+", "second year", "third year",
+                  "veterans 26-30"):
         row = table.get(group)
         if not row:
             continue
@@ -253,6 +325,13 @@ def main() -> None:
     real = real_tables(real_panel())
     show("REAL in-season change (second half minus first half; means, per 36 unless noted)", real["in_season"])
     show("REAL summer change (next season's first half minus this season's second half)", real["summer"])
+    for name, title in (("timing", "box impact at fixed minutes and shot volume"),
+                        ("timing_box", "box impact at fixed minutes"), ("timing_points", "points per 36")):
+      print(f"\nWhen in the year young players improve ({title}):")
+      for label, t in real[name].items():
+        print(f"  {label:22s} in-season share {t.get('in_season_share')} (80% range {t['share_80pct_range']}); "
+              f"yearly gain {t['year']:+.2f} (80% range {t['year_80pct_range']}); per step in season "
+              f"{t['per_step_in_season']:+.3f}, off season {t['per_step_off_season']:+.3f}; seasonal swing {t['swing']:+.2f}")
     out = {"real": real}
     if args.sim:
         sim = sim_tables(args.sim)

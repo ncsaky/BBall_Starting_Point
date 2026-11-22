@@ -53,30 +53,33 @@ class RookieShotVolume(unittest.TestCase):
 
 
 class SeasonTiming(unittest.TestCase):
-    PLAYER = {"id": "player_test_rookie", "age": 19, "minutes_projection": 28}
+    PLAYER = {"id": "player_test_rookie", "age": 19, "minutes_projection": 28, "draft_year": 2026}
 
-    def year(self, age=19.5, trait="handle_pressure"):
-        months = [f"{2026 + (m < 7)}-{m:02d}" for m in (7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6)]
+    def year(self, age=19.5, trait="handle_pressure", start=2026):
+        months = [f"{start + (m < 7)}-{m:02d}" for m in (7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6)]
         return {m: health.monthly_trait_delta(self.PLAYER, trait, 60.0, age, 28.0, {}, 0.0, 17, m, 1.0, None,
                                               expected=True, curve=health.INPUTS_CURVE) for m in months}
 
     def test_weights_keep_the_yearly_total(self):
-        weights = [health.development_month_weight(f"2027-{m:02d}") for m in range(1, 13)]
-        self.assertAlmostEqual(sum(weights), 12.0)
+        for player in (None, self.PLAYER, {"draft_year": 2020}):
+            months = [f"{2026 + (m < 7)}-{m:02d}" for m in range(1, 13)]
+            self.assertAlmostEqual(sum(health.development_month_weight(m, player) for m in months), 12.0)
 
-    def test_young_players_grow_mostly_in_season_and_the_year_is_unchanged(self):
-        year = self.year()
-        in_season = sum(v for m, v in year.items() if int(m[5:]) in health.IN_SEASON_EVENT_MONTHS)
-        total = sum(year.values())
-        self.assertGreater(total, 0.0)
-        self.assertAlmostEqual(in_season / total, health.INPUTS_IN_SEASON_SHARE, places=6)
-        saved = health.INPUTS_IN_SEASON_SHARE
-        try:
-            health.INPUTS_IN_SEASON_SHARE = 0.5
-            even = sum(self.year().values())
-        finally:
-            health.INPUTS_IN_SEASON_SHARE = saved
-        self.assertAlmostEqual(total, even, places=6)
+    def test_in_season_share_by_nba_year_and_the_year_is_unchanged(self):
+        for start, nba_year in ((2026, 1), (2027, 2)):
+            year = self.year(start=start)
+            in_season = sum(v for m, v in year.items() if int(m[5:]) in health.IN_SEASON_EVENT_MONTHS)
+            total = sum(year.values())
+            self.assertGreater(total, 0.0)
+            share = health.INPUTS_IN_SEASON_SHARE_BY_NBA_YEAR.get(nba_year, health.INPUTS_IN_SEASON_SHARE)
+            self.assertAlmostEqual(in_season / total, share, places=6)
+            saved = (health.INPUTS_IN_SEASON_SHARE, health.INPUTS_IN_SEASON_SHARE_BY_NBA_YEAR)
+            try:
+                health.INPUTS_IN_SEASON_SHARE, health.INPUTS_IN_SEASON_SHARE_BY_NBA_YEAR = 0.5, {}
+                even = sum(self.year(start=start).values())
+            finally:
+                health.INPUTS_IN_SEASON_SHARE, health.INPUTS_IN_SEASON_SHARE_BY_NBA_YEAR = saved
+            self.assertAlmostEqual(total, even, places=6)
 
     def test_veteran_decline_is_not_reshaped(self):
         year = self.year(age=34.0)
@@ -89,6 +92,32 @@ class SeasonTiming(unittest.TestCase):
                                              None, expected=True, curve=health.LEGACY_CURVE)
                   for m in ("2026-08", "2027-01")]
         self.assertAlmostEqual(legacy[0], legacy[1])
+
+
+class DevelopmentMinutes(unittest.TestCase):
+    def priority(self, phase="rebuilding", pick=5, draft_year=2026, season=2026, **extra):
+        from nba_gm_data.save import development_minutes_priority
+        return development_minutes_priority({"draft_position": pick, "draft_year": draft_year, **extra}, phase, season,
+                                            2026)
+
+    def test_only_rebuilding_teams_lean_on_young_first_rounders(self):
+        self.assertGreater(self.priority(), 0.0)
+        for phase in ("peak", "entering", "exiting", None):
+            self.assertEqual(self.priority(phase=phase), 0.0)
+
+    def test_fades_with_seasons_and_draft_slot(self):
+        from nba_gm_data.save import DEVELOPMENT_PRIORITY_REBUILDING as table
+        generated = {"source_kind": "generated_rookie"}
+        years = [self.priority(draft_year=2027, season=2027 + k, **generated) for k in range(4)]
+        self.assertEqual(years, [table[1], table[2], table[3], 0.0])
+        self.assertLess(self.priority(pick=25), self.priority(pick=15))
+        self.assertEqual(self.priority(pick=31), 0.0)
+        self.assertEqual(self.priority(pick=None), 0.0)
+
+    def test_a_real_players_own_minutes_already_carry_his_coachs_choice(self):
+        # Drafted before the save began: his opening workload is his real NBA minutes with this roster's coach.
+        self.assertEqual(self.priority(draft_year=2025, season=2026), 0.0)
+        self.assertGreater(self.priority(draft_year=2025, season=2027), 0.0)
 
 
 if __name__ == "__main__":

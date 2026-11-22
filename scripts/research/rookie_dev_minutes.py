@@ -179,6 +179,27 @@ def main() -> None:
             print(f"  picks {lo}-{hi} year {exp}: " + "; ".join(f"{k} {v['mpg']} ({v['n']}) extra {v['extra_mpg']:+.1f}"
                                                             for k, v in cell.items()))
     out["by_pick_band"] = bands
+    # Rebuilding vs every other team, first-round bands (the simulated table uses the same cells).
+    print("\nFirst-round picks by band and season: rebuilding vs other teams, mpg (n) extra vs veterans")
+    rvo = {}
+    for lo, hi in ((1, 10), (11, 20), (21, 30)):
+        for exp in (1, 2, 3):
+            cell = {}
+            for k, kinds in (("rebuilding", ("rebuilding",)), ("other", ("middle", "contending"))):
+                members = [(r, expected(r)) for r in young_any
+                           if lo <= r["pick"] <= hi and r["exp"] == exp and r["kind"] in kinds]
+                members = [(r, e) for r, e in members if e is not None]
+                if members:
+                    w = sum(r["g"] for r, _ in members)
+                    cell[k] = {"n": len(members), "mpg": round(sum(r["mpg"] * r["g"] for r, _ in members) / w, 1),
+                               "extra_mpg": round(sum((r["mpg"] - e) * r["g"] for r, e in members) / w, 2)}
+            if "rebuilding" in cell and "other" in cell:
+                cell["premium"] = round(cell["rebuilding"]["extra_mpg"] - cell["other"]["extra_mpg"], 2)
+            rvo[f"picks {lo}-{hi} year {exp}"] = cell
+            print(f"  picks {lo}-{hi} year {exp}: " + "; ".join(
+                f"{k} {v['mpg']} ({v['n']}) extra {v['extra_mpg']:+.1f}" for k, v in cell.items() if isinstance(v, dict))
+                + (f"; rebuilding premium {cell['premium']:+.1f}" if "premium" in cell else ""))
+    out["rebuilding_vs_other"] = rvo
     # Named recent examples on rebuilding teams.
     examples = sorted((r for r in young_hi if r["kind"] == "rebuilding" and r["year"] >= 2022),
                       key=lambda r: (r["year"], r["pick"]))

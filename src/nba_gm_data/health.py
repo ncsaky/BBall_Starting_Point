@@ -97,8 +97,10 @@ INPUTS_GROWTH_CAP_SCALE = 2.5
 INPUTS_UPSIDE_POWER = 0.25
 # When in the year growth happens (ROOKIE-SEASON, 2026-11-22). Share of a year's growth (94-input ratings) handed out
 # in the six development events that cover the regular season (dated November-April; each event covers the month
-# before it); the other six (May-October) share the rest. 0.5 = spread evenly, as before. The yearly total is unchanged.
+# before it); the other six (May-October) share the rest. 0.5 = spread evenly, as before. The yearly total is unchanged
+# (each July-June year keeps its sum). By the player's season in the NBA (draft year = season 1); others use the default.
 INPUTS_IN_SEASON_SHARE = 0.5
+INPUTS_IN_SEASON_SHARE_BY_NBA_YEAR: dict[int, float] = {1: 0.6}
 IN_SEASON_EVENT_MONTHS = frozenset({11, 12, 1, 2, 3, 4})
 # Monthly decline: (slope per year past onset, onset age, extra slope past the late onset, late onset, largest).
 LEGACY_DECLINE = {"offense": (0.033, 25.5, 0.030, 32.0, 0.45), "physical": (0.021, 28.5, 0.028, 32.0, 0.36),
@@ -1673,7 +1675,7 @@ def monthly_trait_delta(
         growth += (max(0.0, ceiling - current) * .05 * raw_learning * window
                    * role_factor * focus_multiplier * float(staff.get("development_multiplier", 1.0))
                    * float(staff.get("patience_multiplier", 1.0)))
-    timing = development_month_weight(month) if inputs_curve else 1.0
+    timing = development_month_weight(month, player) if inputs_curve else 1.0
     growth *= timing
     health_penalty = health_drag * (0.04 if trait_key in PHYSICAL_TRAITS else 0.022)
     if age <= 30:
@@ -1725,16 +1727,24 @@ def monthly_trait_delta(
     return min(delta, max(0.0, ceiling - current)) if ceiling is not None else delta
 
 
-def development_month_weight(month: str | None) -> float:
-    """This month's share of a year's growth, times 12 (the 94-input ratings; the yearly total is unchanged).
+def development_month_weight(month: str | None, player: dict[str, Any] | None = None) -> float:
+    """This month's share of a year's growth, times 12 (the 94-input ratings; each July-June year keeps its total).
 
     A development event dated the first of a month covers the month before it: events dated November through April
-    cover the regular season (October to March), May through October the end of the season and the summer."""
+    cover the regular season (October to March), May through October the end of the season and the summer. The
+    share depends on the player's season in the NBA (INPUTS_IN_SEASON_SHARE_BY_NBA_YEAR; his draft year's season is
+    season 1)."""
     try:
-        number = int(str(month)[5:7])
+        year, number = int(str(month)[:4]), int(str(month)[5:7])
     except (TypeError, ValueError):
         return 1.0
-    return 2.0 * INPUTS_IN_SEASON_SHARE if number in IN_SEASON_EVENT_MONTHS else 2.0 * (1.0 - INPUTS_IN_SEASON_SHARE)
+    share = INPUTS_IN_SEASON_SHARE
+    try:
+        nba_year = (year if number >= 7 else year - 1) - int((player or {}).get("draft_year")) + 1
+        share = INPUTS_IN_SEASON_SHARE_BY_NBA_YEAR.get(nba_year, share)
+    except (TypeError, ValueError):
+        pass
+    return 2.0 * share if number in IN_SEASON_EVENT_MONTHS else 2.0 * (1.0 - share)
 
 
 def development_upside_multiplier(player: dict[str, Any], seed: int) -> float:

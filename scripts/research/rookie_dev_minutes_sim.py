@@ -104,6 +104,24 @@ def main() -> None:
             out["groups"][f"{label} | {key}"] = row
             print(f"  {label:32s} by {'record' if key == 'kind' else 'team plan'}: " + "; ".join(
                 f"{k} n {v['n']} mpg {v['mpg']} rank {v['mean_rank']} extra {v['extra_mpg']:+.1f}" for k, v in row.items()))
+    print("\nFirst-round picks by band and season (simulated), team plan rebuilding vs other: mpg (n) extra")
+    young_any = [r for r in data if r["exp"] in (1, 2, 3) and r["pick"]]
+    bands = {}
+    for lo, hi in ((1, 10), (11, 20), (21, 30)):
+        for exp in (1, 2, 3):
+            cell = {}
+            for k, kinds in (("rebuilding", ("rebuilding",)), ("other", ("middle", "contending"))):
+                members = [(r, expected(r, "phase_kind")) for r in young_any
+                           if lo <= r["pick"] <= hi and r["exp"] == exp and r["phase_kind"] in kinds]
+                members = [(r, e) for r, e in members if e is not None]
+                if members:
+                    w = sum(r["g"] for r, _ in members)
+                    cell[k] = {"n": len(members), "mpg": round(sum(r["mpg"] * r["g"] for r, _ in members) / w, 1),
+                               "extra_mpg": round(sum((r["mpg"] - e) * r["g"] for r, e in members) / w, 2)}
+            bands[f"picks {lo}-{hi} year {exp}"] = cell
+            print(f"  picks {lo}-{hi} year {exp}: " + "; ".join(f"{k} {v['mpg']} ({v['n']}) extra {v['extra_mpg']:+.1f}"
+                                                            for k, v in cell.items()))
+    out["by_pick_band"] = bands
     print("\nTop-10 picks, years 1-2 (simulated):")
     for r in sorted(young_hi, key=lambda r: (r["exp"], r["pick"], r["dir"])):
         e = expected(r, "phase_kind")
