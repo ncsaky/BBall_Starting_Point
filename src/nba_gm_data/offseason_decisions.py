@@ -52,7 +52,11 @@ RULES: dict[str, dict[str, float]] = {
         # CONTRACT-TERMS: CONTRACT-STRUCTURE-EVIDENCE's best held-out player rule (28 of 41 right on 2025-26 against
         # 20 for "keep" and 21 for the market rule): he opts out after 1,000 or more minutes per 82 games the season
         # before; an injury into next season keeps him in (Lonzo Ball 2024). Real players kept 93 of 177 (2019-26).
+        # Alone it declined 45 of 59 options in the two-summer probe (76%; the rule also over-calls opt-outs on the
+        # evidence's held-out seasons, 26 predicted against 21 real), because option holders are mostly regulars. So
+        # the regular must also have a market at least 0.8x his option: 26 of 59 declined (44%, real 47%).
         "evidence_opt_out_minutes": 1000.0,
+        "opt_out_market_ratio": 0.8,
     },
     # Veteran team options (2023-26: 63 exercised, 68 declined). Exercise when his market price is at least
     # ``exercise_value_ratio`` of the option (fits: 1.2-1.5), or when the year is cheap to keep and cut later (a
@@ -67,6 +71,13 @@ RULES: dict[str, dict[str, float]] = {
         "evidence_market_ratio": 1.30,
         "evidence_regular_ratio": 1.05,
         "evidence_regular_minutes": 500.0,
+        # The evidence's market test does not carry over: the game's market price for a fringe player never falls
+        # near a cheap option (free-agent asks start around $5M; Bronny James $5.7M against a $2.5M option), so the
+        # two-summer probe kept 31 of 38 AI team options (82%; real 48%). Minutes decide instead: keep a player with
+        # 1,000 minutes last season who is worth at least the option. Minutes >= 1,000 alone: 49 of 85 right on the
+        # evidence's held-out 2025-26 seasons (750 minutes: 45); with the worth test the probe keeps 19 of 38 (50%).
+        "keep_minutes": 1000.0,
+        "keep_market_ratio": 1.0,
     },
     # Rookie-scale options: the third year is kept almost always (116 of 120); the fourth is declined only for a
     # player under about ``decline_prior_minutes`` last season with replacement-level value (fits: 700-1,000 minutes).
@@ -314,7 +325,7 @@ def decide_player_option(save: dict[str, Any], player: dict[str, Any], row: dict
         return "exercised", f"He is injured into next season, so he keeps his guaranteed {_m(option)} ({who})."
     played = prior_season_minutes(save, player["id"], player)
     money = f"about {_m(market)} a year on the market" if market else "no clear market price"
-    if played >= rules["evidence_opt_out_minutes"]:
+    if played >= rules["evidence_opt_out_minutes"] and float(market or 0.0) >= option * rules["opt_out_market_ratio"]:
         why = (f"as {who} who played {round(played):,} minutes last season he expects {money} and a longer deal "
                f"than his {_m(option)} option" + (" (his team holds his full Bird rights)" if bird_level == "full" else ""))
         return "declined", f"He becomes a free agent: {why}."
@@ -345,12 +356,12 @@ def decide_team_option_ai(active: dict[str, Any], save: dict[str, Any], player: 
     rules = RULES["team_option"]
     del minimum
     played = prior_season_minutes(save, player["id"], player)
-    regular = played >= rules["evidence_regular_minutes"]
-    if value >= option * rules["evidence_market_ratio"]:
-        return "exercised", f"The team keeps him at {_m(option)}: he is worth about {_m(value)}, a bargain."
-    if regular and value >= option * rules["evidence_regular_ratio"]:
+    if played >= rules["keep_minutes"] and value >= option * rules["keep_market_ratio"]:
         return "exercised", (f"The team keeps him at {_m(option)}: a regular ({round(played):,} minutes last season) "
                              f"worth about {_m(value)}.")
+    if played < rules["keep_minutes"]:
+        return "declined", (f"The team declines his {_m(option)} option: {round(played):,} minutes last season, "
+                            "not enough of a role to guarantee the year.")
     return "declined", f"The team declines his {_m(option)} option: he is worth about {_m(value)}."
 
 

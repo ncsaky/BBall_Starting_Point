@@ -122,6 +122,8 @@ class Options(unittest.TestCase):
         status, reason = od.decide_player_option(save, young, row, 9e6, "non")
         self.assertEqual(status, "declined")
         self.assertIn("1,500 minutes", reason)
+        # ... and only when the market pays him at least 0.8x his option.
+        self.assertEqual(od.decide_player_option(save, young, row, 7e6, "non")[0], "exercised")
         veteran = player("veteran", draft_year=2014, age=33, minutes=28)
         self.assertEqual(od.decide_player_option(save, veteran, {"season": NEXT, "salary": 30e6}, 26e6, "full")[0], "exercised")
         hurt = summer_save(player_season_stats={"young": {"minutes": 1500}},
@@ -131,15 +133,16 @@ class Options(unittest.TestCase):
         self.assertIn("injured", reason)
 
     def test_team_option_rules(self):
-        # CONTRACT-TERMS (rule changed): the evidence's held-out rule (54 of 85): keep at 130% of the option, or 105%
-        # for a player with 500 minutes last season.
-        save = summer_save(player_season_stats={"p": {"minutes": 900}, "q": {"minutes": 200}})
+        # CONTRACT-TERMS (rule changed): keep a player with 1,000 minutes last season who is worth at least the option
+        # (the game's market price never falls near a cheap option, so minutes decide; real clubs kept 89 of 186).
+        save = summer_save(player_season_stats={"p": {"minutes": 1200}, "q": {"minutes": 600}})
         p = player("p", draft_year=2018, age=29, minutes=18)
         q = player("q", draft_year=2018, age=29, minutes=8)
         self.assertEqual(od.decide_team_option_ai({}, save, p, {"season": NEXT, "salary": 10e6}, "team_option", 10.6e6)[0], "exercised")
-        self.assertEqual(od.decide_team_option_ai({}, save, q, {"season": NEXT, "salary": 10e6}, "team_option", 12e6)[0], "declined")
-        self.assertEqual(od.decide_team_option_ai({}, save, q, {"season": NEXT, "salary": 10e6}, "team_option", 13.1e6)[0], "exercised")
         self.assertEqual(od.decide_team_option_ai({}, save, p, {"season": NEXT, "salary": 10e6}, "team_option", 9e6)[0], "declined")
+        status, reason = od.decide_team_option_ai({}, save, q, {"season": NEXT, "salary": 3e6}, "team_option", 6e6)
+        self.assertEqual(status, "declined")
+        self.assertIn("600 minutes", reason)
         # Rookie options: the third year almost always; the fourth declined for a little-used, replacement-level player.
         third = player("third", draft_year=2026, pick=4, age=20, minutes=6)
         self.assertEqual(od.decide_team_option_ai({}, save, third, {"season": "2028-29", "salary": 9e6}, "rookie_option", 2e6)[0], "exercised")

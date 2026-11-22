@@ -6616,6 +6616,27 @@ def extension_headline_with_terms(team_abbrev: str | None, player_name: str | No
 
 AI_ROOKIE_SCALE_EXTENSION_PRIORITY = 55.0   # set so about 40% of eligible rookie-scale players extend (real 2023-26: 41 of 96, 7-14 a year)
 AI_EXTENSION_MODEL_UNDERPRICE = 1.45        # see the pay-cut bar in process_ai_extensions
+AI_VETERAN_EXTENSION_PRIORITY = 50.0       # was 78; with 78 the second probe season had 8 veteran extensions (real 17-27)
+
+
+def ai_extension_rescue_offer(result: dict[str, Any], contract: dict[str, Any] | None, player: dict[str, Any],
+                              candidate: dict[str, Any]) -> dict[str, Any] | None:
+    """CONTRACT-TERMS: talks the AI negotiation drops because its offers start from the contract model's price (about
+    1.45x below real deals for players under contract) end with the team offering what he asks or his no-pay-cut bar,
+    whichever is higher, when that is still within 1.45x his model price. Otherwise None (he waits)."""
+    negotiation = result.get("negotiation") or {}
+    offers = [o for o in negotiation.get("offers") or [] if o.get("annual_salary")]
+    if not offers or negotiation.get("status") != "no_agreement":
+        return None
+    ask = float((negotiation.get("player_ask") or {}).get("aav_millions") or 0.0) * 1e6
+    current_pay = max([float(r.get("salary") or 0.0) for r in (contract or {}).get("seasons") or []] or [0.0])
+    age = float(player.get("display_age", player.get("age")) or 27.0)
+    bar = current_pay * (0.95 if age < 31 else 0.80)
+    worth = float(candidate.get("projected_aav") or 0.0) or float(candidate.get("projected_aav_millions") or 0.0) * 1e6
+    price = max(ask, bar)
+    if not worth or not price or price > AI_EXTENSION_MODEL_UNDERPRICE * worth:
+        return None
+    return {**offers[-1], "annual_salary": round(price, 2), "status": "accepted", "rescued_from_walkaway": True}
 
 
 def ai_extension_pass_horizon(save: dict[str, Any], player: dict[str, Any], through_date: str,
@@ -6700,6 +6721,16 @@ def process_ai_extensions(
             reconstructed[bucket] = int(reconstructed.get(bucket) or 0) + 1
         volume_by_season[season] = reconstructed
     volume = volume_by_season[season]
+    # Measurement only: a caller may put a dict in save["_extension_diagnostics"] to count why candidates stop.
+    diagnostics = save.get("_extension_diagnostics")
+
+    def note(candidate: dict[str, Any], reason: str) -> None:
+        if isinstance(diagnostics, dict):
+            name = f"{candidate.get('extension_kind') or 'veteran'}:{reason}"
+            diagnostics[name] = int(diagnostics.get(name) or 0) + 1
+            if isinstance(diagnostics.get("_detail"), list):
+                diagnostics["_detail"].append((through_date, candidate.get("name"), reason))
+
     for candidate in report.get("candidates", []):
         player_id = candidate.get("player_id")
         team_id = candidate.get("team_id")
@@ -6724,6 +6755,7 @@ def process_ai_extensions(
         contract_now = next((c for c in active.get("contracts", []) if c.get("player_id") == player_id), None)
         due_date = ai_extension_due_date(save, candidate, player, priority, seed, contract_now)
         if due_date > ai_extension_pass_horizon(save, player, through_date, contract_now):
+            note(candidate, "not due yet")
             continue
         team_pass = ai_extension_team_pass_outlook(save, candidate, player, team_id, priority)
         if team_pass:
@@ -6753,19 +6785,23 @@ def process_ai_extensions(
                 },
             )
             processed.add(key)
+            note(candidate, "team passes")
             continue
         bucket = "rookie_scale" if candidate.get("extension_kind") == "rookie_scale" else "veteran"
         if int(volume.get(bucket) or 0) >= AI_EXTENSION_LIMITS.get(bucket, AI_EXTENSION_BUCKET_LIMIT):
             processed.add(key)
+            note(candidate, "season ceiling")
             continue
-        if priority < (AI_ROOKIE_SCALE_EXTENSION_PRIORITY if bucket == "rookie_scale" else 78.0):
+        if priority < (AI_ROOKIE_SCALE_EXTENSION_PRIORITY if bucket == "rookie_scale" else AI_VETERAN_EXTENSION_PRIORITY):
             # Fringe or bad-fit cases stay live for later checkpoints instead of being
             # burned for the full season before their role/team context has settled.
+            note(candidate, "low priority")
             continue
         result = negotiate_extension(active, player_id, team_id, seed=seed, max_rounds=3, date=through_date)
-        if result.get("accepted") and (result.get("decision") or {}).get("accepted_offer"):
+        rescued = None if result.get("accepted") else ai_extension_rescue_offer(result, contract_now, player, candidate)
+        if rescued or (result.get("accepted") and (result.get("decision") or {}).get("accepted_offer")):
             negotiation = result.get("negotiation") or {}
-            offer = dict((result.get("decision") or {}).get("accepted_offer") or {})
+            offer = dict(rescued or (result.get("decision") or {}).get("accepted_offer") or {})
             offer.setdefault("team_id", team_id)
             offer.setdefault("start_season", extension_start_season_from_date_save(through_date))
             # CONTRACT-TERMS: an extension is signed in the season of its date (its anniversaries count from there).
@@ -6815,6 +6851,7 @@ def process_ai_extensions(
                 worth = float(candidate.get("projected_aav") or 0.0) or float(candidate.get("projected_aav_millions") or 0.0) * 1e6
                 if bar > AI_EXTENSION_MODEL_UNDERPRICE * worth:
                     processed.add(key)
+                    note(candidate, "pay-cut bar above his worth")
                     continue
                 first = bar * len(steps) / sum(steps)
                 if limit and first > float(limit) + 1.0:
@@ -6824,6 +6861,7 @@ def process_ai_extensions(
                      "max_raise": EXTENSION_MAX_RAISE}
             offer = merge_extension_offer_with_existing_contract(offer, negotiation)
             if not extension_offer_fits_hard_cap(baseline if baseline is not None else canonical, save, player_id, offer):
+                note(candidate, "hard cap")
                 continue
             from .contract_ai import keep_bird_clock
             keep_bird_clock(save, player, team_id, str(offer.get("signed_season") or ""))   # extensions keep it
@@ -6863,8 +6901,10 @@ def process_ai_extensions(
                 },
             )
             applied += 1
+            note(candidate, "extended")
             volume[bucket] = int(volume.get(bucket) or 0) + 1
         else:
+            note(candidate, "negotiation fails")
             outlook = ai_extension_refusal_outlook(save, candidate, player, team_id, priority)
             if outlook.get("is_trade_demand"):
                 pressure = set(save.setdefault("ai_trade_pressure_player_ids", []))
