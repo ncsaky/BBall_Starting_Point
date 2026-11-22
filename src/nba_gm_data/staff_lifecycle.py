@@ -157,7 +157,7 @@ def _age_ratings(
     return entry
 
 
-def _expected_win_pct(strategic_states: list[dict[str, Any]]) -> dict[str, float]:
+def staff_win_expectations(strategic_states: list[dict[str, Any]]) -> dict[str, float]:
     ceilings = {row["team_id"]: float(row.get("contention_ceiling") or 55) for row in strategic_states}
     league_mean = sum(ceilings.values()) / max(1, len(ceilings))
     return {
@@ -249,13 +249,13 @@ def roll_staff_lifecycle(
         return
 
     preseason = save.setdefault("staff_preseason_expectations", {})
-    expectations = preseason.setdefault(season, _expected_win_pct((canonical or {}).get("team_strategic_states", [])))
+    expectations = preseason.setdefault(season, staff_win_expectations((canonical or {}).get("team_strategic_states", [])))
     results = _season_results(completed, expectations)
     if next_roster and next_roster.get("players"):
         from .schema import to_plain
         from .transactions import build_team_strategic_states
 
-        preseason[new_season] = _expected_win_pct(to_plain(build_team_strategic_states(next_roster, _final_needs_only=True)))
+        preseason[new_season] = staff_win_expectations(to_plain(build_team_strategic_states(next_roster, _final_needs_only=True)))
 
     incumbents = {staff_person_id(staff): staff for staff in ending_slots if not is_interim_staff(staff)}
     former = save.get("former_staff", [])
