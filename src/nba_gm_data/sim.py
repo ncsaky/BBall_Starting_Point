@@ -23,6 +23,7 @@ from .research import BETTING_ODDS_FILE, COACH_REPUTATION_FILE, GAME_BOXSCORES_F
 from .schema import CoachRating, SimFeatureVector, SimGameResult, ValidationReport, to_plain
 from .spatial import (
     flatten_spatial_profile,
+    league_playmaking_mean,
     player_spatial_profile,
     spatial_matchup_adjustment,
     spatial_profile_from_features,
@@ -250,6 +251,47 @@ def invalidate_sim_cache(canonical: dict[str, Any]) -> None:
     canonical.pop("_sim_feature_cache", None)
 
 
+# MONTH-SPEED-2: player feature vectors remembered across league views. Every rebuilt league (one or more a day, plus
+# the many hypothetical rosters of the AI's planning) used to recompute every player's features although almost none
+# of their inputs had changed. The key holds everything the computation reads (_feature_memo_key); the player's
+# effective inputs are checked by identity (ratings_model caches those records per base record and delta values and
+# never edits them). NBA_GM_RUNTIME_AUDIT=1 recomputes every hit and stops on a difference.
+_FEATURE_MEMO: dict[bytes, tuple[Any, SimFeatureVector]] = {}
+_FEATURE_MEMO_LIMIT = 40_000
+_FEATURE_MEMO_AUDIT = __import__("os").environ.get("NBA_GM_RUNTIME_AUDIT") == "1"
+_NO_VALUE = "__no_value__"
+
+
+def _feature_memo_key(canonical: dict[str, Any], cache: dict[str, Any], player: dict[str, Any],
+                      include_spatial: bool) -> bytes | None:
+    """Everything player_feature_vector reads, pickled: the player record (his season box totals only for the zone
+    grids, the only part that reads them), his trait values in trait order, the talent / offense / ratings model
+    switches, his frozen offensive priors, the new-ratings tables and his input deltas, and for the zone grids the
+    league playmaking baseline. None when it cannot be keyed (the caller then computes as before)."""
+    from . import impact_value
+    if impact_value._BUILDING:
+        return None
+    from .offense import enabled as offense_enabled
+    from .ratings_model import MODEL_KEY
+    pid = player.get("id")
+    traits = cache["traits_by_player"].get(pid, {})
+    meta = canonical.get("meta") or {}
+    model = canonical.get(MODEL_KEY) or {}
+    record = player if include_spatial else {k: v for k, v in player.items() if k != "_save_stats"}
+    try:
+        return pickle.dumps((
+            "player_features_v1", include_spatial, record,
+            tuple((key, row.get("value", _NO_VALUE) if isinstance(row, dict) else row) for key, row in traits.items()),
+            talent_enabled(canonical), offense_enabled(canonical),
+            (meta.get("offensive_profiles") or {}).get(pid),
+            model.get("mode"), model.get("inputs_key"), model.get("fitted_key"), model.get("impact_tables_key"),
+            (model.get("input_deltas") or {}).get(pid), (model.get("generated") or {}).get(pid),
+            league_playmaking_mean(canonical) if include_spatial else None,
+        ), protocol=pickle.HIGHEST_PROTOCOL)
+    except (pickle.PicklingError, TypeError, AttributeError):
+        return None
+
+
 def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any], *, include_spatial: bool = True) -> SimFeatureVector:
     """Full game features by default; strength-only forecasts can omit zone expansion."""
     cache = canonical_sim_cache(canonical)
@@ -263,6 +305,28 @@ def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any], *, 
     cached = cache["player_features"].get(feature_key)
     if cached:
         return cached
+    memo_key = _feature_memo_key(canonical, cache, player, include_spatial)
+    if memo_key is None:
+        vector = _compute_player_feature_vector(canonical, cache, player, include_spatial)
+    else:
+        from .ratings_model import effective_inputs
+        inputs = effective_inputs(canonical, player["id"])
+        remembered = _FEATURE_MEMO.get(memo_key)
+        if remembered is not None and remembered[0] is inputs:
+            vector = remembered[1]
+            if _FEATURE_MEMO_AUDIT and _compute_player_feature_vector(canonical, cache, player, include_spatial) != vector:
+                raise AssertionError(f"player feature memo disagrees for {player.get('id')}")
+        else:
+            vector = _compute_player_feature_vector(canonical, cache, player, include_spatial)
+            if len(_FEATURE_MEMO) >= _FEATURE_MEMO_LIMIT:
+                _FEATURE_MEMO.pop(next(iter(_FEATURE_MEMO)))
+            _FEATURE_MEMO[memo_key] = (inputs, vector)
+    cache["player_features"][feature_key] = vector
+    return vector
+
+
+def _compute_player_feature_vector(canonical: dict[str, Any], cache: dict[str, Any], player: dict[str, Any],
+                                   include_spatial: bool) -> SimFeatureVector:
     traits = cache["traits_by_player"].get(player["id"], {})
     get = lambda key, default=50.0: float(traits.get(key, {}).get("value", default))
     synthetic_actual = player.get("rotation_priority") == "actual_boxscore_unmatched"
@@ -360,7 +424,6 @@ def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any], *, 
         source_ids=["src_trait_method_v1", "src_tracking_sources_2025_26"],
         notes="V0 sim feature vector from canonical hidden traits, roles, and public/raw stat proxies.",
     )
-    cache["player_features"][feature_key] = vector
     return vector
 
 

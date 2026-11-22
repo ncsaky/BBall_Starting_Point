@@ -50,8 +50,9 @@ SCENARIOS: dict[str, dict] = {
                                   {"to_date": "2027-02-10", "trade_deadline_confirmed": "2027-02-05"}]},
     # MONTH-SPEED-2 (2026-11-22): the GUI default is now the 94-input ratings, so the second seed and the
     # deadline month run on them too.
+    # Boston has rookie-scale options to decide: the GUI stops on the Nov 2 deadline and the user clicks on.
     "nov-inputs-b": {"team": "BOS", "seed": 55, "model": "inputs_v1", "start": "2026-11-01",
-                     "steps": [{"to_date": "2026-12-01"}]},
+                     "steps": [{"to_date": "2026-12-01"}, {"to_date": "2026-12-01"}]},
     "deadline-inputs": {"team": "BOS", "seed": 55, "model": "inputs_v1", "start": "2027-01-10",
                         "base": "nov-inputs-b",
                         "steps": [{"to_date": "2027-02-10"},
