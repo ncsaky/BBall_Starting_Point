@@ -13,6 +13,11 @@ This script turns every listed person whose images are all present into a game f
     use) and `faces` (gender, stages with min_age and file). Game face ids carry a "gen-" group prefix
     ("gen-staff-m/0001") so they never collide with the stock library's ids ("staff-m/0001").
 
+Cut-out (default): each image is made from Codex's full-size PNG (output/headshots-gen-library/<group>/<NNNN>/
+stage<K>.png, beside the game folder) with scripts/stock_headshot.swift, the tool that made the stock library: the person
+cut out from the studio background (macOS Vision), greyscale, ESPN-style head-and-shoulders framing, so generated
+faces match the real NBA and prospect headshots. `--no-cutout` keeps the plain resized square.
+
 Later batches keep continuing ids in the same manifest: re-run the script and only new or changed images are
 converted; images no longer listed are removed.
 
@@ -46,8 +51,34 @@ ABOUT = ("AI-generated portraits of fictional people (no real person is depicted
          "last stage whose min_age is at or below the person's age (faces.py).")
 
 
-def convert(source: Path, target: Path, fmt: str, width: int, quality: int) -> None:
+CUTOUT_TOOL = ROOT / "output" / "headshots-gen" / "bin" / "stock_headshot"
+
+
+def ensure_cutout_tool() -> Path:
+    source = ROOT / "scripts" / "stock_headshot.swift"
+    if not CUTOUT_TOOL.exists() or CUTOUT_TOOL.stat().st_mtime < source.stat().st_mtime:
+        CUTOUT_TOOL.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(["swiftc", "-O", str(source), "-o", str(CUTOUT_TOOL)], check=True)
+    return CUTOUT_TOOL
+
+
+def full_size_png(source: Path) -> Path | None:
+    """Codex's full-size PNG for a game JPEG (game/staff-m/0003-s2.jpg -> staff-m/0003/stage2.png)."""
+    number, _, stage = source.stem.partition("-s")
+    png = source.parent.parent.parent / source.parent.name / number / f"stage{stage}.png"
+    return png if png.exists() else None
+
+
+def convert(source: Path, target: Path, fmt: str, width: int, quality: int, cutout: bool = True) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
+    if cutout:
+        original = full_size_png(source) or source
+        out = subprocess.run([str(ensure_cutout_tool()), str(original), str(target), str(width)], check=True,
+                             capture_output=True, text=True).stdout.strip().splitlines()
+        report = json.loads(out[-1]) if out else {}
+        if report.get("written"):
+            return
+        print(f"  cut-out failed for {original.name} ({report}); using the plain image", flush=True)
     if fmt == "jpg":
         shutil.copyfile(source, target)
         return
@@ -55,7 +86,7 @@ def convert(source: Path, target: Path, fmt: str, width: int, quality: int) -> N
                     str(source), "--out", str(target)], check=True, capture_output=True)
 
 
-def build(source_dir: Path, manifest_path: Path, fmt: str, width: int, quality: int) -> dict:
+def build(source_dir: Path, manifest_path: Path, fmt: str, width: int, quality: int, cutout: bool = True) -> dict:
     library = json.loads(manifest_path.read_text(encoding="utf-8"))
     groups: dict[str, dict] = {}
     faces: dict[str, dict] = {}
@@ -81,7 +112,7 @@ def build(source_dir: Path, manifest_path: Path, fmt: str, width: int, quality: 
             source = source_dir / stage["file"]
             target = OUT / Path(stage["file"]).with_suffix(f".{fmt}")
             if not target.exists() or target.stat().st_mtime < source.stat().st_mtime:
-                convert(source, target, fmt, width, quality)
+                convert(source, target, fmt, width, quality, cutout)
                 converted += 1
             written.add(target)
             entry["stages"].append({"min_age": stage["min_age"], "age": stage.get("age"),
@@ -113,11 +144,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--format", choices=("avif", "jpg"), default="avif")
     parser.add_argument("--width", type=int, default=260)
     parser.add_argument("--quality", type=int, default=65, help="AVIF quality for sips (0-100)")
+    parser.add_argument("--no-cutout", action="store_true", help="plain resized squares instead of cut-outs")
+    parser.add_argument("--force", action="store_true", help="rebuild every image, not only new or changed ones")
     args = parser.parse_args(argv)
+    if args.force and OUT.exists():
+        for old in OUT.rglob("*"):
+            if old.is_file() and old.suffix in (".avif", ".jpg"):
+                old.unlink()
     if not args.source.is_dir():
         print(f"No image folder at {args.source} (pass --source)", file=sys.stderr)
         return 2
-    report = build(args.source, args.manifest, args.format, args.width, args.quality)
+    report = build(args.source, args.manifest, args.format, args.width, args.quality, cutout=not args.no_cutout)
     print(json.dumps(report, indent=1))
     return 0
 
