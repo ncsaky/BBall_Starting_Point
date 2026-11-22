@@ -56,59 +56,63 @@ injuries, `talent.py`.
 AFTER_RUN_TABLES
 
 ## Development-only probe: seven seasons, two seeds (engine value, LEBRON units)
-Change per season by age, all players with 12+ minutes in both seasons:
+Change per season by age, all players with 12+ minutes in both seasons (before = commit 7b05da8, after = final constants):
 
 | Ages | Real LEBRON | Before | After |
 |---|---:|---:|---:|
 | 19-20 | +0.85 | +0.40 | +0.71 |
-| 21-22 | +0.39 | +0.28 | +0.40 |
-| 23-24 | +0.17 | +0.14 | +0.14 |
-| 25-27 | -0.02 | +0.02 | -0.00 |
+| 21-22 | +0.39 | +0.28 | +0.50 |
+| 23-24 | +0.17 | +0.14 | +0.21 |
+| 25-27 | -0.02 | +0.02 | +0.00 |
 | 28-29 | -0.11 | -0.07 | -0.07 |
-| 30-32 | -0.22 | -0.15 | -0.20 |
-| 33-35 | -0.47 | -0.36 | -0.47 |
-| 36-39 | -0.62 | -0.51 | -0.62 |
+| 30-32 | -0.22 | -0.15 | -0.19 |
+| 33-35 | -0.47 | -0.36 | -0.41 |
+| 36-39 | -0.62 | -0.51 | -0.59 |
 
-Peak age: real 26, before 27, after 26. By starting third (after), ages 21-22: bottom +0.30, middle +0.46, top +0.44
-(real, level from the season before: +0.76 / +0.64 / +0.88 BPM, i.e. no penalty for being good).
+Peak age: real 26, before 27, after 26. By starting third (after), ages 21-22: bottom +0.37, middle +0.56, top +0.57
+(real, level taken from the season before: +0.76 / +0.64 / +0.88 BPM: no penalty for being good). The probe runs a bit
+above the real curve at 21-24 on purpose: played seasons grow about a third less (see the five-season tables).
 
 **Where stars come from** (players aged 19-23 at the start, reaching today's top-10 / top-25 / top-50 level within seven
-seasons; real = players 19-23 in 2005-2019 seasons, reaching that league rank within seven seasons):
+seasons; real = players 19-23 in 2005-2019, reaching that league rank within seven seasons):
 
 | Starting level | Real | Before | After |
 |---|---|---|---|
-| Top third | 16% / 37% / 62% | 8% / 31% / 50% | 21% / 35% / 52% |
-| Middle third | 5% / 17% / 36% | 1% / 5% / 11% | 9% / 12% / 19% |
-| Bottom third | 3% / 6% / 14% | 0% / 1% / 4% | 1% / 2% / 6% |
-| Below the minutes cut | 0.5% / 3.5% / 9% | 0% / 0% / 1% | 0% / 0.5% / 4% |
+| Top third | 16% / 37% / 62% | 8% / 31% / 50% | 24% / 42% / 64% |
+| Middle third | 5% / 17% / 36% | 1% / 5% / 11% | 10% / 18% / 28% |
+| Bottom third | 3% / 6% / 14% | 0% / 1% / 4% | 2% / 4% / 7% |
+| Below the minutes cut | 0.5% / 3.5% / 9% | 0% / 0% / 1% | 0% / 1% / 6% |
 
-By draft slot (this year's real draftees plus two made-up classes): picks 1-3 real 20% / 42% / 60%, before 8% / 33% /
-42%, after 17% / 25% / 42%; picks 4-10 real 9% / 15% / 34%, before 18% / 32% / 46%, after 25% / 36% / 50%; picks 11-30
-real 3% / 9% / 20%, before and after 8% / 11% / 19%; second round real 1% / 3% / 6%, before 0 / 0 / 1%, after 0 / 0 / 2%.
-Picks 4-30 already produced too many stars before this task (made-up classes enter strong); see "What's left".
+By draft slot (this year's real draftees plus two made-up classes; small samples): picks 1-3 real 20% / 42% / 60%,
+before 8% / 33% / 42%, after 17% / 42% / 42%; picks 4-10 real 9% / 15% / 34%, before 18% / 32% / 46%, after 25% / 36% /
+54%; picks 11-30 real 3% / 9% / 20%, before 8% / 11% / 19%, after 9% / 14% / 20%; second round real 1% / 3% / 6%,
+before 0 / 0 / 1%, after 0 / 0 / 2%. Picks 4-30 already produced too many stars before this task (made-up classes enter
+strong); see "What's left".
 
-**Top of the league** (engine value): first-time top-five players per season, before 0.8, after 1.0 (real 1.0); new
-or returning top-five players 0.9 → 1.0 (real 1.9 in BPM, which adds season-to-season noise the probe lacks). Top-five
-average: before 7.12 → 6.64 after seven seasons (the league loses its superstars), after 7.12 → 7.51. Tenth best: 5.11
-→ 5.26 before, → 5.95 after. The middle (50th: 3.24 → 3.37) and depth (150th: 1.75 → 1.73) are unchanged.
+**Top of the league** (engine value): first-time top-five players per season, before 0.8, after 1.0 (real 1.0); new or
+returning top-five players 0.9 → 1.1 (real 1.9 in box plus-minus, which adds season-to-season noise the probe lacks).
+Top-five average after seven seasons: before 7.12 → 6.64 (the league loses its superstars), after 7.12 → 7.87. Tenth
+best: 5.11 → 5.26 before, → 6.50 after. The probe has no new draft classes after 2027 and no injuries; in the played
+five-season run the top stays flat (tables above).
 
-**Physical over-reaction**: stamina changes of 5+ points in a season: 10.7% → 6.5% of player-seasons; 10+ points: 3.8%
-→ 0.8% (0.75% overall, 1% for players 22 and under). Yearly physical-grade changes in league standard deviations (90th
-percentile): agility 0.36 → 0.17, speed 0.40 → 0.18, strength 0.35 → 0.23, balance 0.57 → 0.28.
+**Physical over-reaction**: stamina changes of 5+ points in a season: 10.7% → 6.4% of player-seasons; 10+ points: 3.8%
+→ 0.6% (under 1% for players 22 and under). Yearly physical-grade changes in league standard deviations (90th
+percentile): agility 0.36 → 0.16, speed 0.40 → 0.18, strength 0.35 → 0.23, balance 0.57 → 0.28, conditioning 0.17 →
+0.14, recovery 0.30 → 0.14.
 
-**Older stars**: top-25 the season before vs others (engine value): 33-35 before -0.41 / -0.35, after -0.55 / -0.46
-(real LEBRON -0.11 / -0.54). The game's stars still age a bit faster than other players at 33-35, unlike the real
+**Older stars**: top-25 the season before vs others (engine value): 33-35 before -0.41 / -0.35, after -0.49 / -0.41
+(real LEBRON -0.11 / -0.54). The game's stars still age a little faster than other players at 33-35, unlike the real
 league (see "What's left").
 
 ## Named examples (probe, average of two seeds: engine value at the start, then after each season)
-- **Wembanyama** (22): before 7.1 → 7.4 → 7.6 → 7.7 → 7.9 → 7.3 → 7.6 → 7.5; after 7.1 → 7.8 → 8.3 → 8.4 → 8.6 (26) →
-  7.9 → 8.4 → 8.1.
-- **Flagg** (19): before 2.3 → 4.9 by 25; after 2.3 → 3.7 → 5.0 → 5.4 → 6.2 → 6.3 → 7.1 (25) → 6.8.
-- **Dybantsa** (19): before 0.4 → 2.6 by 26; after 0.4 → 0.7 → 1.5 → 2.1 → 3.4 → 3.4 → 3.7 → 4.4.
-- **Darryn Peterson** (19): before peaks 5.4 at 23; after 7.3 at 23-24. **Cameron Boozer**: 3.3 → 5.0 by 26.
-- **Best made-up prospects**: seed 1 Samir Onyeka (pick 10) 6.7 → 8.0 at 24, Kobe Bouanga (pick 12) 6.5 → 6.7 at 23;
-  seed 2 Bouanga 7.0 → 7.6, Dante Barrett Foster (pick 13) 6.1 → 7.0, Pavel Galloway (pick 6) 6.0 → 6.7.
-- Veterans are unchanged in shape: Jokić 8.0 → 4.9 by 38, Gilgeous-Alexander 7.7 → 5.9 by 35, Giannis 6.3 → 2.2 by 38.
+- **Wembanyama** (22): before 7.1 → 7.4 → 7.6 → 7.7 → 7.9 → 7.3 → 7.6 → 7.5; after 7.1 → 7.9 → 8.5 → 8.8 → 9.0 (26) →
+  8.3 → 8.8 → 8.6.
+- **Flagg** (19): before 2.3 → 4.9 by 25; after 2.3 → 3.7 → 5.0 → 5.6 → 6.6 → 6.9 → 7.7 (25) → 7.5.
+- **Dybantsa** (19): before 0.4 → 2.6 by 26; after 0.4 → 0.7 → 1.5 → 2.2 → 3.5 → 3.6 → 4.1 → 4.8.
+- **Darryn Peterson** (19): before peaks 5.4 at 23; after 7.9 at 24. **Cameron Boozer**: before 3.3, after 5.6 by 26.
+- **Best made-up prospects** (after): seed 1 Samir Onyeka (pick 10) 8.1 at 24, Kobe Bouanga (pick 12) 6.9, Jonas Lemaire
+  (pick 23) 6.8 at 23; seed 2 Bouanga 7.7, Dante Barrett Foster (pick 13) 7.0, Onyeka 6.8.
+- Veterans keep their shape: Jokić 8.0 → 5.3 by 38, Gilgeous-Alexander 7.7 → 6.1 by 35, Giannis 6.3 → 2.6 by 38.
 
 ## Scorecards
 - Real-stat scorecard (`calibration_report.py --games 1230 --mode replay-real-minutes`): **18/18**; the JSON output is
