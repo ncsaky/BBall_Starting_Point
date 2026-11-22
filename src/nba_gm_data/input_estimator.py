@@ -603,7 +603,8 @@ def load_rookie_college(root: str | Path, path: Path | None = None) -> dict[str,
                 'college:' + pid, n=minutes, prior_exposure=ROOKIE_EVIDENCE_PRIOR_MINUTES,
                 reliability=reliability, exposure_unit='college_minutes'))
         out[pid] = dict(evidence=evidence, projection=dict(entry['projection']), involvement=involvement,
-                        name=entry['name'], college=college, parts=entry.get('projection_parts'))
+                        name=entry['name'], college=college, parts=entry.get('projection_parts'),
+                        involvement_games=entry.get('involvement_games'))
     return out
 
 
@@ -625,6 +626,20 @@ def apply_rookie_involvement(section: dict, college: Mapping[str, dict]) -> int:
             f'(fitted mapping, {ROOKIE_MAPPING_PATH})', 'college:' + pid,
             exposure=dict(value=entry['college']['minutes'], unit='college_minutes'),
             notes=f'target={target}; weight={weight}; before={old}')]
+        games = entry.get('involvement_games')
+        if games:
+            # ROOKIE-FIT-2: his real usage so far this season (Basketball Reference), on the measured scale by the
+            # veterans' usage line; weight minutes / (minutes + 1000), so a few games barely move him.
+            g_target, g_weight = games
+            before = float(record['value']['probability'])
+            after = round((1 - g_weight) * before + g_weight * min(.95, max(.05, g_target)), 8)
+            record['value'] = dict(record['value'], probability=after)
+            minutes = ((entry.get('parts') or {}).get('early_games') or {}).get('minutes')
+            record['evidence'] = [*record['evidence'], _evidence(
+                'basketball_reference:2026_27_games_so_far', f'{ROOKIE_METHOD}: real usage this season so far on '
+                f'the measured true-usage scale (veterans\' usage line, {ROOKIE_TRANSLATION_PATH})', 'nba_games:' + pid,
+                exposure=dict(value=minutes or 0, unit='nba_minutes'),
+                notes=f'target={g_target}; weight={g_weight}; before={before}')]
         changed += 1
     return changed
 

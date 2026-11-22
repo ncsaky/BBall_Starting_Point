@@ -74,6 +74,7 @@ def advanced(season: int) -> dict[str, dict]:
         if row["_id"] in out and out[row["_id"]]["team"] in ("TOT", "2TM", "3TM", "4TM"):
             continue
         out[row["_id"]] = {"team": row.get("team_name_abbr"), "gs": number(row.get("games_started")),
+                           "name": row.get("name_display"), "adv_mp": number(row.get("mp")),
                            **{k: number(row.get(k)) for k in ("per", "ts_pct", "usg_pct", "obpm", "dbpm", "bpm",
                                                                 "ast_pct", "trb_pct", "stl_pct", "blk_pct", "tov_pct")}}
     return out
@@ -141,9 +142,12 @@ def main() -> None:
         r.update(adv.get(r["bref_id"], {}))
         year, pick = picks.get(r["bref_id"], (None, None))
         r["draft_year"], r["pick"] = year, pick
-    out = {"source": "Basketball Reference (basketball-reference.com) rookie, advanced and team pages; fetched "
-                     f"{args.as_of}, one page every 6 seconds",
-           "classes": classes, "season_2027": {"as_of": args.as_of, "teams": teams, "rookies": current}}
+    usage = {a["name"]: a["usg_pct"] for a in advanced(2026).values()
+             if a.get("name") and (a.get("adv_mp") or 0) >= 1000 and a.get("usg_pct") is not None}
+    out = {"source": "Basketball Reference (basketball-reference.com) rookie, totals, advanced, draft and team pages; "
+                     f"fetched {args.as_of}, one page every 6 seconds",
+           "classes": classes, "season_2027": {"as_of": args.as_of, "teams": teams, "rookies": current},
+           "usage_2025_26": usage}
     OUT.write_text(json.dumps(out, indent=0, sort_keys=True) + "\n", encoding="utf-8")
     print(f"wrote {OUT.relative_to(ROOT)}: {sum(len(v) for v in classes.values())} rookie seasons 2016-2026, "
           f"{len(current)} rookies in 2026-27, {len(teams)} teams")

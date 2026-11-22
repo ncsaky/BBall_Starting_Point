@@ -59,7 +59,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=17)
     parser.add_argument("--team", default="GSW")
     args = parser.parse_args()
-    out = args.output_dir
+    out = args.output_dir.resolve()
     runner = SoakRunner(argparse.Namespace(root=str(ROOT), output_dir=str(out), seed=args.seed, team=args.team))
     live = out / "saves/league.json"
     runner.payload["save_path"] = str(live)

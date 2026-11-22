@@ -328,6 +328,7 @@ READINESS_NUDGE = {"ready_now": {"o": 0.15, "d": 0.05}, "project": {"o": -0.15, 
 K_EARLY = 1500.0            # this season's games: weight minutes / (minutes + 1500)
 EARLY_MIN_MINUTES = 100.0   # below this a box plus-minus is mostly noise (one hot or cold night); not used
 EARLY_BPM_CAP = 10.0        # offensive / defensive box plus-minus held inside +-10 before conversion
+K_USAGE = 1000.0            # this season's usage as evidence for involvement: weight minutes / (minutes + 1000)
 NAME_FIX = {"labaron philon": "labaron philon jr", "christian anderson": "christian anderson jr"}
 
 
@@ -357,14 +358,65 @@ def load_early():
                 pairs.append((r["obpm"], r["dbpm"], *got))
     lines = {}
     for i, side in ((0, "o"), (1, "d")):
+        # A units line (slope = ratio of spreads, sign of the correlation), not a regression line: the regression slope
+        # already shrinks for noise, and the minutes weight below does that job once.
         xs, ys = [p[i] for p in pairs], [p[2 + i] for p in pairs]
-        slope = statistics.covariance(xs, ys) / statistics.variance(xs)
-        lines[side] = (round(statistics.fmean(ys) - slope * statistics.fmean(xs), 4), round(slope, 4),
-                       round(statistics.correlation(xs, ys), 3))
+        r = statistics.correlation(xs, ys)
+        slope = math.copysign(statistics.pstdev(ys) / statistics.pstdev(xs), r)
+        lines[side] = (round(statistics.fmean(ys) - slope * statistics.fmean(xs), 4), round(slope, 4), round(r, 3))
     season = data["season_2027"]
     return {"as_of": season["as_of"], "conversion": lines, "conversion_players": len(pairs),
+            "usage_line": usage_line(data.get("usage_2025_26") or {}),
             "rookies": {rf.key(r["name"]): {**r, "team_context": season["teams"].get(r.get("team"))}
                         for r in season["rookies"]}}
+
+
+def usage_line(usage: dict) -> dict | None:
+    """Involvement (T08, the measured scale in the inputs file) against Basketball Reference usage %, veterans with
+    1000+ minutes in 2025-26: a units line, as above. Puts a rookie's real usage so far on the game's scale."""
+    import gzip
+    path = ROOT / "data/canonical/player_inputs_2026_27.json.gz"
+    if not usage or not path.exists():
+        return None
+    with gzip.open(path, "rt", encoding="utf-8") as handle:
+        inputs = json.load(handle)["players"]
+    universe = json.loads(rf.UNIVERSE.read_text(encoding="utf-8"))
+    names = {rf.key(p["name"]): p["id"] for p in universe["players"] if str(p.get("draft_year")) != "2026"}
+    pairs = []
+    for name, usg in usage.items():
+        pid = names.get(rf.key(name))
+        if pid and pid in inputs:
+            pairs.append((usg, float(inputs[pid]["inputs"]["T08"]["value"]["probability"])))
+    xs, ys = [p[0] for p in pairs], [p[1] for p in pairs]
+    r = statistics.correlation(xs, ys)
+    slope = math.copysign(statistics.pstdev(ys) / statistics.pstdev(xs), r)
+    return {"intercept": round(statistics.fmean(ys) - slope * statistics.fmean(xs), 5), "slope": round(slope, 6),
+            "r": round(r, 3), "players": len(pairs)}
+
+
+def games_evidence(proj: dict, row: dict | None, early: dict | None) -> tuple[dict, list | None]:
+    """This season's games as light evidence. Returns (the change to day-one ability, offense / defense, with what it
+    was based on; involvement [target, weight] from his usage so far, or None). Under 100 minutes: nothing."""
+    games = {"o": 0.0, "d": 0.0, "minutes": (row or {}).get("mp") or 0.0, "weight": 0.0}
+    if not row or not early or (row.get("mp") or 0) < EARLY_MIN_MINUTES or row.get("obpm") is None:
+        return games, None
+    w = row["mp"] / (row["mp"] + K_EARLY)
+    conv = early["conversion"]
+    seen = {s: conv[s][0] + conv[s][1] * max(-EARLY_BPM_CAP, min(EARLY_BPM_CAP, row["obpm" if s == "o" else "dbpm"]))
+            for s in ("o", "d")}
+    games = {"o": round(w * (seen["o"] - proj["o"]), 3), "d": round(w * (seen["d"] - proj["d"]), 3),
+             "minutes": row["mp"], "weight": round(w, 3), "games": row.get("g"), "team": row.get("team"),
+             "obpm": row["obpm"], "dbpm": row["dbpm"], "bpm": row.get("bpm"),
+             "seen_o": round(seen["o"], 3), "seen_d": round(seen["d"], 3),
+             "pts_per36": round(36 * row.get("pts", 0) / row["mp"], 1), "usage": row.get("usg_pct"),
+             "ts": row.get("ts_pct"), "team_net": (row.get("team_context") or {}).get("net_rtg")}
+    involvement = None
+    line = early.get("usage_line")
+    if line and row.get("usg_pct") is not None:
+        # How much of the offense he takes so far (a tendency, not a skill): settles faster than impact, still light.
+        target = min(0.95, max(0.05, line["intercept"] + line["slope"] * row["usg_pct"]))
+        involvement = [round(target, 6), round(row["mp"] / (row["mp"] + K_USAGE), 6)]
+    return games, involvement
 
 
 def class_entry(e, sels, finals, scouting, early):
@@ -375,27 +427,16 @@ def class_entry(e, sels, finals, scouting, early):
     tier = ((scouting or {}).get("readiness", {}).get(k) or {}).get("tier", "unknown")
     nudge = READINESS_NUDGE.get(tier, {"o": 0.0, "d": 0.0})
     proj = {"o": fit["o"] + nudge["o"], "d": fit["d"] + nudge["d"]}
-    games = {"o": 0.0, "d": 0.0, "minutes": 0.0, "weight": 0.0}
     row = (early["rookies"].get(k) or early["rookies"].get(NAME_FIX.get(k, ""))) if early else None
-    if row and (row.get("mp") or 0) >= EARLY_MIN_MINUTES and row.get("obpm") is not None:
-        w = row["mp"] / (row["mp"] + K_EARLY)
-        conv = early["conversion"]
-        seen = {s: conv[s][0] + conv[s][1] * max(-EARLY_BPM_CAP, min(EARLY_BPM_CAP, row["obpm" if s == "o" else "dbpm"]))
-                for s in ("o", "d")}
-        games = {"o": round(w * (seen["o"] - proj["o"]), 3), "d": round(w * (seen["d"] - proj["d"]), 3),
-                 "minutes": row["mp"], "weight": round(w, 3), "games": row["g"], "team": row.get("team"),
-                 "obpm": row["obpm"], "dbpm": row["dbpm"], "bpm": row.get("bpm"),
-                 "seen_o": round(seen["o"], 3), "seen_d": round(seen["d"], 3),
-                 "pts_per36": round(36 * row["pts"] / row["mp"], 1), "usg": row.get("usg_pct"),
-                 "ts": row.get("ts_pct"), "team_net": (row.get("team_context") or {}).get("net_rtg")}
-        proj = {s: proj[s] + games[s] for s in ("o", "d")}
-    proj = {s: round(v, 3) for s, v in proj.items()}
+    games, involvement_games = games_evidence(proj, row, early)
+    proj = {s: round(proj[s] + games["o" if s == "o" else "d"], 3) for s in ("o", "d")}
     proj["lebron"] = round(proj["o"] + proj["d"], 3)
     proj["bpm"] = fit["bpm"]
     return {"name": e["name"], "pick": e["pick"], "age": round(e["x"]["age"], 2), "college": rf.college_card(e["line"]),
             "projection": proj,
             "projection_parts": {"scout_rank": round(scout_rank, 2), "consensus_rank": cons, "college_fit": fit,
                                  "readiness": {"tier": tier, **nudge}, "early_games": games},
+            "involvement_games": involvement_games,
             "profile": e["profile"], "effective_minutes": e["effective_minutes"]}
 
 

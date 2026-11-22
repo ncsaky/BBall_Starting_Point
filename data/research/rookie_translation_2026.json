@@ -56,6 +56,7 @@
     "usg": 22.7
    },
    "effective_minutes": 1359.1,
+   "involvement_games": null,
    "name": "Henri Veesaar",
    "pick": 52,
    "profile": {
@@ -161,6 +162,10 @@
     "usg": 26.5
    },
    "effective_minutes": 1172.2,
+   "involvement_games": [
+    0.239936,
+    0.205087
+   ],
    "name": "Kingston Flemings",
    "pick": 8,
    "profile": {
@@ -193,9 +198,9 @@
    },
    "projection": {
     "bpm": -1.948,
-    "d": -0.595,
-    "lebron": -1.468,
-    "o": -0.873
+    "d": -0.597,
+    "lebron": -1.501,
+    "o": -0.904
    },
    "projection_parts": {
     "college_fit": {
@@ -212,19 +217,19 @@
     },
     "early_games": {
      "bpm": -3.9,
-     "d": 0.035,
+     "d": 0.033,
      "dbpm": -0.5,
      "games": 12.0,
      "minutes": 258.0,
-     "o": -0.179,
+     "o": -0.21,
      "obpm": -3.4,
      "pts_per36": 13.0,
-     "seen_d": -0.392,
-     "seen_o": -1.914,
+     "seen_d": -0.405,
+     "seen_o": -2.122,
      "team": "ATL",
      "team_net": 2.7,
      "ts": 0.59,
-     "usg": 16.4,
+     "usage": 16.4,
      "weight": 0.147
     },
     "readiness": {
@@ -277,6 +282,10 @@
     "usg": 26.4
    },
    "effective_minutes": 1681.3,
+   "involvement_games": [
+    0.210706,
+    0.103943
+   ],
    "name": "Zuby Ejiofor",
    "pick": 23,
    "profile": {
@@ -309,9 +318,9 @@
    },
    "projection": {
     "bpm": -1.004,
-    "d": 0.777,
-    "lebron": -0.222,
-    "o": -0.999
+    "d": 0.786,
+    "lebron": -0.203,
+    "o": -0.989
    },
    "projection_parts": {
     "college_fit": {
@@ -328,19 +337,19 @@
     },
     "early_games": {
      "bpm": -0.1,
-     "d": -0.035,
+     "d": -0.026,
      "dbpm": 0.4,
      "games": 10.0,
      "minutes": 116.0,
-     "o": 0.032,
+     "o": 0.042,
      "obpm": -0.5,
      "pts_per36": 14.3,
-     "seen_d": 0.325,
-     "seen_o": -0.583,
+     "seen_d": 0.446,
+     "seen_o": -0.45,
      "team": "ATL",
      "team_net": 2.7,
      "ts": 0.648,
-     "usg": 14.4,
+     "usage": 14.4,
      "weight": 0.072
     },
     "readiness": {
@@ -393,6 +402,7 @@
     "usg": 28.6
    },
    "effective_minutes": 1600.5,
+   "involvement_games": null,
    "name": "Joshua Jefferson",
    "pick": 28,
    "profile": {
@@ -444,7 +454,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 4.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -498,6 +508,10 @@
     "usg": 31.0
    },
    "effective_minutes": 612.8,
+   "involvement_games": [
+    0.381701,
+    0.201278
+   ],
    "name": "Mikel Brown Jr.",
    "pick": 6,
    "profile": {
@@ -530,9 +544,9 @@
    },
    "projection": {
     "bpm": -3.078,
-    "d": -1.457,
-    "lebron": -2.366,
-    "o": -0.909
+    "d": -1.528,
+    "lebron": -2.45,
+    "o": -0.922
    },
    "projection_parts": {
     "college_fit": {
@@ -549,19 +563,19 @@
     },
     "early_games": {
      "bpm": -6.1,
-     "d": -0.249,
+     "d": -0.32,
      "dbpm": -3.7,
      "games": 11.0,
      "minutes": 252.0,
-     "o": -0.092,
+     "o": -0.105,
      "obpm": -2.4,
      "pts_per36": 18.9,
-     "seen_d": -2.941,
-     "seen_o": -1.455,
+     "seen_d": -3.43,
+     "seen_o": -1.546,
      "team": "BRK",
      "team_net": -8.0,
      "ts": 0.5,
-     "usg": 26.1,
+     "usage": 26.1,
      "weight": 0.144
     },
     "readiness": {
@@ -614,6 +628,7 @@
     "usg": 23.7
    },
    "effective_minutes": 1371.6,
+   "involvement_games": null,
    "name": "Tyler Bilodeau",
    "pick": 43,
    "profile": {
@@ -719,6 +734,7 @@
     "usg": 19.5
    },
    "effective_minutes": 918.4,
+   "involvement_games": null,
    "name": "Chris Cenac Jr.",
    "pick": 27,
    "profile": {
@@ -770,7 +786,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 58.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -824,6 +840,7 @@
     "usg": 15.9
    },
    "effective_minutes": 1532.4,
+   "involvement_games": null,
    "name": "Dillon Mitchell",
    "pick": 40,
    "profile": {
@@ -875,7 +892,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 2.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -929,6 +946,10 @@
     "usg": 25.2
    },
    "effective_minutes": 1800.9,
+   "involvement_games": [
+    0.314472,
+    0.162479
+   ],
    "name": "Christian Anderson",
    "pick": 18,
    "profile": {
@@ -961,9 +982,9 @@
    },
    "projection": {
     "bpm": -2.459,
-    "d": -1.226,
-    "lebron": -2.045,
-    "o": -0.819
+    "d": -1.24,
+    "lebron": -2.092,
+    "o": -0.852
    },
    "projection_parts": {
     "college_fit": {
@@ -980,19 +1001,19 @@
     },
     "early_games": {
      "bpm": -5.3,
-     "d": 0.036,
+     "d": 0.022,
      "dbpm": -1.2,
      "games": 14.0,
      "minutes": 194.0,
-     "o": -0.183,
+     "o": -0.216,
      "obpm": -4.1,
      "pts_per36": 13.4,
-     "seen_d": -0.95,
-     "seen_o": -2.236,
+     "seen_d": -1.067,
+     "seen_o": -2.526,
      "team": "CHO",
      "team_net": -11.0,
      "ts": 0.473,
-     "usg": 21.5,
+     "usage": 21.5,
      "weight": 0.115
     },
     "readiness": {
@@ -1045,6 +1066,7 @@
     "usg": 24.4
    },
    "effective_minutes": 1039.6,
+   "involvement_games": null,
    "name": "Hannes Steinbach",
    "pick": 14,
    "profile": {
@@ -1096,7 +1118,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 63.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -1150,6 +1172,10 @@
     "usg": 28.8
    },
    "effective_minutes": 751.3,
+   "involvement_games": [
+    0.399239,
+    0.235474
+   ],
    "name": "Caleb Wilson",
    "pick": 4,
    "profile": {
@@ -1182,9 +1208,9 @@
    },
    "projection": {
     "bpm": -0.365,
-    "d": 0.117,
-    "lebron": -0.323,
-    "o": -0.44
+    "d": 0.092,
+    "lebron": -0.321,
+    "o": -0.413
    },
    "projection_parts": {
     "college_fit": {
@@ -1201,19 +1227,19 @@
     },
     "early_games": {
      "bpm": -1.8,
-     "d": -0.252,
+     "d": -0.277,
      "dbpm": -1.4,
      "games": 10.0,
      "minutes": 308.0,
-     "o": -0.011,
+     "o": 0.016,
      "obpm": -0.3,
      "pts_per36": 22.1,
-     "seen_d": -1.109,
-     "seen_o": -0.491,
+     "seen_d": -1.256,
+     "seen_o": -0.335,
      "team": "CHI",
      "team_net": -7.8,
      "ts": 0.525,
-     "usg": 27.3,
+     "usage": 27.3,
      "weight": 0.17
     },
     "readiness": {
@@ -1266,6 +1292,7 @@
     "usg": 25.5
    },
    "effective_minutes": 1632.6,
+   "involvement_games": null,
    "name": "Dailyn Swain",
    "pick": 15,
    "profile": {
@@ -1317,7 +1344,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 27.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -1371,6 +1398,10 @@
     "usg": 22.1
    },
    "effective_minutes": 1128.6,
+   "involvement_games": [
+    0.317395,
+    0.248685
+   ],
    "name": "Meleek Thomas",
    "pick": 34,
    "profile": {
@@ -1404,8 +1435,8 @@
    "projection": {
     "bpm": -3.536,
     "d": -1.011,
-    "lebron": -2.01,
-    "o": -0.999
+    "lebron": -1.975,
+    "o": -0.964
    },
    "projection_parts": {
     "college_fit": {
@@ -1426,15 +1457,15 @@
      "dbpm": -0.4,
      "games": 14.0,
      "minutes": 331.0,
-     "o": 0.142,
+     "o": 0.177,
      "obpm": 0.0,
      "pts_per36": 19.4,
-     "seen_d": -0.313,
-     "seen_o": -0.353,
+     "seen_d": -0.311,
+     "seen_o": -0.162,
      "team": "CLE",
      "team_net": 2.4,
      "ts": 0.584,
-     "usg": 21.7,
+     "usage": 21.7,
      "weight": 0.181
     },
     "readiness": {
@@ -1487,6 +1518,10 @@
     "usg": 21.1
    },
    "effective_minutes": 1268.6,
+   "involvement_games": [
+    0.280858,
+    0.203822
+   ],
    "name": "Morez Johnson Jr.",
    "pick": 9,
    "profile": {
@@ -1519,9 +1554,9 @@
    },
    "projection": {
     "bpm": -1.174,
-    "d": 0.098,
-    "lebron": -1.093,
-    "o": -1.191
+    "d": 0.086,
+    "lebron": -1.152,
+    "o": -1.238
    },
    "projection_parts": {
     "college_fit": {
@@ -1538,19 +1573,19 @@
     },
     "early_games": {
      "bpm": -5.4,
-     "d": -0.152,
+     "d": -0.164,
      "dbpm": -1.0,
      "games": 15.0,
      "minutes": 256.0,
-     "o": -0.202,
+     "o": -0.249,
      "obpm": -4.4,
      "pts_per36": 13.2,
-     "seen_d": -0.791,
-     "seen_o": -2.373,
+     "seen_d": -0.878,
+     "seen_o": -2.699,
      "team": "DAL",
      "team_net": -0.2,
      "ts": 0.476,
-     "usg": 19.2,
+     "usage": 19.2,
      "weight": 0.146
     },
     "readiness": {
@@ -1603,6 +1638,7 @@
     "usg": 20.2
    },
    "effective_minutes": 1064.5,
+   "involvement_games": null,
    "name": "Tobi Lawal",
    "pick": 48,
    "profile": {
@@ -1654,7 +1690,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 36.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -1708,6 +1744,10 @@
     "usg": 22.0
    },
    "effective_minutes": 1111.5,
+   "involvement_games": [
+    0.210706,
+    0.093382
+   ],
    "name": "Bryce Hopkins",
    "pick": 49,
    "profile": {
@@ -1740,9 +1780,9 @@
    },
    "projection": {
     "bpm": -3.851,
-    "d": -0.229,
-    "lebron": -2.114,
-    "o": -1.885
+    "d": -0.253,
+    "lebron": -2.15,
+    "o": -1.897
    },
    "projection_parts": {
     "college_fit": {
@@ -1759,19 +1799,19 @@
     },
     "early_games": {
      "bpm": -6.1,
-     "d": -0.142,
+     "d": -0.166,
      "dbpm": -2.9,
      "games": 8.0,
      "minutes": 103.0,
-     "o": 0.004,
+     "o": -0.008,
      "obpm": -3.2,
      "pts_per36": 13.3,
-     "seen_d": -2.304,
-     "seen_o": -1.822,
+     "seen_d": -2.674,
+     "seen_o": -2.007,
      "team": "DEN",
      "team_net": 1.5,
      "ts": 0.659,
-     "usg": 14.4,
+     "usage": 14.4,
      "weight": 0.064
     },
     "readiness": {
@@ -1824,6 +1864,10 @@
     "usg": 17.2
    },
    "effective_minutes": 1489.1,
+   "involvement_games": [
+    0.199014,
+    0.204455
+   ],
    "name": "Trevon Brazile",
    "pick": 35,
    "profile": {
@@ -1856,9 +1900,9 @@
    },
    "projection": {
     "bpm": -2.396,
-    "d": 0.376,
+    "d": 0.368,
     "lebron": -1.172,
-    "o": -1.548
+    "o": -1.54
    },
    "projection_parts": {
     "college_fit": {
@@ -1875,19 +1919,19 @@
     },
     "early_games": {
      "bpm": -2.0,
-     "d": -0.173,
+     "d": -0.181,
      "dbpm": -0.8,
      "games": 14.0,
      "minutes": 257.0,
-     "o": 0.11,
+     "o": 0.118,
      "obpm": -1.2,
      "pts_per36": 12.5,
-     "seen_d": -0.631,
-     "seen_o": -0.904,
+     "seen_d": -0.689,
+     "seen_o": -0.854,
      "team": "DEN",
      "team_net": 1.5,
      "ts": 0.639,
-     "usg": 13.6,
+     "usage": 13.6,
      "weight": 0.146
     },
     "readiness": {
@@ -1940,6 +1984,7 @@
     "usg": 30.1
    },
    "effective_minutes": 1088.5,
+   "involvement_games": null,
    "name": "Ebuka Okorie",
    "pick": 17,
    "profile": {
@@ -1991,7 +2036,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 20.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -2045,6 +2090,7 @@
     "usg": 15.1
    },
    "effective_minutes": 801.4,
+   "involvement_games": null,
    "name": "Ugonna Onyenso",
    "pick": 53,
    "profile": {
@@ -2150,6 +2196,10 @@
     "usg": 20.5
    },
    "effective_minutes": 1810.9,
+   "involvement_games": [
+    0.396316,
+    0.335989
+   ],
    "name": "Yaxel Lendeborg",
    "pick": 11,
    "profile": {
@@ -2182,9 +2232,9 @@
    },
    "projection": {
     "bpm": -0.99,
-    "d": 0.103,
-    "lebron": -0.465,
-    "o": -0.568
+    "d": 0.096,
+    "lebron": -0.388,
+    "o": -0.484
    },
    "projection_parts": {
     "college_fit": {
@@ -2201,19 +2251,19 @@
     },
     "early_games": {
      "bpm": 0.6,
-     "d": -0.194,
+     "d": -0.201,
      "dbpm": -0.6,
      "games": 16.0,
      "minutes": 506.0,
-     "o": 0.258,
+     "o": 0.342,
      "obpm": 1.2,
      "pts_per36": 22.4,
-     "seen_d": -0.472,
-     "seen_o": 0.198,
+     "seen_d": -0.5,
+     "seen_o": 0.53,
      "team": "GSW",
      "team_net": -0.9,
      "ts": 0.574,
-     "usg": 27.1,
+     "usage": 27.1,
      "weight": 0.252
     },
     "readiness": {
@@ -2266,6 +2316,7 @@
     "usg": 23.2
    },
    "effective_minutes": 1819.8,
+   "involvement_games": null,
    "name": "Bruce Thornton",
    "pick": 31,
    "profile": {
@@ -2317,7 +2368,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 41.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -2371,6 +2422,10 @@
     "usg": 26.5
    },
    "effective_minutes": 2011.5,
+   "involvement_games": [
+    0.226782,
+    0.118943
+   ],
    "name": "Braden Smith",
    "pick": 38,
    "profile": {
@@ -2403,9 +2458,9 @@
    },
    "projection": {
     "bpm": -3.294,
-    "d": -0.651,
-    "lebron": -1.939,
-    "o": -1.288
+    "d": -0.615,
+    "lebron": -1.918,
+    "o": -1.303
    },
    "projection_parts": {
     "college_fit": {
@@ -2422,19 +2477,19 @@
     },
     "early_games": {
      "bpm": -0.8,
-     "d": 0.238,
+     "d": 0.274,
      "dbpm": 2.5,
      "games": 10.0,
      "minutes": 135.0,
-     "o": -0.048,
+     "o": -0.063,
      "obpm": -3.2,
      "pts_per36": 11.5,
-     "seen_d": 1.997,
-     "seen_o": -1.822,
+     "seen_d": 2.431,
+     "seen_o": -2.007,
      "team": "IND",
      "team_net": -3.6,
      "ts": 0.541,
-     "usg": 15.5,
+     "usage": 15.5,
      "weight": 0.083
     },
     "readiness": {
@@ -2487,6 +2542,10 @@
     "usg": 22.3
    },
    "effective_minutes": 1483.3,
+   "involvement_games": [
+    0.270627,
+    0.096658
+   ],
    "name": "Baba Miller",
    "pick": 36,
    "profile": {
@@ -2519,9 +2578,9 @@
    },
    "projection": {
     "bpm": -2.464,
-    "d": 1.059,
-    "lebron": -0.906,
-    "o": -1.965
+    "d": 1.08,
+    "lebron": -0.892,
+    "o": -1.972
    },
    "projection_parts": {
     "college_fit": {
@@ -2538,19 +2597,19 @@
     },
     "early_games": {
      "bpm": -0.8,
-     "d": 0.021,
+     "d": 0.042,
      "dbpm": 1.7,
      "games": 13.0,
      "minutes": 107.0,
-     "o": 0.033,
+     "o": 0.026,
      "obpm": -2.5,
      "pts_per36": 15.8,
-     "seen_d": 1.36,
-     "seen_o": -1.501,
+     "seen_d": 1.675,
+     "seen_o": -1.603,
      "team": "LAC",
      "team_net": -6.5,
      "ts": 0.673,
-     "usg": 18.5,
+     "usage": 18.5,
      "weight": 0.067
     },
     "readiness": {
@@ -2603,6 +2662,10 @@
     "usg": 25.7
    },
    "effective_minutes": 1255.3,
+   "involvement_games": [
+    0.356856,
+    0.249249
+   ],
    "name": "Keaton Wagler",
    "pick": 5,
    "profile": {
@@ -2635,9 +2698,9 @@
    },
    "projection": {
     "bpm": -1.109,
-    "d": -0.841,
-    "lebron": -0.966,
-    "o": -0.125
+    "d": -0.865,
+    "lebron": -0.964,
+    "o": -0.099
    },
    "projection_parts": {
     "college_fit": {
@@ -2654,19 +2717,19 @@
     },
     "early_games": {
      "bpm": -1.7,
-     "d": -0.042,
+     "d": -0.066,
      "dbpm": -1.3,
      "games": 15.0,
      "minutes": 332.0,
-     "o": -0.091,
+     "o": -0.065,
      "obpm": -0.4,
      "pts_per36": 19.2,
-     "seen_d": -1.03,
-     "seen_o": -0.537,
+     "seen_d": -1.161,
+     "seen_o": -0.392,
      "team": "LAC",
      "team_net": -6.5,
      "ts": 0.557,
-     "usg": 24.4,
+     "usage": 24.4,
      "weight": 0.181
     },
     "readiness": {
@@ -2719,6 +2782,7 @@
     "usg": 29.4
    },
    "effective_minutes": 1796.6,
+   "involvement_games": null,
    "name": "Nick Martinelli",
    "pick": 55,
    "profile": {
@@ -2770,7 +2834,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 26.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -2824,6 +2888,7 @@
     "usg": 24.3
    },
    "effective_minutes": 1133.1,
+   "involvement_games": null,
    "name": "Cameron Carr",
    "pick": 24,
    "profile": {
@@ -2875,7 +2940,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 37.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -2929,6 +2994,10 @@
     "usg": 30.6
    },
    "effective_minutes": 1271.3,
+   "involvement_games": [
+    0.358317,
+    0.330656
+   ],
    "name": "Cameron Boozer",
    "pick": 3,
    "profile": {
@@ -2961,9 +3030,9 @@
    },
    "projection": {
     "bpm": 1.157,
-    "d": 0.252,
-    "lebron": 0.718,
-    "o": 0.466
+    "d": 0.297,
+    "lebron": 0.851,
+    "o": 0.554
    },
    "projection_parts": {
     "college_fit": {
@@ -2980,19 +3049,19 @@
     },
     "early_games": {
      "bpm": 2.2,
-     "d": 0.129,
+     "d": 0.174,
      "dbpm": 0.8,
      "games": 16.0,
      "minutes": 494.0,
-     "o": -0.058,
+     "o": 0.03,
      "obpm": 1.4,
      "pts_per36": 19.3,
-     "seen_d": 0.643,
-     "seen_o": 0.29,
+     "seen_d": 0.824,
+     "seen_o": 0.646,
      "team": "MEM",
      "team_net": 9.1,
      "ts": 0.551,
-     "usg": 24.5,
+     "usage": 24.5,
      "weight": 0.248
     },
     "readiness": {
@@ -3045,6 +3114,10 @@
     "usg": 27.5
    },
    "effective_minutes": 1610.4,
+   "involvement_games": [
+    0.251628,
+    0.184339
+   ],
    "name": "Ryan Conwell",
    "pick": 37,
    "profile": {
@@ -3077,9 +3150,9 @@
    },
    "projection": {
     "bpm": -3.908,
-    "d": -1.213,
-    "lebron": -2.482,
-    "o": -1.269
+    "d": -1.231,
+    "lebron": -2.504,
+    "o": -1.273
    },
    "projection_parts": {
     "college_fit": {
@@ -3096,19 +3169,19 @@
     },
     "early_games": {
      "bpm": -3.2,
-     "d": 0.028,
+     "d": 0.01,
      "dbpm": -1.3,
      "games": 13.0,
      "minutes": 226.0,
-     "o": 0.006,
+     "o": 0.002,
      "obpm": -1.9,
      "pts_per36": 15.0,
-     "seen_d": -1.03,
-     "seen_o": -1.225,
+     "seen_d": -1.161,
+     "seen_o": -1.257,
      "team": "MIA",
      "team_net": 0.6,
      "ts": 0.555,
-     "usg": 17.2,
+     "usage": 17.2,
      "weight": 0.131
     },
     "readiness": {
@@ -3161,6 +3234,10 @@
     "usg": 21.6
    },
    "effective_minutes": 1162.3,
+   "involvement_games": [
+    0.304242,
+    0.279019
+   ],
    "name": "Brayden Burries",
    "pick": 10,
    "profile": {
@@ -3193,9 +3270,9 @@
    },
    "projection": {
     "bpm": -2.229,
-    "d": -0.738,
-    "lebron": -1.33,
-    "o": -0.592
+    "d": -0.784,
+    "lebron": -1.32,
+    "o": -0.536
    },
    "projection_parts": {
     "college_fit": {
@@ -3212,19 +3289,19 @@
     },
     "early_games": {
      "bpm": -1.2,
-     "d": -0.198,
+     "d": -0.244,
      "dbpm": -1.9,
      "games": 17.0,
      "minutes": 387.0,
-     "o": 0.145,
+     "o": 0.201,
      "obpm": 0.7,
      "pts_per36": 17.9,
-     "seen_d": -1.508,
-     "seen_o": -0.032,
+     "seen_d": -1.729,
+     "seen_o": 0.242,
      "team": "MIL",
      "team_net": -12.4,
      "ts": 0.559,
-     "usg": 20.8,
+     "usage": 20.8,
      "weight": 0.205
     },
     "readiness": {
@@ -3277,6 +3354,10 @@
     "usg": 27.8
    },
    "effective_minutes": 1038.6,
+   "involvement_games": [
+    0.248705,
+    0.216915
+   ],
    "name": "Nate Ament",
    "pick": 13,
    "profile": {
@@ -3309,9 +3390,9 @@
    },
    "projection": {
     "bpm": -3.23,
-    "d": -0.595,
-    "lebron": -2.309,
-    "o": -1.714
+    "d": -0.639,
+    "lebron": -2.376,
+    "o": -1.737
    },
    "projection_parts": {
     "college_fit": {
@@ -3328,19 +3409,19 @@
     },
     "early_games": {
      "bpm": -5.3,
-     "d": -0.227,
+     "d": -0.271,
      "dbpm": -2.3,
      "games": 15.0,
      "minutes": 277.0,
-     "o": 0.005,
+     "o": -0.018,
      "obpm": -2.9,
      "pts_per36": 14.9,
-     "seen_d": -1.826,
-     "seen_o": -1.685,
+     "seen_d": -2.107,
+     "seen_o": -1.834,
      "team": "MIL",
      "team_net": -12.4,
      "ts": 0.572,
-     "usg": 17.0,
+     "usage": 17.0,
      "weight": 0.156
     },
     "readiness": {
@@ -3393,6 +3474,7 @@
     "usg": 21.8
    },
    "effective_minutes": 1319.2,
+   "involvement_games": null,
    "name": "Isaiah Evans",
    "pick": 33,
    "profile": {
@@ -3444,7 +3526,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 23.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -3498,6 +3580,7 @@
     "usg": 23.3
    },
    "effective_minutes": 1749.0,
+   "involvement_games": null,
    "name": "Jaron Pierre Jr.",
    "pick": 58,
    "profile": {
@@ -3549,7 +3632,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 99.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -3603,6 +3686,7 @@
     "usg": 16.9
    },
    "effective_minutes": 1513.0,
+   "involvement_games": null,
    "name": "Tyler Nickel",
    "pick": 47,
    "profile": {
@@ -3708,6 +3792,10 @@
     "usg": 23.8
    },
    "effective_minutes": 1151.8,
+   "involvement_games": [
+    0.258935,
+    0.263623
+   ],
    "name": "Aday Mara",
    "pick": 12,
    "profile": {
@@ -3740,9 +3828,9 @@
    },
    "projection": {
     "bpm": -0.705,
-    "d": 1.253,
-    "lebron": -0.363,
-    "o": -1.616
+    "d": 1.296,
+    "lebron": -0.288,
+    "o": -1.584
    },
    "projection_parts": {
     "college_fit": {
@@ -3759,19 +3847,19 @@
     },
     "early_games": {
      "bpm": 0.9,
-     "d": -0.088,
+     "d": -0.045,
      "dbpm": 1.1,
      "games": 16.0,
      "minutes": 358.0,
-     "o": 0.28,
+     "o": 0.312,
      "obpm": -0.2,
      "pts_per36": 16.1,
-     "seen_d": 0.882,
-     "seen_o": -0.445,
+     "seen_d": 1.107,
+     "seen_o": -0.277,
      "team": "OKC",
      "team_net": 4.6,
      "ts": 0.653,
-     "usg": 17.7,
+     "usage": 17.7,
      "weight": 0.193
     },
     "readiness": {
@@ -3824,6 +3912,10 @@
     "usg": 26.1
    },
    "effective_minutes": 2045.5,
+   "involvement_games": [
+    0.21509,
+    0.227799
+   ],
    "name": "Bennett Stirtz",
    "pick": 16,
    "profile": {
@@ -3856,9 +3948,9 @@
    },
    "projection": {
     "bpm": -2.867,
-    "d": -0.71,
-    "lebron": -1.368,
-    "o": -0.658
+    "d": -0.676,
+    "lebron": -1.297,
+    "o": -0.621
    },
    "projection_parts": {
     "college_fit": {
@@ -3875,19 +3967,19 @@
     },
     "early_games": {
      "bpm": 1.3,
-     "d": 0.298,
+     "d": 0.332,
      "dbpm": 1.0,
      "games": 16.0,
      "minutes": 295.0,
-     "o": 0.087,
+     "o": 0.124,
      "obpm": 0.3,
      "pts_per36": 15.1,
-     "seen_d": 0.803,
-     "seen_o": -0.215,
+     "seen_d": 1.013,
+     "seen_o": 0.011,
      "team": "OKC",
      "team_net": 4.6,
      "ts": 0.651,
-     "usg": 14.7,
+     "usage": 14.7,
      "weight": 0.164
     },
     "readiness": {
@@ -3940,6 +4032,7 @@
     "usg": 27.1
    },
    "effective_minutes": 1688.6,
+   "involvement_games": null,
    "name": "Otega Oweh",
    "pick": 41,
    "profile": {
@@ -4045,6 +4138,7 @@
     "usg": 23.7
    },
    "effective_minutes": 1272.8,
+   "involvement_games": null,
    "name": "Izaiyah Nelson",
    "pick": 51,
    "profile": {
@@ -4150,6 +4244,7 @@
     "usg": 29.9
    },
    "effective_minutes": 1476.4,
+   "involvement_games": null,
    "name": "Labaron Philon",
    "pick": 22,
    "profile": {
@@ -4201,7 +4296,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 75.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -4255,6 +4350,7 @@
     "usg": 24.4
    },
    "effective_minutes": 999.6,
+   "involvement_games": null,
    "name": "Koa Peat",
    "pick": 30,
    "profile": {
@@ -4306,7 +4402,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 42.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -4360,6 +4456,7 @@
     "usg": 17.6
    },
    "effective_minutes": 1962.1,
+   "involvement_games": null,
    "name": "Alex Karaban",
    "pick": 29,
    "profile": {
@@ -4411,7 +4508,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 82.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -4465,6 +4562,10 @@
     "usg": 29.5
    },
    "effective_minutes": 1264.6,
+   "involvement_games": [
+    0.482545,
+    0.371069
+   ],
    "name": "Darius Acuff Jr.",
    "pick": 7,
    "profile": {
@@ -4497,9 +4598,9 @@
    },
    "projection": {
     "bpm": -2.581,
-    "d": -1.873,
-    "lebron": -1.995,
-    "o": -0.122
+    "d": -1.978,
+    "lebron": -2.022,
+    "o": -0.044
    },
    "projection_parts": {
     "college_fit": {
@@ -4516,19 +4617,19 @@
     },
     "early_games": {
      "bpm": -2.3,
-     "d": -0.169,
+     "d": -0.274,
      "dbpm": -2.9,
      "games": 16.0,
      "minutes": 590.0,
-     "o": 0.035,
+     "o": 0.113,
      "obpm": 0.7,
      "pts_per36": 24.8,
-     "seen_d": -2.304,
-     "seen_o": -0.032,
+     "seen_d": -2.674,
+     "seen_o": 0.242,
      "team": "SAC",
      "team_net": -12.4,
      "ts": 0.513,
-     "usg": 33.0,
+     "usage": 33.0,
      "weight": 0.282
     },
     "readiness": {
@@ -4581,6 +4682,10 @@
     "usg": 23.2
    },
    "effective_minutes": 1593.2,
+   "involvement_games": [
+    0.200475,
+    0.211356
+   ],
    "name": "Emanuel Sharp",
    "pick": 45,
    "profile": {
@@ -4613,9 +4718,9 @@
    },
    "projection": {
     "bpm": -3.377,
-    "d": -0.877,
-    "lebron": -2.328,
-    "o": -1.451
+    "d": -0.859,
+    "lebron": -2.4,
+    "o": -1.541
    },
    "projection_parts": {
     "college_fit": {
@@ -4632,19 +4737,19 @@
     },
     "early_games": {
      "bpm": -6.3,
-     "d": 0.215,
+     "d": 0.233,
      "dbpm": 0.4,
      "games": 16.0,
      "minutes": 268.0,
-     "o": -0.354,
+     "o": -0.444,
      "obpm": -6.7,
      "pts_per36": 10.2,
-     "seen_d": 0.325,
-     "seen_o": -3.429,
+     "seen_d": 0.446,
+     "seen_o": -4.025,
      "team": "SAC",
      "team_net": -12.4,
      "ts": 0.48,
-     "usg": 13.7,
+     "usage": 13.7,
      "weight": 0.152
     },
     "readiness": {
@@ -4697,6 +4802,7 @@
     "usg": 25.7
    },
    "effective_minutes": 1854.0,
+   "involvement_games": null,
    "name": "Ja'Kobi Gillespie",
    "pick": 42,
    "profile": {
@@ -4748,7 +4854,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 4.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -4802,6 +4908,7 @@
     "usg": 14.5
    },
    "effective_minutes": 974.6,
+   "involvement_games": null,
    "name": "Maliq Brown",
    "pick": 44,
    "profile": {
@@ -4853,7 +4960,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 1.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -4907,6 +5014,7 @@
     "usg": 26.5
    },
    "effective_minutes": 1304.5,
+   "involvement_games": null,
    "name": "Tarris Reed Jr.",
    "pick": 26,
    "profile": {
@@ -4958,7 +5066,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 60.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -5012,6 +5120,10 @@
     "usg": 22.4
    },
    "effective_minutes": 768.1,
+   "involvement_games": [
+    0.197552,
+    0.204455
+   ],
    "name": "Allen Graves",
    "pick": 19,
    "profile": {
@@ -5044,9 +5156,9 @@
    },
    "projection": {
     "bpm": 0.212,
-    "d": 0.35,
-    "lebron": 0.217,
-    "o": -0.133
+    "d": 0.353,
+    "lebron": 0.26,
+    "o": -0.093
    },
    "projection_parts": {
     "college_fit": {
@@ -5063,19 +5175,19 @@
     },
     "early_games": {
      "bpm": 0.4,
-     "d": -0.1,
+     "d": -0.097,
      "dbpm": -0.3,
      "games": 16.0,
      "minutes": 257.0,
-     "o": 0.017,
+     "o": 0.057,
      "obpm": 0.7,
      "pts_per36": 12.5,
-     "seen_d": -0.233,
-     "seen_o": -0.032,
+     "seen_d": -0.216,
+     "seen_o": 0.242,
      "team": "TOR",
      "team_net": 0.2,
      "ts": 0.564,
-     "usg": 13.5,
+     "usage": 13.5,
      "weight": 0.146
     },
     "readiness": {
@@ -5128,6 +5240,7 @@
     "usg": 21.1
    },
    "effective_minutes": 1824.1,
+   "involvement_games": null,
    "name": "Jaden Bradley",
    "pick": 50,
    "profile": {
@@ -5179,7 +5292,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 42.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -5233,6 +5346,10 @@
     "usg": 30.9
    },
    "effective_minutes": 696.6,
+   "involvement_games": [
+    0.364163,
+    0.342538
+   ],
    "name": "Darryn Peterson",
    "pick": 2,
    "profile": {
@@ -5265,9 +5382,9 @@
    },
    "projection": {
     "bpm": -1.956,
-    "d": -0.901,
-    "lebron": -0.995,
-    "o": -0.094
+    "d": -0.877,
+    "lebron": -0.919,
+    "o": -0.042
    },
    "projection_parts": {
     "college_fit": {
@@ -5284,19 +5401,19 @@
     },
     "early_games": {
      "bpm": 0.4,
-     "d": 0.37,
+     "d": 0.394,
      "dbpm": 0.2,
      "games": 17.0,
      "minutes": 521.0,
-     "o": -0.074,
+     "o": -0.022,
      "obpm": 0.1,
      "pts_per36": 19.6,
-     "seen_d": 0.165,
-     "seen_o": -0.307,
+     "seen_d": 0.257,
+     "seen_o": -0.104,
      "team": "UTA",
      "team_net": -7.4,
      "ts": 0.52,
-     "usg": 24.9,
+     "usage": 24.9,
      "weight": 0.258
     },
     "readiness": {
@@ -5349,6 +5466,10 @@
     "usg": 33.5
    },
    "effective_minutes": 1216.9,
+   "involvement_games": [
+    0.349548,
+    0.306999
+   ],
    "name": "AJ Dybantsa",
    "pick": 1,
    "profile": {
@@ -5381,9 +5502,9 @@
    },
    "projection": {
     "bpm": -1.616,
-    "d": -1.103,
-    "lebron": -1.65,
-    "o": -0.547
+    "d": -1.139,
+    "lebron": -1.712,
+    "o": -0.573
    },
    "projection_parts": {
     "college_fit": {
@@ -5400,19 +5521,19 @@
     },
     "early_games": {
      "bpm": -4.1,
-     "d": -0.026,
+     "d": -0.062,
      "dbpm": -1.5,
      "games": 13.0,
      "minutes": 443.0,
-     "o": -0.295,
+     "o": -0.321,
      "obpm": -2.6,
      "pts_per36": 17.5,
-     "seen_d": -1.189,
-     "seen_o": -1.547,
+     "seen_d": -1.35,
+     "seen_o": -1.661,
      "team": "WAS",
      "team_net": -6.6,
      "ts": 0.498,
-     "usg": 23.9,
+     "usage": 23.9,
      "weight": 0.228
     },
     "readiness": {
@@ -5465,6 +5586,7 @@
     "usg": 13.5
    },
    "effective_minutes": 1430.5,
+   "involvement_games": null,
    "name": "Felix Okpara",
    "pick": 46,
    "profile": {
@@ -5516,7 +5638,7 @@
     },
     "early_games": {
      "d": 0.0,
-     "minutes": 0.0,
+     "minutes": 5.0,
      "o": 0.0,
      "weight": 0.0
     },
@@ -6363,17 +6485,23 @@
    "as_of": "2026-11-22",
    "conversion": {
     "d": [
-     0.006,
-     0.7966,
+     0.0675,
+     0.9453,
      0.843
     ],
     "o": [
-     -0.3532,
-     0.4591,
+     -0.1616,
+     0.5767,
      0.796
     ]
    },
-   "conversion_players": 247
+   "conversion_players": 247,
+   "usage_line": {
+    "intercept": 0.00025,
+    "players": 278,
+    "r": 0.891,
+    "slope": 0.014615
+   }
   },
   "k_reliability": 500.0,
   "outcomes": {
@@ -6427,11 +6555,133 @@
      "ts": 0.1787,
      "usg": -0.1886
     },
-    "first_round_board": {},
-    "models": {
-     "college_slot": {
-      "leave_one_draft_out": {},
+    "first_round_board": {
+     "college_slot_2015": {
+      "held_out": {
+       "n": 129,
+       "r": 0.553,
+       "r_weighted": 0.575,
+       "rmse": 1.882,
+       "spearman": 0.486
+      },
+      "held_out_1000": {
+       "n": 81,
+       "r": 0.597,
+       "r_weighted": 0.603,
+       "rmse": 1.764,
+       "spearman": 0.547
+      },
+      "leave_one_draft_out": {
+       "n": 236,
+       "r": 0.539,
+       "r_weighted": 0.559,
+       "rmse": 1.822,
+       "spearman": 0.493
+      },
+      "players": 270,
+      "ridge": 10
+     },
+     "college_slot_board_2015": {
+      "held_out": {
+       "n": 129,
+       "r": 0.556,
+       "r_weighted": 0.579,
+       "rmse": 1.869,
+       "spearman": 0.5
+      },
+      "held_out_1000": {
+       "n": 81,
+       "r": 0.597,
+       "r_weighted": 0.604,
+       "rmse": 1.774,
+       "spearman": 0.55
+      },
+      "leave_one_draft_out": {
+       "n": 236,
+       "r": 0.534,
+       "r_weighted": 0.553,
+       "rmse": 1.824,
+       "spearman": 0.488
+      },
+      "players": 270,
       "ridge": 30
+     }
+    },
+    "models": {
+     "college": {
+      "held_out": {
+       "n": 186,
+       "r": 0.496,
+       "r_weighted": 0.523,
+       "rmse": 1.872,
+       "spearman": 0.437
+      },
+      "held_out_1000": {
+       "n": 101,
+       "r": 0.585,
+       "r_weighted": 0.59,
+       "rmse": 1.721,
+       "spearman": 0.541
+      },
+      "leave_one_draft_out": {
+       "n": 519,
+       "r": 0.454,
+       "r_weighted": 0.465,
+       "rmse": 1.863,
+       "spearman": 0.42
+      },
+      "players": 799,
+      "ridge": 3
+     },
+     "college_slot": {
+      "held_out": {
+       "n": 186,
+       "r": 0.507,
+       "r_weighted": 0.535,
+       "rmse": 1.859,
+       "spearman": 0.447
+      },
+      "held_out_1000": {
+       "n": 101,
+       "r": 0.604,
+       "r_weighted": 0.61,
+       "rmse": 1.707,
+       "spearman": 0.56
+      },
+      "leave_one_draft_out": {
+       "n": 519,
+       "r": 0.457,
+       "r_weighted": 0.47,
+       "rmse": 1.856,
+       "spearman": 0.414
+      },
+      "players": 799,
+      "ridge": 30
+     },
+     "slot": {
+      "held_out": {
+       "n": 186,
+       "r": 0.22,
+       "r_weighted": 0.23,
+       "rmse": 2.098,
+       "spearman": 0.088
+      },
+      "held_out_1000": {
+       "n": 101,
+       "r": 0.223,
+       "r_weighted": 0.23,
+       "rmse": 2.061,
+       "spearman": 0.185
+      },
+      "leave_one_draft_out": {
+       "n": 519,
+       "r": 0.21,
+       "r_weighted": 0.228,
+       "rmse": 2.039,
+       "spearman": 0.069
+      },
+      "players": 799,
+      "ridge": 3
      }
     },
     "selection_coefficients": {
@@ -6458,7 +6708,33 @@
      "ts": 0.0749,
      "usg": 0.0974
     },
-    "uncorrected": {}
+    "uncorrected": {
+     "college_slot": {
+      "held_out": {
+       "n": 186,
+       "r": 0.504,
+       "r_weighted": 0.533,
+       "rmse": 1.868,
+       "spearman": 0.458
+      },
+      "held_out_1000": {
+       "n": 101,
+       "r": 0.597,
+       "r_weighted": 0.604,
+       "rmse": 1.751,
+       "spearman": 0.573
+      },
+      "leave_one_draft_out": {
+       "n": 519,
+       "r": 0.447,
+       "r_weighted": 0.462,
+       "rmse": 1.865,
+       "spearman": 0.41
+      },
+      "players": 799,
+      "ridge": 100
+     }
+    }
    },
    "d": {
     "coefficients": {
@@ -6510,11 +6786,133 @@
      "ts": 0.0035,
      "usg": -0.1746
     },
-    "first_round_board": {},
+    "first_round_board": {
+     "college_slot_2015": {
+      "held_out": {
+       "n": 129,
+       "r": 0.685,
+       "r_weighted": 0.7,
+       "rmse": 0.774,
+       "spearman": 0.661
+      },
+      "held_out_1000": {
+       "n": 81,
+       "r": 0.746,
+       "r_weighted": 0.745,
+       "rmse": 0.782,
+       "spearman": 0.693
+      },
+      "leave_one_draft_out": {
+       "n": 236,
+       "r": 0.685,
+       "r_weighted": 0.694,
+       "rmse": 0.76,
+       "spearman": 0.67
+      },
+      "players": 270,
+      "ridge": 10
+     },
+     "college_slot_board_2015": {
+      "held_out": {
+       "n": 129,
+       "r": 0.681,
+       "r_weighted": 0.694,
+       "rmse": 0.778,
+       "spearman": 0.657
+      },
+      "held_out_1000": {
+       "n": 81,
+       "r": 0.74,
+       "r_weighted": 0.738,
+       "rmse": 0.789,
+       "spearman": 0.688
+      },
+      "leave_one_draft_out": {
+       "n": 236,
+       "r": 0.686,
+       "r_weighted": 0.694,
+       "rmse": 0.758,
+       "spearman": 0.672
+      },
+      "players": 270,
+      "ridge": 10
+     }
+    },
     "models": {
-     "college_slot": {
-      "leave_one_draft_out": {},
+     "college": {
+      "held_out": {
+       "n": 186,
+       "r": 0.74,
+       "r_weighted": 0.746,
+       "rmse": 0.694,
+       "spearman": 0.72
+      },
+      "held_out_1000": {
+       "n": 101,
+       "r": 0.769,
+       "r_weighted": 0.768,
+       "rmse": 0.767,
+       "spearman": 0.757
+      },
+      "leave_one_draft_out": {
+       "n": 518,
+       "r": 0.658,
+       "r_weighted": 0.66,
+       "rmse": 0.758,
+       "spearman": 0.644
+      },
+      "players": 799,
       "ridge": 30
+     },
+     "college_slot": {
+      "held_out": {
+       "n": 186,
+       "r": 0.743,
+       "r_weighted": 0.749,
+       "rmse": 0.687,
+       "spearman": 0.72
+      },
+      "held_out_1000": {
+       "n": 101,
+       "r": 0.772,
+       "r_weighted": 0.769,
+       "rmse": 0.758,
+       "spearman": 0.76
+      },
+      "leave_one_draft_out": {
+       "n": 518,
+       "r": 0.66,
+       "r_weighted": 0.662,
+       "rmse": 0.757,
+       "spearman": 0.646
+      },
+      "players": 799,
+      "ridge": 30
+     },
+     "slot": {
+      "held_out": {
+       "n": 186,
+       "r": -0.031,
+       "r_weighted": -0.038,
+       "rmse": 1.009,
+       "spearman": -0.061
+      },
+      "held_out_1000": {
+       "n": 101,
+       "r": -0.052,
+       "r_weighted": -0.05,
+       "rmse": 1.132,
+       "spearman": -0.1
+      },
+      "leave_one_draft_out": {
+       "n": 518,
+       "r": -0.123,
+       "r_weighted": -0.124,
+       "rmse": 1.009,
+       "spearman": -0.103
+      },
+      "players": 799,
+      "ridge": 300
      }
     },
     "selection_coefficients": {
@@ -6541,7 +6939,33 @@
      "ts": 0.0811,
      "usg": 0.0817
     },
-    "uncorrected": {}
+    "uncorrected": {
+     "college_slot": {
+      "held_out": {
+       "n": 186,
+       "r": 0.743,
+       "r_weighted": 0.749,
+       "rmse": 0.687,
+       "spearman": 0.72
+      },
+      "held_out_1000": {
+       "n": 101,
+       "r": 0.771,
+       "r_weighted": 0.769,
+       "rmse": 0.758,
+       "spearman": 0.76
+      },
+      "leave_one_draft_out": {
+       "n": 518,
+       "r": 0.661,
+       "r_weighted": 0.663,
+       "rmse": 0.755,
+       "spearman": 0.648
+      },
+      "players": 799,
+      "ridge": 30
+     }
+    }
    },
    "lebron": {
     "coefficients": {
@@ -6593,11 +7017,133 @@
      "ts": 0.0308,
      "usg": -0.1431
     },
-    "first_round_board": {},
-    "models": {
-     "college_slot": {
-      "leave_one_draft_out": {},
+    "first_round_board": {
+     "college_slot_2015": {
+      "held_out": {
+       "n": 129,
+       "r": 0.632,
+       "r_weighted": 0.659,
+       "rmse": 1.103,
+       "spearman": 0.582
+      },
+      "held_out_1000": {
+       "n": 81,
+       "r": 0.725,
+       "r_weighted": 0.728,
+       "rmse": 1.133,
+       "spearman": 0.69
+      },
+      "leave_one_draft_out": {
+       "n": 236,
+       "r": 0.584,
+       "r_weighted": 0.599,
+       "rmse": 1.079,
+       "spearman": 0.54
+      },
+      "players": 270,
       "ridge": 30
+     },
+     "college_slot_board_2015": {
+      "held_out": {
+       "n": 129,
+       "r": 0.627,
+       "r_weighted": 0.651,
+       "rmse": 1.109,
+       "spearman": 0.572
+      },
+      "held_out_1000": {
+       "n": 81,
+       "r": 0.709,
+       "r_weighted": 0.712,
+       "rmse": 1.15,
+       "spearman": 0.67
+      },
+      "leave_one_draft_out": {
+       "n": 236,
+       "r": 0.582,
+       "r_weighted": 0.596,
+       "rmse": 1.082,
+       "spearman": 0.536
+      },
+      "players": 270,
+      "ridge": 30
+     }
+    },
+    "models": {
+     "college": {
+      "held_out": {
+       "n": 186,
+       "r": 0.55,
+       "r_weighted": 0.578,
+       "rmse": 1.096,
+       "spearman": 0.529
+      },
+      "held_out_1000": {
+       "n": 101,
+       "r": 0.649,
+       "r_weighted": 0.653,
+       "rmse": 1.151,
+       "spearman": 0.662
+      },
+      "leave_one_draft_out": {
+       "n": 518,
+       "r": 0.483,
+       "r_weighted": 0.494,
+       "rmse": 1.115,
+       "spearman": 0.452
+      },
+      "players": 799,
+      "ridge": 30
+     },
+     "college_slot": {
+      "held_out": {
+       "n": 186,
+       "r": 0.562,
+       "r_weighted": 0.591,
+       "rmse": 1.087,
+       "spearman": 0.536
+      },
+      "held_out_1000": {
+       "n": 101,
+       "r": 0.669,
+       "r_weighted": 0.672,
+       "rmse": 1.135,
+       "spearman": 0.682
+      },
+      "leave_one_draft_out": {
+       "n": 518,
+       "r": 0.494,
+       "r_weighted": 0.505,
+       "rmse": 1.107,
+       "spearman": 0.456
+      },
+      "players": 799,
+      "ridge": 30
+     },
+     "slot": {
+      "held_out": {
+       "n": 186,
+       "r": 0.121,
+       "r_weighted": 0.136,
+       "rmse": 1.306,
+       "spearman": 0.056
+      },
+      "held_out_1000": {
+       "n": 101,
+       "r": 0.185,
+       "r_weighted": 0.185,
+       "rmse": 1.439,
+       "spearman": 0.15
+      },
+      "leave_one_draft_out": {
+       "n": 518,
+       "r": 0.164,
+       "r_weighted": 0.173,
+       "rmse": 1.255,
+       "spearman": 0.08
+      },
+      "players": 799,
+      "ridge": 3
      }
     },
     "selection_coefficients": {
@@ -6624,7 +7170,33 @@
      "ts": 0.0811,
      "usg": 0.0817
     },
-    "uncorrected": {}
+    "uncorrected": {
+     "college_slot": {
+      "held_out": {
+       "n": 186,
+       "r": 0.56,
+       "r_weighted": 0.59,
+       "rmse": 1.102,
+       "spearman": 0.529
+      },
+      "held_out_1000": {
+       "n": 101,
+       "r": 0.665,
+       "r_weighted": 0.669,
+       "rmse": 1.174,
+       "spearman": 0.671
+      },
+      "leave_one_draft_out": {
+       "n": 518,
+       "r": 0.48,
+       "r_weighted": 0.491,
+       "rmse": 1.116,
+       "spearman": 0.447
+      },
+      "players": 799,
+      "ridge": 100
+     }
+    }
    },
    "o": {
     "coefficients": {
@@ -6676,11 +7248,133 @@
      "ts": 0.0272,
      "usg": 0.0314
     },
-    "first_round_board": {},
-    "models": {
-     "college_slot": {
-      "leave_one_draft_out": {},
+    "first_round_board": {
+     "college_slot_2015": {
+      "held_out": {
+       "n": 129,
+       "r": 0.274,
+       "r_weighted": 0.321,
+       "rmse": 0.923,
+       "spearman": 0.282
+      },
+      "held_out_1000": {
+       "n": 81,
+       "r": 0.429,
+       "r_weighted": 0.439,
+       "rmse": 0.922,
+       "spearman": 0.44
+      },
+      "leave_one_draft_out": {
+       "n": 236,
+       "r": 0.32,
+       "r_weighted": 0.354,
+       "rmse": 0.886,
+       "spearman": 0.262
+      },
+      "players": 270,
       "ridge": 30
+     },
+     "college_slot_board_2015": {
+      "held_out": {
+       "n": 129,
+       "r": 0.277,
+       "r_weighted": 0.318,
+       "rmse": 0.917,
+       "spearman": 0.282
+      },
+      "held_out_1000": {
+       "n": 81,
+       "r": 0.4,
+       "r_weighted": 0.409,
+       "rmse": 0.944,
+       "spearman": 0.391
+      },
+      "leave_one_draft_out": {
+       "n": 236,
+       "r": 0.307,
+       "r_weighted": 0.341,
+       "rmse": 0.886,
+       "spearman": 0.255
+      },
+      "players": 270,
+      "ridge": 100
+     }
+    },
+    "models": {
+     "college": {
+      "held_out": {
+       "n": 186,
+       "r": 0.301,
+       "r_weighted": 0.315,
+       "rmse": 0.878,
+       "spearman": 0.306
+      },
+      "held_out_1000": {
+       "n": 101,
+       "r": 0.334,
+       "r_weighted": 0.34,
+       "rmse": 0.895,
+       "spearman": 0.316
+      },
+      "leave_one_draft_out": {
+       "n": 518,
+       "r": 0.356,
+       "r_weighted": 0.377,
+       "rmse": 0.953,
+       "spearman": 0.334
+      },
+      "players": 799,
+      "ridge": 100
+     },
+     "college_slot": {
+      "held_out": {
+       "n": 186,
+       "r": 0.294,
+       "r_weighted": 0.314,
+       "rmse": 0.887,
+       "spearman": 0.301
+      },
+      "held_out_1000": {
+       "n": 101,
+       "r": 0.354,
+       "r_weighted": 0.362,
+       "rmse": 0.89,
+       "spearman": 0.318
+      },
+      "leave_one_draft_out": {
+       "n": 518,
+       "r": 0.378,
+       "r_weighted": 0.399,
+       "rmse": 0.946,
+       "spearman": 0.352
+      },
+      "players": 799,
+      "ridge": 30
+     },
+     "slot": {
+      "held_out": {
+       "n": 186,
+       "r": 0.092,
+       "r_weighted": 0.113,
+       "rmse": 0.928,
+       "spearman": -0.042
+      },
+      "held_out_1000": {
+       "n": 101,
+       "r": 0.169,
+       "r_weighted": 0.176,
+       "rmse": 0.941,
+       "spearman": 0.042
+      },
+      "leave_one_draft_out": {
+       "n": 518,
+       "r": 0.147,
+       "r_weighted": 0.161,
+       "rmse": 1.009,
+       "spearman": -0.002
+      },
+      "players": 799,
+      "ridge": 3
      }
     },
     "selection_coefficients": {
@@ -6707,7 +7401,33 @@
      "ts": 0.0811,
      "usg": 0.0817
     },
-    "uncorrected": {}
+    "uncorrected": {
+     "college_slot": {
+      "held_out": {
+       "n": 186,
+       "r": 0.297,
+       "r_weighted": 0.315,
+       "rmse": 0.88,
+       "spearman": 0.309
+      },
+      "held_out_1000": {
+       "n": 101,
+       "r": 0.334,
+       "r_weighted": 0.342,
+       "rmse": 0.896,
+       "spearman": 0.334
+      },
+      "leave_one_draft_out": {
+       "n": 518,
+       "r": 0.359,
+       "r_weighted": 0.381,
+       "rmse": 0.952,
+       "spearman": 0.337
+      },
+      "players": 799,
+      "ridge": 100
+     }
+    }
    }
   },
   "pick_bands": [

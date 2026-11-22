@@ -112,7 +112,7 @@ def table3(old_path: str, first_path: str, new_path: str) -> None:
             tier = parts["readiness"]["tier"].replace("_", " ")
             g = parts["early_games"]
             games = (f"{g['minutes']:.0f} min, {g['pts_per36']:.1f}, {g['bpm']:+.1f} (moved {g['o'] + g['d']:+.2f})"
-                     if g.get("minutes") else "—")
+                     if g.get("weight") else (f"{g['minutes']:.0f} min (too few to count)" if g.get("minutes") else "—"))
             proj = f"{pr['lebron']:+.2f} ({pr['o']:+.2f} / {pr['d']:+.2f})"
         else:
             fit, tier, games, proj = "no college season", "—", "—", "earlier method"
@@ -193,7 +193,7 @@ def backtest(bundle_path: str) -> None:
     for r in sorted(rows, key=lambda r: r["pick"] or 99):
         print(f"| {r['name']} | {r['pick']} | {r['real']:+.2f} ({r['minutes']:.0f}) | {r['projection']:+.2f} | "
               f"{r['old']:+.2f} → {r['new']:+.2f} | {r['old_ovr']:.1f} → {r['new_ovr']:.1f} | {r['now']:+.2f} ({r['now_ovr']:.1f}) |")
-    Path(ROOT / "output/rookie-fit/backtest_2025.json").write_text(json.dumps(rows, indent=1))
+    Path(ROOT / "output/rookie-fit-2/backtest_2025.json").write_text(json.dumps(rows, indent=1))
 
 
 def main() -> None:
