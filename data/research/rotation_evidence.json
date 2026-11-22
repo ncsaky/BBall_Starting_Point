@@ -1,0 +1,4783 @@
+{
+  "schema_version": 1,
+  "fit_seasons": [
+    2024,
+    2025
+  ],
+  "holdout_season": 2026,
+  "coverage": {
+    "2024_regular": {
+      "analyzed_games": 1229,
+      "archive_events": 584711,
+      "archive_games": 1230,
+      "games_with_clock_reversal": 1,
+      "url": "https://github.com/ramirobentes/nba_data/releases/download/pbp/pbp_regular_2024.parquet",
+      "sha256": "dc906c2de933933ab26789de9f3c25c729ec812872c54ec6857b2e57a305ec64"
+    },
+    "2024_playoffs": {
+      "analyzed_games": 82,
+      "archive_events": 37605,
+      "archive_games": 82,
+      "url": "https://github.com/ramirobentes/nba_data/releases/download/pbp/pbp_playoffs_2024.parquet",
+      "sha256": "0ea09876e8218c4392c7f0ee4f150b4316f1e3c0718cf9a6aced6a16a386ebb6"
+    },
+    "2025_regular": {
+      "analyzed_games": 1230,
+      "archive_events": 592259,
+      "archive_games": 1230,
+      "url": "https://github.com/ramirobentes/nba_data/releases/download/pbp/pbp_regular_2025.parquet",
+      "sha256": "c8514240e233a5591e18f4ff5814fd539662ec21a4da947581128b63b85a98e6"
+    },
+    "2025_playoffs": {
+      "analyzed_games": 83,
+      "archive_events": 40397,
+      "archive_games": 83,
+      "url": "https://github.com/ramirobentes/nba_data/releases/download/pbp/pbp_playoffs_2025.parquet",
+      "sha256": "0fb3e615ffc5624f2bf4b39d79e1c286c95739d2b4e3dd24719572aa66dfd7e2"
+    },
+    "2026_regular": {
+      "analyzed_games": 1230,
+      "archive_events": 622187,
+      "archive_games": 1230,
+      "url": "https://github.com/ramirobentes/nba_data/releases/download/pbp/pbp_regular_2026.parquet",
+      "sha256": "b89e4fb2fc50d2c31fc40cafb1418198a4eb0838ff76337590af511549608c0e"
+    },
+    "2026_playoffs": {
+      "analyzed_games": 85,
+      "archive_events": 43289,
+      "archive_games": 85,
+      "url": "https://github.com/ramirobentes/nba_data/releases/download/pbp/pbp_playoffs_2026.parquet",
+      "sha256": "9c0bcbed3730ab4b17a2536f4296a15c69d49913ea3aae5aa36b3c7b2702646e"
+    }
+  },
+  "box_score_check": {
+    "box_minutes_within_60_seconds": 27295,
+    "box_personal_foul_agreement": 27291,
+    "box_player_games_with_positive_minutes": 27295,
+    "box_starter_agreement": 27295,
+    "games_with_local_box": 1264,
+    "games_without_local_box": 51,
+    "matched_box_players": 27295,
+    "matching_final_scores": 1263
+  },
+  "observations": {
+    "2024": {
+      "regular": {
+        "bench_rest_seconds": {
+          "bench": {
+            "n": 15631,
+            "mean": 541.6291,
+            "p25": 256.0,
+            "median": 448.0,
+            "p75": 820.0
+          },
+          "sixth_man": {
+            "n": 4865,
+            "mean": 388.0682,
+            "p25": 190.0,
+            "median": 334.0,
+            "p75": 514.0
+          },
+          "star": {
+            "n": 4917,
+            "mean": 248.1151,
+            "p25": 160.0,
+            "median": 236.0,
+            "p75": 336.0
+          },
+          "starter": {
+            "n": 27655,
+            "mean": 311.9723,
+            "p25": 178.0,
+            "median": 284.0,
+            "p75": 425.0
+          }
+        },
+        "close_Q4_last_lineup_starter_count": {
+          "all": {
+            "n": 1132,
+            "mean": 3.7739,
+            "p25": 3.0,
+            "median": 4.0,
+            "p75": 4.0
+          }
+        },
+        "close_Q4_player_seconds_from_starters": {
+          "all": {
+            "n": 1132,
+            "mean": 0.781,
+            "p25": 0.6778,
+            "median": 0.8,
+            "p75": 0.9024
+          }
+        },
+        "close_Q4_role_seconds_share": {
+          "bench": {
+            "n": 1429,
+            "mean": 0.558,
+            "p25": 0.105,
+            "median": 0.61,
+            "p75": 1.0
+          },
+          "sixth_man": {
+            "n": 632,
+            "mean": 0.6991,
+            "p25": 0.3265,
+            "median": 0.9856,
+            "p75": 1.0
+          },
+          "star": {
+            "n": 852,
+            "mean": 0.9819,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 3995,
+            "mean": 0.8972,
+            "p25": 0.9663,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "close_Q4_seconds_exact_starting_five": {
+          "all": {
+            "n": 1132,
+            "mean": 0.2646,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.5818
+          }
+        },
+        "close_Q4_starter_seconds_share": {
+          "star": {
+            "n": 882,
+            "mean": 0.9485,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 4778,
+            "mean": 0.7501,
+            "p25": 0.5853,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "depth_1_minute_players": {
+          "all": {
+            "n": 2458,
+            "mean": 10.6094,
+            "p25": 9.0,
+            "median": 10.0,
+            "p75": 12.0
+          }
+        },
+        "depth_5_minute_players": {
+          "all": {
+            "n": 2458,
+            "mean": 9.7506,
+            "p25": 9.0,
+            "median": 9.0,
+            "p75": 10.0
+          }
+        },
+        "depth_final_5m_by_margin": {
+          "ahead_20_plus": {
+            "n": 381,
+            "mean": 7.3176,
+            "p25": 5.0,
+            "median": 7.0,
+            "p75": 9.0
+          },
+          "behind_20_plus": {
+            "n": 381,
+            "mean": 6.4121,
+            "p25": 5.0,
+            "median": 5.0,
+            "p75": 8.0
+          },
+          "close_0_5": {
+            "n": 1132,
+            "mean": 6.1025,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 7.0
+          },
+          "moderate_6_19": {
+            "n": 1910,
+            "mean": 6.7979,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 8.0
+          }
+        },
+        "first_exit_Q1_clock_seconds": {
+          "star": {
+            "n": 1501,
+            "mean": 233.4068,
+            "p25": 148.0,
+            "median": 217.0,
+            "p75": 331.0
+          },
+          "starter": {
+            "n": 9822,
+            "mean": 262.3644,
+            "p25": 186.0,
+            "median": 258.0,
+            "p75": 341.0
+          }
+        },
+        "first_exit_with_return": {
+          "star": {
+            "n": 1980,
+            "mean": 0.996,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 10308,
+            "mean": 0.995,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "first_rest_seconds": {
+          "star": {
+            "n": 1972,
+            "mean": 302.9248,
+            "p25": 206.0,
+            "median": 305.0,
+            "p75": 389.0
+          },
+          "starter": {
+            "n": 10256,
+            "mean": 387.3707,
+            "p25": 252.0,
+            "median": 379.0,
+            "p75": 496.0
+          }
+        },
+        "first_return_clock_seconds": {
+          "starter|Q1": {
+            "n": 2542,
+            "mean": 130.6511,
+            "p25": 64.0,
+            "median": 140.5,
+            "p75": 186.0
+          },
+          "starter|Q2": {
+            "n": 7581,
+            "mean": 501.3604,
+            "p25": 401.0,
+            "median": 479.0,
+            "p75": 600.0
+          },
+          "star|Q1": {
+            "n": 583,
+            "mean": 146.284,
+            "p25": 93.0,
+            "median": 154.0,
+            "p75": 198.0
+          },
+          "star|Q2": {
+            "n": 1387,
+            "mean": 478.8767,
+            "p25": 387.0,
+            "median": 445.0,
+            "p75": 534.0
+          }
+        },
+        "first_return_elapsed_seconds": {
+          "star": {
+            "n": 1972,
+            "mean": 847.0763,
+            "p25": 671.125,
+            "median": 929.0,
+            "p75": 1029.0
+          },
+          "starter": {
+            "n": 10256,
+            "mean": 859.0309,
+            "p25": 720.0,
+            "median": 900.0,
+            "p75": 1017.0
+          }
+        },
+        "opening_exit_elapsed_seconds": {
+          "star": {
+            "n": 1980,
+            "mean": 543.9578,
+            "p25": 429.0,
+            "median": 550.0,
+            "p75": 713.925
+          },
+          "starter": {
+            "n": 10308,
+            "mean": 471.1323,
+            "p25": 383.0,
+            "median": 468.0,
+            "p75": 546.0
+          }
+        },
+        "opening_exit_in_Q1": {
+          "star": {
+            "n": 1980,
+            "mean": 0.7581,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 10310,
+            "mean": 0.9527,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "schedule_first_stint_seconds": {
+          "starter|one_day_off|prior_32plus": {
+            "n": 2558,
+            "mean": 502.7274,
+            "p25": 408.0,
+            "median": 500.5,
+            "p75": 572.75
+          },
+          "starter|one_day_off|prior_under32": {
+            "n": 3061,
+            "mean": 457.7803,
+            "p25": 379.0,
+            "median": 457.0,
+            "p75": 529.0
+          },
+          "starter|second_night|prior_32plus": {
+            "n": 623,
+            "mean": 488.07,
+            "p25": 390.5,
+            "median": 489.0,
+            "p75": 565.5
+          },
+          "starter|second_night|prior_under32": {
+            "n": 881,
+            "mean": 453.2215,
+            "p25": 373.0,
+            "median": 456.0,
+            "p75": 525.0
+          },
+          "starter|two_or_more_days_off|prior_32plus": {
+            "n": 807,
+            "mean": 490.4543,
+            "p25": 391.5,
+            "median": 494.0,
+            "p75": 566.0
+          },
+          "starter|two_or_more_days_off|prior_under32": {
+            "n": 892,
+            "mean": 457.1877,
+            "p25": 376.75,
+            "median": 459.5,
+            "p75": 525.25
+          },
+          "star|one_day_off|prior_32plus": {
+            "n": 884,
+            "mean": 556.3627,
+            "p25": 447.75,
+            "median": 559.0,
+            "p75": 720.0
+          },
+          "star|one_day_off|prior_under32": {
+            "n": 264,
+            "mean": 547.3966,
+            "p25": 446.0,
+            "median": 557.5,
+            "p75": 692.825
+          },
+          "star|second_night|prior_32plus": {
+            "n": 222,
+            "mean": 541.0005,
+            "p25": 417.5,
+            "median": 545.5,
+            "p75": 718.775
+          },
+          "star|second_night|prior_under32": {
+            "n": 76,
+            "mean": 551.3092,
+            "p25": 439.75,
+            "median": 569.0,
+            "p75": 696.075
+          },
+          "star|two_or_more_days_off|prior_32plus": {
+            "n": 305,
+            "mean": 535.8315,
+            "p25": 424.0,
+            "median": 541.0,
+            "p75": 683.6
+          },
+          "star|two_or_more_days_off|prior_under32": {
+            "n": 65,
+            "mean": 531.6323,
+            "p25": 438.0,
+            "median": 536.0,
+            "p75": 627.0
+          }
+        },
+        "schedule_regulation_minutes": {
+          "starter|one_day_off|prior_32plus": {
+            "n": 2558,
+            "mean": 32.6212,
+            "p25": 29.5,
+            "median": 33.5417,
+            "p75": 36.5038
+          },
+          "starter|one_day_off|prior_under32": {
+            "n": 3061,
+            "mean": 28.2645,
+            "p25": 24.2167,
+            "median": 28.8333,
+            "p75": 32.8667
+          },
+          "starter|second_night|prior_32plus": {
+            "n": 623,
+            "mean": 31.9037,
+            "p25": 28.565,
+            "median": 33.0333,
+            "p75": 36.2833
+          },
+          "starter|second_night|prior_under32": {
+            "n": 881,
+            "mean": 28.5208,
+            "p25": 24.2167,
+            "median": 29.1817,
+            "p75": 33.2667
+          },
+          "starter|two_or_more_days_off|prior_32plus": {
+            "n": 807,
+            "mean": 32.1387,
+            "p25": 29.08,
+            "median": 33.1833,
+            "p75": 36.2442
+          },
+          "starter|two_or_more_days_off|prior_under32": {
+            "n": 892,
+            "mean": 28.1625,
+            "p25": 24.125,
+            "median": 28.9583,
+            "p75": 32.5621
+          },
+          "star|one_day_off|prior_32plus": {
+            "n": 884,
+            "mean": 35.0914,
+            "p25": 32.9542,
+            "median": 35.8858,
+            "p75": 38.1529
+          },
+          "star|one_day_off|prior_under32": {
+            "n": 264,
+            "mean": 33.6099,
+            "p25": 31.0046,
+            "median": 34.6008,
+            "p75": 37.2087
+          },
+          "star|second_night|prior_32plus": {
+            "n": 222,
+            "mean": 34.6524,
+            "p25": 32.45,
+            "median": 35.6583,
+            "p75": 38.0133
+          },
+          "star|second_night|prior_under32": {
+            "n": 76,
+            "mean": 33.3457,
+            "p25": 31.0,
+            "median": 35.0,
+            "p75": 36.8312
+          },
+          "star|two_or_more_days_off|prior_32plus": {
+            "n": 305,
+            "mean": 34.6107,
+            "p25": 32.27,
+            "median": 35.65,
+            "p75": 38.1
+          },
+          "star|two_or_more_days_off|prior_under32": {
+            "n": 65,
+            "mean": 33.5852,
+            "p25": 30.1333,
+            "median": 34.9167,
+            "p75": 37.2667
+          }
+        },
+        "starter_seconds_by_quarter": {
+          "starter|Q1": {
+            "n": 10310,
+            "mean": 501.3203,
+            "p25": 439.0,
+            "median": 503.0,
+            "p75": 564.0
+          },
+          "starter|Q2": {
+            "n": 10310,
+            "mean": 429.1067,
+            "p25": 354.0,
+            "median": 440.0,
+            "p75": 518.0
+          },
+          "starter|Q3": {
+            "n": 10310,
+            "mean": 492.2586,
+            "p25": 417.0,
+            "median": 502.0,
+            "p75": 578.0
+          },
+          "starter|Q4": {
+            "n": 10310,
+            "mean": 372.4798,
+            "p25": 208.0,
+            "median": 408.0,
+            "p75": 544.0
+          },
+          "star|Q1": {
+            "n": 1980,
+            "mean": 585.5631,
+            "p25": 517.0,
+            "median": 572.0,
+            "p75": 714.05
+          },
+          "star|Q2": {
+            "n": 1980,
+            "mean": 472.4246,
+            "p25": 396.0,
+            "median": 465.0,
+            "p75": 548.25
+          },
+          "star|Q3": {
+            "n": 1980,
+            "mean": 590.8162,
+            "p25": 514.0,
+            "median": 592.0,
+            "p75": 720.0
+          },
+          "star|Q4": {
+            "n": 1980,
+            "mean": 424.2627,
+            "p25": 304.0,
+            "median": 465.5,
+            "p75": 588.625
+          }
+        },
+        "stint_exits_next_minute": {
+          "bench|at_10m": {
+            "n": 1407,
+            "mean": 0.3881,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "bench|at_4m": {
+            "n": 9668,
+            "mean": 0.1055,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "bench|at_6m": {
+            "n": 5510,
+            "mean": 0.1877,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "bench|at_8m": {
+            "n": 3298,
+            "mean": 0.3059,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "sixth_man|at_10m": {
+            "n": 1028,
+            "mean": 0.2714,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "sixth_man|at_4m": {
+            "n": 3570,
+            "mean": 0.0462,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "sixth_man|at_6m": {
+            "n": 1898,
+            "mean": 0.0674,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "sixth_man|at_8m": {
+            "n": 1581,
+            "mean": 0.1569,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_10m": {
+            "n": 7785,
+            "mean": 0.1553,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_4m": {
+            "n": 23659,
+            "mean": 0.0563,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_6m": {
+            "n": 18935,
+            "mean": 0.1688,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_8m": {
+            "n": 12524,
+            "mean": 0.2415,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_10m": {
+            "n": 2420,
+            "mean": 0.1202,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_4m": {
+            "n": 4435,
+            "mean": 0.0207,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_6m": {
+            "n": 3842,
+            "mean": 0.1098,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_8m": {
+            "n": 3162,
+            "mean": 0.1388,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          }
+        },
+        "stint_seconds": {
+          "bench": {
+            "n": 27418,
+            "mean": 349.7314,
+            "p25": 184.0,
+            "median": 322.0,
+            "p75": 484.0
+          },
+          "sixth_man": {
+            "n": 7170,
+            "mean": 450.973,
+            "p25": 242.0,
+            "median": 426.0,
+            "p75": 639.0
+          },
+          "star": {
+            "n": 6897,
+            "mean": 599.5395,
+            "p25": 393.0,
+            "median": 543.0,
+            "p75": 720.0
+          },
+          "starter": {
+            "n": 37965,
+            "mean": 490.9459,
+            "p25": 321.5,
+            "median": 450.0,
+            "p75": 603.0
+          }
+        }
+      },
+      "playoffs": {
+        "bench_rest_seconds": {
+          "bench": {
+            "n": 981,
+            "mean": 476.518,
+            "p25": 184.0,
+            "median": 375.5,
+            "p75": 702.5
+          },
+          "sixth_man": {
+            "n": 340,
+            "mean": 431.0182,
+            "p25": 203.0,
+            "median": 334.9,
+            "p75": 597.5
+          },
+          "star": {
+            "n": 451,
+            "mean": 165.0166,
+            "p25": 88.95,
+            "median": 155.0,
+            "p75": 231.5
+          },
+          "starter": {
+            "n": 1869,
+            "mean": 236.9242,
+            "p25": 128.0,
+            "median": 213.0,
+            "p75": 323.0
+          }
+        },
+        "close_Q4_last_lineup_starter_count": {
+          "all": {
+            "n": 68,
+            "mean": 4.2206,
+            "p25": 4.0,
+            "median": 4.0,
+            "p75": 5.0
+          }
+        },
+        "close_Q4_player_seconds_from_starters": {
+          "all": {
+            "n": 68,
+            "mean": 0.8543,
+            "p25": 0.7929,
+            "median": 0.8077,
+            "p75": 0.9923
+          }
+        },
+        "close_Q4_role_seconds_share": {
+          "bench": {
+            "n": 71,
+            "mean": 0.4607,
+            "p25": 0.0553,
+            "median": 0.3267,
+            "p75": 0.9911
+          },
+          "sixth_man": {
+            "n": 26,
+            "mean": 0.6472,
+            "p25": 0.2389,
+            "median": 0.8655,
+            "p75": 1.0
+          },
+          "star": {
+            "n": 85,
+            "mean": 0.9826,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 230,
+            "mean": 0.8998,
+            "p25": 0.9895,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "close_Q4_seconds_exact_starting_five": {
+          "all": {
+            "n": 68,
+            "mean": 0.4177,
+            "p25": 0.0,
+            "median": 0.0758,
+            "p75": 0.9615
+          }
+        },
+        "close_Q4_starter_seconds_share": {
+          "star": {
+            "n": 85,
+            "mean": 0.9826,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 255,
+            "mean": 0.8116,
+            "p25": 0.9206,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "depth_1_minute_players": {
+          "all": {
+            "n": 164,
+            "mean": 10.0854,
+            "p25": 9.0,
+            "median": 10.0,
+            "p75": 11.0
+          }
+        },
+        "depth_5_minute_players": {
+          "all": {
+            "n": 164,
+            "mean": 8.9878,
+            "p25": 8.0,
+            "median": 9.0,
+            "p75": 9.0
+          }
+        },
+        "depth_final_5m_by_margin": {
+          "ahead_20_plus": {
+            "n": 30,
+            "mean": 7.9,
+            "p25": 5.0,
+            "median": 8.5,
+            "p75": 10.0
+          },
+          "behind_20_plus": {
+            "n": 30,
+            "mean": 6.8667,
+            "p25": 5.0,
+            "median": 5.0,
+            "p75": 9.0
+          },
+          "close_0_5": {
+            "n": 68,
+            "mean": 6.0588,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 7.0
+          },
+          "moderate_6_19": {
+            "n": 108,
+            "mean": 6.4815,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 7.0
+          }
+        },
+        "first_exit_Q1_clock_seconds": {
+          "star": {
+            "n": 110,
+            "mean": 182.0118,
+            "p25": 91.25,
+            "median": 180.5,
+            "p75": 275.5
+          },
+          "starter": {
+            "n": 571,
+            "mean": 261.6224,
+            "p25": 175.0,
+            "median": 251.0,
+            "p75": 348.0
+          }
+        },
+        "first_exit_with_return": {
+          "star": {
+            "n": 192,
+            "mean": 1,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 623,
+            "mean": 0.9952,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "first_rest_seconds": {
+          "star": {
+            "n": 192,
+            "mean": 208.013,
+            "p25": 130.5,
+            "median": 200.5,
+            "p75": 269.7
+          },
+          "starter": {
+            "n": 620,
+            "mean": 292.036,
+            "p25": 170.0,
+            "median": 259.5,
+            "p75": 376.15
+          }
+        },
+        "first_return_clock_seconds": {
+          "starter|Q1": {
+            "n": 241,
+            "mean": 124.9929,
+            "p25": 52.0,
+            "median": 131.0,
+            "p75": 185.0
+          },
+          "starter|Q2": {
+            "n": 374,
+            "mean": 551.8979,
+            "p25": 446.0,
+            "median": 544.0,
+            "p75": 720.0
+          },
+          "star|Q1": {
+            "n": 49,
+            "mean": 106.5673,
+            "p25": 25.8,
+            "median": 102.0,
+            "p75": 181.0
+          },
+          "star|Q2": {
+            "n": 141,
+            "mean": 518.2695,
+            "p25": 446.0,
+            "median": 499.0,
+            "p75": 602.0
+          }
+        },
+        "first_return_elapsed_seconds": {
+          "star": {
+            "n": 192,
+            "mean": 853.4802,
+            "p25": 718.875,
+            "median": 868.0,
+            "p75": 983.0
+          },
+          "starter": {
+            "n": 620,
+            "mean": 780.6353,
+            "p25": 632.0,
+            "median": 720.0,
+            "p75": 939.0
+          }
+        },
+        "opening_exit_elapsed_seconds": {
+          "star": {
+            "n": 192,
+            "mean": 645.4672,
+            "p25": 521.0,
+            "median": 671.0,
+            "p75": 720.0
+          },
+          "starter": {
+            "n": 623,
+            "mean": 490.8372,
+            "p25": 380.0,
+            "median": 484.0,
+            "p75": 563.0
+          }
+        },
+        "opening_exit_in_Q1": {
+          "star": {
+            "n": 192,
+            "mean": 0.5729,
+            "p25": 0.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 628,
+            "mean": 0.9092,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "playoff_minutes_to_regular_top8": {
+          "all": {
+            "n": 164,
+            "mean": 0.8311,
+            "p25": 0.7442,
+            "median": 0.8383,
+            "p75": 0.9225
+          }
+        },
+        "playoff_regular_top8_appearing": {
+          "all": {
+            "n": 164,
+            "mean": 0.8605,
+            "p25": 0.75,
+            "median": 0.875,
+            "p75": 1.0
+          }
+        },
+        "playoff_regular_top8_playing_5m": {
+          "all": {
+            "n": 164,
+            "mean": 0.8445,
+            "p25": 0.75,
+            "median": 0.875,
+            "p75": 1.0
+          }
+        },
+        "starter_seconds_by_quarter": {
+          "starter|Q1": {
+            "n": 628,
+            "mean": 527.6572,
+            "p25": 465.075,
+            "median": 536.0,
+            "p75": 603.0
+          },
+          "starter|Q2": {
+            "n": 628,
+            "mean": 484.1691,
+            "p25": 393.0,
+            "median": 509.0,
+            "p75": 587.0
+          },
+          "starter|Q3": {
+            "n": 628,
+            "mean": 534.3059,
+            "p25": 459.0,
+            "median": 538.75,
+            "p75": 636.75
+          },
+          "starter|Q4": {
+            "n": 628,
+            "mean": 435.2038,
+            "p25": 280.0,
+            "median": 479.0,
+            "p75": 621.25
+          },
+          "star|Q1": {
+            "n": 192,
+            "mean": 642.1839,
+            "p25": 568.5,
+            "median": 676.1,
+            "p75": 720.0
+          },
+          "star|Q2": {
+            "n": 192,
+            "mean": 548.4266,
+            "p25": 467.0,
+            "median": 552.75,
+            "p75": 636.75
+          },
+          "star|Q3": {
+            "n": 192,
+            "mean": 649.4401,
+            "p25": 582.75,
+            "median": 714.65,
+            "p75": 720.0
+          },
+          "star|Q4": {
+            "n": 192,
+            "mean": 539.599,
+            "p25": 467.5,
+            "median": 582.5,
+            "p75": 707.0
+          }
+        },
+        "stint_exits_next_minute": {
+          "bench|at_10m": {
+            "n": 55,
+            "mean": 0.4364,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "bench|at_4m": {
+            "n": 495,
+            "mean": 0.1859,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "bench|at_6m": {
+            "n": 229,
+            "mean": 0.2314,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "bench|at_8m": {
+            "n": 135,
+            "mean": 0.3556,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "sixth_man|at_10m": {
+            "n": 36,
+            "mean": 0.3333,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "sixth_man|at_4m": {
+            "n": 186,
+            "mean": 0.086,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "sixth_man|at_6m": {
+            "n": 96,
+            "mean": 0.125,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "sixth_man|at_8m": {
+            "n": 62,
+            "mean": 0.1935,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_10m": {
+            "n": 548,
+            "mean": 0.1971,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_4m": {
+            "n": 1448,
+            "mean": 0.0691,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_6m": {
+            "n": 1173,
+            "mean": 0.1373,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_8m": {
+            "n": 832,
+            "mean": 0.2067,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_10m": {
+            "n": 296,
+            "mean": 0.0912,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_4m": {
+            "n": 415,
+            "mean": 0.0193,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_6m": {
+            "n": 387,
+            "mean": 0.0465,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_8m": {
+            "n": 334,
+            "mean": 0.0838,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          }
+        },
+        "stint_seconds": {
+          "bench": {
+            "n": 1681,
+            "mean": 288.272,
+            "p25": 145.1,
+            "median": 251.0,
+            "p75": 392.0
+          },
+          "sixth_man": {
+            "n": 504,
+            "mean": 350.6996,
+            "p25": 159.975,
+            "median": 311.5,
+            "p75": 487.75
+          },
+          "star": {
+            "n": 643,
+            "mean": 713.3474,
+            "p25": 449.45,
+            "median": 669.9,
+            "p75": 925.0
+          },
+          "starter": {
+            "n": 2497,
+            "mean": 500.8329,
+            "p25": 286.0,
+            "median": 453.0,
+            "p75": 635.0
+          }
+        }
+      }
+    },
+    "2025": {
+      "regular": {
+        "bench_rest_seconds": {
+          "bench": {
+            "n": 16927,
+            "mean": 510.3893,
+            "p25": 247.0,
+            "median": 416.8,
+            "p75": 738.0
+          },
+          "sixth_man": {
+            "n": 5128,
+            "mean": 372.2561,
+            "p25": 208.0,
+            "median": 321.75,
+            "p75": 467.0
+          },
+          "star": {
+            "n": 4305,
+            "mean": 246.3396,
+            "p25": 165.0,
+            "median": 238.0,
+            "p75": 327.0
+          },
+          "starter": {
+            "n": 29660,
+            "mean": 306.6398,
+            "p25": 178.0,
+            "median": 280.85,
+            "p75": 418.0
+          }
+        },
+        "close_Q4_last_lineup_starter_count": {
+          "all": {
+            "n": 1120,
+            "mean": 3.6652,
+            "p25": 3.0,
+            "median": 4.0,
+            "p75": 4.0
+          }
+        },
+        "close_Q4_player_seconds_from_starters": {
+          "all": {
+            "n": 1120,
+            "mean": 0.7616,
+            "p25": 0.6412,
+            "median": 0.8,
+            "p75": 0.8573
+          }
+        },
+        "close_Q4_role_seconds_share": {
+          "bench": {
+            "n": 1526,
+            "mean": 0.5622,
+            "p25": 0.1244,
+            "median": 0.6328,
+            "p75": 1.0
+          },
+          "sixth_man": {
+            "n": 689,
+            "mean": 0.6925,
+            "p25": 0.2933,
+            "median": 0.9983,
+            "p75": 1.0
+          },
+          "star": {
+            "n": 763,
+            "mean": 0.9705,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 4027,
+            "mean": 0.8752,
+            "p25": 0.9333,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "close_Q4_seconds_exact_starting_five": {
+          "all": {
+            "n": 1120,
+            "mean": 0.2152,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.3396
+          }
+        },
+        "close_Q4_starter_seconds_share": {
+          "star": {
+            "n": 789,
+            "mean": 0.9385,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 4811,
+            "mean": 0.7326,
+            "p25": 0.4504,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "depth_1_minute_players": {
+          "all": {
+            "n": 2460,
+            "mean": 10.5939,
+            "p25": 9.0,
+            "median": 10.0,
+            "p75": 12.0
+          }
+        },
+        "depth_5_minute_players": {
+          "all": {
+            "n": 2460,
+            "mean": 9.7541,
+            "p25": 9.0,
+            "median": 10.0,
+            "p75": 10.0
+          }
+        },
+        "depth_final_5m_by_margin": {
+          "ahead_20_plus": {
+            "n": 388,
+            "mean": 7.1701,
+            "p25": 5.0,
+            "median": 7.0,
+            "p75": 9.0
+          },
+          "behind_20_plus": {
+            "n": 388,
+            "mean": 6.4639,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 7.0
+          },
+          "close_0_5": {
+            "n": 1120,
+            "mean": 6.2545,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 7.0
+          },
+          "moderate_6_19": {
+            "n": 1876,
+            "mean": 6.8513,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 8.0
+          }
+        },
+        "first_exit_Q1_clock_seconds": {
+          "star": {
+            "n": 1273,
+            "mean": 242.4811,
+            "p25": 156.0,
+            "median": 231.0,
+            "p75": 344.0
+          },
+          "starter": {
+            "n": 10112,
+            "mean": 276.8395,
+            "p25": 200.0,
+            "median": 274.0,
+            "p75": 355.0
+          }
+        },
+        "first_exit_with_return": {
+          "star": {
+            "n": 1682,
+            "mean": 0.997,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 10616,
+            "mean": 0.9943,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "first_rest_seconds": {
+          "star": {
+            "n": 1677,
+            "mean": 302.3419,
+            "p25": 217.0,
+            "median": 305.0,
+            "p75": 378.0
+          },
+          "starter": {
+            "n": 10555,
+            "mean": 377.4817,
+            "p25": 248.0,
+            "median": 371.0,
+            "p75": 482.0
+          }
+        },
+        "first_return_clock_seconds": {
+          "starter|Q1": {
+            "n": 2702,
+            "mean": 142.2283,
+            "p25": 74.25,
+            "median": 151.0,
+            "p75": 197.0
+          },
+          "starter|Q2": {
+            "n": 7748,
+            "mean": 523.6359,
+            "p25": 416.0,
+            "median": 502.0,
+            "p75": 720.0
+          },
+          "star|Q1": {
+            "n": 505,
+            "mean": 142.4222,
+            "p25": 103.0,
+            "median": 156.0,
+            "p75": 190.0
+          },
+          "star|Q2": {
+            "n": 1171,
+            "mean": 488.0743,
+            "p25": 391.0,
+            "median": 459.0,
+            "p75": 559.5
+          }
+        },
+        "first_return_elapsed_seconds": {
+          "star": {
+            "n": 1677,
+            "mean": 839.4883,
+            "p25": 658.0,
+            "median": 900.0,
+            "p75": 1024.0
+          },
+          "starter": {
+            "n": 10555,
+            "mean": 835.212,
+            "p25": 716.5,
+            "median": 864.0,
+            "p75": 994.0
+          }
+        },
+        "opening_exit_elapsed_seconds": {
+          "star": {
+            "n": 1682,
+            "mean": 537.1745,
+            "p25": 411.0,
+            "median": 539.5,
+            "p75": 714.75
+          },
+          "starter": {
+            "n": 10616,
+            "mean": 457.3687,
+            "p25": 370.0,
+            "median": 454.0,
+            "p75": 534.0
+          }
+        },
+        "opening_exit_in_Q1": {
+          "star": {
+            "n": 1682,
+            "mean": 0.7568,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 10618,
+            "mean": 0.9523,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "schedule_first_stint_seconds": {
+          "starter|one_day_off|prior_32plus": {
+            "n": 2364,
+            "mean": 492.8072,
+            "p25": 394.0,
+            "median": 495.0,
+            "p75": 568.0
+          },
+          "starter|one_day_off|prior_under32": {
+            "n": 3150,
+            "mean": 441.4164,
+            "p25": 362.0,
+            "median": 438.0,
+            "p75": 509.75
+          },
+          "starter|second_night|prior_32plus": {
+            "n": 637,
+            "mean": 479.578,
+            "p25": 392.0,
+            "median": 483.0,
+            "p75": 556.0
+          },
+          "starter|second_night|prior_under32": {
+            "n": 906,
+            "mean": 442.7999,
+            "p25": 364.0,
+            "median": 438.0,
+            "p75": 518.75
+          },
+          "starter|two_or_more_days_off|prior_32plus": {
+            "n": 755,
+            "mean": 490.9482,
+            "p25": 395.0,
+            "median": 493.0,
+            "p75": 567.0
+          },
+          "starter|two_or_more_days_off|prior_under32": {
+            "n": 898,
+            "mean": 439.2214,
+            "p25": 366.0,
+            "median": 439.0,
+            "p75": 506.75
+          },
+          "star|one_day_off|prior_32plus": {
+            "n": 750,
+            "mean": 549.5833,
+            "p25": 433.5,
+            "median": 551.5,
+            "p75": 720.0
+          },
+          "star|one_day_off|prior_under32": {
+            "n": 214,
+            "mean": 529.657,
+            "p25": 406.0,
+            "median": 527.5,
+            "p75": 674.05
+          },
+          "star|second_night|prior_32plus": {
+            "n": 225,
+            "mean": 538.316,
+            "p25": 415.0,
+            "median": 540.0,
+            "p75": 720.0
+          },
+          "star|second_night|prior_under32": {
+            "n": 46,
+            "mean": 531.4674,
+            "p25": 392.5,
+            "median": 546.5,
+            "p75": 633.75
+          },
+          "star|two_or_more_days_off|prior_32plus": {
+            "n": 234,
+            "mean": 546.897,
+            "p25": 426.5,
+            "median": 551.0,
+            "p75": 720.0
+          },
+          "star|two_or_more_days_off|prior_under32": {
+            "n": 67,
+            "mean": 496.1836,
+            "p25": 391.0,
+            "median": 492.0,
+            "p75": 582.5
+          }
+        },
+        "schedule_regulation_minutes": {
+          "starter|one_day_off|prior_32plus": {
+            "n": 2364,
+            "mean": 32.4364,
+            "p25": 29.5146,
+            "median": 33.285,
+            "p75": 36.3333
+          },
+          "starter|one_day_off|prior_under32": {
+            "n": 3150,
+            "mean": 27.9646,
+            "p25": 23.9833,
+            "median": 28.6833,
+            "p75": 32.6667
+          },
+          "starter|second_night|prior_32plus": {
+            "n": 637,
+            "mean": 32.0953,
+            "p25": 29.3167,
+            "median": 33.2933,
+            "p75": 36.4
+          },
+          "starter|second_night|prior_under32": {
+            "n": 906,
+            "mean": 28.5957,
+            "p25": 24.7833,
+            "median": 29.2308,
+            "p75": 33.2833
+          },
+          "starter|two_or_more_days_off|prior_32plus": {
+            "n": 755,
+            "mean": 32.5315,
+            "p25": 29.835,
+            "median": 33.2167,
+            "p75": 36.1283
+          },
+          "starter|two_or_more_days_off|prior_under32": {
+            "n": 898,
+            "mean": 28.114,
+            "p25": 24.2088,
+            "median": 28.95,
+            "p75": 32.6833
+          },
+          "star|one_day_off|prior_32plus": {
+            "n": 750,
+            "mean": 35.0642,
+            "p25": 32.6792,
+            "median": 36.0083,
+            "p75": 38.0025
+          },
+          "star|one_day_off|prior_under32": {
+            "n": 214,
+            "mean": 33.8343,
+            "p25": 30.7875,
+            "median": 34.6283,
+            "p75": 37.1046
+          },
+          "star|second_night|prior_32plus": {
+            "n": 225,
+            "mean": 34.9806,
+            "p25": 33.0833,
+            "median": 35.75,
+            "p75": 38.0667
+          },
+          "star|second_night|prior_under32": {
+            "n": 46,
+            "mean": 33.367,
+            "p25": 30.025,
+            "median": 35.2667,
+            "p75": 36.6642
+          },
+          "star|two_or_more_days_off|prior_32plus": {
+            "n": 234,
+            "mean": 35.3999,
+            "p25": 33.5167,
+            "median": 36.315,
+            "p75": 37.9125
+          },
+          "star|two_or_more_days_off|prior_under32": {
+            "n": 67,
+            "mean": 34.6011,
+            "p25": 33.375,
+            "median": 35.08,
+            "p75": 37.25
+          }
+        },
+        "starter_seconds_by_quarter": {
+          "starter|Q1": {
+            "n": 10618,
+            "mean": 491.0011,
+            "p25": 423.0,
+            "median": 494.0,
+            "p75": 555.0
+          },
+          "starter|Q2": {
+            "n": 10618,
+            "mean": 432.1694,
+            "p25": 358.0,
+            "median": 443.0,
+            "p75": 518.0
+          },
+          "starter|Q3": {
+            "n": 10618,
+            "mean": 479.181,
+            "p25": 400.0,
+            "median": 489.0,
+            "p75": 565.0
+          },
+          "starter|Q4": {
+            "n": 10618,
+            "mean": 375.1608,
+            "p25": 225.0,
+            "median": 407.6,
+            "p75": 539.7
+          },
+          "star|Q1": {
+            "n": 1682,
+            "mean": 578.837,
+            "p25": 503.0,
+            "median": 562.5,
+            "p75": 714.75
+          },
+          "star|Q2": {
+            "n": 1682,
+            "mean": 475.4587,
+            "p25": 399.0,
+            "median": 471.0,
+            "p75": 546.0
+          },
+          "star|Q3": {
+            "n": 1682,
+            "mean": 587.4473,
+            "p25": 507.775,
+            "median": 584.0,
+            "p75": 720.0
+          },
+          "star|Q4": {
+            "n": 1682,
+            "mean": 439.2339,
+            "p25": 329.0,
+            "median": 474.0,
+            "p75": 595.0
+          }
+        },
+        "stint_exits_next_minute": {
+          "bench|at_10m": {
+            "n": 1244,
+            "mean": 0.3947,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "bench|at_4m": {
+            "n": 10625,
+            "mean": 0.1143,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "bench|at_6m": {
+            "n": 5590,
+            "mean": 0.2025,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "bench|at_8m": {
+            "n": 3029,
+            "mean": 0.3232,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "sixth_man|at_10m": {
+            "n": 851,
+            "mean": 0.2808,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "sixth_man|at_4m": {
+            "n": 3965,
+            "mean": 0.0527,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "sixth_man|at_6m": {
+            "n": 2052,
+            "mean": 0.0843,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "sixth_man|at_8m": {
+            "n": 1426,
+            "mean": 0.1704,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_10m": {
+            "n": 7305,
+            "mean": 0.1544,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_4m": {
+            "n": 24803,
+            "mean": 0.0723,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_6m": {
+            "n": 19291,
+            "mean": 0.1888,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_8m": {
+            "n": 12136,
+            "mean": 0.2668,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "star|at_10m": {
+            "n": 1961,
+            "mean": 0.1458,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_4m": {
+            "n": 3868,
+            "mean": 0.0259,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_6m": {
+            "n": 3292,
+            "mean": 0.1039,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_8m": {
+            "n": 2643,
+            "mean": 0.1616,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          }
+        },
+        "stint_seconds": {
+          "bench": {
+            "n": 28621,
+            "mean": 343.8849,
+            "p25": 188.0,
+            "median": 319.0,
+            "p75": 469.0
+          },
+          "sixth_man": {
+            "n": 7437,
+            "mean": 438.1125,
+            "p25": 256.0,
+            "median": 413.0,
+            "p75": 598.0
+          },
+          "star": {
+            "n": 5987,
+            "mean": 588.8782,
+            "p25": 389.3,
+            "median": 526.0,
+            "p75": 720.0
+          },
+          "starter": {
+            "n": 40278,
+            "mean": 471.4687,
+            "p25": 309.0,
+            "median": 433.0,
+            "p75": 575.0
+          }
+        }
+      },
+      "playoffs": {
+        "bench_rest_seconds": {
+          "bench": {
+            "n": 1185,
+            "mean": 438.4391,
+            "p25": 154.0,
+            "median": 349.0,
+            "p75": 626.0
+          },
+          "sixth_man": {
+            "n": 403,
+            "mean": 358.8437,
+            "p25": 143.0,
+            "median": 294.0,
+            "p75": 467.95
+          },
+          "star": {
+            "n": 442,
+            "mean": 188.3199,
+            "p25": 104.5,
+            "median": 188.1,
+            "p75": 266.0
+          },
+          "starter": {
+            "n": 2079,
+            "mean": 241.3218,
+            "p25": 127.0,
+            "median": 206.0,
+            "p75": 318.0
+          }
+        },
+        "close_Q4_last_lineup_starter_count": {
+          "all": {
+            "n": 80,
+            "mean": 3.975,
+            "p25": 3.0,
+            "median": 4.0,
+            "p75": 5.0
+          }
+        },
+        "close_Q4_player_seconds_from_starters": {
+          "all": {
+            "n": 80,
+            "mean": 0.8417,
+            "p25": 0.7853,
+            "median": 0.8102,
+            "p75": 0.9716
+          }
+        },
+        "close_Q4_role_seconds_share": {
+          "bench": {
+            "n": 81,
+            "mean": 0.452,
+            "p25": 0.037,
+            "median": 0.35,
+            "p75": 0.9833
+          },
+          "sixth_man": {
+            "n": 50,
+            "mean": 0.5339,
+            "p25": 0.0753,
+            "median": 0.4733,
+            "p75": 1.0
+          },
+          "star": {
+            "n": 83,
+            "mean": 0.9458,
+            "p25": 0.9784,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 287,
+            "mean": 0.8996,
+            "p25": 0.9689,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "close_Q4_seconds_exact_starting_five": {
+          "all": {
+            "n": 80,
+            "mean": 0.4004,
+            "p25": 0.0,
+            "median": 0.1317,
+            "p75": 0.9032
+          }
+        },
+        "close_Q4_starter_seconds_share": {
+          "star": {
+            "n": 86,
+            "mean": 0.9128,
+            "p25": 0.9672,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 314,
+            "mean": 0.8223,
+            "p25": 0.886,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "depth_1_minute_players": {
+          "all": {
+            "n": 166,
+            "mean": 10.5542,
+            "p25": 9.0,
+            "median": 10.0,
+            "p75": 12.75
+          }
+        },
+        "depth_5_minute_players": {
+          "all": {
+            "n": 166,
+            "mean": 9.3675,
+            "p25": 8.0,
+            "median": 9.0,
+            "p75": 10.0
+          }
+        },
+        "depth_final_5m_by_margin": {
+          "ahead_20_plus": {
+            "n": 31,
+            "mean": 7.7419,
+            "p25": 5.0,
+            "median": 7.0,
+            "p75": 10.0
+          },
+          "behind_20_plus": {
+            "n": 31,
+            "mean": 6.6452,
+            "p25": 5.0,
+            "median": 5.0,
+            "p75": 9.0
+          },
+          "close_0_5": {
+            "n": 80,
+            "mean": 6.2625,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 7.0
+          },
+          "moderate_6_19": {
+            "n": 126,
+            "mean": 6.8333,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 8.0
+          }
+        },
+        "first_exit_Q1_clock_seconds": {
+          "star": {
+            "n": 94,
+            "mean": 222.3372,
+            "p25": 112.25,
+            "median": 225.5,
+            "p75": 321.25
+          },
+          "starter": {
+            "n": 613,
+            "mean": 271.968,
+            "p25": 193.0,
+            "median": 273.0,
+            "p75": 350.0
+          }
+        },
+        "first_exit_with_return": {
+          "star": {
+            "n": 170,
+            "mean": 0.9941,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 660,
+            "mean": 0.9955,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "first_rest_seconds": {
+          "star": {
+            "n": 169,
+            "mean": 239.9148,
+            "p25": 174.0,
+            "median": 245.0,
+            "p75": 299.4
+          },
+          "starter": {
+            "n": 657,
+            "mean": 305.691,
+            "p25": 172.0,
+            "median": 257.0,
+            "p75": 413.0
+          }
+        },
+        "first_return_clock_seconds": {
+          "starter|Q1": {
+            "n": 264,
+            "mean": 132.8909,
+            "p25": 36.9,
+            "median": 128.0,
+            "p75": 200.0
+          },
+          "starter|Q2": {
+            "n": 387,
+            "mean": 545.3553,
+            "p25": 441.5,
+            "median": 528.0,
+            "p75": 720.0
+          },
+          "star|Q1": {
+            "n": 45,
+            "mean": 133.98,
+            "p25": 65.0,
+            "median": 116.0,
+            "p75": 200.0
+          },
+          "star|Q2": {
+            "n": 124,
+            "mean": 507.1613,
+            "p25": 427.5,
+            "median": 487.5,
+            "p75": 574.0
+          }
+        },
+        "first_return_elapsed_seconds": {
+          "star": {
+            "n": 169,
+            "mean": 840.4905,
+            "p25": 710.8,
+            "median": 902.0,
+            "p75": 998.0
+          },
+          "starter": {
+            "n": 657,
+            "mean": 777.0907,
+            "p25": 635.0,
+            "median": 720.0,
+            "p75": 944.0
+          }
+        },
+        "opening_exit_elapsed_seconds": {
+          "star": {
+            "n": 170,
+            "mean": 599.1782,
+            "p25": 475.5,
+            "median": 686.05,
+            "p75": 720.0
+          },
+          "starter": {
+            "n": 660,
+            "mean": 470.5964,
+            "p25": 375.75,
+            "median": 460.5,
+            "p75": 547.0
+          }
+        },
+        "opening_exit_in_Q1": {
+          "star": {
+            "n": 170,
+            "mean": 0.5529,
+            "p25": 0.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 660,
+            "mean": 0.9288,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "playoff_minutes_to_regular_top8": {
+          "all": {
+            "n": 166,
+            "mean": 0.8189,
+            "p25": 0.7375,
+            "median": 0.8264,
+            "p75": 0.8984
+          }
+        },
+        "playoff_regular_top8_appearing": {
+          "all": {
+            "n": 166,
+            "mean": 0.9142,
+            "p25": 0.875,
+            "median": 0.875,
+            "p75": 1.0
+          }
+        },
+        "playoff_regular_top8_playing_5m": {
+          "all": {
+            "n": 166,
+            "mean": 0.8825,
+            "p25": 0.875,
+            "median": 0.875,
+            "p75": 1.0
+          }
+        },
+        "starter_seconds_by_quarter": {
+          "starter|Q1": {
+            "n": 660,
+            "mean": 516.217,
+            "p25": 449.0,
+            "median": 517.3,
+            "p75": 585.8
+          },
+          "starter|Q2": {
+            "n": 660,
+            "mean": 455.9742,
+            "p25": 371.0,
+            "median": 473.0,
+            "p75": 553.0
+          },
+          "starter|Q3": {
+            "n": 660,
+            "mean": 509.4942,
+            "p25": 417.0,
+            "median": 522.65,
+            "p75": 604.5
+          },
+          "starter|Q4": {
+            "n": 660,
+            "mean": 406.7233,
+            "p25": 231.9,
+            "median": 450.0,
+            "p75": 605.15
+          },
+          "star|Q1": {
+            "n": 170,
+            "mean": 631.1047,
+            "p25": 559.25,
+            "median": 695.05,
+            "p75": 720.0
+          },
+          "star|Q2": {
+            "n": 170,
+            "mean": 502.7159,
+            "p25": 428.0,
+            "median": 502.25,
+            "p75": 587.5
+          },
+          "star|Q3": {
+            "n": 170,
+            "mean": 621.2453,
+            "p25": 550.5,
+            "median": 685.75,
+            "p75": 720.0
+          },
+          "star|Q4": {
+            "n": 170,
+            "mean": 474.7941,
+            "p25": 385.25,
+            "median": 524.0,
+            "p75": 631.25
+          }
+        },
+        "stint_exits_next_minute": {
+          "bench|at_10m": {
+            "n": 63,
+            "mean": 0.2857,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "bench|at_4m": {
+            "n": 540,
+            "mean": 0.1833,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "bench|at_6m": {
+            "n": 260,
+            "mean": 0.2077,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "bench|at_8m": {
+            "n": 149,
+            "mean": 0.302,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "sixth_man|at_10m": {
+            "n": 60,
+            "mean": 0.2,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "sixth_man|at_4m": {
+            "n": 241,
+            "mean": 0.0456,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "sixth_man|at_6m": {
+            "n": 144,
+            "mean": 0.0972,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "sixth_man|at_8m": {
+            "n": 106,
+            "mean": 0.1887,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_10m": {
+            "n": 498,
+            "mean": 0.1627,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_4m": {
+            "n": 1556,
+            "mean": 0.0932,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_6m": {
+            "n": 1211,
+            "mean": 0.1751,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_8m": {
+            "n": 765,
+            "mean": 0.2353,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_10m": {
+            "n": 241,
+            "mean": 0.0996,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_4m": {
+            "n": 380,
+            "mean": 0.0132,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_6m": {
+            "n": 344,
+            "mean": 0.0727,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_8m": {
+            "n": 272,
+            "mean": 0.0956,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          }
+        },
+        "stint_seconds": {
+          "bench": {
+            "n": 1972,
+            "mean": 276.4637,
+            "p25": 123.0,
+            "median": 234.95,
+            "p75": 387.0
+          },
+          "sixth_man": {
+            "n": 569,
+            "mean": 388.0696,
+            "p25": 151.0,
+            "median": 359.1,
+            "p75": 557.0
+          },
+          "star": {
+            "n": 612,
+            "mean": 624.6675,
+            "p25": 382.725,
+            "median": 563.5,
+            "p75": 720.0
+          },
+          "starter": {
+            "n": 2739,
+            "mean": 458.9651,
+            "p25": 264.0,
+            "median": 415.9,
+            "p75": 591.0
+          }
+        }
+      }
+    },
+    "2026": {
+      "regular": {
+        "bench_rest_seconds": {
+          "bench": {
+            "n": 19602,
+            "mean": 477.8138,
+            "p25": 228.0,
+            "median": 386.0,
+            "p75": 665.0
+          },
+          "sixth_man": {
+            "n": 5650,
+            "mean": 348.0891,
+            "p25": 185.0,
+            "median": 303.7,
+            "p75": 436.0
+          },
+          "star": {
+            "n": 3816,
+            "mean": 250.2941,
+            "p25": 161.0,
+            "median": 243.0,
+            "p75": 334.0
+          },
+          "starter": {
+            "n": 32571,
+            "mean": 295.9346,
+            "p25": 173.0,
+            "median": 268.5,
+            "p75": 397.0
+          }
+        },
+        "close_Q4_last_lineup_starter_count": {
+          "all": {
+            "n": 1102,
+            "mean": 3.676,
+            "p25": 3.0,
+            "median": 4.0,
+            "p75": 4.0
+          }
+        },
+        "close_Q4_player_seconds_from_starters": {
+          "all": {
+            "n": 1102,
+            "mean": 0.7515,
+            "p25": 0.6354,
+            "median": 0.7976,
+            "p75": 0.8443
+          }
+        },
+        "close_Q4_role_seconds_share": {
+          "bench": {
+            "n": 1651,
+            "mean": 0.5469,
+            "p25": 0.1093,
+            "median": 0.5662,
+            "p75": 1.0
+          },
+          "sixth_man": {
+            "n": 672,
+            "mean": 0.6934,
+            "p25": 0.3056,
+            "median": 0.9573,
+            "p75": 1.0
+          },
+          "star": {
+            "n": 649,
+            "mean": 0.9656,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 4039,
+            "mean": 0.8701,
+            "p25": 0.9002,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "close_Q4_seconds_exact_starting_five": {
+          "all": {
+            "n": 1102,
+            "mean": 0.2049,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.3142
+          }
+        },
+        "close_Q4_starter_seconds_share": {
+          "star": {
+            "n": 672,
+            "mean": 0.9325,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 4838,
+            "mean": 0.7264,
+            "p25": 0.4401,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "depth_1_minute_players": {
+          "all": {
+            "n": 2460,
+            "mean": 10.7537,
+            "p25": 10.0,
+            "median": 10.0,
+            "p75": 12.0
+          }
+        },
+        "depth_5_minute_players": {
+          "all": {
+            "n": 2460,
+            "mean": 9.9561,
+            "p25": 9.0,
+            "median": 10.0,
+            "p75": 10.0
+          }
+        },
+        "depth_final_5m_by_margin": {
+          "ahead_20_plus": {
+            "n": 415,
+            "mean": 7.3157,
+            "p25": 5.0,
+            "median": 7.0,
+            "p75": 9.0
+          },
+          "behind_20_plus": {
+            "n": 415,
+            "mean": 6.3542,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 7.0
+          },
+          "close_0_5": {
+            "n": 1102,
+            "mean": 6.3621,
+            "p25": 6.0,
+            "median": 6.0,
+            "p75": 7.0
+          },
+          "moderate_6_19": {
+            "n": 1878,
+            "mean": 6.7907,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 8.0
+          }
+        },
+        "first_exit_Q1_clock_seconds": {
+          "star": {
+            "n": 1113,
+            "mean": 227.9631,
+            "p25": 150.0,
+            "median": 202.0,
+            "p75": 307.0
+          },
+          "starter": {
+            "n": 10568,
+            "mean": 298.6773,
+            "p25": 226.0,
+            "median": 299.0,
+            "p75": 375.0
+          }
+        },
+        "first_exit_with_return": {
+          "star": {
+            "n": 1470,
+            "mean": 0.9939,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 10823,
+            "mean": 0.9954,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "first_rest_seconds": {
+          "star": {
+            "n": 1461,
+            "mean": 302.26,
+            "p25": 211.0,
+            "median": 313.0,
+            "p75": 377.0
+          },
+          "starter": {
+            "n": 10773,
+            "mean": 370.1069,
+            "p25": 239.0,
+            "median": 350.0,
+            "p75": 477.0
+          }
+        },
+        "first_return_clock_seconds": {
+          "starter|Q1": {
+            "n": 3476,
+            "mean": 144.2416,
+            "p25": 69.75,
+            "median": 151.0,
+            "p75": 204.0
+          },
+          "starter|Q2": {
+            "n": 7209,
+            "mean": 542.2918,
+            "p25": 430.0,
+            "median": 523.0,
+            "p75": 720.0
+          },
+          "star|Q1": {
+            "n": 379,
+            "mean": 133.2694,
+            "p25": 32.4,
+            "median": 143.0,
+            "p75": 206.5
+          },
+          "star|Q2": {
+            "n": 1082,
+            "mean": 496.0018,
+            "p25": 395.0,
+            "median": 460.5,
+            "p75": 572.0
+          }
+        },
+        "first_return_elapsed_seconds": {
+          "star": {
+            "n": 1461,
+            "mean": 851.3189,
+            "p25": 715.3,
+            "median": 908.0,
+            "p75": 1022.0
+          },
+          "starter": {
+            "n": 10773,
+            "mean": 799.0625,
+            "p25": 660.6,
+            "median": 720.0,
+            "p75": 971.0
+          }
+        },
+        "opening_exit_elapsed_seconds": {
+          "star": {
+            "n": 1470,
+            "mean": 547.5769,
+            "p25": 455.25,
+            "median": 552.0,
+            "p75": 714.125
+          },
+          "starter": {
+            "n": 10823,
+            "mean": 428.8737,
+            "p25": 348.0,
+            "median": 424.0,
+            "p75": 501.0
+          }
+        },
+        "opening_exit_in_Q1": {
+          "star": {
+            "n": 1470,
+            "mean": 0.7571,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 10830,
+            "mean": 0.9758,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "schedule_first_stint_seconds": {
+          "starter|one_day_off|prior_32plus": {
+            "n": 2120,
+            "mean": 451.9095,
+            "p25": 362.0,
+            "median": 449.0,
+            "p75": 531.0
+          },
+          "starter|one_day_off|prior_under32": {
+            "n": 3512,
+            "mean": 422.9892,
+            "p25": 349.0,
+            "median": 422.0,
+            "p75": 490.0
+          },
+          "starter|second_night|prior_32plus": {
+            "n": 560,
+            "mean": 441.7561,
+            "p25": 354.5,
+            "median": 438.5,
+            "p75": 522.0
+          },
+          "starter|second_night|prior_under32": {
+            "n": 947,
+            "mean": 419.4422,
+            "p25": 345.5,
+            "median": 414.0,
+            "p75": 487.0
+          },
+          "starter|two_or_more_days_off|prior_32plus": {
+            "n": 671,
+            "mean": 451.4137,
+            "p25": 358.5,
+            "median": 453.0,
+            "p75": 535.0
+          },
+          "starter|two_or_more_days_off|prior_under32": {
+            "n": 1019,
+            "mean": 425.1702,
+            "p25": 348.5,
+            "median": 424.0,
+            "p75": 494.5
+          },
+          "star|one_day_off|prior_32plus": {
+            "n": 616,
+            "mean": 556.612,
+            "p25": 477.0,
+            "median": 562.0,
+            "p75": 720.0
+          },
+          "star|one_day_off|prior_under32": {
+            "n": 223,
+            "mean": 531.0641,
+            "p25": 439.5,
+            "median": 530.0,
+            "p75": 712.2
+          },
+          "star|second_night|prior_32plus": {
+            "n": 169,
+            "mean": 567.7497,
+            "p25": 488.0,
+            "median": 567.0,
+            "p75": 720.0
+          },
+          "star|second_night|prior_under32": {
+            "n": 60,
+            "mean": 524.0783,
+            "p25": 399.5,
+            "median": 525.0,
+            "p75": 643.25
+          },
+          "star|two_or_more_days_off|prior_32plus": {
+            "n": 197,
+            "mean": 560.1335,
+            "p25": 494.0,
+            "median": 564.0,
+            "p75": 718.6
+          },
+          "star|two_or_more_days_off|prior_under32": {
+            "n": 72,
+            "mean": 536.0417,
+            "p25": 442.75,
+            "median": 540.5,
+            "p75": 651.0
+          }
+        },
+        "schedule_regulation_minutes": {
+          "starter|one_day_off|prior_32plus": {
+            "n": 2120,
+            "mean": 31.6715,
+            "p25": 28.675,
+            "median": 32.575,
+            "p75": 35.4208
+          },
+          "starter|one_day_off|prior_under32": {
+            "n": 3512,
+            "mean": 27.8672,
+            "p25": 24.1167,
+            "median": 28.36,
+            "p75": 32.1638
+          },
+          "starter|second_night|prior_32plus": {
+            "n": 560,
+            "mean": 31.0909,
+            "p25": 27.9037,
+            "median": 31.625,
+            "p75": 35.1096
+          },
+          "starter|second_night|prior_under32": {
+            "n": 947,
+            "mean": 27.8535,
+            "p25": 24.1667,
+            "median": 28.1167,
+            "p75": 32.0667
+          },
+          "starter|two_or_more_days_off|prior_32plus": {
+            "n": 671,
+            "mean": 31.6164,
+            "p25": 28.55,
+            "median": 32.5333,
+            "p75": 35.36
+          },
+          "starter|two_or_more_days_off|prior_under32": {
+            "n": 1019,
+            "mean": 28.0889,
+            "p25": 24.4833,
+            "median": 28.7667,
+            "p75": 32.3167
+          },
+          "star|one_day_off|prior_32plus": {
+            "n": 616,
+            "mean": 33.9621,
+            "p25": 31.7725,
+            "median": 35.0667,
+            "p75": 37.4
+          },
+          "star|one_day_off|prior_under32": {
+            "n": 223,
+            "mean": 32.6985,
+            "p25": 29.9608,
+            "median": 33.8183,
+            "p75": 36.825
+          },
+          "star|second_night|prior_32plus": {
+            "n": 169,
+            "mean": 34.1111,
+            "p25": 31.3333,
+            "median": 34.8333,
+            "p75": 37.6833
+          },
+          "star|second_night|prior_under32": {
+            "n": 60,
+            "mean": 33.4553,
+            "p25": 30.125,
+            "median": 34.6525,
+            "p75": 37.1825
+          },
+          "star|two_or_more_days_off|prior_32plus": {
+            "n": 197,
+            "mean": 34.6826,
+            "p25": 32.5683,
+            "median": 35.3017,
+            "p75": 37.7317
+          },
+          "star|two_or_more_days_off|prior_under32": {
+            "n": 72,
+            "mean": 33.6007,
+            "p25": 30.8242,
+            "median": 34.6667,
+            "p75": 37.1337
+          }
+        },
+        "starter_seconds_by_quarter": {
+          "starter|Q1": {
+            "n": 10830,
+            "mean": 472.9905,
+            "p25": 409.0,
+            "median": 475.0,
+            "p75": 537.0
+          },
+          "starter|Q2": {
+            "n": 10830,
+            "mean": 428.8301,
+            "p25": 356.15,
+            "median": 441.0,
+            "p75": 515.0
+          },
+          "starter|Q3": {
+            "n": 10830,
+            "mean": 461.8601,
+            "p25": 389.0,
+            "median": 469.0,
+            "p75": 545.0
+          },
+          "starter|Q4": {
+            "n": 10830,
+            "mean": 373.3817,
+            "p25": 222.0,
+            "median": 406.0,
+            "p75": 539.0
+          },
+          "star|Q1": {
+            "n": 1470,
+            "mean": 581.311,
+            "p25": 513.0,
+            "median": 569.0,
+            "p75": 715.375
+          },
+          "star|Q2": {
+            "n": 1470,
+            "mean": 460.4563,
+            "p25": 395.0,
+            "median": 456.0,
+            "p75": 531.0
+          },
+          "star|Q3": {
+            "n": 1470,
+            "mean": 584.8694,
+            "p25": 517.0,
+            "median": 582.0,
+            "p75": 720.0
+          },
+          "star|Q4": {
+            "n": 1470,
+            "mean": 395.5367,
+            "p25": 271.0,
+            "median": 442.0,
+            "p75": 544.525
+          }
+        },
+        "stint_exits_next_minute": {
+          "bench|at_10m": {
+            "n": 1087,
+            "mean": 0.4131,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "bench|at_4m": {
+            "n": 11836,
+            "mean": 0.1506,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "bench|at_6m": {
+            "n": 5516,
+            "mean": 0.2123,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "bench|at_8m": {
+            "n": 2708,
+            "mean": 0.312,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "sixth_man|at_10m": {
+            "n": 746,
+            "mean": 0.3646,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "sixth_man|at_4m": {
+            "n": 4135,
+            "mean": 0.0868,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "sixth_man|at_6m": {
+            "n": 1911,
+            "mean": 0.1062,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "sixth_man|at_8m": {
+            "n": 1305,
+            "mean": 0.1877,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_10m": {
+            "n": 6262,
+            "mean": 0.1715,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_4m": {
+            "n": 25806,
+            "mean": 0.0933,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_6m": {
+            "n": 18987,
+            "mean": 0.2204,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_8m": {
+            "n": 10869,
+            "mean": 0.291,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "star|at_10m": {
+            "n": 1689,
+            "mean": 0.1101,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_4m": {
+            "n": 3307,
+            "mean": 0.0396,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_6m": {
+            "n": 2801,
+            "mean": 0.0839,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_8m": {
+            "n": 2357,
+            "mean": 0.1655,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          }
+        },
+        "stint_seconds": {
+          "bench": {
+            "n": 31641,
+            "mean": 330.3956,
+            "p25": 189.0,
+            "median": 302.0,
+            "p75": 438.0
+          },
+          "sixth_man": {
+            "n": 7960,
+            "mean": 405.8219,
+            "p25": 238.0,
+            "median": 377.0,
+            "p75": 556.0
+          },
+          "star": {
+            "n": 5286,
+            "mean": 566.6057,
+            "p25": 362.425,
+            "median": 515.5,
+            "p75": 720.0
+          },
+          "starter": {
+            "n": 43401,
+            "mean": 436.1773,
+            "p25": 286.0,
+            "median": 402.9,
+            "p75": 536.0
+          }
+        }
+      },
+      "playoffs": {
+        "bench_rest_seconds": {
+          "bench": {
+            "n": 1387,
+            "mean": 439.0963,
+            "p25": 179.0,
+            "median": 341.6,
+            "p75": 599.0
+          },
+          "sixth_man": {
+            "n": 380,
+            "mean": 372.7792,
+            "p25": 154.125,
+            "median": 314.5,
+            "p75": 501.475
+          },
+          "star": {
+            "n": 429,
+            "mean": 184.5531,
+            "p25": 103.0,
+            "median": 177.0,
+            "p75": 269.0
+          },
+          "starter": {
+            "n": 2398,
+            "mean": 224.0797,
+            "p25": 120.25,
+            "median": 191.0,
+            "p75": 295.75
+          }
+        },
+        "close_Q4_last_lineup_starter_count": {
+          "all": {
+            "n": 70,
+            "mean": 3.8571,
+            "p25": 4.0,
+            "median": 4.0,
+            "p75": 4.0
+          }
+        },
+        "close_Q4_player_seconds_from_starters": {
+          "all": {
+            "n": 70,
+            "mean": 0.8021,
+            "p25": 0.7782,
+            "median": 0.8,
+            "p75": 0.8427
+          }
+        },
+        "close_Q4_role_seconds_share": {
+          "bench": {
+            "n": 87,
+            "mean": 0.5598,
+            "p25": 0.0974,
+            "median": 0.6106,
+            "p75": 1.0
+          },
+          "sixth_man": {
+            "n": 32,
+            "mean": 0.6428,
+            "p25": 0.196,
+            "median": 0.9123,
+            "p75": 1.0
+          },
+          "star": {
+            "n": 61,
+            "mean": 0.989,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 250,
+            "mean": 0.8816,
+            "p25": 0.9592,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "close_Q4_seconds_exact_starting_five": {
+          "all": {
+            "n": 70,
+            "mean": 0.205,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.2602
+          }
+        },
+        "close_Q4_starter_seconds_share": {
+          "star": {
+            "n": 61,
+            "mean": 0.989,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 289,
+            "mean": 0.7626,
+            "p25": 0.6466,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "depth_1_minute_players": {
+          "all": {
+            "n": 170,
+            "mean": 10.9824,
+            "p25": 9.0,
+            "median": 10.0,
+            "p75": 13.0
+          }
+        },
+        "depth_5_minute_players": {
+          "all": {
+            "n": 170,
+            "mean": 9.5235,
+            "p25": 9.0,
+            "median": 9.0,
+            "p75": 10.0
+          }
+        },
+        "depth_final_5m_by_margin": {
+          "ahead_20_plus": {
+            "n": 28,
+            "mean": 7.7857,
+            "p25": 5.0,
+            "median": 7.0,
+            "p75": 10.0
+          },
+          "behind_20_plus": {
+            "n": 28,
+            "mean": 6.8214,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 10.0
+          },
+          "close_0_5": {
+            "n": 70,
+            "mean": 6.1429,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 7.0
+          },
+          "moderate_6_19": {
+            "n": 136,
+            "mean": 7.3456,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 10.0
+          }
+        },
+        "first_exit_Q1_clock_seconds": {
+          "star": {
+            "n": 107,
+            "mean": 235.4916,
+            "p25": 152.0,
+            "median": 226.0,
+            "p75": 333.0
+          },
+          "starter": {
+            "n": 657,
+            "mean": 288.4457,
+            "p25": 211.0,
+            "median": 282.0,
+            "p75": 365.0
+          }
+        },
+        "first_exit_with_return": {
+          "star": {
+            "n": 157,
+            "mean": 1,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 693,
+            "mean": 0.9957,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "first_rest_seconds": {
+          "star": {
+            "n": 157,
+            "mean": 233.4401,
+            "p25": 158.0,
+            "median": 236.0,
+            "p75": 313.0
+          },
+          "starter": {
+            "n": 690,
+            "mean": 287.2578,
+            "p25": 167.0,
+            "median": 246.35,
+            "p75": 374.75
+          }
+        },
+        "first_return_clock_seconds": {
+          "starter|Q1": {
+            "n": 329,
+            "mean": 145.8173,
+            "p25": 53.3,
+            "median": 153.0,
+            "p75": 225.0
+          },
+          "starter|Q2": {
+            "n": 358,
+            "mean": 563.162,
+            "p25": 463.0,
+            "median": 544.0,
+            "p75": 720.0
+          },
+          "star|Q1": {
+            "n": 51,
+            "mean": 178.7941,
+            "p25": 111.0,
+            "median": 210.0,
+            "p75": 252.5
+          },
+          "star|Q2": {
+            "n": 106,
+            "mean": 523.6604,
+            "p25": 426.75,
+            "median": 511.5,
+            "p75": 607.25
+          }
+        },
+        "first_return_elapsed_seconds": {
+          "star": {
+            "n": 157,
+            "mean": 794.4809,
+            "p25": 626.0,
+            "median": 847.0,
+            "p75": 983.0
+          },
+          "starter": {
+            "n": 690,
+            "mean": 734.977,
+            "p25": 579.25,
+            "median": 720.0,
+            "p75": 905.75
+          }
+        },
+        "opening_exit_elapsed_seconds": {
+          "star": {
+            "n": 157,
+            "mean": 561.0408,
+            "p25": 459.0,
+            "median": 562.0,
+            "p75": 720.0
+          },
+          "starter": {
+            "n": 693,
+            "mean": 446.6092,
+            "p25": 366.0,
+            "median": 447.0,
+            "p75": 525.0
+          }
+        },
+        "opening_exit_in_Q1": {
+          "star": {
+            "n": 157,
+            "mean": 0.6815,
+            "p25": 0.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 693,
+            "mean": 0.9481,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "playoff_minutes_to_regular_top8": {
+          "all": {
+            "n": 170,
+            "mean": 0.7868,
+            "p25": 0.7115,
+            "median": 0.7981,
+            "p75": 0.881
+          }
+        },
+        "playoff_regular_top8_appearing": {
+          "all": {
+            "n": 170,
+            "mean": 0.8934,
+            "p25": 0.875,
+            "median": 0.875,
+            "p75": 1.0
+          }
+        },
+        "playoff_regular_top8_playing_5m": {
+          "all": {
+            "n": 170,
+            "mean": 0.8471,
+            "p25": 0.75,
+            "median": 0.875,
+            "p75": 0.875
+          }
+        },
+        "starter_seconds_by_quarter": {
+          "starter|Q1": {
+            "n": 693,
+            "mean": 512.8939,
+            "p25": 451.0,
+            "median": 521.0,
+            "p75": 580.0
+          },
+          "starter|Q2": {
+            "n": 693,
+            "mean": 460.9074,
+            "p25": 382.2,
+            "median": 483.0,
+            "p75": 562.0
+          },
+          "starter|Q3": {
+            "n": 693,
+            "mean": 494.6714,
+            "p25": 421.6,
+            "median": 512.0,
+            "p75": 587.0
+          },
+          "starter|Q4": {
+            "n": 693,
+            "mean": 419.9554,
+            "p25": 258.0,
+            "median": 470.0,
+            "p75": 597.0
+          },
+          "star|Q1": {
+            "n": 157,
+            "mean": 617.0229,
+            "p25": 543.0,
+            "median": 613.0,
+            "p75": 720.0
+          },
+          "star|Q2": {
+            "n": 157,
+            "mean": 518.4064,
+            "p25": 437.0,
+            "median": 519.0,
+            "p75": 587.0
+          },
+          "star|Q3": {
+            "n": 157,
+            "mean": 602.1115,
+            "p25": 533.0,
+            "median": 606.0,
+            "p75": 720.0
+          },
+          "star|Q4": {
+            "n": 157,
+            "mean": 480.5662,
+            "p25": 409.0,
+            "median": 537.0,
+            "p75": 617.2
+          }
+        },
+        "stint_exits_next_minute": {
+          "bench|at_10m": {
+            "n": 36,
+            "mean": 0.6389,
+            "p25": 0.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "bench|at_4m": {
+            "n": 667,
+            "mean": 0.2009,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "bench|at_6m": {
+            "n": 277,
+            "mean": 0.2347,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "bench|at_8m": {
+            "n": 99,
+            "mean": 0.3939,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "sixth_man|at_10m": {
+            "n": 40,
+            "mean": 0.25,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.25
+          },
+          "sixth_man|at_4m": {
+            "n": 236,
+            "mean": 0.0975,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "sixth_man|at_6m": {
+            "n": 122,
+            "mean": 0.1311,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "sixth_man|at_8m": {
+            "n": 79,
+            "mean": 0.2152,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_10m": {
+            "n": 447,
+            "mean": 0.1991,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_4m": {
+            "n": 1682,
+            "mean": 0.0993,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_6m": {
+            "n": 1273,
+            "mean": 0.1987,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_8m": {
+            "n": 749,
+            "mean": 0.2603,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "star|at_10m": {
+            "n": 190,
+            "mean": 0.1211,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_4m": {
+            "n": 361,
+            "mean": 0.0249,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_6m": {
+            "n": 312,
+            "mean": 0.0545,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_8m": {
+            "n": 251,
+            "mean": 0.1235,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          }
+        },
+        "stint_seconds": {
+          "bench": {
+            "n": 2288,
+            "mean": 260.3424,
+            "p25": 121.0,
+            "median": 229.0,
+            "p75": 366.55
+          },
+          "sixth_man": {
+            "n": 550,
+            "mean": 361.3284,
+            "p25": 189.0,
+            "median": 323.15,
+            "p75": 496.0
+          },
+          "star": {
+            "n": 586,
+            "mean": 599.3836,
+            "p25": 386.55,
+            "median": 551.5,
+            "p75": 720.0
+          },
+          "starter": {
+            "n": 3091,
+            "mean": 427.1651,
+            "p25": 255.0,
+            "median": 398.0,
+            "p75": 547.0
+          }
+        }
+      }
+    },
+    "pooled": {
+      "regular": {
+        "bench_rest_seconds": {
+          "bench": {
+            "n": 52160,
+            "mean": 507.509,
+            "p25": 242.0,
+            "median": 412.0,
+            "p75": 734.0
+          },
+          "sixth_man": {
+            "n": 15643,
+            "mean": 368.445,
+            "p25": 193.0,
+            "median": 317.0,
+            "p75": 469.0
+          },
+          "star": {
+            "n": 13038,
+            "mean": 248.1666,
+            "p25": 162.0,
+            "median": 239.0,
+            "p75": 332.45
+          },
+          "starter": {
+            "n": 89886,
+            "mean": 304.4013,
+            "p25": 176.0,
+            "median": 277.0,
+            "p75": 413.0
+          }
+        },
+        "close_Q4_last_lineup_starter_count": {
+          "all": {
+            "n": 3354,
+            "mean": 3.7054,
+            "p25": 3.0,
+            "median": 4.0,
+            "p75": 4.0
+          }
+        },
+        "close_Q4_player_seconds_from_starters": {
+          "all": {
+            "n": 3354,
+            "mean": 0.7649,
+            "p25": 0.6487,
+            "median": 0.8,
+            "p75": 0.872
+          }
+        },
+        "close_Q4_role_seconds_share": {
+          "bench": {
+            "n": 4606,
+            "mean": 0.5555,
+            "p25": 0.1122,
+            "median": 0.6067,
+            "p75": 1.0
+          },
+          "sixth_man": {
+            "n": 1993,
+            "mean": 0.6949,
+            "p25": 0.3043,
+            "median": 0.9837,
+            "p75": 1.0
+          },
+          "star": {
+            "n": 2264,
+            "mean": 0.9734,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 12061,
+            "mean": 0.8808,
+            "p25": 0.9354,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "close_Q4_seconds_exact_starting_five": {
+          "all": {
+            "n": 3354,
+            "mean": 0.2285,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.4378
+          }
+        },
+        "close_Q4_starter_seconds_share": {
+          "star": {
+            "n": 2343,
+            "mean": 0.9405,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 14427,
+            "mean": 0.7363,
+            "p25": 0.4869,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "depth_1_minute_players": {
+          "all": {
+            "n": 7378,
+            "mean": 10.6523,
+            "p25": 9.0,
+            "median": 10.0,
+            "p75": 12.0
+          }
+        },
+        "depth_5_minute_players": {
+          "all": {
+            "n": 7378,
+            "mean": 9.8203,
+            "p25": 9.0,
+            "median": 10.0,
+            "p75": 10.0
+          }
+        },
+        "depth_final_5m_by_margin": {
+          "ahead_20_plus": {
+            "n": 1184,
+            "mean": 7.2686,
+            "p25": 5.0,
+            "median": 7.0,
+            "p75": 9.0
+          },
+          "behind_20_plus": {
+            "n": 1184,
+            "mean": 6.4088,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 7.0
+          },
+          "close_0_5": {
+            "n": 3354,
+            "mean": 6.2385,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 7.0
+          },
+          "moderate_6_19": {
+            "n": 5664,
+            "mean": 6.8132,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 8.0
+          }
+        },
+        "first_exit_Q1_clock_seconds": {
+          "star": {
+            "n": 3887,
+            "mean": 234.8199,
+            "p25": 151.0,
+            "median": 216.0,
+            "p75": 330.0
+          },
+          "starter": {
+            "n": 30502,
+            "mean": 279.7445,
+            "p25": 203.0,
+            "median": 277.0,
+            "p75": 357.0
+          }
+        },
+        "first_exit_with_return": {
+          "star": {
+            "n": 5132,
+            "mean": 0.9957,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 31747,
+            "mean": 0.9949,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "first_rest_seconds": {
+          "star": {
+            "n": 5110,
+            "mean": 302.5434,
+            "p25": 212.0,
+            "median": 308.0,
+            "p75": 382.0
+          },
+          "starter": {
+            "n": 31584,
+            "mean": 378.1774,
+            "p25": 246.0,
+            "median": 366.0,
+            "p75": 486.0
+          }
+        },
+        "first_return_clock_seconds": {
+          "starter|Q1": {
+            "n": 8720,
+            "mean": 139.6559,
+            "p25": 69.0,
+            "median": 147.0,
+            "p75": 196.0
+          },
+          "starter|Q2": {
+            "n": 22538,
+            "mean": 522.1105,
+            "p25": 415.0,
+            "median": 500.0,
+            "p75": 720.0
+          },
+          "star|Q1": {
+            "n": 1467,
+            "mean": 141.5923,
+            "p25": 85.0,
+            "median": 154.0,
+            "p75": 196.0
+          },
+          "star|Q2": {
+            "n": 3640,
+            "mean": 486.9261,
+            "p25": 391.0,
+            "median": 454.0,
+            "p75": 555.0
+          }
+        },
+        "first_return_elapsed_seconds": {
+          "star": {
+            "n": 5110,
+            "mean": 845.799,
+            "p25": 695.3,
+            "median": 913.0,
+            "p75": 1026.0
+          },
+          "starter": {
+            "n": 31584,
+            "mean": 830.6163,
+            "p25": 707.475,
+            "median": 847.0,
+            "p75": 995.0
+          }
+        },
+        "opening_exit_elapsed_seconds": {
+          "star": {
+            "n": 5132,
+            "mean": 542.7712,
+            "p25": 432.0,
+            "median": 548.0,
+            "p75": 714.05
+          },
+          "starter": {
+            "n": 31747,
+            "mean": 452.1233,
+            "p25": 366.0,
+            "median": 449.0,
+            "p75": 528.0
+          }
+        },
+        "opening_exit_in_Q1": {
+          "star": {
+            "n": 5132,
+            "mean": 0.7574,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 31758,
+            "mean": 0.9605,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "schedule_first_stint_seconds": {
+          "starter|one_day_off|prior_32plus": {
+            "n": 7042,
+            "mean": 484.0984,
+            "p25": 388.0,
+            "median": 482.0,
+            "p75": 559.0
+          },
+          "starter|one_day_off|prior_under32": {
+            "n": 9723,
+            "mean": 439.9121,
+            "p25": 362.0,
+            "median": 438.0,
+            "p75": 509.0
+          },
+          "starter|second_night|prior_32plus": {
+            "n": 1820,
+            "mean": 470.8474,
+            "p25": 377.0,
+            "median": 473.0,
+            "p75": 551.0
+          },
+          "starter|second_night|prior_under32": {
+            "n": 2734,
+            "mean": 438.0675,
+            "p25": 361.0,
+            "median": 436.0,
+            "p75": 511.0
+          },
+          "starter|two_or_more_days_off|prior_32plus": {
+            "n": 2233,
+            "mean": 478.8899,
+            "p25": 382.0,
+            "median": 479.0,
+            "p75": 558.0
+          },
+          "starter|two_or_more_days_off|prior_under32": {
+            "n": 2809,
+            "mean": 439.8293,
+            "p25": 363.0,
+            "median": 440.0,
+            "p75": 508.0
+          },
+          "star|one_day_off|prior_32plus": {
+            "n": 2250,
+            "mean": 554.1712,
+            "p25": 451.0,
+            "median": 558.0,
+            "p75": 720.0
+          },
+          "star|one_day_off|prior_under32": {
+            "n": 701,
+            "mean": 536.7854,
+            "p25": 431.0,
+            "median": 541.0,
+            "p75": 698.9
+          },
+          "star|second_night|prior_32plus": {
+            "n": 616,
+            "mean": 547.3586,
+            "p25": 432.5,
+            "median": 549.5,
+            "p75": 720.0
+          },
+          "star|second_night|prior_under32": {
+            "n": 182,
+            "mean": 537.317,
+            "p25": 410.75,
+            "median": 545.5,
+            "p75": 668.575
+          },
+          "star|two_or_more_days_off|prior_32plus": {
+            "n": 736,
+            "mean": 545.8543,
+            "p25": 433.0,
+            "median": 552.0,
+            "p75": 716.9
+          },
+          "star|two_or_more_days_off|prior_under32": {
+            "n": 204,
+            "mean": 521.5461,
+            "p25": 415.75,
+            "median": 528.0,
+            "p75": 629.25
+          }
+        },
+        "schedule_regulation_minutes": {
+          "starter|one_day_off|prior_32plus": {
+            "n": 7042,
+            "mean": 32.2733,
+            "p25": 29.2833,
+            "median": 33.1833,
+            "p75": 36.1446
+          },
+          "starter|one_day_off|prior_under32": {
+            "n": 9723,
+            "mean": 28.0238,
+            "p25": 24.1333,
+            "median": 28.6333,
+            "p75": 32.5833
+          },
+          "starter|second_night|prior_32plus": {
+            "n": 1820,
+            "mean": 31.7207,
+            "p25": 28.6071,
+            "median": 32.6425,
+            "p75": 35.9375
+          },
+          "starter|second_night|prior_under32": {
+            "n": 2734,
+            "mean": 28.3145,
+            "p25": 24.3667,
+            "median": 28.7833,
+            "p75": 32.8667
+          },
+          "starter|two_or_more_days_off|prior_32plus": {
+            "n": 2233,
+            "mean": 32.1146,
+            "p25": 29.2167,
+            "median": 32.9833,
+            "p75": 35.9833
+          },
+          "starter|two_or_more_days_off|prior_under32": {
+            "n": 2809,
+            "mean": 28.1203,
+            "p25": 24.25,
+            "median": 28.8833,
+            "p75": 32.555
+          },
+          "star|one_day_off|prior_32plus": {
+            "n": 2250,
+            "mean": 34.7731,
+            "p25": 32.4688,
+            "median": 35.6833,
+            "p75": 37.9304
+          },
+          "star|one_day_off|prior_under32": {
+            "n": 701,
+            "mean": 33.3885,
+            "p25": 30.4017,
+            "median": 34.3833,
+            "p75": 37.0117
+          },
+          "star|second_night|prior_32plus": {
+            "n": 616,
+            "mean": 34.6238,
+            "p25": 32.45,
+            "median": 35.615,
+            "p75": 37.8875
+          },
+          "star|second_night|prior_under32": {
+            "n": 182,
+            "mean": 33.3872,
+            "p25": 30.19,
+            "median": 34.9583,
+            "p75": 36.975
+          },
+          "star|two_or_more_days_off|prior_32plus": {
+            "n": 736,
+            "mean": 34.8809,
+            "p25": 32.6317,
+            "median": 35.71,
+            "p75": 37.9208
+          },
+          "star|two_or_more_days_off|prior_under32": {
+            "n": 204,
+            "mean": 33.9243,
+            "p25": 31.0458,
+            "median": 34.7858,
+            "p75": 37.2667
+          }
+        },
+        "starter_seconds_by_quarter": {
+          "starter|Q1": {
+            "n": 31758,
+            "mean": 488.2092,
+            "p25": 422.0,
+            "median": 490.0,
+            "p75": 552.4
+          },
+          "starter|Q2": {
+            "n": 31758,
+            "mean": 430.0363,
+            "p25": 356.125,
+            "median": 441.0,
+            "p75": 517.0
+          },
+          "starter|Q3": {
+            "n": 31758,
+            "mean": 477.5198,
+            "p25": 400.0,
+            "median": 486.0,
+            "p75": 563.0
+          },
+          "starter|Q4": {
+            "n": 31758,
+            "mean": 373.6837,
+            "p25": 219.0,
+            "median": 407.0,
+            "p75": 541.0
+          },
+          "star|Q1": {
+            "n": 5132,
+            "mean": 582.1406,
+            "p25": 512.0,
+            "median": 568.0,
+            "p75": 714.475
+          },
+          "star|Q2": {
+            "n": 5132,
+            "mean": 469.9908,
+            "p25": 397.0,
+            "median": 465.0,
+            "p75": 541.0
+          },
+          "star|Q3": {
+            "n": 5132,
+            "mean": 588.0087,
+            "p25": 512.65,
+            "median": 585.0,
+            "p75": 720.0
+          },
+          "star|Q4": {
+            "n": 5132,
+            "mean": 420.9413,
+            "p25": 303.0,
+            "median": 460.0,
+            "p75": 575.25
+          }
+        },
+        "stint_exits_next_minute": {
+          "bench|at_10m": {
+            "n": 3738,
+            "mean": 0.3975,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "bench|at_4m": {
+            "n": 32129,
+            "mean": 0.125,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "bench|at_6m": {
+            "n": 16616,
+            "mean": 0.2008,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "bench|at_8m": {
+            "n": 9035,
+            "mean": 0.3136,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "sixth_man|at_10m": {
+            "n": 2625,
+            "mean": 0.301,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "sixth_man|at_4m": {
+            "n": 11670,
+            "mean": 0.0628,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "sixth_man|at_6m": {
+            "n": 5861,
+            "mean": 0.086,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "sixth_man|at_8m": {
+            "n": 4312,
+            "mean": 0.1707,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_10m": {
+            "n": 21352,
+            "mean": 0.1598,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_4m": {
+            "n": 74268,
+            "mean": 0.0745,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_6m": {
+            "n": 57213,
+            "mean": 0.1927,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_8m": {
+            "n": 35529,
+            "mean": 0.2653,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "star|at_10m": {
+            "n": 6070,
+            "mean": 0.1257,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_4m": {
+            "n": 11610,
+            "mean": 0.0278,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_6m": {
+            "n": 9935,
+            "mean": 0.1006,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_8m": {
+            "n": 8162,
+            "mean": 0.1539,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          }
+        },
+        "stint_seconds": {
+          "bench": {
+            "n": 87680,
+            "mean": 340.8453,
+            "p25": 187.0,
+            "median": 313.0,
+            "p75": 464.0
+          },
+          "sixth_man": {
+            "n": 22567,
+            "mean": 430.8088,
+            "p25": 244.0,
+            "median": 403.0,
+            "p75": 597.0
+          },
+          "star": {
+            "n": 18170,
+            "mean": 586.4456,
+            "p25": 384.0,
+            "median": 528.0,
+            "p75": 720.0
+          },
+          "starter": {
+            "n": 121644,
+            "mean": 464.956,
+            "p25": 304.0,
+            "median": 427.0,
+            "p75": 569.0
+          }
+        }
+      },
+      "playoffs": {
+        "bench_rest_seconds": {
+          "bench": {
+            "n": 3553,
+            "mean": 449.2094,
+            "p25": 171.0,
+            "median": 350.0,
+            "p75": 631.0
+          },
+          "sixth_man": {
+            "n": 1123,
+            "mean": 385.4108,
+            "p25": 163.5,
+            "median": 315.0,
+            "p75": 522.5
+          },
+          "star": {
+            "n": 1322,
+            "mean": 179.1477,
+            "p25": 96.0,
+            "median": 174.0,
+            "p75": 251.0
+          },
+          "starter": {
+            "n": 6346,
+            "mean": 233.5113,
+            "p25": 124.0,
+            "median": 201.0,
+            "p75": 311.0
+          }
+        },
+        "close_Q4_last_lineup_starter_count": {
+          "all": {
+            "n": 218,
+            "mean": 4.0138,
+            "p25": 4.0,
+            "median": 4.0,
+            "p75": 5.0
+          }
+        },
+        "close_Q4_player_seconds_from_starters": {
+          "all": {
+            "n": 218,
+            "mean": 0.8329,
+            "p25": 0.786,
+            "median": 0.8,
+            "p75": 0.9679
+          }
+        },
+        "close_Q4_role_seconds_share": {
+          "bench": {
+            "n": 239,
+            "mean": 0.4938,
+            "p25": 0.0568,
+            "median": 0.4326,
+            "p75": 0.9927
+          },
+          "sixth_man": {
+            "n": 108,
+            "mean": 0.5934,
+            "p25": 0.12,
+            "median": 0.8009,
+            "p75": 1.0
+          },
+          "star": {
+            "n": 229,
+            "mean": 0.971,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 767,
+            "mean": 0.8938,
+            "p25": 0.9709,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "close_Q4_seconds_exact_starting_five": {
+          "all": {
+            "n": 218,
+            "mean": 0.343,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.8732
+          }
+        },
+        "close_Q4_starter_seconds_share": {
+          "star": {
+            "n": 232,
+            "mean": 0.9584,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 858,
+            "mean": 0.799,
+            "p25": 0.8189,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "depth_1_minute_players": {
+          "all": {
+            "n": 500,
+            "mean": 10.546,
+            "p25": 9.0,
+            "median": 10.0,
+            "p75": 12.0
+          }
+        },
+        "depth_5_minute_players": {
+          "all": {
+            "n": 500,
+            "mean": 9.296,
+            "p25": 8.0,
+            "median": 9.0,
+            "p75": 10.0
+          }
+        },
+        "depth_final_5m_by_margin": {
+          "ahead_20_plus": {
+            "n": 89,
+            "mean": 7.809,
+            "p25": 5.0,
+            "median": 7.0,
+            "p75": 10.0
+          },
+          "behind_20_plus": {
+            "n": 89,
+            "mean": 6.7753,
+            "p25": 5.0,
+            "median": 5.0,
+            "p75": 9.0
+          },
+          "close_0_5": {
+            "n": 218,
+            "mean": 6.1606,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 7.0
+          },
+          "moderate_6_19": {
+            "n": 370,
+            "mean": 6.9189,
+            "p25": 5.0,
+            "median": 6.0,
+            "p75": 8.0
+          }
+        },
+        "first_exit_Q1_clock_seconds": {
+          "star": {
+            "n": 311,
+            "mean": 212.6,
+            "p25": 111.5,
+            "median": 211.0,
+            "p75": 302.5
+          },
+          "starter": {
+            "n": 1841,
+            "mean": 274.6397,
+            "p25": 191.0,
+            "median": 272.0,
+            "p75": 353.0
+          }
+        },
+        "first_exit_with_return": {
+          "star": {
+            "n": 519,
+            "mean": 0.9981,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 1976,
+            "mean": 0.9954,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "first_rest_seconds": {
+          "star": {
+            "n": 518,
+            "mean": 226.1278,
+            "p25": 149.5,
+            "median": 221.0,
+            "p75": 294.525
+          },
+          "starter": {
+            "n": 1967,
+            "mean": 294.9208,
+            "p25": 169.3,
+            "median": 253.0,
+            "p75": 385.0
+          }
+        },
+        "first_return_clock_seconds": {
+          "starter|Q1": {
+            "n": 834,
+            "mean": 135.7079,
+            "p25": 48.325,
+            "median": 136.0,
+            "p75": 204.0
+          },
+          "starter|Q2": {
+            "n": 1119,
+            "mean": 553.2389,
+            "p25": 449.0,
+            "median": 536.0,
+            "p75": 720.0
+          },
+          "star|Q1": {
+            "n": 145,
+            "mean": 140.4786,
+            "p25": 59.8,
+            "median": 140.0,
+            "p75": 217.0
+          },
+          "star|Q2": {
+            "n": 371,
+            "mean": 516.097,
+            "p25": 433.0,
+            "median": 499.0,
+            "p75": 592.5
+          }
+        },
+        "first_return_elapsed_seconds": {
+          "star": {
+            "n": 518,
+            "mean": 831.3602,
+            "p25": 704.475,
+            "median": 868.0,
+            "p75": 986.0
+          },
+          "starter": {
+            "n": 1967,
+            "mean": 763.435,
+            "p25": 613.0,
+            "median": 720.0,
+            "p75": 931.5
+          }
+        },
+        "opening_exit_elapsed_seconds": {
+          "star": {
+            "n": 519,
+            "mean": 604.7657,
+            "p25": 482.0,
+            "median": 632.0,
+            "p75": 720.0
+          },
+          "starter": {
+            "n": 1976,
+            "mean": 468.5655,
+            "p25": 373.0,
+            "median": 459.0,
+            "p75": 548.0
+          }
+        },
+        "opening_exit_in_Q1": {
+          "star": {
+            "n": 519,
+            "mean": 0.5992,
+            "p25": 0.0,
+            "median": 1.0,
+            "p75": 1.0
+          },
+          "starter": {
+            "n": 1981,
+            "mean": 0.9293,
+            "p25": 1.0,
+            "median": 1.0,
+            "p75": 1.0
+          }
+        },
+        "playoff_minutes_to_regular_top8": {
+          "all": {
+            "n": 500,
+            "mean": 0.812,
+            "p25": 0.7283,
+            "median": 0.8206,
+            "p75": 0.899
+          }
+        },
+        "playoff_regular_top8_appearing": {
+          "all": {
+            "n": 500,
+            "mean": 0.8895,
+            "p25": 0.875,
+            "median": 0.875,
+            "p75": 1.0
+          }
+        },
+        "playoff_regular_top8_playing_5m": {
+          "all": {
+            "n": 500,
+            "mean": 0.858,
+            "p25": 0.75,
+            "median": 0.875,
+            "p75": 1.0
+          }
+        },
+        "starter_seconds_by_quarter": {
+          "starter|Q1": {
+            "n": 1981,
+            "mean": 518.6812,
+            "p25": 455.0,
+            "median": 524.0,
+            "p75": 589.0
+          },
+          "starter|Q2": {
+            "n": 1981,
+            "mean": 466.6381,
+            "p25": 382.7,
+            "median": 486.0,
+            "p75": 568.0
+          },
+          "starter|Q3": {
+            "n": 1981,
+            "mean": 512.1745,
+            "p25": 431.0,
+            "median": 524.0,
+            "p75": 605.0
+          },
+          "starter|Q4": {
+            "n": 1981,
+            "mean": 420.3809,
+            "p25": 258.0,
+            "median": 469.0,
+            "p75": 607.1
+          },
+          "star|Q1": {
+            "n": 519,
+            "mean": 630.9435,
+            "p25": 555.0,
+            "median": 651.0,
+            "p75": 720.0
+          },
+          "star|Q2": {
+            "n": 519,
+            "mean": 524.3726,
+            "p25": 442.0,
+            "median": 523.0,
+            "p75": 602.0
+          },
+          "star|Q3": {
+            "n": 519,
+            "mean": 625.8877,
+            "p25": 555.5,
+            "median": 667.8,
+            "p75": 720.0
+          },
+          "star|Q4": {
+            "n": 519,
+            "mean": 500.5143,
+            "p25": 408.0,
+            "median": 548.7,
+            "p75": 661.9
+          }
+        },
+        "stint_exits_next_minute": {
+          "bench|at_10m": {
+            "n": 154,
+            "mean": 0.4221,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "bench|at_4m": {
+            "n": 1702,
+            "mean": 0.191,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "bench|at_6m": {
+            "n": 766,
+            "mean": 0.2245,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "bench|at_8m": {
+            "n": 383,
+            "mean": 0.3446,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 1.0
+          },
+          "sixth_man|at_10m": {
+            "n": 136,
+            "mean": 0.25,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.25
+          },
+          "sixth_man|at_4m": {
+            "n": 663,
+            "mean": 0.0754,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "sixth_man|at_6m": {
+            "n": 362,
+            "mean": 0.116,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "sixth_man|at_8m": {
+            "n": 247,
+            "mean": 0.1984,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_10m": {
+            "n": 1493,
+            "mean": 0.1862,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_4m": {
+            "n": 4686,
+            "mean": 0.0879,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_6m": {
+            "n": 3657,
+            "mean": 0.1712,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "starter|at_8m": {
+            "n": 2346,
+            "mean": 0.2332,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_10m": {
+            "n": 727,
+            "mean": 0.1018,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_4m": {
+            "n": 1156,
+            "mean": 0.019,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_6m": {
+            "n": 1043,
+            "mean": 0.0575,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          },
+          "star|at_8m": {
+            "n": 857,
+            "mean": 0.0992,
+            "p25": 0.0,
+            "median": 0.0,
+            "p75": 0.0
+          }
+        },
+        "stint_seconds": {
+          "bench": {
+            "n": 5941,
+            "mean": 273.5962,
+            "p25": 128.0,
+            "median": 238.0,
+            "p75": 380.5
+          },
+          "sixth_man": {
+            "n": 1623,
+            "mean": 367.4028,
+            "p25": 168.5,
+            "median": 326.0,
+            "p75": 519.0
+          },
+          "star": {
+            "n": 1841,
+            "mean": 647.5924,
+            "p25": 407.0,
+            "median": 589.0,
+            "p75": 769.0
+          },
+          "starter": {
+            "n": 8327,
+            "mean": 459.7157,
+            "p25": 266.0,
+            "median": 419.0,
+            "p75": 587.0
+          }
+        }
+      }
+    }
+  },
+  "held_out_fits": {
+    "first_rest_seconds": {
+      "loss": "absolute_error",
+      "training_n": 24460,
+      "test_n": 12234,
+      "training_baseline": 360.0,
+      "test_loss": 131.82758,
+      "baseline_test_loss": 131.97366,
+      "groups": {
+        "star": {
+          "train_n": 3649,
+          "prediction": 305.0,
+          "test": {
+            "n": 1461,
+            "mean": 302.26,
+            "p25": 211.0,
+            "median": 313.0,
+            "p75": 377.0
+          }
+        },
+        "starter": {
+          "train_n": 20811,
+          "prediction": 374.0,
+          "test": {
+            "n": 10773,
+            "mean": 370.1069,
+            "p25": 239.0,
+            "median": 350.0,
+            "p75": 477.0
+          }
+        }
+      }
+    },
+    "opening_exit_elapsed_seconds": {
+      "loss": "absolute_error",
+      "training_n": 24586,
+      "test_n": 12293,
+      "training_baseline": 470.0,
+      "test_loss": 95.74843,
+      "baseline_test_loss": 100.60151,
+      "groups": {
+        "star": {
+          "train_n": 3662,
+          "prediction": 546.0,
+          "test": {
+            "n": 1470,
+            "mean": 547.5769,
+            "p25": 455.25,
+            "median": 552.0,
+            "p75": 714.125
+          }
+        },
+        "starter": {
+          "train_n": 20924,
+          "prediction": 461.0,
+          "test": {
+            "n": 10823,
+            "mean": 428.8737,
+            "p25": 348.0,
+            "median": 424.0,
+            "p75": 501.0
+          }
+        }
+      }
+    }
+  }
+}

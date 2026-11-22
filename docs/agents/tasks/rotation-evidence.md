@@ -5,3 +5,9 @@
 Research for the Stage 2 coach. Fit on 2023–24 and 2024–25 and reserve 2025–26 for testing. Cover regular-season and playoff rotations, game state, timeouts, end-game tactics and named coaching differences. Engine, interface and tests are outside scope.
 
 The repository has 2025–26 regular-season box scores but no tracked substitution feed. The worktree is on `codex/rotation-evidence` with the main checkout's Python environment linked. Next, confirm a public bulk event archive and validate its floor time against independent box scores.
+
+### Rotation checkpoint
+
+The NBA play-by-play archive publishes six season files with five-player lineups at each event. Cached the six files under `output/rotation-evidence/`. The first build passing clock and floor checks contains 3,939 games. One 2023–24 regular-season game failed the clock-order check. The 2025–26 comparison with the repo’s ESPN boxes matched 27,295 player-games. All matched starters and minutes were within the one-minute check, and four personal foul totals differed. One score mismatch and unmatched game dates remain to investigate.
+
+The first build contains stints, first rest and return, minutes by quarter, close and lopsided rotation depth, playoff top-eight minutes and back-to-back comparisons. Opening-stint and first-rest rules have been scored against 2025–26. Next add coach decisions, end-game opportunities and league-wide coach comparisons.
