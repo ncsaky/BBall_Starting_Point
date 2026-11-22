@@ -350,9 +350,15 @@ def _valuation_features(canonical: dict[str, Any], player: dict[str, Any], inclu
     meta = canonical.get("meta") or {}
     model = canonical.get(MODEL_KEY) or {}
     pid = player.get("id")
+    # MONTH-SPEED-2: the strength-only features read only each trait row's value and never the season box totals
+    # (_save_stats, which change after every game), so the key holds just those: same results, a smaller key and
+    # far fewer misses.
+    rows = canonical_sim_cache(canonical)["traits_by_player"].get(pid, {})
+    record = {k: v for k, v in player.items() if k != "_save_stats"}
     try:
         key = pickle.dumps((
-            "valuation_features_v1", player, canonical_sim_cache(canonical)["traits_by_player"].get(pid, {}),
+            "valuation_features_v2", record,
+            tuple((name, row.get("value", "__no_value__") if isinstance(row, dict) else row) for name, row in rows.items()),
             meta.get("talent_model_version"), meta.get("offense_model_version"),
             (meta.get("offensive_profiles") or {}).get(pid),
             [model.get(field) for field in ("mode", "inputs_key", "fitted_key", "impact_tables_key")],
