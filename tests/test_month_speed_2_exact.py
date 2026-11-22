@@ -137,6 +137,92 @@ class ZoneGridTests(unittest.TestCase):
                 spatial.spatial_matchup_adjustment(full, spatial.spatial_profile_from_features(other, "defense")))
 
 
+class StrengthOnlyFeatureTests(unittest.TestCase):
+    def test_strength_features_are_the_same_without_zone_grids(self):
+        rng = random.Random(13)
+        for meta in ({}, {"offense_model_version": 1}):
+            league = _league(rng, 8)
+            league["meta"].update(meta)
+            for player in league["players"]:
+                full = _fresh(league, player, True).features
+                strength = _fresh(league, player, False).features
+                self.assertEqual({k: v for k, v in full.items() if not k.startswith("sp_")}, strength)
+
+
+def _reference_future_slot(canonical, team_id, base_slot, distance):
+    """future_adjusted_pick_slot as written before MONTH-SPEED-2."""
+    from nba_gm_data.transactions import clamp, fallback_asset_valuation, maybe_float
+    if distance <= 0:
+        return clamp(float(base_slot), 1, 30)
+    state = next((item for item in canonical.get("team_strategic_states", []) if item.get("team_id") == team_id), {})
+    values = {value.get("player_id"): value for value in canonical.get("player_asset_valuations", [])}
+    roster = [player for player in canonical.get("players", []) if player.get("team_id") == team_id]
+    top = sorted(roster, key=lambda p: float((values.get(p.get("id")) or fallback_asset_valuation(p)).get("player_value") or 0.0),
+                 reverse=True)[:5][:3]
+    age = sum(maybe_float(p.get("age")) or 27.0 for p in top) / len(top) if top else 27.0
+    youth = sum(max(0.0, float((values.get(p.get("id")) or fallback_asset_valuation(p)).get("development_upside") or 0.0))
+                for p in roster if (maybe_float(p.get("age")) or 99.0) <= 24.0)
+    phase = str(state.get("phase") or "balanced")
+    pull = min(0.58, distance * 0.10)
+    slot = float(base_slot) * (1.0 - pull) + 15.5 * pull
+    move = 0.0
+    if base_slot <= 8:
+        move += 0.65 + min(0.95, youth / 90.0)
+        if phase in {"rebuilding", "developing"}:
+            move += 0.35
+        if age >= 30.5 and youth < 28:
+            move -= 0.35
+    elif base_slot >= 23:
+        if age >= 31.0:
+            move -= 1.15 + min(0.5, (age - 31.0) * 0.18)
+        elif age <= 27.0 or phase == "contending_with_future_upside":
+            move += 0.28
+        else:
+            move -= 0.25
+    else:
+        if age <= 25.5 and youth >= 36:
+            move += 0.45
+        elif age >= 31.0:
+            move -= 0.55
+    return clamp(slot + move * distance, 1, 30)
+
+
+class PickSlotTests(unittest.TestCase):
+    def test_pick_slots_match_the_per_pick_reference(self):
+        from nba_gm_data import transactions as tx
+        rng = random.Random(17)
+        teams = [f"t{i}" for i in range(6)]
+        players = [{"id": f"p{i}", "team_id": rng.choice(teams), "age": rng.choice([19, 21, 23, 24, 27, 31, 34, None])}
+                   for i in range(60)]
+        league = {
+            "meta": {"active_season": "2026-27"}, "teams": [{"id": t} for t in teams], "players": players,
+            "player_asset_valuations": [{"player_id": p["id"], "player_value": rng.uniform(0, 80),
+                                         "development_upside": rng.uniform(-5, 30)} for p in players if rng.random() < .9],
+            "team_strategic_states": [{"team_id": t, "contention_ceiling": rng.uniform(30, 80),
+                                       "phase": rng.choice(["rebuilding", "contending", "contending_with_future_upside", None])}
+                                      for t in teams],
+            "save_team_records": {t: {"wins": rng.randint(0, 40), "losses": rng.randint(0, 40)} for t in teams[:4]},
+            "draft_picks": [{"id": f"k{i}", "original_team_id": rng.choice(teams), "season": rng.choice(["2026-27", "2027-28", "2028-29", "2031-32"])}
+                            for i in range(40)],
+        }
+        import copy
+        reference = copy.deepcopy(league)
+        original = tx.future_adjusted_pick_slot
+        tx.future_adjusted_pick_slot = lambda c, t, b, d, **_: _reference_future_slot(c, t, b, d)
+        try:
+            tx.annotate_pick_value_context(reference)
+        finally:
+            tx.future_adjusted_pick_slot = original
+        tx.annotate_pick_value_context(league)
+        self.assertEqual(league["draft_picks"], reference["draft_picks"])
+        self.assertTrue(any(p.get("_future_distance_years", 0) > 0 for p in league["draft_picks"]))
+        for team in league["teams"]:
+            for base in (3, 15, 27):
+                for distance in (0, 1, 2, 4):
+                    self.assertEqual(tx.future_adjusted_pick_slot(league, team["id"], base, distance),
+                                     _reference_future_slot(league, team["id"], base, distance))
+
+
 class GameLogIdTests(unittest.TestCase):
     def test_shared_log_ids_match_a_fresh_scan(self):
         game = {"externalGameId": "g1", "gameDate": "2026-11-02"}

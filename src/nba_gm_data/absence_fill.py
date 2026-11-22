@@ -307,7 +307,9 @@ def opponent_lean(canonical: dict[str, Any], opponent_pool: list[dict[str, Any]]
     FRONT_LINE_MEAN, FRONT_LINE_SD, GUARD_MEAN, GUARD_SD = LEAN_SCALE["inputs" if uses_inputs_model(canonical) else "legacy"]
     front = guard = 0.0
     for item in opponent_pool:
-        features = player_feature_vector(canonical, item["player"]).features
+        # Only three strength features are read; they are the same with or without the zone grids, which are not
+        # built here (MONTH-SPEED-2).
+        features = player_feature_vector(canonical, item["player"], include_spatial=False).features
         m = float(item.get("minutes") or 0.0) / total
         front += m * (features.get("offensive_rebounding", 50.0) + features.get("rim_deterrence", 50.0)) / 2.0
         guard += m * features.get("shot_creation", 50.0)
