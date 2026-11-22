@@ -265,10 +265,14 @@ _NO_VALUE = "__no_value__"
 
 def _feature_memo_key(canonical: dict[str, Any], cache: dict[str, Any], player: dict[str, Any],
                       include_spatial: bool) -> bytes | None:
-    """Everything player_feature_vector reads, pickled: the player record (his season box totals only for the zone
-    grids, the only part that reads them), his trait values in trait order, the talent / offense / ratings model
-    switches, his frozen offensive priors, the new-ratings tables and his input deltas, and for the zone grids the
-    league playmaking baseline. None when it cannot be keyed (the caller then computes as before)."""
+    """Everything player_feature_vector reads, pickled: the player record, his trait values in trait order, the
+    talent / offense / ratings model switches, his frozen offensive priors, the new-ratings tables and his input
+    deltas, and for the zone grids the league playmaking baseline. None when it cannot be keyed (the caller then
+    computes as before).
+
+    The season box totals (_save_stats, new after every game) are left out: the strength features never read them,
+    and the zone grids read them only into the profile's signature text (spatial.player_spatial_profile), never
+    into the zone values the vector keeps."""
     from . import impact_value
     if impact_value._BUILDING:
         return None
@@ -278,7 +282,7 @@ def _feature_memo_key(canonical: dict[str, Any], cache: dict[str, Any], player: 
     traits = cache["traits_by_player"].get(pid, {})
     meta = canonical.get("meta") or {}
     model = canonical.get(MODEL_KEY) or {}
-    record = player if include_spatial else {k: v for k, v in player.items() if k != "_save_stats"}
+    record = {k: v for k, v in player.items() if k != "_save_stats"}
     try:
         return pickle.dumps((
             "player_features_v1", include_spatial, record,

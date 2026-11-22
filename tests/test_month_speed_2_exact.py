@@ -59,8 +59,6 @@ class FeatureMemoTests(unittest.TestCase):
         variants.append(dict(base, traits=traits))
         variants.append(dict(base, meta={**base["meta"], "talent_model_version": talent.MODEL_VERSION}))
         variants.append(dict(base, meta={**base["meta"], "offense_model_version": 1}))
-        stats = [dict(player, _save_stats={"games": 9, "minutes": 260.0, "fga": 70, "fg3a": 40})] + base["players"][1:]
-        variants.append(dict(base, players=stats))
         for league in variants:
             league = dict(league)
             who = league["players"][0]
@@ -68,14 +66,19 @@ class FeatureMemoTests(unittest.TestCase):
             self.assertEqual(vector, _fresh(league, who, True))
             self.assertIsNot(vector, reference)
 
-    def test_season_box_totals_do_not_split_the_strength_only_vectors(self):
+    def test_season_box_totals_do_not_split_vectors(self):
         rng = random.Random(11)
-        base = _league(rng)
-        player = base["players"][1]
-        first = sim.player_feature_vector(base, player, include_spatial=False)
-        played = [base["players"][0], dict(player, _save_stats={"games": 4, "minutes": 99.0, "fga": 30, "fg3a": 11})]
-        league = dict(base, players=played + base["players"][2:])
-        self.assertIs(sim.player_feature_vector(league, league["players"][1], include_spatial=False), first)
+        for meta in ({}, {"offense_model_version": 1}):
+            base = _league(rng)
+            base["meta"].update(meta)
+            player = base["players"][1]
+            for include_spatial in (False, True):
+                first = sim.player_feature_vector(base, player, include_spatial=include_spatial)
+                played = [base["players"][0], dict(player, _save_stats={"games": 4, "minutes": 99.0, "fga": 30, "fg3a": 11})]
+                league = dict(base, players=played + base["players"][2:])
+                hit = sim.player_feature_vector(league, league["players"][1], include_spatial=include_spatial)
+                self.assertIs(hit, first)
+                self.assertEqual(hit, _fresh(league, league["players"][1], include_spatial))
 
 
 class SpatialSignatureMemoTests(unittest.TestCase):
