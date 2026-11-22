@@ -30,3 +30,34 @@ _Claude (Opus agent), worktree branch `worktree-agent-a467c2ea2e59eaa25`. Status
 - GUI server for screenshots: port 8771 from this worktree (save dir output/contract-terms/gui_saves).
 - Left: parallel focused tests (waiting for swap), metrics into this report, FA builder and option-card screenshots
   from the probe's copies, board row to review.
+
+## Measurements (2026-11-21 evening)
+| Measure | Before (main 5c5f19a probe) | After, first branch probe | After the fix (season passes on the probe's preseason saves) | Real |
+|---|---:|---:|---:|---:|
+| Rookie-scale extensions 2027-28 | 14* | 5 | 8 | 7-14 a year |
+| Veteran extensions 2027-28 | 15 | 7 | 23 | 17-27 a league year |
+| Rookie-scale extensions 2028-29 | 11* | 6 | 6 (threshold since lowered 60 -> 55; Demin next at 57.8) | 7-14 |
+| Veteran extensions 2028-29 | 13 | 2 | 18 | 17-27 |
+| Player options kept (both summers) | 29 of 50 | 29 of 53 | rule replaced (evidence), re-probe pending | 93 of 177 (53%) |
+| Veteran team options kept | 31 of 39 | 30 of 42 | rule replaced (evidence), re-probe pending | 89 of 186 (48%) |
+| Rookie-scale options kept | 117 of 128 | 142 of 153 | unchanged | 421 of 471 (89%) |
+| Real-stat scorecard | 18/18 | 18/18 | - | |
+| Betting odds, Brier (seeds 1001 / 2001) | .2041 / .1972 | .2041 / .1972 | - | |
+
+\* main counted "rookie-scale" as any extension of a player 25 or younger.
+
+Cause of the collapse (funnel on the 2027 preseason save, 100 eligible veterans): the pay-cut guard stopped 23 (the
+contract model prices players under contract about 1.45x below their real deals, so teams never met a star's bar);
+33 decisions due in January fell after the last monthly pass (an old timing gap, also on main); rookie-scale players
+with priority under 78 had no later checkpoint before the October deadline. Fixes: teams meet the bar when it is within
+1.45x the model price; each monthly pass handles what is due before the next; rookie-scale appetite 55 (about 40% of
+eligible players, real 41 of 96); ceilings per kind at the top of the real range (14 and 27). CBA rules unchanged.
+
+Option rules and AI shapes now from CONTRACT-STRUCTURE-EVIDENCE: player opts out after 1,000+ minutes (held-out 28 of
+41); team keeps at 130% of the option or 105% for a 500-minute player (54 of 85); AI shapes by kind of deal (exception,
+Bird, max, extension, two-year minimum). The player's option weights (1.2 / 0.6) stay assumptions: the evidence counts
+options, it does not price them.
+
+Pending: branch probe 2 on the Azure worker (`contract-terms-branch2`, output/ct-probe-branch), then the focused tests
+and core suite when the laptop has room. Screenshots: output/contract-terms/screens (stop 1 option card + offer builder
+with flat path and player option; extension page with rising path and team option; Podziemski).
