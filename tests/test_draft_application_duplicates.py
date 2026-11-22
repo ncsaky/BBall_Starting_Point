@@ -1,28 +1,25 @@
 """Draft consumption is independent of pending ids; all saves are disposable."""
 from copy import deepcopy
-import json
 from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
 
 from nba_gm_data.app_actions import dispatch_app_action, load_app_canonical
-from nba_gm_data.draft import apply_draft_selection_to_save, apply_draft_selection_to_save_state
+from nba_gm_data.draft import apply_draft_selection_to_save, apply_draft_selection_to_save_state, simulate_draft
 from nba_gm_data.play import apply_current_draft_selection, apply_current_draft_selection_state, select_current_draft_prospect, sim_entire_draft, sim_to_next_user_pick
-from nba_gm_data.save import load_save, write_save
+from nba_gm_data.save import create_league_save, load_save, write_save
 
 ROOT = Path(__file__).resolve().parents[1]
-EVIDENCE = ROOT / 'output' / 'transaction-realism-audit'
 
 
 class DraftApplicationDuplicateTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.canonical = load_app_canonical(ROOT)
-        if not (EVIDENCE / 'fixed-scenarios/fixture-inputs.json').exists():  # captured audit output removed by cleanup
-            raise unittest.SkipTest(f'{EVIDENCE} fixtures are missing; regenerate the transaction-realism audit')
-        cls.base = json.loads((EVIDENCE / 'fixed-scenarios/fixture-inputs.json').read_text())['base']
-        cls.draft = next(row['result'] for row in json.loads((EVIDENCE / 'fixed-scenarios/scenarios.json').read_text()) if row['id'] == 'D1-draft')
+        with tempfile.TemporaryDirectory(prefix='draft-duplicate-fixture-') as directory:
+            cls.base = create_league_save(ROOT, cls.canonical, 'GSW', Path(directory) / 'draft.json', seed=17)
+        cls.draft = simulate_draft(cls.canonical, '2027', seed=3)
         cls.first = cls.draft['pending_draft_selections'][0]
         cls.other = cls.draft['pending_draft_selections'][1]
 
@@ -177,7 +174,9 @@ class DraftApplicationDuplicateTests(unittest.TestCase):
         return save
 
     def app(self, path, action, candidate):
-        team = 'CHA' if action == 'draft_apply_current' else 'GSW'
+        owner = self.first['selection']['team_id']
+        team = next(t['abbrev'] for t in self.canonical['teams']
+                    if (t['id'] == owner) == (action == 'draft_apply_current'))
         return dispatch_app_action(action, {'save_path': str(path), 'team': team, 'year': '2027', 'seed': 17,
                                            'prospect_id': candidate['selection']['prospect_id']}, root=ROOT, save_dir=path.parent, canonical=self.canonical)
 

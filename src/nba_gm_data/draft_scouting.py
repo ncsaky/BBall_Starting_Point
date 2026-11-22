@@ -15,8 +15,8 @@ How a view is formed:
   and drifts through the season: a quarter of what scouts could not see at first (part of his hidden upside or
   shortfall) plus news nobody could predict. Most of the movement comes early; by June the boards are firm.
 - A **team's view** is the public view plus: what a good scouting lead sees that others miss (a share of the gap
-  to the truth, larger with better staff and more coverage), the staff's lasting taste (some leads weigh shooting,
-  some physical tools, some feel), and a fixed estimation error that shrinks as coverage grows.
+  to the truth, larger with better staff and more coverage), and a fixed estimation error that shrinks as coverage
+  grows. The staff's lasting preferences affect how it grades those estimates, especially on less-scouted players.
 - **Coverage** grows through the season, faster for better staffs and for the prospects everyone watches.
 Hidden true ratings are never shown: what the user sees is his own team's view, built exactly as the AI's.
 """
@@ -46,13 +46,14 @@ POT_NOISE = 1.10
 CUR_NOISE = 0.50
 TRAIT_NOISE = 0.45
 WIDTH_FLOOR = 0.20  # share of the error left at full coverage
-WIDTH_SLOPE = 1.30  # extra share per unit of coverage missing (60% coverage: 0.72)
+WIDTH_SLOPE = 1.30  # extra share per unit of coverage missing for current ability and traits
+UPSIDE_WIDTH_SLOPE = 1.30  # limited film makes a prospect's long-term upside harder to read
 # What a scouting lead sees that the consensus misses: up to this share of the hidden gap, by talent evaluation.
 EDGE_MAX = 0.25
 # Preseason coverage by public rank: everyone watches the top of the board; the rest is scouted unevenly.
 COVERAGE_TOP, COVERAGE_LOTTERY, COVERAGE_FIRST, COVERAGE_REST = 76.0, 66.0, 40.0, 26.0
 # Staff taste: lasting weights on skill groups (shooting, physical tools, feel, defense, motor).
-TASTE_SCALE = 1.20
+TASTE_SCALE = 6.0
 TASTE_GROUPS = {
     "shooting": ("shooting",),
     "tools": ("athleticism", "size"),
@@ -296,25 +297,27 @@ def development_label(current: float, potential: float, age: Any) -> dict[str, s
 
 
 def team_report(prospect: dict[str, Any], traits: dict[str, float], staff: dict[str, Any], team_id: str,
-                month: int, class_seed: int, ahead: int = 0) -> dict[str, Any]:
+                month: int, class_seed: int, ahead: int = 0, *, public: dict[str, float] | None = None) -> dict[str, Any]:
     from .health import prospect_medical_penalty
 
     pid = str(prospect["id"])
     rng = random.Random(f"{prospect.get('draft_year')}:{class_seed}:{team_id}:{pid}:scout_view_v1")
     z_potential, z_current = rng.gauss(0.0, 1.0), rng.gauss(0.0, 1.0)
-    trait_draws = {key: rng.gauss(0.0, 1.0) for key in sorted(traits)}
     coverage = coverage_pct(staff, int(prospect.get("rank") or 45), month, team_id, pid, class_seed, ahead)
     noise = staff_noise(staff, prospect)
-    width = WIDTH_FLOOR + WIDTH_SLOPE * (1.0 - coverage / 100.0)
-    public = public_view(prospect, month, class_seed)
+    uncovered = 1.0 - coverage / 100.0
+    width = WIDTH_FLOOR + WIDTH_SLOPE * uncovered
+    upside_width = WIDTH_FLOOR + UPSIDE_WIDTH_SLOPE * uncovered
+    if public is None:
+        public = public_view(prospect, month, class_seed)
     from .draft import trait_noise_multiplier
     position = str(prospect.get("position") or "")
-    estimates = {key: clamp(value + trait_draws[key] * noise * TRAIT_NOISE * width
+    estimates = {key: clamp(value + rng.gauss(0.0, 1.0) * noise * TRAIT_NOISE * width
                             * trait_noise_multiplier(key, position, staff), 1, 99)
                  for key, value in sorted(traits.items())}
     edge = staff["edge"] * coverage / 100.0
     potential = (public["potential"] + edge * hidden_gap(prospect, public["potential"])
-                 + taste_bias(staff, estimates) + z_potential * noise * POT_NOISE * width)
+                 + z_potential * noise * POT_NOISE * upside_width)
     current = public["current"] + z_current * noise * CUR_NOISE * width
     potential = max(potential, current + 1.0)
     ceiling = potential + max(2.0, public["ceiling"] - public["potential"])
@@ -322,12 +325,15 @@ def team_report(prospect: dict[str, Any], traits: dict[str, float], staff: dict[
     volatility = float(prospect.get("volatility") or 0.0)
     medical = prospect_medical_penalty(prospect)
     grade = scout_grade(staff, current, potential, ceiling, floor, volatility, medical)
+    # Prefer different player profiles when the evidence is thinner. Keep that preference out of the rating estimates.
+    grade += (0.15 + uncovered) * taste_bias(staff, estimates)
     half = max(1.2, noise * width)
+    upside_half = max(1.2, noise * upside_width)
     return {
         "team_id": team_id, "prospect_id": pid, "draft_year": str(prospect.get("draft_year")), "month": month,
         "scouted_grade": round(grade, 2),
         "estimated_current": _range(current, half * 0.6),
-        "estimated_potential": _range(potential, half * 1.15),
+        "estimated_potential": _range(potential, upside_half * 1.15),
         "estimated_ceiling": round(ceiling, 2), "estimated_floor": round(floor, 2),
         "trait_estimates": {key: _range(value, half * 0.8) for key, value in estimates.items()},
         "coverage": coverage, "confidence": round(float(staff["confidence"]), 3),
@@ -348,16 +354,18 @@ def class_scouting(canonical: dict[str, Any], year: Any, month: int | None = Non
     teams = [t["id"] for t in canonical.get("teams") or []]
     staffs = {team_id: staff_profile(canonical, team_id) for team_id in teams}
     key = (year, class_seed, int(month), ahead, tuple(sorted(p["id"] for p in prospects)),
-           tuple((t, staffs[t]["key"], round(staffs[t]["score"], 3), staffs[t]["archetype"]) for t in teams))
+           tuple((t, staff["key"], staff["talent_eval"], staff["risk_modeling"],
+                  staff["international_coverage"], staff["archetype"]) for t, staff in staffs.items()))
     hit = _CACHE.get(key)
     if hit is not None:
         return hit
     reports: dict[str, dict[str, dict[str, Any]]] = {}
     boards: dict[str, list[str]] = {}
     ranks: dict[str, dict[str, int]] = {}
+    public = {p["id"]: public_view(p, month, class_seed) for p in prospects}
     for team_id in teams:
         team_reports = {p["id"]: team_report(p, traits.get(p["id"], {}), staffs[team_id], team_id, month,
-                                             class_seed, ahead) for p in prospects}
+                                             class_seed, ahead, public=public[p["id"]]) for p in prospects}
         order = sorted(team_reports, key=lambda pid: (-team_reports[pid]["scouted_grade"], pid))
         reports[team_id] = team_reports
         boards[team_id] = order
