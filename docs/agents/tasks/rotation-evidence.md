@@ -11,3 +11,7 @@ The repository has 2025–26 regular-season box scores but no tracked substituti
 The NBA play-by-play archive publishes six season files with five-player lineups at each event. Cached the six files under `output/rotation-evidence/`. The first build passing clock and floor checks contains 3,939 games. One 2023–24 regular-season game failed the clock-order check. The 2025–26 comparison with the repo’s ESPN boxes matched 27,295 player-games. All matched starters and minutes were within the one-minute check, and four personal foul totals differed. One score mismatch and unmatched game dates remain to investigate.
 
 The first build contains stints, first rest and return, minutes by quarter, close and lopsided rotation depth, playoff top-eight minutes and back-to-back comparisons. Opening-stint and first-rest rules have been scored against 2025–26. Next add coach decisions, end-game opportunities and league-wide coach comparisons.
+
+### Game-state checkpoint
+
+Added foul trouble around the actual whistle and permanent fourth-quarter starter exits, with lead, deficit and clock kept separate. A second foul in the first quarter and a third before halftime show a substantial jump in benching. The data include the chance of an immediate exit, bench time if the player returns, and no-return cases. Box-score matching recovers 39 playoff games by matching the exact score and teams one date later.

@@ -10,7 +10,7 @@ import argparse
 from bisect import bisect_right
 from collections import Counter, defaultdict, namedtuple
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import date, timedelta
 from functools import lru_cache
 from hashlib import file_digest
 from itertools import groupby
@@ -101,11 +101,12 @@ class Evidence:
 class Game:
     year: int
     phase: str
-    date: object
+    date: date
     id: str
     home: str
     away: str
-    events: list
+    events: list[Event]
+    intervals: list[Interval] | None = None
 
     @property
     def end(self):
@@ -223,13 +224,23 @@ def box_reference():
 def audit_box(game, team_data, player_names, fouls, ref, audit):
     if game.year != 2026:
         return
-    box = ref.get((game.date.isoformat(), *game.teams))
+    key = (game.date.isoformat(), *game.teams)
+    box = ref.get(key)
+    if box is None and game.phase == "playoffs":
+        # Some playoff boxes are keyed by UTC date, one calendar day later.
+        later = ref.get(((game.date + timedelta(days=1)).isoformat(), *game.teams))
+        final = game.events[-1]
+        if later and (later["home_score"], later["away_score"]) == (final.home, final.away):
+            box = later
+            audit["local_boxes_joined_using_utc_date"] += 1
     if box is None:
         audit["games_without_local_box"] += 1
         return
     audit["games_with_local_box"] += 1
     last = game.events[-1]
     audit["matching_final_scores"] += (last.home, last.away) == (box["home_score"], box["away_score"])
+    if (last.home, last.away) != (box["home_score"], box["away_score"]):
+        audit[f"score_disagreement_{game.id}"] += 1
     for starters, quarter, team in team_data:
         named = {normalize_name(player_names[pid]): pid for pid in quarter if pid in player_names}
         for player in box["players"]:
@@ -271,7 +282,7 @@ def roles_for_game(starters, players, prior):
             else "sixth_man" if pid == sixth else "bench" for pid in players}
 
 
-def collect_player_rotations(evidence, game, team, pid, role, spans, quarter, prior_game):
+def collect_player_rotations(evidence, game, team, role, spans, quarter, prior_game, prior):
     add = lambda metric, group, value: evidence.add(game, metric, group, value)
     for i, stint in enumerate(spans):
         duration = stint.end - stint.start
@@ -319,6 +330,9 @@ def collect_player_rotations(evidence, game, team, pid, role, spans, quarter, pr
         workload = "prior_32plus" if previous_minutes >= 32 else "prior_under32"
         for metric, value in (("regulation_minutes", regulation_minutes), ("first_stint_seconds", first.end)):
             add(f"schedule_{metric}", f"{role}|{group}|{workload}", value)
+        if prior.appearances >= 8:
+            delta = regulation_minutes - prior.minutes / prior.appearances
+            add("schedule_minutes_vs_own_prior_average", f"{role}|{group}|{workload}", delta)
 
 
 def collect_team_rotations(evidence, game, team, starters, spans, quarter, players_by_state,
@@ -365,6 +379,99 @@ def collect_team_rotations(evidence, game, team, starters, spans, quarter, playe
         evidence.team(game, team, "close_Q4_starter_share", starter_seconds / total)
 
 
+def foul_situation(event, count):
+    if count == 2 and event.period == 1:
+        return "2_Q1"
+    if count == 3 and event.period <= 2:
+        return "3_first_half"
+    if count in {4, 5}:
+        return f"{count}_" + ("Q1_Q3" if event.period <= 3 else "Q4_OT")
+    if count == 1 and event.period == 1:
+        return "1_Q1_comparison"
+    return None
+
+
+def collect_foul_responses(evidence, game, team, spells, roles, foul_events):
+    seen = set()
+    for event, pid, count in foul_events:
+        label = foul_situation(event, count)
+        if pid not in spells or label is None or (pid, label) in seen:
+            continue
+        # Use the prior or current positive-clock stint, allowing an exit at this whistle.
+        k = next((i for i, span in enumerate(spells[pid]) if span.start <= event.t <= span.end), None)
+        if k is None or game.end - event.t <= 60:
+            continue
+        seen.add((pid, label))
+        stint = spells[pid][k]
+        role = roles[pid]
+        group = f"{label}|{role}"
+        near = stint.end - event.t <= 60 and stint.end < game.end
+        on_whistle = stint.end == event.t
+        add = lambda metric, key, value: evidence.add(game, metric, key, value)
+        add("foul_exit_within_minute", group, near)
+        add("foul_exit_same_clock", group, on_whistle)
+        if label in {"1_Q1_comparison", "2_Q1"}:
+            q1_clock = min(3, int((720 - event.t) // 180))
+            add("q1_foul_clock_matched_exit_within_minute", f"{group}|clock_band_{q1_clock}", near)
+        if label == "2_Q1" and role in {"star", "starter"}:
+            evidence.team(game, team, "second_foul_Q1_exit_within_minute", near)
+        if game.phase == "regular" and label != "1_Q1_comparison":
+            evidence.fit(game, "foul_exit_within_minute", group, near)
+        if not near:
+            continue
+        next_stint = spells[pid][k + 1] if k + 1 < len(spells[pid]) else None
+        add("foul_bench_returned", group, next_stint is not None)
+        if next_stint is not None:
+            rest = next_stint.start - stint.end
+            add("foul_bench_seconds_if_returned", group, rest)
+            add("foul_return_elapsed_seconds_if_returned", group, next_stint.start)
+            if game.phase == "regular" and label != "1_Q1_comparison":
+                evidence.fit(game, "foul_bench_seconds_if_returned", group, rest)
+            if label in {"2_Q1", "3_first_half"}:
+                period = int(next_stint.start // 720) + 1 if next_stint.start < 2880 else 5
+                add("early_foul_return_by_halftime", group, next_stint.start < 1440)
+                if period <= 4:
+                    add("early_foul_return_clock_seconds", f"{group}|Q{period}",
+                        period_end(period) - next_stint.start)
+
+
+def margin_bucket(margin):
+    if abs(margin) <= 5:
+        return "close_0_5"
+    side = "ahead" if margin > 0 else "behind"
+    size = "6_14" if abs(margin) < 15 else "15_19" if abs(margin) < 20 else (
+        "20_24" if abs(margin) < 25 else "25_plus")
+    return f"{side}_{size}"
+
+
+def collect_blowouts(evidence, game, team, starters, spells, foul_events):
+    last = {pid: spells[pid][-1].end for pid in starters if pid in spells}
+    fouled_out = {pid for _, pid, count in foul_events if count >= 6}
+    ejected = {player_id(event.player) for event in game.events if event.kind == 11}
+    for pid in starters - fouled_out - ejected:
+        if pid not in last or last[pid] < 2160 or last[pid] >= game.end:
+            continue
+        # Use score immediately before the first event at the substitution clock.
+        clock = last[pid]
+        prior = next(frame for frame in reversed(game.intervals) if frame.start < clock)
+        margin = prior.margin if team == game.home else -prior.margin
+        add = lambda name, label, value: evidence.add(game, name, label, value)
+        if clock < 2880:
+            add("Q4_permanent_starter_exit_clock_seconds", margin_bucket(margin), 2880 - clock)
+    starts = [frame.start for frame in game.intervals]
+    for time_left in (540, 360, 180, 60):
+        now = 2880 - time_left
+        frame = game.intervals[bisect_right(starts, now) - 1]
+        players, margin = (frame.home, frame.margin) if team == game.home else (frame.away, -frame.margin)
+        group = f"{time_left // 60}m|{margin_bucket(margin)}"
+        evidence.add(game, "Q4_starters_on_floor_at_checkpoint", group, len(players & starters))
+        for pid in players & starters:
+            pulled = now < last[pid] <= now + 60 and last[pid] < game.end and pid not in fouled_out | ejected
+            evidence.add(game, "Q4_permanent_exit_next_minute", group, pulled)
+            if game.phase == "regular":
+                evidence.fit(game, "Q4_permanent_exit_next_minute", group, pulled)
+
+
 def collect_games(connection, cache):
     evidence = Evidence()
     coverage = {}
@@ -384,6 +491,7 @@ def collect_games(connection, cache):
                 count["archive_events"] += len(game.events)
                 game.intervals = reconstruct(game, count)
                 if not game.intervals:
+                    count[f"excluded_{game.id}"] += 1
                     continue
                 count["analyzed_games"] += 1
                 for event in game.events:
@@ -396,7 +504,8 @@ def collect_games(connection, cache):
                     pid = player_id(event.player)
                     if pid:
                         scoring[pid] += pts
-                fouls = Counter({pid: number for _, pid, number in personal_fouls(game)})
+                foul_events = list(personal_fouls(game))
+                fouls = Counter({pid: number for _, pid, number in foul_events})
                 teams_for_audit = []
                 ft = Counter(player_id(event.player) for event in game.events
                              if event.kind == 3 and player_id(event.player))
@@ -410,10 +519,12 @@ def collect_games(connection, cache):
                     for pid, intervals in spans.items():
                         previous = ((game.date - previous_date).days, previous_minutes[pid]
                                     ) if pid in previous_minutes and phase == "regular" else None
-                        collect_player_rotations(evidence, game, team, pid, roles[pid], intervals,
-                                                 quarter[pid], previous)
+                        collect_player_rotations(evidence, game, team, roles[pid], intervals,
+                                                 quarter[pid], previous, priors[pid])
                     collect_team_rotations(evidence, game, team, starters, spans, quarter,
                                            players_by_state, roles, top.get(team, set()))
+                    collect_foul_responses(evidence, game, team, spans, roles, foul_events)
+                    collect_blowouts(evidence, game, team, starters, spans, foul_events)
                     teams_for_audit.append((starters, quarter, team))
                     last_game[team] = (game.date, {pid: sum(quarter[pid].values()) / 60 for pid in starters})
                     if phase == "regular":
