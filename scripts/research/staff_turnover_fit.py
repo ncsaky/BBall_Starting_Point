@@ -497,18 +497,22 @@ def two_slot_proxy(comparisons):
 def build(evidence):
     observations = evidence["observations"]
     rows = observations["head_coach_team_seasons"]
-    evidence["head_coaches"] = head_coach_summary(rows)
-    executive_changes = observations["front_office_lead_changes"]
-    evidence["front_office"], front_changes = front_office_summary(rows, executive_changes)
-    evidence["head_coaches"]["checks"] = head_coach_fit(rows, front_changes)
+    head_coaches = head_coach_summary(rows)
+    front_office, front_changes = front_office_summary(rows, observations["front_office_lead_changes"])
+    head_coaches["checks"] = head_coach_fit(rows, front_changes)
     snapshots = observations["assistant_staff_snapshots"]
-    evidence["head_coaches"]["destinations"] = head_coach_next_jobs(
+    head_coaches["destinations"] = head_coach_next_jobs(
         rows, observations["head_coach_destination_examples"], snapshots
     )
     assistants = compare_assistants(snapshots, rows)
     assistants["two_slot_assistant_proxy"] = two_slot_proxy(assistants["paired_observations"])
-    evidence["assistants_and_support_staff"] = assistants
-    return evidence
+    results = {
+        "head_coaches": head_coaches,
+        "assistants_and_support_staff": assistants,
+        "front_office": front_office,
+    }
+    inputs = {key: value for key, value in evidence.items() if key not in results}
+    return {**inputs, **results}
 
 
 def main():
