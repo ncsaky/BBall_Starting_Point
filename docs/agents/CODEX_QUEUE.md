@@ -6,6 +6,45 @@ Current priority (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE now, ODDS-COA
 
 ---
 
+## Ready now (2026-11-22, early): DEFENSIVE-SCHEME-EVIDENCE (fresh chat; research)
+
+### DEFENSIVE-SCHEME-EVIDENCE: how real NBA teams and coaches defend screens and switch
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task DEFENSIVE-SCHEME-EVIDENCE (add a board row, "in progress
+(Codex)"). Read docs/agents/tasks/s2-totals-matchups.md (the new possession engine; it has man-to-man matchups but no
+switching, no drop/hedge coverage and no double teams, because the game's coach inputs have no scheme habits) and
+docs/agents/tasks/rotation-evidence.md (your last task; same format: fitted on 2023-25, checked on 2025-26).
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_schemes -b codex/defensive-scheme-evidence HEAD
+Symlink .venv and the git-ignored data/research/bbi/ files from the main checkout (Basketball Index has defensive
+role and matchup data under data/research/bbi). Commit on that branch; never push, never commit to main. Research only:
+nothing under src/, gui/ or tests/.
+
+From public sources (NBA stats tracking and play type pages via public URLs, Basketball Index, team and coach
+coverage in reputable analysis; respect robots.txt, rate limits and terms; paraphrase; record sources), for 2023-24
+to 2025-26:
+1. Pick-and-roll coverage by team (and coach): drop, switch, hedge/show, blitz/trap, at-level, ice; how often each.
+   Where direct coverage data is missing, use proxies (switch rate from matchup data, big-man distance from the rim on
+   screens) and say so.
+2. Switching: share of screens switched by team; which player types get switched onto (guards onto bigs) and how
+   often teams hunt those mismatches on offense, and how efficient that is.
+3. Double teams and help: post-up double rate, rim help and how often help comes from the strong vs weak side, and
+   zone usage by team.
+4. Screens on offense: screens per 100 possessions by team and by player (screen assists exist in the game already),
+   handoffs, off-ball screens.
+5. How stable these are year to year for the same coach and team, and what they correlate with (roster size and
+   mobility of bigs, coach identity) - so the game can give each coach a scheme habit and each team a likely coverage.
+Fit simple rules where the data allow and check on 2025-26. Output: data/research/defensive_scheme_evidence.json,
+scripts/research/defensive_scheme_fit.py, docs/agents/tasks/defensive-scheme-evidence.md (plain-language TL;DR first,
+5 lines; tables; named examples; gaps). Save and commit after each part. Set the board row to "review" and stop.
+```
+
+---
+
 ## Ready now (2026-11-21, late night): ROTATION-EVIDENCE (fresh chat; research)
 
 ### ROTATION-EVIDENCE: how real NBA coaches run rotations and make in-game decisions
