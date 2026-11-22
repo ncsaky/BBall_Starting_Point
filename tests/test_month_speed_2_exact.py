@@ -223,6 +223,34 @@ class PickSlotTests(unittest.TestCase):
                                      _reference_future_slot(league, team["id"], base, distance))
 
 
+class RotationMemoTests(unittest.TestCase):
+    def test_remembered_projections_match_fresh_ones_and_follow_inputs(self):
+        rng = random.Random(2)
+        league = _league(rng, 12)
+        save = {"health_states": [{"player_id": "p01", "availability_status": "out", "return_date": "2027-02-20"}],
+                "rotation_baselines": {p["id"]: rng.choice([0, 10, 20, 30]) for p in league["players"]},
+                "meta": {"season": "2026-27"}}
+
+        def fresh(lg, sv_):
+            fills = {}
+            health = {h.get("player_id"): h for h in sv_.get("health_states", [])}
+            out = sv._team_rotation_projection(lg, sv_, "t1", False, [p for p in lg["players"] if p["team_id"] == "t1"],
+                                               health, fills)
+            return out, fills
+
+        variants = [save,
+                    {**save, "health_states": []},
+                    {**save, "rotation_baselines": {**save["rotation_baselines"], "p03": 5}},
+                    {**save, "rotation_recommendations": {"p05": {"target_minutes": 30}}},
+                    {**save, "staff_slots": [{"team_id": "t1", "slot": "head_coach", "id": "coach-1", "name": "Coach One"}]}]
+        for variant in variants + variants:   # the second round hits the memo
+            fills = {}
+            projection = sv.team_rotation_projection(league, variant, "t1", fill_out=fills)
+            self.assertEqual((projection, fills), fresh(league, variant))
+        moved = dict(league, players=[dict(p, age=36) if p["id"] == "p03" else p for p in league["players"]])
+        self.assertEqual(sv.team_rotation_projection(moved, save, "t1"), fresh(moved, save)[0])
+
+
 class GameLogIdTests(unittest.TestCase):
     def test_shared_log_ids_match_a_fresh_scan(self):
         game = {"externalGameId": "g1", "gameDate": "2026-11-02"}

@@ -7600,6 +7600,62 @@ def team_rotation_projection(canonical: dict[str, Any], save: dict[str, Any], te
         projection = user_rotation_override_projection(roster, health_by_player, user_override,
                                                        canonical=canonical, save=save, team_id=team_id, fill_out=fill_out)
         return projection if integer else {player_id: float(value) for player_id, value in projection.items()}
+    # MONTH-SPEED-2: the coach's projection is remembered by every input it reads (_rotation_memo_key); each league
+    # rebuild and each daily refresh projected all 30 teams again although most rosters had not changed.
+    key = _rotation_memo_key(canonical, save, team_id, integer, roster, health_by_player)
+    remembered = _ROTATION_MEMO.get(key) if key is not None else None
+    if remembered is not None and not _RUNTIME_AUDIT:
+        projection, fills = pickle.loads(remembered)
+        if fill_out is not None:
+            fill_out.update(fills)
+        return projection
+    fills: dict[str, dict[str, float]] = {}
+    projection = _team_rotation_projection(canonical, save, team_id, integer, roster, health_by_player, fills)
+    if key is not None:
+        stored = pickle.dumps((projection, fills), protocol=pickle.HIGHEST_PROTOCOL)
+        if remembered is not None and remembered != stored:
+            raise AssertionError(f"rotation projection memo disagrees for {team_id}")
+        if len(_ROTATION_MEMO) >= _ROTATION_MEMO_LIMIT:
+            _ROTATION_MEMO.pop(next(iter(_ROTATION_MEMO)))
+        _ROTATION_MEMO[key] = stored
+    if fill_out is not None:
+        fill_out.update(fills)
+    return projection
+
+
+_ROTATION_MEMO: dict[bytes, bytes] = {}
+_ROTATION_MEMO_LIMIT = 6000
+
+
+def _rotation_memo_key(canonical: dict[str, Any], save: dict[str, Any], team_id: str, integer: bool,
+                       roster: list[dict[str, Any]], health_by_player: dict[Any, Any]) -> bytes | None:
+    """Everything the automatic projection reads: the roster's player records in league order (not their season box
+    totals, which nothing here reads) and rating summaries, their health rows, the GM's minute requests, the coach's
+    baselines, the AI role state, whether the team is human-run, the season, the team's window phase and its head
+    coach. None when it cannot be keyed (computed as before)."""
+    ids = [player.get("id") for player in roster]
+    recommendations = save.get("rotation_recommendations") or {}
+    baselines = save.get("rotation_baselines") or {}
+    try:
+        return pickle.dumps((
+            "rotation_projection_v1", team_id, bool(integer),
+            [{k: v for k, v in player.items() if k != "_save_stats"} for player in roster],
+            [player_attribute_summary(canonical, pid) for pid in ids],
+            [health_by_player.get(pid) for pid in ids],
+            [recommendations.get(pid) for pid in ids], [baselines.get(pid) for pid in ids],
+            (save.get("ai_role_state") or {}).get(team_id), team_id in human_controlled_team_ids(save),
+            (save.get("meta") or {}).get("season"), save_active_contract_season(save),
+            ((save.get("team_plans") or {}).get(team_id) or {}).get("window_phase"),
+            next((slot for slot in save.get("staff_slots") or []
+                  if slot.get("team_id") == team_id and slot.get("slot") == "head_coach"), None),
+        ), protocol=pickle.HIGHEST_PROTOCOL)
+    except (pickle.PicklingError, TypeError, AttributeError, KeyError, ValueError):
+        return None
+
+
+def _team_rotation_projection(canonical: dict[str, Any], save: dict[str, Any], team_id: str, integer: bool,
+                              roster: list[dict[str, Any]], health_by_player: dict[Any, Any],
+                              fill_out: dict[str, dict[str, float]] | None) -> dict[str, float]:
     recommendations = save.get("rotation_recommendations") or {}
     baselines = save.get("rotation_baselines") or {}
     ai_role = (save.get("ai_role_state") or {}).get(team_id) if team_id not in human_controlled_team_ids(save) else None
