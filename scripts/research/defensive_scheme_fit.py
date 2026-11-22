@@ -385,10 +385,18 @@ SOURCES = {
     "okc_2025": "https://www.nba.com/news/finals-film-study-thunder-pacers-game-2",
     "okc_memphis_2025": "https://www.si.com/nba/thunder/onsi/news/film-breakdown-okc-thunder-defense-suffocated-grizzlies-game-1",
     "spurs_2026": "https://www.nba.com/news/starting-5-as-finals-return-to-msg-knicks-staying-present-amid-history",
+    "tracking_archive_article": "https://www.neilball.org/p/nba-released-player-tracking-data-for-2025-26-season",
+    "tracking_archive_download": "https://downloads.neilball.org/NBA-2025-26-Available-Tracking.zip",
+    "finals_game_2_book": "https://statsdmz.nba.com/pdfs/20260605/20260605_NYKSAS_book.pdf",
+    "finals_game_3_book": "https://statsdmz.nba.com/pdfs/20260608/20260608_SASNYK_book.pdf",
+    "miami_switch_december_2025": "https://www.nba.com/heat/news/coup-notebook-101-heat-deep-dive-tyler-herro-return-profile-121225",
     "knicks_2026": "https://www.nba.com/news/finals-film-study-game-3-2026-finals",
     "knicks_hawks_post_double": "https://www.nba.com/news/knicks-hawks-2026-playoffs-first-round-game-5-takeaways",
     "suns_thunder_post_double": "https://www.nba.com/news/3-things-to-watch-thunder-suns-game-4",
     "miami_zone_2024": "https://www.nba.com/news/power-rankings-2023-24-week-16",
+    "miami_zone_2024_rate": "https://www.basketballpoetry.com/p/1-stat-explaining-every-first-round",
+    "houston_zone_2026": "https://www.nba.com/news/4-takeaways-from-rockets-early-season-success",
+    "kings_zone_2025": "https://www.sportscasting.com/?p=1614398",
     "miami_zone_2025": "https://www.nba.com/news/offseason-power-rankings-east-2025",
     "miami_zone_2026": "https://www.nba.com/news/offseason-power-rankings-east-2026",
     "miami_zone_changes_2026": "https://www.nba.com/news/power-rankings-2025-26-week-24",
@@ -399,7 +407,47 @@ SOURCES = {
 }
 
 
-def public_samples():
+# Film-selected moments near the screen. NBA Game Pulse supplies positions and
+# clocks. Its clock can differ slightly from the official event clock.
+DEPTH_SAMPLES = (
+    ("0042500402", 4, 504902, -1, 1626157, 1641705, "Karl-Anthony Towns",
+     "Victor Wembanyama", "blitz", 29.6, 32.1, -2.5),
+    ("0042500403", 2, 204333, 1, 1641705, 1628384, "Victor Wembanyama",
+     "OG Anunoby", "switch", 21.1, 13.2, 7.9),
+    ("0042500403", 4, 346150, -1, 1641705, 1626157, "Victor Wembanyama",
+     "Karl-Anthony Towns", "roll with weak-side help due", 30.8, 27.3, 3.5),
+)
+
+
+def coordinate_depth_examples(verify_dir):
+    result = []
+    for game, quarter, clock, basket, screener, defender, screener_name, defender_name, film, *distances in DEPTH_SAMPLES:
+        if verify_dir is not None:
+            file = verify_dir / f"{game}-tracking.jsonl.gz"
+            with gzip.open(file, "rt", encoding="utf-8") as source:
+                for frame in map(json.loads, source):
+                    if (frame["period"] == quarter and frame["game_clock_ms"] == clock
+                            and frame["quality"]["all_ten_and_ball_observed"]):
+                        break
+                else:
+                    raise ValueError(f"Missing expected tracking frame in {file}: {quarter}, {clock}")
+            players = {p["player_id"]: p["xyz"] for p in frame["home_players"] + frame["away_players"] if p["on_court"]}
+            screen_depth, defender_depth = [math.dist(players[pid][:2], (basket * 41.75, 0))
+                                             for pid in (screener, defender)]
+            observed = [round(screen_depth, 1), round(defender_depth, 1), round(screen_depth - defender_depth, 1)]
+            if observed != distances:
+                raise ValueError(f"Tracking depth changed for {game}, quarter {quarter}, {clock}: {observed}")
+        result.append({
+            "game_id": game, "quarter": quarter, "tracking_clock_ms": clock, "screener": screener_name,
+            "screen_defender": defender_name, "film_description": film, "screener_distance_ft": distances[0],
+            "defender_distance_ft": distances[1], "defender_ft_closer_to_rim_than_screener": distances[2],
+            "film_source": "spurs_2026" if game.endswith("02") else "knicks_2026",
+            "tracking_source": "tracking_archive_article",
+        })
+    return result
+
+
+def public_samples(verify_tracking=None):
     return {
         "league_switch_pct_of_ball_screens": {
             "source": "league_switching",
@@ -424,6 +472,12 @@ def public_samples():
             {"season": "2025-26", "defense": "SAS", "coach": "Mitch Johnson", "source": "spurs_2026",
              "sample": "Finals Game 2, Wembanyama and the point-of-attack defender pressure Brunson.",
              "film_coverage": "blitz"},
+        ],
+        "tracking_depth_film_examples": coordinate_depth_examples(verify_tracking),
+        "direct_switching_team_examples": [
+            {"season": "2025-26", "team": "MIA", "coach": "Erik Spoelstra",
+             "sample": "Dec. 12 team article; switched picks per 100 possessions, as reported; not a percent of screens.",
+             "switches_per_100_possessions": 24.5, "points_per_switched_screen": 0.84, "source": "miami_switch_december_2025"},
         ],
         "screen_targeting": [
             {"season": "2023-24", "offense": "OKC", "ball_handler": "Shai Gilgeous-Alexander",
@@ -456,13 +510,23 @@ def public_samples():
         "zone": [
             {"season": "2023-24", "team": "MIA", "coach": "Erik Spoelstra", "rank": 1,
              "sample": "Full-season share rank stated retrospectively. In early February Utah ranked first in count.",
-             "source": "miami_zone_2026", "midseason_source": "miami_zone_2024"},
+             "zone_pct": 13.4, "points_per_zone_possession": 1.02,
+             "source": "miami_zone_2024_rate", "midseason_source": "miami_zone_2024"},
             {"season": "2024-25", "team": "MIA", "coach": "Erik Spoelstra", "rank": 1,
              "sample": "Full season, zone possession count about 50% higher than the next team.",
              "source": "miami_zone_2025"},
             {"season": "2025-26", "team": "MIA", "coach": "Erik Spoelstra", "rank": 1,
              "sample": "Full-season Synergy share of defensive possessions.", "zone_pct": 16.3,
              "source": "miami_zone_2026"},
+            {"season": "2025-26", "team": "HOU", "coach": "Ime Udoka",
+             "sample": "Nov. 7 snapshot. Synergy share of defensive possessions; Miami was second at 9.7%.",
+             "zone_pct": 18.6, "source": "houston_zone_2026"},
+            {"season": "2024-25", "team": "SAC", "coach": "Mike Brown",
+             "sample": "First 31 games, Synergy zone possessions per game.",
+             "zone_possessions_per_game": 2.29, "source": "kings_zone_2025"},
+            {"season": "2024-25", "team": "SAC", "coach": "Doug Christie",
+             "sample": "First eight games after taking over, Synergy zone possessions per game.",
+             "zone_possessions_per_game": 3.25, "source": "kings_zone_2025"},
             {"season": "2025-26", "team": "MIA", "coach": "Erik Spoelstra",
              "sample": "First 55 games vs. next 20 in the April Power Rankings.",
              "zone_possessions_per_game_first_55": 8.7, "zone_possessions_per_game_next_20": 28.7,
@@ -680,7 +744,7 @@ def fit_player_screen_assists(player_seasons, roles_by_year):
     }
 
 
-def build(cache, fetch):
+def build(cache, fetch, verify_tracking=None):
     inputs, provenance = public_assets(cache, fetch)
     roles_by_year, local_provenance = load_bbi()
     coaches = json.loads(ROTATION.read_text(encoding="utf-8"))["coach_comparison"]["team_seasons"]
@@ -713,7 +777,8 @@ def build(cache, fetch):
             }
 
     team_rows = [r for teams in team_seasons.values() for _, r in sorted(teams.items())]
-    switch_samples = public_samples()["league_switch_pct_of_ball_screens"]
+    tracking_and_film = public_samples(verify_tracking)
+    switch_samples = tracking_and_film["league_switch_pct_of_ball_screens"]
     switch_prediction = statistics.mean(switch_samples[s] for s in (SEASONS[2024], SEASONS[2025]))
     return {
         "schema_version": 1,
@@ -743,7 +808,7 @@ def build(cache, fetch):
             "coach": "Named head coach for single-coach seasons from the rotation research. "
                      "Mixed seasons counted at team level with a null coach.",
         },
-        "public_samples": public_samples(),
+        "public_samples": tracking_and_film,
         "league": league,
         "teams": team_seasons,
         "players_screening": {SEASONS[year]: {str(pid): row for pid, row in players.items()}
@@ -770,8 +835,9 @@ def main():
     parser.add_argument("--cache", type=Path, default=CACHE)
     parser.add_argument("--output", type=Path, default=OUTPUT)
     parser.add_argument("--fetch", action="store_true", help="Download missing public Parquet releases")
+    parser.add_argument("--verify-tracking", type=Path, help="Verify the film samples from local tracking files")
     args = parser.parse_args()
-    result = build(args.cache, args.fetch)
+    result = build(args.cache, args.fetch, args.verify_tracking)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     temp_path = args.output.with_suffix(args.output.suffix + ".tmp")
     temp_path.write_text(json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")

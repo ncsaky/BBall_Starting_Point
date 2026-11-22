@@ -19,7 +19,19 @@ A drop keeps the screener's defender closer to the basket than the screen. At-le
 | 2024–25 playoffs, Game 1 vs. Memphis | Oklahoma City, Mark Daigneault | Film shows both switching and Isaiah Hartenstein dropping against Ja Morant. [Sports Illustrated film breakdown](https://www.si.com/nba/thunder/onsi/news/film-breakdown-okc-thunder-defense-suffocated-grizzlies-game-1) |
 | 2025–26 playoffs, Game 2 vs. New York | San Antonio, Mitch Johnson | Victor Wembanyama came above the arc to blitz Jalen Brunson. Karl-Anthony Towns caught the release pass and New York moved the ball to Landry Shamet in the corner. [NBA film study](https://www.nba.com/news/starting-5-as-finals-return-to-msg-knicks-staying-present-amid-history) |
 
-A public tracking series put league switches at **22.5%** in 2023–24, **24.6%** in 2024–25 and **25.9%** in its April 7, 2026 snapshot. The article predates the end of the 2025–26 regular season. These are shares of ball screens in that series. [DLLS tracking analysis](https://alldlls.com/mavericks/nba-isolation-looks-different-10-years-stats-mid-range/)
+A public tracking series put league switches at **22.5%** in 2023–24, **24.6%** in 2024–25 and **25.9%** in its April 7, 2026 snapshot. The article predates the end of the 2025–26 regular season. These are shares of ball screens in that series. For a team example, Miami's December 12, 2025 notebook reported a league-leading **24.5 switched picks per 100 possessions** and **0.84 points allowed per switched screen**. A rate per possession uses a different denominator from the league's share of screens. Miami had switched less in the previous two seasons with different personnel. [DLLS tracking analysis](https://alldlls.com/mavericks/nba-isolation-looks-different-10-years-stats-mid-range/) · [Miami Heat tracking analysis](https://www.nba.com/heat/news/coup-notebook-101-heat-deep-dive-tyler-herro-return-profile-121225)
+
+### What defender depth captures
+
+Three plays identified in 2026 Finals film were matched to positions in the public Game Pulse archive. Positive depth means the defender was closer to the rim than the screener at the selected moment. The two game clocks can differ slightly. These are examples of how to measure depth for future tagging. Switches and traps require tracking what both defenders do next. [Game Pulse archive](https://www.neilball.org/p/nba-released-player-tracking-data-for-2025-26-season) · [Game 2 film](https://www.nba.com/news/starting-5-as-finals-return-to-msg-knicks-staying-present-amid-history) · [Game 3 film](https://www.nba.com/news/finals-film-study-game-3-2026-finals)
+
+| Play | Screener / defender | Feet from rim, screener / defender | Defender depth |
+|---|---|---:|---:|
+| Game 2, fourth-quarter Brunson blitz, leading to a Shamet corner three | Karl-Anthony Towns / Victor Wembanyama | 29.6 / 32.1 | −2.5 ft |
+| Game 3, second-quarter Fox screen leading to a switch and Wembanyama lob | Victor Wembanyama / OG Anunoby | 21.1 / 13.2 | +7.9 ft |
+| Game 3, fourth-quarter Fox screen leading to a late weak-side rotation and another lob | Victor Wembanyama / Karl-Anthony Towns | 30.8 / 27.3 | +3.5 ft |
+
+A single depth threshold would miss the switch in the second clip. The archive covers portions of 2025–26, and these three selected plays give no league or team usage estimates.
 
 ## 2. Switching and mismatch hunting
 
@@ -42,6 +54,26 @@ The 2025–26 center-on-guard and guard-on-center slices had different denominat
 
 Oklahoma City repeatedly brought Haliburton into the play. Bringing his man up to screen does not require Indiana to switch, and overall chance efficiency and direct-ending efficiency use different denominators. A team-wide rate of calling for a mismatch specifically after a switch, and its points per possession, remain unmeasured. Tom Thibodeau's Knicks offer a reminder about opponent adjustments. They ranked in the bottom six for regular-season switching during his five years in New York, then switched far more often in Game 1 against Boston in 2025. Towns picked up early fouls switching onto Jayson Tatum. [NBA Finals film study](https://www.nba.com/news/finals-film-study-thunder-pacers-game-2) · [Yahoo Sports on New York's coverage](https://staging-aws.sports.yahoo.com/nba/article/is-the-knicks-curveball-affecting-boston-behind-the-celtics-3-point-shooting-woes-192439329.html) · [CBS film study](https://www.cbssports.com/nba/news/if-knicks-defense-keeps-playing-with-fire-vs-celtics-theyll-go-up-in-flames-before-nba-playoffs-are-over/)
 
+## 3. Post doubles, rim help and zone
+
+| Requested decision | What is measured | What is missing |
+|---|---|---|
+| Double a post touch | Atlanta sent two at Towns in the second half of 2026 Game 5. New York found open shots away from him. Phoenix sent Oso Ighodaro to double Gilgeous-Alexander in Game 3. The public play-type tables count qualifying post-up endings, averaging 3.89, 3.46 and 3.25 per 100 team possessions in the three years. | Post catches that end in a kick-out, where the second defender came from, and team-level double counts or shares. |
+| Help at the rim | Basketball Index measures how often a player helps away from the ball and their involvement in rim contests. In 2025–26, the bigs' minutes-weighted defended rim attempts were 7.9 per 75 on Rick Carlisle's Pacers and 4.1 on Mike Brown's Knicks. | The player sent, the pass or drive that caused the rotation, and whether the help came from the strong or weak side. The NBA matchup archive's three help fields are all zero in every season examined. |
+| Choose strong- or weak-side help | Denver's weak-side wing was responsible for the roll when Jokić came up to screen level. In 2026 Finals Game 3 the Knicks sometimes lost their early tag when San Antonio put its lone weak-side player deep in the corner. Sixteen of Wembanyama's 35 screens that night had two teammates on the weak side. | How often a defender actually helped from either side. The 16-of-35 count describes offensive spacing. |
+
+A brief tag on a roller, a dig at a post player and a sustained double should be different decisions in the model. The player already assigned to the scorer can also contest at the rim. The rim tracking numbers include that possibility. [Atlanta–New York film](https://www.nba.com/news/knicks-hawks-2026-playoffs-first-round-game-5-takeaways) · [Phoenix–Oklahoma City film](https://www.nba.com/news/3-things-to-watch-thunder-suns-game-4) · [Denver film](https://www.nba.com/news/film-study-can-new-additions-help-nuggets-defense) · [Spurs–Knicks film](https://www.nba.com/news/finals-film-study-game-3-2026-finals)
+
+| Zone example | Measured usage |
+|---|---|
+| Miami, Erik Spoelstra, 2023–24 | 13.4% of defensive possessions, first. Utah led in total zone possessions in early February. |
+| Miami, Spoelstra, 2024–25 | First in total zone possessions, about 50% more than the runner-up. |
+| Miami, Spoelstra, 2025–26 | 16.3% for the season, first. The first 55 games averaged 8.7 zone possessions per game and the next 20 averaged 28.7. |
+| Houston, Ime Udoka, November 2025 | Early snapshot of 18.6% of defensive possessions. Miami was second in that snapshot at 9.7%. |
+| Sacramento, 2024–25 | 2.29 zone possessions per game over Mike Brown's 31 games and 3.25 in Doug Christie's first eight. |
+
+Miami stayed a frequent zone team while its usage changed considerably within the same season. Sacramento is an example of a short comparison across coaches, with different opponents and only eight games after the change. These samples do not give a 30-team zone table or enough observations to fit independent coach effects. [2024 zone reporting](https://www.basketballpoetry.com/p/1-stat-explaining-every-first-round) · [2024 NBA midseason report](https://www.nba.com/news/power-rankings-2023-24-week-16) · [2025 NBA offseason data](https://www.nba.com/news/offseason-power-rankings-east-2025) · [2026 NBA offseason data](https://www.nba.com/news/offseason-power-rankings-east-2026) · [2026 NBA in-season splits](https://www.nba.com/news/power-rankings-2025-26-week-24) · [Houston film and tracking](https://www.nba.com/news/4-takeaways-from-rockets-early-season-success) · [Ben Pfeifer's Sacramento charting](https://www.sportscasting.com/?p=1614398)
+
 ## Resume state
 
-Worktree and shared board row are set. Coverage definitions and named film examples are recorded. The public archive and cross-position matchup summaries are now built. Next are the help, screening and coach conclusions.
+Worktree and shared board row are set. Coverage definitions and named film examples are recorded. The public archive and cross-position matchup summaries are now built. Help, zone and the tracking depth spot check are recorded. Next are offensive screening and the coach comparisons.

@@ -40361,6 +40361,17 @@
         "source": "spurs_2026"
       }
     ],
+    "direct_switching_team_examples": [
+      {
+        "coach": "Erik Spoelstra",
+        "points_per_switched_screen": 0.84,
+        "sample": "Dec. 12 team article; switched picks per 100 possessions, as reported; not a percent of screens.",
+        "season": "2025-26",
+        "source": "miami_switch_december_2025",
+        "switches_per_100_possessions": 24.5,
+        "team": "MIA"
+      }
+    ],
     "league_switch_pct_of_ball_screens": {
       "2023-24": 22.5,
       "2024-25": 24.6,
@@ -40470,15 +40481,58 @@
         "source": "knicks_2026"
       }
     ],
+    "tracking_depth_film_examples": [
+      {
+        "defender_distance_ft": 32.1,
+        "defender_ft_closer_to_rim_than_screener": -2.5,
+        "film_description": "blitz",
+        "film_source": "spurs_2026",
+        "game_id": "0042500402",
+        "quarter": 4,
+        "screen_defender": "Victor Wembanyama",
+        "screener": "Karl-Anthony Towns",
+        "screener_distance_ft": 29.6,
+        "tracking_clock_ms": 504902,
+        "tracking_source": "tracking_archive_article"
+      },
+      {
+        "defender_distance_ft": 13.2,
+        "defender_ft_closer_to_rim_than_screener": 7.9,
+        "film_description": "switch",
+        "film_source": "knicks_2026",
+        "game_id": "0042500403",
+        "quarter": 2,
+        "screen_defender": "OG Anunoby",
+        "screener": "Victor Wembanyama",
+        "screener_distance_ft": 21.1,
+        "tracking_clock_ms": 204333,
+        "tracking_source": "tracking_archive_article"
+      },
+      {
+        "defender_distance_ft": 27.3,
+        "defender_ft_closer_to_rim_than_screener": 3.5,
+        "film_description": "roll with weak-side help due",
+        "film_source": "knicks_2026",
+        "game_id": "0042500403",
+        "quarter": 4,
+        "screen_defender": "Karl-Anthony Towns",
+        "screener": "Victor Wembanyama",
+        "screener_distance_ft": 30.8,
+        "tracking_clock_ms": 346150,
+        "tracking_source": "tracking_archive_article"
+      }
+    ],
     "zone": [
       {
         "coach": "Erik Spoelstra",
         "midseason_source": "miami_zone_2024",
+        "points_per_zone_possession": 1.02,
         "rank": 1,
         "sample": "Full-season share rank stated retrospectively. In early February Utah ranked first in count.",
         "season": "2023-24",
-        "source": "miami_zone_2026",
-        "team": "MIA"
+        "source": "miami_zone_2024_rate",
+        "team": "MIA",
+        "zone_pct": 13.4
       },
       {
         "coach": "Erik Spoelstra",
@@ -40496,6 +40550,30 @@
         "source": "miami_zone_2026",
         "team": "MIA",
         "zone_pct": 16.3
+      },
+      {
+        "coach": "Ime Udoka",
+        "sample": "Nov. 7 snapshot. Synergy share of defensive possessions; Miami was second at 9.7%.",
+        "season": "2025-26",
+        "source": "houston_zone_2026",
+        "team": "HOU",
+        "zone_pct": 18.6
+      },
+      {
+        "coach": "Mike Brown",
+        "sample": "First 31 games, Synergy zone possessions per game.",
+        "season": "2024-25",
+        "source": "kings_zone_2025",
+        "team": "SAC",
+        "zone_possessions_per_game": 2.29
+      },
+      {
+        "coach": "Doug Christie",
+        "sample": "First eight games after taking over, Synergy zone possessions per game.",
+        "season": "2024-25",
+        "source": "kings_zone_2025",
+        "team": "SAC",
+        "zone_possessions_per_game": 3.25
       },
       {
         "coach": "Erik Spoelstra",
@@ -40516,12 +40594,18 @@
     "bbi_terms": "https://www.bball-index.com/legal/terms-and-conditions/",
     "boston_2024": "https://www.nba.com/news/nba-finals-film-study-how-will-the-celtics-defend-luka-doncic",
     "denver_2025": "https://www.nba.com/news/film-study-can-new-additions-help-nuggets-defense",
+    "finals_game_2_book": "https://statsdmz.nba.com/pdfs/20260605/20260605_NYKSAS_book.pdf",
+    "finals_game_3_book": "https://statsdmz.nba.com/pdfs/20260608/20260608_SASNYK_book.pdf",
     "github_terms": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
+    "houston_zone_2026": "https://www.nba.com/news/4-takeaways-from-rockets-early-season-success",
+    "kings_zone_2025": "https://www.sportscasting.com/?p=1614398",
     "knicks_2026": "https://www.nba.com/news/finals-film-study-game-3-2026-finals",
     "knicks_hawks_post_double": "https://www.nba.com/news/knicks-hawks-2026-playoffs-first-round-game-5-takeaways",
     "league_switching": "https://alldlls.com/mavericks/nba-isolation-looks-different-10-years-stats-mid-range/",
+    "miami_switch_december_2025": "https://www.nba.com/heat/news/coup-notebook-101-heat-deep-dive-tyler-herro-return-profile-121225",
     "miami_team_screening": "https://www.miamiherald.com/sports/nba/miami-heat/article314323490.html",
     "miami_zone_2024": "https://www.nba.com/news/power-rankings-2023-24-week-16",
+    "miami_zone_2024_rate": "https://www.basketballpoetry.com/p/1-stat-explaining-every-first-round",
     "miami_zone_2025": "https://www.nba.com/news/offseason-power-rankings-east-2025",
     "miami_zone_2026": "https://www.nba.com/news/offseason-power-rankings-east-2026",
     "miami_zone_changes_2026": "https://www.nba.com/news/power-rankings-2025-26-week-24",
@@ -40545,7 +40629,9 @@
     "sis_ball_screens": "https://www.sportsinfosolutions.com/2025/11/11/heat-check-a-different-offensive-approach-than-any-other-team/",
     "spurs_2026": "https://www.nba.com/news/starting-5-as-finals-return-to-msg-knicks-staying-present-amid-history",
     "suns_thunder_post_double": "https://www.nba.com/news/3-things-to-watch-thunder-suns-game-4",
-    "thibodeau": "https://staging-aws.sports.yahoo.com/nba/article/is-the-knicks-curveball-affecting-boston-behind-the-celtics-3-point-shooting-woes-192439329.html"
+    "thibodeau": "https://staging-aws.sports.yahoo.com/nba/article/is-the-knicks-curveball-affecting-boston-behind-the-celtics-3-point-shooting-woes-192439329.html",
+    "tracking_archive_article": "https://www.neilball.org/p/nba-released-player-tracking-data-for-2025-26-season",
+    "tracking_archive_download": "https://downloads.neilball.org/NBA-2025-26-Available-Tracking.zip"
   },
   "teams": {
     "2023-24": {
