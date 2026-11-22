@@ -23,3 +23,7 @@ Measured roughly 5.5 logged timeouts per team in a regular-season game. About on
 ### End-game checkpoint
 
 Added possession-level evidence for trailing take fouls, fouling while ahead by three and quick shots that leave time to get the ball back. Explicit take-foul tags give a strict count. The data also include a broader non-shooting-foul count. A strict repeated-foul pattern on weak free-throw shooters picked up 12 regular-season sequences and nine playoff sequences, including Golden State targeting Steven Adams in 2025.
+
+### Coach checkpoint
+
+Matched full-season head coaches to regular-season team profiles. Rotation depth and first-substitution timing carried over most strongly to the held-out season. Foul-trouble patience and starter minutes were also useful. The prior team rates for run timeouts, closing lineups, late fouls and early two-for-one shots did not beat the league average for prediction. Added named closing lineups and a coach comparison table to the data.

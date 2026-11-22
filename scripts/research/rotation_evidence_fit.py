@@ -17,7 +17,7 @@ from itertools import groupby
 import json
 from pathlib import Path
 import re
-from statistics import mean, median, quantiles
+from statistics import correlation, mean, median, quantiles
 import unicodedata
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -72,6 +72,7 @@ class Evidence:
         self.coaches = defaultdict(lambda: defaultdict(list))
         self.fits = defaultdict(list)
         self.examples = defaultdict(list)
+        self.lineups = defaultdict(Counter)
 
     def add(self, game, metric, group, value):
         self.values[game.year, game.phase, metric, group].append(value)
@@ -363,6 +364,7 @@ def collect_team_rotations(evidence, game, team, starters, spans, quarter, playe
             players = frame.home if home else frame.away
             close_seconds.update({pid: duration for pid in players})
             start_five_seconds += duration * (players == starters)
+            evidence.lineups[game.year, game.phase, team][tuple(sorted(players))] += duration
     if close_seconds:
         total = sum(close_seconds.values())
         starter_seconds = sum(close_seconds[pid] for pid in starters)
@@ -378,6 +380,8 @@ def collect_team_rotations(evidence, game, team, starters, spans, quarter, playe
         for pid in starters:
             add("close_Q4_starter_seconds_share", roles[pid], close_seconds[pid] * 5 / total)
         evidence.team(game, team, "close_Q4_starter_share", starter_seconds / total)
+        if total >= 900:
+            evidence.team(game, team, "close_game_depth_5_minute_players", len(eligible))
 
 
 def foul_situation(event, count):
@@ -661,6 +665,8 @@ def collect_late_fouling(evidence, game, period, rows, possessions):
             group = band
             metric = "up_three_take_foul_per_opponent_possession"
         add(metric, group, narrow)
+        if -6 <= margin < 0 and left <= 24:
+            evidence.team(game, defense, "late_take_foul_down_1_to_6", narrow)
         add(metric + "_including_early_personal", group, broad)
         if game.phase == "regular":
             evidence.fit(game, metric, group, narrow)
@@ -681,6 +687,8 @@ def collect_two_for_one(evidence, game, period, possessions):
         clock = "30_34s" if left < 35 else "35_38s" if left < 39 else "39_42s"
         group = f"{'late_close' if close else 'other'}|{clock}"
         add("two_for_one_early_shot", group, early)
+        if not close and left >= 35:
+            evidence.team(game, finish.offense, "two_for_one_early_shot_35_42s", early)
         add("two_for_one_early_shot_at_24s", group, time_of_shot >= 24)
         add("two_for_one_early_shot_at_27s", group, time_of_shot >= 27)
         if game.phase == "regular":
@@ -771,6 +779,9 @@ def collect_games(connection, cache):
                     count[f"excluded_{game.id}"] += 1
                     continue
                 count["analyzed_games"] += 1
+                count["clock_team_seconds_checks"] += 1
+                if round(sum(frame.end - frame.start for frame in game.intervals), 5) != game.end:
+                    raise ValueError(f"Clock time does not balance for {game.id}")
                 collect_timeouts(evidence, game)
                 for event in game.events:
                     for field in (event.player, event.second, event.third):
@@ -826,7 +837,7 @@ def collect_games(connection, cache):
                     sorted(count.items()), url=f"{ARCHIVE}/{file.name}",
                     sha256=file_digest(handle, "sha256").hexdigest(),
                 )
-    return evidence, coverage, audit
+    return evidence, coverage, audit, player_names
 
 
 def evaluate_fits(fit_rows):
@@ -867,6 +878,95 @@ def evaluate_fits(fit_rows):
     return result
 
 
+# Single-head-coach seasons from the NBA Guide's franchise tables. Split seasons
+# stay in the league and team figures. Team names follow the archive abbreviations.
+SAME_2024_2025 = {
+    "ATL": "Quin Snyder", "BOS": "Joe Mazzulla", "CHI": "Billy Donovan",
+    "DAL": "Jason Kidd", "GSW": "Steve Kerr", "HOU": "Ime Udoka",
+    "IND": "Rick Carlisle", "LAC": "Tyronn Lue", "MIA": "Erik Spoelstra",
+    "MIN": "Chris Finch", "NOP": "Willie Green", "NYK": "Tom Thibodeau",
+    "OKC": "Mark Daigneault", "ORL": "Jamahl Mosley", "PHI": "Nick Nurse",
+    "POR": "Chauncey Billups", "TOR": "Darko Rajakovic", "UTA": "Will Hardy",
+}
+COACHES_BY_YEAR = {
+    2024: SAME_2024_2025 | {
+        "CHA": "Steve Clifford", "CLE": "J.B. Bickerstaff", "DEN": "Michael Malone",
+        "DET": "Monty Williams", "LAL": "Darvin Ham", "MEM": "Taylor Jenkins",
+        "PHX": "Frank Vogel", "SAC": "Mike Brown", "SAS": "Gregg Popovich",
+    },
+    2025: SAME_2024_2025 | {
+        "BKN": "Jordi Fernandez", "CHA": "Charles Lee", "CLE": "Kenny Atkinson",
+        "DET": "J.B. Bickerstaff", "LAL": "JJ Redick", "MIL": "Doc Rivers",
+        "PHX": "Mike Budenholzer", "WAS": "Brian Keefe",
+    },
+}
+STAFFS = ROOT / "data/research/staffs_2025_26.json"
+
+
+def coach_comparison(samples):
+    current = json.loads(STAFFS.read_text())["teams"]
+    names_by_year = COACHES_BY_YEAR | {
+        2026: {team: value["head_coaches"][0]["name"] for team, value in current.items()
+               if len(value["head_coaches"]) == 1}
+    }
+    names = {(year, team): coach for year, teams in names_by_year.items()
+             for team, coach in teams.items()}
+    profiles = {}
+    prior = defaultdict(list)
+    all_prior = defaultdict(list)
+    test = defaultdict(dict)
+    for (year, team), metrics in sorted(samples.items()):
+        coach = names.get((year, team))
+        profiles[f"{year}|{team}"] = {
+            "coach": coach, "metrics": {metric: summary(rows) for metric, rows in sorted(metrics.items())},
+        }
+        for metric, rows in metrics.items():
+            key = team, coach, metric
+            if year < 2026:
+                prior[key].extend(rows)
+                all_prior[metric].extend(rows)
+            elif coach and len(rows) >= 20 and len(prior[key]) >= 20:
+                test[metric][team] = (len(prior[key]), mean(prior[key]), len(rows), mean(rows), coach)
+    stability = {}
+    for metric, by_team in sorted(test.items()):
+        estimates = [a for _, a, _, _, _ in by_team.values()]
+        observed = [b for _, _, _, b, _ in by_team.values()]
+        fallback = mean(all_prior[metric])
+        spread = quantiles(observed, n=10, method="inclusive")
+        rho = correlation(ranks(estimates), ranks(observed))
+        stability[metric] = {
+            "coach_team_pairs": len(by_team), "rank_correlation": round(rho, 4) if rho is not None else None,
+            "holdout_p10": round(spread[0], 4), "holdout_p90": round(spread[-1], 4),
+            "mean_team_error": round(mean(abs(a - b) for a, b in zip(estimates, observed)), 4),
+            "league_baseline_mean_team_error": round(mean(abs(b - fallback) for b in observed), 4),
+            "pairs": {team: {"coach": coach, "train_n": n, "train_mean": round(a, 4), "test_n": m,
+                             "test_mean": round(b, 4)}
+                      for team, (n, a, m, b, coach) in by_team.items()},
+        }
+    return {"team_seasons": profiles, "same_coach_same_team_holdout": stability}
+
+
+def ranks(values):
+    rank_by_value = {}
+    ordered = sorted(values)
+    for value, group in groupby(enumerate(ordered, 1), key=lambda row: row[1]):
+        rank_by_value[value] = mean(rank for rank, _ in group)
+    return [rank_by_value[value] for value in values]
+
+
+def named_lineups(lineups, player_names):
+    result = {}
+    for (year, phase, team), combos in sorted(lineups.items()):
+        total = sum(combos.values())
+        leading = sorted(combos.items(), key=lambda pair: (-pair[1], pair[0]))[:3]
+        result[f"{year}|{phase}|{team}"] = [
+            {"players": [player_names.get(pid, str(pid)) for pid in combo],
+             "seconds": round(seconds, 2), "share_of_close_seconds": round(seconds / total, 4)}
+            for combo, seconds in leading
+        ]
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cache", type=Path, default=ROOT / "output/rotation-evidence")
@@ -876,12 +976,23 @@ def main():
     import duckdb
 
     with duckdb.connect(config={"threads": 2}) as db:
-        evidence, coverage, audit = collect_games(db, args.cache)
+        evidence, coverage, audit, player_names = collect_games(db, args.cache)
     result = {
         "schema_version": 1, "fit_seasons": [2024, 2025], "holdout_season": 2026,
         "coverage": coverage, "box_score_check": dict(sorted(audit.items())),
         "observations": evidence.describe(), "held_out_fits": evaluate_fits(evidence.fits),
         "hack_proxy_examples_by_season": dict(sorted(evidence.examples.items())),
+        "named_closing_lineups": named_lineups(evidence.lineups, player_names),
+        "coach_comparison": coach_comparison(evidence.coaches),
+        "sources": {
+            "archive_documentation": "https://github.com/ramirobentes/nba_data",
+            "box_score_check": str(BOXES.relative_to(ROOT)),
+            "latest_season_coach_stints": str(STAFFS.relative_to(ROOT)),
+            "historical_coaches": GUIDE,
+            "NBA_timeout_rules": "https://official.nba.com/rule-no-5-scoring-and-timing/",
+            "NBA_away_from_play_rules": "https://official.nba.com/rule-no-4-definitions/",
+            "known_score_correction": "https://www.nba.com/game/cle-vs-was-0022500029",
+        },
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     temporary = args.output.with_suffix(".tmp")
