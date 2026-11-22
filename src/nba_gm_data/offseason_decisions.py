@@ -49,6 +49,10 @@ RULES: dict[str, dict[str, float]] = {
         "opt_out_ratio_30_plus": 0.85,
         "close_band": 0.10,
         "regular_minutes": 24.0,
+        # CONTRACT-TERMS: CONTRACT-STRUCTURE-EVIDENCE's best held-out player rule (28 of 41 right on 2025-26 against
+        # 20 for "keep" and 21 for the market rule): he opts out after 1,000 or more minutes per 82 games the season
+        # before; an injury into next season keeps him in (Lonzo Ball 2024). Real players kept 93 of 177 (2019-26).
+        "evidence_opt_out_minutes": 1000.0,
     },
     # Veteran team options (2023-26: 63 exercised, 68 declined). Exercise when his market price is at least
     # ``exercise_value_ratio`` of the option (fits: 1.2-1.5), or when the year is cheap to keep and cut later (a
@@ -56,6 +60,13 @@ RULES: dict[str, dict[str, float]] = {
     "team_option": {
         "exercise_value_ratio": 1.2,
         "cheap_salary_minimums": 1.5,     # an option at or below 1.5x his minimum salary is kept (cheap to cut)
+        # CONTRACT-TERMS: CONTRACT-STRUCTURE-EVIDENCE's held-out rule (2019-24 fit, tested on 2025-26: 54 of 85
+        # right against 44 for the baseline; docs/agents/tasks/contract-structure-evidence.md section 4): pick up the
+        # option when his market pay is at least 130% of it, or 105% for a player with 500 prior minutes per 82
+        # games. Real clubs kept 89 of 186 standard team options (2019-26). Replaces the two rules above.
+        "evidence_market_ratio": 1.30,
+        "evidence_regular_ratio": 1.05,
+        "evidence_regular_minutes": 500.0,
     },
     # Rookie-scale options: the third year is kept almost always (116 of 120); the fourth is declined only for a
     # player under about ``decline_prior_minutes`` last season with replacement-level value (fits: 700-1,000 minutes).
@@ -301,17 +312,14 @@ def decide_player_option(save: dict[str, Any], player: dict[str, Any], row: dict
     who = role_words(player)
     if injured_through_opening(save, player["id"], row["season"]):
         return "exercised", f"He is injured into next season, so he keeps his guaranteed {_m(option)} ({who})."
-    if not market:
-        return "exercised", f"He keeps his {_m(option)} option: no clear market for {who}."
-    bar = option * (rules["opt_out_ratio_30_plus"] if age >= 30 else rules["opt_out_ratio"])
-    regular_with_bird = bird_level == "full" and _minutes(player) >= rules["regular_minutes"]
-    if market >= bar or (regular_with_bird and market >= bar * (1.0 - rules["close_band"])):
-        why = (f"as {who} he expects about {_m(market)} a year on the market against his {_m(option)} option"
-               + (", and a longer deal (his team holds his full Bird rights)" if market < option else "")
-               + (" while he is still young enough for a long deal" if age < 30 and market >= option else ""))
+    played = prior_season_minutes(save, player["id"], player)
+    money = f"about {_m(market)} a year on the market" if market else "no clear market price"
+    if played >= rules["evidence_opt_out_minutes"]:
+        why = (f"as {who} who played {round(played):,} minutes last season he expects {money} and a longer deal "
+               f"than his {_m(option)} option" + (" (his team holds his full Bird rights)" if bird_level == "full" else ""))
         return "declined", f"He becomes a free agent: {why}."
-    return "exercised", (f"He keeps his {_m(option)} option: the market would pay {who} about {_m(market)}"
-                         + (", and at his age a guaranteed year is worth more" if age >= 30 else "") + ".")
+    return "exercised", (f"He keeps his {_m(option)} option: {round(played):,} minutes last season leave {who} with "
+                         f"{money}" + (", and at his age a guaranteed year is worth more" if age >= 30 else "") + ".")
 
 
 def decide_team_option_ai(active: dict[str, Any], save: dict[str, Any], player: dict[str, Any], row: dict[str, Any],
@@ -335,10 +343,14 @@ def decide_team_option_ai(active: dict[str, Any], save: dict[str, Any], player: 
                                 f"season and a replacement-level price (about {_m(value)}).")
         return "exercised", f"The team keeps his {_m(option)} rookie-scale option."
     rules = RULES["team_option"]
-    if value >= option * rules["exercise_value_ratio"]:
+    del minimum
+    played = prior_season_minutes(save, player["id"], player)
+    regular = played >= rules["evidence_regular_minutes"]
+    if value >= option * rules["evidence_market_ratio"]:
         return "exercised", f"The team keeps him at {_m(option)}: he is worth about {_m(value)}, a bargain."
-    if option <= minimum * rules["cheap_salary_minimums"]:
-        return "exercised", f"The team keeps his cheap {_m(option)} year: it can still cut him later."
+    if regular and value >= option * rules["evidence_regular_ratio"]:
+        return "exercised", (f"The team keeps him at {_m(option)}: a regular ({round(played):,} minutes last season) "
+                             f"worth about {_m(value)}.")
     return "declined", f"The team declines his {_m(option)} option: he is worth about {_m(value)}."
 
 

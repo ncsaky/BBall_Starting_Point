@@ -114,33 +114,32 @@ class Options(unittest.TestCase):
         self.assertEqual(od.option_deadline("team_option", "2027-28"), "2027-06-29")
 
     def test_player_option_rule(self):
-        # The evidence's rule (OFFSEASON-DECISIONS-EVIDENCE): opt out when the market is at least 0.95 of the option
-        # (0.85 at 30 and older); a close call with full Bird rights goes to opting out and re-signing longer.
-        save = summer_save()
+        # CONTRACT-TERMS (rule changed): CONTRACT-STRUCTURE-EVIDENCE's best held-out rule (28 of 41 on 2025-26): he
+        # opts out after 1,000 or more minutes last season; an injury into next season keeps him in.
+        save = summer_save(player_season_stats={"young": {"minutes": 1500}, "veteran": {"minutes": 600}})
         young = player("young", draft_year=2020, age=26)
         row = {"season": NEXT, "salary": 10e6}
-        self.assertEqual(od.decide_player_option(save, young, row, 9.6e6, "non")[0], "declined")
-        self.assertEqual(od.decide_player_option(save, young, row, 9e6, "non")[0], "exercised")
+        status, reason = od.decide_player_option(save, young, row, 9e6, "non")
+        self.assertEqual(status, "declined")
+        self.assertIn("1,500 minutes", reason)
         veteran = player("veteran", draft_year=2014, age=33, minutes=28)
-        self.assertEqual(od.decide_player_option(save, veteran, {"season": NEXT, "salary": 30e6}, 26e6, "non")[0], "declined",
-                         "a lower bar at 30 and older")
-        self.assertEqual(od.decide_player_option(save, veteran, {"season": NEXT, "salary": 43e6}, 35e6, "full")[0], "declined",
-                         "Irving: a regular with full Bird rights, close call")
-        self.assertEqual(od.decide_player_option(save, veteran, {"season": NEXT, "salary": 43e6}, 35e6, "non")[0], "exercised")
-        self.assertEqual(od.decide_player_option(save, veteran, {"season": NEXT, "salary": 50e6}, 30e6, "full")[0], "exercised")
-        hurt = summer_save(health_states=[{"player_id": "young", "availability_status": "out", "return_date": "2027-12-01"}])
+        self.assertEqual(od.decide_player_option(save, veteran, {"season": NEXT, "salary": 30e6}, 26e6, "full")[0], "exercised")
+        hurt = summer_save(player_season_stats={"young": {"minutes": 1500}},
+                           health_states=[{"player_id": "young", "availability_status": "out", "return_date": "2027-12-01"}])
         status, reason = od.decide_player_option(hurt, young, row, 20e6, "non")
         self.assertEqual(status, "exercised")
         self.assertIn("injured", reason)
 
     def test_team_option_rules(self):
-        save = summer_save()
+        # CONTRACT-TERMS (rule changed): the evidence's held-out rule (54 of 85): keep at 130% of the option, or 105%
+        # for a player with 500 minutes last season.
+        save = summer_save(player_season_stats={"p": {"minutes": 900}, "q": {"minutes": 200}})
         p = player("p", draft_year=2018, age=29, minutes=18)
-        self.assertEqual(od.decide_team_option_ai({}, save, p, {"season": NEXT, "salary": 10e6}, "team_option", 12.5e6)[0], "exercised")
-        self.assertEqual(od.decide_team_option_ai({}, save, p, {"season": NEXT, "salary": 10e6}, "team_option", 9e6)[0], "declined",
-                         "below 1.2x the option: declined (some teams then sign a longer deal)")
-        self.assertEqual(od.decide_team_option_ai({}, save, p, {"season": NEXT, "salary": 3e6}, "team_option", 2e6)[0], "exercised",
-                         "a minimum-level year is cheap to keep and cut later")
+        q = player("q", draft_year=2018, age=29, minutes=8)
+        self.assertEqual(od.decide_team_option_ai({}, save, p, {"season": NEXT, "salary": 10e6}, "team_option", 10.6e6)[0], "exercised")
+        self.assertEqual(od.decide_team_option_ai({}, save, q, {"season": NEXT, "salary": 10e6}, "team_option", 12e6)[0], "declined")
+        self.assertEqual(od.decide_team_option_ai({}, save, q, {"season": NEXT, "salary": 10e6}, "team_option", 13.1e6)[0], "exercised")
+        self.assertEqual(od.decide_team_option_ai({}, save, p, {"season": NEXT, "salary": 10e6}, "team_option", 9e6)[0], "declined")
         # Rookie options: the third year almost always; the fourth declined for a little-used, replacement-level player.
         third = player("third", draft_year=2026, pick=4, age=20, minutes=6)
         self.assertEqual(od.decide_team_option_ai({}, save, third, {"season": "2028-29", "salary": 9e6}, "rookie_option", 2e6)[0], "exercised")

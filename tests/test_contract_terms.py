@@ -105,13 +105,32 @@ class OptionDecisionTests(unittest.TestCase):
                 "state": {"current_date": "2027-06-17"}, "league_events": [], "news": []}
 
     def test_reason_names_money_role_and_age(self):
+        # CONTRACT-STRUCTURE-EVIDENCE's held-out rule: he opts out after 1,000 or more minutes the season before.
+        save = {**self.save(), "state": {"current_date": "2027-06-17", "phase": "re_signing"},
+                "player_season_stats": {"p": {"minutes": 700}, "q": {"minutes": 2100}}}
         player = {"id": "p", "name": "Vet", "age": 33, "minutes_projection": 30}
-        status, reason = decide_player_option(self.save(), player, {"season": "2027-28", "salary": 20e6}, 12e6, "full")
+        status, reason = decide_player_option(save, player, {"season": "2027-28", "salary": 20e6}, 12e6, "full")
         self.assertEqual(status, "exercised")
         self.assertIn("33-year-old starter", reason)
-        status, reason = decide_player_option(self.save(), {**player, "age": 26}, {"season": "2027-28", "salary": 10e6}, 18e6, "full")
+        self.assertIn("700 minutes", reason)
+        status, reason = decide_player_option(save, {**player, "id": "q", "age": 26}, {"season": "2027-28", "salary": 10e6}, 18e6, "full")
         self.assertEqual(status, "declined")
-        self.assertIn("expects about $18.0M", reason)
+        self.assertIn("about $18.0M", reason)
+        self.assertIn("2,100 minutes", reason)
+
+    def test_ai_shapes_follow_the_evidence_by_kind_of_deal(self):
+        from nba_gm_data.contract_terms import deal_kind
+        self.assertEqual(deal_kind("bird", 20e6), "bird")
+        self.assertEqual(deal_kind("non_taxpayer_mle", 12e6), "exception")
+        self.assertEqual(deal_kind("cap_room", 40e6), "max")
+        self.assertEqual(deal_kind(None, 40e6, extension=True), "extension_star")
+        stars = Counter(ai_structure(45e6, 5, player_id=f"s{i}", team_id="t", season="x", kind="extension_star")["option"]
+                        for i in range(1000))
+        self.assertEqual(stars["team"], 0)
+        self.assertTrue(0.33 < stars["player"] / 1000 < 0.47)        # real: 25 of 62
+        bird = Counter(ai_structure(15e6, 3, player_id=f"b{i}", team_id="t", season="x", kind="bird")["path"]
+                       for i in range(1000))
+        self.assertTrue(0.32 < bird["flat"] / 1000 < 0.44)            # real: 38% flat
 
     def test_view_and_wire(self):
         save = self.save()

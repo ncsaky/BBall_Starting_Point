@@ -17,9 +17,13 @@ extensions (the shape the extension price was set on). These weights are assumpt
 prices options directly.
 
 **How AI-to-AI deals are shaped** (``ai_structure``): drawn by a fixed hash per player, team and season (no shared
-random stream) from the real shares in the 2025-26 salary table (scripts/contract_structure_shares.py ->
-data/research/contract_structure_shares_2025_26.json), by first-year salary band: e.g. $35M and up: 91% rising,
-41% player options, no team options; under $3M: 74% team options.
+random stream) from the real shares of new signings by kind of deal, from CONTRACT-STRUCTURE-EVIDENCE (1,370 deals
+2019-2026; docs/agents/tasks/contract-structure-evidence.md sections 1-2, data/research/contract_structure_evidence.json):
+mid-level deals mostly rise 5% with 34% player and 13% team options among multi-year deals; Bird re-signings are often
+flat (38%) or declining (18%); new max deals always rise, with player options in 47%; extensions mostly rise 8%,
+with player options in 23% (40% for high-scoring regulars, who get no team options); two-year minimums carry an
+optional second year in 41 of 74. Without a kind, the shares of running contracts in the 2025-26 salary table by
+salary band are used (scripts/contract_structure_shares.py).
 """
 from __future__ import annotations
 
@@ -178,15 +182,52 @@ def _pick(shares: dict[str, float], unit: float, order: tuple[str, ...]) -> str:
     return order[0]
 
 
+# Shares of new multi-year signings by kind of deal (CONTRACT-STRUCTURE-EVIDENCE; counts in the module notes).
+# Path: "up other" and "mixed" count as rising. Options: share of multi-year deals with each documented option.
+EVIDENCE_SHARES: dict[str, dict[str, dict[str, float]]] = {
+    "exception": {"path_share": {"rising": 0.80, "flat": 0.15, "declining": 0.05},
+                  "option_share": {"none": 0.53, "player": 0.34, "team": 0.13}},     # 41 and 16 of 119
+    "bird": {"path_share": {"rising": 0.44, "flat": 0.38, "declining": 0.18},
+             "option_share": {"none": 0.66, "player": 0.19, "team": 0.15}},          # 9 and 7 of 47
+    "max": {"path_share": {"rising": 1.0, "flat": 0.0, "declining": 0.0},
+            "option_share": {"none": 0.48, "player": 0.47, "team": 0.05}},           # 9 and 1 of 19
+    "extension": {"path_share": {"rising": 0.76, "flat": 0.14, "declining": 0.10},
+                  "option_share": {"none": 0.68, "player": 0.23, "team": 0.09}},     # 49 and 19 of 216
+    "extension_star": {"path_share": {"rising": 0.76, "flat": 0.14, "declining": 0.10},
+                       "option_share": {"none": 0.60, "player": 0.40, "team": 0.0}}, # high-scoring regulars, 25 of 62
+    "minimum": {"path_share": {"rising": 1.0, "flat": 0.0, "declining": 0.0},
+                "option_share": {"none": 0.45, "player": 0.43, "team": 0.12}},       # two-year minimums, 32 and 9 of 74
+}
+STAR_SALARY = 35_000_000   # extensions and free-agent deals at this first-year salary use the star / max rows
+
+
+def deal_kind(route: str | None, first_salary: float, *, extension: bool = False) -> str:
+    """The evidence row for a deal: by how it is paid (cap_ledger routes) and its size."""
+    if extension:
+        return "extension_star" if first_salary >= STAR_SALARY else "extension"
+    if route == "minimum":
+        return "minimum"
+    if first_salary >= STAR_SALARY:
+        return "max"
+    if route == "bird":
+        return "bird"
+    return "exception"
+
+
 def ai_structure(first_salary: float, years: int, *, player_id: str, team_id: str, season: str,
-                 bird_level: str | None = None, offer_sheet: bool = False, minimum: bool = False) -> dict[str, str]:
-    """The path and option an AI team writes into a contract, at the real shares for its salary band (fixed hash;
-    no shared random stream). One-season deals and minimum contracts keep the rising, option-free shape."""
-    if int(years) < 2 or minimum:
+                 bird_level: str | None = None, offer_sheet: bool = False, minimum: bool = False,
+                 kind: str | None = None) -> dict[str, str]:
+    """The path and option an AI team writes into a contract, at the real shares for its kind of deal (``kind``, see
+    EVIDENCE_SHARES) or else its salary band (fixed hash; no shared random stream). One-season deals keep the rising,
+    option-free shape; minimum deals keep the minimum scale's path."""
+    if int(years) < 2 or (minimum and kind is None):
         return {"path": "rising", "option": "none"}
-    row = _shares().get(_band(float(first_salary))) or {}
+    row = EVIDENCE_SHARES.get(kind) if kind else None
+    row = row or _shares().get(_band(float(first_salary))) or {}
     path = _pick(row.get("path_share") or {"rising": 1.0}, _unit(season, team_id, player_id, "path"), SALARY_PATHS)
     option = _pick(row.get("option_share") or {"none": 1.0}, _unit(season, team_id, player_id, "option"), CONTRACT_OPTIONS)
     if option_problem(years, option, bird_level=bird_level, offer_sheet=offer_sheet):
         option = "none"
+    if kind == "minimum":
+        path = "rising"   # the minimum scale sets the path
     return {"path": path, "option": option}

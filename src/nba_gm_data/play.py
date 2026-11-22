@@ -5662,12 +5662,13 @@ def ai_shape_bid(active: dict[str, Any], save: dict[str, Any], team: dict[str, A
     (contract_terms.ai_structure), re-checked with the money calculator; the rising, option-free bid stands when the
     other path isn't legal. Adds ``terms`` (path, option, value factor) and puts the shape on the payment."""
     from . import cap_ledger
-    from .contract_terms import ai_structure, path_rate, value_factor
+    from .contract_terms import ai_structure, deal_kind, path_rate, value_factor
     payment = dict((paid.get("quote") or {}).get("payment") or {})
     route = payment.get("route")
     years = int(paid["years"])
     shape = ai_structure(float(paid["aav"]) * 1_000_000, years, player_id=str(player.get("id")), team_id=str(team["id"]),
-                         season=season, bird_level=(bird or {}).get("level"), minimum=route == "minimum")
+                         season=season, bird_level=(bird or {}).get("level"), minimum=route == "minimum",
+                         kind=deal_kind(route, float(paid["aav"]) * 1_000_000))
     top = cap_ledger._route_raise(route or "cap_room", bird)
     quote = paid["quote"]
     if shape["path"] != "rising":

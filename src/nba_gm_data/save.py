@@ -87,7 +87,10 @@ MAJOR_FREE_AGENT_AAV_THRESHOLD = 25_000_000
 MAJOR_PLAYER_MPG_THRESHOLD = 29.0
 MAJOR_INJURY_GAMES_THRESHOLD = 41
 MAJOR_STAFF_GRADE_THRESHOLD = 82.0
-AI_EXTENSION_BUCKET_LIMIT = 15
+AI_EXTENSION_BUCKET_LIMIT = 15   # kept for older callers; the limits by kind are below
+# CONTRACT-TERMS: a ceiling per contract season at the top of the real range (2023-26: 7-14 rookie-scale extensions a
+# year; 17-27 veteran extensions a league year), so the AI's own appetite decides the count inside it.
+AI_EXTENSION_LIMITS = {"rookie_scale": 14, "veteran": 27}
 OFFSEASON_FREE_AGENT_POOL_TARGET = 120
 MAJOR_STAT_LINE_THRESHOLDS = {
     "points": 49,
@@ -6611,6 +6614,21 @@ def extension_headline_with_terms(team_abbrev: str | None, player_name: str | No
     return f"{team_label} extends {player_label}."
 
 
+AI_ROOKIE_SCALE_EXTENSION_PRIORITY = 55.0   # set so about 40% of eligible rookie-scale players extend (real 2023-26: 41 of 96, 7-14 a year)
+AI_EXTENSION_MODEL_UNDERPRICE = 1.45        # see the pay-cut bar in process_ai_extensions
+
+
+def ai_extension_pass_horizon(save: dict[str, Any], player: dict[str, Any], through_date: str,
+                              contract: dict[str, Any] | None) -> str:
+    """CONTRACT-TERMS: AI teams review extensions once a month, so a pass handles every decision due before the next
+    one (and never past his deadline or the January 15 end of the regular passes): a decision due January 5 is made
+    in the January pass instead of falling after the last one."""
+    start = season_start_year_from_date(through_date)
+    horizon = (parse_date(through_date) + timedelta(days=30)).isoformat()
+    deadline = player_extension_deadline(save, player, extension_contract_start_year(save, through_date), contract)
+    return min(horizon, max(through_date, min(deadline, extension_deadline_date(start))))
+
+
 def ai_extension_pass_due(save: dict[str, Any], phase: Any, from_date: str, through_date: str) -> bool:
     """CONTRACT-TERMS: AI teams review extensions once a month from July 6 through January 15 (their habit: the
     regular in-season passes stop mid-January), in the late summer, camp, preseason and regular season, plus one pass
@@ -6703,9 +6721,9 @@ def process_ai_extensions(
             # teams already had the whole 2026 summer to extend these players (deadline-day rookie-scale deals stay).
             continue
         priority = ai_extension_priority(save, candidate, player, team_id, seed)
-        due_date = ai_extension_due_date(save, candidate, player, priority, seed,
-                                         next((c for c in active.get("contracts", []) if c.get("player_id") == player_id), None))
-        if through_date < due_date:
+        contract_now = next((c for c in active.get("contracts", []) if c.get("player_id") == player_id), None)
+        due_date = ai_extension_due_date(save, candidate, player, priority, seed, contract_now)
+        if due_date > ai_extension_pass_horizon(save, player, through_date, contract_now):
             continue
         team_pass = ai_extension_team_pass_outlook(save, candidate, player, team_id, priority)
         if team_pass:
@@ -6737,10 +6755,10 @@ def process_ai_extensions(
             processed.add(key)
             continue
         bucket = "rookie_scale" if candidate.get("extension_kind") == "rookie_scale" else "veteran"
-        if int(volume.get(bucket) or 0) >= AI_EXTENSION_BUCKET_LIMIT:
+        if int(volume.get(bucket) or 0) >= AI_EXTENSION_LIMITS.get(bucket, AI_EXTENSION_BUCKET_LIMIT):
             processed.add(key)
             continue
-        if priority < 78.0:
+        if priority < (AI_ROOKIE_SCALE_EXTENSION_PRIORITY if bucket == "rookie_scale" else 78.0):
             # Fringe or bad-fit cases stay live for later checkpoints instead of being
             # burned for the full season before their role/team context has settled.
             continue
@@ -6762,13 +6780,20 @@ def process_ai_extensions(
                 # CONTRACT-TERMS: an extension's first year is at most 140% of the greater of his salary and the
                 # average salary (veterans), and never above his max.
                 offer = {**offer, "annual_salary": round(min(float(offer["annual_salary"]), float(limit)), 2)}
-            # CONTRACT-TERMS: the extension's shape (salary path, final-season option) at the real shares.
+            # CONTRACT-TERMS: the extension's shape (salary path, final-season option) at the real shares for the
+            # salary he ends up with (his pay-cut bar below, when the team meets it).
             from .contract_ai import EXTENSION_MAX_RAISE
             from .contract_terms import ai_structure
             annual_dollars = float(offer.get("annual_salary") or 0.0)
             annual_dollars *= 1_000_000 if 0 < annual_dollars < 1_000_000 else 1
+            pay_before = max([float(r.get("salary") or 0.0) for r in (current_contract or {}).get("seasons") or []
+                              if str(r.get("season") or "") <= str(offer.get("start_season") or "")] or [0.0])
+            age_before = float(player.get("display_age", player.get("age")) or 27.0)
+            annual_dollars = max(annual_dollars, pay_before * (0.95 if age_before < 31 else 0.80))
+            from .contract_terms import deal_kind
             shape = ai_structure(annual_dollars, int(offer.get("years") or 1), player_id=str(player_id),
-                                 team_id=str(team_id), season=f"ext:{through_date[:4]}")
+                                 team_id=str(team_id), season=f"ext:{through_date[:4]}",
+                                 kind=deal_kind(None, annual_dollars, extension=True))
             # The negotiated salary stays the average: a rising deal starts lower, a declining one higher.
             from .contract_terms import multipliers, path_rate
             steps = multipliers(int(offer.get("years") or 1), path_rate(shape["path"], EXTENSION_MAX_RAISE))
@@ -6781,9 +6806,20 @@ def process_ai_extensions(
                                if str(r.get("season") or "") <= str(offer.get("start_season") or "")] or [0.0])
             age_now = float(player.get("display_age", player.get("age")) or 27.0)
             average = first * sum(steps) / len(steps)
-            if current_pay and average < current_pay * (0.95 if age_now < 31 else 0.80):
-                processed.add(key)
-                continue
+            bar = current_pay * (0.95 if age_now < 31 else 0.80)
+            if current_pay and average < bar:
+                # A team that wants to keep him meets that bar when it is within what he is really worth: the contract
+                # model prices players under contract about 1.45x below their real deals (Trae Young $38.6M against a
+                # real $53.0M, Austin Reaves $31.8M against $46.25M: TRADE-VOLUME-2), so a bar up to 1.45x his model
+                # price is still a fair price. Above that he waits for free agency.
+                worth = float(candidate.get("projected_aav") or 0.0) or float(candidate.get("projected_aav_millions") or 0.0) * 1e6
+                if bar > AI_EXTENSION_MODEL_UNDERPRICE * worth:
+                    processed.add(key)
+                    continue
+                first = bar * len(steps) / sum(steps)
+                if limit and first > float(limit) + 1.0:
+                    processed.add(key)
+                    continue
             offer = {**offer, "annual_salary": round(first, 2), "salary_path": shape["path"], "option": shape["option"],
                      "max_raise": EXTENSION_MAX_RAISE}
             offer = merge_extension_offer_with_existing_contract(offer, negotiation)
@@ -10404,9 +10440,10 @@ def ai_re_signing_contract_terms(save: dict[str, Any], player: dict[str, Any], n
     if (player.get("_bird") or {}).get("level") == "early":
         years = max(2, years)
     # CONTRACT-TERMS: the deal's shape (salary path, final-season option) at the real shares for its salary band.
-    from .contract_terms import ai_structure, apply_option, path_rate
+    from .contract_terms import ai_structure, apply_option, deal_kind, path_rate
     shape = ai_structure(float(salary), years, player_id=str(player.get("id")), team_id=str(player.get("team_id") or ""),
-                         season=next_season, bird_level=(player.get("_bird") or {}).get("level"))
+                         season=next_season, bird_level=(player.get("_bird") or {}).get("level"),
+                         kind=deal_kind("bird", float(salary)))
     raise_rate = path_rate(shape["path"], raise_rate)
     seasons = [
         {
