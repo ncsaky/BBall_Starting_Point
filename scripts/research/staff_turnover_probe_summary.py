@@ -18,6 +18,10 @@ def summarize(first: dict, following: dict, season: str) -> dict:
         return old[team, role]["person_id"] != new[team, role]["person_id"]
 
     coach_changed = {team for team in teams if changed(team, "head_coach")}
+    expiring_neutral = [
+        (team, slot) for team in teams for slot in COORDINATOR_SLOTS
+        if old[team, slot].get("starting_ratings") == "neutral" and old[team, slot].get("years_remaining") == 1
+    ]
     head_fires = [
         row for row in following["firings"]
         if row["season"] == season and row["slot"] == "head_coach" and row["team_id"] in teams
@@ -46,6 +50,10 @@ def summarize(first: dict, following: dict, season: str) -> dict:
         "head_changed_opening_to_opening": len(coach_changed),
         "head_firings": head_fires,
         "coordinators_changed": sum(changed(team, slot) for team in teams for slot in COORDINATOR_SLOTS),
+        "expiring_neutral_coordinators": {
+            "cases": len(expiring_neutral),
+            "kept": sum(not changed(team, slot) for team, slot in expiring_neutral),
+        },
         "returning_coach_bench": bench(teams - coach_changed),
         "new_coach_bench": bench(coach_changed),
         "support_departures_by_role": {

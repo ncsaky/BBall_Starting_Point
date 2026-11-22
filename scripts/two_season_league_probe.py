@@ -118,6 +118,8 @@ def record_staff_snapshot(out: Path, save: dict) -> None:
             {
                 "team_id": slot["team_id"], "slot": slot["slot"], "name": slot["name"],
                 "person_id": staff_person_id(slot), "interim": is_interim_staff(slot),
+                "starting_ratings": slot.get("starting_ratings"),
+                "years_remaining": (slot.get("contract") or {}).get("years_remaining"),
             }
             for slot in save.get("staff_slots", [])
         ],
