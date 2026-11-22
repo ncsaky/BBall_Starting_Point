@@ -15,3 +15,7 @@ The first build contains stints, first rest and return, minutes by quarter, clos
 ### Game-state checkpoint
 
 Added foul trouble around the actual whistle and permanent fourth-quarter starter exits, with lead, deficit and clock kept separate. A second foul in the first quarter and a third before halftime show a substantial jump in benching. The data include the chance of an immediate exit, bench time if the player returns, and no-return cases. Box-score matching recovers 39 playoff games by matching the exact score and teams one date later.
+
+### Timeout checkpoint
+
+Measured roughly 5.5 logged timeouts per team in a regular-season game. About one in five scoreless runs drew an immediate timeout when the opponent first reached six, eight or ten points. The next scorer was about as likely to stop the run in the games where a timeout was called as in those where play continued. This is a comparison of observed decisions and is affected by when coaches choose to call timeouts.

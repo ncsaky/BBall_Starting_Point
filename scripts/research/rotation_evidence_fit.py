@@ -472,6 +472,115 @@ def collect_blowouts(evidence, game, team, starters, spells, foul_events):
                 evidence.fit(game, "Q4_permanent_exit_next_minute", group, pulled)
 
 
+def opponent(game, team):
+    return game.away if team == game.home else game.home
+
+
+def team_margin(game, team, event):
+    return event.home - event.away if team == game.home else event.away - event.home
+
+
+def timeout_types(game):
+    """Flag likely mandatory entries when an unfilled slot reaches its clock window."""
+    types = {}
+    for q, rows in groupby(enumerate(game.events), key=lambda row: row[1].period):
+        prior = []
+        for index, event in rows:
+            if event.kind != 9 or event.team not in game.teams:
+                continue
+            left = period_end(q) - event.t
+            first_due = not prior and event.team == game.home and 375 <= left <= 419
+            second_due = len(prior) == 1 and event.team != prior[0] and 135 <= left <= 179
+            types[index] = ("challenge" if event.subtype == 7 else "possible_mandatory"
+                            if q <= 4 and (first_due or second_due) else "other_regular")
+            prior.append(event.team)
+    return types
+
+
+def scoring_bursts(game):
+    """Collapse scoring at the same clock by the same team, including free-throw trips."""
+    bursts = []
+    for index, event in enumerate(game.events):
+        if event.kind not in {1, 3} or event.shot_pts not in {1, 2, 3} or event.team not in game.teams:
+            continue
+        if bursts:
+            first, last, pts = bursts[-1]
+            previous = game.events[last]
+            if (event.period, event.t, event.team) == (previous.period, previous.t, previous.team):
+                bursts[-1] = (first, index, pts + event.shot_pts)
+                continue
+        bursts.append((index, index, event.shot_pts))
+    return bursts
+
+
+def response_timeout(game, end_index, defending, types):
+    scored = game.events[end_index]
+    for j in range(end_index + 1, len(game.events)):
+        current = game.events[j]
+        if current.period != scored.period or current.t - scored.t > 10:
+            break
+        if j in types and current.team == defending and types[j] != "challenge":
+            return types[j]
+        if current.kind in {1, 2, 3, 5, 6, 10, 13}:
+            break
+    return None
+
+
+def collect_timeouts(evidence, game):
+    add = lambda metric, group, value: evidence.add(game, metric, group, value)
+    timeouts = timeout_types(game)
+    for team in game.teams:
+        own = [(game.events[index], kind) for index, kind in timeouts.items()
+               if game.events[index].team == team]
+        add("timeouts_per_team_game", "all_logged", len(own))
+        for kind in ("challenge", "possible_mandatory", "other_regular"):
+            add("timeouts_per_team_game", kind, sum(group == kind for _, group in own))
+        for period in range(1, game.events[-1].period + 1):
+            label = f"Q{period}" if period <= 4 else "OT"
+            add("timeouts_per_team_period", label, sum(event.period == period for event, _ in own))
+            if period < 4:
+                continue
+            late = [(event, kind) for event, kind in own if event.period == period
+                    and period_end(period) - event.t <= 120]
+            add("timeouts_per_team_in_last_2m", label, len(late))
+            for event, kind in late:
+                margin = team_margin(game, team, event)
+                state = "ahead" if margin > 0 else "behind" if margin < 0 else "tied"
+                add("late_timeout_seconds_left", f"{label}|{state}", period_end(period) - event.t)
+
+    previous = None
+    run = 0
+    bursts = scoring_bursts(game)
+    for i, (_, end, pts) in enumerate(bursts):
+        scored = game.events[end]
+        defending = opponent(game, scored.team)
+        if previous != (scored.period, scored.team):
+            run = 0
+        previous = scored.period, scored.team
+        after = run + pts
+        response = response_timeout(game, end, defending, timeouts)
+        band = "0_5" if after < 6 else "6_7" if after < 8 else "8_9" if after < 10 else "10_plus"
+        add("timeout_after_scoring_burst", band, response is not None)
+        if game.phase == "regular":
+            evidence.fit(game, "timeout_after_scoring_burst", band, response is not None)
+
+        for threshold in (6, 8, 10):
+            if not run < threshold <= after:
+                continue
+            label = str(threshold)
+            add("timeout_at_run_first_crossing", label, response is not None)
+            add("timeout_at_run_first_crossing_excluding_possible_mandatory", label,
+                response == "other_regular")
+            if threshold == 8:
+                evidence.team(game, defending, "timeout_at_8_run_first_crossing", response is not None)
+            if i + 1 < len(bursts):
+                next_score = game.events[bursts[i + 1][1]]
+                if next_score.period == scored.period:
+                    add("next_score_stops_run", f"{label}|{response or 'no_timeout'}",
+                        next_score.team == defending)
+        run = after
+
+
 def collect_games(connection, cache):
     evidence = Evidence()
     coverage = {}
@@ -494,6 +603,7 @@ def collect_games(connection, cache):
                     count[f"excluded_{game.id}"] += 1
                     continue
                 count["analyzed_games"] += 1
+                collect_timeouts(evidence, game)
                 for event in game.events:
                     for field in (event.player, event.second, event.third):
                         pid = player_id(field)
