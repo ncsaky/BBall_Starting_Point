@@ -78,6 +78,43 @@ class FeatureMemoTests(unittest.TestCase):
         self.assertIs(sim.player_feature_vector(league, league["players"][1], include_spatial=False), first)
 
 
+class SpatialSignatureMemoTests(unittest.TestCase):
+    def _signature(self, league, player):
+        """The profile's cache key computed the long way (memo cleared first)."""
+        spatial._SIGNATURE_BY_INPUTS.clear()
+        profile = spatial.player_spatial_profile(dict(league), player)
+        return profile["input_signature"]
+
+    def test_hits_return_the_profile_the_signature_path_returns(self):
+        rng = random.Random(4)
+        for meta in ({}, {"offense_model_version": 1}):
+            base = _league(rng)
+            base["meta"].update(meta)
+            for player in base["players"]:
+                first = spatial.player_spatial_profile(base, player)
+                again = dict(base, players=[dict(p) for p in base["players"]])
+                twin = next(p for p in again["players"] if p["id"] == player["id"])
+                self.assertIs(spatial.player_spatial_profile(again, twin), first)
+                self.assertEqual(first["input_signature"], self._signature(again, twin))
+
+    def test_input_changes_change_the_profile(self):
+        rng = random.Random(8)
+        base = _league(rng)
+        base["meta"]["offense_model_version"] = 1
+        player = base["players"][0]
+        reference = spatial.player_spatial_profile(base, player)
+        changed = [
+            dict(base, players=[dict(player, _save_stats={"games": 9, "minutes": 300.0, "fga": 80, "fg3a": 30})] + base["players"][1:]),
+            dict(base, traits=[dict(t, value=t["value"] + 5) if t["player_id"] == player["id"] else t for t in base["traits"]]),
+            dict(base, players=[dict(player, height_inches=88)] + base["players"][1:]),
+        ]
+        for league in changed:
+            who = league["players"][0]
+            profile = spatial.player_spatial_profile(dict(league), who)
+            self.assertNotEqual(profile["input_signature"], reference["input_signature"])
+            self.assertEqual(profile["input_signature"], self._signature(league, who))
+
+
 class ZoneGridTests(unittest.TestCase):
     def test_zone_grids_and_matchup_match_the_full_profile(self):
         rng = random.Random(21)

@@ -140,6 +140,15 @@ def _scrub(value):
     return value
 
 
+def _warm(canonical: dict, save_path: Path) -> None:
+    """MONTH_SPEED_WARM=1: build the save's league once, untimed and unsaved, before the timed action. The GUI's
+    server has already done this (the dashboard) when the user clicks, so module-level caches are warm."""
+    if os.environ.get("MONTH_SPEED_WARM") != "1":
+        return
+    from nba_gm_data.save import canonical_with_save, ensure_league_save_defaults, load_save
+    canonical_with_save(canonical, ensure_league_save_defaults(load_save(save_path), canonical))
+
+
 def run(names: list[str], label: str, profile: bool) -> None:
     canonical = _canonical()
     for name in names:
@@ -151,6 +160,7 @@ def run(names: list[str], label: str, profile: bool) -> None:
         for path in _save_files(OUT / "seeds" / name):
             shutil.copy2(path, work / path.name)
         save_path = work / "month.json"
+        _warm(canonical, save_path)
         results = []
         profiler = None
         if profile:
@@ -361,6 +371,7 @@ def season_step(model: str, index: int, label: str, profile: bool) -> None:
     # compared between engines. Harness only.
     from nba_gm_data import save as save_module
     save_module.lottery_seed = lambda seed=None: int(seed) if seed is not None else 20270622
+    _warm(canonical, save_path)
     profiler = None
     if profile:
         import cProfile

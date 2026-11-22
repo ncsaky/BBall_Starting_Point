@@ -35,7 +35,24 @@ def first_player_row(canonical, rows, player_id):
         found = forecast.first_row(rows, player_id)
         if found is not _NOT_INDEXED:
             return found
+    indexed = canonical.get('_first_row_index') if hasattr(canonical, 'get') else None
+    if indexed is not None:
+        entry = indexed.get(id(rows))
+        if entry is not None and entry[0] is rows:
+            return entry[1].get(player_id)
     return next((row for row in rows if row.get('player_id') == player_id), None)
+
+
+def first_row_index(*lists):
+    """For a private trial view's ``_first_row_index``: each list's first row per player (MONTH-SPEED-2). Only for
+    lists nobody edits while the view is in use."""
+    out = {}
+    for rows in lists:
+        first = {}
+        for row in rows:
+            first.setdefault(row.get('player_id'), row)
+        out[id(rows)] = (rows, first)
+    return out
 
 
 class ForecastSnapshot:
