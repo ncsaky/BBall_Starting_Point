@@ -1611,6 +1611,9 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
 
     ensure_generated_player_health(canonical, save)
     apply_effective_player_ages(canonical, save)
+    # Made-up players' faces show the career stage for their current age (display only; faces.py).
+    from .faces import stage_player_headshots
+    stage_player_headshots(canonical.get("players", []))
     for player in canonical.get("players", []):
         player["_active_season"] = active_season
     inactive_player_ids = set(save.get("retired_player_ids") or [])

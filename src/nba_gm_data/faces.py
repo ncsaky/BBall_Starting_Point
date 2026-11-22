@@ -1,16 +1,24 @@
 """Faces for people shown in the game.
 
-Every face in the game is a photo of a real human.
 Real people (the real head coaches, real draft prospects) use their own public photo when one was found
-(gui/assets/headshots/real/, listed with sources in its manifest.json; scripts/fetch_real_headshots.py).
-Made-up people get a photo from the stock library (gui/assets/headshots/stock/, scripts/build_stock_faces.py):
-openly licensed photos of real, non-famous adults (CC0, public domain, CC BY, CC BY-SA), each credited in
-stock/credits.json and in the game's Photo credits view. Every stock photo is tagged with one gender (checked by
-eye), and a made-up staff member's name is drawn from the same gender's name list (staff_names.py), so name and
-face always agree.
+(gui/assets/headshots/real/, listed with sources in its manifest.json; scripts/fetch_real_headshots.py); real NBA
+players keep their NBA headshots.
+Made-up people (staff, draft prospects and the players they become) get, in order of preference:
+  1. a generated face (gui/assets/headshots/generated/, scripts/build_generated_faces.py): an AI-generated portrait of
+     a fictional person (no real person is depicted), made with OpenAI's image tool, with images at several ages;
+  2. once every generated face of their gender and kind is in use, a stock photo (gui/assets/headshots/stock/,
+     scripts/build_stock_faces.py): openly licensed photos of real, non-famous adults, each credited in
+     stock/credits.json and in the game's Photo credits view.
+Every face is tagged with one gender, and a made-up staff member's name is drawn from the same gender's name list
+(staff_names.py), so name and face always agree.
 
-A face is a library id such as "staff-f/0042". Within a league, faces are handed out so that no two staff members
-share one while unused faces remain, and no two prospects in a draft class share one.
+A face is a library id such as "gen-staff-f/0004" (generated) or "staff-f/0042" (stock). Within a league, faces are
+handed out so that no two staff members share one while unused faces remain, and no two prospects in a draft class
+share one. Faces never draw from a game random stream: picks come from stable hashes of the person's key.
+
+Faces age: a face may hold several images by age ("stages"), and every display shows the stage for the person's
+current age (staff when their faces are ensured, players when the save's ages are applied: save.py
+apply_effective_player_ages, prospects when shown).
 """
 
 from __future__ import annotations
@@ -25,10 +33,15 @@ from typing import Any, Iterable
 from . import staff_names
 from .utils import normalize_name
 
-# The stock photo library (gui/assets/headshots/<LIBRARY>/<group>/<NNNN>.<ext>, manifest.json, credits.json).
-LIBRARY = "stock"
+# The face libraries (gui/assets/headshots/<library>/manifest.json), in order of preference for made-up people.
+LIBRARY = "stock"  # openly licensed photos of real, non-famous adults (one stage each)
+GENERATED = "generated"  # AI-generated fictional people, several stages by age ("gen-" group prefix)
+LIBRARIES = (GENERATED, LIBRARY)
 ASSETS = Path(__file__).resolve().parent / "gui" / "assets" / "headshots"
 URL_ROOT = "/assets/headshots"
+# Groups to draw from for each kind of made-up person, generated first.
+STAFF_GROUPS = {"male": ("gen-staff-m", "staff-m"), "female": ("gen-staff-f", "staff-f")}
+PROSPECT_GROUPS = ("gen-player-m", "prospect-m")
 
 # Share of women among made-up staff, by role. NBA benches are still mostly men (women hold roughly one in
 # twenty assistant-coach jobs), with more women in player development, scouting and analytics, and the most in
@@ -50,12 +63,39 @@ def _stable_int(text: str) -> int:
 
 
 @lru_cache(maxsize=4)
-def library_manifest(library: str = LIBRARY) -> dict[str, Any]:
-    path = ASSETS / library / "manifest.json"
+def _read_manifest(library: str) -> dict[str, Any]:
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        return json.loads((ASSETS / library / "manifest.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {"groups": {}}
+
+
+@lru_cache(maxsize=4)
+def library_manifest(library: str | None = None) -> dict[str, Any]:
+    """One library's manifest, or (no library given) every library merged: groups and faces of all of them (their
+    ids never collide: generated groups carry a "gen-" prefix)."""
+    if library:
+        return _read_manifest(library)
+    merged: dict[str, Any] = {"ext": _read_manifest(LIBRARY).get("ext", "avif"), "groups": {}, "faces": {}}
+    for name in reversed(LIBRARIES):
+        manifest = _read_manifest(name)
+        merged["groups"].update({group: {**info, "library": name} for group, info in (manifest.get("groups") or {}).items()})
+        merged["faces"].update(manifest.get("faces") or {})
+    return merged
+
+
+@lru_cache(maxsize=16)
+def group_faces(group: str) -> tuple[str, ...]:
+    """The face ids of one group, in id order."""
+    ids = sorted(face_id for face_id in (library_manifest().get("faces") or {}) if face_id.split("/")[0] == group)
+    if not ids:  # a library without per-face entries: <group>/0001 .. <group>/<count>
+        count = int((library_manifest().get("groups", {}).get(group) or {}).get("count") or 0)
+        ids = [f"{group}/{index:04d}" for index in range(1, count + 1)]
+    return tuple(ids)
+
+
+def is_generated(face_id: str | None) -> bool:
+    return str(face_id or "").startswith("gen-")
 
 
 @lru_cache(maxsize=1)
@@ -73,18 +113,18 @@ def real_manifest() -> dict[str, Any]:
 #                                                    {"min_age": 26, "file": "/assets/.../0042-b.avif"}]}
 # The picture shown is the last stage whose min_age is at or below the person's current age. A single photo is a
 # face with one stage (min_age 0). A face missing from manifest["faces"] is one stage at <library>/<id>.<ext>.
-def face_entry(face_id: str | None, library: str = LIBRARY) -> dict[str, Any] | None:
+def face_entry(face_id: str | None, library: str | None = None) -> dict[str, Any] | None:
     return (library_manifest(library).get("faces") or {}).get(str(face_id or ""))
 
 
-def face_stages(face_id: str | None, library: str = LIBRARY) -> list[dict[str, Any]]:
+def face_stages(face_id: str | None, library: str | None = None) -> list[dict[str, Any]]:
     if not face_id:
         return []
     entry = face_entry(face_id, library) or {}
     stages = [stage for stage in entry.get("stages") or [] if stage.get("file")]
     if not stages:
         ext = library_manifest(library).get("ext", "avif")
-        stages = [{"min_age": 0, "file": f"{URL_ROOT}/{library}/{face_id}.{ext}"}]
+        stages = [{"min_age": 0, "file": f"{URL_ROOT}/{library or LIBRARY}/{face_id}.{ext}"}]
     return sorted(stages, key=lambda stage: float(stage.get("min_age") or 0))
 
 
@@ -103,32 +143,35 @@ def stage_file(stages: list[dict[str, Any]], age: Any = None) -> str | None:
     return chosen["file"]
 
 
-def face_url(face_id: str | None, library: str = LIBRARY, age: Any = None) -> str | None:
+def face_url(face_id: str | None, library: str | None = None, age: Any = None) -> str | None:
     return stage_file(face_stages(face_id, library), age)
 
 
 @lru_cache(maxsize=4)
-def _stage_files(library: str = LIBRARY) -> dict[str, str]:
+def _stage_files(library: str | None = None) -> dict[str, str]:
     return {stage["file"]: face_id for face_id, entry in (library_manifest(library).get("faces") or {}).items()
             for stage in entry.get("stages") or [] if stage.get("file")}
 
 
-def face_id_from_url(url: str | None, library: str = LIBRARY) -> str | None:
+def face_id_from_url(url: str | None, library: str | None = None) -> str | None:
     """The library face a stored picture URL belongs to (any of its stages), or None for real photos."""
     text = str(url or "")
     if text in _stage_files(library):
         return _stage_files(library)[text]
-    marker = f"{URL_ROOT}/{library}/"
+    marker = f"{URL_ROOT}/{library or LIBRARY}/"
     return text[len(marker):].rsplit(".", 1)[0] if text.startswith(marker) else None
 
 
-def stage_url(url: str | None, age: Any, library: str = LIBRARY) -> str | None:
-    """A stored picture URL moved to the stage that fits the person's current age (real photos unchanged)."""
+def stage_url(url: str | None, age: Any, library: str | None = None) -> str | None:
+    """A stored picture URL moved to the stage that fits the person's current age (real photos and NBA headshots
+    unchanged)."""
+    if not str(url or "").startswith(URL_ROOT):
+        return url
     face_id = face_id_from_url(url, library)
     return face_url(face_id, library, age) if face_id and valid_face(face_id, library) else url
 
 
-def face_gender(face_id: str | None, library: str = LIBRARY) -> str | None:
+def face_gender(face_id: str | None, library: str | None = None) -> str | None:
     entry = face_entry(face_id, library)
     if entry and entry.get("gender"):
         return entry["gender"]
@@ -136,8 +179,8 @@ def face_gender(face_id: str | None, library: str = LIBRARY) -> str | None:
     return (library_manifest(library).get("groups", {}).get(group) or {}).get("gender")
 
 
-def valid_face(face_id: str | None, library: str = LIBRARY) -> bool:
-    """A face id that exists in the current library (older saves may hold ids from a retired library)."""
+def valid_face(face_id: str | None, library: str | None = None) -> bool:
+    """A face id that exists in a current library (older saves may hold ids from a retired library)."""
     if face_entry(face_id, library):
         return True
     group, _, index = str(face_id or "").partition("/")
@@ -145,10 +188,13 @@ def valid_face(face_id: str | None, library: str = LIBRARY) -> bool:
     return index.isdigit() and 1 <= int(index) <= int(info.get("count") or 0)
 
 
-def is_current_url(url: str | None, library: str = LIBRARY) -> bool:
-    """A picture URL that the current game ships: a real photo or a face of the current library."""
+def is_current_url(url: str | None, library: str | None = None) -> bool:
+    """A picture URL that the current game ships: a real photo or an image of a current library's face. (The
+    retired cartoon library of older saves also lived under generated/: only listed stage images count there.)"""
     text = str(url or "")
-    return text.startswith(f"{URL_ROOT}/real/") or text.startswith(f"{URL_ROOT}/{library}/")
+    if text.startswith(f"{URL_ROOT}/real/") or text in _stage_files(library):
+        return True
+    return LIBRARY in ((library,) if library else LIBRARIES) and text.startswith(f"{URL_ROOT}/{LIBRARY}/")
 
 
 def senior_band(age: Any) -> bool | None:
@@ -160,30 +206,51 @@ def senior_band(age: Any) -> bool | None:
     return True if age >= SENIOR_AGE else False if age <= YOUNG_AGE else None
 
 
-def pick_face(group: str, key: str, used: set[str] | None = None, *, senior: bool | None = None,
-              library: str = LIBRARY) -> str | None:
-    """The face for one person: a stable start from his or her key, then the next unused face of the group
-    (matching the age band first). Reuses a face only once every face of the group is taken."""
-    info = library_manifest(library).get("groups", {}).get(group)
-    if not info or not info.get("count"):
+def _free_face(group: str, key: str, used: set[str], senior: bool | None) -> str | None:
+    """The first unused face of a group from a stable start (matching the age band first), or None if all are used.
+    Generated faces age with the person, so they have no age band."""
+    ids = group_faces(group)
+    if not ids:
         return None
-    count = int(info["count"])
+    info = library_manifest().get("groups", {}).get(group) or {}
     seniors = set(info.get("senior") or [])
-    used = used or set()
-    start = _stable_int(f"{group}:{key}") % count
-    for match_band in (True, False):
-        for step in range(count):
-            index = (start + step) % count + 1
-            face_id = f"{group}/{index:04d}"
-            if face_id in used or (match_band and senior is not None and (index in seniors) != senior):
+    start = _stable_int(f"{group}:{key}") % len(ids)
+    bands = (True, False) if senior is not None and seniors else (False,)
+    for match_band in bands:
+        for step in range(len(ids)):
+            face_id = ids[(start + step) % len(ids)]
+            if face_id in used or (match_band and (int(face_id.split("/")[1]) in seniors) != senior):
                 continue
             return face_id
-    return f"{group}/{start + 1:04d}"
+    return None
+
+
+def pick_face(group: str | Iterable[str], key: str, used: set[str] | None = None, *,
+              senior: bool | None = None) -> str | None:
+    """The face for one person from one group or from groups in order of preference (generated first, then stock):
+    a stable start from his or her key, then the next unused face. Reuses a face only once every face of every
+    group is taken (then the first group's stable choice)."""
+    groups = (group,) if isinstance(group, str) else tuple(group)
+    used = used or set()
+    for name in groups:
+        face_id = _free_face(name, key, used, None if is_generated(f"{name}/") else senior)
+        if face_id:
+            return face_id
+    for name in groups:
+        ids = group_faces(name)
+        if ids:
+            return ids[_stable_int(f"{name}:{key}") % len(ids)]
+    return None
 
 
 # ------------------------------------------------------------------------------------------------ staff
-def staff_group(gender: str) -> str:
-    return "staff-f" if gender == "female" else "staff-m"
+def staff_groups(gender: str) -> tuple[str, ...]:
+    """The face groups for made-up staff of this gender, generated faces first."""
+    return STAFF_GROUPS["female" if gender == "female" else "male"]
+
+
+def face_source(face_id: str | None) -> str:
+    return "generated_face" if is_generated(face_id) else "stock_photo"
 
 
 @lru_cache(maxsize=1)
@@ -219,7 +286,7 @@ def is_real_staff(staff: dict[str, Any]) -> bool:
 
 def apply_staff_face(staff: dict[str, Any], used: set[str] | None = None) -> None:
     """Give one staff member a gender and a face if missing: the real photo for a real coach, else a library face
-    of the staff member's gender (and age band)."""
+    of the staff member's gender: a generated face while one is free, else a stock photo (matching the age band)."""
     if is_real_staff(staff):
         staff["real_person"] = True
         entry = real_coach_entry(staff.get("name")) or {}
@@ -231,12 +298,11 @@ def apply_staff_face(staff: dict[str, Any], used: set[str] | None = None) -> Non
             return
     if not staff.get("gender"):
         staff["gender"] = staff_names.first_name_gender(staff.get("name")) or "male"
-    group = staff_group(staff["gender"])
     if not valid_face(staff.get("face_id")) or face_gender(staff["face_id"]) != staff["gender"]:
         key = str(staff.get("market_source_id") or staff.get("id") or staff.get("name"))
-        staff["face_id"] = pick_face(group, key, used, senior=senior_band(staff.get("age")))
+        staff["face_id"] = pick_face(staff_groups(staff["gender"]), key, used, senior=senior_band(staff.get("age")))
     staff["headshot_url"] = face_url(staff["face_id"], age=staff.get("age"))
-    staff["headshot_source"] = "stock_photo"
+    staff["headshot_source"] = face_source(staff["face_id"])
 
 
 def has_current_face(person: dict[str, Any]) -> bool:
@@ -285,12 +351,16 @@ def ensure_staff_faces(people: Iterable[dict[str, Any]], held: Iterable[dict[str
 
 
 def ensure_save_staff_faces(save: dict[str, Any]) -> None:
-    """Every staff member stored in the save (employed, former, market pool) has a gender and a face."""
-    people = save_staff_people(save)
+    """Every staff member stored in the save (employed, former, market pool) has a gender and a face.
+    Employed staff are faced first: the user's own staff, then the rest of the league in a stable shuffled order, so
+    the generated faces (preferred while free) spread across teams instead of filling the first teams listed."""
     for staff in save.get("staff_slots", []):
         if staff.get("status") == REAL_COACH_STATUS:
             staff["real_person"] = True
-    ensure_staff_faces(people)
+    user_team = str((save.get("meta") or {}).get("user_team_id") or "")
+    employed = sorted(save.get("staff_slots", []), key=lambda staff: (
+        str(staff.get("team_id") or "") != user_team, _stable_int(f"face_order:{staff.get('id') or staff.get('name')}")))
+    ensure_staff_faces([*employed, *save.get("former_staff", []), *(save.get("staff_market_pool") or [])])
 
 
 # ------------------------------------------------------------------------------------------------ prospects
@@ -313,7 +383,8 @@ def real_prospect_photo(real_id: str | None = None, name: str | None = None) -> 
 
 
 def prospect_face_id(key: str, used: set[str] | None = None) -> str | None:
-    return pick_face("prospect-m", key, used)
+    """A made-up prospect's face: a generated player face while one is free in his class, else a stock photo."""
+    return pick_face(PROSPECT_GROUPS, key, used)
 
 
 def prospect_headshot_url(prospect: dict[str, Any], used: set[str] | None = None, real_id: str | None = None) -> str | None:
@@ -332,7 +403,7 @@ def _face_id_of(url: str | None) -> str | None:
 
 def assign_class_faces(prospects: list[Any], real_ids: dict[str, str] | None = None) -> list[Any]:
     """Headshots for one draft class (DraftProspect records or dicts), in class order: real photos where found,
-    otherwise stock photos with no repeats inside the class."""
+    otherwise generated faces, then stock photos, with no face repeated inside the class."""
     from dataclasses import is_dataclass, replace
 
     real_ids = real_ids or {}
@@ -350,3 +421,13 @@ def assign_class_faces(prospects: list[Any], real_ids: dict[str, str] | None = N
             used.add(face_id)
         out.append(replace(prospect, headshot_url=url) if is_dataclass(prospect) else {**prospect, "headshot_url": url})
     return out
+
+
+# ------------------------------------------------------------------------------------------------ players
+def stage_player_headshots(players: Iterable[dict[str, Any]]) -> None:
+    """Made-up players drafted with a library face show the stage for their current age (rookie, prime, veteran,
+    late career). Real NBA players and real prospects keep their own photos. Display only: no game value reads it."""
+    for player in players:
+        url = player.get("headshot_url")
+        if url and str(url).startswith(URL_ROOT):
+            player["headshot_url"] = stage_url(url, player.get("age"))

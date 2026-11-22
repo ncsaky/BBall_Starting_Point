@@ -6,6 +6,259 @@ Current priority (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE now, ODDS-COA
 
 ---
 
+## Ready now (2026-11-22, later): STAFF-TURNOVER-FIT (fresh chat; code task with tests)
+
+### STAFF-TURNOVER-FIT: AI staff decisions follow the real turnover evidence
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task STAFF-TURNOVER-FIT (add a board row, "in progress
+(Codex)"). Read your own docs/agents/tasks/staff-turnover-evidence.md and data/research/staff_turnover_evidence.json,
+plus docs/agents/tasks/staff-life.md, docs/agents/tasks/neutral-coordinators.md and docs/agents/tasks/coaching-overhaul.md.
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_staff_fit -b codex/staff-turnover-fit HEAD
+Symlink .venv and the git-ignored data files the tests need from the main checkout (see how earlier worktrees did it:
+data/research/barttorvik/raw, data/research/bbi, universe_2026_27_offseason.sqlite, data/canonical/
+injury_player_evidence_v4.json, output/settlement-materialization-pass; then gunzip -kf
+data/canonical/player_inputs_2026_27.json.gz). Commit on that branch; never push, never commit to main.
+
+Goal: AI teams' staff decisions match your evidence. Known problem: AI teams replace most of the new neutral-rated
+coordinators each summer because they sit under the AI's keep threshold (68); your evidence says a bar near 60 fits.
+1. Find where AI teams keep, fire and hire head coaches, coordinators and other staff (staff.py, staff_lifecycle.py,
+   and their callers). List every threshold and rate.
+2. Change them to follow the evidence, citing it in comments: head-coach firings (about 2 in-season and 3 in the
+   summer per season, more likely when wins fall short of expectations), the coordinator keep bar, assistant turnover
+   under a returning vs a new head coach (about 1 vs 5-6), front-office firings if the game models them. Keep the
+   user's own team untouched (the user decides their own staff). Use separate random streams for new draws; say which
+   outcomes change.
+3. Measure over at least two simulated seasons with the existing staff or league probe tools (check
+   docs/agents/tasks/staff-life.md for how it was measured before). Heavy runs: one at a time with `nice -n 10`; if
+   the laptop is busy (`uptime` 1-minute load above 20), run them on the Azure worker instead:
+   .venv/bin/python scripts/azure_worker.py run --name staff-fit --dir <your worktree> --fetch <output path> -- env PYTHONPATH=src <command>
+   Compare firings, coordinator turnover and assistant changes per season with the evidence (before / after / real).
+4. Tests: update or add focused tests (staff lifecycle, coaching), run them and the core suite
+   (bash scripts/run_core_tests.sh). Both scorecards should be unchanged unless staff ratings feed games; if they do,
+   run scripts/calibration_report.py --games 1230 --mode replay-real-minutes and say so.
+Files you may touch: staff.py, staff_lifecycle.py and the staff-decision code they call, tests, research scripts,
+docs/agents/tasks/staff-turnover-fit.md (plain-language TL;DR first). Do not touch contract, ratings, development,
+Stage 2, sim.py or GUI files (other agents are working there). Commit after each step. Set the board row to "review"
+and stop.
+```
+
+---
+
+## Ready now (2026-11-22, later): INPUT-DATA-AUDIT (fresh chat; data audit, research only)
+
+### INPUT-DATA-AUDIT: find dead, duplicate and broken columns behind the 94 player inputs
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md (rule 1: ratings first; rule 2: keep all 94 inputs) and docs/agents/BOARD.md first. You own task
+INPUT-DATA-AUDIT (add a board row, "in progress (Codex)"). Background: a Claude agent fixing foul drawing and ball
+security found three data bugs by accident: a "drive foul rate" column that is an exact copy of another column, a
+contact-seeking column that is zero for every player in every season yet carried full weight, and a "Movement Distance
+Rating" that is zero for 96% of players but feeds the effort-allocation tendency. There are likely more.
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_audit -b codex/input-data-audit HEAD
+Symlink .venv and the git-ignored data/research/bbi/ files from the main checkout. Commit on that branch; never push,
+never commit to main. Research only: nothing under src/, gui/ or tests/ (write scripts under scripts/research/).
+
+Audit every source column that feeds the 94 inputs: the Basketball Index captures under data/research/bbi (see
+data/research/bbi/bbi_input_mapping.json for which columns feed which input), plus any other evidence files the input
+builder (scripts/build_player_inputs.py) reads. For each column and season report:
+1. Constant, all-zero, all-missing or mostly-zero/missing (>80%) columns.
+2. Exact or near duplicates (correlation > .98 with another column) and suspected unit or scale errors (values out of
+   the documented range, percent vs fraction, per-game vs per-100).
+3. Season-to-season stability (players with enough minutes in both seasons) - columns that barely repeat are weak
+   evidence; flag them with their repeatability.
+4. Columns whose direction looks reversed (e.g. a "good" metric that correlates negatively with the obvious real
+   outcome, like a shooting skill vs actual percentages).
+5. For each problem: which of the 94 inputs it feeds, its weight in the mapping, how many players it affects, and a
+   suggested fix (drop, replace with X, re-weight, check the capture). Do not apply fixes.
+Output: data/research/input_data_audit.json, scripts/research/input_data_audit.py, docs/agents/tasks/input-data-audit.md
+(plain-language TL;DR first, 5 lines; a ranked table of problems by impact; gaps). Save and commit after each part.
+Set the board row to "review" and stop.
+```
+
+---
+
+## Ready now (2026-11-22): STAFF-TURNOVER-EVIDENCE (fresh chat; research)
+
+### STAFF-TURNOVER-EVIDENCE: how real NBA coaching staffs change over time
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task STAFF-TURNOVER-EVIDENCE (add a board row, "in progress
+(Codex)"). Read docs/agents/tasks/staff-life.md, docs/agents/tasks/neutral-coordinators.md and
+docs/agents/tasks/coaching-overhaul.md (how the game hires, fires and grades head coaches, coordinators and other
+staff; a known problem: AI teams replace most neutral-rated coordinators because they fall below the AI's keep
+threshold of 68) and docs/agents/tasks/rotation-evidence.md (your format: fitted on some seasons, checked on held-out
+ones).
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_staff -b codex/staff-turnover-evidence HEAD
+Commit on that branch; never push, never commit to main. Research only: nothing under src/, gui/ or tests/.
+
+From public sources (Basketball Reference coach records, team and league releases, reputable coaching-carousel
+trackers; respect robots.txt and terms; paraphrase; record sources), for about 2010-2026:
+1. Head coaches: firings per season (in-season vs offseason), what predicts a firing (record vs expectations, years
+   in the job, new front office, playoff results), tenure length, interim coaches and how often interims keep the job,
+   where fired coaches go next (another head job, assistant, TV).
+2. Lead assistants and coordinators (offensive and defensive coordinators where teams name them, top assistants):
+   how many change per team per summer, how often a new head coach brings his own staff, how often assistants are
+   promoted to head coach elsewhere, typical tenure.
+3. Other staff the game models (player development, medical and performance, scouting) where any public data exists;
+   say clearly where none does.
+4. Front-office heads (general managers / presidents): firings per season and what predicts them.
+5. Simple rules the game can use: e.g. firing odds by win share vs expectation and tenure; how many assistants a new
+   head coach replaces; a sensible "keep" bar for an average coordinator. Fit on 2010-2022, check on 2023-2026, with
+   named examples.
+Output: data/research/staff_turnover_evidence.json, scripts/research/staff_turnover_fit.py,
+docs/agents/tasks/staff-turnover-evidence.md (plain-language TL;DR first, 5 lines; tables; named examples; gaps).
+Save and commit after each part. Set the board row to "review" and stop.
+```
+
+---
+
+## Ready now (2026-11-22, early): DEFENSIVE-SCHEME-EVIDENCE (fresh chat; research)
+
+### DEFENSIVE-SCHEME-EVIDENCE: how real NBA teams and coaches defend screens and switch
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task DEFENSIVE-SCHEME-EVIDENCE (add a board row, "in progress
+(Codex)"). Read docs/agents/tasks/s2-totals-matchups.md (the new possession engine; it has man-to-man matchups but no
+switching, no drop/hedge coverage and no double teams, because the game's coach inputs have no scheme habits) and
+docs/agents/tasks/rotation-evidence.md (your last task; same format: fitted on 2023-25, checked on 2025-26).
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_schemes -b codex/defensive-scheme-evidence HEAD
+Symlink .venv and the git-ignored data/research/bbi/ files from the main checkout (Basketball Index has defensive
+role and matchup data under data/research/bbi). Commit on that branch; never push, never commit to main. Research only:
+nothing under src/, gui/ or tests/.
+
+From public sources (NBA stats tracking and play type pages via public URLs, Basketball Index, team and coach
+coverage in reputable analysis; respect robots.txt, rate limits and terms; paraphrase; record sources), for 2023-24
+to 2025-26:
+1. Pick-and-roll coverage by team (and coach): drop, switch, hedge/show, blitz/trap, at-level, ice; how often each.
+   Where direct coverage data is missing, use proxies (switch rate from matchup data, big-man distance from the rim on
+   screens) and say so.
+2. Switching: share of screens switched by team; which player types get switched onto (guards onto bigs) and how
+   often teams hunt those mismatches on offense, and how efficient that is.
+3. Double teams and help: post-up double rate, rim help and how often help comes from the strong vs weak side, and
+   zone usage by team.
+4. Screens on offense: screens per 100 possessions by team and by player (screen assists exist in the game already),
+   handoffs, off-ball screens.
+5. How stable these are year to year for the same coach and team, and what they correlate with (roster size and
+   mobility of bigs, coach identity) - so the game can give each coach a scheme habit and each team a likely coverage.
+Fit simple rules where the data allow and check on 2025-26. Output: data/research/defensive_scheme_evidence.json,
+scripts/research/defensive_scheme_fit.py, docs/agents/tasks/defensive-scheme-evidence.md (plain-language TL;DR first,
+5 lines; tables; named examples; gaps). Save and commit after each part. Set the board row to "review" and stop.
+```
+
+---
+
+## Ready now (2026-11-21, late night): ROTATION-EVIDENCE (fresh chat; research)
+
+### ROTATION-EVIDENCE: how real NBA coaches run rotations and make in-game decisions
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task ROTATION-EVIDENCE (add a board row, "in progress
+(Codex)"). Read docs/agents/tasks/s2-totals-matchups.md (the new possession engine; its next piece is a proper coach:
+rotations and in-game decisions) and docs/agents/tasks/offseason-decisions-evidence.md (your format: rules fitted on
+some seasons, tested on held-out ones).
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_rotations -b codex/rotation-evidence HEAD
+Symlink .venv from the main checkout. Commit on that branch; never push, never commit to main. Research only: nothing
+under src/, gui/ or tests/.
+
+From public play-by-play for 2023-24 to 2025-26 (the NBA's own play-by-play and box score endpoints via public URLs, or
+pbpstats-style public data; respect robots.txt, rate limits and terms; record sources; check the repo's existing
+game logs under data/ first), measure:
+1. Stints: how long players stay in (median and spread) by role (starter, sixth man, bench, star), when starters first
+   sit (game clock), how long they rest, when they return, and how many players a team uses by game state.
+2. Minutes shape: starters' minutes by quarter; closing lineups (who is on the floor in the last 5 minutes of close
+   games vs the starting five); the share of the regular top-8 used in the playoffs.
+3. Game-state decisions: blowouts (when starters are pulled, by margin and time), foul trouble (when a player with 2
+   fouls in the first quarter, 3 in the first half, 4 or 5 sits, and for how long; stars vs others), fatigue and
+   back-to-backs.
+4. Timeouts: how often and when (after opponent runs of 6-0, 8-0, 10-0; end of game), and whether runs stop after them.
+5. End of game: fouling when behind (margin and seconds left), fouling up three, hack-a-player frequency,
+   two-for-one attempts.
+6. Coach differences: which of these vary most by coach (e.g. starters' minutes, rotation depth, foul-trouble
+   patience), with named examples.
+Fit simple rules where the data allow (e.g. "a starter with 2 fouls in the first quarter sits until about X") and
+check them on a held-out season. Output: data/research/rotation_evidence.json, scripts/research/rotation_evidence_fit.py,
+docs/agents/tasks/rotation-evidence.md (plain-language TL;DR first, 5 lines; tables; named examples; gaps).
+Save and commit after each part so a usage limit loses nothing. Set the board row to "review" and stop.
+```
+
+---
+
+## Ready now (2026-11-21, night): CONTRACT-STRUCTURE-EVIDENCE (fresh chat; research, no image tool)
+
+### CONTRACT-STRUCTURE-EVIDENCE: how real NBA contracts are shaped, and how options get decided
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task CONTRACT-STRUCTURE-EVIDENCE (add a board row, "in progress
+(Codex)"). Read docs/agents/tasks/fa-realism-research.md (your earlier CBA research; same citation style) and
+docs/agents/tasks/offseason-decisions-evidence.md (your format: rules fitted on some seasons, tested on held-out ones).
+A Claude agent (CONTRACT-TERMS) is adding salary paths (flat, rising, declining) and player or team options to the
+game's offers, and option decisions the user can see. It needs real rates to aim at.
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_contracts -b codex/contract-structure-evidence HEAD
+Commit on that branch; never push, never commit to main. Research only: nothing under src/, gui/ or tests/.
+
+From public sources (Basketball Reference contracts and transactions, team and league releases, Hoops Rumors option
+trackers and glossary, respect robots.txt and site terms; paraphrase), for contracts signed 2019-2026:
+1. Salary paths: share of contracts that are flat, rising (and by how much: 5%, 8%, other) or declining, by contract
+   kind (rookie scale, minimum, mid-level/exception, Bird re-signing, max, extension) and by player tier where possible.
+2. Options: share of contracts with a player option, a team option, an early termination option or none, by the same
+   kinds; which season the option sits in.
+3. Option decisions: for 2019-2026 player options, how often players opt in vs out, and what predicts it (age, the
+   option salary vs the player's market value or recent production, injury, team success); same for team options,
+   including rookie-scale third- and fourth-year options (rate exercised, by draft slot and early production).
+   Include the decision dates.
+4. Simple rules the game can use: e.g. "a player opts out when his expected market salary exceeds the option by X",
+   fitted on some seasons and checked on held-out ones, with named examples.
+Output: data/research/contract_structure_evidence.json, scripts/research/contract_structure_fit.py (if you fit
+anything), docs/agents/tasks/contract-structure-evidence.md (plain-language TL;DR first, 5 lines; tables; named
+examples; gaps). Save and commit after each part so a usage limit loses nothing. Set the board row to "review" and stop.
+```
+
+---
+
+## Ready now (2026-11-21, evening): HEADSHOT-GEN-LIBRARY batch 2 and later (fresh chat each; image generation)
+
+Batch 1 was approved (66 people, 222 portraits; the ages read clearly). Paste the batch 1 prompt below into a fresh
+chat with these changes at the top:
+
+```
+This is batch 2 of HEADSHOT-GEN-LIBRARY (batch 1 is merged; read docs/agents/tasks/headshot-gen-library.md and
+continue its numbering: players from player-m/0025, staff men from staff-m/0031, staff women from staff-f/0013).
+Reuse ../BBall_codex_headshots on branch codex/headshot-gen-library after: git fetch .. codex/immersive-franchise-journey
+&& git merge FETCH_HEAD. Order for this batch: 40 players (4 stages), then 10 staff women, then staff men if the plan
+still has room. Everything else exactly as the batch 1 prompt below: rules, fixes, outputs, manifest format (append to
+data/research/headshot_gen_library_manifest.json), contact sheet, report section "Batch 2". Board row: "in progress
+(Codex), batch 2", then "review (batch 2)".
+```
+For batch 3 and later, change the batch number, the starting IDs and the order (players first until about 200, then
+staff to about 120 men and 60 women).
+
+---
+
 ## Ready now (2026-11-21, evening): HEADSHOT-GEN-LIBRARY batch 1 (fresh chat; image generation)
 
 ### HEADSHOT-GEN-LIBRARY: the generated face library, batch 1
