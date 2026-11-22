@@ -1,5 +1,7 @@
 # RATINGS-AUDIT-GSW: is Lendeborg underrated, and what does it say about the league's ratings?
 
+Progress: 7/7 - report written, board row set to review
+
 _Status: **review**. Claude Opus agent, worktree branch `worktree-agent-ae9d0da15fccdd0ec`, 2026-11-22._
 
 **TL;DR**
@@ -143,7 +145,8 @@ Game rates lower than analysts:
 - Research script `scripts/research/ratings_audit_gsw.py` (team table, league comparison, age curve, track-record
   level, before/after, simulation minutes). Tests `tests/test_veteran_levels.py` (13).
 - **How many players moved:** 568 had inputs moved (500 by age, 68 by track record); 542 of 691 cards moved by
-  0.1+, 142 by 1.0+, largest 4.0 (the no-track-record guards). Rookies' inputs unchanged. No grade clipped (all
+  0.1+, 142 by 1.0+, largest 4.0 (the no-track-record guards). Other rookies' inputs unchanged (Lendeborg's moved
+  only through his new claims). No grade clipped (all
   grades stay strictly between 0 and 100). Solver: average miss 0.009 points of value; three track-record bigs
   (Dia, Aidoo, Stephens) stopped 0.2-0.4 short of their target after 12 rounds.
 
@@ -195,8 +198,13 @@ the track-record step and the Lendeborg claims do not touch it; the whole differ
 
   Spreads move slightly closer to the market; picking winners gets slightly worse (Brier +.001, log loss +.002).
   This is the expected cost of rating players for 2026-27 while replaying 2025-26 (see decision 5).
-- **Core tests** (`run_core_tests.sh`) and **focused tests** (`run_tests_parallel.py --workers 2 --match
-  "rating|input|estimator|analyst|evidence|rookie"`): see below.
+- **Core tests** (`run_core_tests.sh`): 341 tests pass; one module first errored only because a reference file lives
+  in the main checkout's `output/` (linked in and rerun: passes).
+- **Focused tests** (`run_tests_parallel.py --workers 2 --match "rating|input|estimator|analyst|evidence|rookie"`,
+  143 modules, 1,693 tests): one real failure, mine (a new claim paraphrase was over the 25-word limit; shortened, the
+  inputs rebuilt, values identical). Reference files from the main checkout's `output/` linked in for 5 modules: all
+  pass. Left: two `test_foundation` trade/valuation tests that fail the same way on the committed inputs (they
+  predate this task), and two Windows packaging tests that need a local startup video.
 
 ## 6. Decisions for you
 1. **Thin-sample players (Cryer's case).** Pull every player with under about 1,000 NBA minutes toward the real level
