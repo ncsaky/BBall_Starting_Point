@@ -248,9 +248,9 @@ def azure() -> list[str]:
         stop = datetime.fromisoformat(interval["stop"]) if interval.get("stop") else datetime.now(start.tzinfo)
         if start.strftime("%Y-%m") == month:
             hours += (stop - start).total_seconds() / 3600
-    on = bool(intervals) and not intervals[-1].get("stop")
-    state = f"ON since {intervals[-1]['start'][11:16]} UTC" if on else "off (not billing for the machine)"
-    return [f"Azure worker: {state} · this month {hours:.1f} machine-hours (about US${hours * 0.147:.2f})"]
+    running = sorted({i.get("vm", "bball-worker") for i in intervals if not i.get("stop")})
+    state = f"{len(running)} machine(s) on: {', '.join(running)}" if running else "all machines off (not billing)"
+    return [f"Azure workers: {state} · this month {hours:.1f} machine-hours (about US${hours * 0.147:.2f})"]
 
 
 # ---- board -----------------------------------------------------------------------------------------------------------
@@ -356,8 +356,13 @@ def azure_bars(procs) -> list[str]:
         if not cached or time.time() - cached[0] > 60:      # ask the cloud machine at most once a minute
             try:
                 cfg = json.loads((ROOT / "output" / "azure_worker_config.json").read_text())
+                host = cfg["host"]
+                for claim_file in glob.glob(str(ROOT / "output" / "azure_claims" / "*.json")):
+                    claim = json.loads(Path(claim_file).read_text())
+                    if claim.get("job") == name.group(1):
+                        host = claim.get("host") or host
                 tail = run(["ssh", "-i", str(Path(cfg["key"]).expanduser()), "-o", "ConnectTimeout=8", "-o",
-                            "BatchMode=yes", f"{cfg['user']}@{cfg['host']}", f"tail -n 40 ~/runs/{name.group(1)}/run.log"])
+                            "BatchMode=yes", f"{cfg['user']}@{host}", f"tail -n 40 ~/runs/{name.group(1)}/run.log"])
             except (OSError, ValueError, KeyError):
                 tail = ""
             dates = re.findall(r'"date":\s*"(\d{4}-\d{2}-\d{2})', tail) or re.findall(r'"to_date":\s*"(\d{4}-\d{2}-\d{2})', tail)
