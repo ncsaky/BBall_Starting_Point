@@ -1349,7 +1349,10 @@ def staff_turnover_recommendation(
         "slot": current["slot"],
         "role_label": ROLE_LABELS[current["slot"]],
         "current_staff": compact_staff(current),
+        "candidate": None,
+        "candidate_id": None,
         "current_grade": round(staff_grade(current), 2),
+        "candidate_grade": None,
         "upgrade": 0.0,
         "trigger_score": 100.0,
         "action": action,
@@ -1530,7 +1533,7 @@ def simulate_ai_staff_changes(
                 continue
 
             score, reasons = ai_staff_trigger_score(current, slot, state, team_pressure, underperforming, through_date)
-            support_signal = None if interim else staff_support_failure_signal(canonical, save, team_id, slot, seasonal_review)
+            support_signal = staff_support_failure_signal(canonical, save, team_id, slot, seasonal_review)
             if support_signal:
                 score += support_signal["score"]
                 reasons.append(support_signal["reason"])
