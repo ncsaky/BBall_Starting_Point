@@ -221,10 +221,186 @@ def head_coach_fit(rows):
     }
 
 
+def average(values):
+    return round(mean(values), 6) if values else None
+
+
+def assistant_stats(rows):
+    return {
+        "team_summers": len(rows),
+        "average_prior_staff": average([r["prior_count"] for r in rows]),
+        "average_departed_or_changed_role": average([r["departed"] for r in rows]),
+        "average_added": average([r["added"] for r in rows]),
+        "mean_team_departure_share": average([r["departure_share"] for r in rows]),
+        "at_least_one_left": bin_rate([r["departed"] > 0 for r in rows]),
+        "majority_of_old_staff_left": bin_rate([r["departure_share"] > 0.5 for r in rows]),
+        "whole_old_staff_left": bin_rate([r["departure_share"] == 1 for r in rows]),
+    }
+
+
+def compare_assistants(snapshots, head_rows):
+    teams = {(r["season"], r["team"]): r for r in snapshots}
+    if len(teams) != len(snapshots):
+        raise ValueError("Duplicate assistant snapshot")
+    groups = defaultdict(dict)
+    opening_heads = defaultdict(dict)
+    for row in snapshots:
+        year, team = row["season"], row["team"]
+        roster = {person_key(name): name for name in row["assistants"]}
+        if not roster or len(roster) != len(row["assistants"]):
+            raise ValueError(f"Empty roster or duplicate assistant for {team} {year}")
+        groups[year][team] = roster
+        opening_heads[year][person_key(row["head_coach"])] = team
+
+    past_season_stints = {
+        (row["season"], row["team"]): {person_key(c["coach"]) for c in row["coaches"]}
+        for row in head_rows
+    }
+    comparisons = []
+    coverage = defaultdict(dict)
+    promotions = []
+    support_pairs = defaultdict(list)
+    assistant_starts = []
+    for (year, team), current in teams.items():
+        coverage[year][team] = len(current["assistants"])
+        old = teams.get((year - 1, team))
+        if old is None:
+            continue
+        new_names = groups[year][team]
+        old_names = groups[year - 1][team]
+        new_head = person_key(current["head_coach"])
+        incoming_head = new_head != person_key(old["head_coach"])
+        left = old_names.keys() - new_names.keys()
+        added = new_names.keys() - old_names.keys()
+        prior_assistant_team = next(
+            (t for t, roster in groups[year - 1].items() if new_head in roster), None
+        )
+        if incoming_head and prior_assistant_team:
+            promotions.append({
+                "cycle_ending_with_summer": year - 1, "coach": current["head_coach"],
+                "from": prior_assistant_team, "to": team,
+                "already_took_over_destination_during_cycle": new_head in past_season_stints[year - 1, team],
+                "covered_previous_team_as_interim_during_cycle": (
+                    prior_assistant_team != team and new_head in past_season_stints[year - 1, prior_assistant_team]
+                ),
+            })
+        origin = opening_heads[year - 1].get(new_head) or prior_assistant_team
+        prior_colleagues = groups[year - 1].get(origin, {})
+        brought_colleagues = sorted(new_names[n] for n in added if n in prior_colleagues) if origin != team else []
+        comparisons.append({
+            "season": year - 1, "team": team, "head_coach": current["head_coach"],
+            "head_status": "new" if incoming_head else "returning",
+            "prior_count": len(old_names),
+            "departed": len(left), "added": len(added), "departure_share": len(left) / len(old_names),
+            "departed_names": sorted(old_names[n] for n in left),
+            "added_names": sorted(new_names[n] for n in added),
+            "head_coach_previous_nba_bench": origin if incoming_head and origin != team else None,
+            "arrivals_listed_on_same_prior_bench": brought_colleagues,
+        })
+        for role, name in current["support_roles"].items():
+            if role in old["support_roles"]:
+                support_pairs[role].append({
+                    "season": year - 1, "team": team, "previous": old["support_roles"][role],
+                    "current": name, "same_person": person_key(name) == person_key(old["support_roles"][role]),
+                })
+        if year == LAST + 1:
+            continue
+        for new_assistant in added:
+            assistant_starts.append((year, team, new_assistant))
+
+    # The newest roster is an association snapshot taken in November. The earlier
+    # comparisons are primarily media guides printed near the start of the season.
+    fit = [r for r in comparisons if r["season"] <= LAST_FIT]
+    holdout = [r for r in comparisons if LAST_FIT < r["season"] < LAST]
+    directory_check = [r for r in comparisons if r["season"] == LAST]
+    by_head = {}
+    for label, sample in (("fit", fit), ("holdout_guides", holdout), ("holdout_2026_association", directory_check)):
+        by_head[label] = {g: assistant_stats([r for r in sample if r["head_status"] == g]) for g in ("returning", "new")}
+    average_overall = mean(r["departure_share"] for r in fit)
+    by_condition = {g: by_head["fit"][g]["mean_team_departure_share"] for g in ("returning", "new")}
+
+    def expected_count(row, conditioned):
+        share = by_condition[row["head_status"]] if conditioned else average_overall
+        return row["prior_count"] * share
+
+    scorecards = {}
+    for label, sample in (("holdout_guides", holdout), ("holdout_2026_association", directory_check)):
+        cross_team = [r for r in sample if r["head_coach_previous_nba_bench"]]
+        scorecards[label] = {
+            "flat_average_absolute_error_in_departures": average([abs(expected_count(r, False) - r["departed"]) for r in sample]),
+            "conditioned_average_absolute_error_in_departures": average([abs(expected_count(r, True) - r["departed"]) for r in sample]),
+            "incoming_head_from_identified_external_nba_bench": bin_rate([bool(r["arrivals_listed_on_same_prior_bench"]) for r in cross_team]),
+        }
+
+    survival = {}
+    for horizon in (1, 2, 3):
+        for label, select in (
+            ("fit", lambda y: y <= LAST_FIT),
+            ("holdout_guides", lambda y: LAST_FIT < y < LAST),
+        ):
+            continuing = []
+            for year, team, assistant in assistant_starts:
+                end_summer = year + horizon - 1
+                if not select(end_summer):
+                    continue
+                followups = [groups[y].get(team) for y in range(year + 1, year + horizon + 1)]
+                if all(roster is not None for roster in followups):
+                    continuing.append(all(assistant in roster for roster in followups))
+            survival.setdefault(label, {})[str(horizon)] = bin_rate(continuing)
+
+    return {
+        "staff_directory_coverage": {str(year): {"teams": len(group), "slots": sum(group.values())} for year, group in sorted(coverage.items())},
+        "assistant_changes_by_head_status": by_head,
+        "per_summer": {str(y): assistant_stats([r for r in comparisons if r["season"] == y]) for y in sorted({r["season"] for r in comparisons})},
+        "departure_model": {"fit_flat_share": round(average_overall, 6), "fit_by_head_status": by_condition,
+                            "held_out_checks": scorecards},
+        "newly_listed_assistants_still_listed_after_n_summers": survival,
+        "same_prior_staff_arrivals_in_fit": bin_rate([
+            bool(r["arrivals_listed_on_same_prior_bench"]) for r in fit if r["head_coach_previous_nba_bench"]
+        ]),
+        "promotions_confirmed_by_consecutive_snapshots": sorted(promotions, key=lambda r: (r["cycle_ending_with_summer"], r["to"])),
+        "outside_promotions_per_summer_minimum": {
+            str(y): sum(r["cycle_ending_with_summer"] == y and r["from"] != r["to"] for r in promotions)
+            for y in sorted({r["season"] for r in comparisons})
+        },
+        "support_staff_same_name": {
+            role: {
+                label: bin_rate([r["same_person"] for r in rows if select(r["season"])])
+                for label, select in (("fit", lambda y: y <= LAST_FIT), ("holdout_guides", lambda y: y > LAST_FIT))
+            }
+            for role, rows in sorted(support_pairs.items())
+        },
+        "support_staff_comparisons": dict(sorted(support_pairs.items())),
+        "paired_observations": sorted(comparisons, key=lambda r: (r["season"], r["team"])),
+    }
+
+
+def head_coach_next_jobs(rows, examples):
+    opening = defaultdict(dict)
+    for row in rows:
+        opening[row["season"]][person_key(row["opening_coach_next_year"])] = row["team"]
+    sample = defaultdict(list)
+    for row in rows:
+        for change in row["changes"]:
+            if change["kind"] != "fired":
+                continue
+            team = row["team"]
+            next_team = opening[row["season"]].get(person_key(change["coach"]))
+            cohort = "fit" if row["season"] <= LAST_FIT else "holdout"
+            sample[cohort].append(bool(next_team and team != next_team))
+    return {
+        "other_nba_head_job_by_next_opening": {label: bin_rate(values) for label, values in sample.items()},
+        "selected_destination_counts_over_nonuniform_followup": histogram([r["next_role"] for r in examples]),
+    }
+
+
 def build(evidence):
-    rows = evidence["observations"]["head_coach_team_seasons"]
+    observations = evidence["observations"]
+    rows = observations["head_coach_team_seasons"]
     evidence["head_coaches"] = head_coach_summary(rows)
     evidence["head_coaches"]["checks"] = head_coach_fit(rows)
+    evidence["head_coaches"]["destinations"] = head_coach_next_jobs(rows, observations["head_coach_destination_examples"])
+    evidence["assistants_and_support_staff"] = compare_assistants(observations["assistant_staff_snapshots"], rows)
     return evidence
 
 
