@@ -143,6 +143,10 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--write", action="store_true")
     ap.add_argument("--analyst-weight", type=float, default=ANALYST_WEIGHT, help="0 = impact numbers only")
+    ap.add_argument("--keep-side", choices=("offense", "defense"), default=None,
+                    help="keep this side's coefficients from the current fit file (refit only the other side): for a "
+                         "change to inputs that only one side reads (RATINGS-FT-TOV, 2026-11-21: foul drawing and ball "
+                         "security are offensive skills; the defensive fit gives their group no weight)")
     args = ap.parse_args()
     canonical = load_app_canonical(ROOT)
     install_inputs_model(canonical, ROOT)
@@ -229,6 +233,18 @@ def main() -> None:
                   f"predicted (out-of-fold) {total_oof[i]:+5.2f} #{ranks[name]}"
                   f"   [O target {targets[i][0]:+.2f} pred {oof_all['offense'][i]:+.2f} | D target {targets[i][1]:+.2f} pred {oof_all['defense'][i]:+.2f}]"
                   f"  {notes[i] or ''}")
+    if args.keep_side:
+        previous = json.loads((ROOT / FIT_FILE).read_text())
+        fit["coefficients"][args.keep_side] = previous["coefficients"][args.keep_side]
+        fit["cv_weighted_corr"][args.keep_side] = previous["cv_weighted_corr"][args.keep_side]
+        fit["cv_weighted_corr"][f"{args.keep_side}_vs_lebron"] = previous["cv_weighted_corr"].get(f"{args.keep_side}_vs_lebron")
+        for key in ("overall", "overall_vs_lebron"):
+            # The out-of-fold overall above combines two refitted sides; with one side kept, report the previous file's
+            # (lower, conservative) overall numbers instead.
+            fit["cv_weighted_corr"][key] = previous["cv_weighted_corr"].get(key)
+        fit["kept_side"] = {"side": args.keep_side, "from_version": previous.get("version"),
+                            "from_kept_side": previous.get("kept_side")}
+        print(f"kept the {args.keep_side} coefficients from the current fit file")
     if args.write:
         (ROOT / FIT_FILE).write_text(json.dumps(fit, indent=1) + "\n")
         print("wrote", FIT_FILE)

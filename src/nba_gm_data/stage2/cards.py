@@ -102,9 +102,18 @@ USAGE = {"constant": 0.19605, "log T08": 1.0104, "log T01.shoot": 0.30632, "log 
 # {"constant": -1.09677, "log T07": 0.00619, "log T01.pass": 0.2983, "log T01.drive": -0.14972, "log T06": 0.25803,
 #  "log T08": 0.21238, "S16": 0.00304, "S17": -0.02037, "F.execution": 0.03124, "S20": -0.01673}.
 # The league level is then set by the loop's ball-pressure term and checked against turnovers per 100.
-TURNOVER = {"constant": 1.0164, "log T07": 0.20979, "log T01.pass": 0.19942, "log T01.drive": -0.11268,
-            "log T06": 0.25375, "log T08": 0.50102, "S16": 0.00405, "S17": -0.01507, "F.execution": 0.02579,
-            "S20": -0.01366, "S18": 0.00044, "P08": 0.00218, "P09": -0.03844}
+# RATINGS-FT-TOV refit (2026-11-21, scripts/research/s2_turnover_fit.py): the rule above met the game's own terms in the
+# loop (level, ball pressure, transition, and the extra chances usage brings), so high-usage creators ran 30-70% over
+# their real turnovers (Brown 6.5 per 36 vs 3.8). Refitted on expected turnovers in replayed games against real turnovers
+# per 36, same terms: held-out half mean miss .435 -> .262 per 36, bias +.29 -> -.01, correlation .899 -> .906; top
+# usage quarter miss .76 -> .31. Involvement (log T08) goes from +.50 to -.14: the chances and pressure that come with
+# involvement already carry the extra turnovers. The previous rule:
+# {"constant": 1.0164, "log T07": 0.20979, "log T01.pass": 0.19942, "log T01.drive": -0.11268, "log T06": 0.25375,
+#  "log T08": 0.50102, "S16": 0.00405, "S17": -0.01507, "F.execution": 0.02579, "S20": -0.01366, "S18": 0.00044,
+#  "P08": 0.00218, "P09": -0.03844}.
+TURNOVER = {"constant": -0.64581, "log T07": 0.26955, "log T01.pass": 0.30257, "log T01.drive": -0.22781,
+            "log T06": 0.27393, "log T08": -0.13987, "S16": 0.00311, "S17": -0.0099, "F.execution": 0.01939,
+            "S20": -0.00516, "S18": -0.00091, "P08": 0.00145, "P09": -0.02747}
 # Blocks: log-linear weight in contest technique, interior positioning, reach, jump-contest habit, vertical and help
 # commitment. FITTED to real 2025-26 blocks per 36 (targets file); held-out corr .88. It shares the team's blocks; the
 # level is the loop's.
