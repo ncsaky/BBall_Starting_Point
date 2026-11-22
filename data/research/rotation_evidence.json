@@ -5,14 +5,25 @@
     2025
   ],
   "holdout_season": 2026,
+  "measurement_notes": {
+    "seasons": "Year ending the season. Play-in and NBA Cup finals are outside the archive.",
+    "units": "All times are elapsed game clock unless labeled clock or seconds left. The mean of a Boolean measure is its observed frequency.",
+    "roles": "Starts tonight. Star proxy also averages 30+ minutes and 22+ points and starts at least half of eight or more earlier regular-season games played. Sixth man is the highest prior-minutes-per-game reserve who appeared tonight and has five or more prior games.",
+    "close": "Live absolute margin at most five during the final five minutes of regulation.",
+    "top_eight": "Ranked by regulation plus overtime minutes for each team in its regular season.",
+    "fits": "Fit on the two older regular seasons. Probabilities add 20 league-average observations per cell. Medians use the pooled training median if a cell has fewer than 20 examples.",
+    "take_fouls": "Strict subtype 28. A sensitivity includes generic non-shooting personals within five game seconds of possession entry.",
+    "two_for_one": "First field-goal attempt with 25+ seconds left on possession gained at 30–42 seconds."
+  },
   "coverage": {
     "2024_regular": {
       "analyzed_games": 1229,
       "archive_events": 584711,
       "archive_games": 1230,
-      "clock_team_seconds_checks": 1229,
+      "clock_checks": 1229,
       "excluded_0022301177": 1,
       "games_with_clock_reversal": 1,
+      "team_minutes_checks": 2458,
       "url": "https://github.com/ramirobentes/nba_data/releases/download/pbp/pbp_regular_2024.parquet",
       "sha256": "dc906c2de933933ab26789de9f3c25c729ec812872c54ec6857b2e57a305ec64"
     },
@@ -20,7 +31,8 @@
       "analyzed_games": 82,
       "archive_events": 37605,
       "archive_games": 82,
-      "clock_team_seconds_checks": 82,
+      "clock_checks": 82,
+      "team_minutes_checks": 164,
       "url": "https://github.com/ramirobentes/nba_data/releases/download/pbp/pbp_playoffs_2024.parquet",
       "sha256": "0ea09876e8218c4392c7f0ee4f150b4316f1e3c0718cf9a6aced6a16a386ebb6"
     },
@@ -28,7 +40,8 @@
       "analyzed_games": 1230,
       "archive_events": 592259,
       "archive_games": 1230,
-      "clock_team_seconds_checks": 1230,
+      "clock_checks": 1230,
+      "team_minutes_checks": 2460,
       "url": "https://github.com/ramirobentes/nba_data/releases/download/pbp/pbp_regular_2025.parquet",
       "sha256": "c8514240e233a5591e18f4ff5814fd539662ec21a4da947581128b63b85a98e6"
     },
@@ -36,7 +49,8 @@
       "analyzed_games": 83,
       "archive_events": 40397,
       "archive_games": 83,
-      "clock_team_seconds_checks": 83,
+      "clock_checks": 83,
+      "team_minutes_checks": 166,
       "url": "https://github.com/ramirobentes/nba_data/releases/download/pbp/pbp_playoffs_2025.parquet",
       "sha256": "0fb3e615ffc5624f2bf4b39d79e1c286c95739d2b4e3dd24719572aa66dfd7e2"
     },
@@ -44,7 +58,8 @@
       "analyzed_games": 1230,
       "archive_events": 622187,
       "archive_games": 1230,
-      "clock_team_seconds_checks": 1230,
+      "clock_checks": 1230,
+      "team_minutes_checks": 2460,
       "url": "https://github.com/ramirobentes/nba_data/releases/download/pbp/pbp_regular_2026.parquet",
       "sha256": "b89e4fb2fc50d2c31fc40cafb1418198a4eb0838ff76337590af511549608c0e"
     },
@@ -52,7 +67,8 @@
       "analyzed_games": 85,
       "archive_events": 43289,
       "archive_games": 85,
-      "clock_team_seconds_checks": 85,
+      "clock_checks": 85,
+      "team_minutes_checks": 170,
       "url": "https://github.com/ramirobentes/nba_data/releases/download/pbp/pbp_playoffs_2026.parquet",
       "sha256": "9c0bcbed3730ab4b17a2536f4296a15c69d49913ea3aae5aa36b3c7b2702646e"
     }
@@ -2502,18 +2518,18 @@
             "p75": 525.0
           },
           "starter|two_or_more_days_off|prior_32plus": {
-            "n": 807,
-            "mean": 490.4543,
-            "p25": 391.5,
+            "n": 801,
+            "mean": 490.0444,
+            "p25": 392.0,
             "median": 494.0,
             "p75": 566.0
           },
           "starter|two_or_more_days_off|prior_under32": {
-            "n": 892,
-            "mean": 457.1877,
-            "p25": 376.75,
-            "median": 459.5,
-            "p75": 525.25
+            "n": 891,
+            "mean": 456.8927,
+            "p25": 376.5,
+            "median": 459.0,
+            "p75": 524.5
           },
           "star|one_day_off|prior_32plus": {
             "n": 884,
@@ -2544,11 +2560,11 @@
             "p75": 696.075
           },
           "star|two_or_more_days_off|prior_32plus": {
-            "n": 305,
-            "mean": 535.8315,
-            "p25": 424.0,
+            "n": 304,
+            "mean": 535.9592,
+            "p25": 423.25,
             "median": 541.0,
-            "p75": 683.6
+            "p75": 684.7
           },
           "star|two_or_more_days_off|prior_under32": {
             "n": 65,
@@ -2588,18 +2604,18 @@
             "p75": 6.2112
           },
           "starter|two_or_more_days_off|prior_32plus": {
-            "n": 686,
-            "mean": 1.5443,
-            "p25": -1.9284,
-            "median": 1.7615,
-            "p75": 4.9338
+            "n": 680,
+            "mean": 1.4765,
+            "p25": -1.9423,
+            "median": 1.7268,
+            "p75": 4.9033
           },
           "starter|two_or_more_days_off|prior_under32": {
-            "n": 781,
-            "mean": 1.3139,
-            "p25": -2.7151,
-            "median": 1.2194,
-            "p75": 5.2252
+            "n": 780,
+            "mean": 1.3059,
+            "p25": -2.7181,
+            "median": 1.2175,
+            "p75": 5.2136
           },
           "star|one_day_off|prior_32plus": {
             "n": 884,
@@ -2630,11 +2646,11 @@
             "p75": 2.4119
           },
           "star|two_or_more_days_off|prior_32plus": {
-            "n": 305,
-            "mean": -0.2795,
-            "p25": -2.3086,
-            "median": 0.8957,
-            "p75": 2.9124
+            "n": 304,
+            "mean": -0.2888,
+            "p25": -2.3273,
+            "median": 0.8956,
+            "p75": 2.9199
           },
           "star|two_or_more_days_off|prior_under32": {
             "n": 65,
@@ -2674,18 +2690,18 @@
             "p75": 33.2667
           },
           "starter|two_or_more_days_off|prior_32plus": {
-            "n": 807,
-            "mean": 32.1387,
-            "p25": 29.08,
-            "median": 33.1833,
-            "p75": 36.2442
+            "n": 801,
+            "mean": 32.1128,
+            "p25": 29.0833,
+            "median": 33.1667,
+            "p75": 36.2167
           },
           "starter|two_or_more_days_off|prior_under32": {
-            "n": 892,
-            "mean": 28.1625,
-            "p25": 24.125,
-            "median": 28.9583,
-            "p75": 32.5621
+            "n": 891,
+            "mean": 28.1556,
+            "p25": 24.1167,
+            "median": 28.95,
+            "p75": 32.5442
           },
           "star|one_day_off|prior_32plus": {
             "n": 884,
@@ -2716,11 +2732,11 @@
             "p75": 36.8312
           },
           "star|two_or_more_days_off|prior_32plus": {
-            "n": 305,
-            "mean": 34.6107,
-            "p25": 32.27,
-            "median": 35.65,
-            "p75": 38.1
+            "n": 304,
+            "mean": 34.6006,
+            "p25": 32.265,
+            "median": 35.6208,
+            "p75": 38.1042
           },
           "star|two_or_more_days_off|prior_under32": {
             "n": 65,
@@ -22866,15 +22882,15 @@
             "p75": 511.0
           },
           "starter|two_or_more_days_off|prior_32plus": {
-            "n": 2233,
-            "mean": 478.8899,
+            "n": 2227,
+            "mean": 478.7113,
             "p25": 382.0,
             "median": 479.0,
-            "p75": 558.0
+            "p75": 557.5
           },
           "starter|two_or_more_days_off|prior_under32": {
-            "n": 2809,
-            "mean": 439.8293,
+            "n": 2808,
+            "mean": 439.7296,
             "p25": 363.0,
             "median": 440.0,
             "p75": 508.0
@@ -22908,8 +22924,8 @@
             "p75": 668.575
           },
           "star|two_or_more_days_off|prior_32plus": {
-            "n": 736,
-            "mean": 545.8543,
+            "n": 735,
+            "mean": 545.9208,
             "p25": 433.0,
             "median": 552.0,
             "p75": 716.9
@@ -22952,18 +22968,18 @@
             "p75": 5.9403
           },
           "starter|two_or_more_days_off|prior_32plus": {
-            "n": 1927,
-            "mean": 1.4893,
-            "p25": -1.7072,
-            "median": 1.5935,
-            "p75": 4.7777
+            "n": 1921,
+            "mean": 1.4651,
+            "p25": -1.7162,
+            "median": 1.5923,
+            "p75": 4.7467
           },
           "starter|two_or_more_days_off|prior_under32": {
-            "n": 2526,
-            "mean": 1.3219,
-            "p25": -2.4795,
-            "median": 1.4084,
-            "p75": 5.1055
+            "n": 2525,
+            "mean": 1.3195,
+            "p25": -2.4808,
+            "median": 1.4068,
+            "p75": 5.1049
           },
           "star|one_day_off|prior_32plus": {
             "n": 2250,
@@ -22994,11 +23010,11 @@
             "p75": 2.5075
           },
           "star|two_or_more_days_off|prior_32plus": {
-            "n": 736,
-            "mean": -0.092,
-            "p25": -1.8174,
-            "median": 0.7838,
-            "p75": 2.7723
+            "n": 735,
+            "mean": -0.0956,
+            "p25": -1.8187,
+            "median": 0.783,
+            "p75": 2.7739
           },
           "star|two_or_more_days_off|prior_under32": {
             "n": 204,
@@ -23038,18 +23054,18 @@
             "p75": 32.8667
           },
           "starter|two_or_more_days_off|prior_32plus": {
-            "n": 2233,
-            "mean": 32.1146,
+            "n": 2227,
+            "mean": 32.1052,
             "p25": 29.2167,
-            "median": 32.9833,
-            "p75": 35.9833
+            "median": 32.95,
+            "p75": 35.9667
           },
           "starter|two_or_more_days_off|prior_under32": {
-            "n": 2809,
-            "mean": 28.1203,
-            "p25": 24.25,
-            "median": 28.8833,
-            "p75": 32.555
+            "n": 2808,
+            "mean": 28.1181,
+            "p25": 24.2488,
+            "median": 28.8783,
+            "p75": 32.5487
           },
           "star|one_day_off|prior_32plus": {
             "n": 2250,
@@ -23080,11 +23096,11 @@
             "p75": 36.975
           },
           "star|two_or_more_days_off|prior_32plus": {
-            "n": 736,
-            "mean": 34.8809,
-            "p25": 32.6317,
-            "median": 35.71,
-            "p75": 37.9208
+            "n": 735,
+            "mean": 34.877,
+            "p25": 32.63,
+            "median": 35.7,
+            "p75": 37.925
           },
           "star|two_or_more_days_off|prior_under32": {
             "n": 204,
@@ -27756,6 +27772,104 @@
         }
       }
     },
+    "early_foul_return_elapsed_seconds": {
+      "loss": "absolute_error",
+      "training_n": 3402,
+      "test_n": 1956,
+      "training_baseline": 1440.0,
+      "test_loss": 133.94969,
+      "baseline_test_loss": 336.93599,
+      "groups": {
+        "2_Q1|bench": {
+          "train_n": 236,
+          "prediction": 1046.5,
+          "test": {
+            "n": 183,
+            "mean": 1167.3481,
+            "p25": 895.0,
+            "median": 1043.0,
+            "p75": 1233.5
+          }
+        },
+        "2_Q1|sixth_man": {
+          "train_n": 46,
+          "prediction": 1006.5,
+          "test": {
+            "n": 49,
+            "mean": 1043.7,
+            "p25": 911.0,
+            "median": 984.0,
+            "p75": 1124.0
+          }
+        },
+        "2_Q1|star": {
+          "train_n": 131,
+          "prediction": 868.0,
+          "test": {
+            "n": 50,
+            "mean": 873.246,
+            "p25": 720.0,
+            "median": 918.5,
+            "p75": 983.0
+          }
+        },
+        "2_Q1|starter": {
+          "train_n": 1104,
+          "prediction": 913.0,
+          "test": {
+            "n": 614,
+            "mean": 869.2834,
+            "p25": 720.0,
+            "median": 876.0,
+            "p75": 998.75
+          }
+        },
+        "3_first_half|bench": {
+          "train_n": 536,
+          "prediction": 1849.0,
+          "test": {
+            "n": 296,
+            "mean": 1794.7662,
+            "p25": 1734.75,
+            "median": 1815.5,
+            "p75": 1907.0
+          }
+        },
+        "3_first_half|sixth_man": {
+          "train_n": 146,
+          "prediction": 1785.0,
+          "test": {
+            "n": 78,
+            "mean": 1715.9564,
+            "p25": 1695.25,
+            "median": 1783.0,
+            "p75": 1833.75
+          }
+        },
+        "3_first_half|star": {
+          "train_n": 104,
+          "prediction": 1440.0,
+          "test": {
+            "n": 26,
+            "mean": 1385.2115,
+            "p25": 1412.75,
+            "median": 1440.0,
+            "p75": 1440.0
+          }
+        },
+        "3_first_half|starter": {
+          "train_n": 1099,
+          "prediction": 1440.0,
+          "test": {
+            "n": 660,
+            "mean": 1422.9112,
+            "p25": 1440.0,
+            "median": 1440.0,
+            "p75": 1440.0
+          }
+        }
+      }
+    },
     "first_rest_seconds": {
       "loss": "absolute_error",
       "training_n": 24460,
@@ -28368,6 +28482,148 @@
         }
       }
     },
+    "schedule_minutes_vs_own_prior_average": {
+      "loss": "absolute_error",
+      "training_n": 18648,
+      "test_n": 9045,
+      "training_baseline": 1.6163,
+      "test_loss": 4.53166,
+      "baseline_test_loss": 4.5377,
+      "groups": {
+        "starter|one_day_off|prior_32plus": {
+          "train_n": 4267,
+          "prediction": 2.3472,
+          "test": {
+            "n": 1802,
+            "mean": 1.5254,
+            "p25": -1.8159,
+            "median": 1.5763,
+            "p75": 4.9667
+          }
+        },
+        "starter|one_day_off|prior_under32": {
+          "train_n": 5427,
+          "prediction": 1.6835,
+          "test": {
+            "n": 3055,
+            "mean": 1.2284,
+            "p25": -2.6487,
+            "median": 1.2233,
+            "p75": 4.8495
+          }
+        },
+        "starter|second_night|prior_32plus": {
+          "train_n": 1104,
+          "prediction": 1.5567,
+          "test": {
+            "n": 485,
+            "mean": 1.0406,
+            "p25": -2.3144,
+            "median": 0.9724,
+            "p75": 4.0554
+          }
+        },
+        "starter|second_night|prior_under32": {
+          "train_n": 1563,
+          "prediction": 2.1757,
+          "test": {
+            "n": 856,
+            "mean": 1.4218,
+            "p25": -2.7095,
+            "median": 1.1576,
+            "p75": 5.1797
+          }
+        },
+        "starter|two_or_more_days_off|prior_32plus": {
+          "train_n": 1333,
+          "prediction": 1.6527,
+          "test": {
+            "n": 588,
+            "mean": 1.5292,
+            "p25": -1.6827,
+            "median": 1.3896,
+            "p75": 4.8045
+          }
+        },
+        "starter|two_or_more_days_off|prior_under32": {
+          "train_n": 1603,
+          "prediction": 1.537,
+          "test": {
+            "n": 922,
+            "mean": 0.9742,
+            "p25": -2.6693,
+            "median": 1.1673,
+            "p75": 4.7037
+          }
+        },
+        "star|one_day_off|prior_32plus": {
+          "train_n": 1634,
+          "prediction": 0.7929,
+          "test": {
+            "n": 616,
+            "mean": -0.8188,
+            "p25": -2.9294,
+            "median": 0.3379,
+            "p75": 2.3733
+          }
+        },
+        "star|one_day_off|prior_under32": {
+          "train_n": 478,
+          "prediction": 0.5864,
+          "test": {
+            "n": 223,
+            "mean": -1.0923,
+            "p25": -3.4358,
+            "median": 0.139,
+            "p75": 2.6827
+          }
+        },
+        "star|second_night|prior_32plus": {
+          "train_n": 447,
+          "prediction": 0.5614,
+          "test": {
+            "n": 169,
+            "mean": -0.816,
+            "p25": -4.0333,
+            "median": -0.1525,
+            "p75": 2.5098
+          }
+        },
+        "star|second_night|prior_under32": {
+          "train_n": 122,
+          "prediction": 0.9232,
+          "test": {
+            "n": 60,
+            "mean": -0.5074,
+            "p25": -3.0157,
+            "median": -0.0004,
+            "p75": 2.5845
+          }
+        },
+        "star|two_or_more_days_off|prior_32plus": {
+          "train_n": 538,
+          "prediction": 0.7838,
+          "test": {
+            "n": 197,
+            "mean": -0.1725,
+            "p25": -1.6224,
+            "median": 0.7252,
+            "p75": 2.8869
+          }
+        },
+        "star|two_or_more_days_off|prior_under32": {
+          "train_n": 132,
+          "prediction": 0.5866,
+          "test": {
+            "n": 72,
+            "mean": -0.1642,
+            "p25": -2.0298,
+            "median": 1.0962,
+            "p75": 3.4947
+          }
+        }
+      }
+    },
     "timeout_after_scoring_burst": {
       "loss": "Brier",
       "training_n": 251074,
@@ -28930,6 +29186,1304 @@
       }
     ]
   },
+  "paired_second_night_minutes_minus_one_day_off": {
+    "2024": {
+      "n": 122,
+      "mean": -0.8279,
+      "p25": -2.4744,
+      "median": -0.2568,
+      "p75": 1.3149
+    },
+    "2025": {
+      "n": 117,
+      "mean": -0.4318,
+      "p25": -1.9108,
+      "median": -0.3901,
+      "p75": 1.0611
+    },
+    "2026": {
+      "n": 100,
+      "mean": -0.5258,
+      "p25": -2.0377,
+      "median": -0.2729,
+      "p75": 0.7678
+    },
+    "pooled": {
+      "n": 339,
+      "mean": -0.6021,
+      "p25": -2.2241,
+      "median": -0.3553,
+      "p75": 1.06
+    }
+  },
+  "regular_top8_by_team": {
+    "2024": {
+      "ATL": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.8082,
+        "player_ids": [
+          1627749,
+          203992,
+          1630180,
+          1629027,
+          1630552,
+          203991,
+          1629631,
+          1630168
+        ]
+      },
+      "BKN": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.7227,
+        "player_ids": [
+          1628969,
+          1629651,
+          1630560,
+          1627827,
+          1629661,
+          203915,
+          1626220,
+          1628372
+        ]
+      },
+      "BOS": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.8385,
+        "player_ids": [
+          1628369,
+          1628401,
+          1627759,
+          201950,
+          1630202,
+          1630573,
+          201143,
+          204001
+        ]
+      },
+      "CHA": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.5935,
+        "player_ids": [
+          1628970,
+          1641706,
+          1630208,
+          1629023,
+          1626179,
+          1629684,
+          1631121,
+          1630544
+        ]
+      },
+      "CHI": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.8161,
+        "player_ids": [
+          201942,
+          1629632,
+          202696,
+          1630245,
+          1627936,
+          203083,
+          1630172,
+          1628470
+        ]
+      },
+      "CLE": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7944,
+        "player_ids": [
+          1628386,
+          1629622,
+          1627747,
+          1628378,
+          1629636,
+          1630171,
+          1627777,
+          1630596
+        ]
+      },
+      "DAL": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.6945,
+        "player_ids": [
+          1629029,
+          203501,
+          202681,
+          1627884,
+          1630182,
+          1641726,
+          1629684,
+          203957
+        ]
+      },
+      "DEN": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.8537,
+        "player_ids": [
+          203999,
+          1629008,
+          203484,
+          203932,
+          1627750,
+          202704,
+          1631128,
+          1631212
+        ]
+      },
+      "DET": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.634,
+        "player_ids": [
+          1631093,
+          1630595,
+          1631105,
+          1641709,
+          1630191,
+          1631204,
+          1630164,
+          1630165
+        ]
+      },
+      "GSW": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.7443,
+        "player_ids": [
+          201939,
+          202691,
+          1641764,
+          1630228,
+          203952,
+          101108,
+          203110,
+          1626172
+        ]
+      },
+      "HOU": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.8032,
+        "player_ids": [
+          1627832,
+          1630224,
+          1631095,
+          1628415,
+          1630578,
+          1641708,
+          201145,
+          1628988
+        ]
+      },
+      "IND": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7054,
+        "player_ids": [
+          1630169,
+          1626167,
+          1630174,
+          1630167,
+          1629614,
+          1631097,
+          1627741,
+          1627783
+        ]
+      },
+      "LAC": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.8094,
+        "player_ids": [
+          202331,
+          201935,
+          202695,
+          1626181,
+          1629611,
+          1627826,
+          201566,
+          1629599
+        ]
+      },
+      "LAL": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.8148,
+        "player_ids": [
+          203076,
+          1630559,
+          2544,
+          1626156,
+          1627752,
+          1629060,
+          1629629,
+          1631108
+        ]
+      },
+      "MEM": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.5701,
+        "player_ids": [
+          1628991,
+          1630583,
+          1630217,
+          1631246,
+          1641713,
+          1629723,
+          1631223,
+          1630533
+        ]
+      },
+      "MIA": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7142,
+        "player_ids": [
+          1628389,
+          1631170,
+          202710,
+          1629130,
+          1628997,
+          1629639,
+          1629312,
+          1626196
+        ]
+      },
+      "MIL": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.8191,
+        "player_ids": [
+          203081,
+          203507,
+          201572,
+          1627736,
+          1626171,
+          1626192,
+          203114,
+          203109
+        ]
+      },
+      "MIN": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.8763,
+        "player_ids": [
+          1630162,
+          203497,
+          201144,
+          1630183,
+          1626157,
+          1629675,
+          1629638,
+          203937
+        ]
+      },
+      "NOP": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7623,
+        "player_ids": [
+          1630529,
+          1629627,
+          203468,
+          1627742,
+          202685,
+          1630530,
+          1630700,
+          1630230
+        ]
+      },
+      "NYK": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7473,
+        "player_ids": [
+          1628973,
+          1628404,
+          1628978,
+          1628392,
+          203944,
+          1630540,
+          1630173,
+          1629656
+        ]
+      },
+      "OKC": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7984,
+        "player_ids": [
+          1628983,
+          1631096,
+          1629652,
+          1631114,
+          1630581,
+          1641717,
+          1630198,
+          1630598
+        ]
+      },
+      "ORL": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7212,
+        "player_ids": [
+          1631094,
+          1630532,
+          1630591,
+          1630175,
+          1629021,
+          1628976,
+          203914,
+          204060
+        ]
+      },
+      "PHI": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.6757,
+        "player_ids": [
+          1630178,
+          202699,
+          1626162,
+          1630194,
+          201587,
+          203954,
+          1629001,
+          201976
+        ]
+      },
+      "PHX": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7895,
+        "player_ids": [
+          201142,
+          1628960,
+          1626164,
+          203994,
+          201569,
+          203078,
+          1629234,
+          1629006
+        ]
+      },
+      "POR": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.6658,
+        "player_ids": [
+          203924,
+          1629028,
+          1630703,
+          1641739,
+          1631133,
+          1629014,
+          1629680,
+          1631200
+        ]
+      },
+      "SAC": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.8184,
+        "player_ids": [
+          1627734,
+          1628368,
+          1631099,
+          203084,
+          1628370,
+          1628989,
+          1626168,
+          1630558
+        ]
+      },
+      "SAS": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.7721,
+        "player_ids": [
+          1630170,
+          1631110,
+          1630200,
+          1641705,
+          1629640,
+          1631103,
+          1628380,
+          1630577
+        ]
+      },
+      "TOR": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.6021,
+        "player_ids": [
+          1630567,
+          1629018,
+          203471,
+          1627783,
+          1627751,
+          1641711,
+          1630193,
+          1629628
+        ]
+      },
+      "UTA": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.6767,
+        "player_ids": [
+          1629012,
+          1641718,
+          1628381,
+          1628374,
+          203903,
+          1631117,
+          1627739,
+          1631323
+        ]
+      },
+      "WAS": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.7358,
+        "player_ids": [
+          1629673,
+          1628398,
+          1630166,
+          1630557,
+          1626145,
+          1641731,
+          1629655,
+          1629013
+        ]
+      }
+    },
+    "2025": {
+      "ATL": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.7024,
+        "player_ids": [
+          1629027,
+          1630700,
+          1630168,
+          1642258,
+          1630552,
+          203991,
+          1630249,
+          1629631
+        ]
+      },
+      "BKN": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.6294,
+        "player_ids": [
+          1630592,
+          1630553,
+          1629651,
+          1629661,
+          1630533,
+          1631213,
+          1641730,
+          1630570
+        ]
+      },
+      "BOS": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.811,
+        "player_ids": [
+          1628369,
+          1628401,
+          1630202,
+          1627759,
+          201950,
+          201143,
+          1630573,
+          1628436
+        ]
+      },
+      "CHA": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.583,
+        "player_ids": [
+          1628970,
+          1630182,
+          1630163,
+          1641733,
+          1642275,
+          1631217,
+          1631109,
+          1629610
+        ]
+      },
+      "CHI": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.7027,
+        "player_ids": [
+          1629632,
+          202696,
+          1630581,
+          1630172,
+          1641824,
+          203897,
+          1630245,
+          1641763
+        ]
+      },
+      "CLE": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7246,
+        "player_ids": [
+          1629636,
+          1628386,
+          1628378,
+          1630596,
+          1630241,
+          1629660,
+          1629622,
+          1629731
+        ]
+      },
+      "DAL": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.6552,
+        "player_ids": [
+          203915,
+          202691,
+          1630230,
+          1629023,
+          202681,
+          1629655,
+          1629656,
+          1631108
+        ]
+      },
+      "DEN": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.8479,
+        "player_ids": [
+          1631128,
+          1629008,
+          203999,
+          1627750,
+          201566,
+          1631212,
+          203932,
+          1631124
+        ]
+      },
+      "DET": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7702,
+        "player_ids": [
+          1630595,
+          202699,
+          1627736,
+          203501,
+          1631105,
+          1630191,
+          1641709,
+          1641842
+        ]
+      },
+      "GSW": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.6613,
+        "player_ids": [
+          201939,
+          203110,
+          1627741,
+          1641764,
+          1630541,
+          203952,
+          1630228,
+          1626172
+        ]
+      },
+      "HOU": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7977,
+        "player_ids": [
+          1630224,
+          1630578,
+          1628415,
+          1641708,
+          1627832,
+          1631095,
+          1631106,
+          1641715
+        ]
+      },
+      "IND": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7752,
+        "player_ids": [
+          1627783,
+          1630169,
+          1626167,
+          1631097,
+          1629614,
+          1630167,
+          204456,
+          1641767
+        ]
+      },
+      "LAC": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7737,
+        "player_ids": [
+          201935,
+          1627826,
+          1626181,
+          1627884,
+          1627739,
+          1629599,
+          201587,
+          202695
+        ]
+      },
+      "LAL": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.6953,
+        "player_ids": [
+          1630559,
+          2544,
+          1629060,
+          1629216,
+          1642261,
+          203076,
+          1627827,
+          1631108
+        ]
+      },
+      "MEM": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7209,
+        "player_ids": [
+          1628991,
+          1630217,
+          1642377,
+          1630590,
+          1630583,
+          1629630,
+          1628379,
+          1641744
+        ]
+      },
+      "MIA": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7329,
+        "player_ids": [
+          1629639,
+          1628389,
+          1629312,
+          1629130,
+          1626179,
+          1642276,
+          1631170,
+          1631107
+        ]
+      },
+      "MIL": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7562,
+        "player_ids": [
+          201572,
+          203507,
+          1627752,
+          203081,
+          1629018,
+          1631260,
+          1626171,
+          1628398
+        ]
+      },
+      "MIN": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.8943,
+        "player_ids": [
+          1630162,
+          1630183,
+          203497,
+          203944,
+          1629675,
+          1629638,
+          201144,
+          1628978
+        ]
+      },
+      "NOP": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.5908,
+        "player_ids": [
+          1642274,
+          1630530,
+          203468,
+          1630631,
+          1641722,
+          1630526,
+          1629750,
+          1627749
+        ]
+      },
+      "NYK": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.8707,
+        "player_ids": [
+          1628969,
+          1628404,
+          1628384,
+          1626157,
+          1628973,
+          1630540,
+          1630173,
+          1626166
+        ]
+      },
+      "OKC": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7538,
+        "player_ids": [
+          1628983,
+          1631114,
+          1629652,
+          1641717,
+          1630598,
+          1630198,
+          1628392,
+          1629026
+        ]
+      },
+      "ORL": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7005,
+        "player_ids": [
+          203484,
+          1630532,
+          1641710,
+          1628976,
+          1641783,
+          1631094,
+          1629048,
+          1630175
+        ]
+      },
+      "PHI": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.5836,
+        "player_ids": [
+          1626162,
+          1630178,
+          1627824,
+          202331,
+          1641741,
+          1642348,
+          1629656,
+          1628997
+        ]
+      },
+      "PHX": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.7578,
+        "player_ids": [
+          1626164,
+          201142,
+          1626145,
+          1626220,
+          203078,
+          1628960,
+          1642346,
+          203486
+        ]
+      },
+      "POR": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.7616,
+        "player_ids": [
+          1641739,
+          1629014,
+          1631101,
+          1630166,
+          1630703,
+          203924,
+          1642270,
+          1629028
+        ]
+      },
+      "SAC": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.8044,
+        "player_ids": [
+          201942,
+          1631099,
+          1627734,
+          1628370,
+          1631165,
+          1628368,
+          1626168,
+          203897
+        ]
+      },
+      "SAS": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.7769,
+        "player_ids": [
+          101108,
+          203084,
+          1642264,
+          1630170,
+          1630577,
+          1629640,
+          1641705,
+          1631110
+        ]
+      },
+      "TOR": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.6499,
+        "player_ids": [
+          1630567,
+          1629628,
+          1630534,
+          1627751,
+          1641711,
+          1642347,
+          1642367,
+          1642266
+        ]
+      },
+      "UTA": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.6637,
+        "player_ids": [
+          1641718,
+          1642268,
+          1629012,
+          1631117,
+          1642271,
+          1628374,
+          1641729,
+          1630548
+        ]
+      },
+      "WAS": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.7069,
+        "player_ids": [
+          1642267,
+          1629673,
+          1641731,
+          1642259,
+          1642273,
+          1630557,
+          1630551,
+          202685
+        ]
+      }
+    },
+    "2026": {
+      "ATL": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7513,
+        "player_ids": [
+          1629638,
+          1630552,
+          1630700,
+          1630168,
+          1642258,
+          203468,
+          1631243,
+          1630249
+        ]
+      },
+      "BKN": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.611,
+        "player_ids": [
+          1629651,
+          1641730,
+          1629008,
+          1629611,
+          1642962,
+          1642856,
+          1630533,
+          1642849
+        ]
+      },
+      "BOS": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7768,
+        "player_ids": [
+          1628401,
+          1630202,
+          1627759,
+          1630573,
+          1629674,
+          1631248,
+          1641775,
+          1629014
+        ]
+      },
+      "CHA": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.7635,
+        "player_ids": [
+          1642851,
+          1628970,
+          1630163,
+          1641706,
+          1631217,
+          1642883,
+          1641750,
+          1629012
+        ]
+      },
+      "CHI": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.641,
+        "player_ids": [
+          1641824,
+          1630200,
+          1630581,
+          1630171,
+          202696,
+          1630172,
+          1630245,
+          1630188
+        ]
+      },
+      "CLE": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.6419,
+        "player_ids": [
+          1628378,
+          1630596,
+          1642281,
+          1628386,
+          1630241,
+          1629731,
+          1641854,
+          1629631
+        ]
+      },
+      "DAL": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.6967,
+        "player_ids": [
+          1642843,
+          1631108,
+          1630230,
+          1629023,
+          202691,
+          1630314,
+          1629655,
+          1642948
+        ]
+      },
+      "DEN": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7578,
+        "player_ids": [
+          1627750,
+          203999,
+          203501,
+          1628971,
+          1629661,
+          1631212,
+          1642461,
+          1631128
+        ]
+      },
+      "DET": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7247,
+        "player_ids": [
+          1630595,
+          1629130,
+          1631105,
+          1641709,
+          202699,
+          1641842,
+          1642450,
+          1629750
+        ]
+      },
+      "GSW": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.6187,
+        "player_ids": [
+          1641764,
+          203110,
+          1630541,
+          1630611,
+          1642954,
+          201939,
+          1630311,
+          202710
+        ]
+      },
+      "HOU": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.8476,
+        "player_ids": [
+          1641708,
+          201142,
+          1631095,
+          1630578,
+          1642263,
+          1631106,
+          1629006,
+          203991
+        ]
+      },
+      "IND": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.6131,
+        "player_ids": [
+          1627783,
+          1641716,
+          1629614,
+          1630643,
+          1641767,
+          1630174,
+          204456,
+          1630695
+        ]
+      },
+      "LAC": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.678,
+        "player_ids": [
+          1627739,
+          202695,
+          1628381,
+          201572,
+          201935,
+          1642920,
+          1627884,
+          1627826
+        ]
+      },
+      "LAL": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7593,
+        "player_ids": [
+          1629029,
+          1631222,
+          2544,
+          1629028,
+          1629060,
+          203935,
+          1630559,
+          1629637
+        ]
+      },
+      "MEM": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.5595,
+        "player_ids": [
+          1642377,
+          1642285,
+          1642907,
+          1628991,
+          1630583,
+          1641713,
+          203484,
+          1629111
+        ]
+      },
+      "MIA": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.7608,
+        "player_ids": [
+          1628389,
+          1631170,
+          203952,
+          1630558,
+          1641796,
+          1626181,
+          1642276,
+          1631323
+        ]
+      },
+      "MIL": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.7056,
+        "player_ids": [
+          1631157,
+          1631260,
+          1626167,
+          1628398,
+          1626171,
+          1629018,
+          1630579,
+          1629645
+        ]
+      },
+      "MIN": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.8146,
+        "player_ids": [
+          203944,
+          1628978,
+          203497,
+          1630183,
+          1630162,
+          1629675,
+          1630538,
+          201144
+        ]
+      },
+      "NOP": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.7261,
+        "player_ids": [
+          1630530,
+          1630180,
+          1642847,
+          1642852,
+          1629627,
+          1630529,
+          1642274,
+          1629673
+        ]
+      },
+      "NYK": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7819,
+        "player_ids": [
+          1628969,
+          1628973,
+          1626157,
+          1628384,
+          1628404,
+          203903,
+          1629011,
+          1629013
+        ]
+      },
+      "OKC": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.6962,
+        "player_ids": [
+          1628983,
+          1641717,
+          1631096,
+          1629652,
+          1630198,
+          1642349,
+          1630598,
+          1631119
+        ]
+      },
+      "ORL": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7524,
+        "player_ids": [
+          1630217,
+          1631094,
+          1628976,
+          1641710,
+          1641783,
+          1630591,
+          1630532,
+          1629048
+        ]
+      },
+      "PHI": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7253,
+        "player_ids": [
+          1630178,
+          1642845,
+          1629656,
+          1631230,
+          1626162,
+          1641737,
+          203083,
+          203954
+        ]
+      },
+      "PHX": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7394,
+        "player_ids": [
+          1631221,
+          1626220,
+          1626164,
+          1642345,
+          1628415,
+          1630692,
+          1628960,
+          1631109
+        ]
+      },
+      "POR": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.735,
+        "player_ids": [
+          1641739,
+          1630166,
+          1642270,
+          203924,
+          201950,
+          1631101,
+          1631321,
+          1631200
+        ]
+      },
+      "SAC": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.683,
+        "player_ids": [
+          201942,
+          1642875,
+          1642363,
+          201566,
+          1630173,
+          1628370,
+          203897,
+          203471
+        ]
+      },
+      "SAS": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.8059,
+        "player_ids": [
+          1630577,
+          1628368,
+          1630170,
+          1642264,
+          203084,
+          1629640,
+          1641705,
+          1642844
+        ]
+      },
+      "TOR": {
+        "made_playoffs": true,
+        "minutes_share_for_top8": 0.7868,
+        "player_ids": [
+          1630567,
+          1627742,
+          1630193,
+          1642347,
+          1630572,
+          1629628,
+          1642266,
+          1642867
+        ]
+      },
+      "UTA": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.6597,
+        "player_ids": [
+          1642846,
+          1642271,
+          1641718,
+          1641729,
+          1642262,
+          1642268,
+          1628374,
+          1629004
+        ]
+      },
+      "WAS": {
+        "made_playoffs": false,
+        "minutes_share_for_top8": 0.6058,
+        "player_ids": [
+          1642267,
+          1642860,
+          1641731,
+          1642848,
+          1642273,
+          1630551,
+          1642259,
+          203468
+        ]
+      }
+    }
+  },
   "named_closing_lineups": {
     "2024|playoffs|BOS": [
       {
@@ -28941,7 +30495,8 @@
           "Derrick White"
         ],
         "seconds": 1100.4,
-        "share_of_close_seconds": 0.9778
+        "share_of_close_seconds": 0.9778,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -28952,7 +30507,8 @@
           "Xavier Tillman"
         ],
         "seconds": 22.0,
-        "share_of_close_seconds": 0.0195
+        "share_of_close_seconds": 0.0195,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -28963,7 +30519,8 @@
           "Xavier Tillman"
         ],
         "seconds": 3.0,
-        "share_of_close_seconds": 0.0027
+        "share_of_close_seconds": 0.0027,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|playoffs|CLE": [
@@ -28976,7 +30533,8 @@
           "Evan Mobley"
         ],
         "seconds": 426.0,
-        "share_of_close_seconds": 0.6573
+        "share_of_close_seconds": 0.6573,
+        "average_starters_in_five": 4.314
       },
       {
         "players": [
@@ -28987,7 +30545,8 @@
           "Evan Mobley"
         ],
         "seconds": 135.3,
-        "share_of_close_seconds": 0.2088
+        "share_of_close_seconds": 0.2088,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -28998,7 +30557,8 @@
           "Evan Mobley"
         ],
         "seconds": 56.0,
-        "share_of_close_seconds": 0.0864
+        "share_of_close_seconds": 0.0864,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|playoffs|DAL": [
@@ -29011,7 +30571,8 @@
           "Dereck Lively II"
         ],
         "seconds": 1039.7,
-        "share_of_close_seconds": 0.3947
+        "share_of_close_seconds": 0.3947,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -29022,7 +30583,8 @@
           "Daniel Gafford"
         ],
         "seconds": 486.0,
-        "share_of_close_seconds": 0.1845
+        "share_of_close_seconds": 0.1845,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -29033,7 +30595,8 @@
           "Luka Dončić"
         ],
         "seconds": 448.9,
-        "share_of_close_seconds": 0.1704
+        "share_of_close_seconds": 0.1704,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|playoffs|DEN": [
@@ -29046,7 +30609,8 @@
           "Michael Porter Jr."
         ],
         "seconds": 694.5,
-        "share_of_close_seconds": 0.9612
+        "share_of_close_seconds": 0.9612,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -29057,7 +30621,8 @@
           "Christian Braun"
         ],
         "seconds": 28.0,
-        "share_of_close_seconds": 0.0388
+        "share_of_close_seconds": 0.0388,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|playoffs|IND": [
@@ -29070,7 +30635,8 @@
           "Aaron Nesmith"
         ],
         "seconds": 1274.8,
-        "share_of_close_seconds": 0.7239
+        "share_of_close_seconds": 0.7239,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -29081,7 +30647,8 @@
           "Aaron Nesmith"
         ],
         "seconds": 231.3,
-        "share_of_close_seconds": 0.1313
+        "share_of_close_seconds": 0.1313,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -29092,7 +30659,8 @@
           "Aaron Nesmith"
         ],
         "seconds": 165.0,
-        "share_of_close_seconds": 0.0937
+        "share_of_close_seconds": 0.0937,
+        "average_starters_in_five": 3.0
       }
     ],
     "2024|playoffs|LAC": [
@@ -29105,7 +30673,8 @@
           "Terance Mann"
         ],
         "seconds": 193.7,
-        "share_of_close_seconds": 0.4689
+        "share_of_close_seconds": 0.4689,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -29116,7 +30685,8 @@
           "Terance Mann"
         ],
         "seconds": 102.4,
-        "share_of_close_seconds": 0.2479
+        "share_of_close_seconds": 0.2479,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -29127,7 +30697,8 @@
           "Ivica Zubac"
         ],
         "seconds": 76.5,
-        "share_of_close_seconds": 0.1852
+        "share_of_close_seconds": 0.1852,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|playoffs|LAL": [
@@ -29140,7 +30711,8 @@
           "Austin Reaves"
         ],
         "seconds": 487.7,
-        "share_of_close_seconds": 0.9286
+        "share_of_close_seconds": 0.9286,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -29151,7 +30723,8 @@
           "Austin Reaves"
         ],
         "seconds": 26.3,
-        "share_of_close_seconds": 0.0501
+        "share_of_close_seconds": 0.0501,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -29162,7 +30735,8 @@
           "Austin Reaves"
         ],
         "seconds": 10.0,
-        "share_of_close_seconds": 0.019
+        "share_of_close_seconds": 0.019,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|playoffs|MIL": [
@@ -29175,7 +30749,8 @@
           "Bobby Portis"
         ],
         "seconds": 298.6,
-        "share_of_close_seconds": 0.9953
+        "share_of_close_seconds": 0.9953,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -29186,7 +30761,8 @@
           "Andre Jackson Jr."
         ],
         "seconds": 1.4,
-        "share_of_close_seconds": 0.0047
+        "share_of_close_seconds": 0.0047,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|playoffs|MIN": [
@@ -29199,7 +30775,8 @@
           "Jaden McDaniels"
         ],
         "seconds": 515.5,
-        "share_of_close_seconds": 0.3567
+        "share_of_close_seconds": 0.3567,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -29210,7 +30787,8 @@
           "Jaden McDaniels"
         ],
         "seconds": 344.0,
-        "share_of_close_seconds": 0.238
+        "share_of_close_seconds": 0.238,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -29221,7 +30799,8 @@
           "Anthony Edwards"
         ],
         "seconds": 114.7,
-        "share_of_close_seconds": 0.0794
+        "share_of_close_seconds": 0.0794,
+        "average_starters_in_five": 3.0
       }
     ],
     "2024|playoffs|NOP": [
@@ -29234,7 +30813,8 @@
           "Trey Murphy III"
         ],
         "seconds": 325.0,
-        "share_of_close_seconds": 0.9587
+        "share_of_close_seconds": 0.9587,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -29245,7 +30825,8 @@
           "Trey Murphy III"
         ],
         "seconds": 14.0,
-        "share_of_close_seconds": 0.0413
+        "share_of_close_seconds": 0.0413,
+        "average_starters_in_five": 5.0
       }
     ],
     "2024|playoffs|NYK": [
@@ -29258,7 +30839,8 @@
           "Donte DiVincenzo"
         ],
         "seconds": 627.5,
-        "share_of_close_seconds": 0.3222
+        "share_of_close_seconds": 0.3222,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -29269,7 +30851,8 @@
           "Miles McBride"
         ],
         "seconds": 448.8,
-        "share_of_close_seconds": 0.2304
+        "share_of_close_seconds": 0.2304,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -29280,7 +30863,8 @@
           "Miles McBride"
         ],
         "seconds": 296.5,
-        "share_of_close_seconds": 0.1522
+        "share_of_close_seconds": 0.1522,
+        "average_starters_in_five": 3.0
       }
     ],
     "2024|playoffs|OKC": [
@@ -29293,7 +30877,8 @@
           "Cason Wallace"
         ],
         "seconds": 545.0,
-        "share_of_close_seconds": 0.4449
+        "share_of_close_seconds": 0.4449,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -29304,7 +30889,8 @@
           "Jaylin Williams"
         ],
         "seconds": 290.0,
-        "share_of_close_seconds": 0.2367
+        "share_of_close_seconds": 0.2367,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -29315,7 +30901,8 @@
           "Jalen Williams"
         ],
         "seconds": 263.7,
-        "share_of_close_seconds": 0.2153
+        "share_of_close_seconds": 0.2153,
+        "average_starters_in_five": 4.093
       }
     ],
     "2024|playoffs|ORL": [
@@ -29328,7 +30915,8 @@
           "Paolo Banchero"
         ],
         "seconds": 346.7,
-        "share_of_close_seconds": 0.6094
+        "share_of_close_seconds": 0.6094,
+        "average_starters_in_five": 4.144
       },
       {
         "players": [
@@ -29339,7 +30927,8 @@
           "Paolo Banchero"
         ],
         "seconds": 219.0,
-        "share_of_close_seconds": 0.385
+        "share_of_close_seconds": 0.385,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -29350,7 +30939,8 @@
           "Paolo Banchero"
         ],
         "seconds": 3.2,
-        "share_of_close_seconds": 0.0056
+        "share_of_close_seconds": 0.0056,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|playoffs|PHI": [
@@ -29363,7 +30953,8 @@
           "Tyrese Maxey"
         ],
         "seconds": 400.9,
-        "share_of_close_seconds": 0.3213
+        "share_of_close_seconds": 0.3213,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -29374,7 +30965,8 @@
           "Tyrese Maxey"
         ],
         "seconds": 377.4,
-        "share_of_close_seconds": 0.3025
+        "share_of_close_seconds": 0.3025,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -29385,7 +30977,8 @@
           "Tyrese Maxey"
         ],
         "seconds": 286.9,
-        "share_of_close_seconds": 0.23
+        "share_of_close_seconds": 0.23,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|playoffs|PHX": [
@@ -29398,7 +30991,8 @@
           "Royce O'Neale"
         ],
         "seconds": 184.0,
-        "share_of_close_seconds": 0.9288
+        "share_of_close_seconds": 0.9288,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -29409,7 +31003,8 @@
           "Josh Okogie"
         ],
         "seconds": 6.3,
-        "share_of_close_seconds": 0.0318
+        "share_of_close_seconds": 0.0318,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -29420,7 +31015,8 @@
           "Royce O'Neale"
         ],
         "seconds": 4.9,
-        "share_of_close_seconds": 0.0247
+        "share_of_close_seconds": 0.0247,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|regular|ATL": [
@@ -29433,7 +31029,8 @@
           "Jalen Johnson"
         ],
         "seconds": 968.0,
-        "share_of_close_seconds": 0.1137
+        "share_of_close_seconds": 0.1137,
+        "average_starters_in_five": 4.739
       },
       {
         "players": [
@@ -29444,7 +31041,8 @@
           "Vít Krejčí"
         ],
         "seconds": 964.9,
-        "share_of_close_seconds": 0.1133
+        "share_of_close_seconds": 0.1133,
+        "average_starters_in_five": 4.43
       },
       {
         "players": [
@@ -29455,7 +31053,8 @@
           "Jalen Johnson"
         ],
         "seconds": 868.0,
-        "share_of_close_seconds": 0.102
+        "share_of_close_seconds": 0.102,
+        "average_starters_in_five": 5.0
       }
     ],
     "2024|regular|BKN": [
@@ -29468,7 +31067,8 @@
           "Cameron Johnson"
         ],
         "seconds": 1178.1,
-        "share_of_close_seconds": 0.146
+        "share_of_close_seconds": 0.146,
+        "average_starters_in_five": 4.698
       },
       {
         "players": [
@@ -29479,7 +31079,8 @@
           "Cam Thomas"
         ],
         "seconds": 693.7,
-        "share_of_close_seconds": 0.086
+        "share_of_close_seconds": 0.086,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -29490,7 +31091,8 @@
           "Cam Thomas"
         ],
         "seconds": 691.5,
-        "share_of_close_seconds": 0.0857
+        "share_of_close_seconds": 0.0857,
+        "average_starters_in_five": 4.363
       }
     ],
     "2024|regular|BOS": [
@@ -29503,7 +31105,8 @@
           "Derrick White"
         ],
         "seconds": 1913.4,
-        "share_of_close_seconds": 0.3289
+        "share_of_close_seconds": 0.3289,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -29514,7 +31117,8 @@
           "Derrick White"
         ],
         "seconds": 1156.7,
-        "share_of_close_seconds": 0.1988
+        "share_of_close_seconds": 0.1988,
+        "average_starters_in_five": 4.698
       },
       {
         "players": [
@@ -29525,7 +31129,8 @@
           "Derrick White"
         ],
         "seconds": 353.3,
-        "share_of_close_seconds": 0.0607
+        "share_of_close_seconds": 0.0607,
+        "average_starters_in_five": 4.567
       }
     ],
     "2024|regular|CHA": [
@@ -29538,7 +31143,8 @@
           "Brandon Miller"
         ],
         "seconds": 792.3,
-        "share_of_close_seconds": 0.1145
+        "share_of_close_seconds": 0.1145,
+        "average_starters_in_five": 4.637
       },
       {
         "players": [
@@ -29549,7 +31155,8 @@
           "Brandon Miller"
         ],
         "seconds": 432.8,
-        "share_of_close_seconds": 0.0625
+        "share_of_close_seconds": 0.0625,
+        "average_starters_in_five": 4.196
       },
       {
         "players": [
@@ -29560,7 +31167,8 @@
           "Brandon Miller"
         ],
         "seconds": 425.7,
-        "share_of_close_seconds": 0.0615
+        "share_of_close_seconds": 0.0615,
+        "average_starters_in_five": 5.0
       }
     ],
     "2024|regular|CHI": [
@@ -29573,7 +31181,8 @@
           "Ayo Dosunmu"
         ],
         "seconds": 2637.5,
-        "share_of_close_seconds": 0.289
+        "share_of_close_seconds": 0.289,
+        "average_starters_in_five": 4.802
       },
       {
         "players": [
@@ -29584,7 +31193,8 @@
           "Coby White"
         ],
         "seconds": 2106.9,
-        "share_of_close_seconds": 0.2309
+        "share_of_close_seconds": 0.2309,
+        "average_starters_in_five": 4.261
       },
       {
         "players": [
@@ -29595,7 +31205,8 @@
           "Patrick Williams"
         ],
         "seconds": 551.0,
-        "share_of_close_seconds": 0.0604
+        "share_of_close_seconds": 0.0604,
+        "average_starters_in_five": 4.697
       }
     ],
     "2024|regular|CLE": [
@@ -29608,7 +31219,8 @@
           "Isaac Okoro"
         ],
         "seconds": 885.0,
-        "share_of_close_seconds": 0.113
+        "share_of_close_seconds": 0.113,
+        "average_starters_in_five": 3.671
       },
       {
         "players": [
@@ -29619,7 +31231,8 @@
           "Evan Mobley"
         ],
         "seconds": 738.7,
-        "share_of_close_seconds": 0.0943
+        "share_of_close_seconds": 0.0943,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -29630,7 +31243,8 @@
           "Isaac Okoro"
         ],
         "seconds": 606.8,
-        "share_of_close_seconds": 0.0775
+        "share_of_close_seconds": 0.0775,
+        "average_starters_in_five": 4.766
       }
     ],
     "2024|regular|DAL": [
@@ -29643,7 +31257,8 @@
           "Luka Dončić"
         ],
         "seconds": 452.4,
-        "share_of_close_seconds": 0.0757
+        "share_of_close_seconds": 0.0757,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -29654,7 +31269,8 @@
           "Dereck Lively II"
         ],
         "seconds": 355.8,
-        "share_of_close_seconds": 0.0595
+        "share_of_close_seconds": 0.0595,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -29665,7 +31281,8 @@
           "Daniel Gafford"
         ],
         "seconds": 305.5,
-        "share_of_close_seconds": 0.0511
+        "share_of_close_seconds": 0.0511,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|regular|DEN": [
@@ -29678,7 +31295,8 @@
           "Michael Porter Jr."
         ],
         "seconds": 3218.4,
-        "share_of_close_seconds": 0.4134
+        "share_of_close_seconds": 0.4134,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -29689,7 +31307,8 @@
           "Michael Porter Jr."
         ],
         "seconds": 1339.7,
-        "share_of_close_seconds": 0.1721
+        "share_of_close_seconds": 0.1721,
+        "average_starters_in_five": 4.98
       },
       {
         "players": [
@@ -29700,7 +31319,8 @@
           "Christian Braun"
         ],
         "seconds": 533.8,
-        "share_of_close_seconds": 0.0686
+        "share_of_close_seconds": 0.0686,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|regular|DET": [
@@ -29713,7 +31333,8 @@
           "Jalen Duren"
         ],
         "seconds": 752.1,
-        "share_of_close_seconds": 0.1258
+        "share_of_close_seconds": 0.1258,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -29724,7 +31345,8 @@
           "Ausar Thompson"
         ],
         "seconds": 394.8,
-        "share_of_close_seconds": 0.066
+        "share_of_close_seconds": 0.066,
+        "average_starters_in_five": 4.671
       },
       {
         "players": [
@@ -29735,7 +31357,8 @@
           "Jalen Duren"
         ],
         "seconds": 300.0,
-        "share_of_close_seconds": 0.0502
+        "share_of_close_seconds": 0.0502,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|regular|GSW": [
@@ -29748,7 +31371,8 @@
           "Jonathan Kuminga"
         ],
         "seconds": 1064.4,
-        "share_of_close_seconds": 0.1343
+        "share_of_close_seconds": 0.1343,
+        "average_starters_in_five": 3.955
       },
       {
         "players": [
@@ -29759,7 +31383,8 @@
           "Kevon Looney"
         ],
         "seconds": 659.5,
-        "share_of_close_seconds": 0.0832
+        "share_of_close_seconds": 0.0832,
+        "average_starters_in_five": 4.172
       },
       {
         "players": [
@@ -29770,7 +31395,8 @@
           "Gary Payton II"
         ],
         "seconds": 521.1,
-        "share_of_close_seconds": 0.0657
+        "share_of_close_seconds": 0.0657,
+        "average_starters_in_five": 3.0
       }
     ],
     "2024|regular|HOU": [
@@ -29783,7 +31409,8 @@
           "Jabari Smith Jr."
         ],
         "seconds": 1357.4,
-        "share_of_close_seconds": 0.1962
+        "share_of_close_seconds": 0.1962,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -29794,7 +31421,8 @@
           "Amen Thompson"
         ],
         "seconds": 424.0,
-        "share_of_close_seconds": 0.0613
+        "share_of_close_seconds": 0.0613,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -29805,7 +31433,8 @@
           "Amen Thompson"
         ],
         "seconds": 312.5,
-        "share_of_close_seconds": 0.0452
+        "share_of_close_seconds": 0.0452,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|regular|IND": [
@@ -29818,7 +31447,8 @@
           "Aaron Nesmith"
         ],
         "seconds": 1053.4,
-        "share_of_close_seconds": 0.1466
+        "share_of_close_seconds": 0.1466,
+        "average_starters_in_five": 3.517
       },
       {
         "players": [
@@ -29829,7 +31459,8 @@
           "Aaron Nesmith"
         ],
         "seconds": 1034.8,
-        "share_of_close_seconds": 0.144
+        "share_of_close_seconds": 0.144,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -29840,7 +31471,8 @@
           "Tyrese Haliburton"
         ],
         "seconds": 382.4,
-        "share_of_close_seconds": 0.0532
+        "share_of_close_seconds": 0.0532,
+        "average_starters_in_five": 4.639
       }
     ],
     "2024|regular|LAC": [
@@ -29853,7 +31485,8 @@
           "Ivica Zubac"
         ],
         "seconds": 1085.9,
-        "share_of_close_seconds": 0.153
+        "share_of_close_seconds": 0.153,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -29864,7 +31497,8 @@
           "Amir Coffey"
         ],
         "seconds": 436.5,
-        "share_of_close_seconds": 0.0615
+        "share_of_close_seconds": 0.0615,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -29875,7 +31509,8 @@
           "Daniel Theis"
         ],
         "seconds": 408.9,
-        "share_of_close_seconds": 0.0576
+        "share_of_close_seconds": 0.0576,
+        "average_starters_in_five": 3.0
       }
     ],
     "2024|regular|LAL": [
@@ -29888,7 +31523,8 @@
           "Austin Reaves"
         ],
         "seconds": 560.3,
-        "share_of_close_seconds": 0.0917
+        "share_of_close_seconds": 0.0917,
+        "average_starters_in_five": 4.012
       },
       {
         "players": [
@@ -29899,7 +31535,8 @@
           "Austin Reaves"
         ],
         "seconds": 540.0,
-        "share_of_close_seconds": 0.0884
+        "share_of_close_seconds": 0.0884,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -29910,7 +31547,8 @@
           "Austin Reaves"
         ],
         "seconds": 438.3,
-        "share_of_close_seconds": 0.0717
+        "share_of_close_seconds": 0.0717,
+        "average_starters_in_five": 3.459
       }
     ],
     "2024|regular|MEM": [
@@ -29923,7 +31561,8 @@
           "Vince Williams Jr."
         ],
         "seconds": 336.4,
-        "share_of_close_seconds": 0.0536
+        "share_of_close_seconds": 0.0536,
+        "average_starters_in_five": 3.825
       },
       {
         "players": [
@@ -29934,7 +31573,8 @@
           "GG Jackson"
         ],
         "seconds": 300.0,
-        "share_of_close_seconds": 0.0478
+        "share_of_close_seconds": 0.0478,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -29945,7 +31585,8 @@
           "Vince Williams Jr."
         ],
         "seconds": 291.6,
-        "share_of_close_seconds": 0.0465
+        "share_of_close_seconds": 0.0465,
+        "average_starters_in_five": 3.0
       }
     ],
     "2024|regular|MIA": [
@@ -29958,7 +31599,8 @@
           "Duncan Robinson"
         ],
         "seconds": 756.4,
-        "share_of_close_seconds": 0.0955
+        "share_of_close_seconds": 0.0955,
+        "average_starters_in_five": 3.812
       },
       {
         "players": [
@@ -29969,7 +31611,8 @@
           "Jaime Jaquez Jr."
         ],
         "seconds": 521.8,
-        "share_of_close_seconds": 0.0659
+        "share_of_close_seconds": 0.0659,
+        "average_starters_in_five": 3.564
       },
       {
         "players": [
@@ -29980,7 +31623,8 @@
           "Tyler Herro"
         ],
         "seconds": 484.7,
-        "share_of_close_seconds": 0.0612
+        "share_of_close_seconds": 0.0612,
+        "average_starters_in_five": 3.905
       }
     ],
     "2024|regular|MIL": [
@@ -29993,7 +31637,8 @@
           "Malik Beasley"
         ],
         "seconds": 2465.1,
-        "share_of_close_seconds": 0.3406
+        "share_of_close_seconds": 0.3406,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -30004,7 +31649,8 @@
           "Malik Beasley"
         ],
         "seconds": 1325.0,
-        "share_of_close_seconds": 0.1831
+        "share_of_close_seconds": 0.1831,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30015,7 +31661,8 @@
           "Malik Beasley"
         ],
         "seconds": 548.5,
-        "share_of_close_seconds": 0.0758
+        "share_of_close_seconds": 0.0758,
+        "average_starters_in_five": 4.613
       }
     ],
     "2024|regular|MIN": [
@@ -30028,7 +31675,8 @@
           "Jaden McDaniels"
         ],
         "seconds": 2303.4,
-        "share_of_close_seconds": 0.3189
+        "share_of_close_seconds": 0.3189,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -30039,7 +31687,8 @@
           "Jaden McDaniels"
         ],
         "seconds": 895.8,
-        "share_of_close_seconds": 0.124
+        "share_of_close_seconds": 0.124,
+        "average_starters_in_five": 4.324
       },
       {
         "players": [
@@ -30050,7 +31699,8 @@
           "Jaden McDaniels"
         ],
         "seconds": 574.8,
-        "share_of_close_seconds": 0.0796
+        "share_of_close_seconds": 0.0796,
+        "average_starters_in_five": 4.941
       }
     ],
     "2024|regular|NOP": [
@@ -30063,7 +31713,8 @@
           "Trey Murphy III"
         ],
         "seconds": 371.5,
-        "share_of_close_seconds": 0.0715
+        "share_of_close_seconds": 0.0715,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30074,7 +31725,8 @@
           "Herbert Jones"
         ],
         "seconds": 332.0,
-        "share_of_close_seconds": 0.0639
+        "share_of_close_seconds": 0.0639,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30085,7 +31737,8 @@
           "Herbert Jones"
         ],
         "seconds": 329.6,
-        "share_of_close_seconds": 0.0635
+        "share_of_close_seconds": 0.0635,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|regular|NYK": [
@@ -30098,7 +31751,8 @@
           "Precious Achiuwa"
         ],
         "seconds": 569.2,
-        "share_of_close_seconds": 0.0967
+        "share_of_close_seconds": 0.0967,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -30109,7 +31763,8 @@
           "Miles McBride"
         ],
         "seconds": 534.8,
-        "share_of_close_seconds": 0.0909
+        "share_of_close_seconds": 0.0909,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -30120,7 +31775,8 @@
           "Donte DiVincenzo"
         ],
         "seconds": 440.4,
-        "share_of_close_seconds": 0.0748
+        "share_of_close_seconds": 0.0748,
+        "average_starters_in_five": 5.0
       }
     ],
     "2024|regular|OKC": [
@@ -30133,7 +31789,8 @@
           "Jalen Williams"
         ],
         "seconds": 1406.6,
-        "share_of_close_seconds": 0.2174
+        "share_of_close_seconds": 0.2174,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30144,7 +31801,8 @@
           "Jalen Williams"
         ],
         "seconds": 1314.2,
-        "share_of_close_seconds": 0.2032
+        "share_of_close_seconds": 0.2032,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -30155,7 +31813,8 @@
           "Jalen Williams"
         ],
         "seconds": 422.9,
-        "share_of_close_seconds": 0.0654
+        "share_of_close_seconds": 0.0654,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|regular|ORL": [
@@ -30168,7 +31827,8 @@
           "Paolo Banchero"
         ],
         "seconds": 564.1,
-        "share_of_close_seconds": 0.0856
+        "share_of_close_seconds": 0.0856,
+        "average_starters_in_five": 4.968
       },
       {
         "players": [
@@ -30179,7 +31839,8 @@
           "Paolo Banchero"
         ],
         "seconds": 471.8,
-        "share_of_close_seconds": 0.0716
+        "share_of_close_seconds": 0.0716,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -30190,7 +31851,8 @@
           "Paolo Banchero"
         ],
         "seconds": 453.0,
-        "share_of_close_seconds": 0.0687
+        "share_of_close_seconds": 0.0687,
+        "average_starters_in_five": 4.81
       }
     ],
     "2024|regular|PHI": [
@@ -30203,7 +31865,8 @@
           "Tyrese Maxey"
         ],
         "seconds": 383.5,
-        "share_of_close_seconds": 0.0575
+        "share_of_close_seconds": 0.0575,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30214,7 +31877,8 @@
           "Tyrese Maxey"
         ],
         "seconds": 303.3,
-        "share_of_close_seconds": 0.0455
+        "share_of_close_seconds": 0.0455,
+        "average_starters_in_five": 3.011
       },
       {
         "players": [
@@ -30225,7 +31889,8 @@
           "Tyrese Maxey"
         ],
         "seconds": 301.2,
-        "share_of_close_seconds": 0.0452
+        "share_of_close_seconds": 0.0452,
+        "average_starters_in_five": 5.0
       }
     ],
     "2024|regular|PHX": [
@@ -30238,7 +31903,8 @@
           "Grayson Allen"
         ],
         "seconds": 793.6,
-        "share_of_close_seconds": 0.1064
+        "share_of_close_seconds": 0.1064,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -30249,7 +31915,8 @@
           "Grayson Allen"
         ],
         "seconds": 783.8,
-        "share_of_close_seconds": 0.1051
+        "share_of_close_seconds": 0.1051,
+        "average_starters_in_five": 4.675
       },
       {
         "players": [
@@ -30260,7 +31927,8 @@
           "Grayson Allen"
         ],
         "seconds": 782.5,
-        "share_of_close_seconds": 0.1049
+        "share_of_close_seconds": 0.1049,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|regular|POR": [
@@ -30273,7 +31941,8 @@
           "Jabari Walker"
         ],
         "seconds": 564.4,
-        "share_of_close_seconds": 0.0809
+        "share_of_close_seconds": 0.0809,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -30284,7 +31953,8 @@
           "Toumani Camara"
         ],
         "seconds": 561.9,
-        "share_of_close_seconds": 0.0806
+        "share_of_close_seconds": 0.0806,
+        "average_starters_in_five": 3.486
       },
       {
         "players": [
@@ -30295,7 +31965,8 @@
           "Toumani Camara"
         ],
         "seconds": 553.5,
-        "share_of_close_seconds": 0.0794
+        "share_of_close_seconds": 0.0794,
+        "average_starters_in_five": 3.411
       }
     ],
     "2024|regular|SAC": [
@@ -30308,7 +31979,8 @@
           "Keegan Murray"
         ],
         "seconds": 1611.6,
-        "share_of_close_seconds": 0.2005
+        "share_of_close_seconds": 0.2005,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30319,7 +31991,8 @@
           "Keon Ellis"
         ],
         "seconds": 847.5,
-        "share_of_close_seconds": 0.1054
+        "share_of_close_seconds": 0.1054,
+        "average_starters_in_five": 4.994
       },
       {
         "players": [
@@ -30330,7 +32003,8 @@
           "Keegan Murray"
         ],
         "seconds": 661.3,
-        "share_of_close_seconds": 0.0823
+        "share_of_close_seconds": 0.0823,
+        "average_starters_in_five": 5.0
       }
     ],
     "2024|regular|SAS": [
@@ -30343,7 +32017,8 @@
           "Victor Wembanyama"
         ],
         "seconds": 1776.2,
-        "share_of_close_seconds": 0.2385
+        "share_of_close_seconds": 0.2385,
+        "average_starters_in_five": 3.988
       },
       {
         "players": [
@@ -30354,7 +32029,8 @@
           "Jeremy Sochan"
         ],
         "seconds": 636.4,
-        "share_of_close_seconds": 0.0854
+        "share_of_close_seconds": 0.0854,
+        "average_starters_in_five": 3.895
       },
       {
         "players": [
@@ -30365,7 +32041,8 @@
           "Victor Wembanyama"
         ],
         "seconds": 561.7,
-        "share_of_close_seconds": 0.0754
+        "share_of_close_seconds": 0.0754,
+        "average_starters_in_five": 4.541
       }
     ],
     "2024|regular|TOR": [
@@ -30378,7 +32055,8 @@
           "Scottie Barnes"
         ],
         "seconds": 987.6,
-        "share_of_close_seconds": 0.1282
+        "share_of_close_seconds": 0.1282,
+        "average_starters_in_five": 4.998
       },
       {
         "players": [
@@ -30389,7 +32067,8 @@
           "Ochai Agbaji"
         ],
         "seconds": 469.1,
-        "share_of_close_seconds": 0.0609
+        "share_of_close_seconds": 0.0609,
+        "average_starters_in_five": 4.616
       },
       {
         "players": [
@@ -30400,7 +32079,8 @@
           "Scottie Barnes"
         ],
         "seconds": 466.4,
-        "share_of_close_seconds": 0.0605
+        "share_of_close_seconds": 0.0605,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|regular|UTA": [
@@ -30413,7 +32093,8 @@
           "Keyonte George"
         ],
         "seconds": 661.5,
-        "share_of_close_seconds": 0.1069
+        "share_of_close_seconds": 0.1069,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -30424,7 +32105,8 @@
           "Simone Fontecchio"
         ],
         "seconds": 450.2,
-        "share_of_close_seconds": 0.0728
+        "share_of_close_seconds": 0.0728,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -30435,7 +32117,8 @@
           "Keyonte George"
         ],
         "seconds": 434.6,
-        "share_of_close_seconds": 0.0702
+        "share_of_close_seconds": 0.0702,
+        "average_starters_in_five": 4.0
       }
     ],
     "2024|regular|WAS": [
@@ -30448,7 +32131,8 @@
           "Bilal Coulibaly"
         ],
         "seconds": 801.2,
-        "share_of_close_seconds": 0.1302
+        "share_of_close_seconds": 0.1302,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30459,7 +32143,8 @@
           "Deni Avdija"
         ],
         "seconds": 695.1,
-        "share_of_close_seconds": 0.113
+        "share_of_close_seconds": 0.113,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -30470,7 +32155,8 @@
           "Bilal Coulibaly"
         ],
         "seconds": 603.7,
-        "share_of_close_seconds": 0.0981
+        "share_of_close_seconds": 0.0981,
+        "average_starters_in_five": 4.033
       }
     ],
     "2025|playoffs|BOS": [
@@ -30483,7 +32169,8 @@
           "Derrick White"
         ],
         "seconds": 488.0,
-        "share_of_close_seconds": 0.5115
+        "share_of_close_seconds": 0.5115,
+        "average_starters_in_five": 4.406
       },
       {
         "players": [
@@ -30494,7 +32181,8 @@
           "Payton Pritchard"
         ],
         "seconds": 178.6,
-        "share_of_close_seconds": 0.1872
+        "share_of_close_seconds": 0.1872,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30505,7 +32193,8 @@
           "Derrick White"
         ],
         "seconds": 98.0,
-        "share_of_close_seconds": 0.1027
+        "share_of_close_seconds": 0.1027,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|playoffs|CLE": [
@@ -30518,7 +32207,8 @@
           "Evan Mobley"
         ],
         "seconds": 210.3,
-        "share_of_close_seconds": 0.4322
+        "share_of_close_seconds": 0.4322,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -30529,7 +32219,8 @@
           "Isaac Okoro"
         ],
         "seconds": 80.0,
-        "share_of_close_seconds": 0.1644
+        "share_of_close_seconds": 0.1644,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30540,7 +32231,8 @@
           "Evan Mobley"
         ],
         "seconds": 51.0,
-        "share_of_close_seconds": 0.1048
+        "share_of_close_seconds": 0.1048,
+        "average_starters_in_five": 3.0
       }
     ],
     "2025|playoffs|DEN": [
@@ -30553,7 +32245,8 @@
           "Christian Braun"
         ],
         "seconds": 1050.1,
-        "share_of_close_seconds": 0.6466
+        "share_of_close_seconds": 0.6466,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -30564,7 +32257,8 @@
           "Christian Braun"
         ],
         "seconds": 556.4,
-        "share_of_close_seconds": 0.3426
+        "share_of_close_seconds": 0.3426,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30575,7 +32269,8 @@
           "Peyton Watson"
         ],
         "seconds": 8.1,
-        "share_of_close_seconds": 0.005
+        "share_of_close_seconds": 0.005,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|playoffs|DET": [
@@ -30588,7 +32283,8 @@
           "Jalen Duren"
         ],
         "seconds": 596.7,
-        "share_of_close_seconds": 0.4669
+        "share_of_close_seconds": 0.4669,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30599,7 +32295,8 @@
           "Ausar Thompson"
         ],
         "seconds": 239.6,
-        "share_of_close_seconds": 0.1875
+        "share_of_close_seconds": 0.1875,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -30610,7 +32307,8 @@
           "Jalen Duren"
         ],
         "seconds": 210.4,
-        "share_of_close_seconds": 0.1646
+        "share_of_close_seconds": 0.1646,
+        "average_starters_in_five": 3.0
       }
     ],
     "2025|playoffs|GSW": [
@@ -30623,7 +32321,8 @@
           "Brandin Podziemski"
         ],
         "seconds": 236.0,
-        "share_of_close_seconds": 0.4012
+        "share_of_close_seconds": 0.4012,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -30634,7 +32333,8 @@
           "Brandin Podziemski"
         ],
         "seconds": 168.0,
-        "share_of_close_seconds": 0.2856
+        "share_of_close_seconds": 0.2856,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -30645,7 +32345,8 @@
           "Brandin Podziemski"
         ],
         "seconds": 78.0,
-        "share_of_close_seconds": 0.1326
+        "share_of_close_seconds": 0.1326,
+        "average_starters_in_five": 3.0
       }
     ],
     "2025|playoffs|HOU": [
@@ -30658,7 +32359,8 @@
           "Amen Thompson"
         ],
         "seconds": 150.0,
-        "share_of_close_seconds": 0.3817
+        "share_of_close_seconds": 0.3817,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30669,7 +32371,8 @@
           "Amen Thompson"
         ],
         "seconds": 111.2,
-        "share_of_close_seconds": 0.283
+        "share_of_close_seconds": 0.283,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30680,7 +32383,8 @@
           "Amen Thompson"
         ],
         "seconds": 79.0,
-        "share_of_close_seconds": 0.201
+        "share_of_close_seconds": 0.201,
+        "average_starters_in_five": 5.0
       }
     ],
     "2025|playoffs|IND": [
@@ -30693,7 +32397,8 @@
           "Aaron Nesmith"
         ],
         "seconds": 1222.4,
-        "share_of_close_seconds": 0.7287
+        "share_of_close_seconds": 0.7287,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -30704,7 +32409,8 @@
           "Aaron Nesmith"
         ],
         "seconds": 249.6,
-        "share_of_close_seconds": 0.1488
+        "share_of_close_seconds": 0.1488,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30715,7 +32421,8 @@
           "Aaron Nesmith"
         ],
         "seconds": 129.0,
-        "share_of_close_seconds": 0.0769
+        "share_of_close_seconds": 0.0769,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|playoffs|LAC": [
@@ -30728,7 +32435,8 @@
           "Ivica Zubac"
         ],
         "seconds": 451.5,
-        "share_of_close_seconds": 0.5696
+        "share_of_close_seconds": 0.5696,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -30739,7 +32447,8 @@
           "Ivica Zubac"
         ],
         "seconds": 153.0,
-        "share_of_close_seconds": 0.193
+        "share_of_close_seconds": 0.193,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30750,7 +32459,8 @@
           "Derrick Jones Jr."
         ],
         "seconds": 114.0,
-        "share_of_close_seconds": 0.1438
+        "share_of_close_seconds": 0.1438,
+        "average_starters_in_five": 3.0
       }
     ],
     "2025|playoffs|LAL": [
@@ -30763,7 +32473,8 @@
           "Austin Reaves"
         ],
         "seconds": 428.0,
-        "share_of_close_seconds": 0.7063
+        "share_of_close_seconds": 0.7063,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30774,7 +32485,8 @@
           "Austin Reaves"
         ],
         "seconds": 93.0,
-        "share_of_close_seconds": 0.1535
+        "share_of_close_seconds": 0.1535,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30785,7 +32497,8 @@
           "Austin Reaves"
         ],
         "seconds": 85.0,
-        "share_of_close_seconds": 0.1403
+        "share_of_close_seconds": 0.1403,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|playoffs|MEM": [
@@ -30798,7 +32511,8 @@
           "Scotty Pippen Jr."
         ],
         "seconds": 189.6,
-        "share_of_close_seconds": 0.4595
+        "share_of_close_seconds": 0.4595,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -30809,7 +32523,8 @@
           "Vince Williams Jr."
         ],
         "seconds": 75.0,
-        "share_of_close_seconds": 0.1818
+        "share_of_close_seconds": 0.1818,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30820,7 +32535,8 @@
           "Zach Edey"
         ],
         "seconds": 53.0,
-        "share_of_close_seconds": 0.1285
+        "share_of_close_seconds": 0.1285,
+        "average_starters_in_five": 3.0
       }
     ],
     "2025|playoffs|MIA": [
@@ -30833,7 +32549,8 @@
           "Nikola Jović"
         ],
         "seconds": 245.3,
-        "share_of_close_seconds": 1.0
+        "share_of_close_seconds": 1.0,
+        "average_starters_in_five": 3.0
       }
     ],
     "2025|playoffs|MIL": [
@@ -30846,7 +32563,8 @@
           "AJ Green"
         ],
         "seconds": 300.0,
-        "share_of_close_seconds": 0.6881
+        "share_of_close_seconds": 0.6881,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -30857,7 +32575,8 @@
           "Gary Trent Jr."
         ],
         "seconds": 136.0,
-        "share_of_close_seconds": 0.3119
+        "share_of_close_seconds": 0.3119,
+        "average_starters_in_five": 3.0
       }
     ],
     "2025|playoffs|MIN": [
@@ -30870,7 +32589,8 @@
           "Jaden McDaniels"
         ],
         "seconds": 388.0,
-        "share_of_close_seconds": 0.384
+        "share_of_close_seconds": 0.384,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -30881,7 +32601,8 @@
           "Jaden McDaniels"
         ],
         "seconds": 199.1,
-        "share_of_close_seconds": 0.1971
+        "share_of_close_seconds": 0.1971,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -30892,7 +32613,8 @@
           "Jaden McDaniels"
         ],
         "seconds": 144.0,
-        "share_of_close_seconds": 0.1425
+        "share_of_close_seconds": 0.1425,
+        "average_starters_in_five": 5.0
       }
     ],
     "2025|playoffs|NYK": [
@@ -30905,7 +32627,8 @@
           "Jalen Brunson"
         ],
         "seconds": 1678.5,
-        "share_of_close_seconds": 0.7153
+        "share_of_close_seconds": 0.7153,
+        "average_starters_in_five": 4.964
       },
       {
         "players": [
@@ -30916,7 +32639,8 @@
           "Miles McBride"
         ],
         "seconds": 203.4,
-        "share_of_close_seconds": 0.0867
+        "share_of_close_seconds": 0.0867,
+        "average_starters_in_five": 3.002
       },
       {
         "players": [
@@ -30927,7 +32651,8 @@
           "Miles McBride"
         ],
         "seconds": 99.3,
-        "share_of_close_seconds": 0.0423
+        "share_of_close_seconds": 0.0423,
+        "average_starters_in_five": 3.0
       }
     ],
     "2025|playoffs|OKC": [
@@ -30940,7 +32665,8 @@
           "Jalen Williams"
         ],
         "seconds": 906.2,
-        "share_of_close_seconds": 0.4598
+        "share_of_close_seconds": 0.4598,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30951,7 +32677,8 @@
           "Jalen Williams"
         ],
         "seconds": 566.6,
-        "share_of_close_seconds": 0.2875
+        "share_of_close_seconds": 0.2875,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -30962,7 +32689,8 @@
           "Jalen Williams"
         ],
         "seconds": 196.6,
-        "share_of_close_seconds": 0.0998
+        "share_of_close_seconds": 0.0998,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|playoffs|ORL": [
@@ -30975,7 +32703,8 @@
           "Paolo Banchero"
         ],
         "seconds": 209.2,
-        "share_of_close_seconds": 0.5685
+        "share_of_close_seconds": 0.5685,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -30986,7 +32715,8 @@
           "Paolo Banchero"
         ],
         "seconds": 158.5,
-        "share_of_close_seconds": 0.4307
+        "share_of_close_seconds": 0.4307,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -30997,7 +32727,8 @@
           "Paolo Banchero"
         ],
         "seconds": 0.3,
-        "share_of_close_seconds": 0.0008
+        "share_of_close_seconds": 0.0008,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|regular|ATL": [
@@ -31010,7 +32741,8 @@
           "Dyson Daniels"
         ],
         "seconds": 1196.9,
-        "share_of_close_seconds": 0.1457
+        "share_of_close_seconds": 0.1457,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -31021,7 +32753,8 @@
           "Dyson Daniels"
         ],
         "seconds": 920.8,
-        "share_of_close_seconds": 0.1121
+        "share_of_close_seconds": 0.1121,
+        "average_starters_in_five": 3.148
       },
       {
         "players": [
@@ -31032,7 +32765,8 @@
           "Dyson Daniels"
         ],
         "seconds": 609.8,
-        "share_of_close_seconds": 0.0742
+        "share_of_close_seconds": 0.0742,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|regular|BKN": [
@@ -31045,7 +32779,8 @@
           "Cam Thomas"
         ],
         "seconds": 1115.9,
-        "share_of_close_seconds": 0.1515
+        "share_of_close_seconds": 0.1515,
+        "average_starters_in_five": 4.621
       },
       {
         "players": [
@@ -31056,7 +32791,8 @@
           "Trendon Watford"
         ],
         "seconds": 425.7,
-        "share_of_close_seconds": 0.0578
+        "share_of_close_seconds": 0.0578,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -31067,7 +32803,8 @@
           "Cam Thomas"
         ],
         "seconds": 297.2,
-        "share_of_close_seconds": 0.0404
+        "share_of_close_seconds": 0.0404,
+        "average_starters_in_five": 4.828
       }
     ],
     "2025|regular|BOS": [
@@ -31080,7 +32817,8 @@
           "Derrick White"
         ],
         "seconds": 1531.0,
-        "share_of_close_seconds": 0.2375
+        "share_of_close_seconds": 0.2375,
+        "average_starters_in_five": 4.921
       },
       {
         "players": [
@@ -31091,7 +32829,8 @@
           "Derrick White"
         ],
         "seconds": 590.8,
-        "share_of_close_seconds": 0.0916
+        "share_of_close_seconds": 0.0916,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -31102,7 +32841,8 @@
           "Neemias Queta"
         ],
         "seconds": 357.8,
-        "share_of_close_seconds": 0.0555
+        "share_of_close_seconds": 0.0555,
+        "average_starters_in_five": 4.589
       }
     ],
     "2025|regular|CHA": [
@@ -31115,7 +32855,8 @@
           "Nick Smith Jr."
         ],
         "seconds": 728.8,
-        "share_of_close_seconds": 0.0894
+        "share_of_close_seconds": 0.0894,
+        "average_starters_in_five": 4.998
       },
       {
         "players": [
@@ -31126,7 +32867,8 @@
           "Brandon Miller"
         ],
         "seconds": 384.1,
-        "share_of_close_seconds": 0.0471
+        "share_of_close_seconds": 0.0471,
+        "average_starters_in_five": 3.877
       },
       {
         "players": [
@@ -31137,7 +32879,8 @@
           "KJ Simpson"
         ],
         "seconds": 377.0,
-        "share_of_close_seconds": 0.0462
+        "share_of_close_seconds": 0.0462,
+        "average_starters_in_five": 4.225
       }
     ],
     "2025|regular|CHI": [
@@ -31150,7 +32893,8 @@
           "Ayo Dosunmu"
         ],
         "seconds": 543.1,
-        "share_of_close_seconds": 0.0863
+        "share_of_close_seconds": 0.0863,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -31161,7 +32905,8 @@
           "Josh Giddey"
         ],
         "seconds": 528.9,
-        "share_of_close_seconds": 0.084
+        "share_of_close_seconds": 0.084,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -31172,7 +32917,8 @@
           "Josh Giddey"
         ],
         "seconds": 425.7,
-        "share_of_close_seconds": 0.0676
+        "share_of_close_seconds": 0.0676,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|regular|CLE": [
@@ -31185,7 +32931,8 @@
           "Evan Mobley"
         ],
         "seconds": 817.8,
-        "share_of_close_seconds": 0.1153
+        "share_of_close_seconds": 0.1153,
+        "average_starters_in_five": 4.645
       },
       {
         "players": [
@@ -31196,7 +32943,8 @@
           "Evan Mobley"
         ],
         "seconds": 515.1,
-        "share_of_close_seconds": 0.0726
+        "share_of_close_seconds": 0.0726,
+        "average_starters_in_five": 4.576
       },
       {
         "players": [
@@ -31207,7 +32955,8 @@
           "Darius Garland"
         ],
         "seconds": 481.0,
-        "share_of_close_seconds": 0.0678
+        "share_of_close_seconds": 0.0678,
+        "average_starters_in_five": 4.593
       }
     ],
     "2025|regular|DAL": [
@@ -31220,7 +32969,8 @@
           "Max Christie"
         ],
         "seconds": 452.4,
-        "share_of_close_seconds": 0.059
+        "share_of_close_seconds": 0.059,
+        "average_starters_in_five": 3.607
       },
       {
         "players": [
@@ -31231,7 +32981,8 @@
           "Naji Marshall"
         ],
         "seconds": 407.7,
-        "share_of_close_seconds": 0.0531
+        "share_of_close_seconds": 0.0531,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -31242,7 +32993,8 @@
           "Dereck Lively II"
         ],
         "seconds": 315.4,
-        "share_of_close_seconds": 0.0411
+        "share_of_close_seconds": 0.0411,
+        "average_starters_in_five": 4.231
       }
     ],
     "2025|regular|DEN": [
@@ -31255,7 +33007,8 @@
           "Christian Braun"
         ],
         "seconds": 1758.4,
-        "share_of_close_seconds": 0.2482
+        "share_of_close_seconds": 0.2482,
+        "average_starters_in_five": 4.811
       },
       {
         "players": [
@@ -31266,7 +33019,8 @@
           "Christian Braun"
         ],
         "seconds": 788.4,
-        "share_of_close_seconds": 0.1113
+        "share_of_close_seconds": 0.1113,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -31277,7 +33031,8 @@
           "Peyton Watson"
         ],
         "seconds": 654.9,
-        "share_of_close_seconds": 0.0924
+        "share_of_close_seconds": 0.0924,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|regular|DET": [
@@ -31290,7 +33045,8 @@
           "Jalen Duren"
         ],
         "seconds": 738.7,
-        "share_of_close_seconds": 0.0961
+        "share_of_close_seconds": 0.0961,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -31301,7 +33057,8 @@
           "Jalen Duren"
         ],
         "seconds": 693.3,
-        "share_of_close_seconds": 0.0902
+        "share_of_close_seconds": 0.0902,
+        "average_starters_in_five": 4.334
       },
       {
         "players": [
@@ -31312,7 +33069,8 @@
           "Jalen Duren"
         ],
         "seconds": 485.6,
-        "share_of_close_seconds": 0.0632
+        "share_of_close_seconds": 0.0632,
+        "average_starters_in_five": 4.026
       }
     ],
     "2025|regular|GSW": [
@@ -31325,7 +33083,8 @@
           "Brandin Podziemski"
         ],
         "seconds": 743.6,
-        "share_of_close_seconds": 0.093
+        "share_of_close_seconds": 0.093,
+        "average_starters_in_five": 4.357
       },
       {
         "players": [
@@ -31336,7 +33095,8 @@
           "Jonathan Kuminga"
         ],
         "seconds": 466.6,
-        "share_of_close_seconds": 0.0583
+        "share_of_close_seconds": 0.0583,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -31347,7 +33107,8 @@
           "Moses Moody"
         ],
         "seconds": 291.1,
-        "share_of_close_seconds": 0.0364
+        "share_of_close_seconds": 0.0364,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|regular|HOU": [
@@ -31360,7 +33121,8 @@
           "Amen Thompson"
         ],
         "seconds": 1668.0,
-        "share_of_close_seconds": 0.202
+        "share_of_close_seconds": 0.202,
+        "average_starters_in_five": 4.69
       },
       {
         "players": [
@@ -31371,7 +33133,8 @@
           "Jabari Smith Jr."
         ],
         "seconds": 1018.9,
-        "share_of_close_seconds": 0.1234
+        "share_of_close_seconds": 0.1234,
+        "average_starters_in_five": 4.975
       },
       {
         "players": [
@@ -31382,7 +33145,8 @@
           "Amen Thompson"
         ],
         "seconds": 739.5,
-        "share_of_close_seconds": 0.0895
+        "share_of_close_seconds": 0.0895,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|regular|IND": [
@@ -31395,7 +33159,8 @@
           "Bennedict Mathurin"
         ],
         "seconds": 1559.0,
-        "share_of_close_seconds": 0.197
+        "share_of_close_seconds": 0.197,
+        "average_starters_in_five": 4.582
       },
       {
         "players": [
@@ -31406,7 +33171,8 @@
           "Aaron Nesmith"
         ],
         "seconds": 1474.9,
-        "share_of_close_seconds": 0.1864
+        "share_of_close_seconds": 0.1864,
+        "average_starters_in_five": 4.826
       },
       {
         "players": [
@@ -31417,7 +33183,8 @@
           "Bennedict Mathurin"
         ],
         "seconds": 509.1,
-        "share_of_close_seconds": 0.0643
+        "share_of_close_seconds": 0.0643,
+        "average_starters_in_five": 4.584
       }
     ],
     "2025|regular|LAC": [
@@ -31430,7 +33197,8 @@
           "Amir Coffey"
         ],
         "seconds": 867.5,
-        "share_of_close_seconds": 0.1274
+        "share_of_close_seconds": 0.1274,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -31441,7 +33209,8 @@
           "Derrick Jones Jr."
         ],
         "seconds": 569.4,
-        "share_of_close_seconds": 0.0836
+        "share_of_close_seconds": 0.0836,
+        "average_starters_in_five": 4.439
       },
       {
         "players": [
@@ -31452,7 +33221,8 @@
           "Derrick Jones Jr."
         ],
         "seconds": 548.8,
-        "share_of_close_seconds": 0.0806
+        "share_of_close_seconds": 0.0806,
+        "average_starters_in_five": 4.633
       }
     ],
     "2025|regular|LAL": [
@@ -31465,7 +33235,8 @@
           "Austin Reaves"
         ],
         "seconds": 630.5,
-        "share_of_close_seconds": 0.0994
+        "share_of_close_seconds": 0.0994,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -31476,7 +33247,8 @@
           "Dalton Knecht"
         ],
         "seconds": 618.5,
-        "share_of_close_seconds": 0.0975
+        "share_of_close_seconds": 0.0975,
+        "average_starters_in_five": 4.401
       },
       {
         "players": [
@@ -31487,7 +33259,8 @@
           "Jaxson Hayes"
         ],
         "seconds": 470.2,
-        "share_of_close_seconds": 0.0741
+        "share_of_close_seconds": 0.0741,
+        "average_starters_in_five": 3.881
       }
     ],
     "2025|regular|MEM": [
@@ -31500,7 +33273,8 @@
           "Jaylen Wells"
         ],
         "seconds": 662.7,
-        "share_of_close_seconds": 0.0886
+        "share_of_close_seconds": 0.0886,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -31511,7 +33285,8 @@
           "Scotty Pippen Jr."
         ],
         "seconds": 424.0,
-        "share_of_close_seconds": 0.0567
+        "share_of_close_seconds": 0.0567,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -31522,7 +33297,8 @@
           "Jaylen Wells"
         ],
         "seconds": 308.9,
-        "share_of_close_seconds": 0.0413
+        "share_of_close_seconds": 0.0413,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|regular|MIA": [
@@ -31535,7 +33311,8 @@
           "Pelle Larsson"
         ],
         "seconds": 595.0,
-        "share_of_close_seconds": 0.068
+        "share_of_close_seconds": 0.068,
+        "average_starters_in_five": 3.504
       },
       {
         "players": [
@@ -31546,7 +33323,8 @@
           "Kel'el Ware"
         ],
         "seconds": 562.4,
-        "share_of_close_seconds": 0.0643
+        "share_of_close_seconds": 0.0643,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -31557,7 +33335,8 @@
           "Nikola Jović"
         ],
         "seconds": 519.1,
-        "share_of_close_seconds": 0.0593
+        "share_of_close_seconds": 0.0593,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|regular|MIL": [
@@ -31570,7 +33349,8 @@
           "Gary Trent Jr."
         ],
         "seconds": 656.8,
-        "share_of_close_seconds": 0.0754
+        "share_of_close_seconds": 0.0754,
+        "average_starters_in_five": 4.456
       },
       {
         "players": [
@@ -31581,7 +33361,8 @@
           "Gary Trent Jr."
         ],
         "seconds": 493.1,
-        "share_of_close_seconds": 0.0566
+        "share_of_close_seconds": 0.0566,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -31592,7 +33373,8 @@
           "AJ Green"
         ],
         "seconds": 476.0,
-        "share_of_close_seconds": 0.0546
+        "share_of_close_seconds": 0.0546,
+        "average_starters_in_five": 2.624
       }
     ],
     "2025|regular|MIN": [
@@ -31605,7 +33387,8 @@
           "Jaden McDaniels"
         ],
         "seconds": 1222.2,
-        "share_of_close_seconds": 0.141
+        "share_of_close_seconds": 0.141,
+        "average_starters_in_five": 4.954
       },
       {
         "players": [
@@ -31616,7 +33399,8 @@
           "Jaden McDaniels"
         ],
         "seconds": 1207.9,
-        "share_of_close_seconds": 0.1394
+        "share_of_close_seconds": 0.1394,
+        "average_starters_in_five": 4.003
       },
       {
         "players": [
@@ -31627,7 +33411,8 @@
           "Jaden McDaniels"
         ],
         "seconds": 1081.4,
-        "share_of_close_seconds": 0.1248
+        "share_of_close_seconds": 0.1248,
+        "average_starters_in_five": 4.385
       }
     ],
     "2025|regular|NOP": [
@@ -31640,7 +33425,8 @@
           "Yves Missi"
         ],
         "seconds": 598.0,
-        "share_of_close_seconds": 0.0897
+        "share_of_close_seconds": 0.0897,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -31651,7 +33437,8 @@
           "Yves Missi"
         ],
         "seconds": 295.7,
-        "share_of_close_seconds": 0.0444
+        "share_of_close_seconds": 0.0444,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -31662,7 +33449,8 @@
           "Yves Missi"
         ],
         "seconds": 287.6,
-        "share_of_close_seconds": 0.0432
+        "share_of_close_seconds": 0.0432,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|regular|NYK": [
@@ -31675,7 +33463,8 @@
           "Jalen Brunson"
         ],
         "seconds": 2901.1,
-        "share_of_close_seconds": 0.4005
+        "share_of_close_seconds": 0.4005,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -31686,7 +33475,8 @@
           "Miles McBride"
         ],
         "seconds": 597.2,
-        "share_of_close_seconds": 0.0824
+        "share_of_close_seconds": 0.0824,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -31697,7 +33487,8 @@
           "Miles McBride"
         ],
         "seconds": 590.7,
-        "share_of_close_seconds": 0.0815
+        "share_of_close_seconds": 0.0815,
+        "average_starters_in_five": 4.928
       }
     ],
     "2025|regular|OKC": [
@@ -31710,7 +33501,8 @@
           "Cason Wallace"
         ],
         "seconds": 724.2,
-        "share_of_close_seconds": 0.207
+        "share_of_close_seconds": 0.207,
+        "average_starters_in_five": 4.912
       },
       {
         "players": [
@@ -31721,7 +33513,8 @@
           "Cason Wallace"
         ],
         "seconds": 312.8,
-        "share_of_close_seconds": 0.0894
+        "share_of_close_seconds": 0.0894,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -31732,7 +33525,8 @@
           "Cason Wallace"
         ],
         "seconds": 298.3,
-        "share_of_close_seconds": 0.0853
+        "share_of_close_seconds": 0.0853,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|regular|ORL": [
@@ -31745,7 +33539,8 @@
           "Paolo Banchero"
         ],
         "seconds": 921.3,
-        "share_of_close_seconds": 0.1416
+        "share_of_close_seconds": 0.1416,
+        "average_starters_in_five": 4.417
       },
       {
         "players": [
@@ -31756,7 +33551,8 @@
           "Anthony Black"
         ],
         "seconds": 483.8,
-        "share_of_close_seconds": 0.0743
+        "share_of_close_seconds": 0.0743,
+        "average_starters_in_five": 3.009
       },
       {
         "players": [
@@ -31767,7 +33563,8 @@
           "Anthony Black"
         ],
         "seconds": 360.8,
-        "share_of_close_seconds": 0.0554
+        "share_of_close_seconds": 0.0554,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|regular|PHI": [
@@ -31780,7 +33577,8 @@
           "Tyrese Maxey"
         ],
         "seconds": 573.2,
-        "share_of_close_seconds": 0.0867
+        "share_of_close_seconds": 0.0867,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -31791,7 +33589,8 @@
           "Tyrese Maxey"
         ],
         "seconds": 566.3,
-        "share_of_close_seconds": 0.0856
+        "share_of_close_seconds": 0.0856,
+        "average_starters_in_five": 3.48
       },
       {
         "players": [
@@ -31802,7 +33601,8 @@
           "Justin Edwards"
         ],
         "seconds": 557.4,
-        "share_of_close_seconds": 0.0843
+        "share_of_close_seconds": 0.0843,
+        "average_starters_in_five": 4.508
       }
     ],
     "2025|regular|PHX": [
@@ -31815,7 +33615,8 @@
           "Grayson Allen"
         ],
         "seconds": 478.5,
-        "share_of_close_seconds": 0.0691
+        "share_of_close_seconds": 0.0691,
+        "average_starters_in_five": 2.86
       },
       {
         "players": [
@@ -31826,7 +33627,8 @@
           "Grayson Allen"
         ],
         "seconds": 415.4,
-        "share_of_close_seconds": 0.06
+        "share_of_close_seconds": 0.06,
+        "average_starters_in_five": 3.751
       },
       {
         "players": [
@@ -31837,7 +33639,8 @@
           "Grayson Allen"
         ],
         "seconds": 359.6,
-        "share_of_close_seconds": 0.0519
+        "share_of_close_seconds": 0.0519,
+        "average_starters_in_five": 2.302
       }
     ],
     "2025|regular|POR": [
@@ -31850,7 +33653,8 @@
           "Toumani Camara"
         ],
         "seconds": 484.4,
-        "share_of_close_seconds": 0.0801
+        "share_of_close_seconds": 0.0801,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -31861,7 +33665,8 @@
           "Toumani Camara"
         ],
         "seconds": 450.3,
-        "share_of_close_seconds": 0.0745
+        "share_of_close_seconds": 0.0745,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -31872,7 +33677,8 @@
           "Donovan Clingan"
         ],
         "seconds": 409.8,
-        "share_of_close_seconds": 0.0678
+        "share_of_close_seconds": 0.0678,
+        "average_starters_in_five": 4.636
       }
     ],
     "2025|regular|SAC": [
@@ -31885,7 +33691,8 @@
           "Keegan Murray"
         ],
         "seconds": 2228.9,
-        "share_of_close_seconds": 0.2703
+        "share_of_close_seconds": 0.2703,
+        "average_starters_in_five": 4.583
       },
       {
         "players": [
@@ -31896,7 +33703,8 @@
           "Keegan Murray"
         ],
         "seconds": 787.7,
-        "share_of_close_seconds": 0.0955
+        "share_of_close_seconds": 0.0955,
+        "average_starters_in_five": 4.724
       },
       {
         "players": [
@@ -31907,7 +33715,8 @@
           "Keon Ellis"
         ],
         "seconds": 473.8,
-        "share_of_close_seconds": 0.0575
+        "share_of_close_seconds": 0.0575,
+        "average_starters_in_five": 4.325
       }
     ],
     "2025|regular|SAS": [
@@ -31920,7 +33729,8 @@
           "Stephon Castle"
         ],
         "seconds": 643.0,
-        "share_of_close_seconds": 0.084
+        "share_of_close_seconds": 0.084,
+        "average_starters_in_five": 3.073
       },
       {
         "players": [
@@ -31931,7 +33741,8 @@
           "Victor Wembanyama"
         ],
         "seconds": 563.1,
-        "share_of_close_seconds": 0.0735
+        "share_of_close_seconds": 0.0735,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -31942,7 +33753,8 @@
           "Victor Wembanyama"
         ],
         "seconds": 470.2,
-        "share_of_close_seconds": 0.0614
+        "share_of_close_seconds": 0.0614,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|regular|TOR": [
@@ -31955,7 +33767,8 @@
           "Gradey Dick"
         ],
         "seconds": 712.1,
-        "share_of_close_seconds": 0.1123
+        "share_of_close_seconds": 0.1123,
+        "average_starters_in_five": 4.523
       },
       {
         "players": [
@@ -31966,7 +33779,8 @@
           "Gradey Dick"
         ],
         "seconds": 418.0,
-        "share_of_close_seconds": 0.0659
+        "share_of_close_seconds": 0.0659,
+        "average_starters_in_five": 4.684
       },
       {
         "players": [
@@ -31977,7 +33791,8 @@
           "Jonathan Mogbo"
         ],
         "seconds": 395.4,
-        "share_of_close_seconds": 0.0624
+        "share_of_close_seconds": 0.0624,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|regular|UTA": [
@@ -31990,7 +33805,8 @@
           "Isaiah Collier"
         ],
         "seconds": 524.2,
-        "share_of_close_seconds": 0.0802
+        "share_of_close_seconds": 0.0802,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32001,7 +33817,8 @@
           "Kyle Filipowski"
         ],
         "seconds": 293.0,
-        "share_of_close_seconds": 0.0448
+        "share_of_close_seconds": 0.0448,
+        "average_starters_in_five": 2.0
       },
       {
         "players": [
@@ -32012,7 +33829,8 @@
           "Brice Sensabaugh"
         ],
         "seconds": 291.1,
-        "share_of_close_seconds": 0.0445
+        "share_of_close_seconds": 0.0445,
+        "average_starters_in_five": 4.0
       }
     ],
     "2025|regular|WAS": [
@@ -32025,7 +33843,8 @@
           "Kyshawn George"
         ],
         "seconds": 308.2,
-        "share_of_close_seconds": 0.0699
+        "share_of_close_seconds": 0.0699,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -32036,7 +33855,8 @@
           "AJ Johnson"
         ],
         "seconds": 280.0,
-        "share_of_close_seconds": 0.0635
+        "share_of_close_seconds": 0.0635,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -32047,7 +33867,8 @@
           "Kyshawn George"
         ],
         "seconds": 273.0,
-        "share_of_close_seconds": 0.0619
+        "share_of_close_seconds": 0.0619,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|playoffs|ATL": [
@@ -32060,7 +33881,8 @@
           "Jalen Johnson"
         ],
         "seconds": 530.8,
-        "share_of_close_seconds": 0.9616
+        "share_of_close_seconds": 0.9616,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32071,7 +33893,8 @@
           "Dyson Daniels"
         ],
         "seconds": 15.6,
-        "share_of_close_seconds": 0.0283
+        "share_of_close_seconds": 0.0283,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32082,7 +33905,8 @@
           "Dyson Daniels"
         ],
         "seconds": 5.6,
-        "share_of_close_seconds": 0.0101
+        "share_of_close_seconds": 0.0101,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|playoffs|BOS": [
@@ -32095,7 +33919,8 @@
           "Sam Hauser"
         ],
         "seconds": 279.8,
-        "share_of_close_seconds": 0.5123
+        "share_of_close_seconds": 0.5123,
+        "average_starters_in_five": 2.0
       },
       {
         "players": [
@@ -32106,7 +33931,8 @@
           "Payton Pritchard"
         ],
         "seconds": 266.4,
-        "share_of_close_seconds": 0.4877
+        "share_of_close_seconds": 0.4877,
+        "average_starters_in_five": 3.0
       }
     ],
     "2026|playoffs|CLE": [
@@ -32119,7 +33945,8 @@
           "Evan Mobley"
         ],
         "seconds": 406.8,
-        "share_of_close_seconds": 0.3168
+        "share_of_close_seconds": 0.3168,
+        "average_starters_in_five": 4.272
       },
       {
         "players": [
@@ -32130,7 +33957,8 @@
           "Evan Mobley"
         ],
         "seconds": 377.1,
-        "share_of_close_seconds": 0.2936
+        "share_of_close_seconds": 0.2936,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32141,7 +33969,8 @@
           "Evan Mobley"
         ],
         "seconds": 163.2,
-        "share_of_close_seconds": 0.1271
+        "share_of_close_seconds": 0.1271,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|playoffs|DEN": [
@@ -32154,7 +33983,8 @@
           "Christian Braun"
         ],
         "seconds": 299.7,
-        "share_of_close_seconds": 0.5063
+        "share_of_close_seconds": 0.5063,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32165,7 +33995,8 @@
           "Spencer Jones"
         ],
         "seconds": 169.0,
-        "share_of_close_seconds": 0.2855
+        "share_of_close_seconds": 0.2855,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -32176,7 +34007,8 @@
           "Christian Braun"
         ],
         "seconds": 75.3,
-        "share_of_close_seconds": 0.1272
+        "share_of_close_seconds": 0.1272,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|playoffs|DET": [
@@ -32189,7 +34021,8 @@
           "Daniss Jenkins"
         ],
         "seconds": 233.1,
-        "share_of_close_seconds": 0.2063
+        "share_of_close_seconds": 0.2063,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32200,7 +34033,8 @@
           "Ausar Thompson"
         ],
         "seconds": 200.7,
-        "share_of_close_seconds": 0.1776
+        "share_of_close_seconds": 0.1776,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32211,7 +34045,8 @@
           "Daniss Jenkins"
         ],
         "seconds": 181.6,
-        "share_of_close_seconds": 0.1607
+        "share_of_close_seconds": 0.1607,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|playoffs|HOU": [
@@ -32224,7 +34059,8 @@
           "Reed Sheppard"
         ],
         "seconds": 410.7,
-        "share_of_close_seconds": 0.6989
+        "share_of_close_seconds": 0.6989,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -32235,7 +34071,8 @@
           "Amen Thompson"
         ],
         "seconds": 134.7,
-        "share_of_close_seconds": 0.2292
+        "share_of_close_seconds": 0.2292,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32246,7 +34083,8 @@
           "Amen Thompson"
         ],
         "seconds": 32.0,
-        "share_of_close_seconds": 0.0545
+        "share_of_close_seconds": 0.0545,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|playoffs|LAL": [
@@ -32259,7 +34097,8 @@
           "Jaxson Hayes"
         ],
         "seconds": 425.1,
-        "share_of_close_seconds": 0.4911
+        "share_of_close_seconds": 0.4911,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32270,7 +34109,8 @@
           "Austin Reaves"
         ],
         "seconds": 265.8,
-        "share_of_close_seconds": 0.3071
+        "share_of_close_seconds": 0.3071,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32281,7 +34121,8 @@
           "Austin Reaves"
         ],
         "seconds": 88.0,
-        "share_of_close_seconds": 0.1017
+        "share_of_close_seconds": 0.1017,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|playoffs|MIN": [
@@ -32294,7 +34135,8 @@
           "Jaden McDaniels"
         ],
         "seconds": 299.7,
-        "share_of_close_seconds": 0.2802
+        "share_of_close_seconds": 0.2802,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -32305,7 +34147,8 @@
           "Terrence Shannon Jr."
         ],
         "seconds": 126.0,
-        "share_of_close_seconds": 0.1178
+        "share_of_close_seconds": 0.1178,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32316,7 +34159,8 @@
           "Jaden McDaniels"
         ],
         "seconds": 122.0,
-        "share_of_close_seconds": 0.1141
+        "share_of_close_seconds": 0.1141,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|playoffs|NYK": [
@@ -32329,7 +34173,8 @@
           "Jalen Brunson"
         ],
         "seconds": 678.1,
-        "share_of_close_seconds": 0.342
+        "share_of_close_seconds": 0.342,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -32340,7 +34185,8 @@
           "Miles McBride"
         ],
         "seconds": 355.1,
-        "share_of_close_seconds": 0.1791
+        "share_of_close_seconds": 0.1791,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32351,7 +34197,8 @@
           "Landry Shamet"
         ],
         "seconds": 267.3,
-        "share_of_close_seconds": 0.1348
+        "share_of_close_seconds": 0.1348,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|playoffs|OKC": [
@@ -32364,7 +34211,8 @@
           "Ajay Mitchell"
         ],
         "seconds": 284.9,
-        "share_of_close_seconds": 0.4684
+        "share_of_close_seconds": 0.4684,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -32375,7 +34223,8 @@
           "Ajay Mitchell"
         ],
         "seconds": 165.1,
-        "share_of_close_seconds": 0.2714
+        "share_of_close_seconds": 0.2714,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -32386,7 +34235,8 @@
           "Ajay Mitchell"
         ],
         "seconds": 72.0,
-        "share_of_close_seconds": 0.1184
+        "share_of_close_seconds": 0.1184,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|playoffs|ORL": [
@@ -32399,7 +34249,8 @@
           "Jamal Cain"
         ],
         "seconds": 224.0,
-        "share_of_close_seconds": 0.4347
+        "share_of_close_seconds": 0.4347,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32410,7 +34261,8 @@
           "Paolo Banchero"
         ],
         "seconds": 178.0,
-        "share_of_close_seconds": 0.3454
+        "share_of_close_seconds": 0.3454,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -32421,7 +34273,8 @@
           "Anthony Black"
         ],
         "seconds": 63.1,
-        "share_of_close_seconds": 0.1225
+        "share_of_close_seconds": 0.1225,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|playoffs|PHI": [
@@ -32434,7 +34287,8 @@
           "VJ Edgecombe"
         ],
         "seconds": 279.8,
-        "share_of_close_seconds": 0.3806
+        "share_of_close_seconds": 0.3806,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -32445,7 +34299,8 @@
           "VJ Edgecombe"
         ],
         "seconds": 233.0,
-        "share_of_close_seconds": 0.317
+        "share_of_close_seconds": 0.317,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32456,7 +34311,8 @@
           "VJ Edgecombe"
         ],
         "seconds": 151.0,
-        "share_of_close_seconds": 0.2054
+        "share_of_close_seconds": 0.2054,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|playoffs|POR": [
@@ -32469,7 +34325,8 @@
           "Toumani Camara"
         ],
         "seconds": 220.0,
-        "share_of_close_seconds": 0.9483
+        "share_of_close_seconds": 0.9483,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32480,7 +34337,8 @@
           "Toumani Camara"
         ],
         "seconds": 5.2,
-        "share_of_close_seconds": 0.0224
+        "share_of_close_seconds": 0.0224,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32491,7 +34349,8 @@
           "Toumani Camara"
         ],
         "seconds": 5.2,
-        "share_of_close_seconds": 0.0224
+        "share_of_close_seconds": 0.0224,
+        "average_starters_in_five": 2.0
       }
     ],
     "2026|playoffs|SAS": [
@@ -32504,7 +34363,8 @@
           "Dylan Harper"
         ],
         "seconds": 460.5,
-        "share_of_close_seconds": 0.2152
+        "share_of_close_seconds": 0.2152,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32515,7 +34375,8 @@
           "Dylan Harper"
         ],
         "seconds": 432.7,
-        "share_of_close_seconds": 0.2022
+        "share_of_close_seconds": 0.2022,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32526,7 +34387,8 @@
           "Dylan Harper"
         ],
         "seconds": 384.0,
-        "share_of_close_seconds": 0.1795
+        "share_of_close_seconds": 0.1795,
+        "average_starters_in_five": 4.75
       }
     ],
     "2026|playoffs|TOR": [
@@ -32539,7 +34401,8 @@
           "Collin Murray-Boyles"
         ],
         "seconds": 305.5,
-        "share_of_close_seconds": 0.5791
+        "share_of_close_seconds": 0.5791,
+        "average_starters_in_five": 3.982
       },
       {
         "players": [
@@ -32550,7 +34413,8 @@
           "Collin Murray-Boyles"
         ],
         "seconds": 204.0,
-        "share_of_close_seconds": 0.3867
+        "share_of_close_seconds": 0.3867,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -32561,7 +34425,8 @@
           "Jamison Battle"
         ],
         "seconds": 16.2,
-        "share_of_close_seconds": 0.0307
+        "share_of_close_seconds": 0.0307,
+        "average_starters_in_five": 3.0
       }
     ],
     "2026|regular|ATL": [
@@ -32574,7 +34439,8 @@
           "Dyson Daniels"
         ],
         "seconds": 1821.6,
-        "share_of_close_seconds": 0.2581
+        "share_of_close_seconds": 0.2581,
+        "average_starters_in_five": 4.463
       },
       {
         "players": [
@@ -32585,7 +34451,8 @@
           "Dyson Daniels"
         ],
         "seconds": 1204.8,
-        "share_of_close_seconds": 0.1707
+        "share_of_close_seconds": 0.1707,
+        "average_starters_in_five": 3.893
       },
       {
         "players": [
@@ -32596,7 +34463,8 @@
           "Dyson Daniels"
         ],
         "seconds": 750.1,
-        "share_of_close_seconds": 0.1063
+        "share_of_close_seconds": 0.1063,
+        "average_starters_in_five": 4.373
       }
     ],
     "2026|regular|BKN": [
@@ -32609,7 +34477,8 @@
           "Drake Powell"
         ],
         "seconds": 365.6,
-        "share_of_close_seconds": 0.0663
+        "share_of_close_seconds": 0.0663,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -32620,7 +34489,8 @@
           "Egor Dëmin"
         ],
         "seconds": 300.0,
-        "share_of_close_seconds": 0.0544
+        "share_of_close_seconds": 0.0544,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -32631,7 +34501,8 @@
           "Egor Dëmin"
         ],
         "seconds": 289.0,
-        "share_of_close_seconds": 0.0524
+        "share_of_close_seconds": 0.0524,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|regular|BOS": [
@@ -32644,7 +34515,8 @@
           "Sam Hauser"
         ],
         "seconds": 1074.5,
-        "share_of_close_seconds": 0.181
+        "share_of_close_seconds": 0.181,
+        "average_starters_in_five": 4.291
       },
       {
         "players": [
@@ -32655,7 +34527,8 @@
           "Jordan Walsh"
         ],
         "seconds": 330.1,
-        "share_of_close_seconds": 0.0556
+        "share_of_close_seconds": 0.0556,
+        "average_starters_in_five": 4.277
       },
       {
         "players": [
@@ -32666,7 +34539,8 @@
           "Jordan Walsh"
         ],
         "seconds": 289.3,
-        "share_of_close_seconds": 0.0487
+        "share_of_close_seconds": 0.0487,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|regular|CHA": [
@@ -32679,7 +34553,8 @@
           "Kon Knueppel"
         ],
         "seconds": 1135.4,
-        "share_of_close_seconds": 0.1971
+        "share_of_close_seconds": 0.1971,
+        "average_starters_in_five": 4.89
       },
       {
         "players": [
@@ -32690,7 +34565,8 @@
           "Sion James"
         ],
         "seconds": 570.2,
-        "share_of_close_seconds": 0.099
+        "share_of_close_seconds": 0.099,
+        "average_starters_in_five": 4.026
       },
       {
         "players": [
@@ -32701,7 +34577,8 @@
           "Sion James"
         ],
         "seconds": 433.9,
-        "share_of_close_seconds": 0.0753
+        "share_of_close_seconds": 0.0753,
+        "average_starters_in_five": 3.929
       }
     ],
     "2026|regular|CHI": [
@@ -32714,7 +34591,8 @@
           "Matas Buzelis"
         ],
         "seconds": 576.6,
-        "share_of_close_seconds": 0.0666
+        "share_of_close_seconds": 0.0666,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32725,7 +34603,8 @@
           "Josh Giddey"
         ],
         "seconds": 466.2,
-        "share_of_close_seconds": 0.0539
+        "share_of_close_seconds": 0.0539,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -32736,7 +34615,8 @@
           "Matas Buzelis"
         ],
         "seconds": 417.0,
-        "share_of_close_seconds": 0.0482
+        "share_of_close_seconds": 0.0482,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|regular|CLE": [
@@ -32749,7 +34629,8 @@
           "Evan Mobley"
         ],
         "seconds": 429.7,
-        "share_of_close_seconds": 0.0635
+        "share_of_close_seconds": 0.0635,
+        "average_starters_in_five": 4.585
       },
       {
         "players": [
@@ -32760,7 +34641,8 @@
           "Evan Mobley"
         ],
         "seconds": 387.9,
-        "share_of_close_seconds": 0.0573
+        "share_of_close_seconds": 0.0573,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32771,7 +34653,8 @@
           "Jaylon Tyson"
         ],
         "seconds": 358.9,
-        "share_of_close_seconds": 0.053
+        "share_of_close_seconds": 0.053,
+        "average_starters_in_five": 3.735
       }
     ],
     "2026|regular|DAL": [
@@ -32784,7 +34667,8 @@
           "Cooper Flagg"
         ],
         "seconds": 813.3,
-        "share_of_close_seconds": 0.0948
+        "share_of_close_seconds": 0.0948,
+        "average_starters_in_five": 3.161
       },
       {
         "players": [
@@ -32795,7 +34679,8 @@
           "Cooper Flagg"
         ],
         "seconds": 371.4,
-        "share_of_close_seconds": 0.0433
+        "share_of_close_seconds": 0.0433,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32806,7 +34691,8 @@
           "Cooper Flagg"
         ],
         "seconds": 346.7,
-        "share_of_close_seconds": 0.0404
+        "share_of_close_seconds": 0.0404,
+        "average_starters_in_five": 3.941
       }
     ],
     "2026|regular|DEN": [
@@ -32819,7 +34705,8 @@
           "Christian Braun"
         ],
         "seconds": 1296.0,
-        "share_of_close_seconds": 0.1395
+        "share_of_close_seconds": 0.1395,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -32830,7 +34717,8 @@
           "Christian Braun"
         ],
         "seconds": 887.1,
-        "share_of_close_seconds": 0.0955
+        "share_of_close_seconds": 0.0955,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -32841,7 +34729,8 @@
           "Peyton Watson"
         ],
         "seconds": 651.7,
-        "share_of_close_seconds": 0.0702
+        "share_of_close_seconds": 0.0702,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|regular|DET": [
@@ -32854,7 +34743,8 @@
           "Ausar Thompson"
         ],
         "seconds": 1285.8,
-        "share_of_close_seconds": 0.1694
+        "share_of_close_seconds": 0.1694,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -32865,7 +34755,8 @@
           "Daniss Jenkins"
         ],
         "seconds": 404.1,
-        "share_of_close_seconds": 0.0533
+        "share_of_close_seconds": 0.0533,
+        "average_starters_in_five": 4.889
       },
       {
         "players": [
@@ -32876,7 +34767,8 @@
           "Ausar Thompson"
         ],
         "seconds": 382.5,
-        "share_of_close_seconds": 0.0504
+        "share_of_close_seconds": 0.0504,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|regular|GSW": [
@@ -32889,7 +34781,8 @@
           "LJ Cryer"
         ],
         "seconds": 307.3,
-        "share_of_close_seconds": 0.0401
+        "share_of_close_seconds": 0.0401,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32900,7 +34793,8 @@
           "Brandin Podziemski"
         ],
         "seconds": 291.7,
-        "share_of_close_seconds": 0.038
+        "share_of_close_seconds": 0.038,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -32911,7 +34805,8 @@
           "Jonathan Kuminga"
         ],
         "seconds": 286.3,
-        "share_of_close_seconds": 0.0373
+        "share_of_close_seconds": 0.0373,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|regular|HOU": [
@@ -32924,7 +34819,8 @@
           "Reed Sheppard"
         ],
         "seconds": 1789.5,
-        "share_of_close_seconds": 0.1975
+        "share_of_close_seconds": 0.1975,
+        "average_starters_in_five": 4.225
       },
       {
         "players": [
@@ -32935,7 +34831,8 @@
           "Amen Thompson"
         ],
         "seconds": 844.3,
-        "share_of_close_seconds": 0.0932
+        "share_of_close_seconds": 0.0932,
+        "average_starters_in_five": 4.641
       },
       {
         "players": [
@@ -32946,7 +34843,8 @@
           "Amen Thompson"
         ],
         "seconds": 735.5,
-        "share_of_close_seconds": 0.0812
+        "share_of_close_seconds": 0.0812,
+        "average_starters_in_five": 4.854
       }
     ],
     "2026|regular|IND": [
@@ -32959,7 +34857,8 @@
           "Bennedict Mathurin"
         ],
         "seconds": 487.4,
-        "share_of_close_seconds": 0.0747
+        "share_of_close_seconds": 0.0747,
+        "average_starters_in_five": 3.529
       },
       {
         "players": [
@@ -32970,7 +34869,8 @@
           "Ben Sheppard"
         ],
         "seconds": 300.0,
-        "share_of_close_seconds": 0.046
+        "share_of_close_seconds": 0.046,
+        "average_starters_in_five": 2.0
       },
       {
         "players": [
@@ -32981,7 +34881,8 @@
           "Taelon Peter"
         ],
         "seconds": 300.0,
-        "share_of_close_seconds": 0.046
+        "share_of_close_seconds": 0.046,
+        "average_starters_in_five": 3.0
       }
     ],
     "2026|regular|LAC": [
@@ -32994,7 +34895,8 @@
           "Jordan Miller"
         ],
         "seconds": 372.1,
-        "share_of_close_seconds": 0.0576
+        "share_of_close_seconds": 0.0576,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -33005,7 +34907,8 @@
           "John Collins"
         ],
         "seconds": 341.5,
-        "share_of_close_seconds": 0.0529
+        "share_of_close_seconds": 0.0529,
+        "average_starters_in_five": 4.953
       },
       {
         "players": [
@@ -33016,7 +34919,8 @@
           "Bennedict Mathurin"
         ],
         "seconds": 327.6,
-        "share_of_close_seconds": 0.0507
+        "share_of_close_seconds": 0.0507,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|regular|LAL": [
@@ -33029,7 +34933,8 @@
           "Austin Reaves"
         ],
         "seconds": 699.5,
-        "share_of_close_seconds": 0.1349
+        "share_of_close_seconds": 0.1349,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -33040,7 +34945,8 @@
           "Jake LaRavia"
         ],
         "seconds": 400.0,
-        "share_of_close_seconds": 0.0771
+        "share_of_close_seconds": 0.0771,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -33051,7 +34957,8 @@
           "Austin Reaves"
         ],
         "seconds": 396.4,
-        "share_of_close_seconds": 0.0764
+        "share_of_close_seconds": 0.0764,
+        "average_starters_in_five": 4.498
       }
     ],
     "2026|regular|MEM": [
@@ -33064,7 +34971,8 @@
           "Cedric Coward"
         ],
         "seconds": 789.5,
-        "share_of_close_seconds": 0.1101
+        "share_of_close_seconds": 0.1101,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -33075,7 +34983,8 @@
           "Cedric Coward"
         ],
         "seconds": 684.4,
-        "share_of_close_seconds": 0.0954
+        "share_of_close_seconds": 0.0954,
+        "average_starters_in_five": 3.929
       },
       {
         "players": [
@@ -33086,7 +34995,8 @@
           "Cedric Coward"
         ],
         "seconds": 403.5,
-        "share_of_close_seconds": 0.0563
+        "share_of_close_seconds": 0.0563,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|regular|MIA": [
@@ -33099,7 +35009,8 @@
           "Jaime Jaquez Jr."
         ],
         "seconds": 854.9,
-        "share_of_close_seconds": 0.1493
+        "share_of_close_seconds": 0.1493,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -33110,7 +35021,8 @@
           "Pelle Larsson"
         ],
         "seconds": 505.8,
-        "share_of_close_seconds": 0.0884
+        "share_of_close_seconds": 0.0884,
+        "average_starters_in_five": 3.302
       },
       {
         "players": [
@@ -33121,7 +35033,8 @@
           "Pelle Larsson"
         ],
         "seconds": 430.0,
-        "share_of_close_seconds": 0.0751
+        "share_of_close_seconds": 0.0751,
+        "average_starters_in_five": 4.988
       }
     ],
     "2026|regular|MIL": [
@@ -33134,7 +35047,8 @@
           "AJ Green"
         ],
         "seconds": 801.1,
-        "share_of_close_seconds": 0.1134
+        "share_of_close_seconds": 0.1134,
+        "average_starters_in_five": 4.7
       },
       {
         "players": [
@@ -33145,7 +35059,8 @@
           "AJ Green"
         ],
         "seconds": 545.4,
-        "share_of_close_seconds": 0.0772
+        "share_of_close_seconds": 0.0772,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -33156,7 +35071,8 @@
           "AJ Green"
         ],
         "seconds": 432.1,
-        "share_of_close_seconds": 0.0612
+        "share_of_close_seconds": 0.0612,
+        "average_starters_in_five": 4.461
       }
     ],
     "2026|regular|MIN": [
@@ -33169,7 +35085,8 @@
           "Jaden McDaniels"
         ],
         "seconds": 1615.7,
-        "share_of_close_seconds": 0.2607
+        "share_of_close_seconds": 0.2607,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -33180,7 +35097,8 @@
           "Jaden McDaniels"
         ],
         "seconds": 593.3,
-        "share_of_close_seconds": 0.0957
+        "share_of_close_seconds": 0.0957,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -33191,7 +35109,8 @@
           "Jaden McDaniels"
         ],
         "seconds": 463.0,
-        "share_of_close_seconds": 0.0747
+        "share_of_close_seconds": 0.0747,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|regular|NOP": [
@@ -33204,7 +35123,8 @@
           "Derik Queen"
         ],
         "seconds": 685.0,
-        "share_of_close_seconds": 0.0855
+        "share_of_close_seconds": 0.0855,
+        "average_starters_in_five": 3.939
       },
       {
         "players": [
@@ -33215,7 +35135,8 @@
           "Derik Queen"
         ],
         "seconds": 667.6,
-        "share_of_close_seconds": 0.0833
+        "share_of_close_seconds": 0.0833,
+        "average_starters_in_five": 3.347
       },
       {
         "players": [
@@ -33226,7 +35147,8 @@
           "Trey Murphy III"
         ],
         "seconds": 616.1,
-        "share_of_close_seconds": 0.0769
+        "share_of_close_seconds": 0.0769,
+        "average_starters_in_five": 5.0
       }
     ],
     "2026|regular|NYK": [
@@ -33239,7 +35161,8 @@
           "Jalen Brunson"
         ],
         "seconds": 997.0,
-        "share_of_close_seconds": 0.1535
+        "share_of_close_seconds": 0.1535,
+        "average_starters_in_five": 4.904
       },
       {
         "players": [
@@ -33250,7 +35173,8 @@
           "Miles McBride"
         ],
         "seconds": 444.6,
-        "share_of_close_seconds": 0.0685
+        "share_of_close_seconds": 0.0685,
+        "average_starters_in_five": 4.067
       },
       {
         "players": [
@@ -33261,7 +35185,8 @@
           "Tyler Kolek"
         ],
         "seconds": 439.6,
-        "share_of_close_seconds": 0.0677
+        "share_of_close_seconds": 0.0677,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|regular|OKC": [
@@ -33274,7 +35199,8 @@
           "Cason Wallace"
         ],
         "seconds": 340.8,
-        "share_of_close_seconds": 0.0517
+        "share_of_close_seconds": 0.0517,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -33285,7 +35211,8 @@
           "Ajay Mitchell"
         ],
         "seconds": 335.0,
-        "share_of_close_seconds": 0.0508
+        "share_of_close_seconds": 0.0508,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -33296,7 +35223,8 @@
           "Cason Wallace"
         ],
         "seconds": 298.3,
-        "share_of_close_seconds": 0.0452
+        "share_of_close_seconds": 0.0452,
+        "average_starters_in_five": 5.0
       }
     ],
     "2026|regular|ORL": [
@@ -33309,7 +35237,8 @@
           "Paolo Banchero"
         ],
         "seconds": 1547.1,
-        "share_of_close_seconds": 0.1742
+        "share_of_close_seconds": 0.1742,
+        "average_starters_in_five": 4.82
       },
       {
         "players": [
@@ -33320,7 +35249,8 @@
           "Tristan da Silva"
         ],
         "seconds": 1505.2,
-        "share_of_close_seconds": 0.1694
+        "share_of_close_seconds": 0.1694,
+        "average_starters_in_five": 4.657
       },
       {
         "players": [
@@ -33331,7 +35261,8 @@
           "Tristan da Silva"
         ],
         "seconds": 1264.8,
-        "share_of_close_seconds": 0.1424
+        "share_of_close_seconds": 0.1424,
+        "average_starters_in_five": 4.763
       }
     ],
     "2026|regular|PHI": [
@@ -33344,7 +35275,8 @@
           "VJ Edgecombe"
         ],
         "seconds": 1105.3,
-        "share_of_close_seconds": 0.1382
+        "share_of_close_seconds": 0.1382,
+        "average_starters_in_five": 4.629
       },
       {
         "players": [
@@ -33355,7 +35287,8 @@
           "VJ Edgecombe"
         ],
         "seconds": 711.9,
-        "share_of_close_seconds": 0.089
+        "share_of_close_seconds": 0.089,
+        "average_starters_in_five": 3.542
       },
       {
         "players": [
@@ -33366,7 +35299,8 @@
           "VJ Edgecombe"
         ],
         "seconds": 617.4,
-        "share_of_close_seconds": 0.0772
+        "share_of_close_seconds": 0.0772,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|regular|PHX": [
@@ -33379,7 +35313,8 @@
           "Mark Williams"
         ],
         "seconds": 636.9,
-        "share_of_close_seconds": 0.082
+        "share_of_close_seconds": 0.082,
+        "average_starters_in_five": 3.723
       },
       {
         "players": [
@@ -33390,7 +35325,8 @@
           "Oso Ighodaro"
         ],
         "seconds": 585.6,
-        "share_of_close_seconds": 0.0754
+        "share_of_close_seconds": 0.0754,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -33401,7 +35337,8 @@
           "Oso Ighodaro"
         ],
         "seconds": 420.9,
-        "share_of_close_seconds": 0.0542
+        "share_of_close_seconds": 0.0542,
+        "average_starters_in_five": 4.221
       }
     ],
     "2026|regular|POR": [
@@ -33414,7 +35351,8 @@
           "Donovan Clingan"
         ],
         "seconds": 766.9,
-        "share_of_close_seconds": 0.0975
+        "share_of_close_seconds": 0.0975,
+        "average_starters_in_five": 4.0
       },
       {
         "players": [
@@ -33425,7 +35363,8 @@
           "Donovan Clingan"
         ],
         "seconds": 719.0,
-        "share_of_close_seconds": 0.0914
+        "share_of_close_seconds": 0.0914,
+        "average_starters_in_five": 4.391
       },
       {
         "players": [
@@ -33436,7 +35375,8 @@
           "Toumani Camara"
         ],
         "seconds": 530.9,
-        "share_of_close_seconds": 0.0675
+        "share_of_close_seconds": 0.0675,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|regular|SAC": [
@@ -33449,7 +35389,8 @@
           "Domantas Sabonis"
         ],
         "seconds": 635.8,
-        "share_of_close_seconds": 0.0955
+        "share_of_close_seconds": 0.0955,
+        "average_starters_in_five": 4.36
       },
       {
         "players": [
@@ -33460,7 +35401,8 @@
           "Dylan Cardwell"
         ],
         "seconds": 580.2,
-        "share_of_close_seconds": 0.0871
+        "share_of_close_seconds": 0.0871,
+        "average_starters_in_five": 3.445
       },
       {
         "players": [
@@ -33471,7 +35413,8 @@
           "Maxime Raynaud"
         ],
         "seconds": 377.0,
-        "share_of_close_seconds": 0.0566
+        "share_of_close_seconds": 0.0566,
+        "average_starters_in_five": 4.0
       }
     ],
     "2026|regular|SAS": [
@@ -33484,7 +35427,8 @@
           "Stephon Castle"
         ],
         "seconds": 829.0,
-        "share_of_close_seconds": 0.1168
+        "share_of_close_seconds": 0.1168,
+        "average_starters_in_five": 4.12
       },
       {
         "players": [
@@ -33495,7 +35439,8 @@
           "Julian Champagnie"
         ],
         "seconds": 594.9,
-        "share_of_close_seconds": 0.0839
+        "share_of_close_seconds": 0.0839,
+        "average_starters_in_five": 3.557
       },
       {
         "players": [
@@ -33506,7 +35451,8 @@
           "Stephon Castle"
         ],
         "seconds": 472.8,
-        "share_of_close_seconds": 0.0666
+        "share_of_close_seconds": 0.0666,
+        "average_starters_in_five": 4.295
       }
     ],
     "2026|regular|TOR": [
@@ -33519,7 +35465,8 @@
           "Scottie Barnes"
         ],
         "seconds": 1041.0,
-        "share_of_close_seconds": 0.1682
+        "share_of_close_seconds": 0.1682,
+        "average_starters_in_five": 4.781
       },
       {
         "players": [
@@ -33530,7 +35477,8 @@
           "Ja'Kobe Walter"
         ],
         "seconds": 516.0,
-        "share_of_close_seconds": 0.0834
+        "share_of_close_seconds": 0.0834,
+        "average_starters_in_five": 4.419
       },
       {
         "players": [
@@ -33541,7 +35489,8 @@
           "Jamal Shead"
         ],
         "seconds": 445.8,
-        "share_of_close_seconds": 0.072
+        "share_of_close_seconds": 0.072,
+        "average_starters_in_five": 3.762
       }
     ],
     "2026|regular|UTA": [
@@ -33554,7 +35503,8 @@
           "Isaiah Collier"
         ],
         "seconds": 519.0,
-        "share_of_close_seconds": 0.0904
+        "share_of_close_seconds": 0.0904,
+        "average_starters_in_five": 3.0
       },
       {
         "players": [
@@ -33565,7 +35515,8 @@
           "Ace Bailey"
         ],
         "seconds": 355.1,
-        "share_of_close_seconds": 0.0619
+        "share_of_close_seconds": 0.0619,
+        "average_starters_in_five": 1.845
       },
       {
         "players": [
@@ -33576,7 +35527,8 @@
           "Blake Hinson"
         ],
         "seconds": 288.0,
-        "share_of_close_seconds": 0.0502
+        "share_of_close_seconds": 0.0502,
+        "average_starters_in_five": 3.0
       }
     ],
     "2026|regular|WAS": [
@@ -33589,7 +35541,8 @@
           "Tre Johnson"
         ],
         "seconds": 505.5,
-        "share_of_close_seconds": 0.1091
+        "share_of_close_seconds": 0.1091,
+        "average_starters_in_five": 4.824
       },
       {
         "players": [
@@ -33600,7 +35553,8 @@
           "Tre Johnson"
         ],
         "seconds": 403.0,
-        "share_of_close_seconds": 0.0869
+        "share_of_close_seconds": 0.0869,
+        "average_starters_in_five": 5.0
       },
       {
         "players": [
@@ -33611,7 +35565,8 @@
           "Kyshawn George"
         ],
         "seconds": 321.4,
-        "share_of_close_seconds": 0.0693
+        "share_of_close_seconds": 0.0693,
+        "average_starters_in_five": 4.0
       }
     ]
   },

@@ -11,13 +11,13 @@ from bisect import bisect_right
 from collections import Counter, defaultdict, namedtuple
 from dataclasses import dataclass
 from datetime import date, timedelta
-from functools import lru_cache
+from functools import lru_cache, partial
 from hashlib import file_digest
 from itertools import groupby
 import json
 from pathlib import Path
 import re
-from statistics import correlation, mean, median, quantiles
+from statistics import StatisticsError, correlation, mean, median, quantiles
 import unicodedata
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -73,6 +73,8 @@ class Evidence:
         self.fits = defaultdict(list)
         self.examples = defaultdict(list)
         self.lineups = defaultdict(Counter)
+        self.lineup_starters = defaultdict(Counter)
+        self.schedule_pairs = defaultdict(lambda: defaultdict(list))
 
     def add(self, game, metric, group, value):
         self.values[game.year, game.phase, metric, group].append(value)
@@ -284,8 +286,8 @@ def roles_for_game(starters, players, prior):
             else "sixth_man" if pid == sixth else "bench" for pid in players}
 
 
-def collect_player_rotations(evidence, game, team, role, spans, quarter, prior_game, prior):
-    add = lambda metric, group, value: evidence.add(game, metric, group, value)
+def collect_player_rotations(evidence, game, team, pid, role, spans, quarter, prior_game, prior):
+    add = partial(evidence.add, game)
     for i, stint in enumerate(spans):
         duration = stint.end - stint.start
         add("stint_seconds", role, duration)
@@ -335,11 +337,15 @@ def collect_player_rotations(evidence, game, team, role, spans, quarter, prior_g
         if prior.appearances >= 8:
             delta = regulation_minutes - prior.minutes / prior.appearances
             add("schedule_minutes_vs_own_prior_average", f"{role}|{group}|{workload}", delta)
+            evidence.fit(game, "schedule_minutes_vs_own_prior_average",
+                         f"{role}|{group}|{workload}", delta)
+        if previous_minutes >= 32 and rest in {1, 2}:
+            evidence.schedule_pairs[game.year, team, pid][rest].append(regulation_minutes)
 
 
 def collect_team_rotations(evidence, game, team, starters, spans, quarter, players_by_state,
                            roles, top_eight):
-    add = lambda metric, group, value: evidence.add(game, metric, group, value)
+    add = partial(evidence.add, game)
     eligible = [pid for pid in spans if sum(quarter[pid].values()) >= 300]
     # Exclude last-second special-purpose substitutions from the broad game depth count.
     used = [pid for pid in spans if sum(quarter[pid].values()) >= 60]
@@ -364,7 +370,10 @@ def collect_team_rotations(evidence, game, team, starters, spans, quarter, playe
             players = frame.home if home else frame.away
             close_seconds.update({pid: duration for pid in players})
             start_five_seconds += duration * (players == starters)
-            evidence.lineups[game.year, game.phase, team][tuple(sorted(players))] += duration
+            key = game.year, game.phase, team
+            combo = tuple(sorted(players))
+            evidence.lineups[key][combo] += duration
+            evidence.lineup_starters[key][combo] += duration * len(players & starters)
     if close_seconds:
         total = sum(close_seconds.values())
         starter_seconds = sum(close_seconds[pid] for pid in starters)
@@ -412,7 +421,7 @@ def collect_foul_responses(evidence, game, team, spells, roles, foul_events):
         group = f"{label}|{role}"
         near = stint.end - event.t <= 60 and stint.end < game.end
         on_whistle = stint.end == event.t
-        add = lambda metric, key, value: evidence.add(game, metric, key, value)
+        add = partial(evidence.add, game)
         add("foul_exit_within_minute", group, near)
         add("foul_exit_same_clock", group, on_whistle)
         if label in {"1_Q1_comparison", "2_Q1"}:
@@ -433,6 +442,8 @@ def collect_foul_responses(evidence, game, team, spells, roles, foul_events):
             if game.phase == "regular" and label != "1_Q1_comparison":
                 evidence.fit(game, "foul_bench_seconds_if_returned", group, rest)
             if label in {"2_Q1", "3_first_half"}:
+                if game.phase == "regular":
+                    evidence.fit(game, "early_foul_return_elapsed_seconds", group, next_stint.start)
                 period = int(next_stint.start // 720) + 1 if next_stint.start < 2880 else 5
                 add("early_foul_return_by_halftime", group, next_stint.start < 1440)
                 if period <= 4:
@@ -460,7 +471,7 @@ def collect_blowouts(evidence, game, team, starters, spells, foul_events):
         clock = last[pid]
         prior = next(frame for frame in reversed(game.intervals) if frame.start < clock)
         margin = prior.margin if team == game.home else -prior.margin
-        add = lambda name, label, value: evidence.add(game, name, label, value)
+        add = partial(evidence.add, game)
         if clock < 2880:
             add("Q4_permanent_starter_exit_clock_seconds", margin_bucket(margin), 2880 - clock)
     starts = [frame.start for frame in game.intervals]
@@ -532,7 +543,7 @@ def response_timeout(game, end_index, defending, types):
 
 
 def collect_timeouts(evidence, game):
-    add = lambda metric, group, value: evidence.add(game, metric, group, value)
+    add = partial(evidence.add, game)
     timeouts = timeout_types(game)
     for team in game.teams:
         own = [(game.events[index], kind) for index, kind in timeouts.items()
@@ -628,7 +639,7 @@ def take_foul(event, defense):
 
 
 def collect_late_fouling(evidence, game, period, rows, possessions):
-    add = lambda metric, group, value: evidence.add(game, metric, group, value)
+    add = partial(evidence.add, game)
     end = period_end(period)
     times = [event.t for event in rows]
     for event in rows:
@@ -673,7 +684,7 @@ def collect_late_fouling(evidence, game, period, rows, possessions):
 
 
 def collect_two_for_one(evidence, game, period, possessions):
-    add = lambda metric, group, value: evidence.add(game, metric, group, value)
+    add = partial(evidence.add, game)
     end = period_end(period)
     for i, (start, finish, events) in enumerate(possessions):
         left = end - start.t
@@ -762,11 +773,13 @@ def collect_games(connection, cache):
     coverage = {}
     audit = Counter()
     player_names = {}
+    regular_top8 = {}
     ref = box_reference()
     for year in SEASONS:
         priors = defaultdict(Prior)
         team_totals = defaultdict(Counter)
         last_game = {}
+        playoff_teams = set()
         for phase in PHASES:
             file = cache / f"pbp_{phase}_{year}.parquet"
             top = {team: {pid for pid, _ in total.most_common(8)} for team, total in team_totals.items()}
@@ -777,9 +790,11 @@ def collect_games(connection, cache):
                 game.intervals = reconstruct(game, count)
                 if not game.intervals:
                     count[f"excluded_{game.id}"] += 1
+                    for team in game.teams:
+                        last_game.pop(team, None)
                     continue
                 count["analyzed_games"] += 1
-                count["clock_team_seconds_checks"] += 1
+                count["clock_checks"] += 1
                 if round(sum(frame.end - frame.start for frame in game.intervals), 5) != game.end:
                     raise ValueError(f"Clock time does not balance for {game.id}")
                 collect_timeouts(evidence, game)
@@ -801,15 +816,20 @@ def collect_games(connection, cache):
                              if event.kind == 3 and player_id(event.player))
                 ft_made = Counter(player_id(event.player) for event, _ in points(game) if event.kind == 3)
                 for team in game.teams:
+                    if phase == "playoffs":
+                        playoff_teams.add(team)
                     home = team == game.home
                     starters = lineup(game.events[0].lineup_home if home else game.events[0].lineup_away)
                     spans, quarter, players_by_state = spells_for_team(game.intervals, home)
+                    if abs(sum(sum(q.values()) for q in quarter.values()) - 5 * game.end) > 0.001:
+                        raise ValueError(f"Five-player floor time does not balance for {game.id} {team}")
+                    count["team_minutes_checks"] += 1
                     roles = roles_for_game(starters, spans, priors)
                     previous_date, previous_minutes = last_game.get(team, (None, {}))
                     for pid, intervals in spans.items():
                         previous = ((game.date - previous_date).days, previous_minutes[pid]
                                     ) if pid in previous_minutes and phase == "regular" else None
-                        collect_player_rotations(evidence, game, team, roles[pid], intervals,
+                        collect_player_rotations(evidence, game, team, pid, roles[pid], intervals,
                                                  quarter[pid], previous, priors[pid])
                     collect_team_rotations(evidence, game, team, starters, spans, quarter,
                                            players_by_state, roles, top.get(team, set()))
@@ -837,7 +857,16 @@ def collect_games(connection, cache):
                     sorted(count.items()), url=f"{ARCHIVE}/{file.name}",
                     sha256=file_digest(handle, "sha256").hexdigest(),
                 )
-    return evidence, coverage, audit, player_names
+        regular_top8[str(year)] = {
+            team: {
+                "made_playoffs": team in playoff_teams,
+                "minutes_share_for_top8": round(sum(minutes for _, minutes in totals.most_common(8))
+                                                 / sum(totals.values()), 4),
+                "player_ids": [pid for pid, _ in totals.most_common(8)],
+            }
+            for team, totals in sorted(team_totals.items())
+        }
+    return evidence, coverage, audit, player_names, regular_top8
 
 
 def evaluate_fits(fit_rows):
@@ -932,8 +961,13 @@ def coach_comparison(samples):
         estimates = [a for _, a, _, _, _ in by_team.values()]
         observed = [b for _, _, _, b, _ in by_team.values()]
         fallback = mean(all_prior[metric])
+        if len(observed) < 2:
+            continue
         spread = quantiles(observed, n=10, method="inclusive")
-        rho = correlation(ranks(estimates), ranks(observed))
+        try:
+            rho = correlation(ranks(estimates), ranks(observed))
+        except StatisticsError:
+            rho = None
         stability[metric] = {
             "coach_team_pairs": len(by_team), "rank_correlation": round(rho, 4) if rho is not None else None,
             "holdout_p10": round(spread[0], 4), "holdout_p90": round(spread[-1], 4),
@@ -954,17 +988,29 @@ def ranks(values):
     return [rank_by_value[value] for value in values]
 
 
-def named_lineups(lineups, player_names):
+def named_lineups(lineups, lineup_starters, player_names):
     result = {}
     for (year, phase, team), combos in sorted(lineups.items()):
         total = sum(combos.values())
         leading = sorted(combos.items(), key=lambda pair: (-pair[1], pair[0]))[:3]
         result[f"{year}|{phase}|{team}"] = [
             {"players": [player_names.get(pid, str(pid)) for pid in combo],
-             "seconds": round(seconds, 2), "share_of_close_seconds": round(seconds / total, 4)}
+             "seconds": round(seconds, 2), "share_of_close_seconds": round(seconds / total, 4),
+             "average_starters_in_five": round(lineup_starters[year, phase, team][combo] / seconds, 3)}
             for combo, seconds in leading
         ]
     return result
+
+
+def paired_schedule_summary(schedule):
+    differences = defaultdict(list)
+    for (year, _, _), by_rest in schedule.items():
+        back_to_back, one_day_off = by_rest[1], by_rest[2]
+        if len(back_to_back) >= 3 and len(one_day_off) >= 3:
+            value = mean(back_to_back) - mean(one_day_off)
+            differences[str(year)].append(value)
+            differences["pooled"].append(value)
+    return {year: summary(values) for year, values in sorted(differences.items())}
 
 
 def main():
@@ -976,13 +1022,30 @@ def main():
     import duckdb
 
     with duckdb.connect(config={"threads": 2}) as db:
-        evidence, coverage, audit, player_names = collect_games(db, args.cache)
+        evidence, coverage, audit, player_names, regular_top8 = collect_games(db, args.cache)
     result = {
         "schema_version": 1, "fit_seasons": [2024, 2025], "holdout_season": 2026,
+        "measurement_notes": {
+            "seasons": "Year ending the season. Play-in and NBA Cup finals are outside the archive.",
+            "units": "All times are elapsed game clock unless labeled clock or seconds left. "
+                     "The mean of a Boolean measure is its observed frequency.",
+            "roles": "Starts tonight. Star proxy also averages 30+ minutes and 22+ points and starts at least "
+                     "half of eight or more earlier regular-season games played. Sixth man is the highest "
+                     "prior-minutes-per-game reserve who appeared tonight and has five or more prior games.",
+            "close": "Live absolute margin at most five during the final five minutes of regulation.",
+            "top_eight": "Ranked by regulation plus overtime minutes for each team in its regular season.",
+            "fits": "Fit on the two older regular seasons. Probabilities add 20 league-average observations "
+                    "per cell. Medians use the pooled training median if a cell has fewer than 20 examples.",
+            "take_fouls": "Strict subtype 28. A sensitivity includes generic non-shooting personals within "
+                          "five game seconds of possession entry.",
+            "two_for_one": "First field-goal attempt with 25+ seconds left on possession gained at 30–42 seconds.",
+        },
         "coverage": coverage, "box_score_check": dict(sorted(audit.items())),
         "observations": evidence.describe(), "held_out_fits": evaluate_fits(evidence.fits),
         "hack_proxy_examples_by_season": dict(sorted(evidence.examples.items())),
-        "named_closing_lineups": named_lineups(evidence.lineups, player_names),
+        "paired_second_night_minutes_minus_one_day_off": paired_schedule_summary(evidence.schedule_pairs),
+        "regular_top8_by_team": regular_top8,
+        "named_closing_lineups": named_lineups(evidence.lineups, evidence.lineup_starters, player_names),
         "coach_comparison": coach_comparison(evidence.coaches),
         "sources": {
             "archive_documentation": "https://github.com/ramirobentes/nba_data",
