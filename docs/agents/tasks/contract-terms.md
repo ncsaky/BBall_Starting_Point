@@ -61,3 +61,23 @@ options, it does not price them.
 Pending: branch probe 2 on the Azure worker (`contract-terms-branch2`, output/ct-probe-branch), then the focused tests
 and core suite when the laptop has room. Screenshots: output/contract-terms/screens (stop 1 option card + offer builder
 with flat path and player option; extension page with rising path and team option; Podziemski).
+
+## Measurements, round 3 (2026-11-21 night)
+Second branch probe (`contract-terms-branch2`) against main and real, then the fixes in 9b6f9d8 measured by replaying
+each season's extension passes and option decisions on that probe's own saves (a third probe is queued):
+
+| Measure | Main | Probe 2 | After 9b6f9d8 (on probe 2's saves) | Real |
+|---|---:|---:|---:|---:|
+| Rookie-scale extensions 2027-28 / 2028-29 | 14* / 11* | 10 / 8 | 9 / 8 | 7-14 |
+| Veteran extensions 2027-28 / 2028-29 | 15 / 13 | 27 / 8 | 27 (ceiling) / 18 | 17-27 |
+| Player options declined (both summers) | 21 of 50 | 45 of 59 (76%) | 26 of 59 (44%) | 84 of 177 (47%) |
+| AI team options kept (both summers) | 31 of 39 | 31 of 38 (82%) | 19 of 38 (50%) | 89 of 186 (48%) |
+| Rookie-scale options kept | 117 of 128 | 137 of 147 | unchanged | 421 of 471 (89%) |
+
+Causes and fixes: the 2028-29 veteran drop came from AI negotiations that start at the model's low price (Mobley
+offered $30-34M against a $57.5M salary, so he walks); such talks now end with the team offering his ask or his
+no-pay-cut bar when that is within 1.45x his model price, and the veteran appetite threshold is 50 (was 78). The
+1,000-minute opt-out rule alone fires for nearly every option holder (they are mostly regulars), so it now also needs a
+market at least 0.8x the option. The evidence's 130%/105% team rule kept nearly everything because the game's market
+price for fringe players starts near $5M, far above cheap options; teams now keep a 1,000-minute player worth at least
+the option (minutes alone: 49 of 85 right on the evidence's held-out 2025-26 seasons).
