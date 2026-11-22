@@ -4898,12 +4898,16 @@ def team_dashboard(
     injury_schedule = remaining_injury_schedule(root, active, save, team["id"])
     current_legal_actions = save_legal_actions_for_date(save, current_date)
     extension_window_open = "extensions" in set(current_legal_actions)
+    # CONTRACT-TERMS: the same rule as the extension screen: the league calendar, his contract, and his own deadline
+    # (the day before opening night unless he is in the last season of his deal), so a highlighted player is never
+    # refused when the user clicks him.
     extension_eligible_player_ids = {
         player["id"]
         for player in roster
         if extension_window_open
         and (contract := contracts_by_player.get(player["id"]))
         and extension_contract_window(contract, player)["eligible"]
+        and not extension_window_closed_for_player(save, active, player, current_date)
     }
     asset_value_by_player = {
         str(item.get("player_id")): item
@@ -6816,13 +6820,15 @@ def process_ai_extensions(
             offer["signed_season"] = signing_season_for_date(through_date)
             from .contract_ai import extension_first_year_limit
             current_contract = next((c for c in active.get("contracts", []) if c.get("player_id") == player_id), None)
-            limit = extension_first_year_limit(current_contract, player, str(offer.get("start_season") or ""),
-                                               str(candidate.get("extension_kind") or "veteran"))
+            # (Named first_year_limit: it used to reuse the name ``limit`` and so overwrote the most extensions one
+            # pass may apply, which then never stopped a pass.)
+            first_year_limit = extension_first_year_limit(current_contract, player, str(offer.get("start_season") or ""),
+                                                          str(candidate.get("extension_kind") or "veteran"))
             offer = ai_adjust_extension_offer_for_current_season(save, candidate, player, offer, priority)
-            if limit and offer.get("annual_salary"):
+            if first_year_limit and offer.get("annual_salary"):
                 # CONTRACT-TERMS: an extension's first year is at most 140% of the greater of his salary and the
                 # average salary (veterans), and never above his max.
-                offer = {**offer, "annual_salary": round(min(float(offer["annual_salary"]), float(limit)), 2)}
+                offer = {**offer, "annual_salary": round(min(float(offer["annual_salary"]), float(first_year_limit)), 2)}
             # CONTRACT-TERMS: the extension's shape (salary path, final-season option) at the real shares for the
             # salary he ends up with (his pay-cut bar below, when the team meets it).
             from .contract_ai import EXTENSION_MAX_RAISE
@@ -6841,8 +6847,8 @@ def process_ai_extensions(
             from .contract_terms import multipliers, path_rate
             steps = multipliers(int(offer.get("years") or 1), path_rate(shape["path"], EXTENSION_MAX_RAISE))
             first = float(offer.get("annual_salary") or 0.0) * len(steps) / sum(steps)
-            if limit:
-                first = min(first, float(limit))
+            if first_year_limit:
+                first = min(first, float(first_year_limit))
             # CONTRACT-TERMS: a player doesn't extend for a pay cut while he can still earn more: under 31 the new deal
             # must average at least 95% of his current salary, from 31 on 80% (he waits for free agency instead).
             current_pay = max([float(r.get("salary") or 0.0) for r in (current_contract or {}).get("seasons") or []
@@ -6861,7 +6867,7 @@ def process_ai_extensions(
                     note(candidate, "pay-cut bar above his worth")
                     continue
                 first = bar * len(steps) / sum(steps)
-                if limit and first > float(limit) + 1.0:
+                if first_year_limit and first > float(first_year_limit) + 1.0:
                     processed.add(key)
                     continue
             offer = {**offer, "annual_salary": round(first, 2), "salary_path": shape["path"], "option": shape["option"],

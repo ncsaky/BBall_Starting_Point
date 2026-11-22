@@ -109,23 +109,36 @@ class AdvanceRuntimeParityTests(unittest.TestCase):
             with self.subTest(model=model), tempfile.TemporaryDirectory() as folder:
                 path = Path(folder) / "career.json"
                 sv.create_league_save(self.root, self.canonical, "BOS", path, seed=55, ratings_model=model)
-                initial = sv.load_save(path)
-                sv.set_save_date_phase(initial, "2026-11-29")
-                initial.setdefault("lifecycle_state", {})["through_date"] = "2026-11-29"
-                fresh, reused = deepcopy(initial), deepcopy(initial)
-                dates = ["2026-11-30", "2026-12-01", "2026-12-02"]
-                current = "2026-11-29"
-                with patch.object(sv, "canonical_with_save", wraps=sv.canonical_with_save) as build:
-                    for target in dates:
-                        sv.advance_save_day(self.root, self.canonical, path, fresh, current, target, 55)
-                        current = target
-                    fresh_builds = build.call_count
-                with patch.object(sv, "canonical_with_save", wraps=sv.canonical_with_save) as build:
-                    sv.advance_save(self.root, self.canonical, path, to_date=dates[-1],
-                                    prepared_save=reused, persist=False)
-                    reused_builds = build.call_count
-                self.assertEqual(fresh, reused)
-                self.assertLess(reused_builds, fresh_builds)
+                created = sv.load_save(path)
+
+                def advance_both_ways(start, dates):
+                    initial = deepcopy(created)
+                    sv.set_save_date_phase(initial, start)
+                    initial.setdefault("lifecycle_state", {})["through_date"] = start
+                    fresh, reused = deepcopy(initial), deepcopy(initial)
+                    current = start
+                    with patch.object(sv, "canonical_with_save", wraps=sv.canonical_with_save) as build:
+                        for target in dates:
+                            sv.advance_save_day(self.root, self.canonical, path, fresh, current, target, 55)
+                            current = target
+                        fresh_builds = build.call_count
+                    with patch.object(sv, "canonical_with_save", wraps=sv.canonical_with_save) as build:
+                        sv.advance_save(self.root, self.canonical, path, to_date=dates[-1],
+                                        prepared_save=reused, persist=False)
+                        reused_builds = build.call_count
+                    self.assertEqual(fresh, reused)
+                    return initial, reused, fresh_builds, reused_builds
+
+                # The AI front offices' first extension pass of the season (November 30 here: the save jumps past the
+                # earlier ones) signs a backlog of extensions under the CONTRACT-TERMS rules; each changes contracts,
+                # so the league is rightly rebuilt in both runs. Results must still match exactly.
+                initial, reused, fresh_builds, reused_builds = advance_both_ways(
+                    "2026-11-29", ["2026-11-30", "2026-12-01", "2026-12-02"])
+                self.assertLessEqual(reused_builds, fresh_builds)
+                # Across a month boundary with no extension pass (the AI passes stop January 15), reuse saves builds.
+                _initial, _reused, quiet_fresh, quiet_reused = advance_both_ways(
+                    "2027-01-30", ["2027-01-31", "2027-02-01", "2027-02-02"])
+                self.assertLess(quiet_reused, quiet_fresh)
                 self.assertIsNone(sv._ADVANCE_RUNTIME_STATE.get())
                 # Every rating dependency can change within an advance.
                 # Cached answers must still equal a fresh formula evaluation.

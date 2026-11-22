@@ -475,6 +475,9 @@ def load_app_canonical(root: Path) -> dict[str, Any]:
         canonical = load_universe_json(json_path)
     else:
         canonical = to_plain(build_universe(root))
+        # CONTRACT-TERMS: the same evidence-based contract history as the stored file (see load_universe_json).
+        from .contract_history import apply_contract_history
+        apply_contract_history(canonical, root)
     enrich_player_external_metadata(canonical.get("players") or [], load_player_external_metadata(root))
     canonical["_allow_internal_caches"] = True
     canonical["_baseline_directory"] = str(root / "data/canonical/baselines")

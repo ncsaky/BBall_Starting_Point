@@ -81,8 +81,11 @@ class RatingScaleConsistencyTests(unittest.TestCase):
         # The stored 2027 draft class (draft_prospects, its traits and scouting reports) was deliberately replaced on
         # 2026-11-19 by real college/high-school/international prospects (docs/agents/tasks/real-prospects.md), so it is
         # no longer part of this rim-anchor comparison; everything else must still be untouched.
-        for k in ('contracts','development_events'):
-            self.assertEqual(before[k],current[k])
+        self.assertEqual(before['development_events'],current['development_events'])
+        # CONTRACT-TERMS (2026-11-22) rebuilt each real contract's signing season and length from evidence; salaries,
+        # seasons and every other contract field must still be untouched.
+        from test_five_player_calibration import rebuilt_contract_history
+        self.assertEqual(rebuilt_contract_history(before['contracts'],current['contracts']),current['contracts'])
         f=sim.player_feature_vector(current,next(p for p in current['players'] if p['id']==key[0])).features
         gobert=sim.player_feature_vector(current,next(p for p in current['players'] if p['name']=='Rudy Gobert')).features
         # Since the 2026-11-19 ratings audit the rim response is evidence-shaped and no longer clipped at 99, so the
