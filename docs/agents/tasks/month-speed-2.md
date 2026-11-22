@@ -22,3 +22,12 @@ Get a simulated month in the GUI (including AI front-office activity) as close t
 
 ## Resume state
 - 2026-11-22: worktree set up; baseline jobs `speed-base-months` and `speed-base-season` started on Azure.
+- 2026-11-22 baseline (unprofiled, `27aa06b`): November LAL 74-75 s (canada2, 2 cores; westus 4 cores 74 s),
+  November BOS 84 s (westus), deadline month 232-244 s; offseason steps 10-21 (re-signing through Nov 1) 665 s
+  on canada. Profiles in `output/month-speed/fetch/` (git-ignored).
+- Commit `1de3aea` (feature memo): IDENTICAL on all three month scenarios and with the runtime audit on (westus).
+  Nov LAL 74 -> 69, Nov BOS 84 -> 73, deadline 232 -> 220.
+- Commits `81086af`, `83682ae`: zone-grid-only shot diet, game-log id set, spatial signature memo, signing
+  counterfactual index, backup copy; harness `MONTH_SPEED_WARM=1`. Offseason pair job `speed-off1` running.
+- Azure script bug: `start()` reads `monthly_hour_cap` from the worker entry, so a deallocated pool machine can't be
+  started (KeyError). Worked around with a patched copy in the scratchpad; not fixed in the repo.
