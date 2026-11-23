@@ -78,6 +78,13 @@ Game runs from the browser pane: launch entry `game` (port 8766, normal `saves/`
 - **Centred pop-ups and charcoal board (done 2026-11-23):** cards that pop up (phase windows on entry, windows
   opened from closed, windows whose default size changed) open in the middle of the screen, vertically too. A
   charcoal/grey board grid was tried and reverted at the user's request; the board stays cream paper with blue lines.
+- **Contract extension card polish (done 2026-11-23; content and charts unchanged):** explanations moved into hover
+  tips marked with a small "i" (market ask, his price, longest deal, salary range, guarantee, option and salary
+  path, the verdict's reason, the cap table's footnote, the footer's terms). No repeated name in "What He Wants";
+  the ask reads "$18.8M × 4"; footer "$1.8M × 4 · $7.2M total". Labels in sentence case, not small capitals. The
+  verdict is a coloured status chip; no red left bar. Header OVR/OFF/DEF bars reach their numbers again (the global
+  36px bar rule had shrunk them). Injury figure body is mid-grey with a dark outline. Two chart labels that collided
+  with the axis ticks moved aside. The free-agent offer builder shares these pieces and looks the same.
 - **Rating bars (done 2026-11-22):** every player OVR/OFF/DEF bar is one look: 36 x 5px on the house tables' dark
   track, fill and colour spread over 60-98 (`playerRatingBarStyle` in app.js) instead of 0-100, so a 77 and a 94
   differ at a glance (77 fills ~45% amber, 94 ~90% blue). Numbers unchanged. Skill and coach bars keep 0-100.

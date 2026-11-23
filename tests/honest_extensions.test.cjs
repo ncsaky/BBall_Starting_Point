@@ -19,6 +19,7 @@ const slice = (from, to) => {
 function scope(extra = {}) {
   const context = {
     money: (v) => (v === undefined || v === null || v === '' ? '' : `$${Number(v).toFixed(1)}M`),
+    contractLabel: (salary, years) => (Number(salary) > 0 ? `$${Number(salary).toFixed(1)}M${Number(years) > 0 ? ` × ${Number(years)}` : ''}` : '—'),
     signedMoney: (v) => `$${Number(v) >= 0 ? '+' : ''}${Number(v).toFixed(1)}M`,
     escapeHtml: (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
     escapeAttr: (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;'),

@@ -106,3 +106,35 @@ body.unified-terminal-ui .player-evidence-ring.injury-body-evidence > span { dis
 body.unified-terminal-ui .player-evidence-ring.injury-body-evidence > span > svg.injury-body-figure.mini {
   display: block; margin: 0 auto; height: 100% !important; width: auto !important; max-width: 100% !important; max-height: 100% !important; transform: none !important;
 }
+
+/* Contract extension card polish (playtest 2026-11-23): explanations on hover, sentence-case labels, a status chip
+   instead of a red left bar, header bars that reach their numbers, a readable injury figure. The offer builder for
+   free agents shares these pieces, so it gets the same look. */
+.ext-hint { position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden !important;
+  clip: rect(0 0 0 0) !important; white-space: nowrap !important; margin: 0 !important; padding: 0 !important; }
+.ext-info { display: inline-grid; place-items: center; width: 12px; height: 12px; margin-left: 4px; border: 1px solid #9aa6b0;
+  border-radius: 50%; color: #66737e; font: italic 700 8.5px Georgia, "Times New Roman", serif; vertical-align: 1px;
+  cursor: help; font-style: italic; }
+:is(header, div, dt, label, small)[title]:has(.ext-info), [data-extension-hint-host][title] { cursor: help; }
+body.unified-terminal-ui .fa-builder .fa-offer-field > small,
+body.unified-terminal-ui .fa-builder .fa-offer-field label > small {
+  text-transform: none !important; letter-spacing: 0 !important; font-size: 11px !important; font-weight: 700 !important;
+  color: var(--season-text, #1d2a33) !important;
+}
+body.unified-terminal-ui .fa-builder-market dt { font-weight: 600; }
+body.unified-terminal-ui .fa-builder-market dd strong { font-size: 14px; }
+/* Verdict: a coloured status chip, no left bar. */
+body.unified-terminal-ui .fa-offer-verdict .fa-verdict-line {
+  display: flex !important; align-items: center; gap: 4px; padding: 6px 8px !important; border-left: 0 !important; background: transparent !important;
+}
+body.unified-terminal-ui .fa-offer-verdict .fa-verdict-line strong { padding: 2px 9px; border-radius: 10px; font-size: 12.5px !important; }
+body.unified-terminal-ui .fa-verdict-yes .fa-verdict-line strong { background: #dbeadc; color: #1f4f25 !important; }
+body.unified-terminal-ui .fa-verdict-no .fa-verdict-line strong { background: #f6e2bf; color: #6b4610 !important; }
+body.unified-terminal-ui .fa-verdict-blocked .fa-verdict-line strong { background: #f0dcdc; color: #6d2323 !important; }
+/* Card header OVR/OFF/DEF: the bar fills its column up to the number (the header's own wide bar). */
+body.unified-terminal-ui .player-summary-rating .player-rating-bar.player-rating-bar > i {
+  width: 100% !important; min-width: 0 !important; max-width: none !important;
+}
+/* Injury body figure: a mid-grey body with a darker outline, so the figure and its hotspots read on light cards. */
+.injury-body-figure.mini .injury-body-shape { --injury-body-fill: color-mix(in srgb, var(--injury-body-tone) 30%, #74818d); }
+.injury-body-figure.mini .injury-body-shape > :is(circle, rect, path, ellipse) { stroke: #56636e; stroke-width: 1.5; }

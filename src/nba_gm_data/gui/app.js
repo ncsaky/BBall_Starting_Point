@@ -11887,7 +11887,7 @@ function extensionVerdictMarkup(preview) {
   const verdict = preview.verdict;
   const meter = clampNumber(preview.ratio * 100, 0, 150);
   return `<header>Will He Sign?</header>
-    <div class="fa-verdict-line"><strong>${escapeHtml(verdict.headline)}</strong><span>${escapeHtml(verdict.detail)}</span></div>
+    <div class="fa-verdict-line" title="${escapeAttr(verdict.detail)}"><strong>${escapeHtml(verdict.headline)}</strong> <i class="ext-info" aria-hidden="true">i</i><span class="ext-hint">${escapeHtml(verdict.detail)}</span></div>
     ${Number.isFinite(preview.price) ? `<div class="fa-verdict-meter" title="Your salary against the salary he needs from you (100% signs)"><i><b style="width:${meter / 1.5}%"></b><u style="left:${100 / 1.5}%"></u></i><em>${Math.round(preview.ratio * 100)}% of his price</em></div>` : ""}`;
 }
 
@@ -11914,20 +11914,21 @@ function extensionCapTableMarkup(preview, candidate) {
   // The game keeps two tax lines: the signing rules measure "tax room" to one, the luxury-tax bill uses another.
   const split = preview.seasons.find((row) => row.taxLine && row.roomLine && Math.abs(row.taxLine - row.roomLine) > 0.05);
   const splitNote = split ? ` Tax room is measured to the signing rules' line (${money(split.roomLine)} in ${shortSeasonLabel(split.season)}); the tax bill and payout use the luxury-tax line (${money(split.taxLine)}).` : "";
-  return `<header>Cap Position With This Extension</header>
+  const capNote = `The extension starts in ${shortSeasonLabel(start) || "the season after his deal ends"} and must fit under the hard cap in every season; it may go over the tax. * Later seasons count today's contracts only; payout shares use today's league payrolls.${splitNote}`;
+  return `<header title="${escapeAttr(capNote)}">Cap Position With This Extension <i class="ext-info" aria-hidden="true">i</i></header>
     <table class="fa-cap-table ext-cap-table" aria-label="Payroll by season with this extension">
       <colgroup><col style="width:10%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:13%"><col style="width:13%"><col style="width:16%"></colgroup>
       <thead><tr><th scope="col">Season</th><th scope="col" title="Payroll today, including his current contract">Payroll</th><th scope="col" title="His current contract (already in payroll)">His deal</th><th scope="col" title="This extension">Extension</th><th scope="col">After</th><th scope="col" title="Room under the luxury tax after this extension">Tax room</th><th scope="col" title="Room under the hard cap (the second apron) after this extension">Hard-cap room</th><th scope="col" title="Luxury-tax bill if over the line, or your share of the tax payout if under it">Tax / payout</th></tr></thead>
       <tbody>${rows || `<tr><td colspan="8" class="fa-empty">No cap seasons available.</td></tr>`}</tbody>
     </table>
-    <p class="fa-muted">The extension starts in ${escapeHtml(shortSeasonLabel(start) || "the season after his deal ends")} and must fit under the hard cap in every season; it may go over the tax. * Later seasons count today's contracts only; payout shares use today's league payrolls.${escapeHtml(splitNote)}</p>`;
+    <p class="fa-muted ext-hint">${escapeHtml(capNote)}</p>`;
 }
 
 function extensionOfferFootMarkup(preview, legal = true) {
   const label = preview.accepts && preview.canSubmit ? `Sign for ${money(preview.aav)} × ${preview.years}` : "Make Offer";
   const disabled = !legal || !preview.canSubmit;
   const shape = `${CONTRACT_PATH_LABELS[preview.path || "flat"].toLowerCase()} salary${preview.option && preview.option !== "none" ? `, ${CONTRACT_OPTION_LABELS[preview.option].toLowerCase()}` : ""}`;
-  return `<div><strong>${escapeHtml(money(preview.aav))} first season × ${escapeHtml(preview.years)} yr${preview.years === 1 ? "" : "s"} · ${escapeHtml(money(preview.total))} total</strong><span>${escapeHtml(`${preview.guaranteed ? "Guaranteed" : "Non-guaranteed"} · ${shape} · ${preview.verdict.headline.toLowerCase()}`)}</span></div>
+  return `<div title="${escapeAttr(`First-season salary × years. ${preview.guaranteed ? "Guaranteed" : "Non-guaranteed"} · ${shape} · ${preview.verdict.headline.toLowerCase()}`)}"><strong>${escapeHtml(contractLabel(preview.aav, preview.years))} · ${escapeHtml(money(preview.total))} total</strong></div>
     <button type="submit" class="ui-command fa-submit extension-submit${preview.accepts && !disabled ? " is-ready" : ""}" ${disabled ? "disabled" : ""}>${escapeHtml(label)}</button>`;
 }
 
@@ -11951,17 +11952,17 @@ function extensionNegotiationPage(room, selectedPlayerId, response = null, detai
     <div class="extension-page-layout">
       <form class="fa-panel fa-builder ext-builder" data-extension-offer-form aria-label="Extension offer for ${escapeAttr(candidate.name || "player")}">
         <div class="fa-builder-scroll">
-          <section class="approved-card-panel fa-builder-market"><header>What He Wants · ${escapeHtml(candidate.name || "Player")}</header><dl>
-            <div><dt title="The contract model's projected salary for him: what the open market would pay.">Market ask</dt><dd><strong>${money(ask)}</strong><small>× ${escapeHtml(candidate.preferred_years || preview.years)} yr${Number(candidate.preferred_years) === 1 ? "" : "s"} preferred · the contract model's price</small></dd></div>
-            <div><dt title="The salary your extension must reach for him to sign it.">Signs with you from</dt><dd><strong data-extension-price>${money(candidate.accept_offer_millions?.guaranteed)}</strong><small>guaranteed · ${money(candidate.accept_offer_millions?.non_guaranteed)} without a guarantee${Number.isFinite(share) ? ` · ${Math.round(share * 100)}% of his ask, from his flexibility with your team` : ""}</small></dd></div>
-            <div><dt>Longest deal</dt><dd><strong>${safe >= 5 ? "5 years" : safe < 1 ? "None" : `${safe} year${safe === 1 ? "" : "s"}`}</strong><small>${safe >= 5 ? "the league maximum" : safe < 1 ? "he plans to retire first" : "he plans to retire after that"} · starts ${escapeHtml(shortSeasonLabel(candidate.start_season))}${lastSeason ? `, after his deal ends in ${escapeHtml(shortSeasonLabel(lastSeason))}` : ""}</small></dd></div>
+          <section class="approved-card-panel fa-builder-market"><header>What He Wants</header><dl>
+            <div title="${escapeAttr(`The contract model's price: what the open market would pay him, ${candidate.preferred_years || preview.years} years preferred.`)}"><dt>Market ask <i class="ext-info" aria-hidden="true">i</i></dt><dd><strong>${contractLabel(ask, candidate.preferred_years || preview.years)}</strong></dd></div>
+            <div title="${escapeAttr(`The salary your extension must reach for him to sign: ${money(candidate.accept_offer_millions?.guaranteed)} guaranteed, ${money(candidate.accept_offer_millions?.non_guaranteed)} without a guarantee${Number.isFinite(share) ? `; ${Math.round(share * 100)}% of his ask, from his flexibility with your team` : ""}.`)}"><dt>Signs with you from <i class="ext-info" aria-hidden="true">i</i></dt><dd><strong data-extension-price>${money(candidate.accept_offer_millions?.guaranteed)}</strong></dd></div>
+            <div title="${escapeAttr(`${safe >= 5 ? "The league maximum" : safe < 1 ? "He plans to retire first" : "He plans to retire after that"}. Starts ${shortSeasonLabel(candidate.start_season)}${lastSeason ? `, after his deal ends in ${shortSeasonLabel(lastSeason)}` : ""}.`)}"><dt>Longest deal <i class="ext-info" aria-hidden="true">i</i></dt><dd><strong>${safe >= 5 ? "5 years" : safe < 1 ? "None" : `${safe} year${safe === 1 ? "" : "s"}`}</strong></dd></div>
           </dl></section>
           <section class="approved-card-panel fa-builder-offer"><header>Your Offer</header>
-            <div class="fa-offer-field fa-offer-salary">
-              <label for="extensionOfferAav"><small>First-season salary</small></label>
+            <div class="fa-offer-field fa-offer-salary" title="${escapeAttr(`${money(minimum)} minimum to ${money(extensionOfferCeiling(preview.maximum))} in the first season (hard-cap room for ${preview.years} year${preview.years === 1 ? "" : "s"} and the league's extension limit)`)}" data-extension-hint-host="limit">
+              <label for="extensionOfferAav"><small>First-season salary <i class="ext-info" aria-hidden="true">i</i></small></label>
               <span class="money-input"><b>$</b><input id="extensionOfferAav" type="number" inputmode="decimal" min="${minimum.toFixed(1)}" max="${sliderMax.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-extension-aav aria-describedby="extensionOfferAavHelp" required><b>M</b></span>
               <input type="range" min="${minimum.toFixed(1)}" max="${sliderMax.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-extension-aav-range aria-label="First-season salary, in millions" />
-              <small id="extensionOfferAavHelp" data-extension-limit>${money(minimum)} minimum to ${money(extensionOfferCeiling(preview.maximum))} in the first season (hard-cap room for ${preview.years} year${preview.years === 1 ? "" : "s"} and the league's extension limit)</small>
+              <small id="extensionOfferAavHelp" class="ext-hint" data-extension-limit>${money(minimum)} minimum to ${money(extensionOfferCeiling(preview.maximum))} in the first season (hard-cap room for ${preview.years} year${preview.years === 1 ? "" : "s"} and the league's extension limit)</small>
               <div class="fa-offer-quick" role="group" aria-label="Quick salary">
                 <button type="button" class="ui-command" data-extension-offer-set="price">His price from you</button>
                 <button type="button" class="ui-command" data-extension-offer-set="${escapeAttr(ask)}">Market ask</button>
@@ -11969,11 +11970,11 @@ function extensionNegotiationPage(room, selectedPlayerId, response = null, detai
               </div>
             </div>
             <div class="fa-offer-pair"><div class="fa-offer-field"><small id="extensionYearsLabel">Years</small><div class="fa-segmented" role="radiogroup" aria-labelledby="extensionYearsLabel" data-extension-radiogroup="years">${[1, 2, 3, 4, 5].map((years) => radio("years", years, String(years), preview.years === years, years > Math.max(1, safe), years > safe ? `He plans to retire after ${safe} season${safe === 1 ? "" : "s"} of a new deal` : `At most ${money(extensionMaximum(candidate, years))} a season for ${years} year${years === 1 ? "" : "s"}`)).join("")}</div><input type="hidden" data-extension-years value="${preview.years}"></div>
-            <div class="fa-offer-field"><small id="extensionGuaranteeLabel">Guarantee</small><div class="fa-segmented" role="radiogroup" aria-labelledby="extensionGuaranteeLabel" data-extension-radiogroup="guarantee">${radio("guarantee", "true", "Guaranteed", preview.guaranteed)}${radio("guarantee", "false", "Non-guaranteed", !preview.guaranteed)}</div>
-              <p class="fa-offer-note" data-extension-guarantee-note>${preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on January 10; release him before then and you owe nothing. He asks ${Number.isFinite(premium) ? `${premium.toFixed(1)}%` : ""} more for this.`}</p></div></div>
+            <div class="fa-offer-field" data-extension-hint-host="guarantee"><small id="extensionGuaranteeLabel">Guarantee <i class="ext-info" aria-hidden="true">i</i></small><div class="fa-segmented" role="radiogroup" aria-labelledby="extensionGuaranteeLabel" data-extension-radiogroup="guarantee">${radio("guarantee", "true", "Guaranteed", preview.guaranteed)}${radio("guarantee", "false", "Non-guaranteed", !preview.guaranteed)}</div>
+              <p class="fa-offer-note ext-hint" data-extension-guarantee-note>${preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on January 10; release him before then and you owe nothing. He asks ${Number.isFinite(premium) ? `${premium.toFixed(1)}%` : ""} more for this.`}</p></div></div>
             <div class="fa-offer-pair"><div class="fa-offer-field"><small id="extensionPathLabel">Salary path</small><div class="fa-segmented" role="radiogroup" aria-labelledby="extensionPathLabel" data-extension-radiogroup="path">${["rising", "flat", "declining"].map((value) => radio("path", value, CONTRACT_PATH_LABELS[value], preview.path === value, false, contractShapeTitle(value, Number(candidate.max_raise_pct ?? 8)))).join("")}</div></div>
-            <div class="fa-offer-field"><small id="extensionOptionLabel">Option on the last season</small><div class="fa-segmented" role="radiogroup" aria-labelledby="extensionOptionLabel" data-extension-radiogroup="option">${["none", "player", "team"].map((value) => radio("option", value, CONTRACT_OPTION_LABELS[value], (offer.option || "none") === value, false, contractOptionTitle(value))).join("")}</div></div></div>
-            <p class="fa-offer-note fa-offer-options" data-extension-shape-note>${escapeHtml(extensionShapeNote(candidate, preview))}</p>
+            <div class="fa-offer-field" data-extension-hint-host="shape"><small id="extensionOptionLabel">Option on the last season <i class="ext-info" aria-hidden="true">i</i></small><div class="fa-segmented" role="radiogroup" aria-labelledby="extensionOptionLabel" data-extension-radiogroup="option">${["none", "player", "team"].map((value) => radio("option", value, CONTRACT_OPTION_LABELS[value], (offer.option || "none") === value, false, contractOptionTitle(value))).join("")}</div></div></div>
+            <p class="fa-offer-note fa-offer-options ext-hint" data-extension-shape-note>${escapeHtml(extensionShapeNote(candidate, preview))}</p>
           </section>
           ${status}
         </div>
@@ -12013,7 +12014,7 @@ function extensionAbilityView(candidate, years) {
   const y = value => bottom - (value - minimum) / (maximum - minimum) * (bottom - top);
   const grids = Array.from({length:5}, (_,index) => { const value = minimum + (maximum - minimum) * index / 4; return `<line class="extension-chart-grid" x1="${left}" x2="${right}" y1="${y(value)}" y2="${y(value)}"/><text x="${left - 12}" y="${y(value)+5}" text-anchor="end">${value.toFixed(0)}</text>`; }).join("");
   const range = points.map((p,i) => `${x(i)},${y(p.high)}`).concat(points.map((p,i) => `${x(i)},${y(p.low)}`).reverse()).join(" ");
-  return `<div class="extension-analysis-plot"><svg viewBox="0 0 960 280" preserveAspectRatio="none" role="img" aria-label="Projected overall ability through the contract"><title>${escapeHtml(analysis.projection_note || "Estimated development")}</title>${grids}<polygon class="extension-projection-range" points="${range}"/><polyline class="extension-projection-line" points="${points.map((p,i) => `${x(i)},${y(p.overall)}`).join(" ")}"/>${points.map((p,i) => `<circle class="extension-projection-node" cx="${x(i)}" cy="${y(p.overall)}" r="4"><title>${escapeHtml(p.season)} · age ${p.age}: OVR ${p.overall.toFixed(1)}, scenario range ${p.low.toFixed(1)}–${p.high.toFixed(1)}</title></circle><text class="extension-chart-value" x="${x(i)}" y="${y(p.high)-12}" text-anchor="middle">${p.overall.toFixed(1)}</text><text x="${x(i)}" y="${bottom+23}" text-anchor="middle">${escapeHtml(shortSeasonLabel(p.season))}</text><text class="extension-chart-muted" x="${x(i)}" y="${bottom+43}" text-anchor="middle">Age ${p.age}</text>`).join("")}</svg></div><footer class="extension-analysis-footer"><span class="extension-chart-key" title="${escapeAttr(analysis.projection_note || "")}"><i class="extension-range-key"></i>Scenario range <i class="extension-line-key"></i>Projected OVR</span><span>Current <b>${points[0].overall.toFixed(1)}</b> → final year <b>${points.at(-1).overall.toFixed(1)}</b></span></footer>`;
+  return `<div class="extension-analysis-plot"><svg viewBox="0 0 960 280" preserveAspectRatio="none" role="img" aria-label="Projected overall ability through the contract"><title>${escapeHtml(analysis.projection_note || "Estimated development")}</title>${grids}<polygon class="extension-projection-range" points="${range}"/><polyline class="extension-projection-line" points="${points.map((p,i) => `${x(i)},${y(p.overall)}`).join(" ")}"/>${points.map((p,i) => `<circle class="extension-projection-node" cx="${x(i)}" cy="${y(p.overall)}" r="4"><title>${escapeHtml(p.season)} · age ${p.age}: OVR ${p.overall.toFixed(1)}, scenario range ${p.low.toFixed(1)}–${p.high.toFixed(1)}</title></circle><text class="extension-chart-value" x="${i === 0 ? x(i) + 6 : x(i)}" y="${y(p.high)-12}" text-anchor="${i === 0 ? "start" : "middle"}">${p.overall.toFixed(1)}</text><text x="${i === 0 ? x(i) - 4 : x(i)}" y="${bottom+23}" text-anchor="${i === 0 ? "start" : "middle"}">${escapeHtml(shortSeasonLabel(p.season))}</text><text class="extension-chart-muted" x="${i === 0 ? x(i) - 4 : x(i)}" y="${bottom+43}" text-anchor="${i === 0 ? "start" : "middle"}">Age ${p.age}</text>`).join("")}</svg></div><footer class="extension-analysis-footer"><span class="extension-chart-key" title="${escapeAttr(analysis.projection_note || "")}"><i class="extension-range-key"></i>Scenario range <i class="extension-line-key"></i>Projected OVR</span><span>Current <b>${points[0].overall.toFixed(1)}</b> → final year <b>${points.at(-1).overall.toFixed(1)}</b></span></footer>`;
 }
 
 function extensionContractsView(candidate, aav) {
@@ -12150,6 +12151,11 @@ function updateExtensionPreview(modal = state.modal, root = els.modalRoot) {
   if (cap) cap.innerHTML = extensionCapTableMarkup(preview, candidate);
   const foot = root.querySelector("[data-extension-foot]");
   if (foot && !modal.submitting) foot.innerHTML = extensionOfferFootMarkup(preview, true);
+  // Explanations read on hover (playtest 2026-11-23): each hidden hint's text is its field's tooltip.
+  [["limit", limit], ["guarantee", note], ["shape", shapeNote]].forEach(([key, hint]) => {
+    const host = root.querySelector(`[data-extension-hint-host="${key}"]`);
+    if (host && hint) host.title = hint.textContent.trim();
+  });
   const analysisSlot = root.querySelector("[data-extension-analysis-slot]");
   const signature = `${preview.years}:${preview.aav}`;
   if (analysisSlot && analysisSlot.dataset.signature !== signature) {
