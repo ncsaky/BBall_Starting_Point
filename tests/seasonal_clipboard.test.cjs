@@ -684,31 +684,61 @@ test('team identity heatmaps size to the court aspect ratio with content-tight r
   assert.match(css,/\[data-board-window="identity"\] \.spatial-court\s*\{\s*height:auto;\s*aspect-ratio:500 \/ 470;/);
 });
 test('heatmap hover targets summarize whole regions and emphasize only their hexes', () => {
-  const scope = {
-    spatialHexPoints:(x,y,r)=>Array.from({length:6},(_,i)=>`${(x+Math.cos(Math.PI/6+Math.PI/3*i)*r).toFixed(1)},${(y+Math.sin(Math.PI/6+Math.PI/3*i)*r).toFixed(1)}`).join(' '),
-    spatialEfficiencyColor:()=>'#a8b3bd',
-    escapeHtml:value=>String(value), escapeAttr:value=>String(value),
-  };
+  const scope = { escapeHtml:value=>String(value), escapeAttr:value=>String(value) };
   vm.createContext(scope);
-  vm.runInContext(app.slice(app.indexOf('function spatialHexRadius('),app.indexOf('\nfunction spatialHeatmapMarkup(')),scope);
+  vm.runInContext(app.slice(app.indexOf('function spatialEfficiencyColor('),app.indexOf('\nfunction spatialHeatmapMarkup(')),scope);
   const profile = {shot_chart:{regions:[
     {id:1,label:'Paint',fg_pct:41.1,league_fg_pct:40.3,delta_pp:0.8,suppression_delta_pp:0.5},
-    {id:2,label:'Wing three',fg_pct:39,league_fg_pct:38,delta_pp:1,suppression_delta_pp:0.2},
+    {id:2,label:'Short left',fg_pct:39,league_fg_pct:38,delta_pp:1,suppression_delta_pp:0.2},
   ],cells:[
-    [100,100,1,0.2,0.1,0.1],[121.65,100,1,0.3,0.2,0.2],[200,100,2,0.1,0.1,0.1],
+    [52.5,250,1,0.2,0.1,0.1],[74.15,250,1,0.3,0.2,0.2],[100,130,2,0.1,0.1,0.1],
   ]}};
   const regions = scope.spatialHeatmapRegions(profile,'offense');
-  assert.equal((regions.match(/class="spatial-court-hex"/g)||[]).length,3);
+  // Both paint cells pool into one coarse hex; the short-range cell is below the league's average hex volume.
+  assert.equal((regions.match(/class="spatial-court-hex"/g)||[]).length,1);
   assert.equal((regions.match(/class="spatial-court-hex-region"/g)||[]).length,2);
   assert.equal((regions.match(/class="spatial-region-hit"/g)||[]).length,2);
-  assert.match(regions,/Paint: Projected FG 41\.1%, league 40\.3%; \+0\.8 pp vs league; 1\.88x league mean cell density; 1\.67x estimated league density in this region/);
+  assert.equal((regions.match(/class="spatial-region-fill"/g)||[]).length,2);
+  assert.match(regions,/Paint: 83\.3% of shots \(league 75\.0%\) · Projected FG 41\.1%, league 40\.3% · FG vs league: \+0\.8 pts \(typical player \+2\.9\)/);
   assert.doesNotMatch(regions,/spatial-region-outline/);
-  assert.match(regions,/<g class="spatial-court-hex-region" data-region="1">\s*<polygon[^>]+data-region="1"[\s\S]+?<path class="spatial-region-hit"/);
+  assert.match(regions,/<g class="spatial-region-fills">[\s\S]+?<\/g><g class="spatial-court-hex-region" data-region="1">\s*<polygon[^>]+data-region="1"[\s\S]+?<path class="spatial-region-hit"/);
   const css = fs.readFileSync(path.join(gui,'styles.css'),'utf8');
   assert.match(css,/\.spatial-court-hex \{ pointer-events: none;/);
   assert.match(css,/\.spatial-region-hit \{[^}]*pointer-events: all;/);
   assert.match(css,/\.spatial-court:has\(\.spatial-region-hit:is\(:hover,:focus-visible\)\)[\s\S]*?opacity: \.16;/);
   assert.match(css,/\.spatial-court-hex-region:has\(\.spatial-region-hit:is\(:hover,:focus-visible\)\) \{ filter: brightness\(1\.12\); \}/);
+  const heat = fs.readFileSync(path.join(gui,'heatmaps.css'),'utf8');
+  assert.match(heat,/\.spatial-region-hit:is\(:hover,:focus-visible\) \{ stroke:#24323c;/);
+  // Selected view tabs are a light tint with an underline, never black with white text.
+  assert.match(heat,/\.spatial-court-tab\[aria-pressed="true"\],[\s\S]*?background:#e0eaf3;[\s\S]*?border-bottom-color:#2f5f86;/);
+  assert.doesNotMatch(heat,/spatial-court-tab[^{]*\{[^}]*color:#fff/);
+});
+test('four factors draw a league box plot with our team as a dot coloured by league rank', () => {
+  const scope = { clampNumber:(v,a,b)=>Math.min(b,Math.max(a,v)), escapeHtml:String, escapeAttr:String };
+  vm.createContext(scope);
+  vm.runInContext(app.slice(app.indexOf('const FOUR_FACTOR_MEANINGS'),app.indexOf('// Player rating bars (OVR/OFF/DEF)')),scope);
+  const row = scope.seasonFactorBar({key:'tov',label:'TOV%',value:14.2,league_average:13.1,rank:28,team_count:30,score:10,
+    league_spread:{min:11.2,q1:12.4,median:13.0,q3:13.8,max:15.6}});
+  for (const part of ['whisker','iqr','median']) assert.match(row,new RegExp(`class="season-factor-${part}"`));
+  assert.match(row,/class="season-factor-dot" style="left:/);
+  assert.match(row,/--factor-color:#/);
+  assert.match(row,/<strong class="season-factor-value">14\.2<\/strong>/);
+  assert.match(row,/middle half 12\.4–13\.8, median 13\.0/);
+  // Without a league spread (older data) the row still shows the average tick and the dot.
+  const plain = scope.seasonFactorBar({key:'efg',label:'eFG%',value:55,league_average:53,score:80});
+  assert.doesNotMatch(plain,/season-factor-iqr|NaN/);
+  assert.match(plain,/season-factor-median[\s\S]*season-factor-dot/);
+});
+test('weekly efficiency labels weeks, not dates, and puts small y labels on round values', () => {
+  const points = Array.from({length:12},(_,i)=>{ const d=new Date(Date.UTC(2026,9,19)+i*7*86400000).toISOString().slice(0,10); return {date:d,label:d.slice(5),offense:112+9*Math.sin(i/2),defense:110-6*Math.cos(i/3)}; });
+  const scope = { state:{data:{dashboardTrends:{efficiency:{points,league_average:112,events:[]}}}}, clampNumber:(v,a,b)=>Math.min(b,Math.max(a,v)), escapeHtml:String, escapeAttr:String, signedNumber:v=>String(v), seasonPanelHeader:t=>t };
+  vm.createContext(scope);
+  vm.runInContext(app.slice(app.indexOf('function seasonEfficiencyCard('),app.indexOf('function efficiencyEventDetail(')),scope);
+  const svg = scope.seasonEfficiencyCard({},420,220,true);
+  assert.deepEqual([...svg.matchAll(/>Week (\d+)</g)].map(m=>Number(m[1])),[1,5,10,15,20,25]);
+  assert.doesNotMatch(svg,/>10-19<|rotate\(/);
+  assert.deepEqual([...svg.matchAll(/class="axis-label y-label"[^>]*>(-?\d+)</g)].map(m=>Number(m[1])),[40,20,0,-20,-40]);
+  assert.match(svg,/<title>Week 3 OFF vs league/);
 });
 test('payroll segment hover text includes the contract amount and escaped player name', () => {
   const scope = {

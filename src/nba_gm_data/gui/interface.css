@@ -730,7 +730,7 @@ body.unified-terminal-ui .unified-phase-dashboard:is([data-phase="cutdown"],[dat
 .spatial-court[hidden] { display:none !important; }
 .spatial-court-tabs { display:flex; gap:2px; justify-content:center; margin:0; }
 .spatial-court-tab { background:transparent; border:1px solid var(--ui-line, #bbb); border-radius:3px; color:var(--ui-muted); cursor:pointer; font:inherit; font-size:9px; font-weight:700; padding:1px 6px; }
-.spatial-court-tab[aria-pressed="true"] { background:var(--ui-text); border-color:var(--ui-text); color:var(--ui-panel, #fff); }
+.spatial-court-tab[aria-pressed="true"] { background:#e0eaf3; border-color:#2f5f86; color:#14212b; }
 .spatial-court-tab:focus-visible { outline:2px solid #668ea7; outline-offset:1px; }
 .spatial-heatmap.has-court-views { display:grid; grid-template-columns:1fr 1fr; column-gap:10px; }
 .spatial-heatmap.has-court-views > .spatial-court-head, .spatial-heatmap.has-court-views > .spatial-half-courts, .spatial-heatmap.has-court-views > .spatial-legends { grid-column:1 / -1; }

@@ -26,3 +26,89 @@ body .spatial-heatmap .spatial-numeric-key .spatial-key-stop b {
   clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);
 }
 .spatial-numeric-key .spatial-key-stop em { color:#263b4d; font:11px/12px Tahoma,Arial,sans-serif; text-align:center; }
+
+/* Court heat maps, taste pass 2026-11-23: whole-region colour fills with white region edges under a sparse set of
+   large volume hexes. */
+body .spatial-region-fill { stroke:#f7f9fa; stroke-width:2.2; stroke-linejoin:round; }
+body .spatial-court-hex,
+body .spatial-court-hex:hover { stroke:#ffffff; stroke-width:1.6; stroke-linejoin:round; }
+body .spatial-region-hit:is(:hover,:focus-visible) { stroke:#24323c; stroke-width:2.4; }
+body .spatial-court:has(.spatial-region-hit:is(:hover,:focus-visible)) .spatial-region-fill { opacity:.6; }
+
+/* View tabs: a tab strip per court with the group name, tabs evenly sized and centred; the selected tab is a light
+   tint with a darker label and an underline. Never black, and hover never turns the label white. */
+body .spatial-heatmap .spatial-court-head h4.spatial-court-tabs {
+  display:flex;
+  align-items:stretch;
+  justify-content:center;
+  gap:2px;
+  box-sizing:border-box;
+  height:100%;
+  min-height:22px;
+  margin:0;
+  padding:0;
+  background:transparent;
+  border:0;
+  border-bottom:1px solid #c3ccd4;
+  box-shadow:none;
+}
+body .spatial-heatmap .spatial-court-tabs .spatial-court-group-label {
+  display:flex;
+  align-items:center;
+  padding:0 8px 0 2px;
+  color:#14212b;
+  font:700 11px Tahoma,"Trebuchet MS",Arial,sans-serif;
+  white-space:nowrap;
+}
+body .spatial-heatmap .spatial-court-tabs .spatial-court-tab {
+  flex:1 1 0;
+  min-width:0;
+  max-width:92px;
+  height:auto;
+  min-height:0;
+  margin:0;
+  padding:0 4px;
+  overflow:hidden;
+  background:transparent;
+  border:0;
+  border-bottom:2px solid transparent;
+  border-radius:3px 3px 0 0;
+  box-shadow:none;
+  color:#56646f;
+  font:600 11px Tahoma,"Trebuchet MS",Arial,sans-serif;
+  letter-spacing:0;
+  text-overflow:ellipsis;
+  text-transform:none;
+  white-space:nowrap;
+}
+body .spatial-heatmap .spatial-court-tabs .spatial-court-tab:hover { background:#edf2f6; border-color:transparent; color:#14212b; }
+body .spatial-heatmap .spatial-court-tabs .spatial-court-tab[aria-pressed="true"],
+body .spatial-heatmap .spatial-court-tabs .spatial-court-tab[aria-pressed="true"]:hover {
+  background:#e0eaf3;
+  color:#14212b;
+  font-weight:700;
+  border-bottom-color:#2f5f86;
+}
+body .spatial-heatmap .spatial-court-tabs .spatial-court-tab:focus-visible { outline:2px solid #668ea7; outline-offset:-2px; }
+
+/* League-relative colour key: Worse, five swatches, Better. */
+body .spatial-heatmap .spatial-legend i.spatial-relative-key {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  width:auto;
+  min-width:0;
+  height:auto;
+  background:none !important;
+}
+body .spatial-heatmap .spatial-legend i.spatial-relative-key::after { display:none; }
+body .spatial-heatmap .spatial-relative-key b {
+  display:block;
+  flex:none;
+  width:12px;
+  height:12px;
+  border:0;
+  clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);
+}
+body .spatial-heatmap .spatial-relative-key em { padding:0 3px; color:#4a5965; font:normal 10px/12px Tahoma,Arial,sans-serif; }

@@ -3130,14 +3130,30 @@ const FOUR_FACTOR_MEANINGS = {
   ftr: "Free-throw rate: free-throw attempts per shot attempt, a sign of getting to the line. Higher is better.",
 };
 
+// Four Factors (taste pass 2026-11-23): a league box plot per factor (lowest to highest team as the whisker, the
+// middle half as the box, the median as a tick) with this team as a coloured dot. The dot and the number share one
+// colour, red to blue by league rank (rank already accounts for turnovers being better low).
 function seasonFactorBar(factor) {
   const score = clampNumber(Number(factor.score || 0), 0, 100);
   const value = Number(factor.value || 0);
   const average = Number(factor.league_average || 0);
+  const spread = factor.league_spread || {};
+  const known = ["min", "q1", "median", "q3", "max"].every(key => Number.isFinite(Number(spread[key])));
+  const low = Math.min(value, known ? Number(spread.min) : average);
+  const high = Math.max(value, known ? Number(spread.max) : average);
+  const pad = Math.max((high - low) * 0.06, 0.2);
+  const at = number => `${clampNumber((Number(number) - (low - pad)) / ((high + pad) - (low - pad)) * 100, 0, 100).toFixed(1)}%`;
+  const color = performanceBarColor(score);
   const meaning = FOUR_FACTOR_MEANINGS[factor.key] ? `${FOUR_FACTOR_MEANINGS[factor.key]} ` : "";
   const rank = factor.rank && factor.team_count ? ` Rank #${factor.rank} of ${factor.team_count}.` : "";
-  return `<div class="season-signal-row season-factor-row" title="${escapeAttr(`${meaning}League average ${average.toFixed(1)}.${rank}`)}">
-    <span>${escapeHtml(factor.label || "Factor")}</span><i><b style="--fill:${clampNumber(value, 0, 100)}%;--bar-color:${performanceBarColor(score)}"></b><u style="left:${clampNumber(average, 0, 100)}%"></u></i><strong>${value.toFixed(1)}</strong>
+  const league = known
+    ? `League: lowest ${Number(spread.min).toFixed(1)}, middle half ${Number(spread.q1).toFixed(1)}–${Number(spread.q3).toFixed(1)}, median ${Number(spread.median).toFixed(1)}, highest ${Number(spread.max).toFixed(1)}.`
+    : `League average ${average.toFixed(1)}.`;
+  const box = known
+    ? `<span class="season-factor-whisker" style="left:${at(spread.min)};right:calc(100% - ${at(spread.max)})"></span><span class="season-factor-iqr" style="left:${at(spread.q1)};right:calc(100% - ${at(spread.q3)})"></span><span class="season-factor-median" style="left:${at(spread.median)}"></span>`
+    : `<span class="season-factor-median" style="left:${at(average)}"></span>`;
+  return `<div class="season-signal-row season-factor-row" title="${escapeAttr(`${meaning}${league}${rank}`)}" style="--factor-color:${color}">
+    <span>${escapeHtml(factor.label || "Factor")}</span><span class="season-factor-box" role="img" aria-label="${escapeAttr(`${factor.label || "Factor"} ${value.toFixed(1)}. ${league}`)}">${box}<span class="season-factor-dot" style="left:${at(value)}"></span></span><strong class="season-factor-value">${value.toFixed(1)}</strong>
   </div>`;
 }
 
@@ -3189,13 +3205,53 @@ function performanceBarStyle(value) {
   return `--fill:${score}%;--bar-color:${performanceBarColor(score)}`;
 }
 
-function spatialEfficiencyColor(value) {
-  const delta = Number.isFinite(Number(value)) ? Math.max(-8, Math.min(8, Number(value))) : 0;
-  const stops = [[-8,[189,75,88]],[-3,[219,145,153]],[0,[168,179,189]],[3,[113,168,212]],[8,[52,125,235]]];
-  const index = Math.max(1, stops.findIndex(([point]) => delta <= point));
+// Court heat maps (Team Identity, player Court Influence, trade comparisons). Taste pass 2026-11-23: each court
+// region is filled as a whole with its colour, and a sparse set of large hexes marks only the spots with real volume.
+// Colour is league-relative: each region is compared with the league's typical team (or player) in that same
+// region and view, and divided by how far the league spreads around it, so the strongest regions reach full colour
+// and an ordinary region stays neutral. Display only; the values themselves are the engine's.
+//
+// Red (worse than the league) through neutral grey to blue (better), on the relative score.
+function spatialEfficiencyColor(score, strength = 1) {
+  const value = Number.isFinite(Number(score)) ? Math.max(-1, Math.min(1, Number(score))) : 0;
+  const stops = [[-1, [176, 42, 58]], [-0.45, [222, 120, 128]], [0, [182, 191, 199]], [0.45, [108, 160, 214]], [1, [28, 92, 184]]];
+  const index = Math.max(1, stops.findIndex(([point]) => value <= point));
   const [low, a] = stops[index - 1], [high, b] = stops[index];
-  const fraction = (delta - low) / (high - low);
-  return `#${a.map((channel, i) => Math.round(channel + (b[i] - channel) * fraction).toString(16).padStart(2, "0")).join("")}`;
+  const fraction = (value - low) / (high - low);
+  return `#${a.map((channel, i) => {
+    const color = channel + (b[i] - channel) * fraction;
+    return Math.round(SPATIAL_COURT_FLOOR[i] + (color - SPATIAL_COURT_FLOOR[i]) * strength).toString(16).padStart(2, "0");
+  }).join("")}`;
+}
+
+// League reference, measured on the 2026-27 league (30 team rotations; 230 players projected 15+ minutes):
+// `mid` is the league median for regions 1-15, `spread` the 95th percentile distance from it across all regions.
+const SPATIAL_LEAGUE_REFERENCE = {
+  team: {
+    offense_total: { spread: 2.58, mid: [4.3, 0.9, -0.77, 2.85, 0.71, 0.07, 1.03, -0.02, -0.32, 0.23, -0.7, -1.3, -0.59, 0.78, -1.42] },
+    offense: { spread: 1.87, mid: [4.36, 0.78, -0.96, 2.61, 0.91, 0.32, 0.85, 0.03, -0.33, -0.15, -0.6, -1.13, -0.78, 0.29, -1.24] },
+    playmaking: { spread: 1.4, mid: [-0.04, 0.06, -0.04, 0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.2, 0.05, 0.05, 0.05, 0.2, 0.05] },
+    defense: { spread: 2.31, mid: [1.67, 1.32, 1.63, 1.31, 1.37, 1.37, 1.32, 1.28, 1.28, 1.72, 1.84, 1.82, 1.86, 1.77, 1.82] },
+    onball: { spread: 1.41, mid: [1.89, 1.2, 1.81, 1.23, 1.23, 1.23, 1.24, 1.19, 1.19, 1.76, 1.8, 1.85, 1.88, 1.78, 1.85] },
+    help: { spread: 1.18, mid: [-0.19, 0.07, -0.19, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.04, 0.04, 0.04, 0.04, 0.04, 0.04] },
+  },
+  player: {
+    offense: { spread: 5.92, mid: [2.91, 0.52, -1.87, 2.19, 0.5, -0.05, -0.32, -0.26, -0.46, -0.04, -1.05, -2.46, -1.06, -0.29, -1.28] },
+    playmaking: { spread: 1.62, mid: [0.1, 0.14, 0.1, 0.14, 0.14, 0.14, 0.14, 0.14, 0.14, 0.21, 0.08, 0.08, 0.08, 0.21, 0.08] },
+    defense: { spread: 6.97, mid: [1.26, 1.47, 1.25, 1.51, 1.49, 1.49, 1.51, 1.45, 1.45, 1.72, 1.81, 1.87, 1.87, 1.94, 1.87] },
+    onball: { spread: 3.98, mid: [1.75, 1.3, 1.65, 1.28, 1.32, 1.32, 1.31, 1.27, 1.27, 1.81, 1.84, 1.83, 1.85, 1.9, 1.83] },
+    help: { spread: 3.81, mid: [-0.43, 0.1, -0.43, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.06, 0.06, 0.06, 0.06, 0.06, 0.06] },
+  },
+};
+const SPATIAL_COURT_FLOOR = [237, 240, 242];
+
+// Relative score in [-1, 1] (null when the comparison is unknown): 0 is the league's typical value in this region.
+function spatialRelativeScore(delta, regionId, view, entity) {
+  if (delta == null || !Number.isFinite(Number(delta))) return null;
+  const reference = SPATIAL_LEAGUE_REFERENCE[entity === "team" ? "team" : "player"]?.[view];
+  const typical = Number(reference?.mid?.[Number(regionId) - 1] ?? 0);
+  const spread = Number(reference?.spread) > 0 ? Number(reference.spread) : 8;
+  return Math.max(-1, Math.min(1, (Number(delta) - typical) / spread));
 }
 
 function spatialHexPoints(centerX, centerY, radius) {
@@ -3205,93 +3261,167 @@ function spatialHexPoints(centerX, centerY, radius) {
   }).join(" ");
 }
 
-function spatialHexRadius(density, leagueMeanDensity) {
-  const ratio = Math.max(0, Number(density) || 0) / Math.max(Number(leagueMeanDensity) || 0, 0.000025);
-  // Hex area, rather than its radius, is proportional to relative density.
-  return Math.max(1.8, Math.min(12, 7 * Math.sqrt(ratio)));
+// Display hexes: the fine shot grid (12.5-unit hexes) pooled into a coarse grid of 31-unit hexes anchored on the rim.
+// A coarse hex is drawn only where its volume reaches the league's average hex; its area grows with volume up to 4x.
+const SPATIAL_COARSE_RADIUS = 31;
+const SPATIAL_HEX_MIN_RATIO = 1;
+const SPATIAL_HEX_FULL_RATIO = 4;
+function spatialHexRadius(volume, leagueMeanVolume) {
+  const ratio = Math.max(0, Number(volume) || 0) / Math.max(Number(leagueMeanVolume) || 0, 0.000025);
+  return SPATIAL_COARSE_RADIUS * 0.92 * Math.sqrt(Math.min(ratio, SPATIAL_HEX_FULL_RATIO) / SPATIAL_HEX_FULL_RATIO);
+}
+
+function spatialCoarseCells(cells, densityIndex) {
+  const radius = SPATIAL_COARSE_RADIUS, stepX = radius * Math.sqrt(3), stepY = radius * 1.5;
+  const bins = new Map();
+  cells.forEach(cell => {
+    const x = Number(cell[0]), y = Number(cell[1]);
+    let best = null;
+    const nearRow = Math.round((y - 250) / stepY);
+    for (let row = nearRow - 1; row <= nearRow + 1; row += 1) {
+      const offset = Math.abs(row) % 2 ? stepX / 2 : 0;
+      const column = Math.round((x - 52.5 - offset) / stepX);
+      const centerX = 52.5 + offset + column * stepX, centerY = 250 + row * stepY;
+      const distance = (x - centerX) ** 2 + (y - centerY) ** 2;
+      if (!best || distance < best.distance) best = { distance, key: `${row}:${column}`, x: centerX, y: centerY };
+    }
+    let bin = bins.get(best.key);
+    if (!bin) bins.set(best.key, bin = { x: best.x, y: best.y, volume: 0, league: 0, regions: new Map() });
+    const volume = Math.max(0, Number(cell[densityIndex]) || 0);
+    bin.volume += volume;
+    bin.league += Math.max(0, Number(cell[5]) || 0);
+    bin.regions.set(Number(cell[2]), (bin.regions.get(Number(cell[2])) || 0) + volume + Math.max(0, Number(cell[5]) || 0) * 1e-6);
+  });
+  return [...bins.values()].map(bin => ({ ...bin, region: [...bin.regions.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] }));
 }
 
 const SPATIAL_COURT_VIEWS = {
-  offense: { density: 3, delta: "delta_pp", tab: "Scoring", legend: "His FG vs league (pp)", caption: "His own shots: where he shoots, and his projected FG% against league average." },
-  playmaking: { density: 6, delta: "playmaking_delta_pp", tab: "Playmaking", legend: "Teammates' FG change (pp)", caption: "His teammates' shots while he plays (his own shots left out): where they shoot, and how much better or worse they shoot because of his passing, driving and gravity." },
-  defense: { density: 4, delta: "suppression_delta_pp", tab: "Overall", legend: "Suppression (pp)", caption: "All of his defense: how much he lowers opponents' FG% by zone. Blue is better defense." },
-  onball: { density: 7, delta: "onball_delta_pp", tab: "On his man", legend: "His man held below league (pp)", caption: "The man he guards: where players his size shoot, and how much he holds them below league FG%." },
-  help: { density: 8, delta: "help_delta_pp", tab: "Help", legend: "Others held below league (pp)", caption: "Everyone else while he plays (his own man left out): how much his rim protection and rotations lower their FG%." },
+  offense_total: { density: 3, delta: "delta_pp", plus: "playmaking_delta_pp", tab: "Overall", legend: "Shooting with playmaking", measure: "FG vs league, with playmaking", shots: "shots" },
+  offense: { density: 3, delta: "delta_pp", tab: "Scoring", legend: "Shooting vs league", measure: "FG vs league", shots: "shots", caption: "His own shots: where he shoots, and his projected FG% against league average." },
+  playmaking: { density: 6, delta: "playmaking_delta_pp", tab: "Playmaking", legend: "Playmaking lift", measure: "Teammates' FG change", shots: "teammates' shots", caption: "His teammates' shots while he plays (his own shots left out): where they shoot, and how much better or worse they shoot because of his passing, driving and gravity." },
+  defense: { density: 4, delta: "suppression_delta_pp", tab: "Overall", legend: "Overall defense", measure: "Opponent FG held down", shots: "opponent shots", caption: "All of his defense: how much he lowers opponents' FG% by zone. Blue is better defense." },
+  onball: { density: 7, delta: "onball_delta_pp", tab: "On-ball", legend: "On-ball defense", measure: "Men guarded, FG held down", shots: "shots by men guarded", caption: "The man he guards: where players his size shoot, and how much he holds them below league FG%." },
+  help: { density: 8, delta: "help_delta_pp", tab: "Off-ball", legend: "Off-ball defense", measure: "Everyone else, FG held down", shots: "other opponent shots", caption: "Off the ball: everyone else while he plays (his own man left out): how much his rim protection and rotations lower their FG%." },
 };
 const SPATIAL_TEAM_CAPTIONS = {
-  offense: "The team's shots: where its rotation shoots, and projected FG% against league average.",
+  offense_total: "The team's shots: where its rotation shoots, and projected FG% with its passing, driving and gravity included.",
+  offense: "The team's own shot-making: where its rotation shoots, and projected FG% against league average.",
   playmaking: "How much the team's passing, driving and gravity raise its shooting by zone, as the sim applies it.",
   defense: "The team's defense: how much its rotation lowers opponents' FG% by zone. Blue is better defense.",
-  onball: "Defense on the ball: how much the rotation holds the men it guards below league FG%.",
-  help: "Help defense: how much rim protection and rotations lower everyone else's FG%.",
+  onball: "On-ball defense: how much the rotation holds the men it guards below league FG%.",
+  help: "Off-ball defense: how much rim protection and rotations lower everyone else's FG%.",
 };
 function spatialCourtCaption(view, team) {
   return team ? SPATIAL_TEAM_CAPTIONS[view] : SPATIAL_COURT_VIEWS[view].caption;
+}
+
+function spatialViewDelta(region, view) {
+  const raw = region[view.delta];
+  if (raw == null || !Number.isFinite(Number(raw))) return null;
+  if (!view.plus) return Number(raw);
+  const extra = region[view.plus];
+  return extra == null || !Number.isFinite(Number(extra)) ? null : Number(raw) + Number(extra);
 }
 
 function spatialHeatmapRegions(profile, side) {
   const chart = profile?.shot_chart;
   if (!chart?.cells?.length || !chart.regions?.length || chart.basis === "unavailable") return "";
   const view = SPATIAL_COURT_VIEWS[side] || SPATIAL_COURT_VIEWS.defense;
-  const cellsByRegion = new Map(chart.regions.map(region => [Number(region.id), []]));
-  const leagueMeanDensity = chart.cells.reduce((total, cell) => total + Number(cell[5]), 0) / chart.cells.length;
-  chart.cells.forEach(cell => cellsByRegion.get(Number(cell[2]))?.push(cell));
+  const entity = profile.entity_type === "team" ? "team" : "player";
   const densityIndex = view.density;
-  return chart.regions.map(region => {
-    const cells = cellsByRegion.get(Number(region.id)) || [];
-    if (!cells.length) return "";
-    const teamDensity = cells.reduce((total, cell) => total + Number(cell[densityIndex]), 0);
-    const leagueDensity = cells.reduce((total, cell) => total + Number(cell[5]), 0);
-    const meanCellDensity = teamDensity / cells.length;
-    const ratio = meanCellDensity / Math.max(leagueMeanDensity, 0.000025);
-    const localRatio = teamDensity / Math.max(leagueDensity, 0.000025);
-    const rawDelta = region[view.delta];
-    const delta = rawDelta == null ? null : Number(rawDelta);
-    const known = delta != null && Number.isFinite(delta);
-    const color = known ? spatialEfficiencyColor(delta) : "#d4dce2";
-    const hexes = cells.map(cell => {
-      const [x, y] = cell;
-      const density = Number(cell[densityIndex] || 0);
-      if (density < 0.000025) return "";
-      const ratio = density / Math.max(leagueMeanDensity, 0.000025);
-      const radius = spatialHexRadius(density, leagueMeanDensity);
-      return `<polygon class="spatial-court-hex" data-side="${side}" data-region="${Number(region.id)}" data-density-ratio="${ratio.toFixed(3)}" points="${spatialHexPoints(x, y, radius)}" fill="${color}" pointer-events="none"/>`;
+  const coarse = spatialCoarseCells(chart.cells, densityIndex);
+  const leagueTotal = coarse.reduce((total, bin) => total + bin.league, 0);
+  const leagueMeanVolume = leagueTotal / Math.max(1, coarse.filter(bin => bin.league > 0).length);
+  const viewTotal = chart.cells.reduce((total, cell) => total + Math.max(0, Number(cell[densityIndex]) || 0), 0) || 1;
+  const regionVolume = new Map(), regionLeague = new Map();
+  chart.cells.forEach(cell => {
+    const id = Number(cell[2]);
+    regionVolume.set(id, (regionVolume.get(id) || 0) + Math.max(0, Number(cell[densityIndex]) || 0));
+    regionLeague.set(id, (regionLeague.get(id) || 0) + Math.max(0, Number(cell[5]) || 0));
+  });
+  const shown = chart.regions.filter(region => SPATIAL_REGION_SHAPES[Number(region.id)] && regionLeague.has(Number(region.id)));
+  // Corners paint last so they sit over the wide midrange and three-point sectors they cut into.
+  shown.sort((a, b) => Number(SPATIAL_REGION_SHAPES[Number(a.id)].corner || 0) - Number(SPATIAL_REGION_SHAPES[Number(b.id)].corner || 0));
+  const scores = new Map(shown.map(region => [Number(region.id), spatialRelativeScore(spatialViewDelta(region, view), region.id, side, entity)]));
+  const fills = shown.map(region => {
+    const id = Number(region.id);
+    const score = scores.get(id);
+    // The wash fades where this team or player hardly shoots, so a strong colour on a spot nobody uses doesn't dominate.
+    const use = ((regionVolume.get(id) || 0) / viewTotal) / Math.max((regionLeague.get(id) || 0) / (leagueTotal || 1), 1e-6);
+    const fill = score == null ? "#dde3e8" : spatialEfficiencyColor(score, 0.12 + 0.33 * Math.min(1, use));
+    return `<path class="spatial-region-fill" data-region="${Number(region.id)}" d="${spatialRegionGeometry(region.id)}" fill="${fill}" pointer-events="none"/>`;
+  }).join("");
+  const groups = shown.map(region => {
+    const id = Number(region.id);
+    const score = scores.get(id);
+    const color = score == null ? "#aab4bd" : spatialEfficiencyColor(score);
+    const hexes = coarse.filter(bin => bin.region === id).map(bin => {
+      const ratio = bin.volume / Math.max(leagueMeanVolume, 0.000025);
+      if (ratio < SPATIAL_HEX_MIN_RATIO) return "";
+      return `<polygon class="spatial-court-hex" data-side="${side}" data-region="${id}" data-density-ratio="${ratio.toFixed(3)}" points="${spatialHexPoints(bin.x, bin.y, spatialHexRadius(bin.volume, leagueMeanVolume))}" fill="${color}" pointer-events="none"/>`;
     }).join("");
-    const value = side === "offense" && region.fg_pct != null
-      ? `Projected FG ${Number(region.fg_pct).toFixed(1)}%, league ${Number(region.league_fg_pct).toFixed(1)}%`
-      : side === "defense" ? "Modeled defensive suppression"
-      : side === "playmaking" ? "Teammates' FG change with him on court"
-      : side === "onball" ? "His man's FG held below league"
-      : side === "help" ? "Other opponents' FG held below league" : "Reference unavailable";
-    const comparison = known ? `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pp vs league` : "Comparison unavailable";
-    const title = `${region.label}: ${value}; ${comparison}; ${ratio.toFixed(2)}x league mean cell density; ${localRatio.toFixed(2)}x estimated league density in this region`;
-    const hit = spatialRegionGeometry(cells);
-    return `<g class="spatial-court-hex-region" data-region="${Number(region.id)}">
+    const delta = spatialViewDelta(region, view);
+    const share = (regionVolume.get(id) || 0) / viewTotal * 100;
+    const leagueShare = (regionLeague.get(id) || 0) / (leagueTotal || 1) * 100;
+    const shots = entity === "team" && side === "playmaking" ? "shots" : view.shots;
+    const fg = side === "offense" && region.fg_pct != null ? ` · Projected FG ${Number(region.fg_pct).toFixed(1)}%, league ${Number(region.league_fg_pct).toFixed(1)}%` : "";
+    const typical = Number(SPATIAL_LEAGUE_REFERENCE[entity]?.[side]?.mid?.[id - 1] ?? 0);
+    const signed = value => `${value >= 0 ? "+" : ""}${value.toFixed(1)}`;
+    const comparison = delta == null ? "Comparison unavailable" : `${view.measure}: ${signed(delta)} pts (typical ${entity} ${signed(typical)})`;
+    const title = `${region.label}: ${share.toFixed(1)}% of ${shots} (league ${leagueShare.toFixed(1)}%)${fg} · ${comparison}`;
+    return `<g class="spatial-court-hex-region" data-region="${id}">
       ${hexes}
-      <path class="spatial-region-hit" d="${hit}" fill="transparent" fill-rule="nonzero" pointer-events="all" tabindex="0" role="img" aria-label="${escapeAttr(title)}"><title>${escapeHtml(title)}</title></path>
+      <path class="spatial-region-hit" d="${spatialRegionGeometry(id)}" fill="transparent" pointer-events="all" tabindex="0" role="img" aria-label="${escapeAttr(title)}"><title>${escapeHtml(title)}</title></path>
     </g>`;
   }).join("");
+  return `<g class="spatial-region-fills">${fills}</g>${groups}`;
 }
 
-function spatialRegionGeometry(cells) {
-  const hit = [];
-  cells.forEach(([x, y]) => {
-    const points = spatialHexPoints(x, y, 12.5).split(" ");
-    hit.push(`M${points[0]}L${points.slice(1).join("L")}Z`);
-  });
-  return hit.join("");
+// Court regions as drawn shapes (inner court units: rim at 52.5,250, ten units a foot), matching shot_chart.region_at:
+// rim-centred rings split by angle (behind the rim belongs to the side sectors), and the corner threes as strips.
+const SPATIAL_REGION_SHAPES = {
+  1: { inner: 0, outer: 80, from: -180, to: 180 },
+  2: { inner: 80, outer: 160, from: -180, to: -30 },
+  3: { inner: 80, outer: 160, from: -30, to: 30 },
+  4: { inner: 80, outer: 160, from: 30, to: 180 },
+  5: { inner: 160, outer: 237.5, from: -180, to: -54 },
+  6: { inner: 160, outer: 237.5, from: -54, to: -18 },
+  7: { inner: 160, outer: 237.5, from: -18, to: 18 },
+  8: { inner: 160, outer: 237.5, from: 18, to: 54 },
+  9: { inner: 160, outer: 237.5, from: 54, to: 180 },
+  10: { corner: true, x: -10, y: -10, width: 152, height: 40 },
+  11: { inner: 237.5, outer: 900, from: -180, to: -18 },
+  12: { inner: 237.5, outer: 900, from: -18, to: 18 },
+  13: { inner: 237.5, outer: 900, from: 18, to: 180 },
+  14: { corner: true, x: -10, y: 470, width: 152, height: 40 },
+};
+function spatialRegionGeometry(regionId) {
+  const shape = SPATIAL_REGION_SHAPES[Number(regionId)];
+  if (!shape) return "";
+  if (shape.corner) return `M${shape.x} ${shape.y}H${shape.x + shape.width}V${shape.y + shape.height}H${shape.x}Z`;
+  const point = (radius, degrees) => {
+    const angle = degrees * Math.PI / 180;
+    return `${(52.5 + Math.cos(angle) * radius).toFixed(1)} ${(250 + Math.sin(angle) * radius).toFixed(1)}`;
+  };
+  const { inner, outer, from, to } = shape;
+  if (to - from >= 360) {
+    return `M${point(outer, 0)}A${outer} ${outer} 0 1 1 ${point(outer, 180)}A${outer} ${outer} 0 1 1 ${point(outer, 360)}Z`;
+  }
+  const large = to - from > 180 ? 1 : 0;
+  const innerEdge = inner > 0 ? `L${point(inner, to)}A${inner} ${inner} 0 ${large} 0 ${point(inner, from)}` : "L52.5 250";
+  return `M${point(outer, from)}A${outer} ${outer} 0 ${large} 1 ${point(outer, to)}${innerEdge}Z`;
 }
 
-function spatialHeatmapLegend(label, side) {
-  const meaning = side === "offense" ? "Projected FG% minus league FG%" : "Modeled reduction in opponent FG% versus league; blue is better defense, not observed opponent shooting";
-  const detail = `${meaning}. Fixed continuous color scale: -8 to +8 percentage points, neutral at zero; endpoints saturate. Hex area: attempt/contest density relative to league mean cell density, capped at 2.94x. Offense volume follows observed current-season 3PA/FGA when the sample is reliable; efficiency remains projected. Defense volume remains modeled.`;
-  return `<div class="spatial-legend" title="${escapeAttr(detail)}"><span>${label}</span><i class="spatial-discrete-key spatial-numeric-key" role="img" aria-label="${escapeAttr(detail)}">${[-8,-3,0,3,8].map(delta => `<span class="spatial-key-stop"><b style="background:${spatialEfficiencyColor(delta)}"></b><em>${delta > 0 ? "+" : ""}${delta}</em></span>`).join("")}</i></div>`;
+function spatialHeatmapLegend(label, side, entity = "player") {
+  const detail = `Each region is coloured against the league's typical ${entity === "team" ? "team" : "player"} in that same region: blue is better, red is worse, grey is ordinary, and the strongest few reach full colour. ${side === "offense" ? "" : "On defense, blue means opponents shoot worse. "}Hexes mark where the volume is: only spots with at least the league's average volume are drawn, and bigger means more.`;
+  const stops = [-1, -0.5, 0, 0.5, 1].map(score => `<b style="background:${spatialEfficiencyColor(score)}"></b>`).join("");
+  return `<div class="spatial-legend" title="${escapeAttr(detail)}"><span>${escapeHtml(label)}</span><i class="spatial-discrete-key spatial-relative-key" role="img" aria-label="${escapeAttr(detail)}"><em>Worse</em>${stops}<em>Better</em></i></div>`;
 }
 
 function spatialCourtSvg(seed, side, regions, hidden) {
-  const label = { offense: "Projected shooting efficiency", playmaking: "Teammates' shooting change with him on court", defense: "Modeled defensive suppression", onball: "Shooting of the man he guards", help: "Other opponents' shooting with him on court" }[side];
-  const group = side === "offense" || side === "playmaking" ? "offense" : "defense";
-  return `<svg class="spatial-court" viewBox="0 0 500 470" role="img" aria-label="${label} versus league average" data-court-view="${side}" data-court-group="${group}"${hidden ? " hidden" : ""}>
+  const label = { offense_total: "Shooting with playmaking", offense: "Projected shooting efficiency", playmaking: "Teammates' shooting change with him on court", defense: "Modeled defensive suppression", onball: "On-ball defense", help: "Off-ball defense" }[side];
+  const group = ["offense_total", "offense", "playmaking"].includes(side) ? "offense" : "defense";
+  return `<svg class="spatial-court" viewBox="0 0 500 470" role="img" aria-label="${label} versus the league" data-court-view="${side}" data-court-group="${group}"${hidden ? " hidden" : ""}>
       <defs><clipPath id="spatial-court-clip-${seed}-${side}"><rect x="2" y="2" width="468" height="496"/></clipPath></defs>
       <g transform="matrix(0 -1 1 0 0 470)">
       <rect class="spatial-court-floor" x="2" y="2" width="468" height="496"/>
@@ -3313,17 +3443,22 @@ function spatialHeatmapMarkup(profile, options = {}) {
   if (!profile?.zones?.length) return `<div class="spatial-heatmap-empty">Spatial profile unavailable</div>`;
   if (!profile.shot_chart?.cells?.length || profile.shot_chart.basis === "unavailable") return `<div class="spatial-heatmap-empty" role="status">Shot reference unavailable</div>`;
   const seed = String(profile.seed || profile.entity_id || "spatial").replace(/[^a-zA-Z0-9_-]/g, "");
+  const team = profile.entity_type === "team";
   const extended = (profile.shot_chart.views || []).includes("playmaking") && (profile.shot_chart.cells[0] || []).length >= 9;
-  const groups = extended ? { offense: ["offense", "playmaking"], defense: ["defense", "onball", "help"] } : { offense: ["offense"], defense: ["defense"] };
-  const legends = `<div class="spatial-legends">${spatialHeatmapLegend("Projected FG (pp)", "offense")}${spatialHeatmapLegend("Suppression (pp)", "defense")}</div>`;
+  // Teams get an overall offense view (own shot-making plus the playmaking lift, both on the team's shots). A player's
+  // two offense layers sit on different shots (his own; his teammates'), so they are not added together.
+  const groups = extended
+    ? { offense: team ? ["offense_total", "offense", "playmaking"] : ["offense", "playmaking"], defense: ["defense", "onball", "help"] }
+    : { offense: ["offense"], defense: ["defense"] };
+  const entity = team ? "team" : "player";
+  const legends = `<div class="spatial-legends">${spatialHeatmapLegend(SPATIAL_COURT_VIEWS[groups.offense[0]].legend, "offense", entity)}${spatialHeatmapLegend(SPATIAL_COURT_VIEWS[groups.defense[0]].legend, "defense", entity)}</div>`;
   const head = group => {
     const title = group === "offense" ? "Offense" : "Defense";
     if (groups[group].length === 1) return `<h4>${title}</h4>`;
-    return `<h4 class="spatial-court-tabs" role="group" aria-label="${title} chart">${groups[group].map((view, index) => `<button type="button" class="spatial-court-tab" data-court-tab="${view}" data-court-group="${group}" aria-pressed="${index === 0}" title="${escapeAttr(spatialCourtCaption(view, profile.entity_type === "team"))}">${escapeHtml(profile.entity_type === "team" && view === "onball" ? "On the ball" : SPATIAL_COURT_VIEWS[view].tab)}</button>`).join("")}</h4>`;
+    return `<h4 class="spatial-court-tabs" role="group" aria-label="${title} chart"><span class="spatial-court-group-label">${title}</span>${groups[group].map((view, index) => `<button type="button" class="spatial-court-tab" data-court-tab="${view}" data-court-group="${group}" aria-pressed="${index === 0}" title="${escapeAttr(spatialCourtCaption(view, team))}">${escapeHtml(SPATIAL_COURT_VIEWS[view].tab)}</button>`).join("")}</h4>`;
   };
   const courts = ["offense", "defense"].flatMap(group => groups[group].map((view, index) => spatialCourtSvg(seed, view, spatialHeatmapRegions(profile, view), index > 0))).join("");
-  const team = profile.entity_type === "team";
-  const captions = extended ? `<p class="spatial-court-caption" data-court-caption="offense">${escapeHtml(spatialCourtCaption("offense", team))}</p><p class="spatial-court-caption" data-court-caption="defense">${escapeHtml(spatialCourtCaption("defense", team))}</p>` : "";
+  const captions = extended ? `<p class="spatial-court-caption" data-court-caption="offense">${escapeHtml(spatialCourtCaption(groups.offense[0], team))}</p><p class="spatial-court-caption" data-court-caption="defense">${escapeHtml(spatialCourtCaption("defense", team))}</p>` : "";
   return `<div class="spatial-heatmap${options.compact ? " compact" : ""}${extended ? " has-court-views" : ""}"${team ? ' data-court-entity="team"' : ""}>
     <div class="spatial-court-head">${head("offense")}${head("defense")}</div>
     <div class="spatial-half-courts">${courts}</div>
@@ -3840,9 +3975,13 @@ function seasonEfficiencyCard(dash, chartWidth = 420, chartHeight = 220, chartOn
   const offenseDiff = offense.map((value) => value - leagueAverage);
   const defenseDiff = defense.map((value) => leagueAverage - value);
   const net = offense.map((value, index) => value - Number(defense[index] || value));
-  const maximum = Math.max(40, Math.ceil(Math.max(0, ...[...offenseDiff, ...defenseDiff, ...net].map((value) => Math.abs(value))) / 10) * 10);
-  const left = 28, right = chartWidth - 7, top = 7, bottom = chartHeight - 42;
+  // Taste pass 2026-11-23: one row of "Week N" labels under the grid (no rotated dates, so no tall grey footer), and
+  // small y labels only at round values (every 10, 20, 50 or 100 points, whichever fits).
+  const left = 24, right = chartWidth - 7, top = 7, bottom = chartHeight - 16;
   const plotWidth = right - left, plotHeight = bottom - top;
+  const largest = Math.max(0, ...[...offenseDiff, ...defenseDiff, ...net].map((value) => Math.abs(value)));
+  const yLabelStep = [10, 20, 50, 100].find((step) => plotHeight / (2 * Math.max(40, Math.ceil(largest / step) * step) / step) >= 30) || 100;
+  const maximum = Math.max(40, Math.ceil(largest / yLabelStep) * yLabelStep);
   const zeroY = top + plotHeight / 2;
   const firstDate = Date.parse(`${source[0]?.date || ""}T00:00:00Z`);
   const weekMs = 7 * 86400000;
@@ -3883,18 +4022,38 @@ function seasonEfficiencyCard(dash, chartWidth = 420, chartHeight = 220, chartOn
   const offenseTone = tone(seasonMean(offenseDiff));
   const defenseTone = tone(seasonMean(defenseDiff));
   const netTone = tone(seasonMean(net));
-  const gridRows = Math.max(2, 2 * Math.round(plotHeight / (plotWidth / (seasonSlots - 1) / 2) / 2));
-  const labelStep = Math.max(1, Math.ceil(12 / (plotHeight / gridRows)));
+  // Dense near-square grid, with every horizontal line on a round value that divides the label step.
+  const slotWidth = plotWidth / (seasonSlots - 1);
+  const gridStep = [5, 10, 20, 25, 50].filter((step) => yLabelStep % step === 0)
+    .reduce((best, step) => Math.abs(plotHeight / (2 * maximum / step) - slotWidth) < Math.abs(plotHeight / (2 * maximum / best) - slotWidth) ? step : best, yLabelStep);
+  const gridRows = 2 * maximum / gridStep;
+  const slotX = (slot) => left + slot / (seasonSlots - 1) * plotWidth;
+  const weekOf = (index) => {
+    const day = Date.parse(`${source[index]?.date || ""}T00:00:00Z`);
+    return Number.isFinite(firstDate) && Number.isFinite(day) ? Math.round((day - firstDate) / weekMs) + 1 : index + 1;
+  };
+  const weekStep = [1, 2, 5, 10].find((step) => slotWidth * step >= 34) || 10;
+  let labelRight = -Infinity;
+  const weekLabels = Array.from({length: seasonSlots}, (_unused, slot) => slot + 1)
+    .filter((week) => week === 1 || (weekStep === 2 ? week % 2 === 1 : week % weekStep === 0))
+    .map((week) => {
+      const x = slotX(week - 1), width = 4.2 * `Week ${week}`.length, end = x + width / 2 > chartWidth - 1;
+      const from = end ? x - width : x - width / 2;
+      if (from < labelRight + 4) return "";
+      labelRight = end ? x : x + width / 2;
+      return `<text class="axis-label x-label week-label${end ? " end" : ""}" x="${x}" y="${bottom + 8}" text-anchor="${end ? "end" : "middle"}">Week ${week}</text>`;
+    }).join("");
   const chart = `
     <svg class="season-efficiency-chart" viewBox="0 0 ${chartWidth} ${chartHeight}" preserveAspectRatio="none" aria-label="Weekly offensive and defensive rating">
-      ${Array.from({length: seasonSlots}, (_unused, index) => `<line class="grid vertical" x1="${xFor(index)}" y1="${top}" x2="${xFor(index)}" y2="${bottom}"></line><line class="axis-notch" x1="${xFor(index)}" y1="${bottom}" x2="${xFor(index)}" y2="${bottom + 3}"></line>${source[index] ? `<text class="axis-label x-label" transform="translate(${xFor(index)},${bottom + 8}) rotate(-60)">${escapeHtml(source[index].label || `W${index + 1}`)}</text>` : ""}`).join("")}
-      ${Array.from({length: gridRows + 1}, (_unused, index) => { const y = top + index / gridRows * plotHeight; const value = maximum - index / gridRows * maximum * 2; const labeled = index === 0 || index === gridRows || (index >= labelStep && index <= gridRows - labelStep && (index - gridRows / 2) % labelStep === 0); return `<line class="grid horizontal" x1="${left}" y1="${y}" x2="${right}" y2="${y}"></line>${labeled ? `<line class="axis-notch" x1="${left - 3}" y1="${y}" x2="${left}" y2="${y}"></line><text class="axis-label" x="${left - 5}" y="${y}">${value.toFixed(0)}</text>` : ""}`; }).join("")}
+      ${Array.from({length: seasonSlots}, (_unused, slot) => `<line class="grid vertical" x1="${slotX(slot)}" y1="${top}" x2="${slotX(slot)}" y2="${bottom}"></line><line class="axis-notch" x1="${slotX(slot)}" y1="${bottom}" x2="${slotX(slot)}" y2="${bottom + 2}"></line>`).join("")}
+      ${weekLabels}
+      ${Array.from({length: gridRows + 1}, (_unused, index) => { const y = top + index / gridRows * plotHeight; const value = Math.round(maximum - index * gridStep); const labeled = value % yLabelStep === 0; return `<line class="grid horizontal" x1="${left}" y1="${y}" x2="${right}" y2="${y}"></line>${labeled ? `<line class="axis-notch" x1="${left - 3}" y1="${y}" x2="${left}" y2="${y}"></line><text class="axis-label y-label" x="${left - 5}" y="${y}">${value}</text>` : ""}`; }).join("")}
       <line class="zero" x1="${left}" y1="${zeroY}" x2="${right}" y2="${zeroY}"></line>
       <path class="net-area ${netTone}" d="${areaPath(net)}"></path>
       <polyline class="offense secondary ${offenseTone}" points="${chartPoints(offenseDiff)}"></polyline>
       <polyline class="defense secondary ${defenseTone}" points="${chartPoints(defenseDiff)}"></polyline>
       <polyline class="net ${netTone}" points="${chartPoints(net)}"></polyline>
-      ${[offenseDiff, defenseDiff, net].map((series, seriesIndex) => series.map((value, index) => `<circle class="chart-node ${[offenseTone, defenseTone, netTone][seriesIndex]}" cx="${xFor(index)}" cy="${yFor(value)}" r="1.8"><title>${escapeHtml(source[index]?.label || `W${index + 1}`)} ${["OFF vs league", "DEF vs league", "NET"][seriesIndex]}: ${signedNumber(value)}</title></circle>`).join("")).join("")}
+      ${[offenseDiff, defenseDiff, net].map((series, seriesIndex) => series.map((value, index) => `<circle class="chart-node ${[offenseTone, defenseTone, netTone][seriesIndex]}" cx="${xFor(index)}" cy="${yFor(value)}" r="1.8"><title>Week ${weekOf(index)} ${["OFF vs league", "DEF vs league", "NET"][seriesIndex]}: ${signedNumber(value)}</title></circle>`).join("")).join("")}
       ${eventMarks}
     </svg>`;
   return chartOnly ? chart : `${seasonPanelHeader("Weekly Efficiency")}<div class="season-efficiency-plot">${chart}</div><div class="season-efficiency-legend" role="group" aria-label="Latest weekly efficiency"><span class="${offenseTone}"><i class="offense" aria-hidden="true"></i><span class="legend-label">OFF</span><strong>${latestOffense.toFixed(1)}</strong></span><span class="${defenseTone}"><i class="defense" aria-hidden="true"></i><span class="legend-label">DEF</span><strong>${latestDefense.toFixed(1)}</strong></span><span class="${netTone}"><i class="net" aria-hidden="true"></i><span class="legend-label">NET</span><strong>${latestNet.toFixed(1)}</strong></span></div>`;
