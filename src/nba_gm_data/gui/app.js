@@ -6753,14 +6753,14 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
         <div class="fa-offer-field fa-offer-salary">
           <label for="faOfferAav"><small>Salary per season</small></label>
           <span class="money-input"><b>$</b><input id="faOfferAav" type="number" inputmode="decimal" min="${minimum.toFixed(1)}" max="${maximum.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-fa-offer-aav aria-describedby="faOfferAavHelp"><b>M</b></span>
-          <input type="range" min="${minimum.toFixed(1)}" max="${maximum.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-fa-offer-range aria-label="Salary per season, in millions" />
+          <div class="salary-track"><input type="range" min="${minimum.toFixed(1)}" max="${maximum.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-fa-offer-range aria-label="Salary per season, in millions" />
+            ${salaryMarksMarkup([
+              ...(Number.isFinite(preview.floorOffer) ? [{ label: "His price", value: preview.floorOffer, attr: "data-fa-offer-set", title: `What he signs for from you: ${money(preview.floorOffer)}` }] : []),
+              { label: "Market ask", value: Number(player.ask_millions), attr: "data-fa-offer-set", title: `His market ask: ${money(player.ask_millions)}` },
+              { label: "Minimum", value: minimum, attr: "data-fa-offer-set", title: `His minimum: ${money(minimum)}` },
+            ])}</div>
           <small id="faOfferAavHelp">${money(minimum)} his minimum (${escapeHtml(player.legal?.years_of_service ?? "?")} years in the league) to ${money(maximum)}, the most a legal way to pay lets you offer${Number(player.legal?.max_millions) > maximum + 0.05 ? ` (his maximum is ${money(player.legal.max_millions)})` : ""}</small>
           ${player.bird_rights ? `<p class="fa-offer-note fa-offer-bird">${escapeHtml(player.bird_rights.text)}</p>` : ""}
-          <div class="fa-offer-quick" role="group" aria-label="Quick salary">
-            <button type="button" class="ui-command" data-fa-offer-set="${escapeAttr(preview.floorOffer)}" ${Number.isFinite(preview.floorOffer) ? "" : "disabled"}>His price from you</button>
-            <button type="button" class="ui-command" data-fa-offer-set="${escapeAttr(player.ask_millions)}">Market ask</button>
-            <button type="button" class="ui-command" data-fa-offer-set="${escapeAttr(minimum)}">His minimum</button>
-          </div>
         </div>
         <div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferYearsLabel">Years</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferYearsLabel">${[1, 2, 3, 4, 5].map((years) => radio("years", years, String(years), preview.years === years, years > preview.maxYears || years < (preview.minYears || 1), sheet && (years > preview.maxYears || years < preview.minYears) ? `An offer sheet runs ${preview.minYears} to ${preview.maxYears} seasons` : years > preview.maxYears ? "Only a team with full Bird rights can offer a fifth year" : years > safe ? `He plans to retire after ${safe} season${safe === 1 ? "" : "s"}; he refuses ${years} years` : "")).join("")}</div></div>
         <div class="fa-offer-field"><small id="faOfferGuaranteeLabel">Guarantee</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferGuaranteeLabel">${radio("guarantee", "true", "Guaranteed", preview.guaranteed)}${radio("guarantee", "false", "Non-guaranteed", !preview.guaranteed, Boolean(sheet), sheet ? "Offer sheets are fully guaranteed" : "")}</div>
@@ -9424,6 +9424,7 @@ function wireFreeAgencyBuilderPanel(panel) {
   number?.addEventListener("change", () => setSalary(number.value, { commit: true }));
   range?.addEventListener("input", () => setSalary(range.value, { fromRange: true }));
   panel.querySelectorAll("[data-fa-offer-set]").forEach((button) => button.addEventListener("click", () => setSalary(button.dataset.faOfferSet, { commit: true })));
+  requestAnimationFrame(() => positionSalaryMarks(panel));
   const wireRadios = (selector, apply) => {
     const buttons = [...panel.querySelectorAll(selector)];
     buttons.forEach((button, index) => {
@@ -11961,13 +11962,13 @@ function extensionNegotiationPage(room, selectedPlayerId, response = null, detai
             <div class="fa-offer-field fa-offer-salary" title="${escapeAttr(`${money(minimum)} minimum to ${money(extensionOfferCeiling(preview.maximum))} in the first season (hard-cap room for ${preview.years} year${preview.years === 1 ? "" : "s"} and the league's extension limit)`)}" data-extension-hint-host="limit">
               <label for="extensionOfferAav"><small>First-season salary <i class="ext-info" aria-hidden="true">i</i></small></label>
               <span class="money-input"><b>$</b><input id="extensionOfferAav" type="number" inputmode="decimal" min="${minimum.toFixed(1)}" max="${sliderMax.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-extension-aav aria-describedby="extensionOfferAavHelp" required><b>M</b></span>
-              <input type="range" min="${minimum.toFixed(1)}" max="${sliderMax.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-extension-aav-range aria-label="First-season salary, in millions" />
+              <div class="salary-track"><input type="range" min="${minimum.toFixed(1)}" max="${sliderMax.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-extension-aav-range aria-label="First-season salary, in millions" />
+                ${salaryMarksMarkup([
+                  { label: "His price", value: preview.price, attr: "data-extension-offer-set", attrValue: "price", title: `What he signs for from you: ${money(preview.price)}` },
+                  { label: "Market ask", value: ask, attr: "data-extension-offer-set", title: `The open market's price: ${money(ask)}` },
+                  { label: "Minimum", value: minimum, attr: "data-extension-offer-set", title: `The least an extension can pay: ${money(minimum)}` },
+                ])}</div>
               <small id="extensionOfferAavHelp" class="ext-hint" data-extension-limit>${money(minimum)} minimum to ${money(extensionOfferCeiling(preview.maximum))} in the first season (hard-cap room for ${preview.years} year${preview.years === 1 ? "" : "s"} and the league's extension limit)</small>
-              <div class="fa-offer-quick" role="group" aria-label="Quick salary">
-                <button type="button" class="ui-command" data-extension-offer-set="price">His price from you</button>
-                <button type="button" class="ui-command" data-extension-offer-set="${escapeAttr(ask)}">Market ask</button>
-                <button type="button" class="ui-command" data-extension-offer-set="${escapeAttr(minimum)}">Minimum</button>
-              </div>
             </div>
             <div class="fa-offer-pair"><div class="fa-offer-field"><small id="extensionYearsLabel">Years</small><div class="fa-segmented" role="radiogroup" aria-labelledby="extensionYearsLabel" data-extension-radiogroup="years">${[1, 2, 3, 4, 5].map((years) => radio("years", years, String(years), preview.years === years, years > Math.max(1, safe), years > safe ? `He plans to retire after ${safe} season${safe === 1 ? "" : "s"} of a new deal` : `At most ${money(extensionMaximum(candidate, years))} a season for ${years} year${years === 1 ? "" : "s"}`)).join("")}</div><input type="hidden" data-extension-years value="${preview.years}"></div>
             <div class="fa-offer-field" data-extension-hint-host="guarantee"><small id="extensionGuaranteeLabel">Guarantee <i class="ext-info" aria-hidden="true">i</i></small><div class="fa-segmented" role="radiogroup" aria-labelledby="extensionGuaranteeLabel" data-extension-radiogroup="guarantee">${radio("guarantee", "true", "Guaranteed", preview.guaranteed)}${radio("guarantee", "false", "Non-guaranteed", !preview.guaranteed)}</div>
@@ -12151,6 +12152,9 @@ function updateExtensionPreview(modal = state.modal, root = els.modalRoot) {
   if (cap) cap.innerHTML = extensionCapTableMarkup(preview, candidate);
   const foot = root.querySelector("[data-extension-foot]");
   if (foot && !modal.submitting) foot.innerHTML = extensionOfferFootMarkup(preview, true);
+  const priceMark = root.querySelector('[data-extension-offer-set="price"]');
+  if (priceMark && Number.isFinite(preview.price)) priceMark.dataset.salaryMarkValue = String(preview.price);
+  positionSalaryMarks(root);
   // Explanations read on hover (playtest 2026-11-23): each hidden hint's text is its field's tooltip.
   [["limit", limit], ["guarantee", note], ["shape", shapeNote]].forEach(([key, hint]) => {
     const host = root.querySelector(`[data-extension-hint-host="${key}"]`);
@@ -13137,6 +13141,42 @@ function playerRoleChip(role) {
   if (!role) return "—";
   const [label, tone] = PLAYER_ROLE_CHIPS[role] || [String(role), "unknown"];
   return `<span class="role-chip role-${tone}" title="${escapeAttr(role)}">${escapeHtml(label)}</span>`;
+}
+
+// Salary marks on the offer slider (playtest 2026-11-23): his price, the market ask and the minimum sit on the track
+// where they fall, and a click sets the salary there. They replace a row of quick-set buttons under the slider.
+function salaryMarksMarkup(marks) {
+  return `<div class="salary-marks">${marks.map(({ label, value, attr, attrValue, title }) => `<button type="button" class="salary-mark" ${attr}="${escapeAttr(attrValue ?? value)}" data-salary-mark-value="${escapeAttr(value)}" title="${escapeAttr(title || `${label}: ${money(value)}`)}" aria-label="${escapeAttr(`Set salary to ${label.toLowerCase()}, ${money(value)}`)}"><i aria-hidden="true"></i><span>${escapeHtml(label)}</span></button>`).join("")}</div>`;
+}
+
+function positionSalaryMarks(scope) {
+  scope.querySelectorAll(".salary-track").forEach((track) => {
+    const range = track.querySelector('input[type="range"]');
+    if (!range) return;
+    const min = Number(range.min), max = Number(range.max);
+    const marks = [...track.querySelectorAll(".salary-mark")]
+      .map((mark) => ({ mark, value: Number(mark.dataset.salaryMarkValue) }))
+      .sort((a, b) => a.value - b.value);
+    let lastTop = -1;
+    marks.forEach(({ mark, value }) => {
+      mark.hidden = !Number.isFinite(value);
+      if (mark.hidden) return;
+      const span = max - min;
+      // Out of reach (above the most you can pay, or below the floor): pinned to that end, muted, with an arrow.
+      const above = value > max + 1e-9, below = value < min - 1e-9;
+      const share = above ? 1 : below ? 0 : span > 0 ? (value - min) / span : 0;
+      mark.classList.toggle("is-off", above || below);
+      mark.dataset.side = above ? "above" : below ? "below" : "";
+      mark.style.left = `calc(8px + (100% - 16px) * ${share.toFixed(4)})`;
+      // Labels at either end of the track lean inward so they stay inside it.
+      mark.classList.toggle("is-start", share < 0.12);
+      mark.classList.toggle("is-end", share > 0.88);
+      // A mark close to the previous one drops its label a row so the two never overlap.
+      const low = lastTop >= 0 && share - lastTop < 0.18;
+      mark.classList.toggle("is-low", low);
+      if (!low) lastTop = share;
+    });
+  });
 }
 
 // A contract is always one field: salary per season × years (playtest 2026-11-22).

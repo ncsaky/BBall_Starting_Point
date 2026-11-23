@@ -138,3 +138,24 @@ body.unified-terminal-ui .player-summary-rating .player-rating-bar.player-rating
 /* Injury body figure: a mid-grey body with a darker outline, so the figure and its hotspots read on light cards. */
 .injury-body-figure.mini .injury-body-shape { --injury-body-fill: color-mix(in srgb, var(--injury-body-tone) 30%, #74818d); }
 .injury-body-figure.mini .injury-body-shape > :is(circle, rect, path, ellipse) { stroke: #56636e; stroke-width: 1.5; }
+
+/* Offer slider with marks under the track (his price, market ask, minimum); click a mark to set the salary. */
+.salary-track { position: relative; min-width: 0; padding-bottom: 30px; }
+.salary-track > input[type="range"] { display: block; width: 100%; margin: 0; }
+.salary-marks { position: absolute; left: 0; right: 0; top: 100%; margin-top: -30px; height: 30px; pointer-events: none; }
+body.unified-terminal-ui .salary-mark {
+  position: absolute; top: 0; transform: translateX(-50%) !important; display: flex; flex-direction: column; align-items: center; gap: 1px;
+  min-height: 0 !important; height: auto !important; padding: 0 !important; border: 0 !important; background: transparent !important;
+  box-shadow: none !important; color: #4f5d69 !important; font-size: 10px !important; font-weight: 600 !important; line-height: 1.2;
+  white-space: nowrap; cursor: pointer; pointer-events: auto;
+}
+.salary-mark i { display: block; width: 2px; height: 7px; background: #6f7c88; }
+.salary-mark.is-low i { height: 18px; }
+body.unified-terminal-ui .salary-mark:hover { color: #18212a !important; text-decoration: underline; }
+.salary-mark:hover i { background: #18212a; }
+.salary-mark[hidden] { display: none !important; }
+.salary-mark.is-off { opacity: .6; }
+.salary-mark.is-off[data-side="above"] span::after { content: " \203A"; }
+.salary-mark.is-off[data-side="below"] span::before { content: "\2039 "; }
+body.unified-terminal-ui .salary-mark.is-end { transform: translateX(calc(-100% + 3px)) !important; align-items: flex-end; }
+body.unified-terminal-ui .salary-mark.is-start { transform: translateX(-3px) !important; align-items: flex-start; }
