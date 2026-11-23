@@ -26,3 +26,11 @@ test('header line is two flush bars, headers and sorted values are bold, sorted 
   assert.match(css, /background-image: linear-gradient\(var\(--table-sorted-cell\)/);
   assert.match(css, /\.ss-sorted, \.is-sorted, \.is-sorted-value/);
 });
+
+test('every slideshow table header sorts on click, and split halves sort as one list', () => {
+  const js = read('season-slideshow.js');
+  assert.match(js, /<th scope="col"[^`]*data-ss-sort tabindex="0"/);
+  assert.match(js, /closest\("\.ss-table th\[data-ss-sort\]"\)/);
+  assert.match(js, /class="ss-two ss-compact" data-ss-split/);
+  assert.match(js, /closest\("\[data-ss-split\]"\)/);
+});

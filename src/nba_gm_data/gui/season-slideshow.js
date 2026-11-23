@@ -27,10 +27,58 @@
   const money = (value) => (value === null || value === undefined ? "—" : `$${Number(value).toFixed(1)}M`);
 
   function table(columns, rows, {sorted = null, caption = "", rowClass = () => ""} = {}) {
-    const head = columns.map((col, index) => `<th scope="col" class="${col.cls || ""}${index === sorted ? " ss-sorted" : ""}">${esc(col.label)}</th>`).join("");
+    const head = columns.map((col, index) => `<th scope="col" class="${col.cls || ""}${index === sorted ? " ss-sorted" : ""}" data-ss-sort tabindex="0" title="Sort by ${attr(col.label)}"${index === sorted ? ` aria-sort="${SORT_ASCENDING_FIRST.test(col.label) ? "ascending" : "descending"}"` : ""}>${esc(col.label)}</th>`).join("");
     const body = rows.map((row, r) => `<tr class="${rowClass(row, r)}">${columns.map((col, index) => `<td class="${col.cls || ""}${index === sorted ? " ss-sorted" : ""}">${col.render(row, r)}</td>`).join("")}</tr>`).join("");
     return `<table class="ss-table">${caption ? `<caption>${esc(caption)}</caption>` : ""}<thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
   }
+  // Click (or Enter / Space on) any header to sort by it; click again to flip the order. Ranks, seeds and names
+  // start smallest-first; every other column starts biggest-first. Blank cells ("—") always sort last.
+  const SORT_ASCENDING_FIRST = /^(#|rank|seed|cons\.?|pick|team|player|your player|prospect|pos|from|note|name|team stat|expected role|your scouts|finish|last finish|league rank|gb|l)$/i;
+  function sortValue(cell) {
+    const text = (cell?.textContent || "").trim();
+    if (!text || text === "—" || text === "-") return null;
+    if (text === "=") return 0;
+    const arrow = text.match(/^([▲▼↑↓+−-])\s*([\d.]+)/);
+    if (arrow) return (/[▼↓−-]/.test(arrow[1]) ? -1 : 1) * Number(arrow[2]);
+    const ordinal = text.match(/^#?(\d+(?:\.\d+)?)(?:st|nd|rd|th)?\b(?!-)/);
+    const plain = text.replace(/[$,%M]/g, "").replace("−", "-");
+    if (/^-?[\d.]+$/.test(plain)) return Number(plain);
+    const record = text.match(/^(\d+)-(\d+)$/);
+    if (record) return Number(record[1]) / Math.max(1, Number(record[1]) + Number(record[2]));
+    if (ordinal) return Number(ordinal[1]);
+    return text.toLowerCase();
+  }
+  function sortTable(th) {
+    const table = th.closest("table");
+    const row = th.parentElement;
+    const index = [...row.children].indexOf(th);
+    const current = th.getAttribute("aria-sort");
+    const ascending = current ? current !== "ascending" : SORT_ASCENDING_FIRST.test(th.textContent.trim());
+    row.querySelectorAll("th").forEach((cell) => { cell.removeAttribute("aria-sort"); cell.classList.remove("ss-sorted"); });
+    th.setAttribute("aria-sort", ascending ? "ascending" : "descending");
+    th.classList.add("ss-sorted");
+    // A long list split into side-by-side halves (power rankings) sorts as one list across both halves.
+    const split = table.closest("[data-ss-split]");
+    const tables = split ? [...split.querySelectorAll(".ss-table")] : [table];
+    const bodies = tables.map((t) => t.tBodies[0]);
+    const sizes = bodies.map((b) => b.rows.length);
+    tables.forEach((t) => t.tHead.rows[0].querySelectorAll("th").forEach((cell, i) => {
+      cell.classList.toggle("ss-sorted", i === index);
+      if (i === index) cell.setAttribute("aria-sort", ascending ? "ascending" : "descending"); else cell.removeAttribute("aria-sort");
+    }));
+    const rows = bodies.flatMap((b) => [...b.rows]);
+    rows.forEach((tr) => [...tr.cells].forEach((cell, i) => cell.classList.toggle("ss-sorted", i === index)));
+    rows.sort((a, b) => {
+      const av = sortValue(a.cells[index]);
+      const bv = sortValue(b.cells[index]);
+      if (av === null || bv === null) return av === bv ? 0 : (av === null ? 1 : -1);
+      const order = typeof av === "number" && typeof bv === "number" ? av - bv : String(av).localeCompare(String(bv), undefined, {numeric: true});
+      return ascending ? order : -order;
+    });
+    let start = 0;
+    bodies.forEach((b, i) => { b.append(...rows.slice(start, start + sizes[i])); start += sizes[i]; });
+  }
+
   const teamCell = (team) => team ? `<span class="ss-team">${logo(team.abbrev)}<b>${esc(team.abbrev)}</b></span>` : "—";
   const playerCell = (player, extra = "") => `<span class="ss-player">${headshot(player)}<span><b>${esc(player?.name || "—")}</b>${extra ? `<small>${extra}</small>` : ""}</span></span>`;
   const note = (text) => text ? `<p class="ss-note">${esc(text)}</p>` : "";
@@ -130,7 +178,7 @@
       const rows = slide.rows || [];
       const half = Math.ceil(rows.length / 2);
       const options = {sorted: 2, rowClass: (r) => (r.is_user ? "ss-user" : "")};
-      return `<div class="ss-two ss-compact">${table(columns, rows.slice(0, half), options)}${table(columns, rows.slice(half), options)}</div>${note(slide.note)}`;
+      return `<div class="ss-two ss-compact" data-ss-split>${table(columns, rows.slice(0, half), options)}${table(columns, rows.slice(half), options)}</div>${note(slide.note)}`;
     },
     continuity(slide) {
       const names = (list, unit = "minutes") => list.map((item) => `${item.name} (${item[unit] ?? 0})`).join(", ");
@@ -269,6 +317,10 @@
     if (event.key === "Escape") { event.preventDefault(); event.stopImmediatePropagation(); return close(); }
     if (event.key === "ArrowRight") { event.preventDefault(); event.stopImmediatePropagation(); return move(1); }
     if (event.key === "ArrowLeft") { event.preventDefault(); event.stopImmediatePropagation(); return move(-1); }
+    const header = event.target?.closest?.(".ss-table th[data-ss-sort]");
+    if (header && root.contains(header) && (event.key === "Enter" || event.key === " ")) {
+      event.preventDefault(); event.stopImmediatePropagation(); return sortTable(header);
+    }
     if (event.key === "Enter") {
       const button = event.target?.closest?.("[data-ss-action]");
       if (button && root.contains(button)) return; // the focused button handles Enter itself
@@ -303,6 +355,8 @@
     show.root = document.getElementById("seasonSlideshow");
     if (!show.root) return;
     show.root.addEventListener("click", (event) => {
+      const header = event.target.closest(".ss-table th[data-ss-sort]");
+      if (header) return sortTable(header);
       const button = event.target.closest("[data-ss-action]");
       if (!button) return;
       const name = button.dataset.ssAction;
