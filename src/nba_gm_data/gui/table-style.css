@@ -281,3 +281,31 @@ body.unified-terminal-ui .salary-segment-14 { background: #6c9b95; }
 .option-terms > summary::after { content: "▾"; font-size: 9px; color: #6b7883; }
 .option-terms[open] > summary::after { content: "▴"; }
 .option-terms > p { margin: 3px 0 0; max-width: 240px; font-size: 11px; line-height: 1.35; color: #3d4a55; text-align: left; white-space: normal; }
+
+/* Buttons inside windows (taste deck 2026-11-23, "filled primary + text"): the main action is a filled blue button;
+   every other command is a plain text button that only shades on hover. Text never changes colour on hover. The top
+   toolbar keeps its own buttons (the user likes them). */
+body.unified-terminal-ui :is(.card-board-body, .modal-shell, .clipboard-player-card) :is(.fa-submit, [data-roster-submit], .primary-action, .approved-player-primary-action, .ui-command.is-primary, #staffRetentionResign, #setStartingFive) {
+  background: #2f6fb7 !important; border: 1px solid #275f9e !important; color: #fff !important; box-shadow: none !important;
+  font-weight: 700 !important; border-radius: 3px !important;
+}
+body.unified-terminal-ui :is(.card-board-body, .modal-shell, .clipboard-player-card) :is(.fa-submit, [data-roster-submit], .primary-action, .approved-player-primary-action, .ui-command.is-primary, #staffRetentionResign, #setStartingFive):not(:disabled):hover {
+  background: #275f9e !important; color: #fff !important;
+}
+body.unified-terminal-ui :is(.card-board-body, .modal-shell, .clipboard-player-card) :is(.fa-submit, [data-roster-submit], .primary-action, .approved-player-primary-action, .ui-command.is-primary):disabled {
+  background: #c9d3dc !important; border-color: #b9c4ce !important; color: #5f6c77 !important;
+}
+body.unified-terminal-ui .card-board-body .ui-command:not(.is-primary):not(.fa-submit):not([data-roster-submit]):not(.primary-action) {
+  background: transparent !important; border: 1px solid transparent !important; box-shadow: none !important;
+  color: #24557c !important; font-weight: 600 !important; border-radius: 3px !important;
+}
+body.unified-terminal-ui .card-board-body .ui-command:not(.is-primary):not(.fa-submit):not([data-roster-submit]):not(.primary-action):not(:disabled):hover {
+  background: #e3eaf1 !important; color: #24557c !important;
+}
+body.unified-terminal-ui .card-board-body .ui-command:not(.is-primary):disabled { color: #9aa5ae !important; }
+
+/* Windows open with a short rise and fade instead of snapping in. */
+@media (prefers-reduced-motion: no-preference) {
+  body.unified-terminal-ui .card-board-window:not([hidden]) { animation: board-window-open 170ms cubic-bezier(.2, .8, .2, 1); }
+}
+@keyframes board-window-open { from { opacity: 0; translate: 0 8px; scale: .985; } to { opacity: 1; translate: 0 0; scale: 1; } }
