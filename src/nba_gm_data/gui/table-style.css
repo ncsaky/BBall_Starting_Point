@@ -312,3 +312,9 @@ body.unified-terminal-ui .card-board-body .ui-command:not(.is-primary):disabled 
 
 /* Cells a table marks as left-aligned on purpose (slideshow names and notes) stay left under the centring rule. */
 body.unified-terminal-ui table :is(thead th, tbody td):is(.ss-left, .is-left, .text-left) { text-align: left !important; }
+
+/* Team Identity window: the courts fit their row (never run under the legend), and the long captions give way to
+   the legend label and the hover tips (less text; taste deck 2026-11-23). */
+body.unified-terminal-ui .season-identity-panel .spatial-half-courts { min-height: 0; }
+body.unified-terminal-ui .season-identity-panel .spatial-half-courts > svg.spatial-court { height: 100% !important; width: auto !important; max-width: 100%; justify-self: center; }
+body.unified-terminal-ui .season-identity-panel .spatial-court-caption { display: none !important; }

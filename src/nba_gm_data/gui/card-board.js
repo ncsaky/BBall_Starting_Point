@@ -12,7 +12,7 @@
   const PHASE_STARTER_LIMIT = 4;
   const STARTER_CARD_MIN_WIDTHS = {minutes:450, week:720, standings:240, opponent:452, signals:198, efficiency:266};
   const CARD_SIZE_FACTORS = {
-    identity: [1.32, 1],
+    identity: [1.32, 1.1],
     signals: [1, .75],
     minutes: [1.03 * .8 * 1.16, 1.22 * .7],
     development: [1.4, 1],
@@ -27,9 +27,9 @@
     staff: [1.58, 1.12],
     "league-wire": [.61, 1.05],
   };
-  const CARD_SIZE_REVISIONS = {identity:2,signals:2,minutes:6,development:3,staff:7,"league-wire":2,prospects:3,offense:4,defense:4,"award-mvp":3,"award-dpoy":3,"award-roty":3,roster:3};
+  const CARD_SIZE_REVISIONS = {identity:4,signals:2,minutes:6,development:3,staff:7,"league-wire":2,prospects:3,offense:4,defense:4,"award-mvp":3,"award-dpoy":3,"award-roty":3,roster:3};
   const CARD_WIDTH_MIGRATIONS = {minutes:{1:1.03/1.68*.8*.7*1.16,2:1.03/1.36*.8*.7*1.16,3:.8*.7*1.16,4:.7*1.16,5:1.16},development:{1:1.4/1.15,2:1.12},"league-wire":{1:.5},prospects:{1:1.92/1.2,2:1.92/1.45},offense:{1:1.1,2:1.1/1.4,3:1.4/1.1},defense:{1:1.1,2:1.1/1.4,3:1.4/1.1},"award-mvp":{1:2.7/1.22,2:2.7/2.05},"award-dpoy":{1:2.7/1.22,2:2.7/2.05},"award-roty":{1:2.7/1.22,2:2.7/2.05},roster:{1:1.16}};
-  const CARD_HEIGHT_MIGRATIONS = {identity:{1:1/1.3},signals:{1:.75},minutes:{1:.7,2:.7,3:.7,4:.7},staff:{2:1.12/1.8,3:1.12/1.35,4:1.12/1.12,5:1.12/1.12,6:1.12/1.04},offense:{1:1.55},defense:{1:1.55}};
+  const CARD_HEIGHT_MIGRATIONS = {identity:{1:1.1/1.3,2:1.1,3:1.1/1.25},signals:{1:.75},minutes:{1:.7,2:.7,3:.7,4:.7},staff:{2:1.12/1.8,3:1.12/1.35,4:1.12/1.12,5:1.12/1.12,6:1.12/1.04},offense:{1:1.55},defense:{1:1.55}};
   const CARD_SCALE_MIGRATIONS = {staff:{4:1.25}};
   const CARD_MIN_SCALES = {
     identity: .72, signals: .78, morale: .78, factors: .78, offense: .72, defense: .72,
