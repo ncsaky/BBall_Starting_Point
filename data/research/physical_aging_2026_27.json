@@ -1,0 +1,245 @@
+{
+ "version": "physical_aging_v1_2026_11_22",
+ "method": "Real change of Basketball Index's tracked movement speed by age (within the same player, season to season). Players with 1,000+ minutes in both seasons (2013-14 to 2025-26), change in Avg Speed Offense and Avg Speed Defense (miles per hour of tracked movement) divided by the league's between-player spread that season, so the change is in league standard deviations per year. Age = age in the later season (Basketball Reference). Smoothed across ages (Gaussian, 1.5 years). Average speed also reflects role, pace and effort (Basketball Index's own caveat), so this is an upper bound on pure athletic decline at ages where roles shrink. Survivors only.",
+ "sources": [
+  "Basketball Index Leaderboards Values 2013-14 to 2025-26 (local capture): Avg Speed Offense, Avg Speed Defense",
+  "Basketball Reference ages (data/research/development_evidence.json)"
+ ],
+ "league_drift_sd_per_year": -0.0627,
+ "raw": {
+  "20": [
+   -0.1571,
+   39
+  ],
+  "21": [
+   -0.1639,
+   107
+  ],
+  "22": [
+   -0.1843,
+   146
+  ],
+  "23": [
+   -0.1146,
+   177
+  ],
+  "24": [
+   -0.0538,
+   219
+  ],
+  "25": [
+   -0.0931,
+   218
+  ],
+  "26": [
+   -0.0737,
+   226
+  ],
+  "27": [
+   -0.0391,
+   208
+  ],
+  "28": [
+   -0.0128,
+   208
+  ],
+  "29": [
+   -0.0575,
+   193
+  ],
+  "30": [
+   -0.0162,
+   172
+  ],
+  "31": [
+   0.0225,
+   136
+  ],
+  "32": [
+   -0.058,
+   94
+  ],
+  "33": [
+   -0.0489,
+   67
+  ],
+  "34": [
+   -0.0217,
+   63
+  ],
+  "35": [
+   0.041,
+   46
+  ],
+  "36": [
+   -0.0619,
+   29
+  ],
+  "37": [
+   0.1129,
+   22
+  ],
+  "38": [
+   -0.0529,
+   10
+  ],
+  "39": [
+   -0.0985,
+   7
+  ]
+ },
+ "annual_sd": {
+  "20": -0.0967,
+  "21": -0.0869,
+  "22": -0.0686,
+  "23": -0.046,
+  "24": -0.0266,
+  "25": -0.0128,
+  "26": -0.0002,
+  "27": 0.013,
+  "28": 0.0241,
+  "29": 0.0319,
+  "30": 0.0384,
+  "31": 0.0422,
+  "32": 0.0405,
+  "33": 0.0376,
+  "34": 0.0417,
+  "35": 0.0528,
+  "36": 0.0646,
+  "37": 0.0722,
+  "38": 0.0697,
+  "39": 0.053,
+  "40": 0.0279
+ },
+ "athletic_markers": {
+  "blocks_per_minute_pct": {
+   "20-23": {
+    "n": 455,
+    "change": -0.6,
+    "se": 1.787
+   },
+   "24-26": {
+    "n": 481,
+    "change": -0.481,
+    "se": 1.671
+   },
+   "27-29": {
+    "n": 336,
+    "change": -2.783,
+    "se": 2.017
+   },
+   "30-32": {
+    "n": 174,
+    "change": -2.603,
+    "se": 2.723
+   },
+   "33-35": {
+    "n": 71,
+    "change": -0.051,
+    "se": 4.108
+   },
+   "36-41": {
+    "n": 33,
+    "change": -6.322,
+    "se": 6.437
+   }
+  },
+  "steals_per_minute_pct": {
+   "20-23": {
+    "n": 455,
+    "change": 2.045,
+    "se": 1.109
+   },
+   "24-26": {
+    "n": 481,
+    "change": 0.555,
+    "se": 1.077
+   },
+   "27-29": {
+    "n": 336,
+    "change": 0.659,
+    "se": 1.251
+   },
+   "30-32": {
+    "n": 174,
+    "change": 0.257,
+    "se": 1.675
+   },
+   "33-35": {
+    "n": 71,
+    "change": 1.281,
+    "se": 2.643
+   },
+   "36-41": {
+    "n": 33,
+    "change": 3.976,
+    "se": 3.647
+   }
+  },
+  "rebounds_per_minute_pct": {
+   "20-23": {
+    "n": 455,
+    "change": 1.224,
+    "se": 0.694
+   },
+   "24-26": {
+    "n": 481,
+    "change": 0.76,
+    "se": 0.732
+   },
+   "27-29": {
+    "n": 336,
+    "change": -1.214,
+    "se": 0.806
+   },
+   "30-32": {
+    "n": 174,
+    "change": -0.475,
+    "se": 1.042
+   },
+   "33-35": {
+    "n": 71,
+    "change": -3.714,
+    "se": 1.446
+   },
+   "36-41": {
+    "n": 33,
+    "change": -3.947,
+    "se": 1.833
+   }
+  },
+  "dunk_share_sd": {
+   "20-23": {
+    "n": 75,
+    "change": -0.029,
+    "se": 0.047
+   },
+   "24-26": {
+    "n": 102,
+    "change": -0.037,
+    "se": 0.039
+   },
+   "27-29": {
+    "n": 76,
+    "change": -0.075,
+    "se": 0.044
+   },
+   "30-32": {
+    "n": 53,
+    "change": -0.001,
+    "se": 0.06
+   },
+   "33-35": {
+    "n": 17,
+    "change": -0.112,
+    "se": 0.121
+   },
+   "36-41": {
+    "n": 13,
+    "change": -0.022,
+    "se": 0.144
+   }
+  }
+ },
+ "athletic_markers_method": "Within-player change per season of athletic box-score markers, by age band (players with 1,000+ minutes in both seasons): blocks, steals and rebounds per minute (ESPN career stats of today's players, data/research/ player_career_stats.json) and the share of shots within 3 feet that are dunks (Basketball Reference, 2023-24 to 2025-26, 60+ close attempts). Per cent change per season for the rates; league standard deviations for the dunk share (log-odds). These also reflect role, so they bound athletic decline from above at ages where roles shrink."
+}

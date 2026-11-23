@@ -21,6 +21,7 @@ from nba_gm_data.input_estimator import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+ROOKIE_INVOLVEMENT_PATH = "data/research/rookie_involvement_2026.json"
 BEGIN = '<!-- E2 generated evidence report -->'
 END = '<!-- E2 end generated evidence report -->'
 TECHNIQUE_INPUTS = tuple(iid for iid, definition in DEFINITIONS.items()
@@ -65,6 +66,40 @@ def apply_rookie_college(section: dict, estimator: InputEstimator, universe: dic
     rookies earlier would shift veterans too. Here only the rookies change: their analyst claims are re-applied to
     the new technique and involvement (their other inputs are restored, so no claim counts twice)."""
     rookies = [p for p in startup_rookies(estimator, universe) if p["id"] in college]
+    # RATINGS-FOLLOWUPS step 6: college involvement on the veterans' usage scale. The college-to-involvement mapping
+    # was blended into a prospect prior that sat far above veterans (about 0.5 for guards), so a rookie expected to use
+    # 17% of his team's plays got the involvement of a 25% veteran and role-player rookies over-scored. Now his
+    # involvement is the veterans' line at his forecast rookie usage (data/research/rookie_involvement_2026.json,
+    # fitted on real rookie classes and 2025-26 veterans); this season's games stay light evidence on top.
+    path = root / ROOKIE_INVOLVEMENT_PATH
+    if path.exists():
+        scale = json.loads(path.read_text())["players"]
+        for player in rookies:
+            row = scale.get(player["id"])
+            if row:
+                # This season's usage is already inside the target (by precision), so the separate early-games
+                # involvement blend is not applied again.
+                college[player["id"]] = {**college[player["id"]], "involvement": [row["involvement"], 1.0],
+                                         "involvement_games": None, "involvement_method": (
+                    f"rookie_involvement_v1: forecast rookie usage {row['rookie_usage']}% from college usage "
+                    f"{row['college_usage']}% and draft pick {row['pick']} (real rookie classes 2015-16 to 2025-26)"
+                    + (f", with this season's {row['season_usage']}% over {row['season_minutes']:.0f} minutes at weight "
+                       f"{row['season_weight']} -> {row['usage']}%" if row.get("season_usage") is not None else "")
+                    + f", placed on the veterans' usage line ({ROOKIE_INVOLVEMENT_PATH})")}
+        # Draftees without a college line (international players): the same scale at the average draftee's college
+        # usage and his pick, set directly (no other involvement evidence applies to them here).
+        from nba_gm_data.input_estimator import _evidence
+        for player in startup_rookies(estimator, universe):
+            row = scale.get(player["id"])
+            if player["id"] in college or not row or player["id"] not in section["players"]:
+                continue
+            record = section["players"][player["id"]]["inputs"]["T08"]
+            before = float(record["value"]["probability"])
+            record["value"] = dict(record["value"], probability=round(row["involvement"], 8))
+            record["evidence"] = [*record["evidence"], _evidence(
+                ROOKIE_INVOLVEMENT_PATH, f"rookie_involvement_v1: no college line; forecast rookie usage "
+                f"{row['rookie_usage']}% at the average draftee's college usage and pick {row['pick']}, on the veterans' "
+                f"usage line", "draft:" + player["id"], notes=f"target={row['involvement']}; before={before}")]
     for player in rookies:
         new = estimator.estimate_player_inputs(player, prospect=True, college=college[player["id"]]).to_dict()["inputs"]
         section["players"][player["id"]]["inputs"].update({iid: new[iid] for iid in TECHNIQUE_INPUTS})
@@ -156,12 +191,23 @@ def _value_lines(values: dict[str, dict], universe: dict, root: Path, exclude=fr
     return lines
 
 
-def _shifted(record: dict, delta: float, note: dict, evidence: dict | None = None) -> dict:
+def _shifted(record: dict, delta: float, note: dict, evidence: dict | None = None, undo_step: str | None = None,
+             extra: list[dict] | None = None) -> dict:
+    """The record with its technique grade moved by `delta` log-odds and the step's evidence appended.
+
+    `undo_step` names the step (age projection with return from injury, thin sample, no track record): the evidence
+    then records the grade before the step and the shift. Tools that replay last season (the betting test, the
+    real-stat scorecard, the value fit) undo the opening-day projection with it; a diagnostic replay can undo every
+    step (ratings_model.replay_last_season_inputs). `extra`: further evidence entries of the same shift (each carries its
+    own notes), e.g. the return-from-injury part of a veteran's opening-day change."""
     import math
     out = json.loads(json.dumps(record))
     grade = out["value"]["grade"]
     new = 100 / (1 + math.exp(-(math.log(grade / (100 - grade)) + delta)))
     out["value"]["grade"] = round(new, 6)
+    if undo_step:
+        note = {**note, "replay_undo": {"step": undo_step, "field": "grade", "before": grade,
+                                        "log_odds_shift": round(delta, 6)}}
     notes = json.loads(out["uncertainty"]["notes"])
     if "interval" in notes:
         low, high = notes["interval"]
@@ -172,7 +218,8 @@ def _shifted(record: dict, delta: float, note: dict, evidence: dict | None = Non
                   "played, scouts' rank, readiness notes, this season's games by minutes) placed on the game's value "
                   "scale (veteran real-impact line); one log-odds shift per side of the ball",
         "shared_evidence_id": "rookie_level:" + note["player_id"]}
-    out["evidence"] = [*out["evidence"], {**evidence, "notes": json.dumps(note, sort_keys=True, separators=(",", ":"))}]
+    out["evidence"] = [*out["evidence"], {**evidence, "notes": json.dumps(note, sort_keys=True, separators=(",", ":"))},
+                       *(extra or [])]
     return out
 
 
@@ -238,7 +285,8 @@ def level_rookies(section: dict, college: dict, root: Path, iterations: int = 25
             "at_shift_limit": sorted(p for p in ids for s in channels if abs(delta[p][s]) >= LEVEL_MAX_SHIFT)}
 
 
-# Veterans' opening-day level (RATINGS-AUDIT-GSW, 2026-11-22). Two evidence-based steps, solved together after
+# Veterans' opening-day level (RATINGS-AUDIT-GSW, 2026-11-22; steps 3-4 RATINGS-FOLLOWUPS). Evidence-based steps,
+# solved together after
 # the rookies' step (the rookies' level is already a rookie-year forecast and is not touched):
 #
 # 1. Age projection. A veteran's inputs measure the level he showed over 2023-24 to 2025-26 (season weights
@@ -330,10 +378,136 @@ def no_track_record_players(universe: dict, root: Path) -> list[str]:
     return out
 
 
+# 3. Thin samples (RATINGS-FOLLOWUPS, 2026-11-22). Players with 1-999 NBA minutes in 2023-24 to 2025-26 had too
+#    little evidence for their own numbers to set their level, and the rest of it came from the average of
+#    established players in their listed role. Real evidence (data/research/thin_sample_level_2026_27.json, Basketball
+#    Index LEBRON 2011-2026): the next season of such players is best forecast by the level such players show plus his
+#    own measured LEBRON over those seasons, counted by his minutes m as m / (m + 350) (cross-validated against using
+#    only his own number or only the group). Splitting the group by years in the league (1-2, 3-4, 5+), age or draft
+#    round did not forecast better: veterans who rarely play mostly leave the league (13% of those with 5+ years get
+#    250 minutes the next season, against 40% of young players), but the ones who do play show the same level, so one
+#    pooled group is used (the research file records the split levels). Each is placed at that forecast for opening day, instead of the age step: his own
+#    age's change to opening day (the age step's curve) replaces the average change already inside his group's level,
+#    so a 39-year-old is not given a 27-year-old's season. His skill shape is kept. Moves both ways.
+THIN_SAMPLE_PATH = "data/research/thin_sample_level_2026_27.json"
+
+
+def _lebron_by_season(root: Path) -> dict[str, dict[int, tuple[float, float]]]:
+    import csv
+    path = root / "data/research/bbi/captures/fanspo_tools/lebron/lebron_separate-seasons_raw_all-2010-2026.csv"
+    rows: dict[str, dict[int, tuple[float, float]]] = {}
+    if path.exists():
+        with path.open(newline="", encoding="utf-8") as handle:
+            for row in csv.DictReader(handle):
+                rows.setdefault(_evidence_name(row["Player"]), {})[int(row["Season"])] = (
+                    float(row["O-LEBRON"]), float(row["D-LEBRON"]))
+    return rows
+
+
+def _nba_seasons(root: Path) -> dict[str, list[tuple[int, float | None]]]:
+    """Name key -> [(season end year, age then)] for every season with NBA minutes (Basketball Reference)."""
+    out: dict[str, list[tuple[int, float | None]]] = {}
+    for r in json.loads((root / "data/research/development_evidence.json").read_text())["public_inputs"]["seasons"]:
+        if r[4]:
+            out.setdefault(_evidence_name(r[2]), []).append((int(r[0]), r[3]))
+    return out
+
+
+def _first_nba_season(seasons: list[tuple[int, float | None]], age_now: float) -> int:
+    """His first NBA season, counting only seasons whose age fits his own (a father with the same name, as Ron
+    Harper and Ron Harper Jr., is not him)."""
+    own = [y for y, age in seasons if age is None or abs(float(age) - (age_now - (2027 - y))) <= 1.5]
+    return min(own, default=2026)
+
+
+def thin_sample_targets(universe: dict, root: Path) -> dict[str, dict]:
+    """{player_id: real-impact forecast for opening day 2026-27 (offense / defense) and its parts} for veterans with
+    1-999 NBA minutes in 2023-24 to 2025-26 (not 2026 rookies)."""
+    evidence = json.loads((root / THIN_SAMPLE_PATH).read_text())
+    curve = json.loads((root / AGE_PROJECTION_PATH).read_text())
+    ages = sorted(int(a) for a in curve["shift"]["offense"])
+    k, groups, top = evidence["minutes_k"], evidence["groups"], evidence["thin_max_minutes"]
+    minutes = _recent_minutes(root)
+    lebron = _lebron_by_season(root)
+    careers = _nba_seasons(root)
+    weights = dict(zip((2026, 2025, 2024), (1.0, 0.7, 0.45)))     # the builder's season weights
+    out = {}
+    for player in universe["players"]:
+        if player.get("draft_year") == 2026:
+            continue
+        name = _evidence_name(player["name"])
+        played = {y: minutes.get((name, y), 0.0) for y in (2026, 2025, 2024)}
+        total = sum(played.values())
+        if not 0 < total < top:
+            continue
+        years = 2027 - _first_nba_season(careers.get(name, []), float(player.get("age") or 26))
+        band = ("all" if evidence["grouping"] == "minutes"
+                else "1-2" if years <= 2 else "3-4" if years <= 4 else "5+")
+        group = groups[band]
+        parts = [(lebron[name][y], weights[y] * m) for y, m in played.items() if m > 0 and y in lebron.get(name, {})]
+        w = total / (total + k) if parts else 0.0
+        age = min(max(int(round(float(player.get("age") or 26))), ages[0]), ages[-1])
+        row = {"minutes": round(total, 1), "years_in_league": years, "group": band, "own_weight": round(w, 4), "age": age}
+        for i, side in enumerate(("offense", "defense")):
+            own = sum(v[i] * wt for v, wt in parts) / sum(wt for _, wt in parts) if parts else group["own_mean_" + side]
+            # His own age's change to opening day (the age step's shift), less the change already in his group's level.
+            age_change = curve["shift"][side][str(age)] - group["mean_case_lag_" + side]
+            row["own_" + side] = round(own, 4)
+            row["group_" + side] = group[side]
+            row["age_change_" + side] = round(age_change, 4)
+            row[side] = round(group[side] + w * (own - group["own_mean_" + side]) + age_change, 4)
+        out[player["id"]] = row
+    return out
+
+
+# 4. Return from a major injury (RATINGS-FOLLOWUPS, 2026-11-22). A veteran whose Achilles rupture or ACL tear came
+#    after (or late in) his measured seasons starts from his level before the injury. Real evidence
+#    (data/research/major_injury_return_2026_27.json): 43 players back from these injuries 2010-2026 played their first
+#    season back -0.45 offense / -0.20 defense (LEBRON points per 100 possessions) below what their level before and
+#    their age predicted. By injury and by age at injury (under 30 / 30+) the groups differ by less than chance, so the
+#    pooled cost applies to all (Basketball Index's own matched estimate: -0.54 ACL, -1.12 Achilles before its
+#    shrinkage). It is added to his age-step change, times the share of his measured seasons played before the injury
+#    (seasons after it already show the cost). Undone by replays of last season, like the age step.
+INJURY_RETURN_PATH = "data/research/major_injury_return_2026_27.json"
+INJURY_SEASON_WEIGHTS = {2026: 1.0, 2025: 0.7, 2024: 0.45}     # the builder's season weights
+
+
+def injury_return_targets(universe: dict, root: Path) -> dict[str, dict]:
+    """{player_id: {offense, defense (LEBRON points to add), injury, season, age_at_injury, before_share, sources}}."""
+    evidence = json.loads((root / INJURY_RETURN_PATH).read_text())
+    applied, split = evidence["applied_cost"], evidence["age_split"]
+    minutes = _recent_minutes(root)
+    by_name = {_evidence_name(p["name"]): p for p in universe["players"] if p.get("draft_year") != 2026}
+    out = {}
+    for case in evidence["current_players"]:
+        player = by_name.get(_evidence_name(case["player"]))
+        if player is None or player.get("age") is None:
+            continue
+        name = _evidence_name(player["name"])
+        weights = {y: w * minutes.get((name, y), 0.0) for y, w in INJURY_SEASON_WEIGHTS.items()}
+        total = sum(weights.values())
+        if total <= 0:
+            continue
+        before = sum(w for y, w in weights.items() if y <= case["season"]) / total
+        age_then = float(player["age"]) - (2027 - case["season"])
+        group = applied[f"{case['injury']} {'30+' if age_then >= split else 'under 30'}"]
+        out[player["id"]] = {"injury": case["injury"], "season": case["season"], "age_at_injury": round(age_then, 1),
+                             "before_share": round(before, 4), "sources": case["sources"],
+                             "offense": round(group["offense"] * before, 4), "defense": round(group["defense"] * before, 4)}
+    return out
+
+
 def project_veterans(section: dict, universe: dict, root: Path, iterations: int = 12) -> dict:
     from nba_gm_data.app_actions import load_app_canonical
     age_targets = age_projection_targets(universe, root) if (root / AGE_PROJECTION_PATH).exists() else {}
     fringe = no_track_record_players(universe, root) if (root / NO_TRACK_RECORD_PATH).exists() else []
+    # Thin samples replace the age step (their forecast is already for opening day); the age step's centring above
+    # is computed before, so every other veteran's target is unchanged.
+    thin = thin_sample_targets(universe, root) if (root / THIN_SAMPLE_PATH).exists() and age_targets else {}
+    for pid in thin:
+        age_targets.pop(pid, None)
+    injured = {pid: t for pid, t in (injury_return_targets(universe, root) if (root / INJURY_RETURN_PATH).exists()
+                                     else {}).items() if pid in age_targets}
     if not age_targets and not fringe:
         return {"players": 0}
     base = load_app_canonical(root)
@@ -341,17 +515,30 @@ def project_veterans(section: dict, universe: dict, root: Path, iterations: int 
     rookies = {p["id"] for p in universe["players"] if p.get("draft_year") == 2026}
     league = _game_values(section, root, base, [p["id"] for p in universe["players"]])
     lines = _value_lines(league, universe, root, exclude=rookies)
-    ids = sorted(pid for pid in set(age_targets) | set(fringe) if pid in league)
+    ids = sorted(pid for pid in set(age_targets) | set(fringe) | set(thin) if pid in league)
     target, notes, evidence = {}, {}, {}
     if fringe:
         level = json.loads((root / NO_TRACK_RECORD_PATH).read_text())["level"]
     for pid in ids:
-        if pid in age_targets:
+        if pid in thin:
+            t = thin[pid]
+            target[pid] = {side: lines[side][0] + lines[side][1] * t[side] for side in channels}
+            notes[pid] = {"player_id": pid, **{"thin_" + key: value for key, value in t.items()}}
+            evidence[pid] = {"source": THIN_SAMPLE_PATH, "shared_evidence_id": "thin_sample:" + pid,
+                "method": "thin_sample_level_v1: 1-999 NBA minutes in 2023-24 to 2025-26, so his opening-day level is "
+                          "the next-season level of players with his years in the league plus his own measured LEBRON "
+                          "counted by minutes, m/(m+350) (Basketball Index LEBRON 2011-2026, cross-validated); placed on "
+                          "the game's value scale (veteran real-impact line); one log-odds shift per side of the ball, "
+                          "his skill shape kept"}
+        elif pid in age_targets:
             t = age_targets[pid]
-            target[pid] = {side: league[pid][side] + lines[side][1] * t[side] for side in channels}
+            hurt = injured.get(pid, {})
+            target[pid] = {side: league[pid][side] + lines[side][1] * (t[side] + hurt.get(side, 0.0)) for side in channels}
             notes[pid] = {"player_id": pid, "age": t["age"], "missed_recent_seasons": t["missed"],
                           "projected_change_offense": t["offense"], "projected_change_defense": t["defense"],
                           "uncentred_offense": t["uncentred_offense"], "uncentred_defense": t["uncentred_defense"]}
+            if hurt:
+                notes[pid]["injury_return"] = hurt
             evidence[pid] = {"source": AGE_PROJECTION_PATH, "shared_evidence_id": "age_projection:" + pid,
                 "method": "age_projection_v1: measured 2023-26 level carried to opening day 2026-27 by the real change "
                           "from that blend to the next season at his age (Basketball Index LEBRON 2010-2026, Basketball "
@@ -365,6 +552,13 @@ def project_veterans(section: dict, universe: dict, root: Path, iterations: int 
                           "such players when they did play (Basketball Index LEBRON 2011-2026, an upper bound); placed "
                           "on the game's value scale (veteran real-impact line); one log-odds shift per side of the "
                           "ball, his skill shape kept"}
+    extra = {pid: [{"source": INJURY_RETURN_PATH, "shared_evidence_id": "injury_return:" + pid,
+                    "method": "major_injury_return_v1: first season back from an Achilles rupture or ACL tear, the "
+                              "real cost beyond age (43 returns 2010-2026, Basketball Index LEBRON; pooled across injury "
+                              "and age, which differ by less than chance), times the share of his measured seasons "
+                              "before the injury; part of the opening-day shift above",
+                    "notes": json.dumps({"player_id": pid, **hurt}, sort_keys=True, separators=(",", ":"))}]
+             for pid, hurt in injured.items()}
     original = {pid: {iid: section["players"][pid]["inputs"][iid] for side in channels for iid in channels[side]
                       if isinstance((section["players"][pid]["inputs"][iid].get("value") or {}).get("grade"), (int, float))}
                 for pid in ids}
@@ -395,8 +589,10 @@ def project_veterans(section: dict, universe: dict, root: Path, iterations: int 
             for side, inputs in channels.items():
                 for iid in inputs:
                     if iid in original[pid]:
-                        section["players"][pid]["inputs"][iid] = _shifted(original[pid][iid], delta[pid][side], note,
-                                                                          evidence[pid])
+                        section["players"][pid]["inputs"][iid] = _shifted(
+                            original[pid][iid], delta[pid][side], note, evidence[pid],
+                            undo_step=("age_projection" if pid in age_targets else "thin_sample" if pid in thin
+                                       else "no_track_record"), extra=extra.get(pid))
         values = _game_values(section, root, base, ids)
     from nba_gm_data import ratings_model
     ratings_model._INPUT_CACHE.clear()
@@ -404,7 +600,8 @@ def project_veterans(section: dict, universe: dict, root: Path, iterations: int 
     errors = {p: max(abs(target[p][s] - values[p][s]) for s in channels) for p in ids}
     any_age = next(iter(age_targets.values()), {})
     return {"players": len(ids), "age_projection": sum(1 for p in ids if p in age_targets),
-            "no_track_record": sum(1 for p in ids if p not in age_targets), "iterations": step + 1,
+            "thin_sample": sum(1 for p in ids if p in thin), "injury_return": sorted(injured),
+            "no_track_record": sum(1 for p in ids if p not in age_targets and p not in thin), "iterations": step + 1,
             "max_error": round(max(errors.values()), 4), "mean_error": round(sum(errors.values()) / len(errors), 4),
             "worst": sorted(errors, key=errors.get)[-3:], "value_lines": lines,
             "centre": {s: any_age.get("centre_" + s) for s in channels},

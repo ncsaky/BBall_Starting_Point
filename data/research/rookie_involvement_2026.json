@@ -1,0 +1,585 @@
+{
+ "version": "rookie_involvement_v1_2026_11_22",
+ "method": "Rookies' involvement (T08) for the 2026 class on the veterans' usage scale. 1. Veterans' line: involvement in the inputs file against Basketball Reference usage %, veterans with 1,000+ minutes in 2025-26 (scripts/research/rookie_fit2.usage_line, the line the early-games evidence already uses). 2. Rookie usage from college: real rookie-season usage % (Basketball Reference, classes 2015-16 to 2025-26, 300+ minutes) against the final college season's usage % (Barttorvik) and log draft pick, weighted least squares by rookie minutes (the ROOKIE-FIT sample of drafted college players). Survivors only (rookies who played). 3. Each 2026 rookie's involvement = the veterans' line at his forecast rookie usage, so a rookie expected to use 18% of his team's plays gets what a veteran at 18% has. Draftees without a college line (international players) are forecast at the average drafted player's college usage and their own pick. 4. This season's real usage so far joins the forecast by precision (see with_season), then the veterans' line.",
+ "sources": [
+  "Basketball Reference usage %: veterans 2025-26 and rookie classes 2015-16 to 2025-26 (data/research/rookie_real_lines.json)",
+  "Barttorvik final college seasons (local)",
+  "inputs file involvement (data/canonical/player_inputs_2026_27.json.gz)"
+ ],
+ "veterans_line": {
+  "intercept": 0.00025,
+  "slope": 0.014615,
+  "r": 0.891,
+  "players": 278
+ },
+ "rookie_usage_fit": {
+  "intercept": 15.4603,
+  "college_usage": 0.3271,
+  "log_pick": -1.9928,
+  "rookies": 328,
+  "weighted_r2": 0.365,
+  "residual_sd": 3.49
+ },
+ "season_evidence": {
+  "plays_per_minute": 2.125,
+  "forecast_variance": 12.167,
+  "as_of": "2026-11-22"
+ },
+ "players": {
+  "player_atl-henri-veesaar": {
+   "name": "Henri Veesaar",
+   "college_usage": 22.7,
+   "pick": 52,
+   "rookie_usage": 15.01,
+   "involvement": 0.2197
+  },
+  "player_atl-kingston-flemings": {
+   "name": "Kingston Flemings",
+   "college_usage": 26.5,
+   "pick": 8,
+   "rookie_usage": 19.99,
+   "involvement": 0.2501,
+   "season_usage": 16.4,
+   "season_minutes": 258.0,
+   "season_weight": 0.807,
+   "usage": 17.09
+  },
+  "player_atl-zuby-ejiofor": {
+   "name": "Zuby Ejiofor",
+   "college_usage": 26.4,
+   "pick": 23,
+   "rookie_usage": 17.85,
+   "involvement": 0.2273,
+   "season_usage": 14.4,
+   "season_minutes": 116.0,
+   "season_weight": 0.672,
+   "usage": 15.53
+  },
+  "player_bkn-joshua-jefferson": {
+   "name": "Joshua Jefferson",
+   "college_usage": 28.6,
+   "pick": 28,
+   "rookie_usage": 18.18,
+   "involvement": 0.289,
+   "season_usage": 42.4,
+   "season_minutes": 4.0,
+   "season_weight": 0.065,
+   "usage": 19.75
+  },
+  "player_bkn-mikel-brown-jr": {
+   "name": "Mikel Brown Jr.",
+   "college_usage": 31.0,
+   "pick": 6,
+   "rookie_usage": 22.03,
+   "involvement": 0.3693,
+   "season_usage": 26.1,
+   "season_minutes": 252.0,
+   "season_weight": 0.791,
+   "usage": 25.25
+  },
+  "player_bkn-tyler-bilodeau": {
+   "name": "Tyler Bilodeau",
+   "college_usage": 23.7,
+   "pick": 43,
+   "rookie_usage": 15.72,
+   "involvement": 0.23
+  },
+  "player_bos-chris-cenac-jr": {
+   "name": "Chris Cenac Jr.",
+   "college_usage": 19.5,
+   "pick": 27,
+   "rookie_usage": 15.27,
+   "involvement": 0.2582,
+   "season_usage": 19.7,
+   "season_minutes": 58.0,
+   "season_weight": 0.537,
+   "usage": 17.65
+  },
+  "player_bos-dillon-mitchell": {
+   "name": "Dillon Mitchell",
+   "college_usage": 15.9,
+   "pick": 40,
+   "rookie_usage": 13.31,
+   "involvement": 0.1864,
+   "season_usage": 0.0,
+   "season_minutes": 2.0,
+   "season_weight": 0.043,
+   "usage": 12.74
+  },
+  "player_cha-christian-anderson": {
+   "name": "Christian Anderson",
+   "college_usage": 25.2,
+   "pick": 18,
+   "rookie_usage": 17.94,
+   "involvement": 0.3027,
+   "season_usage": 21.5,
+   "season_minutes": 194.0,
+   "season_weight": 0.773,
+   "usage": 20.69
+  },
+  "player_cha-hannes-steinbach": {
+   "name": "Hannes Steinbach",
+   "college_usage": 24.4,
+   "pick": 14,
+   "rookie_usage": 18.18,
+   "involvement": 0.2317,
+   "season_usage": 13.7,
+   "season_minutes": 63.0,
+   "season_weight": 0.523,
+   "usage": 15.84
+  },
+  "player_chi-caleb-wilson": {
+   "name": "Caleb Wilson",
+   "college_usage": 28.8,
+   "pick": 4,
+   "rookie_usage": 22.12,
+   "involvement": 0.3858,
+   "season_usage": 27.3,
+   "season_minutes": 308.0,
+   "season_weight": 0.822,
+   "usage": 26.38
+  },
+  "player_chi-dailyn-swain": {
+   "name": "Dailyn Swain",
+   "college_usage": 25.5,
+   "pick": 15,
+   "rookie_usage": 18.41,
+   "involvement": 0.2841,
+   "season_usage": 21.6,
+   "season_minutes": 27.0,
+   "season_weight": 0.317,
+   "usage": 19.42
+  },
+  "player_cle-meleek-thomas": {
+   "name": "Meleek Thomas",
+   "college_usage": 22.1,
+   "pick": 34,
+   "rookie_usage": 15.66,
+   "involvement": 0.3056,
+   "season_usage": 21.7,
+   "season_minutes": 331.0,
+   "season_weight": 0.866,
+   "usage": 20.89
+  },
+  "player_dal-morez-johnson-jr": {
+   "name": "Morez Johnson Jr.",
+   "college_usage": 21.1,
+   "pick": 9,
+   "rookie_usage": 17.98,
+   "involvement": 0.2776,
+   "season_usage": 19.2,
+   "season_minutes": 256.0,
+   "season_weight": 0.818,
+   "usage": 18.98
+  },
+  "player_dal-tobi-lawal": {
+   "name": "Tobi Lawal",
+   "college_usage": 20.2,
+   "pick": 48,
+   "rookie_usage": 14.35,
+   "involvement": 0.2078,
+   "season_usage": 14.0,
+   "season_minutes": 36.0,
+   "season_weight": 0.431,
+   "usage": 14.2
+  },
+  "player_den-bryce-hopkins": {
+   "name": "Bryce Hopkins",
+   "college_usage": 22.0,
+   "pick": 49,
+   "rookie_usage": 14.9,
+   "involvement": 0.2131,
+   "season_usage": 14.4,
+   "season_minutes": 103.0,
+   "season_weight": 0.677,
+   "usage": 14.56
+  },
+  "player_den-trevon-brazile": {
+   "name": "Trevon Brazile",
+   "college_usage": 17.2,
+   "pick": 35,
+   "rookie_usage": 14.0,
+   "involvement": 0.1999,
+   "season_usage": 13.6,
+   "season_minutes": 257.0,
+   "season_weight": 0.847,
+   "usage": 13.66
+  },
+  "player_det-ebuka-okorie": {
+   "name": "Ebuka Okorie",
+   "college_usage": 30.1,
+   "pick": 17,
+   "rookie_usage": 19.66,
+   "involvement": 0.3364,
+   "season_usage": 33.2,
+   "season_minutes": 20.0,
+   "season_weight": 0.247,
+   "usage": 23.0
+  },
+  "player_det-ugonna-onyenso": {
+   "name": "Ugonna Onyenso",
+   "college_usage": 15.1,
+   "pick": 53,
+   "rookie_usage": 12.49,
+   "involvement": 0.1828
+  },
+  "player_gsw-yaxel-lendeborg": {
+   "name": "Yaxel Lendeborg",
+   "college_usage": 20.5,
+   "pick": 11,
+   "rookie_usage": 17.39,
+   "involvement": 0.3823,
+   "season_usage": 27.1,
+   "season_minutes": 506.0,
+   "season_weight": 0.901,
+   "usage": 26.14
+  },
+  "player_hou-bruce-thornton": {
+   "name": "Bruce Thornton",
+   "college_usage": 23.2,
+   "pick": 31,
+   "rookie_usage": 16.21,
+   "involvement": 0.2672,
+   "season_usage": 20.9,
+   "season_minutes": 41.0,
+   "season_weight": 0.438,
+   "usage": 18.27
+  },
+  "player_ind-braden-smith": {
+   "name": "Braden Smith",
+   "college_usage": 26.5,
+   "pick": 38,
+   "rookie_usage": 16.88,
+   "involvement": 0.2326,
+   "season_usage": 15.5,
+   "season_minutes": 135.0,
+   "season_weight": 0.713,
+   "usage": 15.9
+  },
+  "player_lac-baba-miller": {
+   "name": "Baba Miller",
+   "college_usage": 22.3,
+   "pick": 36,
+   "rookie_usage": 15.61,
+   "involvement": 0.257,
+   "season_usage": 18.5,
+   "season_minutes": 107.0,
+   "season_weight": 0.677,
+   "usage": 17.57
+  },
+  "player_lac-keaton-wagler": {
+   "name": "Keaton Wagler",
+   "college_usage": 25.7,
+   "pick": 5,
+   "rookie_usage": 20.66,
+   "involvement": 0.3481,
+   "season_usage": 24.4,
+   "season_minutes": 332.0,
+   "season_weight": 0.84,
+   "usage": 23.8
+  },
+  "player_lac-nick-martinelli": {
+   "name": "Nick Martinelli",
+   "college_usage": 29.4,
+   "pick": 55,
+   "rookie_usage": 17.09,
+   "involvement": 0.2745,
+   "season_usage": 22.3,
+   "season_minutes": 26.0,
+   "season_weight": 0.322,
+   "usage": 18.77
+  },
+  "player_lal-cameron-carr": {
+   "name": "Cameron Carr",
+   "college_usage": 24.3,
+   "pick": 24,
+   "rookie_usage": 17.08,
+   "involvement": 0.25,
+   "season_usage": 17.1,
+   "season_minutes": 37.0,
+   "season_weight": 0.403,
+   "usage": 17.09
+  },
+  "player_mem-cameron-boozer": {
+   "name": "Cameron Boozer",
+   "college_usage": 30.6,
+   "pick": 3,
+   "rookie_usage": 23.28,
+   "involvement": 0.3561,
+   "season_usage": 24.5,
+   "season_minutes": 494.0,
+   "season_weight": 0.877,
+   "usage": 24.35
+  },
+  "player_mia-ryan-conwell": {
+   "name": "Ryan Conwell",
+   "college_usage": 27.5,
+   "pick": 37,
+   "rookie_usage": 17.26,
+   "involvement": 0.2518,
+   "season_usage": 17.2,
+   "season_minutes": 226.0,
+   "season_weight": 0.804,
+   "usage": 17.21
+  },
+  "player_mil-brayden-burries": {
+   "name": "Brayden Burries",
+   "college_usage": 21.6,
+   "pick": 10,
+   "rookie_usage": 17.94,
+   "involvement": 0.2989,
+   "season_usage": 20.8,
+   "season_minutes": 387.0,
+   "season_weight": 0.872,
+   "usage": 20.43
+  },
+  "player_mil-nate-ament": {
+   "name": "Nate Ament",
+   "college_usage": 27.8,
+   "pick": 13,
+   "rookie_usage": 19.44,
+   "involvement": 0.2551,
+   "season_usage": 17.0,
+   "season_minutes": 277.0,
+   "season_weight": 0.821,
+   "usage": 17.44
+  },
+  "player_min-isaiah-evans": {
+   "name": "Isaiah Evans",
+   "college_usage": 21.8,
+   "pick": 33,
+   "rookie_usage": 15.62,
+   "involvement": 0.2398,
+   "season_usage": 18.1,
+   "season_minutes": 23.0,
+   "season_weight": 0.311,
+   "usage": 16.39
+  },
+  "player_nop-jaron-pierre-jr": {
+   "name": "Jaron Pierre Jr.",
+   "college_usage": 23.3,
+   "pick": 58,
+   "rookie_usage": 14.99,
+   "involvement": 0.2955,
+   "season_usage": 22.8,
+   "season_minutes": 99.0,
+   "season_weight": 0.668,
+   "usage": 20.2
+  },
+  "player_nyk-tyler-nickel": {
+   "name": "Tyler Nickel",
+   "college_usage": 16.9,
+   "pick": 47,
+   "rookie_usage": 13.32,
+   "involvement": 0.1949
+  },
+  "player_okc-aday-mara": {
+   "name": "Aday Mara",
+   "college_usage": 23.8,
+   "pick": 12,
+   "rookie_usage": 18.29,
+   "involvement": 0.2601,
+   "season_usage": 17.7,
+   "season_minutes": 358.0,
+   "season_weight": 0.861,
+   "usage": 17.78
+  },
+  "player_okc-bennett-stirtz": {
+   "name": "Bennett Stirtz",
+   "college_usage": 26.1,
+   "pick": 16,
+   "rookie_usage": 18.47,
+   "involvement": 0.2242,
+   "season_usage": 14.7,
+   "season_minutes": 295.0,
+   "season_weight": 0.835,
+   "usage": 15.32
+  },
+  "player_okc-otega-oweh": {
+   "name": "Otega Oweh",
+   "college_usage": 27.1,
+   "pick": 41,
+   "rookie_usage": 16.93,
+   "involvement": 0.2476
+  },
+  "player_orl-izaiyah-nelson": {
+   "name": "Izaiyah Nelson",
+   "college_usage": 23.7,
+   "pick": 51,
+   "rookie_usage": 15.38,
+   "involvement": 0.225
+  },
+  "player_phi-labaron-philon": {
+   "name": "Labaron Philon",
+   "college_usage": 29.9,
+   "pick": 22,
+   "rookie_usage": 19.08,
+   "involvement": 0.2858,
+   "season_usage": 19.9,
+   "season_minutes": 75.0,
+   "season_weight": 0.557,
+   "usage": 19.54
+  },
+  "player_phx-koa-peat": {
+   "name": "Koa Peat",
+   "college_usage": 24.4,
+   "pick": 30,
+   "rookie_usage": 16.66,
+   "involvement": 0.2767,
+   "season_usage": 21.8,
+   "season_minutes": 42.0,
+   "season_weight": 0.439,
+   "usage": 18.92
+  },
+  "player_sac-alex-karaban": {
+   "name": "Alex Karaban",
+   "college_usage": 17.6,
+   "pick": 29,
+   "rookie_usage": 14.51,
+   "involvement": 0.1587,
+   "season_usage": 8.7,
+   "season_minutes": 82.0,
+   "season_weight": 0.631,
+   "usage": 10.84
+  },
+  "player_sac-darius-acuff-jr": {
+   "name": "Darius Acuff Jr.",
+   "college_usage": 29.5,
+   "pick": 7,
+   "rookie_usage": 21.23,
+   "involvement": 0.4656,
+   "season_usage": 33.0,
+   "season_minutes": 590.0,
+   "season_weight": 0.901,
+   "usage": 31.84
+  },
+  "player_sac-emanuel-sharp": {
+   "name": "Emanuel Sharp",
+   "college_usage": 23.2,
+   "pick": 45,
+   "rookie_usage": 15.46,
+   "involvement": 0.2046,
+   "season_usage": 13.7,
+   "season_minutes": 268.0,
+   "season_weight": 0.841,
+   "usage": 13.98
+  },
+  "player_sas-jakobi-gillespie": {
+   "name": "Ja'Kobi Gillespie",
+   "college_usage": 25.7,
+   "pick": 42,
+   "rookie_usage": 16.42,
+   "involvement": 0.2664,
+   "season_usage": 42.0,
+   "season_minutes": 4.0,
+   "season_weight": 0.07,
+   "usage": 18.21
+  },
+  "player_sas-maliq-brown": {
+   "name": "Maliq Brown",
+   "college_usage": 14.5,
+   "pick": 44,
+   "rookie_usage": 12.66,
+   "involvement": 0.181,
+   "season_usage": 0.0,
+   "season_minutes": 1.0,
+   "season_weight": 0.023,
+   "usage": 12.37
+  },
+  "player_sas-tarris-reed-jr": {
+   "name": "Tarris Reed Jr.",
+   "college_usage": 26.5,
+   "pick": 26,
+   "rookie_usage": 17.64,
+   "involvement": 0.2555,
+   "season_usage": 17.3,
+   "season_minutes": 60.0,
+   "season_weight": 0.516,
+   "usage": 17.46
+  },
+  "player_tor-allen-graves": {
+   "name": "Allen Graves",
+   "college_usage": 22.4,
+   "pick": 19,
+   "rookie_usage": 16.92,
+   "involvement": 0.2063,
+   "season_usage": 13.5,
+   "season_minutes": 257.0,
+   "season_weight": 0.825,
+   "usage": 14.1
+  },
+  "player_tor-jaden-bradley": {
+   "name": "Jaden Bradley",
+   "college_usage": 21.1,
+   "pick": 50,
+   "rookie_usage": 14.57,
+   "involvement": 0.2297,
+   "season_usage": 17.0,
+   "season_minutes": 42.0,
+   "season_weight": 0.466,
+   "usage": 15.7
+  },
+  "player_uta-darryn-peterson": {
+   "name": "Darryn Peterson",
+   "college_usage": 30.9,
+   "pick": 2,
+   "rookie_usage": 24.19,
+   "involvement": 0.3629,
+   "season_usage": 24.9,
+   "season_minutes": 521.0,
+   "season_weight": 0.88,
+   "usage": 24.81
+  },
+  "player_was-aj-dybantsa": {
+   "name": "AJ Dybantsa",
+   "college_usage": 33.5,
+   "pick": 1,
+   "rookie_usage": 26.42,
+   "involvement": 0.3549,
+   "season_usage": 23.9,
+   "season_minutes": 443.0,
+   "season_weight": 0.855,
+   "usage": 24.27
+  },
+  "player_was-felix-okpara": {
+   "name": "Felix Okpara",
+   "college_usage": 13.5,
+   "pick": 46,
+   "rookie_usage": 12.25,
+   "involvement": 0.199,
+   "season_usage": 24.8,
+   "season_minutes": 5.0,
+   "season_weight": 0.107,
+   "usage": 13.6
+  },
+  "player_dal-sergio-de-larrea": {
+   "name": "Sergio de Larrea",
+   "college_usage": null,
+   "pick": 25,
+   "rookie_usage": 17.09,
+   "involvement": 0.2701,
+   "season_usage": 20.1,
+   "season_minutes": 46.0,
+   "season_weight": 0.456,
+   "usage": 18.46
+  },
+  "player_mem-karim-lopez": {
+   "name": "Karim Lopez",
+   "college_usage": null,
+   "pick": 21,
+   "rookie_usage": 17.44,
+   "involvement": 0.2332,
+   "season_usage": 11.3,
+   "season_minutes": 18.0,
+   "season_weight": 0.244,
+   "usage": 15.94
+  },
+  "player_sas-jayden-quaintance": {
+   "name": "Jayden Quaintance",
+   "college_usage": null,
+   "pick": 20,
+   "rookie_usage": 17.54,
+   "involvement": 0.2566
+  }
+ }
+}

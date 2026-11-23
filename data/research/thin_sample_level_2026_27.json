@@ -1,0 +1,72 @@
+{
+ "version": "thin_sample_level_v1_2026_11_22",
+ "method": "Real level of thin-sample players (1-999 NBA minutes in the three seasons before), by years in the league. Cases: every player-season s (2011-2026) with 250+ minutes whose three seasons before s hold 1-999 NBA minutes (Basketball Reference). Own number = his Basketball Index LEBRON over those seasons, weighted by minutes and the builder's season weights (1 / 0.7 / 0.45). Forecast of his LEBRON in s = his group's level in s + m/(m+k) x (own number - his group's mean own number), m = his minutes. k and the grouping are chosen by leave-one-season-out cross-validation (squared error, offense + defense); groupings tested: one pooled group, years since his first NBA minutes (1-2, 3-4, 5+), age, years x draft round. Each group's age change is recorded so the builder can use the player's own age. Survivors only: players who did not reach 250 minutes in s are missing (see played_next_season), so the levels are an upper bound, as for the no-track-record level.",
+ "sources": [
+  "Basketball Index LEBRON by season 2010-2026 (fanspo tools capture, local)",
+  "Basketball Reference minutes, ages and draft (data/research/development_evidence.json)"
+ ],
+ "thin_max_minutes": 1000.0,
+ "cases": 733,
+ "grouping": "minutes",
+ "experience_groups_tested": {
+  "1-2": {
+   "n": 616,
+   "offense": -0.949,
+   "defense": -0.14
+  },
+  "3-4": {
+   "n": 72,
+   "offense": -0.898,
+   "defense": 0.209
+  },
+  "5+": {
+   "n": 45,
+   "offense": -0.912,
+   "defense": -0.118
+  }
+ },
+ "minutes_k": 350,
+ "groups": {
+  "all": {
+   "n": 733,
+   "offense": -0.942,
+   "defense": -0.104,
+   "own_mean_offense": -0.987,
+   "own_mean_defense": -0.235,
+   "mean_case_lag_offense": 0.307,
+   "mean_case_lag_defense": 0.0736,
+   "mean_age": 23.78
+  }
+ },
+ "cv_mean_squared_error": {
+  "own number only (no pull)": 1.6312,
+  "minutes groups, group level only": 1.8658,
+  "minutes groups, own number weighted m/(m+350)": 1.4243,
+  "experience groups, group level only": 1.8704,
+  "experience groups, own number weighted m/(m+350)": 1.4247,
+  "age groups, group level only": 1.8706,
+  "age groups, own number weighted m/(m+350)": 1.4275,
+  "experience_draft groups, group level only": 1.8736,
+  "experience_draft groups, own number weighted m/(m+350)": 1.4296
+ },
+ "played_next_season": {
+  "1-2": {
+   "windows": 1521,
+   "played_any": 0.672,
+   "played_250": 0.404,
+   "measured_level_all": -1.156
+  },
+  "3-4": {
+   "windows": 250,
+   "played_any": 0.404,
+   "played_250": 0.232,
+   "measured_level_all": -1.043
+  },
+  "5+": {
+   "windows": 252,
+   "played_any": 0.282,
+   "played_250": 0.131,
+   "measured_level_all": -1.004
+  }
+ }
+}

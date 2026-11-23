@@ -118,7 +118,8 @@ def load_sim_context(root: str | Path, canonical: dict[str, Any] | None = None, 
         from .ratings_model import INPUTS_V1, install_inputs_model, ratings_model_for
         if ratings_model_for() == INPUTS_V1:
             # Save-less tools (calibration report, betting-odds validation) opt in via NBA_GM_RATINGS_MODEL.
-            install_inputs_model(canonical, root)
+            # They replay 2025-26, so they use last season's level (the opening-day projection undone).
+            install_inputs_model(canonical, root, replay_last_season=True)
     tables = reference if reference is not None else load_sim_reference(root)
     context = {
         "root": root,
