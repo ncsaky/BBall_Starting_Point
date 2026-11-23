@@ -47,7 +47,8 @@ test('rest button: rest for N games, shows resting state, disabled when injured 
   const resting = ctx.playerRestButtonMarkup({id: 'p1', name: 'Jalen', health: {status: 'ok', label: '', user_rest: {games_left: 2}}}, true);
   assert.match(resting, /season-minute-rest active/);
   assert.match(resting, /back in 2 games/);
-  assert.match(ctx.playerRestButtonMarkup({id: 'p1', health: {status: 'out', label: 'Ankle sprain ~3g'}}, true), /disabled/);
+  // Injured players get no zZ at all (taste deck 2026-11-23).
+  assert.equal(ctx.playerRestButtonMarkup({id: 'p1', health: {status: 'out', label: 'Ankle sprain ~3g'}}, true), '');
   assert.match(ctx.playerRestButtonMarkup({id: 'p1', health: {status: 'ok', label: ''}}, false), /disabled/);
 });
 

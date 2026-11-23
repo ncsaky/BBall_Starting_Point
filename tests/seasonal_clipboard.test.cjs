@@ -311,7 +311,7 @@ test('minutes table keeps identity, minutes and fatigue without ratings or box s
     state:{rotationDraft:{p1:24},rotationLockedPlayerIds:new Set()},
     developmentPlayerCandidates:()=>{throw new Error('Development should render in its own card');}, seasonPanelHeader:()=>'', isPlayerInjured:()=>false,
     injuryGamesRemaining:()=>null, compactPos:value=>value, heightFromRow:()=>"6'5\"",
-    rating:()=>80, seasonMiniRating:()=>'<span></span>', escapeHtml:value=>String(value),
+    rating:()=>80, playerRatingBarStyle:()=>'', PLAYER_ROLE_CHIPS:{}, seasonMiniRating:()=>'<span></span>', escapeHtml:value=>String(value),
     escapeAttr:value=>String(value), clampNumber:(value,min,max)=>Math.min(max,Math.max(min,value)),
     seasonFatigueCell:()=>'<span class="season-fatigue low"></span>', signedNumber:value=>String(value),
     mpgFromRow:()=>{calls.mpg++;throw new Error('MPG should not render in this table');},
@@ -339,6 +339,7 @@ test('injured minutes rows keep black player text and show a red cross with the 
     escapeHtml:value=>String(value), escapeAttr:value=>String(value),
     clampNumber:(value,min,max)=>Math.min(max,Math.max(min,value)),
     seasonFatigueCell:()=>'<span class="season-fatigue low"></span>',
+    rating:()=>80, playerRatingBarStyle:()=>'', PLAYER_ROLE_CHIPS:{},
   };
   vm.createContext(scope);
   loadHouseTables(scope);
@@ -360,7 +361,7 @@ test('next opponent injury list shows remaining games without repeating injured 
       name:'Test Player',minutes_projection:30,health:{status:'injured',label:'injured ~4g',days_left:10},
     }]}}},
     teamLabel:value=>typeof value==='string'?value:value?.abbrev||'NYK', seasonGameOpponent:()=>'NYK', teamLogoSrc:()=>'',
-    clampNumber:value=>value, performanceBarStyle:()=>'', playerRatingBarStyle: ()=>'', escapeAttr:value=>String(value), escapeHtml:value=>String(value),
+    clampNumber:value=>value, performanceBarStyle:()=>'', playerRatingBarStyle: ()=>'', ratingInkColor: ()=>'#333', escapeAttr:value=>String(value), escapeHtml:value=>String(value),
     formatDashboardShortDate:value=>value, isPlayerInjured:health=>health?.status==='injured', injuryGamesRemaining:()=>4,
     rating:()=>80, seasonMiniRating:()=>'<span>80</span>', statNumber:()=>0,
   };

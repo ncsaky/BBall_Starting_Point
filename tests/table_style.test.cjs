@@ -19,9 +19,11 @@ test('rows have no left bar on hover', () => {
   assert.match(read('table-style.css'), /table tbody tr \{ border-left: 0 !important; \}/);
 });
 
-test('header line is two flush bars, headers and sorted values are bold, sorted cells are shaded', () => {
+test('header line is one thick dark bar, headers and sorted values are bold, sorted cells are shaded', () => {
   const css = read('table-style.css');
-  assert.match(css, /inset 0 -1px var\(--table-row-bar\), inset 0 -3px var\(--table-head-bar\)/);
+  // Taste deck 2026-11-23: one dark 3px line, not two tones.
+  assert.match(css, /box-shadow: inset 0 -3px var\(--table-head-bar\) !important/);
+  assert.doesNotMatch(css, /inset 0 -1px var\(--table-row-bar\), inset 0 -3px/);
   assert.match(css, /font-weight: 700 !important/);
   assert.match(css, /background-image: linear-gradient\(var\(--table-sorted-cell\)/);
   assert.match(css, /\.ss-sorted, \.is-sorted, \.is-sorted-value/);

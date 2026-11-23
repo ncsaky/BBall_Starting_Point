@@ -253,6 +253,7 @@ test('window icons: every window type has its own icon, unknown windows share on
   assert.equal(WindowIcons.entry('something-new').group, 'fallback');
   assert.match(WindowIcons.svg('minutes'), /<svg class="window-icon" data-window-icon="stopwatch" viewBox="0 0 32 32"/);
   assert.match(board, /card-board-window-switcher-icon" aria-hidden="true">\$\{windowIcon\(id\) \|\| window\.CardVisuals\.icon\(id\)\}/);
-  assert.match(board, /class="card-board-window-mark\$\{windowIcon\(id, node\)/);
+  // Title bars carry no icon (taste deck 2026-11-23); the switcher keeps them.
+  assert.match(board, /<span class="card-board-window-mark" aria-hidden="true"><\/span>/);
   assert.match(app, /iconKind:entry\.kind/);
 });

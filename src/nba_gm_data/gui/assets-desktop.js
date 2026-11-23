@@ -210,7 +210,7 @@ function assetsTradeTools(legal) {
 }
 // Player OVR/OFF/DEF: the one rating bar every table uses (scale and look in app.js playerRatingBarStyle).
 function compactRatingBar(value) {
-  return `<span class="linked-rating assets-rating-bar player-rating-bar"><span>${draftMetric(value)}</span><i><b style="${playerRatingBarStyle(value)}"></b></i></span>`;
+  return `<span class="linked-rating assets-rating-bar player-rating-bar" style="${Number.isFinite(Number(value)) && value !== null && value !== "" ? playerRatingBarStyle(value) : ""}"><span>${draftMetric(value)}</span><i><b style="${playerRatingBarStyle(value)}"></b></i></span>`;
 }
 // Coach effects and other 0-100 values keep the plain scale.
 function effectRatingBar(value) {

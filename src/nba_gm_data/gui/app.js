@@ -3168,7 +3168,20 @@ function playerRatingBarStyle(value) {
   const fill = Number.isFinite(number)
     ? clampNumber((number - PLAYER_BAR_FLOOR) / (PLAYER_BAR_CEILING - PLAYER_BAR_FLOOR) * 100, 3, 100)
     : 0;
-  return `--fill:${fill.toFixed(1)}%;--bar-color:${performanceBarColor(fill)}`;
+  return `--fill:${fill.toFixed(1)}%;--bar-color:${performanceBarColor(fill)};--rating-ink:${ratingInkColor(fill)}`;
+}
+
+// Text-safe version of the rating colour scale (taste deck 2026-11-23: ratings in tables are coloured numbers,
+// red low to blue high). Same stops as performanceBarColor, darkened so the number reads on light rows.
+function ratingInkColor(value) {
+  const amount = clampNumber(Number(value || 0) / 100, 0, 1);
+  const stops = [[0, [168, 38, 52]], [0.34, [178, 82, 30]], [0.52, [134, 104, 16]], [0.74, [38, 108, 168]], [1, [22, 70, 170]]];
+  const upperIndex = Math.max(1, stops.findIndex(([stop]) => amount <= stop));
+  const [lowerStop, lowerColor] = stops[upperIndex - 1];
+  const [upperStop, upperColor] = stops[upperIndex];
+  const progress = upperStop === lowerStop ? 0 : (amount - lowerStop) / (upperStop - lowerStop);
+  const channel = (index) => Math.round(lowerColor[index] + (upperColor[index] - lowerColor[index]) * progress).toString(16).padStart(2, "0");
+  return `#${channel(0)}${channel(1)}${channel(2)}`;
 }
 
 function performanceBarStyle(value) {
@@ -3545,7 +3558,8 @@ function seasonOpponentCard(dash, viewedTeam) {
   return `<header class="season-panel-header season-opponent-header">
       <div class="season-opponent-title">${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(opponentTeam)} logo" />` : ""}<span>${escapeHtml(opponentTeam || "—")}</span><span>${Number(record.wins || 0)}-${Number(record.losses || 0)}</span>${opponent.pending ? "" : `<span>L10 ${lastTenWins}-${Math.max(0, lastTen.length - lastTenWins)}</span>${headerRatings.map(([label, rank]) => {
         const score = clampNumber(((30 - Number(rank || 30) + 1) / 30) * 100, 3, 100);
-        return `<span class="season-opponent-header-rating">#${Number(rank || 30)} ${label}<i><b style="${performanceBarStyle(score)}"></b></i></span>`;
+        // League rank as a coloured number (red near 30th, blue near 1st), no bar (taste deck 2026-11-23).
+        return `<span class="season-opponent-header-rating"><b style="color:${ratingInkColor(score)}">#${Number(rank || 30)}</b> ${label}</span>`;
       }).join("")}`}</div>
       <span class="season-opponent-date">${escapeHtml(formatDashboardShortDate(game.date) || game.date || "")}${homeAway ? ` · ${homeAway}` : ""}</span>
     </header>
@@ -3556,7 +3570,8 @@ function seasonOpponentCard(dash, viewedTeam) {
       ].map(([key, label]) => seasonOpponentSortHeader(key, label)).join("")}</div>
       ${leaders.map(({ row, originalIndex }, displayIndex) => {
         const playerName = row.name || "Unknown";
-        const playerMarkup = playerNameWithInjuryMarkup(row, `${displayIndex + 1}. ${playerName}`)
+        // Headshot where the rank number was (taste deck 2026-11-23).
+        const playerMarkup = (playerHeadshotMarkup(row, "roster-player-headshot") || "") + playerNameWithInjuryMarkup(row, playerName)
           .replace('class="player-name-text"', 'class="player-name-text" data-opponent-player-text');
         return `<div class="season-opponent-row${isPlayerInjured(row.health) ? " injured" : ""}" role="row" data-opponent-index="${originalIndex}" data-house-row data-house-order="${originalIndex}"${displayIndex % 2 ? " data-house-alt" : ""}${seasonOpponentSortData(row)}><span class="season-opponent-player-cell" role="rowheader" data-opponent-column="player"><button type="button" class="season-opponent-player-link" data-dashboard-player-card="${escapeAttr(row.id || row.player_id || "")}" aria-label="Open ${escapeAttr(playerName)} player card">${playerMarkup}</button></span>${seasonOpponentRatingCell(rating(row, "overall"), "overall")}${seasonOpponentRatingCell(rating(row, "offense"), "offense")}${seasonOpponentRatingCell(rating(row, "defense"), "defense")}${["points", "rebounds", "assists"].map((key) => `<span role="cell" data-opponent-column="${key}">${escapeHtml(statNumber(row, key))}</span>`).join("")}</div>`;
       }).join("") || `<div class="empty">${opponent.pending ? "Rotation updates as the sim reaches this game." : "Opponent rotation unavailable."}</div>`}
@@ -3682,12 +3697,6 @@ function applyHouseSort(table) {
   const rows = [...table.querySelectorAll(":scope > [data-house-row]")];
   HouseTable.placeRows(table, houseOrderedRows(id, rows));
   houseMarkTable(table);
-  if (id === "opponent") {
-    table.querySelectorAll(":scope > [data-house-row]").forEach((row, index) => {
-      const label = row.querySelector("[data-opponent-player-text]");
-      if (label) label.textContent = `${index + 1}. ${row.dataset.sortPlayer || "Unknown"}`;
-    });
-  }
 }
 
 function wireHouseTables(root = document) {
@@ -3719,7 +3728,7 @@ function seasonOpponentSortHeader(key, label) {
 
 function seasonOpponentRatingCell(value, key) {
   const score = clampNumber(Number(value || 0), 0, 99);
-  return `<span class="season-mini-rating player-rating-bar" role="cell" data-opponent-column="${key}"><em>${score.toFixed(0)}</em><i><b style="${playerRatingBarStyle(score)}"></b></i></span>`;
+  return `<span class="season-mini-rating player-rating-bar" role="cell" data-opponent-column="${key}" style="${playerRatingBarStyle(score)}"><em>${score.toFixed(0)}</em><i><b style="${playerRatingBarStyle(score)}"></b></i></span>`;
 }
 
 function seasonOpponentSortData(row) {
@@ -4223,7 +4232,7 @@ function seasonMinutesCard(rows, editable) {
         const position = String(row.position || "—").trim() || "—";
         const height = heightFromRow(row) || "—";
         return `<div class="season-minute-row${injured ? " injured" : ""}${resting ? " resting" : ""}" data-minute-row="${escapeAttr(row.id)}" data-house-row data-house-order="${index}"${index % 2 ? " data-house-alt" : ""} data-sort-player="${escapeAttr(row.name || "")}" data-sort-position="${housePositionRank(row.position)}" data-sort-height="${houseHeightInches(height)}">
-          <button type="button" data-dashboard-player-card="${escapeAttr(row.id)}">${playerHeadshotMarkup(row, "roster-player-headshot")}<span class="season-minute-player-name">${escapeHtml(row.name || "Unknown")}</span>${injuryStatus}<i class="season-row-motion" aria-hidden="true" hidden></i></button>
+          <button type="button" data-dashboard-player-card="${escapeAttr(row.id)}">${playerHeadshotMarkup(row, "roster-player-headshot")}<span class="season-minute-identity"><span class="season-minute-name-line"><span class="season-minute-player-name">${escapeHtml(row.name || "Unknown")}</span>${injuryStatus}</span>${seasonMinuteRoleLine(row)}</span>${seasonMinuteOverall(row)}<i class="season-row-motion" aria-hidden="true" hidden></i></button>
           <span class="season-minute-position" title="${escapeAttr(row.position || "Position unavailable")}">${escapeHtml(position)}</span>
           <span class="season-minute-height">${escapeHtml(height)}</span>
           <div class="season-minute-control"><label class="season-minute-slider${rotationLocked ? " user-locked" : ""}"><i><b class="season-minute-fill" style="width:${(minuteValue / 48 * 100).toFixed(2)}%"></b></i><input type="range" min="0" max="48" step="1" value="${minuteValue}" data-minute-player="${escapeAttr(row.id)}" aria-label="Minutes for ${escapeAttr(row.name || "player")}" ${editable && !out ? "" : "disabled"} /></label><output data-minute-output="${escapeAttr(row.id)}">${minuteValue}</output><button type="button" class="season-minute-reset" data-minute-reset-player="${escapeAttr(row.id)}" aria-label="Reset ${escapeAttr(row.name || "player")} to automatic minutes" title="Reset to automatic minutes" ${rotationLocked && editable && !out ? "" : "hidden"} ${editable && !out ? "" : "disabled"}>×</button>${playerRestButtonMarkup(row, editable)}</div>
@@ -4231,6 +4240,23 @@ function seasonMinutesCard(rows, editable) {
         </div>`;
       }).join("") || `<div class="empty">No roster loaded.</div>`}
     </div>`;
+}
+
+// Minutes + Availability: who the player is at a glance, so minutes can be set without another window open (taste
+// deck 2026-11-23): his overall as a coloured number and his offense / defense roles as one coloured pair.
+function seasonMinuteOverall(row) {
+  const value = Number(rating(row, "overall"));
+  if (!Number.isFinite(value)) return "";
+  return `<span class="season-minute-ovr player-rating-bar" style="${playerRatingBarStyle(value)}" title="Overall ${value.toFixed(0)}"><em>${value.toFixed(0)}</em></span>`;
+}
+
+function seasonMinuteRoleLine(row) {
+  const pair = [row.primary_off_role, row.primary_def_role].filter(Boolean);
+  if (!pair.length) return "";
+  return `<span class="season-minute-roles">${pair.map((role) => {
+    const [label, tone] = PLAYER_ROLE_CHIPS[role] || [role, "unknown"];
+    return `<span class="role-text role-${escapeAttr(tone)}">${escapeHtml(label)}</span>`;
+  }).join('<i aria-hidden="true">/</i>')}</span>`;
 }
 
 function seasonMiniRating(value) {
@@ -4363,7 +4389,7 @@ function seasonDevelopmentCard(rows) {
     state.data?.dashboardTrends?.development?.latest_month || candidates[0]?.points?.at(-1)?.label,
   );
   return `<div class="season-development-list" style="--development-count:${Math.max(1, Math.min(9, candidates.length))};--development-total:${Math.max(1, candidates.length)}" data-house-table="development">
-      <div class="season-development-head" data-house-head>${houseHeader("development", "player", "Player")}${houseHeader("development", "age", "Age")}${houseHeader("development", "runway", "Growth runway", {title:"Growth runway (young players) or decline watch (veterans, ↓ per year). Growth runway: room this player has left to improve, from age, role and current level, on a 0-5 scale. Not a prediction of a future rating; 0 for most players 27 and older. Sorts most room to grow first, steepest expected decline last."})}${houseHeader("development", "movement", "Rating change", {keys:[["movement", "Change", "Change in overall rating this season (October to June) and in the latest month, from the game's actual rating changes. Sorts the biggest movers first, up or down."], ["season", "Season", "Sort by this season's change, biggest gain first"], ["month", monthLabel, "Sort by the latest month's change, biggest gain first"]]})}</div>
+      <div class="season-development-head" data-house-head>${houseHeader("development", "player", "Player")}${houseHeader("development", "age", "Age")}${houseHeader("development", "runway", "Growth runway", {title:"Growth runway (young players) or decline watch (veterans, ↓ per year). Growth runway: room this player has left to improve, from age, role and current level, on a 0-5 scale. Not a prediction of a future rating; 0 for most players 27 and older. Sorts most room to grow first, steepest expected decline last."})}${houseHeader("development", "movement", "Change", {title:"Change in overall rating this season (October to June, top bar) and in the latest month (bottom bar), from the game's actual rating changes. Sorts the biggest movers first, up or down."})}</div>
       ${candidates.map((player, index) => {
         const points = player.points || [];
         const values = points.map((point) => Number(point.value)).filter(Number.isFinite);
@@ -4424,7 +4450,13 @@ function declineWatchDetail(decline) {
 function seasonDevelopmentDecline(decline) {
   const amount = Number(decline.per_year);
   const label = declineWatchDetail(decline);
-  return `<span class="season-development-upside season-development-decline" role="img" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}"><span aria-hidden="true">↓</span><strong>${Math.abs(amount).toFixed(1)}</strong><small>/yr</small></span>`;
+  // Same ring as growth runway, in red, filling toward a steep 2.5-per-year decline, so both read as one graphic.
+  const circumference = 56.55;
+  const share = clampNumber(Math.abs(amount) / 2.5, 0, 1);
+  return `<span class="season-development-upside season-development-decline" role="img" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="9" style="stroke:#b8463c;stroke-dasharray:${circumference};stroke-dashoffset:${circumference * (1 - share)}"></circle></svg>
+    <strong>−${Math.abs(amount).toFixed(1)}</strong>
+  </span>`;
 }
 
 function seasonDevelopmentMonthLabel(value) {
@@ -5370,7 +5402,7 @@ function playoffInjuriesRows(payload, scope, sort) {
 function playoffInjuryRatingCell(value) {
   const number = Number(value);
   if (!Number.isFinite(number)) return "—";
-  return `<span class="playoff-injury-rating player-rating-bar"><em>${number.toFixed(0)}</em><i aria-hidden="true"><b style="${playerRatingBarStyle(number)}"></b></i></span>`;
+  return `<span class="playoff-injury-rating player-rating-bar" style="${playerRatingBarStyle(number)}"><em>${number.toFixed(0)}</em><i aria-hidden="true"><b style="${playerRatingBarStyle(number)}"></b></i></span>`;
 }
 
 function playoffInjuryStatusCell(row) {
@@ -6471,7 +6503,7 @@ function freeAgencyMarketTable(rows, room = state.data.freeagency || {}) {
     const selected = String(state.selectedFreeAgent || "") === id;
     const shortlisted = state.freeAgentShortlistIds.includes(player.id);
     const compared = state.freeAgentCompareIds.includes(player.id);
-    const bar = (value) => `<span class="fa-rating player-rating-bar"><em>${draftMetric(value)}</em><i aria-hidden="true"><b style="${playerRatingBarStyle(value)}"></b></i></span>`;
+    const bar = (value) => `<span class="fa-rating player-rating-bar" style="${playerRatingBarStyle(value)}"><em>${draftMetric(value)}</em><i aria-hidden="true"><b style="${playerRatingBarStyle(value)}"></b></i></span>`;
     return `<tr class="${selected ? "is-selected" : ""}" data-fa-select="${escapeAttr(id)}" tabindex="${selected ? 0 : -1}" aria-selected="${selected}">
       ${state.freeAgentCompareMode ? `<td class="fa-col-compare"><input type="checkbox" class="free-agency-compare-checkbox" data-fa-compare="${escapeAttr(id)}" tabindex="${selected ? 0 : -1}" aria-label="Compare ${escapeAttr(player.name)}" ${compared ? "checked" : ""} /></td>` : ""}
       <td class="fa-col-shortlist"><button type="button" class="fa-star${shortlisted ? " is-active" : ""}" data-fa-shortlist="${escapeAttr(id)}" tabindex="${selected ? 0 : -1}" aria-pressed="${shortlisted}" aria-label="${shortlisted ? "Remove from" : "Add to"} shortlist: ${escapeAttr(player.name)}" title="${shortlisted ? "On your shortlist" : "Add to shortlist"}">${shortlisted ? "★" : "☆"}</button></td>
@@ -6725,7 +6757,7 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
   const shortlisted = state.freeAgentShortlistIds.includes(player.id);
   const safe = preview.safe;
   const stat = (label, value) => `<span><small>${label}</small><strong>${draftMetric(value)}</strong></span>`;
-  const rating = (label, value) => `<span class="fa-id-rating player-rating-bar"><small>${label}</small><strong>${draftMetric(value)}</strong><i aria-hidden="true"><b style="${playerRatingBarStyle(value)}"></b></i></span>`;
+  const rating = (label, value) => `<span class="fa-id-rating player-rating-bar" style="${playerRatingBarStyle(value)}"><small>${label}</small><strong>${draftMetric(value)}</strong><i aria-hidden="true"><b style="${playerRatingBarStyle(value)}"></b></i></span>`;
   const radio = (name, value, label, checked, disabled = false, title = "") => `<button type="button" role="radio" aria-checked="${checked}" class="${checked ? "is-active" : ""}" data-fa-offer-${name}="${escapeAttr(value)}" tabindex="${checked ? 0 : -1}"${disabled ? " disabled" : ""}${title ? ` title="${escapeAttr(title)}"` : ""}>${escapeHtml(label)}</button>`;
   const bids = (room.active_offers || [])
     .filter((offer) => String(offer.player_id || "") === String(player.id))
@@ -7230,7 +7262,7 @@ function rosterCutdownDashboardWorkspace() {
           <td>${escapeHtml(compactPos(row.position) || "—")}</td>
           <td>${escapeHtml(Number.isFinite(Number(row.age)) ? Math.round(Number(row.age)) : "—")}</td>
           <td>${Number(row.minutes || 0).toFixed(1)}</td>
-          <td>${Number.isFinite(overall) ? `<span class="playoff-injury-rating player-rating-bar"><em>${overall.toFixed(0)}</em><i aria-hidden="true"><b style="${playerRatingBarStyle(overall)}"></b></i></span>` : "—"}</td>
+          <td>${Number.isFinite(overall) ? `<span class="playoff-injury-rating player-rating-bar" style="${playerRatingBarStyle(overall)}"><em>${overall.toFixed(0)}</em><i aria-hidden="true"><b style="${playerRatingBarStyle(overall)}"></b></i></span>` : "—"}</td>
           <td>${cutdownContractCell(row)}</td>
           <td>${cutdownGuaranteeCell(row)}</td>
           <td class="${choice === "waive" ? "is-chosen" : ""}">${cutdownQuoteCell(row, "waive")}</td>
@@ -13285,7 +13317,9 @@ function playerRestButtonMarkup(row, editable) {
   const label = rest
     ? `${name} is resting: back in ${restGamesLabel(Number(rest.games_left || 0))}. Change or cancel the rest.`
     : `Rest ${name} for his team's next 1 to 5 games`;
-  return `<button type="button" class="season-minute-rest${rest ? " active" : ""}" data-minute-rest-player="${escapeAttr(row.id)}" aria-haspopup="menu" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}" ${editable && !injured ? "" : "disabled"}>zZ</button>`;
+  // Injured players can't be rested, so they get no zZ at all (taste deck 2026-11-23).
+  if (injured) return "";
+  return `<button type="button" class="season-minute-rest${rest ? " active" : ""}" data-minute-rest-player="${escapeAttr(row.id)}" aria-haspopup="menu" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}" ${editable ? "" : "disabled"}>zZ</button>`;
 }
 
 function injuryGamesRemaining(row) {

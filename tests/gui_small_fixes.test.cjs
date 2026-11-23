@@ -355,7 +355,7 @@ test('rest suggestion note shows the coach reason for the user team and is only 
 test('decline watch shows for veterans without growth runway, with athletic and skill split', () => {
   const grab = (name) => app.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n}\\n`))[0];
   const tip = app.match(/const DECLINE_WATCH_TIP = [^\n]+\n/)[0];
-  const ctx = {escapeHtml: (v) => String(v), escapeAttr: (v) => String(v)};
+  const ctx = {escapeHtml: (v) => String(v), escapeAttr: (v) => String(v), clampNumber: (v, lo, hi) => Math.min(hi, Math.max(lo, v))};
   vm.createContext(ctx);
   vm.runInContext(`${tip}${grab('declineWatchApplies')}\n${grab('declineWatchDetail')}\n${grab('seasonDevelopmentDecline')}`, ctx);
   const vet = {upside_remaining: 0, decline_watch: {per_year: -1.02, athletic: -1.44, skill: -0.81}};
@@ -363,5 +363,6 @@ test('decline watch shows for veterans without growth runway, with athletic and 
   assert.equal(ctx.declineWatchApplies({upside_remaining: 2.1, decline_watch: vet.decline_watch}), false);
   assert.equal(ctx.declineWatchApplies({upside_remaining: 0, decline_watch: null}), false);
   const html = ctx.seasonDevelopmentDecline(vet.decline_watch);
-  assert.match(html, /↓/); assert.match(html, />1\.0</); assert.match(html, /athletic -1\.4, skills -0\.8/);
+  // Decline is the growth-runway ring in red with a negative number (taste deck 2026-11-23).
+  assert.match(html, /stroke:#b8463c/); assert.match(html, />−1\.0</); assert.match(html, /athletic -1\.4, skills -0\.8/);
 });

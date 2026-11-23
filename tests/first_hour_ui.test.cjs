@@ -67,6 +67,7 @@ test('minutes initialize from saved targets and locks, not newer coaching projec
     seasonFatigueCell: () => '', escapeHtml: String, escapeAttr: String,
     playerInjuryStatusMarkup: () => '', playerHeadshotMarkup: () => '', heightFromRow: () => '',
     clampNumber: (value, min, max) => Math.min(max, Math.max(min, value)),
+    rating: () => 80, playerRatingBarStyle: () => '', PLAYER_ROLE_CHIPS: {},
   };
   vm.createContext(scope);
   loadHouseTables(scope);

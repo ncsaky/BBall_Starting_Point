@@ -360,8 +360,25 @@ const GameInterface = (() => {
     });
   }
 
+  // The player/name column is the one left-aligned column in a table (everything else is centred; taste deck
+  // 2026-11-23). Found by its header text, or by the first row's headshot or player-name markup.
+  const NAME_HEAD = /^(player|players|name|player \/ asset|prospect|coach|staff)$/i;
+  function markNameColumns(scope) {
+    const tables = [...(scope.matches?.('table') ? [scope] : []), ...scope.querySelectorAll('table')];
+    tables.forEach(table => {
+      const heads = [...(table.tHead?.rows[0]?.cells || [])];
+      const firstRow = table.tBodies[0]?.rows[0];
+      let index = heads.findIndex(th => NAME_HEAD.test(th.textContent.trim()));
+      if (index < 0 && firstRow) index = [...firstRow.cells].findIndex(td => td.querySelector('.player-name-with-injury, .player-headshot-frame, .roster-player-headshot'));
+      if (index < 0) return;
+      heads[index]?.classList.add('is-name-col');
+      [...table.tBodies].forEach(body => [...body.rows].forEach(row => row.cells[index]?.classList.add('is-name-col')));
+    });
+  }
+
   function enhance(scope = document) {
     enhanceAutoSort(scope);
+    try { markNameColumns(scope); } catch (_) { /* display only */ }
     scope.querySelectorAll('table[data-local-sort], .free-agency-roster-table').forEach(table => {
       table.querySelectorAll('thead th').forEach(th => {
         if (th.querySelector('button') || !th.textContent.trim()) return;

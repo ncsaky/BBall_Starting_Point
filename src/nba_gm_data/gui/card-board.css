@@ -5006,8 +5006,7 @@ body.unified-terminal-ui .player-rest-status.player-resting > span { color:#fff 
 .season-rest-menu small { color:#5d6872; font-size:10px; padding:3px 2px 0; }
 
 /* Decline watch (veterans): red down arrow with expected overall change per year. */
-body.unified-terminal-ui .season-development-decline { color:#c4585f; display:inline-flex; align-items:baseline; gap:2px; }
-body.unified-terminal-ui .season-development-decline small { font-size:9px; opacity:.8; }
+body.unified-terminal-ui .season-development-decline strong { color:#8f2f27 !important; }
 body.unified-terminal-ui .player-decline-watch strong { color:#c4585f; }
 
 /* Draft boards (2026-11-19): consensus beside your scouts' board. Shared table style: double header rule, small

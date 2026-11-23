@@ -183,16 +183,7 @@ body.unified-terminal-ui [data-house-table] .season-minute-slider > i { top: cal
 body.unified-terminal-ui [data-house-table] .season-development-diverging b { top: 0 !important; height: 100% !important; }
 body.unified-terminal-ui [data-house-table] .season-development-diverging::after { background: #8d9aa6 !important; top: -2px !important; bottom: -2px !important; }
 
-/* Development: the decline arrow sits beside its number instead of over it. */
-body.unified-terminal-ui [data-house-table="development"] .season-development-decline {
-  display: inline-flex !important;
-  align-items: baseline;
-  justify-content: center;
-  gap: 2px;
-  position: static;
-}
-body.unified-terminal-ui [data-house-table="development"] .season-development-decline > span[aria-hidden] { position: static !important; transform: none !important; }
-body.unified-terminal-ui [data-house-table="development"] .season-development-decline :is(strong, small) { position: static !important; }
+/* Development: decline uses the growth-runway ring (red), so no overrides here (taste deck 2026-11-23). */
 
 @media (prefers-reduced-motion: reduce) {
   body.unified-terminal-ui [data-house-table] > [data-house-row] { transition: none !important; }
