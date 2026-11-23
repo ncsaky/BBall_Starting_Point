@@ -256,3 +256,10 @@ body.unified-terminal-ui .ss-return {
   box-shadow: 0 4px 14px rgba(0, 0, 0, .35) !important;
 }
 body.unified-terminal-ui .ss-return:hover { background: #2b3a48 !important; }
+
+/* Fixed-layout tables (set column widths): every table on a slide lines up, one row height, no wrapping. */
+.ss-table.ss-fixed { table-layout: fixed; }
+.ss-table.ss-fixed :is(th, td) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ss-table.ss-fixed tbody tr { height: 30px; }
+.ss-compact .ss-table.ss-fixed tbody tr { height: 32px; }
+.ss-table.ss-fixed td small.ss-clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; overflow: hidden; line-height: 1.25; }

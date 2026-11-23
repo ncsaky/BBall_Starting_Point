@@ -30,7 +30,11 @@
   function table(columns, rows, {sorted = null, caption = "", rowClass = () => ""} = {}) {
     const head = columns.map((col, index) => `<th scope="col" class="${col.cls || ""}${index === sorted ? " ss-sorted" : ""}" data-ss-sort tabindex="0" title="Sort by ${attr(col.label)}"${index === sorted ? ` aria-sort="${SORT_ASCENDING_FIRST.test(col.label) ? "ascending" : "descending"}"` : ""}>${esc(col.label)}</th>`).join("");
     const body = rows.map((row, r) => `<tr class="${rowClass(row, r)}">${columns.map((col, index) => `<td class="${col.cls || ""}${index === sorted ? " ss-sorted" : ""}">${col.render(row, r)}</td>`).join("")}</tr>`).join("");
-    return `<table class="ss-table">${caption ? `<caption>${esc(caption)}</caption>` : ""}<thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+    // Columns with a set width make a fixed layout: tables shown side by side then line up exactly (same column
+    // widths, row heights and alignment), whatever their contents (playtest 2026-11-22).
+    const fixed = columns.some((col) => col.width);
+    const cols = fixed ? `<colgroup>${columns.map((col) => `<col${col.width ? ` style="width:${col.width}"` : ""}>`).join("")}</colgroup>` : "";
+    return `<table class="ss-table${fixed ? " ss-fixed" : ""}">${caption ? `<caption>${esc(caption)}</caption>` : ""}${cols}<thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
   }
   // Click (or Enter / Space on) any header to sort by it; click again to flip the order. Ranks, seeds and names
   // start smallest-first; every other column starts biggest-first. Blank cells ("—") always sort last.
@@ -102,12 +106,12 @@
     },
     standings(slide) {
       const conf = (name) => table([
-        {label: "#", render: (r) => r.rank, cls: "ss-num"},
-        {label: "Team", render: (r) => teamCell(r.team)},
-        {label: "W", render: (r) => r.wins, cls: "ss-num"},
-        {label: "L", render: (r) => r.losses, cls: "ss-num"},
-        {label: "GB", render: (r) => (r.games_behind ? num(r.games_behind) : "—"), cls: "ss-num"},
-        {label: "Seed", render: (r) => r.playoff_seed || "—", cls: "ss-num"},
+        {label: "#", render: (r) => r.rank, cls: "ss-num", width: "30px"},
+        {label: "Team", render: (r) => teamCell(r.team), width: "78px"},
+        {label: "W", render: (r) => r.wins, cls: "ss-num", width: "36px"},
+        {label: "L", render: (r) => r.losses, cls: "ss-num", width: "36px"},
+        {label: "GB", render: (r) => (r.games_behind ? num(r.games_behind) : "—"), cls: "ss-num", width: "42px"},
+        {label: "Seed", render: (r) => r.playoff_seed || "—", cls: "ss-num", width: "42px"},
         {label: "Finish", render: (r) => esc(r.result_label)},
       ], slide.conferences?.[name] || [], {sorted: 0, caption: `${name}ern Conference`, rowClass: (r) => (r.is_user ? "ss-user" : "")});
       return `<div class="ss-two">${conf("East")}${conf("West")}</div>`;
@@ -121,10 +125,10 @@
     },
     leaders(slide) {
       return `<div class="ss-grid">${(slide.categories || []).map((cat) => table([
-        {label: "#", render: (r, i) => i + 1, cls: "ss-num"},
+        {label: "#", render: (r, i) => i + 1, cls: "ss-num", width: "28px"},
         {label: "Player", render: name},
-        {label: "Team", render: (r) => esc(r.team_abbrev || "—")},
-        {label: "Per game", render: (r) => num(r.per_game), cls: "ss-num"},
+        {label: "Team", render: (r) => esc(r.team_abbrev || "—"), width: "52px"},
+        {label: "Per game", render: (r) => num(r.per_game), cls: "ss-num", width: "66px"},
       ], cat.rows, {sorted: 3, caption: cat.label})).join("")}</div>`;
     },
     your_season(slide) {
@@ -172,12 +176,12 @@
     power(slide) {
       const change = (r) => r.change === null || r.change === undefined ? "—" : r.change > 0 ? `<span class="ss-up">▲${r.change}</span>` : r.change < 0 ? `<span class="ss-down">▼${-r.change}</span>` : "=";
       const columns = [
-        {label: "#", render: (r) => r.rank, cls: "ss-num"},
-        {label: "Team", render: (r) => teamCell(r.team)},
-        {label: "Overall", render: (r) => num(r.overall), cls: "ss-num"},
-        {label: "Last finish", render: (r) => r.last_finish ?? "—", cls: "ss-num"},
-        {label: "Change", render: change, cls: "ss-num"},
-        {label: "Note", render: (r) => `<small>${esc(r.note || "")}</small>`},
+        {label: "#", render: (r) => r.rank, cls: "ss-num", width: "30px"},
+        {label: "Team", render: (r) => teamCell(r.team), width: "72px"},
+        {label: "Overall", render: (r) => num(r.overall), cls: "ss-num", width: "58px"},
+        {label: "Last finish", render: (r) => r.last_finish ?? "—", cls: "ss-num", width: "72px"},
+        {label: "Change", render: change, cls: "ss-num", width: "60px"},
+        {label: "Note", render: (r) => `<small class="ss-clamp" title="${attr(r.note || "")}">${esc(r.note || "")}</small>`},
       ];
       const rows = slide.rows || [];
       const half = Math.ceil(rows.length / 2);
@@ -223,9 +227,9 @@
       }
       const cats = (slide.categories || []).map((cat) => `<section class="ss-leader-cat"><header><h4>${esc(cat.label)}</h4>${(slide.players || []).length ? `<button type="button" class="ss-view-all" data-ss-view-all="${attr(cat.stat)}">View all</button>` : ""}</header>${table([
         {label: "Player", render: name},
-        {label: /_pct$/.test(cat.stat) ? "Pct" : "Per game", render: (r) => value(r.per_game), cls: "ss-num"},
-        {label: "Team", render: (r) => where(r.team_abbrev, r.now)},
-      ], cat.rows, {sorted: 1})}</section>`).join("");
+        {label: "Team", render: (r) => where(r.team_abbrev, r.now), width: "126px"},
+        {label: /_pct$/.test(cat.stat) ? "Pct" : "Per game", render: (r) => value(r.per_game), cls: "ss-num", width: "66px"},
+      ], cat.rows, {sorted: 2})}</section>`).join("");
       const winners = (slide.award_winners || []).map((w) => `<li><b>${esc(w.label)}</b>: ${esc(w.name)} ${where(w.then, w.now)}</li>`).join("");
       return `<div class="ss-grid ss-grid-3">${cats}</div>${winners ? `<section class="ss-feature"><h4>Award winners</h4><ul class="ss-list">${winners}</ul></section>` : ""}`;
     },

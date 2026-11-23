@@ -41,6 +41,8 @@ Game runs from the browser pane: launch entry `game` (port 8766, normal `saves/`
   year-end recap) need 30 games, not the awards' 65. Category titles are bold and larger; View all is small grey
   text, no box. Player names (here and in the recap's leaders) open the player card: the slideshow steps aside and a
   "Back to Preseason Outlook" button returns to the same slide. The move arrow is drawn, so it centres on the logos.
+  Tables shown together now line up exactly (fixed column widths, one row height): leaders grid (Player | Team |
+  stat), power rankings' halves (notes clamp to two lines, full text on hover), standings, recap leaders.
 - **Power-ranking notes (done 2026-11-22).** Rookies at rotation level (value 56.5+) are always named
   ("drafted Cameron Boozer"). Chosen by rating, not draft slot.
 - **Tables, still open:** the user wants consistent row height and header centering across all tables. Not done
