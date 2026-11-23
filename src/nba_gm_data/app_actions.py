@@ -2566,6 +2566,22 @@ def league_efficiency_average(save: dict[str, Any]) -> float:
     return round(sum(float(row.get("points") or 0.0) for row in logs) / possessions * 100.0, 1)
 
 
+def league_spread(values: list[float]) -> dict[str, float] | None:
+    """Lowest, quartiles, median and highest of a league column (linear-interpolated quartiles)."""
+    ordered = sorted(float(value) for value in values)
+    if not ordered:
+        return None
+
+    def quantile(fraction: float) -> float:
+        position = fraction * (len(ordered) - 1)
+        low = int(math.floor(position))
+        high = min(low + 1, len(ordered) - 1)
+        return ordered[low] + (ordered[high] - ordered[low]) * (position - low)
+
+    return {name: round(quantile(fraction), 1) for name, fraction in
+            (("min", 0.0), ("q1", 0.25), ("median", 0.5), ("q3", 0.75), ("max", 1.0))}
+
+
 def dashboard_four_factors(
     save: dict[str, Any],
     active: dict[str, Any],
@@ -2638,6 +2654,9 @@ def dashboard_four_factors(
                 "rank": rank,
                 "team_count": team_count,
                 "score": round(((team_count - rank + 1) / team_count) * 100.0, 1),
+                "higher_is_better": higher_is_better,
+                # The league's spread for the box plot (lowest, middle half, median, highest); display only.
+                "league_spread": league_spread([item * 100.0 for item in values]),
             }
         )
     return payload

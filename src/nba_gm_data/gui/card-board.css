@@ -823,6 +823,26 @@ body .has-card-board [data-board-window="league-wire"] .season-wire-activity-emp
 body .has-card-board :is([data-board-window="signals"],[data-board-window="morale"],[data-board-window="factors"]) .season-signal-row > span,
 body .has-card-board :is([data-board-window="signals"],[data-board-window="morale"],[data-board-window="factors"]) .season-signal-divider span { font-size:10px; }
 body .has-card-board :is([data-board-window="signals"],[data-board-window="morale"],[data-board-window="factors"]) .season-signal-row > strong { font-size:11px; }
+/* Four Factors box plots (taste pass 2026-11-23): league whisker (lowest to highest), middle-half box, median tick,
+   and this team as a dot; the dot and the number share the league-rank colour. */
+body .season-signal-row.season-factor-row > .season-factor-box { position:relative; display:block; align-self:stretch; min-height:12px; }
+body .season-factor-box > span { position:absolute; top:50%; display:block; transform:translateY(-50%); }
+body .season-factor-box > .season-factor-whisker { height:7px; border-left:1px solid #7d8a95; border-right:1px solid #7d8a95; box-sizing:border-box; }
+body .season-factor-box > .season-factor-whisker::before { content:""; position:absolute; left:0; right:0; top:3px; height:1px; background:#7d8a95; }
+body .season-factor-box > .season-factor-iqr { height:9px; background:#dde4ea; border:1px solid #7d8a95; box-sizing:border-box; }
+body .season-factor-box > .season-factor-median { width:2px; height:9px; margin-left:-1px; background:#24323c; }
+body .season-factor-box > .season-factor-dot {
+  z-index:1;
+  width:9px;
+  height:9px;
+  margin-left:-4.5px;
+  background:var(--factor-color, #73838b);
+  border:1.5px solid #ffffff;
+  border-radius:50%;
+  box-shadow:0 0 0 1px rgba(20,33,43,.45);
+  box-sizing:border-box;
+}
+body .season-signal-row.season-factor-row > strong.season-factor-value { color:color-mix(in srgb, var(--factor-color, #18232c) 72%, #111) !important; font-weight:700; }
 body .has-card-board [data-board-window="signals"] .season-identity-signals { grid-template-rows:repeat(3,minmax(0,1fr)); }
 body .has-card-board [data-board-window="signals"] .season-identity-signals .season-signal-row > i > b {
   transition:width 420ms ease,background-color 420ms ease;
@@ -916,7 +936,7 @@ body.unified-terminal-ui :is(
   .approved-negotiation-evidence i
 ) { transform:scaleY(1.2); transform-origin:center; }
 
-body .has-card-board .season-efficiency-legend { gap:18px; min-height:24px; padding:2px 6px 5px; }
+body .has-card-board .season-efficiency-legend { gap:18px; min-height:20px; padding:0 6px 4px; }
 body .has-card-board .card-board-body .season-efficiency-panel.card-board-headerless { grid-template-rows:minmax(0,1fr) auto; }
 body .has-card-board .season-efficiency-legend > span { gap:5px; font-size:10px; }
 body .has-card-board .season-efficiency-legend .legend-label { color:#111; }
@@ -925,8 +945,10 @@ body .has-card-board .season-efficiency-legend i { width:20px; }
 body .has-card-board .season-efficiency-legend i.offense { border-top-style:dashed; }
 body .has-card-board .season-efficiency-legend i.defense { border-top-style:dotted; }
 body .has-card-board .season-efficiency-legend i.net { border-top-style:solid; }
-body .has-card-board .season-efficiency-chart .axis-label { font-size:9px; }
+body .has-card-board .season-efficiency-chart .axis-label { font-size:7.5px; fill:#5f6d78; }
 body .has-card-board .season-efficiency-chart .x-label { font-size:8px; }
+body .season-efficiency-chart text.axis-label.week-label { text-anchor:middle; dominant-baseline:middle; }
+body .season-efficiency-chart text.axis-label.week-label.end { text-anchor:end; }
 body .has-card-board .season-efficiency-chart .axis-caption { font-size:9px; }
 body .has-card-board .season-efficiency-chart .offense.secondary { stroke-dasharray:6 4; }
 body .has-card-board .season-efficiency-chart .defense.secondary { stroke-dasharray:1 4; stroke-linecap:round; }

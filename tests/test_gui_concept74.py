@@ -134,6 +134,24 @@ class Concept74GuiTests(unittest.TestCase):
         self.assertIn("Four Factors", signals)
         self.assertIn("dashboardSummaryLeaders?.rookies", awards)
 
+    def test_four_factors_carry_the_league_spread_for_box_plots(self):
+        from nba_gm_data.app_actions import dashboard_four_factors, league_spread
+
+        self.assertEqual(league_spread([1.0, 2.0, 3.0, 4.0, 5.0]), {"min": 1.0, "q1": 2.0, "median": 3.0, "q3": 4.0, "max": 5.0})
+        self.assertIsNone(league_spread([]))
+        teams = [{"id": f"T{index}"} for index in range(5)]
+        identity = {f"T{index}": {"metrics": {"spacing": 40 + index * 5}} for index in range(5)}
+        factors = dashboard_four_factors({"team_game_logs": []}, {"teams": teams}, "T4", identity)
+        efg = next(row for row in factors if row["key"] == "efg")
+        spread = efg["league_spread"]
+        self.assertLessEqual(spread["min"], spread["q1"])
+        self.assertLessEqual(spread["q1"], spread["median"])
+        self.assertLessEqual(spread["median"], spread["q3"])
+        self.assertLessEqual(spread["q3"], spread["max"])
+        self.assertEqual(efg["value"], spread["max"])
+        self.assertEqual(efg["rank"], 1)
+        self.assertFalse(next(row for row in factors if row["key"] == "tov")["higher_is_better"])
+
     def test_weekly_efficiency_uses_dense_fixed_grid_and_three_series(self):
         efficiency = APP[
             APP.index("function seasonEfficiencyCard"):
@@ -151,7 +169,10 @@ class Concept74GuiTests(unittest.TestCase):
             APP.index("function seasonEfficiencyCard"):
             APP.index("function seasonProspectsCard")
         ]
-        self.assertIn("chartHeight - 42", efficiency)
+        # One row of "Week N" labels under the grid (taste pass 2026-11-23), so the footer is short.
+        self.assertIn("chartHeight - 16", efficiency)
+        self.assertIn("Week ${week}", efficiency)
+        self.assertNotIn("rotate(-60)", efficiency)
         self.assertNotIn('class="axis-caption"', efficiency)
         # The league-average context caption was replaced by series plotted relative to the league average,
         # with a legend row; the card-board panel now has two grid rows.
