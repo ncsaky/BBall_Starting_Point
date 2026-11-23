@@ -30,6 +30,8 @@ Game runs from the browser pane: launch entry `game` (port 8766, normal `saves/`
 - **Slideshow text (done 2026-11-22).** The user wants less text: let graphics speak. Removed the "01 · kicker"
   line on every slide; each slide's footnote now sits right under the title as subtext. Power rankings subtext:
   "Change compares with each team's 2025-26 record finish." Card corners match the board windows (3px top).
+  Continuity slide: the repeated source line and the "% kept · +N new / N had no NBA minutes" text are gone;
+  just the bars (names are still in the hover tooltip).
 - **Power-ranking notes (done 2026-11-22).** Rookies at rotation level (value 56.5+) are always named
   ("drafted Cameron Boozer"). Chosen by rating, not draft slot.
 - **Tables, still open:** the user wants consistent row height and header centering across all tables. Not done

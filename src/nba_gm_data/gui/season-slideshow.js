@@ -184,16 +184,13 @@
       const names = (list, unit = "minutes") => list.map((item) => `${item.name} (${item[unit] ?? 0})`).join(", ");
       const rows = (slide.rows || []).map((row) => {
         const arrivals = row.arrivals || [];
-        const unplayed = arrivals.filter((a) => a.rookie).length;
         const tip = [`Kept: ${names(row.kept)}`, row.injured.length ? `Kept, out long: ${names(row.injured)}` : "", `Gone: ${names(row.gone)}`, arrivals.length ? `New: ${names(arrivals, "minutes_last_season")}` : ""].filter(Boolean).join("\n");
         return `<li class="${row.is_user ? "ss-user" : ""}" title="${attr(tip)}" tabindex="0" aria-label="${attr(`${row.team.name}: ${row.continuity_pct}% of last season's minutes kept. ${tip}`)}">
           <span class="ss-team">${logo(row.team.abbrev)}<b>${esc(row.team.abbrev)}</b></span>
-          <span class="ss-bar"><i class="ss-kept" style="width:${row.kept_pct}%"></i><i class="ss-injured" style="width:${row.injured_pct}%"></i><i class="ss-gone" style="width:${row.gone_pct}%"></i></span>
-          <span class="ss-pct"><b>${num(row.continuity_pct, 0)}%</b> kept${arrivals.length ? ` · +${arrivals.length} new` : ""}${unplayed ? `<small>${unplayed} had no NBA minutes</small>` : ""}</span></li>`;
+          <span class="ss-bar"><i class="ss-kept" style="width:${row.kept_pct}%"></i><i class="ss-injured" style="width:${row.injured_pct}%"></i><i class="ss-gone" style="width:${row.gone_pct}%"></i></span></li>`;
       }).join("");
       const legend = slide.legend || {};
-      return `<p class="ss-source">${esc(slide.note)}</p>
-        <div class="ss-legend"><span><i class="ss-kept"></i>${esc(legend.kept)}</span><span><i class="ss-injured"></i>${esc(legend.injured)}</span><span><i class="ss-gone"></i>${esc(legend.gone)}</span></div>
+      return `<div class="ss-legend"><span><i class="ss-kept"></i>${esc(legend.kept)}</span><span><i class="ss-injured"></i>${esc(legend.injured)}</span><span><i class="ss-gone"></i>${esc(legend.gone)}</span></div>
         <ol class="ss-continuity">${rows}</ol>`;
     },
     leaders_revisited(slide) {

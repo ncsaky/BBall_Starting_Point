@@ -60,7 +60,8 @@ test('every recap and outlook slide renders its data', () => {
     assert.ok(markup.includes(expected[key]), `${key} is missing ${expected[key]}`);
   }
   assert.match(RENDER.continuity({rows: slides.continuity.rows, legend: {}}), /ss-kept" style="width:70%"[\s\S]*ss-injured" style="width:5%"[\s\S]*ss-gone" style="width:25%"/);
-  assert.match(RENDER.continuity({rows: slides.continuity.rows, legend: {}}), /1 had no NBA minutes/);
+  // The bar speaks for itself: no "% kept · +N new" text and no repeated source line (playtest 2026-11-22).
+  assert.doesNotMatch(RENDER.continuity({rows: slides.continuity.rows, legend: {}, note: 'Source'}), /kept ·|had no NBA minutes|ss-source/);
   assert.match(RENDER.trades({trades: []}), /No trades this season/);
   assert.match(RENDER.injuries({players: []}), /more than 20 games/);
 });
