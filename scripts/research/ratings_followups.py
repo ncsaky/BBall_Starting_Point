@@ -812,12 +812,123 @@ def value_experiments() -> None:
     run("no usage on defense, ridge 1.0", drop_def=("in_involvement",), lam=1.0)
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# Step 6 (coordinator, 2026-11-22): rookies' involvement on the veterans' usage scale.
+ROOKIE_INVOLVEMENT_OUT = ROOT / "data/research/rookie_involvement_2026.json"
+ROOKIE_USAGE_MIN_MINUTES = 300.0
+
+
+def rookie_involvement() -> dict:
+    """Rookies' involvement (T08) for the 2026 class on the veterans' usage scale.
+
+    1. Veterans' line: involvement in the inputs file against Basketball Reference usage %, veterans with 1,000+
+       minutes in 2025-26 (scripts/research/rookie_fit2.usage_line, the line the early-games evidence already uses).
+    2. Rookie usage from college: real rookie-season usage % (Basketball Reference, classes 2015-16 to 2025-26, 300+
+       minutes) against the final college season's usage % (Barttorvik) and log draft pick, weighted least squares by
+       rookie minutes (the ROOKIE-FIT sample of drafted college players). Survivors only (rookies who played).
+    3. Each 2026 rookie's involvement = the veterans' line at his forecast rookie usage, so a rookie expected to use
+       18% of his team's plays gets what a veteran at 18% has. Draftees without a college line (international
+       players) are forecast at the average drafted player's college usage and their own pick.
+    4. This season's real usage so far joins the forecast by precision (see with_season), then the veterans' line.
+    """
+    import rookie_fit as rf
+    import rookie_fit2 as rf2
+    real = json.loads((ROOT / "data/research/rookie_real_lines.json").read_text())
+    line = rf2.usage_line(real.get("usage_2025_26") or {})
+    by_class = {(int(season), rf.key(r["name"])): r for season, rows in real["classes"].items() for r in rows}
+    examples, _, _, _ = rf.assemble()
+    rows = []
+    for e in examples:
+        r = by_class.get((e["first_season"], rf.key(e["name"])))
+        if r and r.get("usg_pct") is not None and (r.get("mp") or 0) >= ROOKIE_USAGE_MIN_MINUTES:
+            rows.append((e["x"]["usg"], math.log(e["pick"]), float(r["usg_pct"]), float(r["mp"]), e["name"]))
+    # weighted least squares: usage = a + b * college usage + c * log pick
+    X = [[1.0, u, lp] for u, lp, _, _, _ in rows]
+    y = [t for _, _, t, _, _ in rows]
+    w = [m for _, _, _, m, _ in rows]
+    n = 3
+    A = [[sum(wi * x[i] * x[j] for x, wi in zip(X, w)) for j in range(n)] for i in range(n)]
+    b = [sum(wi * x[i] * t for x, t, wi in zip(X, y, w)) for i in range(n)]
+    for i in range(n):
+        for j in range(i + 1, n):
+            f = A[j][i] / A[i][i]
+            for k in range(i, n):
+                A[j][k] -= f * A[i][k]
+            b[j] -= f * b[i]
+    coef = [0.0] * n
+    for i in reversed(range(n)):
+        coef[i] = (b[i] - sum(A[i][k] * coef[k] for k in range(i + 1, n))) / A[i][i]
+    pred = [sum(c * v for c, v in zip(coef, x)) for x in X]
+    resid = [t - p for t, p in zip(y, pred)]
+    r2 = 1 - sum(wi * e * e for e, wi in zip(resid, w)) / sum(wi * (t - sum(wi2 * t2 for t2, wi2 in zip(y, w)) / sum(w)) ** 2
+                                                          for t, wi in zip(y, w))
+    bundle = json.loads((ROOT / "data/research/rookie_translation_2026.json").read_text())["class_2026"]
+    players = {}
+    for pid, entry in sorted(bundle.items()):
+        usg = (entry.get("college") or {}).get("usg")
+        pick = entry.get("pick")
+        if usg is None or not pick:
+            continue
+        usage = coef[0] + coef[1] * float(usg) + coef[2] * math.log(max(1.0, float(pick)))
+        players[pid] = {"name": entry["name"], "college_usage": usg, "pick": pick, "rookie_usage": round(usage, 2),
+                        "involvement": round(min(0.95, max(0.05, line["intercept"] + line["slope"] * usage)), 4)}
+    # This season's real usage so far (Basketball Reference) joins the forecast in usage terms, each by its precision:
+    # the forecast's own error (residual spread of the fit above) and the counting noise of a usage share over his
+    # minutes (team plays while he is on court: 102 possessions per 48 minutes, binomial share). Counting noise is the
+    # least noise a share can have, so this weight is an upper bound; it replaces the earlier fixed 1,000-minute weight.
+    plays_per_minute = 102.0 / 48.0
+    forecast_var = statistics.pvariance(resid)
+    early = {rf.key(r["name"]): r for r in (real.get("season_2027") or {}).get("rookies", [])}
+
+    def with_season(row):
+        r = early.get(rf.key(row["name"]))
+        if not r or r.get("usg_pct") is None or not r.get("mp"):
+            return row
+        share = row["rookie_usage"] / 100.0      # the expected share sets the noise (a 0% in two minutes is noise)
+        noise = share * (1 - share) / (plays_per_minute * float(r["mp"])) * 1e4
+        w = forecast_var / (forecast_var + noise)
+        usage = w * float(r["usg_pct"]) + (1 - w) * row["rookie_usage"]
+        return {**row, "season_usage": r["usg_pct"], "season_minutes": r["mp"], "season_weight": round(w, 3),
+                "usage": round(usage, 2),
+                "involvement": round(min(0.95, max(0.05, line["intercept"] + line["slope"] * usage)), 4)}
+
+    # 2026 draftees without a college line (international players): the average drafted player's college usage, his pick.
+    mean_usage = sum(u * m for u, _, _, m, _ in rows) / sum(m for *_, m, _ in rows)
+    universe = json.loads((ROOT / "data/canonical/universe_2026_27_offseason.json").read_text())
+    for p in universe["players"]:
+        if p.get("draft_year") == 2026 and p.get("draft_status") == "drafted" and p["id"] not in players \
+                and p.get("draft_position"):
+            usage = coef[0] + coef[1] * mean_usage + coef[2] * math.log(max(1.0, float(p["draft_position"])))
+            players[p["id"]] = {"name": p["name"], "college_usage": None, "pick": p["draft_position"],
+                                "rookie_usage": round(usage, 2),
+                                "involvement": round(min(0.95, max(0.05, line["intercept"] + line["slope"] * usage)), 4)}
+    players = {pid: with_season(row) for pid, row in players.items()}
+    return {"version": "rookie_involvement_v1_2026_11_22", "method": " ".join(rookie_involvement.__doc__.split()),
+            "sources": ["Basketball Reference usage %: veterans 2025-26 and rookie classes 2015-16 to 2025-26 "
+                        "(data/research/rookie_real_lines.json)", "Barttorvik final college seasons (local)",
+                        "inputs file involvement (data/canonical/player_inputs_2026_27.json.gz)"],
+            "veterans_line": line, "rookie_usage_fit": {"intercept": round(coef[0], 4), "college_usage": round(coef[1], 4),
+                                                        "log_pick": round(coef[2], 4), "rookies": len(rows),
+                                                        "weighted_r2": round(r2, 3),
+                                                        "residual_sd": round(statistics.pstdev(resid), 2)},
+            "season_evidence": {"plays_per_minute": round(plays_per_minute, 4), "forecast_variance": round(forecast_var, 3),
+                                "as_of": (real.get("season_2027") or {}).get("as_of")},
+            "players": players}
+
+
 def main() -> None:
     cmd = sys.argv[1] if len(sys.argv) > 1 else ""
     if cmd == "thin":
         out = thin()
         THIN_OUT.write_text(json.dumps(out, indent=1) + "\n")
         print(json.dumps(out, indent=1))
+    elif cmd == "rookie-involvement":
+        out = rookie_involvement()
+        ROOKIE_INVOLVEMENT_OUT.write_text(json.dumps(out, indent=1) + "\n")
+        print(json.dumps({k: out[k] for k in ("veterans_line", "rookie_usage_fit")}, indent=1))
+        for pid, r in sorted(out["players"].items(), key=lambda kv: -kv[1]["involvement"]):
+            print(f"  {r['name']:24s} pick {r['pick']:>2} college usage {r['college_usage'] or 0:5.1f} -> rookie {r['rookie_usage']:5.1f}"
+                  f" -> involvement {r['involvement']:.3f}")
     elif cmd == "snapshot":
         snapshot_from(sys.argv[2], sys.argv[3])
     elif cmd == "analysts":

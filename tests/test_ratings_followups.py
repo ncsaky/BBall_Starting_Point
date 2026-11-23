@@ -131,6 +131,31 @@ class InjuryReturnTest(unittest.TestCase):
         self.assertAlmostEqual(tatum["offense"], full * tatum["before_share"], places=3)
 
 
+class RookieInvolvementTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.evidence = json.loads((ROOT / bpi.ROOKIE_INVOLVEMENT_PATH).read_text())
+        cls.inputs = json.loads(gzip.open(ROOT / "data/canonical/player_inputs_2026_27.json.gz").read())["players"]
+
+    def test_scale_is_fitted_on_veterans_and_real_rookies(self):
+        self.assertGreater(self.evidence["veterans_line"]["players"], 200)
+        self.assertGreater(self.evidence["veterans_line"]["r"], 0.8)
+        fit = self.evidence["rookie_usage_fit"]
+        self.assertGreater(fit["rookies"], 200)
+        self.assertGreater(fit["college_usage"], 0.0)     # higher college usage, higher rookie usage
+        self.assertLess(fit["log_pick"], 0.0)             # earlier picks get more of the ball
+
+    def test_rookie_at_a_usage_gets_the_veterans_involvement(self):
+        line = self.evidence["veterans_line"]
+        for row in self.evidence["players"].values():
+            self.assertAlmostEqual(row["involvement"], line["intercept"] + line["slope"] * row.get("usage", row["rookie_usage"]), places=3)
+
+    def test_role_player_rookie_is_no_longer_above_veterans(self):
+        line = self.evidence["veterans_line"]
+        philon = self.inputs["player_phi-labaron-philon"]["inputs"]["T08"]["value"]["probability"]
+        self.assertLess(philon, line["intercept"] + line["slope"] * 22.0)   # a 22%-usage veteran
+
+
 class CanonicalInputsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

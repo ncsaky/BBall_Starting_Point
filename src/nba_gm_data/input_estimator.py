@@ -621,9 +621,10 @@ def apply_rookie_involvement(section: dict, college: Mapping[str, dict]) -> int:
         old = float(record['value']['probability'])
         new = round((1 - weight) * old + weight * min(.95, max(.05, target)), 8)
         record['value'] = dict(record['value'], probability=new)
+        method = entry.get('involvement_method') or (f'{ROOKIE_METHOD}: college usage on the measured true-usage '
+                                                     f'scale (fitted mapping, {ROOKIE_MAPPING_PATH})')
         record['evidence'] = [*record['evidence'], _evidence(
-            'barttorvik:final_college_season', f'{ROOKIE_METHOD}: college usage on the measured true-usage scale '
-            f'(fitted mapping, {ROOKIE_MAPPING_PATH})', 'college:' + pid,
+            'barttorvik:final_college_season', method, 'college:' + pid,
             exposure=dict(value=entry['college']['minutes'], unit='college_minutes'),
             notes=f'target={target}; weight={weight}; before={old}')]
         games = entry.get('involvement_games')

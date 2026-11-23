@@ -21,6 +21,7 @@ from nba_gm_data.input_estimator import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+ROOKIE_INVOLVEMENT_PATH = "data/research/rookie_involvement_2026.json"
 BEGIN = '<!-- E2 generated evidence report -->'
 END = '<!-- E2 end generated evidence report -->'
 TECHNIQUE_INPUTS = tuple(iid for iid, definition in DEFINITIONS.items()
@@ -65,6 +66,40 @@ def apply_rookie_college(section: dict, estimator: InputEstimator, universe: dic
     rookies earlier would shift veterans too. Here only the rookies change: their analyst claims are re-applied to
     the new technique and involvement (their other inputs are restored, so no claim counts twice)."""
     rookies = [p for p in startup_rookies(estimator, universe) if p["id"] in college]
+    # RATINGS-FOLLOWUPS step 6: college involvement on the veterans' usage scale. The college-to-involvement mapping
+    # was blended into a prospect prior that sat far above veterans (about 0.5 for guards), so a rookie expected to use
+    # 17% of his team's plays got the involvement of a 25% veteran and role-player rookies over-scored. Now his
+    # involvement is the veterans' line at his forecast rookie usage (data/research/rookie_involvement_2026.json,
+    # fitted on real rookie classes and 2025-26 veterans); this season's games stay light evidence on top.
+    path = root / ROOKIE_INVOLVEMENT_PATH
+    if path.exists():
+        scale = json.loads(path.read_text())["players"]
+        for player in rookies:
+            row = scale.get(player["id"])
+            if row:
+                # This season's usage is already inside the target (by precision), so the separate early-games
+                # involvement blend is not applied again.
+                college[player["id"]] = {**college[player["id"]], "involvement": [row["involvement"], 1.0],
+                                         "involvement_games": None, "involvement_method": (
+                    f"rookie_involvement_v1: forecast rookie usage {row['rookie_usage']}% from college usage "
+                    f"{row['college_usage']}% and draft pick {row['pick']} (real rookie classes 2015-16 to 2025-26)"
+                    + (f", with this season's {row['season_usage']}% over {row['season_minutes']:.0f} minutes at weight "
+                       f"{row['season_weight']} -> {row['usage']}%" if row.get("season_usage") is not None else "")
+                    + f", placed on the veterans' usage line ({ROOKIE_INVOLVEMENT_PATH})")}
+        # Draftees without a college line (international players): the same scale at the average draftee's college
+        # usage and his pick, set directly (no other involvement evidence applies to them here).
+        from nba_gm_data.input_estimator import _evidence
+        for player in startup_rookies(estimator, universe):
+            row = scale.get(player["id"])
+            if player["id"] in college or not row or player["id"] not in section["players"]:
+                continue
+            record = section["players"][player["id"]]["inputs"]["T08"]
+            before = float(record["value"]["probability"])
+            record["value"] = dict(record["value"], probability=round(row["involvement"], 8))
+            record["evidence"] = [*record["evidence"], _evidence(
+                ROOKIE_INVOLVEMENT_PATH, f"rookie_involvement_v1: no college line; forecast rookie usage "
+                f"{row['rookie_usage']}% at the average draftee's college usage and pick {row['pick']}, on the veterans' "
+                f"usage line", "draft:" + player["id"], notes=f"target={row['involvement']}; before={before}")]
     for player in rookies:
         new = estimator.estimate_player_inputs(player, prospect=True, college=college[player["id"]]).to_dict()["inputs"]
         section["players"][player["id"]]["inputs"].update({iid: new[iid] for iid in TECHNIQUE_INPUTS})
