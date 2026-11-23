@@ -15,7 +15,8 @@ _Status: **review**. Claude Opus agent, worktree branch `worktree-agent-a7aab174
   Nerd Sesh rate them lower than ESPN and The Ringer. Physical tools: real data shows almost no extra athletic decline in
   one season, so nothing moved.
 - **Gates:** real-stat scorecard 18/18 (player misses better on 7 of 9 stats); betting test slightly better at picking
-  winners and spreads on both seeds, total points a little worse (section 8); core suite passes.
+  winners and spreads on both seeds, total points a little worse (section 8); core suite passes; one new focused-test
+  failure from a tied starting-five choice in San Antonio (Castle vs Fox, section 8).
 
 ## 1. Thin-sample players (follow-up 1)
 
@@ -245,7 +246,22 @@ per 100 possessions behind Green"), and keep league rank for the top 50, where g
   the total-points miss is a little worse (+0.01 and +0.08), which traces to the league-wide tables (see section 5:
   the same shift appears with only the projection undone, and vanishes when every step is undone).
 
-- **Core suite** and **focused tests**: CORE_TESTS
+- **Core suite** (`run_core_tests.sh`): 341 tests pass (one module first errored on a git-ignored reference file from
+  the main checkout's `output/`; linked and rerun: OK).
+- **Focused tests** (`run_tests_parallel.py --workers 2 --match "rating|input|estimator|analyst|evidence|value|veteran|rookie|followup"`,
+  210 modules, 2,366 tests): 4 failures, 11 errors.
+  - 10 errors and 2 failures are missing git-ignored files (experimental-engine and pilot references in the main
+    checkout's `output/`, the Windows startup video), as in earlier tasks.
+  - `test_foundation`: 3 failures fail identically on the last commit's inputs (trade market when quiet, player asset
+    valuation 2.03 vs 3.3, waiver "claimed" vs "cleared").
+  - **1 new failure:** `test_starting_five_optimizer_respects_lineup_shape_for_okc_and_sas` expects De'Aaron Fox at
+    point guard for San Antonio; the auto starting five now puts Stephon Castle there and leaves Fox out. Fox's card
+    is unchanged (83.4); the coach's point-guard scores for Fox and Castle were tied (92.4 / 92.4 on the last commit,
+    92.3 / 92.5 now, after small league-wide table shifts), and the loser of the tie goes to the bench because his
+    shooting-guard score (83.2) is below Vassell's (85.0). That is a fragile tie in the coach's starting-five logic
+    (outside this task's files), not a rating change for either player. Left for the coordinator: a tie-break that
+    keeps the better player in the five would fix both the test and the odd choice.
+- New tests: `tests/test_ratings_followups.py` (20 tests) and `tests/test_veteran_levels.py` (13) pass.
 - No grade clipped at 100 (all technique grades strictly between 0 and 100; checked in tests).
 - All runs were on the laptop (each scorecard run about 4 minutes; the rookie probes about 4 minutes each), so Azure
   was not needed.
@@ -258,6 +274,8 @@ per 100 possessions behind Green"), and keep league rank for the top 50, where g
    this is engine-side (how low-usage players turn touches into points); worth an engine task if you want it closer.
 4. Other fit scripts that fit 2025-26 data (`fit_court_influence.py`, `fit_offensive_rebounding.py`,
    `fit_playoff_translation.py`) should also pass `replay_last_season=True` the next time they are refitted.
+5. **San Antonio starting five:** the auto starting five benches Fox when his and Castle's point-guard scores tie
+   (coach logic, not ratings). A tie-break that keeps the better player in the five would settle it (section 8).
 
 ## 10. Files
 - `scripts/build_player_inputs.py`: thin-sample step, return-from-injury step, replay-undo notes on every shifted input,
