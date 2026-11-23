@@ -967,51 +967,64 @@ def outlook_continuity_slide(ctx: dict[str, Any]) -> dict[str, Any]:
                        "gone": "Left the team"}}
 
 
+# Last season's leaders: nine categories in a 3 x 3 grid, and every qualifying player for "View all" (playtest
+# 2026-11-22). Percentages use the NBA's own minimums, the three-point one per game as the user asked.
+OUTLOOK_LEADER_STATS = (("points", "Points"), ("rebounds", "Rebounds"), ("assists", "Assists"), ("steals", "Steals"),
+                        ("blocks", "Blocks"), ("fg3m", "Threes made"), ("fg3_pct", "Three-point %"),
+                        ("ft_pct", "Free-throw %"), ("minutes", "Minutes"))
+THREE_PCT_MIN_ATTEMPTS = 3.0     # three-point attempts per game
+FT_PCT_MIN_MADE = 125            # free throws made, the NBA's rule
+
+
+def _leader_line(totals: dict[str, Any]) -> dict[str, Any]:
+    games = max(1, int(totals.get("games") or 0))
+    line: dict[str, Any] = {key: round(float(totals.get(key) or 0.0) / games, 1)
+                            for key in ("points", "rebounds", "assists", "steals", "blocks", "fg3m", "minutes")}
+    fg3a, fta = float(totals.get("fg3a") or 0.0), float(totals.get("fta") or 0.0)
+    line["fg3_pct"] = (round(100 * float(totals.get("fg3m") or 0) / fg3a, 1)
+                       if fg3a and fg3a / games >= THREE_PCT_MIN_ATTEMPTS else None)
+    line["ft_pct"] = (round(100 * float(totals.get("ftm") or 0) / fta, 1)
+                      if fta and float(totals.get("ftm") or 0) >= FT_PCT_MIN_MADE else None)
+    line["games"] = int(totals.get("games") or 0)
+    return line
+
+
 def outlook_leaders_slide(ctx: dict[str, Any]) -> dict[str, Any]:
-    from .save import AWARD_LABELS, display_minutes_projection, team_rotation_projection
+    from .save import AWARD_LABELS, AWARD_MIN_GAMES, award_qualifying_games
 
     active, last, teams = ctx["active"], ctx["last"], ctx["teams"]
     players = {row["id"]: row for row in active.get("players", [])}
-    names = {pid: (players.get(pid) or {}).get("name") or totals.get("player_name") for pid, totals in last["totals"].items()}
-    categories = [row for row in season_leaders(last["totals"], names, limit=3,
-                                                qualifies=None if last["source"] == "save" else (lambda t: int(t.get("games") or 0) >= 65))
-                  if row["stat"] in {"points", "rebounds", "assists"}]
-
-    projections: dict[str, dict[str, float]] = {}
-    health_by_player = {row.get("player_id"): row for row in ctx["save"].get("health_states") or []}
-
-    def planned_minutes(player: dict[str, Any]) -> float:
-        team_id = player.get("team_id")
-        if team_id not in projections:
-            projections[team_id] = team_rotation_projection(active, ctx["save"], team_id, integer=True)
-        return float(projections[team_id].get(player["id"], display_minutes_projection(player)))
+    real = last["source"] != "save"
+    qualifies = (lambda t: int(t.get("games") or 0) >= 65) if real else (lambda t: award_qualifying_games(t) >= AWARD_MIN_GAMES)
 
     def now(pid: str | None) -> dict[str, Any]:
         player = players.get(pid or "")
         if not player:
             return {"team": None, "status": "No longer in the league"}
-        health = health_by_player.get(player["id"]) or {}
-        if player.get("team_id") and str(health.get("availability_status") or "active") not in {"active", "healthy"}:
-            back = f", back around {health['return_date']}" if health.get("return_date") else ""
-            return {"team": _team_ref(teams, player.get("team_id")), "status": f"Injured ({health.get('current_injury_label') or 'injury'}){back}",
-                    "age": player.get("display_age", player.get("age"))}
-        minutes = planned_minutes(player) if player.get("team_id") else 0.0
-        role = "starter" if minutes >= 28 else "rotation player" if minutes >= 16 else "bench player" if minutes > 0 else "out of the rotation"
-        return {"team": _team_ref(teams, player.get("team_id")) if player.get("team_id") else None,
-                "status": "Free agent" if not player.get("team_id") else f"Expected {role}, about {minutes:.0f} minutes",
-                "age": player.get("display_age", player.get("age"))}
+        if not player.get("team_id"):
+            return {"team": None, "status": "Free agent"}
+        return {"team": _team_ref(teams, player.get("team_id"))}
 
-    for category in categories:
-        for row in category["rows"]:
-            row["now"] = now(row["player_id"])
-            row["moved"] = bool(row["now"].get("team")) and row["now"]["team"]["abbrev"] != row.get("team_abbrev")
+    rows = []
+    for pid, totals in last["totals"].items():
+        if not qualifies(totals):
+            continue
+        name = (players.get(pid) or {}).get("name") or totals.get("player_name") or totals.get("name")
+        rows.append({"player_id": pid, "name": name, "team_abbrev": totals.get("team_abbrev") or totals.get("team"),
+                     "now": now(pid), **_leader_line(totals)})
+    categories = []
+    for key, label in OUTLOOK_LEADER_STATS:
+        ranked = sorted((row for row in rows if row.get(key) is not None), key=lambda row: (-row[key], str(row["name"])))
+        if ranked and ranked[0][key]:
+            categories.append({"stat": key, "label": label,
+                               "rows": [{"name": row["name"], "team_abbrev": row["team_abbrev"], "per_game": row[key],
+                                         "now": row["now"]} for row in ranked[:3]]})
     winners = [{"label": AWARD_LABELS.get(row.get("award"), row.get("award")), "name": row.get("player_name"),
                 "then": row.get("team_abbrev"), "now": now(row.get("player_id"))}
                for row in sorted(last["awards"], key=lambda item: AWARD_ORDER.index(item["award"]) if item.get("award") in AWARD_ORDER else 99)
                if row.get("award") in AWARD_ORDER]
-    return {"key": "leaders_revisited", "title": "Last season's leaders, revisited", "kicker": f"Where the {last['season']} leaders play now",
-            "categories": categories, "award_winners": winners,
-            "note": None if last["source"] == "save" else "Real 2025-26 leaders (65+ games)."}
+    return {"key": "leaders_revisited", "title": "Last season's leaders", "kicker": f"Where the {last['season']} leaders play now",
+            "categories": categories, "players": sorted(rows, key=lambda row: -row["points"]), "award_winners": winners, "note": None}
 
 
 def outlook_your_team_slide(ctx: dict[str, Any]) -> dict[str, Any]:

@@ -226,3 +226,11 @@
 
 .ss-card > .ss-titlebar { border-radius: 2px 2px 0 0; }
 .ss-move .ss-arrow { margin: 0 3px; color: #52616e; font-weight: 700; }
+
+/* Last season's leaders: 3 x 3 grid, each table with a View all button; View all is one scrolling table. */
+.ss-leader-cat > header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0 0 4px; }
+.ss-leader-cat > header h4 { margin: 0; font-size: 13px; }
+.ss-view-all, .ss-back { padding: 2px 8px; font-size: 11px; text-decoration: none; cursor: pointer; }
+.ss-viewall-bar { margin: 0 0 8px; }
+.ss-viewall { max-height: 590px; overflow: auto; }
+.ss-viewall .ss-table thead th { position: sticky; top: 0; z-index: 2; background-color: var(--house-head, #e4e8ec); }

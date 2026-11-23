@@ -7,7 +7,7 @@
 
   const KIND_LABEL = {recap: "YEAR-END RECAP", outlook: "PRESEASON OUTLOOK"};
   const SKIP_LABEL = {recap: "Skip recap", outlook: "Skip outlook"};
-  const show = {open: false, data: null, index: 0, returnFocus: null, root: null};
+  const show = {open: false, data: null, index: 0, returnFocus: null, root: null, viewAll: null};
 
   const esc = (value) => (typeof escapeHtml === "function" ? escapeHtml(value) : String(value ?? "").replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c])));
   const attr = (value) => (typeof escapeAttr === "function" ? escapeAttr(value) : esc(value));
@@ -200,11 +200,28 @@
         if (!then || then === now.team.abbrev) return teamCell(now.team);
         return `<span class="ss-team ss-move">${logo(then)}<span class="ss-arrow" aria-label="moved to">→</span>${logo(now.team.abbrev)}<b>${esc(now.team.abbrev)}</b></span>`;
       };
-      const cats = (slide.categories || []).map((cat) => table([
+      const value = (v) => (v === null || v === undefined ? "—" : num(v));
+      if (show.viewAll && (slide.players || []).length) {
+        // "View all": one table of every qualifying player and every stat, sorted by the category that was opened.
+        const stats = [["points", "PTS"], ["rebounds", "REB"], ["assists", "AST"], ["steals", "STL"], ["blocks", "BLK"],
+                       ["fg3m", "3PM"], ["fg3_pct", "3P%"], ["ft_pct", "FT%"], ["minutes", "MIN"]];
+        const key = show.viewAll;
+        const columns = [
+          {label: "Player", render: (r) => `<b>${esc(r.name)}</b>`},
+          {label: "Team", render: (r) => where(r.team_abbrev, r.now)},
+          {label: "G", render: (r) => r.games, cls: "ss-num"},
+          ...stats.map(([stat, label]) => ({label, render: (r) => value(r[stat]), cls: "ss-num"})),
+        ];
+        const ordered = [...slide.players].sort((a, b) => (b[key] ?? -Infinity) - (a[key] ?? -Infinity));
+        const sorted = 3 + Math.max(0, stats.findIndex(([stat]) => stat === key));
+        return `<div class="ss-viewall-bar"><button type="button" class="ss-back" data-ss-view-all="">← Back</button></div>
+          <div class="ss-viewall">${table(columns, ordered, {sorted})}</div>`;
+      }
+      const cats = (slide.categories || []).map((cat) => `<section class="ss-leader-cat"><header><h4>${esc(cat.label)}</h4>${(slide.players || []).length ? `<button type="button" class="ss-view-all" data-ss-view-all="${attr(cat.stat)}">View all</button>` : ""}</header>${table([
         {label: "Player", render: (r) => `<b>${esc(r.name)}</b>`},
-        {label: "Per game", render: (r) => num(r.per_game), cls: "ss-num"},
+        {label: /_pct$/.test(cat.stat) ? "Pct" : "Per game", render: (r) => value(r.per_game), cls: "ss-num"},
         {label: "Team", render: (r) => where(r.team_abbrev, r.now)},
-      ], cat.rows, {sorted: 1, caption: `${cat.label} leaders`})).join("");
+      ], cat.rows, {sorted: 1})}</section>`).join("");
       const winners = (slide.award_winners || []).map((w) => `<li><b>${esc(w.label)}</b>: ${esc(w.name)} ${where(w.then, w.now)}</li>`).join("");
       return `<div class="ss-grid ss-grid-3">${cats}</div>${winners ? `<section class="ss-feature"><h4>Award winners</h4><ul class="ss-list">${winners}</ul></section>` : ""}`;
     },
@@ -297,6 +314,7 @@
     if (next < 0) return;
     if (next >= (show.data.slides || []).length) return close();
     show.index = next;
+    show.viewAll = null;
     render(step);
   }
 
@@ -316,7 +334,7 @@
   function keydown(event) {
     if (!show.open) return;
     const root = show.root;
-    if (event.key === "Escape") { event.preventDefault(); event.stopImmediatePropagation(); return close(); }
+    if (event.key === "Escape") { event.preventDefault(); event.stopImmediatePropagation(); if (show.viewAll) { show.viewAll = null; return render(0); } return close(); }
     if (event.key === "ArrowRight") { event.preventDefault(); event.stopImmediatePropagation(); return move(1); }
     if (event.key === "ArrowLeft") { event.preventDefault(); event.stopImmediatePropagation(); return move(-1); }
     const header = event.target?.closest?.(".ss-table th[data-ss-sort]");
@@ -359,6 +377,8 @@
     show.root.addEventListener("click", (event) => {
       const header = event.target.closest(".ss-table th[data-ss-sort]");
       if (header) return sortTable(header);
+      const viewAll = event.target.closest("[data-ss-view-all]");
+      if (viewAll) { show.viewAll = viewAll.dataset.ssViewAll || null; render(0); return; }
       const button = event.target.closest("[data-ss-action]");
       if (!button) return;
       const name = button.dataset.ssAction;

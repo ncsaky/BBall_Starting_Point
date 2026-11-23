@@ -23,7 +23,7 @@ TARGET = ROOT / "data/canonical/real_season_summary_2025_26.json"
 ESPN_TO_GAME = {"GS": "GSW", "NO": "NOP", "NY": "NYK", "SA": "SAS", "UTAH": "UTA", "WSH": "WAS"}
 # The NBA Cup final (Dec 16, 2025, Knicks v Spurs) is in the box scores but counts in neither standings nor season stats.
 CUP_FINAL_DATE = "2025-12-16"
-TOTALS = ("minutes", "points", "rebounds", "assists", "steals", "blocks", "fg3m")
+TOTALS = ("minutes", "points", "rebounds", "assists", "steals", "blocks", "fg3m", "fg3a", "ftm", "fta", "turnovers")  # ESPN lines carry no field-goal attempts
 
 
 def abbrev(value: str) -> str:
