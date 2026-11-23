@@ -24,6 +24,8 @@ GUI wishlist work is parked.
 
 | Task | Owner | Status | Files it may touch |
 |---|---|---|---|
+| TASTE-R2 Taste deck round 2: build what the user's 22 answers ask for, in 5 batches (polish and bugs; what to press next; trade room second redo; opening roster window; basketball notes on the Thunder rotation and Porziņģis) | Claude | **queued** 2026-11-23, waiting for go-ahead. Rules already in `docs/UI_STYLE_GUIDE.md` | Plan: `docs/agents/tasks/taste-round-2.md`. GUI files per batch |
+| HEADSHOT-GEN-LIBRARY batch 3 | Codex | **ready** (prompt at the top of `CODEX_QUEUE.md`): resume at player 0062 | `output/headshots-gen-library/`, manifest, task report |
 | TEST-LEFTOVERS Both leftover AI front-office failures were stale tests (late-first draft trades may be paid with an early second by design; the waiver fixture now uses a player who clears) | Claude subagent | **done** 2026-11-23 (test-only change) | `tests/test_foundation.py` |
 | TASTE-SLIDES Preseason slideshow: your-team slide is now starting-five tiles, bench strip and three numbers; team profile two titled panels; contracts slide bar charts incl. "Could be on the move"; borders and fall-in rows | Claude subagent | **done** 2026-11-23 | `season-slideshow.js/.css`, `season_slides.py` |
 | TASTE-IDENTITY Heat maps coloured against the league per region, whole-region fills, ~25 hexes; tabs Overall/Scoring/Playmaking and Overall/On-ball/Off-ball; Four Factors box plots; Weekly Efficiency week labels | Claude subagent | **done** 2026-11-23 (league reference values in `app.js` need re-measuring now and then: scratch script `identity/measure.py`) | `app.js`, `heatmaps.css`, `app_actions.py` |

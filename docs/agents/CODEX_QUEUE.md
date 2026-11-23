@@ -2,7 +2,33 @@
 
 Paste one prompt into a **fresh** Codex chat. One task per chat keeps it from drifting after context compaction. Each prompt is self-contained. Claude reviews the result and updates `BOARD.md`.
 
-Current priority (2026-11-22, night): DRAFT-REAL-ORDER now. GUI tasks are parked at the bottom.
+Current priority (2026-11-23): HEADSHOT-GEN-LIBRARY batch 3 (faces for made-up people); DRAFT-REAL-ORDER after. GUI tasks are parked at the bottom.
+
+---
+
+## Ready now (2026-11-23): HEADSHOT-GEN-LIBRARY batch 3 (fresh chat; image generation)
+
+The user wants every made-up person in the game to have a face. Batch 2 stopped at the Plus image limit before player 0062. Paste into a fresh chat with image generation (GPT-6.2 Sol, Medium):
+
+```
+This is batch 3 of HEADSHOT-GEN-LIBRARY (batches 1 and 2 are done; read AGENTS.md, docs/agents/BOARD.md and
+docs/agents/tasks/headshot-gen-library.md, then continue its numbering: players from player-m/0062, staff women
+from staff-f/0013, staff men from staff-m/0031). Set the board row "HEADSHOT-GEN-LIBRARY batch 3" to
+"in progress (Codex)".
+Reuse ../BBall_codex_headshots on branch codex/headshot-gen-library after:
+  git fetch .. codex/immersive-franchise-journey && git merge FETCH_HEAD
+Commit on that branch after every 3 people; never push. Nothing under src/, gui/ or tests/.
+Order: players 0062 onward (4 stages) until about 120 players in the library, then 10 staff women (3 stages),
+then staff men if there is room. Stop cleanly at a usage limit and record exactly where you stopped.
+Everything else exactly as the batch 1 prompt further down this file (CODEX_QUEUE.md, "HEADSHOT-GEN-LIBRARY:
+the generated face library, batch 1"): hard rules (fictional adults only, no real person's name, photo or
+likeness, no logos, numbers or text), age fixes, variety, output paths, 320x320 game copies, manifest format
+(append to data/research/headshot_gen_library_manifest.json), contact sheet, self-review and redo counts.
+Add a "Batch 3" section to docs/agents/tasks/headshot-gen-library.md (plain TL;DR first), set the board row to
+"review (batch 3)" and stop.
+```
+
+For batch 4 and later, change the batch number and the starting ids to where the last batch stopped.
 
 ---
 
