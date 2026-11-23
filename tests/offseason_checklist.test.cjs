@@ -27,12 +27,15 @@ function context() {
     signedMoney: (value) => `${Number(value) < 0 ? '-' : '+'}$${Math.abs(Number(value)).toFixed(1)}M`,
     rowLabel: (value) => String(value || ''),
     FREE_AGENCY_SIGNING_KINDS: new Set(['free_agent_signing']),
+    playerHeadshotMarkup: (row) => (row.headshot_url ? `<span class="player-headshot-frame"><img src="${row.headshot_url}"></span>` : ''),
+    compactRatingBar: (value) => `<span class="player-rating-bar">${value}</span>`,
+    teamLogoSrc: (abbrev) => (abbrev ? `/${abbrev}.png` : ''),
   };
   vm.createContext(ctx);
   const names = ['shortDate', 'offseasonStopTimeline', 'offseasonItemStatus', 'offseasonItemMoney', 'offseasonItemActions',
     'offseasonChecklistTable', 'signingDayRecap', 'offseasonChecklistPanel', 'offerSheetStillOpen', 'offerSheetStatusWords',
-    'offerSheetDecisionMarkup', 'shortSeasonLabel', 'optionDecisionWords', 'optionDecisionWho', 'optionDecisionsMarkup'];
-  vm.runInContext(`${extract('OFFSEASON_STOPS', 'const')}\n${extract('OFFSEASON_ITEM_LABELS', 'const')}\n${extract('OPTION_ITEM_KINDS', 'const')}\n${names.map((n) => extract(n)).join('\n')}
+    'offerSheetDecisionMarkup', 'shortSeasonLabel', 'optionDecisionWords', 'optionDecisionWho', 'optionDecisionsMarkup', 'offseasonPlayerCell'];
+  vm.runInContext(`${extract('OFFSEASON_STOPS', 'const')}\n${extract('OFFSEASON_ITEM_LABELS', 'const')}\n${extract('OPTION_ITEM_KINDS', 'const')}\n${extract('OFFSEASON_COLUMNS', 'const')}\n${names.map((n) => extract(n)).join('\n')}
 this.offseasonChecklistPanel = offseasonChecklistPanel; this.shortDate = shortDate;`, ctx);
   return ctx;
 }
@@ -57,11 +60,12 @@ const room = {
 
 test('stop 1 shows the four stops with dates and the current one marked', () => {
   const html = context().offseasonChecklistPanel(room);
-  assert.match(html, /Decide Who To Keep/);
-  assert.match(html, /aria-current="step"><b>1<\/b><span>Decide who to keep<\/span><small>Jun 17 – Jun 29 · draft Jun 22–23<\/small>/);
-  assert.match(html, /<span>Make offers<\/span><small>from Jun 30/);
-  assert.match(html, /15 players by Oct 20/);
-  assert.match(html, /2 decisions waiting/);
+  // Playtest 2026-11-22: no title or paragraph; one short date per stop, finer dates and rules on hover, and a badge
+  // on the current stop counting the decisions waiting.
+  assert.doesNotMatch(html, /Decide Who To Keep<\/h3>/);
+  assert.match(html, /aria-current="step" title="Draft Jun 22–23\. Teams may talk to their own free agents now[^"]*"><b>1<\/b><span>Decide who to keep <em class="offseason-waiting" title="2 decisions waiting">2<\/em><\/span><small>Jun 17–29<\/small>/);
+  assert.match(html, /<span>Make offers<\/span><small>From Jun 30/);
+  assert.match(html, /By Oct 20/);
 });
 
 test('each decision has a plain status and only the user\'s own decisions get buttons', () => {
@@ -83,7 +87,7 @@ test('signing day recaps the first wave and says what is still open', () => {
     offseason_checklist: {...room.offseason_checklist, departed: [{player_id: 'd', name: 'Own Guy', team_abbrev: 'BOS'}]}, league_moves: [
     {kind: 'free_agent_signing', team_ids: ['gsw'], headline: 'GSW signs New Guy.', aav_millions: 12, years: 3, player_id: 'n'},
     {kind: 'free_agent_signing', team_ids: ['bos'], headline: 'BOS signs Own Guy.', aav_millions: 20, years: 4, player_id: 'd'}]});
-  assert.match(html, /Signing Day/);
+  assert.match(html, /Signing day/);
   assert.match(html, /Your signings<\/h4><ul><li>GSW signs New Guy\./);
   assert.match(html, /Your free agents who left<\/h4><ul><li>Own Guy signed with BOS\./);
   // FA-REAL slice 3 (rule changed): offer sheets exist now; with none this summer the box says what can still happen.
@@ -146,11 +150,11 @@ test('option decisions card: who decides, the decision, why, and your buttons', 
     league: [{player_id: 'z', name: 'Big Star', team_abbrev: 'LAL', kind: 'player_option', kind_words: 'player option',
       salary_millions: 48, status: 'exercised', decided_by: 'player', reason: 'He keeps his $48.0M option.'}]};
   const html = context().offseasonChecklistPanel({...room, offseason_checklist: {...room.offseason_checklist, option_decisions: view}});
-  assert.match(html, /Option Decisions · 27-28/);
-  assert.match(html, /The player<\/td>[\s\S]*is-declined">Opted out/);
+  assert.match(html, /Options · 27-28/);
+  assert.match(html, /is-declined" title="[^"]*">Opted out/);
   assert.match(html, /as a 27-year-old starter/);
   assert.match(html, /data-offseason-option="exercise" data-player-id="a">Keep him/);
   assert.match(html, /Big Star[\s\S]*LAL[\s\S]*Opted in/);
-  assert.match(html, /7 players opted out and 9 opted in/);
+  assert.match(html, /<h4>Around the league<\/h4>/);
   assert.equal((html.match(/data-player-id="a">Keep him/g) || []).length, 1, 'the option is not repeated in the main table');
 });

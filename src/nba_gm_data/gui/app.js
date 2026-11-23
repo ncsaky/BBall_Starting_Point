@@ -5859,15 +5859,31 @@ const OFFSEASON_STOPS = [
   ["set_the_roster", "4", "Set the roster"],
 ];
 
-function offseasonStopTimeline(stop, dates) {
-  const when = {
-    decide_who_to_keep: `${shortDate(dates.offseason_opens)} – ${shortDate(dates.decisions_deadline)} · draft ${shortDate(dates.draft_round_one)}–${shortDate(dates.draft_round_two).split(" ")[1] || ""}`,
-    make_offers: `from ${shortDate(dates.market_opens)} · league year ${shortDate(dates.league_year)}`,
-    finalize: `after ${shortDate(dates.market_wave_ends)}`,
-    set_the_roster: `15 players by ${shortDate(dates.roster_deadline)}`,
+// The four stops, one short date each (playtest 2026-11-22: less text). The finer dates and the rules for the current
+// stop sit in its tooltip; a badge on the current stop counts the decisions waiting.
+function offseasonStopTimeline(stop, dates, waiting = 0, note = "") {
+  const range = (from, to) => {
+    const a = shortDate(from), b = shortDate(to);
+    if (!a || !b) return a || b;
+    return a.split(" ")[0] === b.split(" ")[0] ? `${a}–${b.split(" ")[1]}` : `${a} – ${b}`;
   };
-  return `<ol class="offseason-stops" aria-label="The four offseason stops">${OFFSEASON_STOPS.map(([key, number, label]) => `
-    <li class="${key === stop ? "is-current" : ""}"${key === stop ? ' aria-current="step"' : ""}><b>${number}</b><span>${escapeHtml(label)}</span><small>${escapeHtml(when[key] || "")}</small></li>`).join("")}</ol>`;
+  const when = {
+    decide_who_to_keep: range(dates.offseason_opens, dates.decisions_deadline),
+    make_offers: dates.market_opens ? `From ${shortDate(dates.market_opens)}` : "",
+    finalize: dates.market_wave_ends ? `After ${shortDate(dates.market_wave_ends)}` : "",
+    set_the_roster: dates.roster_deadline ? `By ${shortDate(dates.roster_deadline)}` : "",
+  };
+  const tips = {
+    decide_who_to_keep: dates.draft_round_one ? `Draft ${range(dates.draft_round_one, dates.draft_round_two)}.` : "",
+    make_offers: dates.league_year ? `League year opens ${shortDate(dates.league_year)}.` : "",
+    finalize: "", set_the_roster: "Opening roster: 15 players.",
+  };
+  return `<ol class="offseason-stops" aria-label="The four offseason stops">${OFFSEASON_STOPS.map(([key, number, label]) => {
+    const current = key === stop;
+    const tip = [tips[key], current ? note : ""].filter(Boolean).join(" ");
+    return `
+    <li class="${current ? "is-current" : ""}"${current ? ' aria-current="step"' : ""}${tip ? ` title="${escapeAttr(tip)}"` : ""}><b>${number}</b><span>${escapeHtml(label)}${current && waiting ? ` <em class="offseason-waiting" title="${waiting} decision${waiting === 1 ? "" : "s"} waiting">${waiting}</em>` : ""}</span><small>${escapeHtml(when[key] || "")}</small></li>`;
+  }).join("")}</ol>`;
 }
 
 const OFFSEASON_ITEM_LABELS = {
@@ -5954,6 +5970,10 @@ function optionDecisionWho(row) {
   return "The team";
 }
 
+// Your options and your deadlines share one column set, so the two tables line up (playtest 2026-11-22).
+const OFFSEASON_COLUMNS = `<colgroup><col style="width:230px"><col style="width:84px"><col style="width:190px"><col style="width:90px"><col style="width:64px"><col style="width:110px"><col></colgroup>
+      <thead><tr><th scope="col">Player</th><th scope="col">OVR</th><th scope="col">Decision</th><th scope="col">Money</th><th scope="col">Due</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>`;
+
 function optionDecisionsMarkup(view, editable) {
   const yours = view?.yours || [];
   const league = view?.league || [];
@@ -5962,54 +5982,66 @@ function optionDecisionsMarkup(view, editable) {
   const actions = (row) => editable && row.status === "pending" && ["team_option", "rookie_option"].includes(row.kind)
     ? `<button type="button" class="ui-command" data-offseason-option="exercise" data-player-id="${escapeAttr(row.player_id || "")}">Keep him</button>
        <button type="button" class="ui-command" data-offseason-option="decline" data-player-id="${escapeAttr(row.player_id || "")}">Decline</button>` : "";
-  const name = (row) => `<button type="button" class="fa-player-name" data-fa-player-card="${escapeAttr(row.player_id || "")}">${escapeHtml(row.name || "")}</button>`;
+  const option = (row) => escapeHtml(row.kind_words.replace(/^./, (c) => c.toUpperCase()));
+  // Why the decision went this way (or what happens by default) reads on hover instead of a paragraph per row.
+  const why = (row) => [row.reason, row.status === "pending" ? `Declined if you do nothing by ${shortDate(row.deadline)}.` : ""].filter(Boolean).join(" ");
+  const chip = (row) => `<span class="offseason-chip is-${chipTone(row)}"${why(row) ? ` title="${escapeAttr(why(row))}"` : ""}>${escapeHtml(optionDecisionWords(row))}</span>`;
   const yourRows = yours.map((row) => `<tr class="${row.status === "pending" ? "is-pending" : ""}">
-      <th scope="row" class="offseason-player">${name(row)}</th>
-      <td>${escapeHtml(row.kind_words.replace(/^./, (c) => c.toUpperCase()))}<small>${escapeHtml(shortSeasonLabel(row.season))}</small></td>
+      <th scope="row" class="offseason-player">${offseasonPlayerCell(row)}</th>
+      <td>${row.overall != null ? compactRatingBar(row.overall) : "—"}</td>
+      <td>${option(row)}</td>
       <td class="offseason-money">${money(row.salary_millions)}</td>
-      <td>${escapeHtml(optionDecisionWho(row))}</td>
-      <td class="offseason-status"><span class="offseason-chip is-${chipTone(row)}">${escapeHtml(optionDecisionWords(row))}</span></td>
-      <td class="offseason-text">${escapeHtml(row.reason || "")}${row.status === "pending" ? `<small>${escapeHtml(`Due ${shortDate(row.deadline)}; declined if you do nothing.`)}</small>` : ""}</td>
+      <td class="offseason-due">${row.status === "pending" ? escapeHtml(shortDate(row.deadline)) : "—"}</td>
+      <td class="offseason-status">${chip(row)}</td>
       <td class="offseason-actions">${actions(row)}</td>
     </tr>`).join("");
   const leagueRows = league.map((row) => `<tr>
-      <th scope="row" class="offseason-player">${name(row)}</th>
-      <td>${escapeHtml(row.team_abbrev || "")}</td>
-      <td>${escapeHtml(row.kind_words.replace(/^./, (c) => c.toUpperCase()))}</td>
+      <th scope="row" class="offseason-player">${offseasonPlayerCell(row)}</th>
+      <td>${teamLogoSrc(row.team_abbrev) ? `<span class="offseason-team"><img src="${escapeAttr(teamLogoSrc(row.team_abbrev))}" alt="" aria-hidden="true">${escapeHtml(row.team_abbrev || "")}</span>` : escapeHtml(row.team_abbrev || "")}</td>
+      <td>${row.overall != null ? compactRatingBar(row.overall) : "—"}</td>
+      <td>${option(row)}</td>
       <td class="offseason-money">${money(row.salary_millions)}</td>
-      <td class="offseason-status"><span class="offseason-chip is-${chipTone(row)}">${escapeHtml(optionDecisionWords(row))}</span></td>
-      <td class="offseason-text">${escapeHtml(row.reason || "")}</td>
+      <td class="offseason-status">${chip(row)}</td>
     </tr>`).join("");
-  const counts = view.counts || {};
-  const summary = `Around the league: ${counts.player_opted_out || 0} player${counts.player_opted_out === 1 ? "" : "s"} opted out and ${counts.player_opted_in || 0} opted in; teams kept ${counts.team_kept || 0} options and declined ${counts.team_declined || 0}.`;
   return `<section class="option-decisions" data-option-decisions aria-label="Option decisions">
-    <header><h4>Option Decisions · ${escapeHtml(shortSeasonLabel(view.season || ""))}</h4><span>Player options are the player's call; team options are yours.</span></header>
+    <h4>Options · ${escapeHtml(shortSeasonLabel(view.season || ""))}</h4>
     ${yours.length ? `<table class="offseason-table option-decisions-table" aria-label="Your team's option decisions">
-      <colgroup><col style="width:150px"><col style="width:118px"><col style="width:82px"><col style="width:96px"><col style="width:96px"><col><col style="width:176px"></colgroup>
-      <thead><tr><th scope="col">Player</th><th scope="col">Option</th><th scope="col">Salary</th><th scope="col">Who decides</th><th scope="col">Decision</th><th scope="col">Why</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+      ${OFFSEASON_COLUMNS}
       <tbody>${yourRows}</tbody></table>` : `<p class="offseason-empty">No options on your team this time.</p>`}
-    ${league.length ? `<p class="option-decisions-summary">${escapeHtml(summary)}</p><table class="offseason-table option-decisions-table" aria-label="Notable option decisions around the league">
-      <colgroup><col style="width:150px"><col style="width:58px"><col style="width:118px"><col style="width:82px"><col style="width:96px"><col></colgroup>
-      <thead><tr><th scope="col">Player</th><th scope="col">Team</th><th scope="col">Option</th><th scope="col">Salary</th><th scope="col">Decision</th><th scope="col">Why</th></tr></thead>
+    ${league.length ? `<h4>Around the league</h4><table class="offseason-table option-decisions-table" aria-label="Notable option decisions around the league">
+      <colgroup><col style="width:230px"><col style="width:84px"><col style="width:84px"><col style="width:160px"><col style="width:84px"><col style="width:110px"></colgroup>
+      <thead><tr><th scope="col">Player</th><th scope="col">Team</th><th scope="col">OVR</th><th scope="col">Option</th><th scope="col">Salary</th><th scope="col">Decision</th></tr></thead>
       <tbody>${leagueRows}</tbody></table>` : ""}
   </section>`;
 }
 
+// Player cell for the offseason tables: headshot and name (opens his card).
+function offseasonPlayerCell(row) {
+  if (!row.player_id) return escapeHtml(row.name || "");
+  const face = playerHeadshotMarkup(row, "roster-player-headshot") || playerHeadshotMarkup({is_prospect: true}, "roster-player-headshot");
+  return `<span class="offseason-player-cell">${face}<button type="button" class="fa-player-name" data-fa-player-card="${escapeAttr(row.player_id)}">${escapeHtml(row.name || "")}</button></span>`;
+}
+
 function offseasonChecklistTable(items, editable) {
-  if (!items.length) return `<p class="offseason-empty">Nothing to decide here.</p>`;
-  const rows = items.map((item) => `<tr class="${item.status === "pending" ? "is-pending" : ""}">
-      <td class="offseason-due">${escapeHtml(shortDate(item.deadline))}</td>
-      <th scope="row" class="offseason-player">${item.player_id ? `<button type="button" class="fa-player-name" data-fa-player-card="${escapeAttr(item.player_id)}">${escapeHtml(item.name || "")}</button>` : escapeHtml(item.text || "")}</th>
-      <td>${escapeHtml(OFFSEASON_ITEM_LABELS[item.kind] || rowLabel(item.kind))}${item.bird_level ? `<small>${escapeHtml({full: "Full Bird", early: "Early Bird", non: "Non-Bird"}[item.bird_level] || "")}</small>` : ""}</td>
+  if (!items.length) return "";
+  const bird = (item) => item.bird_level ? ` (${({full: "Full Bird", early: "Early Bird", non: "Non-Bird"}[item.bird_level] || "")})` : "";
+  const detail = (item) => [item.text, item.basis ? `Amount: ${item.basis}.` : "", item.status === "pending" ? item.default : ""].filter(Boolean).join(" ");
+  const rows = items.map((item) => {
+    const label = OFFSEASON_ITEM_LABELS[item.kind] || rowLabel(item.kind);
+    const tip = detail(item);
+    return `<tr class="${item.status === "pending" ? "is-pending" : ""}"${tip ? ` title="${escapeAttr(tip)}"` : ""}>
+      <th scope="row" class="offseason-player">${item.player_id ? offseasonPlayerCell(item) : escapeHtml(label)}</th>
+      <td>${item.overall != null ? compactRatingBar(item.overall) : ""}</td>
+      <td>${item.player_id ? escapeHtml(label + bird(item)) : ""}</td>
       <td class="offseason-money">${offseasonItemMoney(item)}</td>
+      <td class="offseason-due">${escapeHtml(shortDate(item.deadline))}</td>
       <td class="offseason-status"><span class="offseason-chip is-${escapeAttr(item.status || "")}">${escapeHtml(offseasonItemStatus(item))}</span></td>
-      <td class="offseason-text">${item.player_id ? escapeHtml(item.text || "") : ""}${item.basis ? `<small>Amount: ${escapeHtml(item.basis)}.</small>` : ""}${item.status === "pending" && item.default ? `<small>${escapeHtml(item.default)}</small>` : ""}</td>
       <td class="offseason-actions">${offseasonItemActions(item, editable)}</td>
-    </tr>`).join("");
-  return `<table class="offseason-table" aria-label="Offseason decisions">
-    <colgroup><col style="width:54px"><col style="width:150px"><col style="width:118px"><col style="width:82px"><col style="width:92px"><col><col style="width:176px"></colgroup>
-    <thead><tr><th scope="col">Due</th><th scope="col">Player</th><th scope="col">Decision</th><th scope="col">Money</th><th scope="col">Status</th><th scope="col">What it means</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
-    <tbody>${rows}</tbody></table>`;
+    </tr>`;
+  }).join("");
+  return `<section class="offseason-deadlines"><h4>Deadlines</h4><table class="offseason-table" aria-label="Offseason decisions">
+    ${OFFSEASON_COLUMNS}
+    <tbody>${rows}</tbody></table></section>`;
 }
 
 // Stop 3: who signed, who left, and what is still open after the first wave.
@@ -6114,7 +6146,6 @@ function offseasonChecklistPanel(room = state.data.freeagency || {}) {
   const dates = list.calendar || {};
   const items = list.items || [];
   const editable = !state.hydrating;
-  const titles = {decide_who_to_keep: "Decide Who To Keep", make_offers: "Your Offseason Decisions", finalize: "Signing Day"};
   const notes = {
     decide_who_to_keep: `Teams may talk to their own free agents now; deals are official the moment both sides agree. Options and qualifying offers are due ${shortDate(dates.decisions_deadline)}. Other teams' free agents open ${shortDate(dates.market_opens)}.`,
     make_offers: "Talk to anyone. Another team's restricted free agent (one sent a qualifying offer) signs with you only on an offer sheet, which his team may match by the end of the next day.",
@@ -6123,11 +6154,10 @@ function offseasonChecklistPanel(room = state.data.freeagency || {}) {
   // FA-REAL slice 3: a rival's offer sheet waiting for your Match or Pass is a decision too.
   const pending = items.filter((item) => item.status === "pending").length + (room.offer_sheets?.for_you || []).length;
   return `<section class="fa-panel offseason-checklist" data-offseason-checklist aria-label="Offseason checklist">
-    <header class="offseason-head">
-      <div><p>${escapeHtml(list.season || room.signing_season || "")} · ${pending ? `${pending} decision${pending === 1 ? "" : "s"} waiting` : "No decision waiting"}</p><h3>${escapeHtml(titles[stop] || "Offseason")}</h3><span>${escapeHtml(notes[stop] || "")}</span></div>
+    <header class="offseason-head is-compact">
       <div class="offseason-cap">${list.cap_room_millions != null ? `<span class="fa-cap-chip${Number(list.cap_room_millions) < 0 ? " is-over" : ""}"><small>Cap room</small><strong>${escapeHtml(signedMoney(list.cap_room_millions))}</strong></span>` : ""}${list.holds_millions ? `<span class="fa-cap-chip"><small>Cap holds</small><strong>${escapeHtml(money(list.holds_millions))}</strong></span>` : ""}</div>
     </header>
-    ${offseasonStopTimeline(stop, dates)}
+    ${offseasonStopTimeline(stop, dates, pending, notes[stop] || "")}
     <div class="offseason-scroll">${offerSheetDecisionMarkup(room)}${stop === "finalize" ? signingDayRecap(room) : ""}${optionDecisionsMarkup(list.option_decisions, editable)}${offseasonChecklistTable(list.option_decisions ? items.filter((item) => !OPTION_ITEM_KINDS.has(item.kind)) : items, editable)}</div>
   </section>`;
 }
@@ -6137,11 +6167,8 @@ function setRosterChecklistPanel(list = state.data.setRoster || {}) {
   const items = list.items || [];
   const pending = items.filter((item) => item.status === "pending").length;
   return `<section class="fa-panel offseason-checklist" data-set-roster-checklist aria-label="Set the roster">
-    <header class="offseason-head">
-      <div><p>${escapeHtml(list.season || "")} · ${pending ? `${pending} decision${pending === 1 ? "" : "s"} waiting` : "No decision waiting"}</p><h3>Set The Roster</h3>
-      <span>${escapeHtml(`Opening rosters (15 players) and rookie-scale extensions are due ${shortDate(list.roster_deadline)}, the day before opening night. Rookie-scale options for next season are due ${shortDate(list.rookie_option_deadline)}.`)}</span></div>
-    </header>
-    ${offseasonStopTimeline("set_the_roster", dates)}
+    ${offseasonStopTimeline("set_the_roster", {...dates, roster_deadline: dates.roster_deadline || list.roster_deadline}, pending,
+      `Opening rosters and rookie-scale extensions are due ${shortDate(list.roster_deadline)}; rookie-scale options for next season ${shortDate(list.rookie_option_deadline)}.`)}
     <div class="offseason-scroll">${optionDecisionsMarkup(list.option_decisions, !state.hydrating)}${offseasonChecklistTable(list.option_decisions ? items.filter((item) => !OPTION_ITEM_KINDS.has(item.kind)) : items, !state.hydrating)}</div>
   </section>`;
 }
@@ -8913,8 +8940,8 @@ function setRosterClipboardCard() {
   card.className = "seasonal-clipboard-card";
   card.innerHTML = `<div class="unified-phase-dashboard" data-seasonal-context>${setRosterChecklistPanel(list)}</div>`;
   const rows = (list.items || []).length;
-  return {id: "phase-set_roster-checklist", title: "Set The Roster", card, width: 900,
-          height: Math.min(520, 190 + rows * 40), sizingKey: "set-roster-v1", locked: false, galleryVisible: true,
+  return {id: "phase-set_roster-checklist", title: "Set The Roster", card, width: 1120,
+          height: Math.min(720, Math.max(560, 260 + rows * 48)), sizingKey: "set-roster-v2", locked: false, galleryVisible: true,
           mandatory: false, required: false, measured: true, phaseActive: true};
 }
 

@@ -567,6 +567,23 @@ def user_decide_option(canonical: dict[str, Any], save: dict[str, Any], player_i
     return {"ok": True, "option": saved}
 
 
+def _with_faces(rows: list[dict[str, Any]], active: dict[str, Any] | None) -> list[dict[str, Any]]:
+    """Headshot and overall (the one display scale) on every row about a player, for the tables (playtest
+    2026-11-22: headshots and rating bars in every player table)."""
+    if not active:
+        return rows
+    from .save import player_display_attribute_summary
+    players = {p.get("id"): p for p in active.get("players", [])}
+    for row in rows:
+        player = players.get(row.get("player_id"))
+        if not player:
+            continue
+        row.setdefault("headshot_url", player.get("headshot_url"))
+        overall = player_display_attribute_summary(active, player["id"]).get("overall")
+        row["overall"] = round(float(overall), 1) if overall is not None else None
+    return rows
+
+
 def option_decisions_view(canonical: dict[str, Any], save: dict[str, Any], team_id: str, *,
                           active: dict[str, Any] | None = None, kinds: set[str] | None = None) -> dict[str, Any]:
     """CONTRACT-TERMS part 3: the option decisions of the current offseason (or autumn, for rookie-scale options),
@@ -600,8 +617,9 @@ def option_decisions_view(canonical: dict[str, Any], save: dict[str, Any], team_
               "player_opted_out": sum(1 for r in records if r.get("decided_by") == "player" and r["status"] == "declined"),
               "team_kept": sum(1 for r in records if r.get("decided_by") in {"team", "user"} and r["status"] == "exercised"),
               "team_declined": sum(1 for r in records if r.get("decided_by") in {"team", "user", "default"} and r["status"] == "declined")}
-    return {"season": season, "today": today, "yours": [row(r) for r in sorted(yours, key=lambda r: (r.get("status") != "pending", -float(r.get("salary") or 0)))],
-            "league": [row(r) for r in league[:12]], "counts": counts,
+    return {"season": season, "today": today,
+            "yours": _with_faces([row(r) for r in sorted(yours, key=lambda r: (r.get("status") != "pending", -float(r.get("salary") or 0)))], active),
+            "league": _with_faces([row(r) for r in league[:12]], active), "counts": counts,
             "deadlines": {"summer": offseason_dates(start + 1, save)["decisions_deadline"] if start else None,
                           "rookie": rookie_option_deadline(start).isoformat() if start else None}}
 
@@ -1171,6 +1189,7 @@ def stop_one_checklist(canonical: dict[str, Any], save: dict[str, Any], team_id:
                                                         "player_option_result": 2, "own_free_agent": 3}.get(i["kind"], 4),
                               str(i.get("name") or "")))
     pending = sum(1 for i in items if i.get("status") == "pending")
+    _with_faces(items, active)
     return {"season": season, "dates": dates, "items": items, "pending_count": pending, "departed": departed,
             "cap_room_millions": round(float(payroll.get("cap_room") or 0) / 1e6, 2),
             "holds_millions": round(sum(float(h["amount"]) for h in holds.values()) / 1e6, 2),
@@ -1219,6 +1238,7 @@ def stop_four_checklist(canonical: dict[str, Any], save: dict[str, Any], team_id
                           "salary_millions": round(record["salary"] / 1e6, 2), "season": record["season"],
                           "text": record.get("reason")})
     items.sort(key=lambda i: (i.get("deadline") or "", i["kind"]))
+    _with_faces(items, active)
     return {"season": season, "items": items, "roster_deadline": deadline,
             "rookie_option_deadline": rookie_option_deadline(start).isoformat(),
             "pending_count": sum(1 for i in items if i.get("status") == "pending"),

@@ -109,3 +109,34 @@ body.unified-terminal-ui .offseason-table thead th { font-size: 9px !important; 
 .option-decisions > header span { font-size: 10.5px; color: #5c6b75; }
 .option-decisions-summary { margin: 8px 12px 4px; font-size: 10.5px; color: #34424c; }
 .option-decisions-table + .option-decisions-summary { margin-top: 10px; }
+
+/* Playtest 2026-11-22: less text, bigger card, tables in the house look. The header keeps only the cap chips (the
+   window title already names the card); details and rules read on hover. */
+.offseason-head.is-compact { padding: 6px 12px 0; border-bottom: 0; justify-content: flex-end; }
+.offseason-head.is-compact:not(:has(.fa-cap-chip)) { display: none; }
+.offseason-stops { padding: 10px 12px; gap: 8px; }
+.offseason-stops li { padding: 6px 8px; }
+.offseason-stops li span { font-size: 12.5px; overflow: visible; }
+.offseason-stops li small { font-size: 11px; }
+.offseason-waiting { display: inline-grid; place-items: center; min-width: 17px; height: 17px; margin-left: 4px; padding: 0 4px; border-radius: 9px;
+  background: #c2862a; color: #fff; font-size: 10.5px; font-style: normal; font-weight: 700; vertical-align: 1px; }
+.offseason-scroll { padding: 4px 12px 12px; }
+.offseason-scroll h4 { margin: 12px 0 6px; font-size: 16px; font-weight: 750; color: #18212a; }
+.offseason-table { font-size: 12px; }
+.offseason-table tbody tr.is-pending { box-shadow: none; }
+.offseason-table tbody :is(th, td) { vertical-align: middle; height: 30px; padding: 0 6px; }
+.offseason-table .offseason-actions { display: table-cell; white-space: nowrap; }
+.offseason-table .offseason-actions .ui-command { margin-right: 4px; }
+.offseason-player-cell { display: flex; align-items: flex-end; gap: 8px; height: 30px; }
+.offseason-table th.offseason-player:has(.offseason-player-cell) { padding-left: 0; vertical-align: bottom; }
+.offseason-player-cell .player-headshot-frame { display: block; flex: 0 0 40px; width: 40px; height: 30px; overflow: hidden; }
+.offseason-player-cell .roster-player-headshot { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center bottom;
+  filter: grayscale(1) contrast(1.12); image-rendering: pixelated; }
+.offseason-player-cell .fa-player-name { align-self: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.offseason-team { display: inline-flex; align-items: center; gap: 5px; }
+.offseason-team img { width: 18px; height: 18px; object-fit: contain; }
+/* One row height for every row (blank portraits included). */
+.offseason-table tbody tr { height: 31px; }
+.offseason-player-cell .player-headshot-frame { height: 30px !important; max-height: 30px; line-height: 0; }
+.offseason-player-cell .player-headshot-frame svg { display: block; width: 100%; height: 100%; }
+body.unified-terminal-ui .offseason-scroll h4 { font-weight: 750 !important; }
