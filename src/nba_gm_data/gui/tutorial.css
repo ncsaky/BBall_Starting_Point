@@ -161,8 +161,7 @@
   cursor: pointer;
   font-size: 14px !important;
   padding: 7px 5px;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration: none;  /* it sits in a button box; no underline (playtest 2026-11-22) */
 }
 
 .game-tutorial button:hover:not(:disabled) {

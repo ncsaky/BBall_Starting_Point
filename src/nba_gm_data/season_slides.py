@@ -956,10 +956,13 @@ def roster_note(row: dict[str, Any] | None, value: Callable[[str], float] | None
     return text
 
 
+CONTINUITY_NOTE = "Last season's minutes, by whether the player is still on the team."
+
+
 def outlook_continuity_slide(ctx: dict[str, Any]) -> dict[str, Any]:
     return {"key": "continuity", "title": "Continuity", "kicker": f"Share of {ctx['last']['season']} minutes still on the roster",
             "rows": [{**row, "is_user": row["team"]["id"] == ctx["user"]} for row in ctx["continuity"]],
-            "source": ctx["last"]["source"], "note": ctx["last"]["note"],
+            "source": ctx["last"]["source"], "note": CONTINUITY_NOTE,
             "legend": {"kept": "Still on the team", "injured": f"Still on the team, out more than {INJURY_SLIDE_MIN_GAMES} games",
                        "gone": "Left the team"}}
 
