@@ -46,7 +46,7 @@ test('a declined offer with a counter shows it in plain words with the full pack
   const readout = readoutIn();
   const html = readout({legality: {status: 'legal'}, evaluations: [{perspective_team_id: 'team_uta', accepted: false}],
     counter_offer: counter});
-  assert.match(html, /Partner declines/);
+  assert.match(html, /Declines|Counters/); // trade-room redo: the answer reads as one word under the dial
   assert.match(html, /class="trade-counter-offer/);
   assert.match(html, /UTA asked for a 2029 second-round pick as well\./);
   assert.match(html, /GSW sends: Buddy Hield, 2029 R2 GSW/);

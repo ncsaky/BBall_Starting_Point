@@ -7817,6 +7817,8 @@ function setMarketRotatorActive(rotator, value) {
   if (select) select.value = String(index);
 }
 
+// TRADE-ROOM REDO (2026-11-23): one window with three tools. The builder's deal is the hero (what each team gives,
+// its salary picture and the partner's answer); asset lists sit underneath. Tabs are a light tint with an underline.
 function tradeRoomModalBody() {
   const user = userTeam();
   const market = Boolean(state.tradeMarketOpen);
@@ -7827,34 +7829,119 @@ function tradeRoomModalBody() {
     .filter((team) => team.abbrev !== user && (finder || !(state.tradeAdditionalTeams || []).includes(team.abbrev)))
     .map((team) => `<option value="${escapeAttr(team.abbrev)}" ${team.abbrev === (finder ? scope : state.tradePartner) ? "selected" : ""}>${escapeHtml(team.abbrev)} ${escapeHtml(team.name || "")}</option>`)
     .join("");
+  const tab = (active) => `aria-pressed="${active}" class="${active ? "active" : ""}"`;
+  const extraTeams = state.teams.filter(team => team.abbrev !== user && team.abbrev !== state.tradePartner && !(state.tradeAdditionalTeams || []).includes(team.abbrev));
   return `
-    <div class="trade-room-toolbar">
+    <div class="trade-room-toolbar tr-toolbar">
       <div class="trade-room-mode">
-        <div class="tabs" aria-label="Trade tools">
-          <button data-trade-tab="builder" aria-pressed="${!finder && !market}" class="${!finder && !market ? "active" : ""}">Trade Builder</button>
-          <button data-trade-tab="finder" aria-pressed="${finder}" class="${finder ? "active" : ""}">Trade Finder</button>
-          <button data-trade-tab="market" aria-pressed="${market}" class="${market ? "active" : ""}">Trade Market</button>
-        </div>
-        ${!finder && state.tradeWorkspaceDrafts?.finder ? '<button type="button" data-back-finder>Back to results</button>' : ""}
+        <div class="tabs tr-tabs" aria-label="Trade tools"><button type="button" data-trade-tab="builder" ${tab(!finder && !market)}>Builder</button><button type="button" data-trade-tab="finder" ${tab(finder)}>Finder</button><button type="button" data-trade-tab="market" ${tab(market)}>Market</button></div>
+        ${!finder && !market && state.tradeWorkspaceDrafts?.finder ? '<button type="button" class="tr-text-button" data-back-finder>‹ Back to results</button>' : ""}
       </div>
       ${finder ? `
-        <label class="trade-finder-mode"><span>Find a deal to</span><select id="tradeFinderMode" aria-label="Trade Finder mode"><option value="shop" ${!acquiring ? "selected" : ""}>Shop my assets</option><option value="acquire" ${acquiring ? "selected" : ""}>Acquire another team's assets</option></select></label>
-        <div class="trade-partner-navigation">
-          ${scope && teamLogoSrc(scope) ? `<img src="${escapeAttr(teamLogoSrc(scope))}" alt="${escapeAttr(scope)} logo" />` : ""}
-          <button type="button" data-trade-team-step="-1" aria-label="Previous Trade Finder team">‹</button>
-          <label class="trade-partner-field" for="tradeFinderTeam"><span>${acquiring ? "Target team" : "Search teams"}</span><select id="tradeFinderTeam">${!acquiring ? `<option value="" ${!scope ? "selected" : ""}>All ${state.teams.length - 1} teams</option>` : ""}${partnerOptions}</select></label>
-          <button type="button" data-trade-team-step="1" aria-label="Next Trade Finder team">›</button>
-        </div>` : `
-        <div class="trade-partner-navigation">
-          ${teamLogoSrc(state.tradePartner) ? `<img src="${escapeAttr(teamLogoSrc(state.tradePartner))}" alt="${escapeAttr(state.tradePartner)} logo" />` : ""}
-          <button type="button" data-trade-team-step="-1" aria-label="Previous trade partner">‹</button>
-        <label class="trade-partner-field" for="tradePartner">
-          <span>Trade partner</span>
-          <select id="tradePartner">${partnerOptions}</select>
-        </label><button type="button" data-trade-team-step="1" aria-label="Next trade partner">›</button></div>
-        <div class="trade-add-participant"><select id="tradeAddTeam" aria-label="Additional trade team"><option value="">Add team</option>${state.teams.filter(team => team.abbrev !== user && team.abbrev !== state.tradePartner && !(state.tradeAdditionalTeams || []).includes(team.abbrev)).map(team => `<option value="${escapeAttr(team.abbrev)}">${escapeHtml(team.abbrev)} ${escapeHtml(team.name || "")}</option>`).join("")}</select><button type="button" class="ui-command trade-icon-button" data-trade-add-team aria-label="Add team to trade" title="Add team" ${(state.tradeAdditionalTeams || []).length >= 4 ? "disabled" : ""}><img src="/assets/window-icons/plus.svg" alt=""></button></div>`}
+        <div class="tr-toolbar-controls">
+          <label class="trade-finder-mode"><select id="tradeFinderMode" aria-label="Trade Finder mode"><option value="shop" ${!acquiring ? "selected" : ""}>Shop my assets</option><option value="acquire" ${acquiring ? "selected" : ""}>Get another team's assets</option></select></label>
+          <div class="trade-partner-navigation">
+            <button type="button" class="tr-step" data-trade-team-step="-1" aria-label="Previous Trade Finder team">‹</button>
+            ${scope && teamLogoSrc(scope) ? `<img src="${escapeAttr(teamLogoSrc(scope))}" alt="" />` : ""}
+            <label class="trade-partner-field" for="tradeFinderTeam"><span class="sr-only">${acquiring ? "Target team" : "Search teams"}</span><select id="tradeFinderTeam">${!acquiring ? `<option value="" ${!scope ? "selected" : ""}>All ${state.teams.length - 1} teams</option>` : ""}${partnerOptions}</select></label>
+            <button type="button" class="tr-step" data-trade-team-step="1" aria-label="Next Trade Finder team">›</button>
+          </div>
+        </div>` : market ? "" : `
+        <div class="tr-toolbar-controls">
+          <div class="trade-add-participant"><select id="tradeAddTeam" aria-label="Additional trade team"><option value="">Add a team…</option>${extraTeams.map(team => `<option value="${escapeAttr(team.abbrev)}">${escapeHtml(team.abbrev)} ${escapeHtml(team.name || "")}</option>`).join("")}</select><button type="button" class="tr-text-button" data-trade-add-team aria-label="Add team to trade" ${(state.tradeAdditionalTeams || []).length >= 4 ? "disabled" : ""}>Add</button></div>
+        </div>`}
     </div>
-    <div id="tradeBody"></div>`;
+    <div id="tradeBody" class="tr-body"></div>`;
+}
+
+// The engine's salary checks for one team in this deal, in display form. Mirrors transactions.salary_matching_issue:
+// above the tax line after the trade, incoming salary over $7.5M may be at most 125% of outgoing salary plus $5M;
+// a team may not finish above the hard cap (or its own triggered hard cap) unless it was already there. Roster
+// minimum 12. The engine counts only guaranteed money as outgoing salary, so a non-guaranteed contract can make
+// this read a little generous until the deal is asked; the partner's answer then carries the engine's verdict.
+function tradeSalaryFlow(team, payload = {}, sends = [], receives = []) {
+  const cap = payload.cap || {};
+  const season = cap.season || Object.keys(payload.cap_by_year || {}).sort()[0] || "";
+  const salary = asset => asset.kind !== "player" ? 0 : tradeKnownNumber(asset.salary_by_year?.[season]);
+  const total = list => list.reduce((sum, asset) => sum === null || salary(asset) === null ? null : sum + salary(asset), 0);
+  const out = total(sends), incoming = total(receives), payroll = tradeKnownNumber(cap.salary_total_millions);
+  const after = payroll === null || out === null || incoming === null ? null : payroll - out + incoming;
+  const tax = tradeKnownNumber(cap.tax_line_millions);
+  const triggered = cap.triggered_hard_cap ? tradeKnownNumber(cap.triggered_hard_cap.amount ?? cap.triggered_hard_cap) : null;
+  const hard = triggered !== null ? (triggered > 10000 ? triggered / 1e6 : triggered) : tradeKnownNumber(cap.hard_cap_millions);
+  const limit = out === null ? null : Math.max(7.5, out * 1.25 + 5);
+  const players = Array.isArray(payload.players) ? payload.players.length : null;
+  const rosterAfter = players === null ? null : players - sends.filter(a => a.kind === "player").length + receives.filter(a => a.kind === "player").length;
+  const active = sends.length + receives.length > 0;
+  let status = "", tone = "";
+  if (!active) status = "";
+  else if (after === null) { status = "Salary unknown"; tone = "unknown"; }
+  else if (hard !== null && after > hard && after > payroll + 0.25) { status = `${money(after - hard)} over the hard cap`; tone = "bad"; }
+  else if (tax !== null && after > tax && incoming > limit) { status = `Takes back ${money(incoming - limit)} too much`; tone = "bad"; }
+  else if (rosterAfter !== null && rosterAfter < 12 && rosterAfter < players) { status = `Roster drops to ${rosterAfter}`; tone = "bad"; }
+  else if (tax !== null && after <= tax) { status = "Under the tax: no matching"; tone = "good"; }
+  else { status = incoming > 0 ? "Salaries match" : "Salary works"; tone = "good"; }
+  return {team, season, out, incoming, payroll, after, tax, hard, limit, rosterNow: players, rosterAfter, status, tone, triggered: triggered !== null};
+}
+
+// Salary picture in the payroll-chart language: before and after bars on one 0-based scale, dashed tax (gold) and
+// hard-cap (red) lines, what leaves hatched, what arrives in blue. One status line; the numbers sit in hover text.
+function tradeSalaryGauge(flow) {
+  if (flow.payroll === null) return `<div class="tr-salary is-unknown"><div class="tr-salary-line"><span>Payroll</span><strong>—</strong></div></div>`;
+  const kept = flow.payroll - (flow.out || 0);
+  const after = flow.after ?? flow.payroll;
+  const top = Math.max(1, flow.payroll, after, flow.hard || 0, flow.tax || 0) * 1.06;
+  const pct = value => `${Math.max(0, Math.min(100, Number(value || 0) / top * 100)).toFixed(2)}%`;
+  const line = (value, cls, label) => value === null ? "" : `<i class="tr-salary-mark ${cls}" style="left:${pct(value)}" title="${escapeAttr(`${label} ${money(value)}`)}"><span>${label}</span></i>`;
+  const limitText = flow.tax !== null && after > flow.tax && flow.limit !== null ? ` · can take back up to ${money(flow.limit)}` : "";
+  const detail = `Payroll ${money(flow.payroll)}${flow.after !== null && (flow.out || flow.incoming) ? ` → ${money(flow.after)}` : ""} · sends ${money(flow.out || 0)} · takes back ${money(flow.incoming || 0)}${limitText}${flow.tax !== null ? ` · tax line ${money(flow.tax)}` : ""}${flow.hard !== null ? ` · ${flow.triggered ? "its own hard cap" : "hard cap"} ${money(flow.hard)}` : ""}`;
+  const room = flow.hard === null ? "" : `${money(Math.abs(flow.hard - after))} ${after <= flow.hard ? "under" : "over"} the hard cap`;
+  const mark = flow.tone === "good" ? "✓" : flow.tone === "bad" ? "✕" : "";
+  return `<div class="tr-salary" title="${escapeAttr(detail)}">
+    <div class="tr-salary-line"><span>Payroll</span><strong>${money(flow.payroll)}${flow.after !== null && (flow.out || flow.incoming) ? ` <em>→</em> ${money(flow.after)}` : ""}</strong>
+      <span class="tr-salary-status${flow.tone ? ` is-${flow.tone}` : ""}">${mark ? `<b aria-hidden="true">${mark}</b>` : ""}${escapeHtml(flow.status || room)}</span></div>
+    <div class="tr-salary-bars" role="img" aria-label="${escapeAttr(detail)}">
+      <div class="tr-salary-bar is-before"><i class="tr-kept" style="width:${pct(kept)}"></i>${flow.out ? `<i class="tr-out" style="width:${pct(flow.out)}" title="${escapeAttr(`Sends ${money(flow.out)}`)}"></i>` : ""}</div>
+      <div class="tr-salary-bar is-after"><i class="tr-kept" style="width:${pct(kept)}"></i>${flow.incoming ? `<i class="tr-in" style="width:${pct(flow.incoming)}" title="${escapeAttr(`Takes back ${money(flow.incoming)}`)}"></i>` : ""}</div>
+      ${line(flow.tax, "is-tax", "Tax")}${line(flow.hard, "is-hard", "Hard cap")}
+    </div>
+  </div>`;
+}
+
+// One side of the deal: who gives what, as compact tiles, with that team's salary picture underneath.
+function tradeDealSide(row, participants, fresh = "") {
+  const {team, side, payload = {}, selected = []} = row;
+  const multi = participants.length > 2;
+  const receives = tradeReceivedAssets(team, participants);
+  const flow = tradeSalaryFlow(team, payload, selected, receives);
+  const record = payload.record || {};
+  const recordText = `${Number(record.wins || 0)}-${Number(record.losses || 0)}`;
+  const logo = teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : "";
+  const partnerPicker = side === "to" ? `<div class="trade-partner-navigation tr-partner-picker">
+      <button type="button" class="tr-step" data-trade-team-step="-1" aria-label="Previous trade partner">‹</button>
+      <button type="button" class="tr-side-team" data-trade-team-roster="${escapeAttr(team)}" title="${escapeAttr(`${team} roster · ${recordText}`)}">${logo}</button>
+      <label class="trade-partner-field" for="tradePartner"><span class="sr-only">Trade partner</span><select id="tradePartner">${state.teams.filter(item => item.abbrev !== userTeam() && !(state.tradeAdditionalTeams || []).includes(item.abbrev)).map(item => `<option value="${escapeAttr(item.abbrev)}" ${item.abbrev === state.tradePartner ? "selected" : ""}>${escapeHtml(item.abbrev)} ${escapeHtml(item.name || "")}</option>`).join("")}</select></label>
+      <button type="button" class="tr-step" data-trade-team-step="1" aria-label="Next trade partner">›</button>
+    </div>` : `<button type="button" class="tr-side-team" data-trade-team-roster="${escapeAttr(team)}" title="${escapeAttr(`${team} roster · ${recordText}`)}">${logo}<strong>${escapeHtml(team)}</strong></button>`;
+  const remove = side.startsWith("extra:") ? `<button type="button" class="tr-text-button tr-side-remove" data-trade-remove-team="${escapeAttr(team)}" aria-label="Remove ${escapeAttr(team)} from trade" title="Remove ${escapeAttr(team)}">×</button>` : "";
+  const total = selectedTradeValue(selected);
+  const tiles = selected.length
+    ? selected.map(asset => tradeDealTile(asset, {removeSide: side, routeFrom: multi ? team : "", fresh: fresh === `${side}:${asset.kind}:${asset.id}`})).join("")
+    : `<li class="tr-tiles-empty"><button type="button" class="tr-text-button" data-trade-roster-side="${escapeAttr(side)}">Choose from ${escapeHtml(team)}'s list</button></li>`;
+  return `<section class="tr-side${state.tradeRosterSide === side ? " is-picking" : ""}" data-tr-side="${escapeAttr(side)}" ${teamBrandStyle(team)}>
+    <header class="tr-side-head">${partnerPicker}<span class="tr-side-verb">gives</span><span class="tr-side-total" title="Listed trade value of what ${escapeAttr(team)} gives (before fit and role)">${selected.length ? total.toFixed(1) : ""}</span>${remove}</header>
+    <ul class="tr-tiles" data-trade-scroll="selected-${escapeAttr(side)}" aria-label="${escapeAttr(team)} gives">${tiles}</ul>
+    ${tradeSalaryGauge(flow)}
+  </section>`;
+}
+
+function tradeLowerTabs(page) {
+  const labels = ["Assets", "Value", "Payroll", "Team identity"];
+  return `<nav class="tr-lower-tabs" aria-label="Trade details">${labels.map((label, index) => `<button type="button" data-trade-page="${index}" aria-pressed="${page === index}" class="${page === index ? "active" : ""}">${label}</button>`).join("")}</nav>`;
+}
+
+function tradeTeamPickerTabs(participants, current) {
+  return `<div class="trade-roster-switch tr-team-tabs" aria-label="Team asset lists">${participants.map(({side, team, selected}) => `<span class="trade-participant-tab"><button type="button" data-trade-roster-side="${escapeAttr(side)}" aria-pressed="${current === side}" class="${current === side ? "active" : ""}">${teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : ""}<strong>${escapeHtml(team)}</strong>${selected.length ? `<small>${selected.length}</small>` : ""}</button></span>`).join("")}</div>`;
 }
 
 async function openTradeMarketBoard() {
@@ -8196,36 +8283,54 @@ function renderTradeBuilder(root) {
   const participants = tradeWorkspaceParticipants();
   const multi = participants.length > 2;
   const current = participants.find(team => team.side === state.tradeRosterSide) || participants[0];
-  const side = current.side;
   const page = Math.max(0, Math.min(3, Number(state.tradeInsightPage || 0)));
+  const candidate = state.tradeCandidate;
+  const userId = state.home?.save?.user_team?.id;
+  const partnerAnswers = (candidate?.evaluations || []).filter(row => row.perspective_team_id !== userId && teamLabel(row.perspective_team_id) !== userTeam());
+  const canApply = candidate?.legality?.status === "legal" && partnerAnswers.length > 0 && partnerAnswers.every(row => row.accepted);
+  const empty = !participants.some(row => row.selected.length);
+  const hasPicks = participants.some(row => row.selected.some(asset => asset.kind !== "player")) || (state.tradePickRules || []).length;
+  const fresh = state.tradeFreshAsset || "";
+  state.tradeFreshAsset = "";
+  const freshVerdict = Boolean(state.tradeVerdictFresh);
+  state.tradeVerdictFresh = false;
+  const ask = multi ? "Ask every team" : candidate ? "Ask again" : `Ask ${state.tradePartner}`;
+  const lower = page === 0
+    ? assetColumn(`${current.team} assets`, current.payload, current.side, current.team, {tabs: tradeTeamPickerTabs(participants, current.side)})
+    : page === 1
+      ? `<div class="tr-value-page">${multi ? tradeMultiValuePreview(participants) : `<div class="trade-team-decisions">${(candidate?.evaluations || []).map(tradeEvaluationPanel).join("")}</div>${tradeSegmentedValueBoard(candidate, state.selectedFrom, state.selectedTo, userTeam(), state.tradePartner)}`}</div>`
+      : page === 2 ? tradeFourYearImplications(userAssets, partnerAssets, state.selectedFrom, state.selectedTo, participants) : `<div class="tr-identity-page">${tradeIdentityPage()}</div>`;
   body.innerHTML = `
-    <div class="trade-builder-layout">
-      ${page === 0 ? `<div class="trade-roster-switch" aria-label="Team asset lists">
-        ${participants.map(({side:key,team,selected:items}) => `<span class="trade-participant-tab"><button type="button" data-trade-roster-side="${escapeAttr(key)}" aria-pressed="${side === key}">${teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : ""}<strong>${escapeHtml(team)}</strong><span>${items.length} selected</span></button>${key.startsWith("extra:") ? `<button type="button" class="trade-icon-button" data-trade-remove-team="${escapeAttr(team)}" aria-label="Remove ${escapeAttr(team)} from trade" title="Remove team"><img src="/assets/window-icons/x.svg" alt=""></button>` : ""}</span>`).join("")}
-      </div>
-      ${assetColumn(`${current.team} assets`,current.payload,side,current.team)}` : `<div class="trade-package-brief">${participants.map(({team,selected:items}) => `<section><strong>${escapeHtml(team)} sends</strong><span>${items.length ? items.slice(0,3).map(item => escapeHtml(item.name || item.label)).join(", ") + (items.length > 3 ? ` + ${items.length-3} assets` : "") : "No assets selected"}</span></section>`).join("")}<button type="button" class="ui-command" data-trade-edit-package>Edit package</button></div>`}
-      <section class="trade-deal-desk approved-trade-desk">
-        ${tradeInsightPager(["Package", "Value", "Payroll", "Team identity"], page, "builder")}
-        <div class="trade-insight-page" data-trade-page="${page}">
-        ${page === 0 ? `<div class="trade-selected-packages">
-          ${participants.map(({team,side,selected,payload}) => selectedPackage(`${team} sends`,selected,side,team,payload)).join("")}
-        </div>${tradePickTermsMarkup()}` : page === 1 ? multi ? tradeMultiValuePreview(participants) : `<div class="trade-team-decisions">${(state.tradeCandidate?.evaluations || []).map(tradeEvaluationPanel).join("")}</div>${tradeSegmentedValueBoard(state.tradeCandidate, state.selectedFrom, state.selectedTo, userTeam(), state.tradePartner)}` : page === 2 ? tradeFourYearImplications(userAssets, partnerAssets, state.selectedFrom, state.selectedTo,participants) : tradeIdentityPage()}
-        </div>
-        <div class="trade-decision-dock"><div id="tradeRead">${tradeReadout(state.tradeCandidate)}</div><label class="trade-final-toggle"><input type="checkbox" id="tradeFinalOffer" ${state.tradeFinalOffer ? "checked" : ""}> Final offer (no counters)</label><button id="evaluateTrade" class="trade-evaluate-button ui-command" ${tradePickRuleErrors().length || !participants.some(row => row.selected.length) ? "disabled" : ""}>Evaluate package</button></div>
+    <div class="trade-builder-layout tr-builder${multi ? " is-multi" : ""}">
+      <section class="tr-stage" style="--tr-sides:${participants.length}">
+        ${participants.map(row => tradeDealSide(row, participants, fresh)).join("")}
+        <aside class="tr-verdict${freshVerdict ? " is-fresh" : ""}" aria-label="The other side's answer">
+          <div id="tradeRead">${tradeReadout(candidate)}</div>
+          <div class="tr-verdict-actions">
+            <label class="trade-final-toggle" title="A final offer gets a yes or no, never a counter-offer."><input type="checkbox" id="tradeFinalOffer" ${state.tradeFinalOffer ? "checked" : ""}> Final offer</label>
+            <button type="button" id="evaluateTrade" class="tr-button${canApply ? "" : " is-primary"}" ${tradePickRuleErrors().length || empty ? "disabled" : ""}>${escapeHtml(ask)}</button>
+          </div>
+        </aside>
+      </section>
+      ${hasPicks ? `<div class="tr-terms">${tradePickTermsMarkup()}</div>` : ""}
+      <section class="tr-lower">
+        ${tradeLowerTabs(page)}
+        <div class="tr-lower-body" data-trade-page-body="${page}">${lower}</div>
       </section>
     </div>`;
-  body.querySelectorAll("[data-trade-roster-side]").forEach(button => button.addEventListener("click", () => { state.tradeRosterSide = button.dataset.tradeRosterSide; renderTradeRoom(); }));
+  body.querySelectorAll("[data-trade-roster-side]").forEach(button => button.addEventListener("click", () => { state.tradeRosterSide = button.dataset.tradeRosterSide; state.tradeInsightPage = 0; renderTradeRoom(); }));
   body.querySelectorAll("[data-trade-remove-team]").forEach(button => button.addEventListener("click", () => removeTradeParticipant(button.dataset.tradeRemoveTeam)));
-  wireTradeInsightPagers(body);
-  body.querySelector("[data-trade-edit-package]")?.addEventListener("click", () => { state.tradeInsightPage = 0; renderTradeRoom(); });
+  body.querySelectorAll("[data-trade-page]").forEach(button => button.addEventListener("click", () => { state.tradeInsightPage = Number(button.dataset.tradePage); renderTradeRoom(); }));
+  const handle = task => Promise.resolve(task).catch(error => showToast(error.message || String(error), true));
+  body.querySelector("#tradePartner")?.addEventListener("change", event => handle(setTradeWorkspaceTeam(event.target.value)));
+  body.querySelectorAll("[data-trade-team-step]").forEach(button => button.addEventListener("click", () => handle(stepTradeWorkspaceTeam(Number(button.dataset.tradeTeamStep)))));
   body.querySelectorAll("[data-trade-identity-team]").forEach(button => button.addEventListener("click", () => { state.tradeIdentityTeam = button.dataset.tradeIdentityTeam; renderTradeRoom(); }));
   body.querySelector("[data-trade-identity-retry]")?.addEventListener("click", () => loadTradeIdentity(true));
   if (page === 3) loadTradeIdentity().catch(error => showToast(error.message, true));
   wireTradeAssetControls(body);
   body.querySelector("#tradeFinalOffer")?.addEventListener("change", event => { state.tradeFinalOffer = Boolean(event.target.checked); });
   body.querySelector("#evaluateTrade").addEventListener("click", () => evaluateBuiltTrade().catch(error => showToast(error.message || String(error), true)));
-  const applyButton = body.querySelector("#applyBuiltTrade");
-  if (applyButton) applyButton.addEventListener("click", () => applyCandidate(state.tradeCandidate, "builder").catch(error => showToast(error.message || String(error), true)));
+  body.querySelector("#applyBuiltTrade")?.addEventListener("click", () => applyCandidate(state.tradeCandidate, "builder").catch(error => showToast(error.message || String(error), true)));
   body.querySelector("#acceptCounterTrade")?.addEventListener("click", () => applyCandidate(state.tradeCandidate?.counter_offer, "counter").catch(error => showToast(error.message || String(error), true)));
   body.querySelector("#editCounterTrade")?.addEventListener("click", () => editCounterOffer());
   body.querySelector("#declineCounterTrade")?.addEventListener("click", () => { state.tradeCandidate = {...state.tradeCandidate, counter_offer: null}; state.tradeCounterChain = null; showToast("Counter-offer declined"); tradeResponseEffect("declined"); renderTradeRoom(); });
@@ -8442,8 +8547,37 @@ function tradeFourYearImplications(userPayload, partnerPayload, outgoing, incomi
   return `<section class="approved-trade-cap"><div class="trade-payroll-plots" tabindex="0" aria-label="Four-year payroll before and after trade">${charts}</div><div class="trade-payroll-ledgers">${ledger}</div></section>`;
 }
 
-function assetColumn(title, payload, side, team) {
-  const cap = payload.cap || {};
+// The asset list for one team: every player and pick it could send. Table rules: one dark header line, centred
+// columns (the name left), every header sorts, sorted column shaded and bold, stripes, whole-row hover. A row click
+// adds or removes the asset; the name opens the player card.
+const TRADE_ASSET_SORTS = {
+  name: asset => String(asset.name || asset.label || "").toLowerCase(),
+  pos: asset => asset.kind === "player" ? String(asset.position || "") : null,
+  age: asset => tradeKnownNumber(asset.age),
+  height: asset => { const match = String(asset.height || "").match(/(\d+)'(\d+)/); return match ? Number(match[1]) * 12 + Number(match[2]) : null; },
+  roles: asset => asset.kind === "player" ? String(asset.primary_off_role || "") : null,
+  ovr: asset => tradeKnownNumber(asset.overall ?? asset.ratings?.overall),
+  off: asset => tradeKnownNumber(asset.offense ?? asset.ratings?.offense),
+  def: asset => tradeKnownNumber(asset.defense ?? asset.ratings?.defense),
+  runway: asset => tradeKnownNumber(asset.upside_remaining),
+  injury: asset => tradeKnownNumber(asset.health_risk),
+  contract: asset => { const values = Object.values(asset.salary_by_year || {}).map(Number).filter(value => value > 0); return values.length ? values[0] : null; },
+  value: asset => tradeKnownNumber(asset.trade_value),
+};
+const TRADE_ASSET_ASCENDING = new Set(["name", "pos", "roles", "injury"]);
+
+function sortTradeAssets(assets, sort) {
+  const read = TRADE_ASSET_SORTS[sort?.key];
+  if (!read) return assets;
+  const direction = sort.dir === "asc" ? 1 : -1;
+  return [...assets].sort((a, b) => {
+    const left = read(a), right = read(b);
+    if (left === null || right === null) return left === right ? 0 : left === null ? 1 : -1;
+    return (typeof left === "number" && typeof right === "number" ? left - right : String(left).localeCompare(String(right))) * direction;
+  });
+}
+
+function assetColumn(title, payload, side, team, options = {}) {
   const allAssets = payload.assets || [];
   const filter = state.tradeAssetFilters?.[side] || "all";
   const assets = allAssets.filter((asset) => {
@@ -8452,21 +8586,18 @@ function assetColumn(title, payload, side, team) {
     if (filter === "picks") return asset.kind === "pick";
     return asset.kind === "pick_swap";
   });
+  const sort = state.tradeAssetSorts?.[side] || {key: "value", dir: "desc"};
+  const counts = {all: allAssets.length, players: allAssets.filter(a => a.kind === "player").length, picks: allAssets.filter(a => a.kind === "pick").length, swaps: allAssets.filter(a => a.kind === "pick_swap").length};
+  const filters = [["all", "All"], ["players", "Players"], ["picks", "Picks"], ["swaps", "Swaps"]].filter(([value]) => value === "all" || counts[value] || filter === value);
   return `
-    <section class="trade-asset-column" ${teamBrandStyle(team)}>
-      <div class="trade-asset-head">
-        <div class="trade-team-lockup">
-          ${teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : ""}
-          <div><strong>${escapeHtml(title)}</strong><span>${allAssets.length} available assets</span></div>
-        </div>
-        <select data-asset-filter-side="${escapeAttr(side)}" aria-label="${escapeAttr(title)} filter">
-          ${[["all", "All"], ["players", "Players"], ["picks", "Picks"], ["swaps", "Swaps"]].map(([value, label]) => `<option value="${value}" ${filter === value ? "selected" : ""}>${label}</option>`).join("")}
-        </select>
-      </div>
-      ${tradeCapStrip(cap)}
-      ${typeof tradeWantsStrip==='function'?tradeWantsStrip(payload):''}
+    <section class="trade-asset-column tr-picker" ${teamBrandStyle(team)}>
+      <header class="tr-picker-head">
+        ${options.tabs || `<div class="trade-team-lockup">${teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : ""}<strong>${escapeHtml(title)}</strong></div>`}
+        <div class="tr-filter" role="group" aria-label="${escapeAttr(title)} filter">${filters.map(([value, label]) => `<button type="button" data-asset-filter-side="${escapeAttr(side)}" data-asset-filter="${value}" aria-pressed="${filter === value}" class="${filter === value ? "active" : ""}">${label}</button>`).join("")}</div>
+      </header>
+      ${typeof tradeWantsStrip === 'function' ? tradeWantsStrip(payload) : ''}
       <div class="trade-asset-list scroll-list" data-trade-scroll="catalog-${escapeAttr(side)}" tabindex="0" aria-label="${escapeAttr(title)}">
-        ${assets.length ? tradeAssetTable(assets, {side, label:title}) : `<div class="trade-list-empty">No ${filter === "all" ? "tradeable assets" : escapeHtml(filter)} available for ${escapeHtml(team)}.</div>`}
+        ${assets.length ? tradeAssetTable(sortTradeAssets(assets, sort), {side, label: title, sort}) : `<div class="trade-list-empty">No ${filter === "all" ? "tradeable assets" : escapeHtml(filter)} available for ${escapeHtml(team)}.</div>`}
       </div>
     </section>`;
 }
@@ -8487,21 +8618,22 @@ function renderTradeFinder(root) {
   const capRows = targetMode
     ? tradeCapImpactRows(state.data.tradeUser || {}, selection, [], Object.keys(state.data.tradeUser?.cap_by_year || {}).sort().slice(0, 4))
     : tradeCapImpactRows(userAssets, [], selection, seasons);
+  const fresh = state.tradeFreshAsset || "";
+  state.tradeFreshAsset = "";
+  const scopeName = state.tradeFinderScope || "the league";
   body.innerHTML = `
-    <div class="trade-finder-layout">
+    <div class="trade-finder-layout tr-finder">
       ${assetColumn(`${finderTeam} ${targetMode ? "target" : "available"} assets`, userAssets, side, finderTeam)}
-      <div class="trade-finder-workspace">
-        <section class="trade-finder-brief" ${teamBrandStyle(userTeam())}>
-          <div class="trade-desk-head"><h3>${targetMode ? `Acquire from ${finderTeam}` : "Shop your assets"}</h3><span class="trade-selection-count">${selection.length}/2 selected</span></div>
-          <div class="trade-finder-control-grid">
-            ${selectedPackage(targetMode ? "Target Assets" : "Assets To Shop", selection, side, finderTeam)}
-            <div class="trade-finder-cap"><header>${escapeHtml(userTeam())} salary ${targetMode ? "added if acquired" : "removed if moved"}</header>${tradeCapDeltaChart(capRows)}</div>
-          </div>
+      <div class="trade-finder-workspace tr-finder-workspace">
+        <section class="trade-finder-brief tr-finder-brief" ${teamBrandStyle(userTeam())}>
+          <header class="tr-side-head"><span class="tr-side-team">${teamLogoSrc(finderTeam) ? `<img src="${escapeAttr(teamLogoSrc(finderTeam))}" alt="" />` : ""}<strong>${targetMode ? `Get from ${escapeHtml(finderTeam)}` : `Shop to ${escapeHtml(scopeName)}`}</strong></span><span class="trade-selection-count">${selection.length} of 2</span></header>
+          <ul class="tr-tiles" data-trade-scroll="selected-${escapeAttr(side)}">${selection.length ? selection.map(asset => tradeDealTile(asset, {removeSide: side, fresh: fresh === `${side}:${asset.kind}:${asset.id}`})).join("") : `<li class="tr-tiles-empty"><span>Choose up to two assets from the list</span></li>`}</ul>
+          <div class="trade-finder-cap"><header>${escapeHtml(userTeam())} salary ${targetMode ? "added" : "cleared"}</header>${tradeCapDeltaChart(capRows)}</div>
           ${tradePickTermsMarkup()}
-          <div class="trade-finder-actions"><span class="trade-finder-hint">${targetMode ? "Choose up to two targets; your GM will find a legal package." : `Choose up to two assets to shop to ${state.tradeFinderScope || "the league"}.`}</span><button id="runTrade" class="trade-evaluate-button ui-command" ${selection.length && !tradePickRuleErrors().length ? "" : "disabled"}>Find trades</button><button id="clearTradeMarket" class="trade-clear-button ui-command" ${selection.length || state.tradeResults.length ? "" : "disabled"}>Clear</button></div>
+          <div class="trade-finder-actions"><button id="clearTradeMarket" type="button" class="tr-text-button" ${selection.length || state.tradeResults.length ? "" : "disabled"}>Clear</button><button id="runTrade" type="button" class="tr-button is-primary" ${selection.length && !tradePickRuleErrors().length ? "" : "disabled"}>Find trades</button></div>
         </section>
-        <section class="trade-finder-results">
-          <div class="trade-results-head"><h3>Found trades ${!targetMode && state.tradeFinderScope ? `· ${escapeHtml(state.tradeFinderScope)}` : ""}</h3><span>${state.tradeResults.length} results</span></div>
+        <section class="trade-finder-results tr-finder-results">
+          <div class="trade-results-head"><strong>Found trades</strong><span>${state.tradeResults.length || ""}</span></div>
           <div id="tradeResults" class="trade-results-list scroll-list" aria-live="polite">${tradeResultCards(state.tradeResults)}</div>
         </section>
       </div>
@@ -8596,6 +8728,7 @@ async function evaluateBuiltTrade() {
   if (counter) rounds.push({package: counter.package, asking_net: counter.asking_net, text: counter.text, round: counter.rounds});
   state.tradeCounterChain = {partner, rounds};
   state.tradeCandidate = result;
+  state.tradeVerdictFresh = true;
   renderTradeRoom();
 }
 
@@ -15041,14 +15174,29 @@ function wireTradeAssetControls(root) {
   root.querySelectorAll("[data-asset-side]").forEach((button) => {
     button.addEventListener("click", () => toggleAsset(button.dataset.assetSide, button.dataset.assetKind, button.dataset.assetId));
   });
+  // A click anywhere on a list row adds or removes it (the name, contract details and controls keep their own clicks).
+  root.querySelectorAll("tr[data-trade-row]").forEach(row => row.addEventListener("click", event => {
+    if (event.target.closest("button, input, select, summary, details, a, label")) return;
+    row.querySelector("[data-asset-side]")?.click();
+  }));
   root.querySelectorAll("[data-remove-side]").forEach((button) => {
     button.addEventListener("click", () => removeAsset(button.dataset.removeSide, button.dataset.assetId));
   });
-  root.querySelectorAll("[data-asset-filter-side]").forEach((select) => {
-    select.addEventListener("change", () => {
-      state.tradeAssetFilters[select.dataset.assetFilterSide] = select.value || "all";
+  root.querySelectorAll("[data-asset-filter-side]").forEach((control) => {
+    const apply = value => { state.tradeAssetFilters ||= {}; state.tradeAssetFilters[control.dataset.assetFilterSide] = value || "all"; renderTradeRoom(); };
+    if (control.tagName === "SELECT") control.addEventListener("change", () => apply(control.value));
+    else control.addEventListener("click", () => apply(control.dataset.assetFilter));
+  });
+  root.querySelectorAll("th[data-trade-sort]").forEach((header) => {
+    const sort = () => {
+      const side = header.dataset.tradeSortSide, key = header.dataset.tradeSort;
+      state.tradeAssetSorts ||= {};
+      const current = state.tradeAssetSorts[side] || {key: "value", dir: "desc"};
+      state.tradeAssetSorts[side] = {key, dir: current.key === key ? (current.dir === "asc" ? "desc" : "asc") : TRADE_ASSET_ASCENDING.has(key) ? "asc" : "desc"};
       renderTradeRoom();
-    });
+    };
+    header.addEventListener("click", sort);
+    header.addEventListener("keydown", event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); sort(); } });
   });
   root.querySelectorAll("[data-trade-destination]").forEach(select => select.addEventListener("change", () => {
     state.tradeAssetRoutes ||= {};
@@ -15117,6 +15265,7 @@ function toggleAsset(side, kind, id) {
   if (existing >= 0) list.splice(existing, 1);
   else {
     if (state.tradeTab === "finder" && list.length >= 2) return showToast("Trade Finder can search up to two assets at once.", true);
+    state.tradeFreshAsset = `${side}:${asset.kind}:${asset.id}`;
     list.push({
       ...asset,
       kind: asset.kind,
@@ -15172,21 +15321,60 @@ function assetSpec(asset) {
   return { kind: asset.kind, value: asset.value || asset.id };
 }
 
+// The other side's answer, at a glance: a half-dial whose needle sits left of their price when the deal falls short
+// and right of it when it clears (the same value margin the engine decides on: what they get minus what they give,
+// plus strategy and their manager's lean, against the price this deal needs), one headline word and one short line.
+// Everything else (each team's numbers, counters, the assistant GM's read) sits behind Details.
 function tradeReadout(candidate) {
-  if (!candidate) return `<div class="trade-evaluation-empty"><strong>Not evaluated</strong><span>Salary matching · Roster limits · Team decisions</span></div>`;
+  const dial = (score, tone, label) => {
+    const point = value => { const angle = Math.PI * (1 - value / 100); return [(90 + 70 * Math.cos(angle)).toFixed(1), (86 - 70 * Math.sin(angle)).toFixed(1)]; };
+    const arc = (from, to, cls) => { const [x1, y1] = point(from), [x2, y2] = point(to); return `<path class="${cls}" d="M${x1} ${y1} A70 70 0 0 1 ${x2} ${y2}" />`; };
+    const needle = score === null ? "" : `<g class="tr-dial-needle" style="--tr-needle:${(score * 1.8 - 90).toFixed(1)}deg"><line x1="90" y1="86" x2="90" y2="26" /><circle cx="90" cy="86" r="5" /></g>`;
+    return `<svg class="tr-dial is-${tone}" viewBox="0 0 180 96" role="img" aria-label="${escapeHtml(label)}">${arc(0, 33, "tr-dial-far")}${arc(33, 49.4, "tr-dial-near")}${arc(50.6, 100, "tr-dial-yes")}<line class="tr-dial-price" x1="90" y1="8" x2="90" y2="24" />${needle}</svg>`;
+  };
+  const marginOf = row => {
+    const notes = String(row.notes || "");
+    const read = pattern => { const match = notes.match(pattern); return match ? Number(match[1]) : null; };
+    const known = value => value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value)) ? Number(value) : null;
+    const net = known(row.net_value) ?? read(/net\s+([+-]?\d+(?:\.\d+)?)/i);
+    const threshold = row.incoming_asset_value == null ? read(/threshold\s+([+-]?\d+(?:\.\d+)?)/i) ?? known(row.acceptance_threshold) : known(row.acceptance_threshold);
+    return net !== null && threshold !== null ? net - threshold : null;
+  };
+  if (!candidate) return `<div class="trade-evaluation-board tr-answer is-waiting" aria-live="polite">${dial(null, "waiting", "Not asked yet")}<strong class="tr-answer-word">Not asked yet</strong><span class="tr-answer-line">Build a deal, then ask.</span></div>`;
   const legal = candidate.legality?.status || "unknown";
   const userId = state.home?.save?.user_team?.id;
   const partners = (candidate.evaluations || []).filter(row => row.perspective_team_id !== userId && teamLabel(row.perspective_team_id) !== userTeam());
   const canApply = legal === "legal" && partners.length > 0 && partners.every(row => row.accepted);
+  const counter = canApply ? "" : tradeCounterOffer(candidate.counter_offer, candidate.counter_closed);
+  const hasCounter = !canApply && Boolean(candidate.counter_offer?.proposal && !candidate.counter_offer.proposal.transfers);
+  const margins = partners.map(marginOf).filter(value => value !== null);
+  const margin = margins.length ? Math.min(...margins) : null;
+  const score = margin === null ? (canApply ? 70 : legal === "legal" ? 30 : null) : Math.max(2, Math.min(98, 50 + margin * 4.5));
+  const tone = legal !== "legal" ? "blocked" : canApply ? "yes" : hasCounter ? "counter" : "no";
+  const word = legal !== "legal" ? "Not possible" : canApply ? (partners.length > 1 ? "All accept" : "Accepts") : hasCounter ? "Counters" : "Declines";
+  const issues = [...(candidate.legality?.issues || []), ...(candidate.legality?.manual_review || [])];
+  const reasons = partners.flatMap(row => row.decision_reasons || []);
+  const line = legal !== "legal" ? textValue(issues[0] || "A trade rule blocks this deal.")
+    : candidate.final_declined ? "Final offer declined."
+    : margin === null ? "" : !canApply && margin >= 0 && reasons.length ? textValue(reasons[0])
+    : `${Math.abs(margin).toFixed(1)} ${margin >= 0 ? "above" : "short of"} their price`;
+  const many = partners.length > 1 ? `<ul class="tr-answer-teams">${partners.map(row => { const m = marginOf(row); return `<li class="${row.accepted ? "is-yes" : "is-no"}"><b>${escapeHtml(row.team_abbrev || teamLabel(row.perspective_team_id))}</b><span>${row.accepted ? "Yes" : "No"}</span><em>${m === null ? "—" : `${m >= 0 ? "+" : "−"}${Math.abs(m).toFixed(1)}`}</em></li>`; }).join("")}</ul>` : "";
+  const details = [
+    tradeLegalityBadge(candidate),
+    tradeLegalityIssues(candidate),
+    candidate.final_declined ? `<div class="trade-counter-offer trade-legality-issues"><strong>Final offer declined:</strong> ${escapeHtml(textValue(candidate.final_declined))}</div>` : "",
+    candidate.partner_read ? frontOfficeReadMarkup(candidate.partner_read, "Your assistant GM's read") : "",
+  ].join("");
   return `
-    <div class="trade-evaluation-board" aria-live="polite">
-      <div class="trade-evaluation-title">${tradeLegalityBadge(candidate)}<strong>${canApply ? "All partners accept" : legal === "legal" ? "Partner declines" : "Trade cannot proceed"}</strong></div>
-      ${tradeLegalityIssues(candidate)}
-      <button id="applyBuiltTrade" class="trade-execute-button ui-command" ${canApply ? "" : "disabled"}>${canApply ? "Accept Trade" : legal !== "legal" ? "Trade unavailable" : "Partner declines"}</button>
+    <div class="trade-evaluation-board tr-answer is-${tone}" aria-live="polite">
+      ${dial(score, tone, word)}
+      <strong class="tr-answer-word">${escapeHtml(word)}</strong>
+      ${line ? `<span class="tr-answer-line">${escapeHtml(line)}</span>` : ""}
+      ${many}
       ${candidate.market_competition?.text ? `<div class="trade-market-competition${candidate.market_competition.beaten ? " is-beaten" : ""}">${escapeHtml(textValue(candidate.market_competition.text))}</div>` : ""}
-      ${candidate.final_declined ? `<div class="trade-counter-offer trade-legality-issues"><strong>Final offer declined:</strong> ${escapeHtml(textValue(candidate.final_declined))}</div>` : ""}
-      ${canApply ? "" : tradeCounterOffer(candidate.counter_offer, candidate.counter_closed)}
-      ${candidate.partner_read ? frontOfficeReadMarkup(candidate.partner_read, "Your assistant GM's read") : ""}
+      ${canApply ? `<button type="button" id="applyBuiltTrade" class="tr-button is-primary trade-execute-button">Accept Trade</button>` : ""}
+      ${counter}
+      ${details.trim() ? `<details class="tr-details"><summary>Details</summary>${details}</details>` : ""}
     </div>`;
 }
 
@@ -15195,19 +15383,17 @@ function tradeReadout(candidate) {
 // Earlier counters in the same negotiation are listed above it; Edit loads it into the builder to answer it.
 function tradeCounterOffer(counter, closed) {
   const earlier = (state.tradeCounterChain?.rounds || []).filter(row => row.text && row.package !== counter?.counter?.package);
-  const history = earlier.length ? `<ol class="trade-counter-history">${earlier.map(row => `<li>Round ${escapeHtml(textValue(row.round))}: ${escapeHtml(textValue(row.text))}</li>`).join("")}</ol>` : "";
+  const history = earlier.length ? `<details class="tr-details"><summary>Earlier rounds</summary><ol class="trade-counter-history">${earlier.map(row => `<li>Round ${escapeHtml(textValue(row.round))}: ${escapeHtml(textValue(row.text))}</li>`).join("")}</ol></details>` : "";
   if (closed && !counter) return `<div class="trade-counter-offer trade-legality-issues">${history}<strong>No more counters:</strong> the partner has made its last counter-offer in this negotiation.</div>`;
   if (!counter || !counter.proposal || counter.proposal.transfers) return "";
   const proposal = counter.proposal;
   const names = assets => (assets || []).map(asset => escapeHtml(textValue(asset.label || asset.name || asset.id))).join(", ") || "nothing";
   const round = counter.counter?.rounds;
-  return `<div class="trade-counter-offer trade-legality-issues" aria-live="polite">
-      ${history}<strong>Counter-offer${round > 1 ? ` (round ${escapeHtml(textValue(round))})` : ""}:</strong> ${escapeHtml(textValue(counter.counter?.text || "The partner proposes a different package."))}${counter.counter?.last_round && !counter.counter?.final_offer ? " This is its last counter." : ""}
-      <div>${escapeHtml(teamLabel(proposal.from_team_id))} sends: ${names(proposal.from_assets)}</div>
-      <div>${escapeHtml(teamLabel(proposal.to_team_id))} sends: ${names(proposal.to_assets)}</div>
-      <button id="acceptCounterTrade" class="trade-execute-button ui-command">Accept counter</button>
-      <button id="editCounterTrade" class="trade-clear-button ui-command">Edit and answer</button>
-      <button id="declineCounterTrade" class="trade-clear-button ui-command">Decline</button>
+  return `<div class="trade-counter-offer" aria-live="polite">
+      <p><strong>Counter-offer${round > 1 ? ` (round ${escapeHtml(textValue(round))})` : ""}:</strong> ${escapeHtml(textValue(counter.counter?.text || "The partner proposes a different package."))}${counter.counter?.last_round && !counter.counter?.final_offer ? " This is its last counter." : ""}</p>
+      <div class="tr-counter-package"><div>${escapeHtml(teamLabel(proposal.from_team_id))} sends: ${names(proposal.from_assets)}</div><div>${escapeHtml(teamLabel(proposal.to_team_id))} sends: ${names(proposal.to_assets)}</div></div>
+      <div class="tr-counter-actions"><button type="button" id="declineCounterTrade" class="tr-text-button">Decline</button><button type="button" id="editCounterTrade" class="tr-text-button">Edit and answer</button><button type="button" id="acceptCounterTrade" class="tr-button is-primary trade-execute-button">Accept counter</button></div>
+      ${history}
     </div>`;
 }
 
@@ -15325,32 +15511,40 @@ async function loadTradeIdentity(force = false) {
 
 function tradeAssetTable(assets, options = {}) {
   const control = options.side || options.removeSide;
-  return `<table class="trade-ledger${options.routeFrom ? " is-routed" : ""}" aria-label="${escapeAttr(options.label || "Trade assets")}"><thead><tr>${control ? '<th class="trade-ledger-control"><span class="sr-only">Select or remove</span></th>' : ""}${options.routeFrom ? '<th class="trade-ledger-route">Destination</th>' : ""}<th class="trade-ledger-portrait" aria-label="Portrait"></th><th>Player / Asset</th><th>Age</th><th>Height</th><th>Pos</th><th>OVR</th><th>OFF</th><th>DEF</th><th title="Growth runway: room this player has left to improve, from age, role and current level, on a 0-5 scale. Not a prediction of a future rating; 0 for most players 27 and older.">Runway</th><th title="Model injury-risk index, not a probability. Standard player scores range from 0 to 34.">Injury risk</th><th>Contract</th><th title="Owner-context asset value; final evaluation includes destination fit and role">Value</th></tr></thead><tbody>${assets.map(asset => tradeAssetRow(asset, options)).join("")}</tbody></table>`;
+  const sortSide = options.sort && options.side ? options.side : "";
+  const head = (key, label, cls = "", title = "") => {
+    const sorted = sortSide && options.sort.key === key;
+    const sortAttrs = sortSide ? ` data-trade-sort="${key}" data-trade-sort-side="${escapeAttr(sortSide)}" tabindex="0"${sorted ? ` aria-sort="${options.sort.dir === "asc" ? "ascending" : "descending"}"` : ""}` : "";
+    return `<th class="${cls}${sorted ? " is-sorted" : ""}"${sortAttrs}${title ? ` title="${escapeAttr(title)}"` : ""}>${label}</th>`;
+  };
+  return `<table class="trade-ledger tr-table${options.routeFrom ? " is-routed" : ""}" data-no-sort aria-label="${escapeAttr(options.label || "Trade assets")}"${sortSide ? ` data-sorted-key="${escapeAttr(options.sort.key)}"` : ""}><thead><tr>${control ? '<th class="trade-ledger-control"><span class="sr-only">Select or remove</span></th>' : ""}${options.routeFrom ? '<th class="trade-ledger-route">Destination</th>' : ""}<th class="trade-ledger-portrait" aria-label="Portrait"></th>${head("name", "Player / asset", "tr-col-name")}${head("pos", "Pos", "tr-col-pos")}${head("age", "Age", "tr-col-age")}${head("height", "Ht", "tr-col-ht")}${head("roles", "Roles", "tr-col-roles")}${head("ovr", "OVR", "tr-col-rating")}${head("off", "OFF", "tr-col-rating")}${head("def", "DEF", "tr-col-rating")}${head("runway", "Runway", "tr-col-runway", "Growth runway: room this player has left to improve, from age, role and current level, on a 0-5 scale. Not a prediction of a future rating; 0 for most players 27 and older.")}${head("injury", "Injury risk", "tr-col-injury", "Model injury-risk index, not a probability. Most players score 1-4.")}${head("contract", "Contract", "tr-col-contract")}${head("value", "Value", "tr-col-value", "Listed trade value: what this asset is worth on the market before the receiving team's fit and role")}</tr></thead><tbody>${assets.map(asset => tradeAssetRow(asset, {...options, sortKey: sortSide ? options.sort.key : ""})).join("")}</tbody></table>`;
 }
 
-function tradeAssetRow(asset, {side, removeSide, routeFrom} = {}) {
+function tradeAssetRow(asset, {side, removeSide, routeFrom, sortKey = ""} = {}) {
   const id = asset.id || asset.value || "";
   const name = asset.name || asset.label || id || "Unknown";
   const selected = side ? selectedList(side).some(item => item.id === id && item.kind === asset.kind) : false;
-  const control = side ? `<td><input type="checkbox" data-asset-side="${escapeAttr(side)}" data-asset-kind="${escapeAttr(asset.kind)}" data-asset-id="${escapeAttr(id)}" aria-label="${selected ? "Remove" : "Add"} ${escapeAttr(name)} ${selected ? "from" : "to"} package" ${selected ? "checked" : ""}></td>` : removeSide ? `<td><button type="button" class="trade-row-remove trade-icon-button" data-remove-side="${escapeAttr(removeSide)}" data-asset-id="${escapeAttr(id)}" aria-label="Remove ${escapeAttr(name)}" title="Remove ${escapeAttr(name)}"><img src="/assets/window-icons/x.svg" alt="" /></button></td>` : "";
+  const cell = (key, cls, content, title = "") => `<td class="${cls}${sortKey === key ? " is-sorted" : ""}"${title ? ` title="${escapeAttr(title)}"` : ""}>${content}</td>`;
+  const control = side ? `<td class="trade-ledger-control"><input type="checkbox" data-asset-side="${escapeAttr(side)}" data-asset-kind="${escapeAttr(asset.kind)}" data-asset-id="${escapeAttr(id)}" aria-label="${selected ? "Remove" : "Add"} ${escapeAttr(name)} ${selected ? "from" : "to"} package" ${selected ? "checked" : ""}></td>` : removeSide ? `<td class="trade-ledger-control"><button type="button" class="trade-row-remove tr-text-button" data-remove-side="${escapeAttr(removeSide)}" data-asset-id="${escapeAttr(id)}" aria-label="Remove ${escapeAttr(name)}" title="Remove ${escapeAttr(name)}">×</button></td>` : "";
   const route = routeFrom ? `<td class="trade-ledger-route"><select data-trade-destination="${escapeAttr(tradeRouteKey(routeFrom,asset))}" aria-label="Destination for ${escapeAttr(name)}">${tradeWorkspaceParticipants().filter(row => row.team !== routeFrom).map(row => `<option value="${escapeAttr(row.team)}" ${tradeAssetDestination(routeFrom,asset) === row.team ? "selected" : ""}>${escapeHtml(row.team)}</option>`).join("")}</select></td>` : "";
+  const rowAttrs = side ? ` data-trade-row` : "";
   if (asset.kind !== "player") {
-    const condition = String(asset.condition_summary || asset.protection_summary || "").trim();
-    const label = asset.label || asset.name || id || "Draft asset";
-    const extra = condition && !/^unprotected[.\s]*$/i.test(condition) && !label.toLowerCase().includes(condition.toLowerCase()) ? condition : "";
+    const pick = tradePickText(asset);
     const rule=(side || removeSide) ? (state.tradePickRules || []).find(r=>r.pick_id===id && r.enabled!==false) : null;
     const authored = rule ? rule.type==='pick_swap' ? `${rule.benefit==='worse'?'Less':'More'} favorable swap right` : `Picks ${rule.from}–${rule.through} protected` : '';
-    return `<tr class="trade-ledger-pick${selected ? " is-selected" : ""}">${control}${route}<td>${draftAssetGlyph(asset, true, true)}</td><td colspan="10"><strong>${escapeHtml(label)}</strong>${extra || authored ? `<span class="trade-pick-condition">${escapeHtml(authored || extra)}</span>` : ""}<small>${asset.kind === "pick_swap" || rule?.type==='pick_swap' ? "Swap right" : "Draft pick"}</small></td><td class="trade-ledger-value">${draftMetric(tradeKnownNumber(asset.trade_value))}</td></tr>`;
+    const kind = asset.kind === "pick_swap" || rule?.type==='pick_swap' ? "Swap right" : "Draft pick";
+    return `<tr class="trade-ledger-pick${selected ? " is-selected" : ""}"${rowAttrs}>${control}${route}<td class="trade-ledger-portrait">${draftAssetGlyph(asset, true, true)}</td><th scope="row" class="tr-col-name${sortKey === "name" ? " is-sorted" : ""}"${pick.full ? ` title="${escapeAttr(pick.full)}"` : ""}><strong>${escapeHtml(pick.short)}</strong>${pick.note || authored ? `<span class="trade-pick-condition">${escapeHtml(authored || pick.note)}</span>` : ""}</th><td class="tr-col-pos">${kind === "Swap right" ? "Swap" : "Pick"}</td><td class="tr-col-age">—</td><td class="tr-col-ht">—</td><td class="tr-col-roles">—</td><td class="tr-col-rating">—</td><td class="tr-col-rating">—</td><td class="tr-col-rating">—</td><td class="tr-col-runway">—</td><td class="tr-col-injury">—</td><td class="tr-col-contract">—</td>${cell("value", "trade-ledger-value tr-col-value", draftMetric(tradeKnownNumber(asset.trade_value)))}</tr>`;
   }
   const ratings = asset.ratings || {};
   const offense = [ratings.shooting, ratings.creation, ratings.passing].map(tradeKnownNumber).filter(value => value !== null);
-  const values = [asset.overall ?? ratings.overall, asset.offense ?? ratings.offense ?? (offense.length ? offense.reduce((a,b) => a+b,0) / offense.length : null), asset.defense ?? ratings.defense];
+  const values = [["ovr", asset.overall ?? ratings.overall], ["off", asset.offense ?? ratings.offense ?? (offense.length ? offense.reduce((a,b) => a+b,0) / offense.length : null)], ["def", asset.defense ?? ratings.defense]];
   const injury = typeof isPlayerInjured === "function" && isPlayerInjured(asset.health);
-  const ratingCell = value => { const n = tradeKnownNumber(value); return `<td class="trade-ledger-rating player-rating-bar">${draftMetric(n)}<i aria-hidden="true">${n === null ? "" : `<b style="${playerRatingBarStyle(n)}"></b>`}</i></td>`; };
-  const meter = (label, value, max) => { const n = tradeKnownNumber(value); return `<td class="trade-ledger-meter" title="${escapeAttr(label)}${n === null ? " unavailable" : ` ${n.toFixed(1)}${label === "Runway" ? `/${max}` : " model index"}`}"><span>${draftMetric(n)}${n === null || label !== "Runway" ? "" : `<small>/${max}</small>`}</span><i aria-hidden="true">${n === null ? "" : `<b style="width:${clampNumber(n/max*100,0,100)}%"></b>`}</i></td>`; };
+  const ratingCell = ([key, value]) => { const n = tradeKnownNumber(value); return cell(key, "trade-ledger-rating tr-col-rating", n === null ? "—" : `<b class="tr-rating" style="color:${tradeRatingColor(n)}">${draftMetric(n)}</b>`); };
+  const runway = tradeKnownNumber(asset.upside_remaining);
   const evidence = [asset.potential != null ? `Potential ${draftMetric(asset.potential)}` : "", asset.mpg != null ? `${draftMetric(asset.mpg)} MPG` : "", asset.ppg != null ? `${draftMetric(asset.ppg)} PPG` : ""].filter(Boolean).join(" · ");
   const salaries = Object.entries(asset.salary_by_year || {}).filter(([,value]) => Number(value) > 0).sort(([a],[b]) => a.localeCompare(b));
-  return `<tr class="trade-ledger-player${selected ? " is-selected" : ""}${injury ? " is-injured" : ""}">${control}${route}<td>${playerHeadshotMarkup(asset, "trade-player-headshot") || '<span class="trade-portrait-empty" aria-hidden="true">&mdash;</span>'}</td><th scope="row"><button type="button" class="trade-player-link" data-dashboard-player-card="${escapeAttr(id)}" title="${escapeAttr(evidence || name)}">${playerNameWithInjuryMarkup(asset, name)}</button></th><td>${asset.age == null ? "—" : escapeHtml(asset.age)}</td><td>${escapeHtml(asset.height || "—")}</td><td>${escapeHtml(asset.position || "—")}</td>${values.map(ratingCell).join("")}${meter("Runway",asset.upside_remaining,5)}<td class="trade-ledger-meter trade-ledger-injury">${injuryRiskBody(asset.health_risk, asset.injury_body)}</td><td class="trade-ledger-contract">${salaries.length ? `<details><summary>${tradeAssetContract(asset)}</summary><div>${salaries.map(([season, amount]) => `<span>${escapeHtml(shortSeasonLabel(season))} <b>${money(Number(amount))}</b></span>`).join("")}${asset.contract ? `<span>${escapeHtml(asset.contract)}</span>` : ""}</div></details>` : tradeAssetContract(asset)}</td><td class="trade-ledger-value">${draftMetric(tradeKnownNumber(asset.trade_value))}</td></tr>`;
+  const roles = typeof playerRoleChip === "function" && (asset.primary_off_role || asset.primary_def_role) ? `<span class="tr-role-pair">${playerRoleChip(asset.primary_off_role)}${playerRoleChip(asset.primary_def_role)}</span>` : "—";
+  return `<tr class="trade-ledger-player${selected ? " is-selected" : ""}${injury ? " is-injured" : ""}"${rowAttrs}>${control}${route}<td class="trade-ledger-portrait">${playerHeadshotMarkup(asset, "trade-player-headshot") || '<span class="trade-portrait-empty" aria-hidden="true">&mdash;</span>'}</td><th scope="row" class="tr-col-name${sortKey === "name" ? " is-sorted" : ""}"><button type="button" class="trade-player-link" data-dashboard-player-card="${escapeAttr(id)}" title="${escapeAttr(evidence || name)}">${playerNameWithInjuryMarkup(asset, name)}</button>${evidence ? `<span class="sr-only">${escapeHtml(evidence)}</span>` : ""}</th>${cell("pos", "tr-col-pos", escapeHtml(asset.position || "—"))}${cell("age", "tr-col-age", asset.age == null ? "—" : escapeHtml(asset.age))}${cell("height", "tr-col-ht", escapeHtml(asset.height || "—"))}${cell("roles", "tr-col-roles", roles)}${values.map(ratingCell).join("")}${cell("runway", "trade-ledger-meter tr-col-runway", runway === null ? "—" : draftMetric(runway), runway === null ? "Runway unavailable" : `Runway ${runway.toFixed(1)}/5`)}${cell("injury", "trade-ledger-meter trade-ledger-injury tr-col-injury", injuryRiskBody(asset.health_risk, asset.injury_body))}${cell("contract", "trade-ledger-contract tr-col-contract", salaries.length ? `<details><summary>${tradeAssetContract(asset)}</summary><div>${salaries.map(([season, amount]) => `<span>${escapeHtml(shortSeasonLabel(season))} <b>${money(Number(amount))}</b></span>`).join("")}${asset.contract ? `<span>${escapeHtml(asset.contract)}</span>` : ""}</div></details>` : tradeAssetContract(asset))}${cell("value", "trade-ledger-value tr-col-value", draftMetric(tradeKnownNumber(asset.trade_value)))}</tr>`;
 }
 
 function tradeLegalityBadge(candidate) {
@@ -15371,12 +15565,54 @@ function tradeCandidateInsights(candidate, key) {
   return `<details class="incoming-offer-evaluation" ${state.tradeOfferPages?.[key] != null ? "open" : ""}><summary>Trade analysis</summary>${tradeInsightPager(["Team value", "Payroll impact"], page, key)}${page === 0 ? `<div class="trade-team-decisions">${(candidate.evaluations || []).map(tradeEvaluationPanel).join("")}</div>${tradeSegmentedValueBoard(candidate, proposal.from_assets || [], proposal.to_assets || [], teamLabel(proposal.from_team_id || proposal.from_team), teamLabel(proposal.to_team_id || proposal.to_team))}` : `<div class="trade-candidate-finances">${Object.entries(candidate.team_finances || {}).map(([team, row]) => `<section><h4>${escapeHtml(teamLabel(team))}</h4><dl><div><dt>Current payroll</dt><dd>${row.cap?.salary_total_millions == null ? "—" : money(row.cap.salary_total_millions)}</dd></div><div><dt>Outgoing salary</dt><dd>${row.outgoing_salary_millions == null ? "—" : money(row.outgoing_salary_millions)}</dd></div><div><dt>Incoming salary</dt><dd>${row.incoming_salary_millions == null ? "—" : money(row.incoming_salary_millions)}</dd></div><div><dt>After trade</dt><dd>${row.payroll_after_millions == null ? "—" : money(row.payroll_after_millions)}</dd></div></dl></section>`).join("") || '<div class="trade-package-empty">Payroll details unavailable</div>'}</div>`}</details>`;
 }
 
+// A draft asset in a few words ("2027 R1 NOP · top-4 protected"); the full terms go in the hover text.
+function tradePickText(asset) {
+  const label = String(asset.label || asset.name || asset.id || "Draft pick");
+  const known = asset.season && asset.round && asset.original_team_abbrev;
+  const short = known ? `${asset.season} R${asset.round} ${asset.original_team_abbrev}` : label.split(";")[0].trim();
+  const protection = String(asset.protection_summary || "").trim();
+  const condition = String(asset.condition_summary || "").trim();
+  const plainProtection = protection && !/^unprotected[.\s]*$/i.test(protection) && !short.toLowerCase().includes(protection.toLowerCase()) ? protection : "";
+  const note = plainProtection || (!protection && condition && !/^unprotected[.\s]*$/i.test(condition) ? (condition.length > 40 ? "Conditions" : condition) : "");
+  const fuller = [asset.pick_presentation?.label, condition, label].map(text => String(text || "").trim()).sort((a, b) => b.length - a.length)[0];
+  const full = fuller && fuller.length > `${short} ${note}`.length + 12 ? fuller : "";
+  return {short, note, full};
+}
+
+// Rating numbers in the red-to-blue colour of the game's rating bars (60-98 spread), so a 77 and a 94 differ at a glance.
+function tradeRatingColor(value) {
+  const number = Number(value);
+  const fill = Number.isFinite(number) ? Math.max(3, Math.min(100, (number - 60) / 38 * 100)) : 0;
+  if (typeof performanceBarColor === "function") return performanceBarColor(fill);
+  return fill >= 74 ? "#3978d4" : fill >= 52 ? "#b58a2e" : "#d84b57";
+}
+
+// One asset in a deal, as a compact tile: greyscale headshot, name, position and age, the role pair, OVR as a
+// coloured number, the contract as "$X × N" and the listed value. Picks show their year, round and protection.
+function tradeDealTile(asset, {removeSide = "", routeFrom = "", fresh = false} = {}) {
+  const id = asset.id || asset.value || "";
+  const name = asset.name || asset.label || id || "Asset";
+  const remove = removeSide ? `<button type="button" class="tr-tile-remove" data-remove-side="${escapeAttr(removeSide)}" data-asset-id="${escapeAttr(id)}" aria-label="Remove ${escapeAttr(name)}" title="Remove ${escapeAttr(name)}">×</button>` : "";
+  const route = routeFrom && typeof tradeWorkspaceParticipants === "function" ? `<label class="tr-tile-route"><span>to</span><select data-trade-destination="${escapeAttr(tradeRouteKey(routeFrom, asset))}" aria-label="Destination for ${escapeAttr(name)}">${tradeWorkspaceParticipants().filter(row => row.team !== routeFrom).map(row => `<option value="${escapeAttr(row.team)}" ${tradeAssetDestination(routeFrom, asset) === row.team ? "selected" : ""}>${escapeHtml(row.team)}</option>`).join("")}</select></label>` : "";
+  const value = tradeKnownNumber(asset.trade_value);
+  const valueCell = `<span class="tr-tile-value" title="Listed trade value">${value === null ? "—" : value.toFixed(1)}</span>`;
+  if (asset.kind !== "player") {
+    const pick = tradePickText(asset);
+    return `<li class="tr-tile is-pick${fresh ? " is-new" : ""}"${pick.full ? ` title="${escapeAttr(pick.full)}"` : ""}><span class="tr-tile-face">${typeof draftAssetGlyph === "function" ? draftAssetGlyph(asset, true, true) : ""}</span><span class="tr-tile-main"><strong class="tr-tile-name">${escapeHtml(pick.short)}</strong><span class="tr-tile-sub">${asset.kind === "pick_swap" ? "Swap right" : "Draft pick"}${pick.note ? ` · ${escapeHtml(pick.note)}` : ""}</span></span><span class="tr-tile-ovr"></span><span class="tr-tile-contract"></span>${valueCell}${route}${remove}</li>`;
+  }
+  const overall = tradeKnownNumber(asset.overall ?? asset.ratings?.overall);
+  const roles = typeof playerRoleChip === "function" && (asset.primary_off_role || asset.primary_def_role) ? `<span class="tr-role-pair">${playerRoleChip(asset.primary_off_role)}${playerRoleChip(asset.primary_def_role)}</span>` : "";
+  const sub = [asset.position, asset.age != null ? `${asset.age}` : ""].filter(Boolean).map(escapeHtml).join(" · ");
+  const contract = Object.keys(asset.salary_by_year || {}).length || asset.contract_terms?.length || asset.contract ? tradeAssetContract(asset) : "—";
+  return `<li class="tr-tile${fresh ? " is-new" : ""}"><span class="tr-tile-face">${playerHeadshotMarkup(asset, "trade-player-headshot") || ""}</span><span class="tr-tile-main"><span class="tr-tile-top"><button type="button" class="trade-player-link tr-tile-name" data-dashboard-player-card="${escapeAttr(id)}">${playerNameWithInjuryMarkup(asset, name)}</button>${sub ? `<span class="tr-tile-meta">${sub}</span>` : ""}</span>${roles ? `<span class="tr-tile-sub">${roles}</span>` : ""}</span><span class="tr-tile-ovr" title="Overall rating">${overall === null ? "—" : `<b style="color:${tradeRatingColor(overall)}">${overall.toFixed(1)}</b>`}</span><span class="tr-tile-contract">${contract}</span>${valueCell}${route}${remove}</li>`;
+}
+
 function incomingOfferAsset(asset) {
   return `<div class="trade-ledger-scroll">${tradeAssetTable([asset])}</div>`;
 }
 
 function incomingOfferSide(team, assets, { compact = false } = {}) {
-  return `<section class="incoming-offer-side"><header>${teamLogoSrc(team)?`<img src="${escapeAttr(teamLogoSrc(team))}" alt="${escapeAttr(team)} logo">`:""}<strong>${escapeHtml(team)} receives</strong><span>${assets.length} asset${assets.length === 1 ? "" : "s"}</span></header><div class="trade-ledger-scroll" tabindex="0" aria-label="${escapeAttr(team)} incoming assets">${assets.length ? tradeAssetTable(assets, {label:`${team} receives`}) : '<div class="offer-pick offer-pick-empty">No assets in this package</div>'}</div></section>`;
+  return `<section class="incoming-offer-side"><header>${teamLogoSrc(team)?`<img src="${escapeAttr(teamLogoSrc(team))}" alt="">`:""}<strong>${escapeHtml(team)} receives</strong></header><ul class="tr-tiles" aria-label="${escapeAttr(team)} incoming assets">${assets.length ? assets.map(asset => tradeDealTile(asset)).join("") : '<li class="tr-tiles-empty offer-pick-empty">No assets in this package</li>'}</ul></section>`;
 }
 
 function incomingOfferPackage(receipts) {
@@ -15407,7 +15643,7 @@ function offerCard(offer, index) {
     ${tradeLegalityIssues(offer)}
     <div class="incoming-offer-analysis-row">
       ${tradeCandidateInsights(offer, proposal.id || `offer-${index}`)}
-      <div class="incoming-offer-analysis-actions"><button class="ui-command" data-offer-reject="${index}">Decline</button><button class="ui-command" data-offer-accept="${index}" ${legal !== "legal" ? "disabled" : ""}>Accept Trade</button></div>
+      <div class="incoming-offer-analysis-actions"><button type="button" class="tr-text-button" data-offer-reject="${index}">Decline</button><button type="button" class="tr-button is-primary" data-offer-accept="${index}" ${legal !== "legal" ? "disabled" : ""}>Accept Trade</button></div>
     </div>
   </article>`;
 }
@@ -15421,18 +15657,17 @@ function tradeCandidateCard(candidate, index, mode) {
   return `
     <article class="trade-candidate-card ${mode === "offer" ? "incoming" : "market"}">
       <header class="trade-candidate-head">
-        <div><span>${mode === "offer" ? "Incoming proposal" : `Market offer ${index + 1}`}</span><strong>${escapeHtml(proposal.transfers ? tradeReceipts(proposal).map(row=>row.team).join(' ↔ ') : `${fromTeam} ↔ ${toTeam}`)}</strong></div>
-        ${tradeLegalityBadge(candidate)}${mode !== "offer" ? `<button data-inspect-finder="${index}" class="ui-command">Review In Builder</button>` : ""}
+        <div><span>${mode === "offer" ? "Incoming proposal" : `Option ${index + 1}`}</span><strong>${escapeHtml(proposal.transfers ? tradeReceipts(proposal).map(row=>row.team).join(' ↔ ') : `${fromTeam} ↔ ${toTeam}`)}</strong></div>
+        ${tradeLegalityBadge(candidate)}
       </header>
       ${incomingOfferPackage(tradeReceipts(proposal))}
       ${typeof tradeWantsOfferSummary==='function'?tradeWantsOfferSummary(candidate):''}
       ${tradeLegalityIssues(candidate)}
       ${tradeCandidateInsights(candidate, proposal.id || `finder-${index}`)}
       <footer>
-        <p>${tradeReceipts(proposal).reduce((sum,row)=>sum+(row.assets?.length || 0),0)} assets · Review the package before accepting.</p>
         ${mode === "offer"
-          ? `<div><button data-offer-reject="${index}" class="trade-reject-button">Reject</button><button data-offer-accept="${index}" class="trade-accept-button" ${legal === "legal" ? "" : "disabled"}>Accept Trade</button></div>`
-          : `<button data-inspect-finder="${index}" class="trade-accept-button ui-command">Review In Builder</button>`}
+          ? `<div><button type="button" data-offer-reject="${index}" class="tr-text-button trade-reject-button">Decline</button><button type="button" data-offer-accept="${index}" class="tr-button is-primary trade-accept-button" ${legal === "legal" ? "" : "disabled"}>Accept Trade</button></div>`
+          : `<button type="button" data-inspect-finder="${index}" class="tr-button is-primary trade-accept-button">Open in builder</button>`}
       </footer>
     </article>`;
 }
