@@ -69,14 +69,9 @@ class Concept74GuiTests(unittest.TestCase):
             specification.index(".season-minutes-head,"):
             specification.index(".season-minutes-head {")
         ]
-        prospects = specification[
-            specification.index(".season-prospects-head,"):
-            specification.index(".season-prospects-head {")
-        ]
         # Minutes table was reduced to Player / Pos / Height / Minutes / Fatigue columns.
+        # (The prospects card is now a real table sized in card-board.css.)
         self.assertIn("minmax(112px,1.25fr) minmax(88px,1fr) minmax(52px,.7fr)", minutes)
-        self.assertIn("minmax(0, 1.6fr)", prospects)
-        self.assertNotIn("minmax(100px", prospects)
 
     def test_minutes_add_age_and_preserve_authored_group_gaps(self):
         minutes = APP[

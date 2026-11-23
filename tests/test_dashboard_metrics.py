@@ -79,8 +79,13 @@ class DashboardMetricsTests(unittest.TestCase):
         rows = [{"player_id": pid, "player_name": pid, "team_id": "was", "team_abbrev": "WAS", "headshot_url": None, "rookie": False, "values": {"overall": 80}} for pid in ("a", "b")]
         ranks = award_watch_payload(rows, save)["MVP"]
         self.assertEqual([(row["player_id"], row["rank_change"]) for row in ranks], [("b", 1), ("a", -1)])
+        # The award card's stat line: the rating always, per-game numbers once he has played.
+        self.assertEqual(ranks[0]["stats"]["overall"], 80)
+        self.assertIn("points", ranks[0]["stats"])
         save["player_season_stats"] = {}
-        self.assertEqual([row["rank_change"] for row in award_watch_payload(rows, save)["MVP"]], [0, 0])
+        preseason = award_watch_payload(rows, save)["MVP"]
+        self.assertEqual([row["rank_change"] for row in preseason], [0, 0])
+        self.assertNotIn("points", preseason[0]["stats"])
 
     def test_preseason_projection_uses_prior_performance_and_growth(self):
         active = {"players": [{"id": "young", "age": 22, "team_id": "was"}, {"id": "old", "age": 35, "team_id": "was"}]}

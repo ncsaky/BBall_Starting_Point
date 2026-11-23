@@ -14142,20 +14142,6 @@ body[data-dashboard-experience="journey"] .dashboard-shell {
 
 /* Prospect board */
 .season-prospects-panel { display: grid; grid-template-rows: var(--season-card-header-height) minmax(0, 1fr); }
-.season-prospects-table { display: grid; grid-template-rows: 17px repeat(6, minmax(0, 1fr)); min-height: 0; padding: 3px 7px 6px; }
-.season-prospects-head,
-.season-prospect-row {
-  align-items: center;
-  display: grid;
-  gap: 4px;
-  grid-template-columns:
-    15px minmax(0, 1.6fr) minmax(0, .5fr) minmax(0, .9fr)
-    minmax(0, .8fr) minmax(0, 1.1fr) minmax(0, 1.2fr);
-  min-width: 0;
-}
-.season-prospects-head { color: var(--season-muted); font-size: 7px; }
-.season-prospect-row { background: transparent !important; border: 0 !important; border-radius: 0; box-shadow: none !important; color: var(--season-text); min-height: 0; outline: 0 !important; padding: 0; text-align: left; }
-.season-prospect-row > span { font-size: 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .season-stock-spark { height: 14px; width: 100%; }
 .season-stock-spark polyline { fill: none; stroke: var(--season-text); stroke-width: 1.2; }
 .season-scouted { align-items: center; display: grid; gap: 5px; grid-template-columns: minmax(0, 1fr) 24px; }
@@ -14172,11 +14158,6 @@ body[data-dashboard-experience="journey"] .dashboard-shell {
 .season-award-actions { align-items: center; display: flex; flex: 0 0 auto; gap: 2px; }
 .season-awards-grid .season-award-actions button { font-size: 6px; height: 16px; min-height: 16px; padding: 0 3px; white-space: nowrap; }
 .season-award-actions .shortcut-hint { display: none; }
-.season-award-rows { display: grid; grid-template-rows: repeat(4, minmax(0, 1fr)); min-height: 0; }
-.season-award-rows > button { align-items: center; background: transparent !important; border: 0; border-top: 1px solid var(--season-soft-line); border-radius: 0; display: grid; gap: 4px; grid-template-columns: 12px 16px minmax(0, 1fr) 44px; min-height: 0; padding: 0; text-align: left; }
-.season-award-rows > button > span { color: var(--season-muted); font-size: 7px; }
-.season-award-rows > button img { height: 15px; object-fit: contain; width: 15px; }
-.season-award-rows > button strong { color: var(--season-text); font-size: 7px; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .season-award-spark { height: 14px; width: 100%; }
 .season-award-spark polyline { fill: none; stroke: var(--season-text); stroke-width: 1; }
 
@@ -14225,12 +14206,6 @@ body[data-dashboard-experience="journey"] .dashboard-shell {
   .season-opponent-header-rating { gap: 2px; }
   .season-opponent-header-rating > i { width: 12px; }
   .season-opponent-date { flex: 0 0 auto; font-size: 6px; }
-  .season-prospects-head,
-  .season-prospect-row {
-    grid-template-columns:
-      15px minmax(0, 1.6fr) minmax(0, .5fr) minmax(0, .9fr)
-      minmax(0, .8fr) minmax(0, 1.1fr) minmax(0, 1.2fr);
-  }
 }
 
 @media (max-height: 780px) {
