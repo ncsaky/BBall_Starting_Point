@@ -205,6 +205,14 @@ def league_reference(inputs_key: str, league_inputs: Mapping[str, Mapping[str, A
     scalar_ids = [i for i in reg if ex[pids[0]][i]["kind"] != "distribution"]
     sorted_vals = {i: sorted(ex[p][i]["value"] for p in pids) for i in scalar_ids}
     pct = {pid: {iid: _pct_in(sorted_vals[iid], ex[pid][iid]["value"]) for iid in scalar_ids} for pid in pids}
+    # League spread per input (taste deck round 4: every rating on the card as a range bar, like Four Factors):
+    # lowest, 25th percentile, median, 75th percentile, highest.
+    def _five(values: list[float]) -> list[float]:
+        n = len(values)
+        at = lambda q: values[min(n - 1, max(0, int(round(q * (n - 1)))))]
+        return [round(float(values[0]), 2), round(float(at(.25)), 2), round(float(at(.5)), 2), round(float(at(.75)), 2),
+                round(float(values[-1]), 2)]
+    spread = {i: _five(sorted_vals[i]) for i in scalar_ids if sorted_vals[i]}
 
     positions = sorted({position[p] for p in pids if p in position})
     pos_avg: dict[str, dict[str, Any]] = {}
@@ -227,7 +235,7 @@ def league_reference(inputs_key: str, league_inputs: Mapping[str, Mapping[str, A
     curves = {"ovr": _Curve(ovr_c), "off": _Curve(off_c), "def": _Curve(def_c)}
     ref = {
         "reg": reg, "pids": pids, "ex": ex, "position": position, "positions": positions,
-        "scalar_ids": scalar_ids, "sorted_vals": sorted_vals, "pct": pct, "pos_avg": pos_avg,
+        "scalar_ids": scalar_ids, "sorted_vals": sorted_vals, "pct": pct, "pos_avg": pos_avg, "spread": spread,
         "curves": curves,
         "display": {pid: {"ovr": curves["ovr"](ovr_c[k]), "off": curves["off"](off_c[k]),
                           "def": curves["def"](def_c[k])} for k, pid in enumerate(pids)},
@@ -306,6 +314,8 @@ def _entry(ref, iid, ex_cur, base_ex, position):
         row["pct"] = None
         return row
     row["pct"] = round(pct_of(ref, iid, e["value"]), 1)
+    if ref.get("spread", {}).get(iid):
+        row["league"] = ref["spread"][iid]
     if e["kind"] == "measure" and avg is not None:
         row["pos_avg_pct"] = round(pct_of(ref, iid, avg), 1)
         if interval:

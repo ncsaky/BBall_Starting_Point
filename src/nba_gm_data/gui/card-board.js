@@ -12,9 +12,9 @@
   const PHASE_STARTER_LIMIT = 4;
   const STARTER_CARD_MIN_WIDTHS = {minutes:450, week:720, standings:240, opponent:452, signals:198, efficiency:266};
   const CARD_SIZE_FACTORS = {
-    identity: [1.32, 1.1],
+    identity: [1.32, 1.1 * 1.07],   // round 4: room for the Offense / Defense labels above the tabs
     signals: [1, .75],
-    minutes: [1.03 * .8 * 1.16, 1.22 * .7],
+    minutes: [1.03 * .8 * 1.16 * 1.12, 1.22 * .7],   // round 4: room for Fatigue in the modern font
     development: [1.4, 1],
     efficiency: [1.36, 1.36],
     prospects: [1.92, 1.22],
@@ -23,13 +23,16 @@
     "award-mvp": [3.05, 1.22],
     "award-dpoy": [3.05, 1.22],
     "award-roty": [3.05, 1.22],
-    roster: [1.16, 1],
+    roster: [1.16 * 1.6, 1],   // round 4: wide enough for every column, roles in full
+    factors: [1.25 * 1.3, 1.4],   // round 4: the range charts and their key were cut off at the old size
     staff: [1.58, 1.12],
     "league-wire": [.61, 1.05],
   };
-  const CARD_SIZE_REVISIONS = {identity:4,signals:2,minutes:6,development:3,staff:7,"league-wire":2,prospects:3,offense:4,defense:4,"award-mvp":4,"award-dpoy":4,"award-roty":4,roster:3};
-  const CARD_WIDTH_MIGRATIONS = {minutes:{1:1.03/1.68*.8*.7*1.16,2:1.03/1.36*.8*.7*1.16,3:.8*.7*1.16,4:.7*1.16,5:1.16},development:{1:1.4/1.15,2:1.12},"league-wire":{1:.5},prospects:{1:1.92/1.2,2:1.92/1.45},offense:{1:1.1,2:1.1/1.4,3:1.4/1.1},defense:{1:1.1,2:1.1/1.4,3:1.4/1.1},"award-mvp":{1:3.05/1.22,2:3.05/2.05,3:3.05/2.7},"award-dpoy":{1:3.05/1.22,2:3.05/2.05,3:3.05/2.7},"award-roty":{1:3.05/1.22,2:3.05/2.05,3:3.05/2.7},roster:{1:1.16}};
-  const CARD_HEIGHT_MIGRATIONS = {identity:{1:1.1/1.3,2:1.1,3:1.1/1.25},signals:{1:.75},minutes:{1:.7,2:.7,3:.7,4:.7},staff:{2:1.12/1.8,3:1.12/1.35,4:1.12/1.12,5:1.12/1.12,6:1.12/1.04},offense:{1:1.55},defense:{1:1.55}};
+  // Round 4: a new layout never opens these narrower than their tables need (the measured grid cell can be narrow).
+  const CARD_MIN_DEFAULT_WIDTHS = {roster: 1140, minutes: 638, factors: 320};
+  const CARD_SIZE_REVISIONS = {identity:5,signals:2,minutes:7,development:3,staff:7,"league-wire":2,prospects:3,offense:4,defense:4,"award-mvp":4,"award-dpoy":4,"award-roty":4,roster:5,factors:3};
+  const CARD_WIDTH_MIGRATIONS = {minutes:{1:1.03/1.68*.8*.7*1.16*1.12,2:1.03/1.36*.8*.7*1.16*1.12,3:.8*.7*1.16*1.12,4:.7*1.16*1.12,5:1.16*1.12,6:1.12},development:{1:1.4/1.15,2:1.12},"league-wire":{1:.5},prospects:{1:1.92/1.2,2:1.92/1.45},offense:{1:1.1,2:1.1/1.4,3:1.4/1.1},defense:{1:1.1,2:1.1/1.4,3:1.4/1.1},"award-mvp":{1:3.05/1.22,2:3.05/2.05,3:3.05/2.7},"award-dpoy":{1:3.05/1.22,2:3.05/2.05,3:3.05/2.7},"award-roty":{1:3.05/1.22,2:3.05/2.05,3:3.05/2.7},roster:{1:1.16*1.6,3:1.6,4:1.6/1.4},factors:{1:1.25*1.3,2:1.3}};
+  const CARD_HEIGHT_MIGRATIONS = {identity:{1:1.1/1.3*1.07,2:1.1*1.07,3:1.1/1.25*1.07,4:1.07},signals:{1:.75},minutes:{1:.7,2:.7,3:.7,4:.7},staff:{2:1.12/1.8,3:1.12/1.35,4:1.12/1.12,5:1.12/1.12,6:1.12/1.04},offense:{1:1.55},defense:{1:1.55},factors:{1:1.4}};
   const CARD_SCALE_MIGRATIONS = {staff:{4:1.25}};
   const CARD_MIN_SCALES = {
     identity: .72, signals: .78, morale: .78, factors: .78, offense: .72, defense: .72,
@@ -466,7 +469,7 @@
       if (width < 1 || height < 1) continue;
       nodes.set(id, { card, title });
       const [widthFactor, heightFactor] = CARD_SIZE_FACTORS[id] || [1, 1];
-      measurements.push({ id, x: position.x - origin.x, y: position.y - origin.y, width: Math.ceil((id === "staff" ? Math.max(width, 292) : width) * widthFactor), height: Math.ceil(height * heightFactor), sizeRevision: 1 });
+      measurements.push({ id, x: position.x - origin.x, y: position.y - origin.y, width: Math.max(CARD_MIN_DEFAULT_WIDTHS[id] || 0, Math.ceil((id === "staff" ? Math.max(width, 292) : width) * widthFactor)), height: Math.ceil(height * heightFactor), sizeRevision: 1 });
     }
     if (!nodes.size) return;
     const defaults = defaultLayout(measurements);
@@ -493,6 +496,7 @@
       defaults[id] = {x:16, y:16, width:contractTable ? contractWidth : Math.max(100,parseFloat(style.width),rosterTable ? rosterTable.scrollWidth + 24 : 0,blockTable ? blockTable.scrollWidth + 16 : 0), height:contractTable ? Math.max(40,(contractTable.tHead?.offsetHeight || 22) + contractRowsHeight + 2) : id === "roster" ? rosterContentHeight : id === "stats" ? statsContentHeight : id === "team-block" ? teamBlockHeight + 2 : Math.max(40,parseFloat(style.height),teamBlockHeight), scale:1, minScale:minimumScaleFor(id), visible:false, pinned:false, minimized:false, z:nodes.size};
     }
     if (defaults["league-block"]) defaults["league-block"].width = Math.max(defaults["league-block"].width, 740);
+    for (const [id, minimum] of Object.entries(CARD_MIN_DEFAULT_WIDTHS)) if (defaults[id]) defaults[id].width = Math.max(defaults[id].width, minimum);
     for (const {id, title, card, width, height, locked, measured, required, galleryVisible, sizeRevision, initialScale = 1, minScale} of options.extraCards || []) {
       nodes.set(id, {card, title, locked, required, galleryVisible});
       defaults[id] = {x:16, y:16, width, height, scale:initialScale, minScale:Number.isFinite(minScale) ? minScale : minimumScaleFor(id), visible:false, pinned:false, minimized:false, z:nodes.size, measured:Boolean(measured), positioned:false, sizeRevision:Number(sizeRevision) || 0};

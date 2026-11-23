@@ -41,7 +41,7 @@ const profile = {
 
 test('layered ratings page shows four layers, evidence styling and plain labels', () => {
   const html = runtime().inputsProfilePage(profile);
-  for (const text of ['1 · Technique &amp; Recognition', '2 · Physical Tools', '3 · Tendencies', '4 · Coach Usage', 'Catch-and-shoot', 'Drive and kick', 'Shot hunting', 'Shot mix', 'Provisional note', 'Core rotation', '33.3 per game', 'Not yet revealed']) assert.ok(html.includes(text), text);
+  for (const text of ['1 · Technique &amp; Recognition', '2 · Physical Tools', '3 · Tendencies', '4 · Coach Usage', 'Catch-and-shoot', 'Drive and kick', 'Shot hunting', 'Shot mix', 'Middle half', 'Core rotation', '33.3 per game', 'Not yet revealed']) assert.ok(html.includes(text), text);
   assert.ok(html.includes('pc4-fill prior'), 'prior estimates are hatched');
   assert.ok(html.includes('pc4-band'), 'likely range band drawn');
   assert.ok(html.includes('2 of 3 from player data'));
@@ -56,4 +56,11 @@ test('summary OVR/OFF/DEF bars use the profile header when present, legacy value
   assert.ok(!withProfile.includes('61.0'));
   const legacy = c.playerSummaryRatings({ ratings: { overall: 61, offense: 60, defense: 59 } });
   assert.ok(legacy.includes('61.0') && !legacy.includes('80.5'));
+});
+
+test('every rating with a league spread draws as a range bar (taste deck round 4)', () => {
+  const row = {id: 'S01', name: 'Catch-and-shoot', kind: 'grade', evidence: 'player', value: 70, pct: 80, pos_avg: 45, interval: [60, 80], league: [10, 35, 45, 58, 92]};
+  const html = runtime().pc4RangeTrack(row);
+  for (const part of ['pc4-rg-whisker', 'pc4-rg-box', 'pc4-rg-median', 'pc4-rg-avg', 'pc4-rg-dot', 'pc4-rg-band']) assert.ok(html.includes(part), part);
+  assert.equal(runtime().pc4RangeTrack({...row, league: undefined}), null, 'no spread, no range bar');
 });

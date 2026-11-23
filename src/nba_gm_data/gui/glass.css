@@ -208,7 +208,7 @@ body.unified-terminal-ui .season-slideshow .ss-actions :is(.game-tutorial-skip, 
 
 /* One solid dark line under every table header (the old 3px double rule read as two lines with a white gap). */
 :root { --house-head-rule: #3f4b55; }
-body.unified-terminal-ui [data-house-table] > [data-house-head] { border-bottom: 2px solid #3f4b55 !important; }
+body.unified-terminal-ui [data-house-table] > [data-house-head] { border-bottom: 2px solid #3f4b55 !important; box-shadow: none !important; }
 
 /* Team Identity view tabs (round 3: try a new style): a segmented control. A soft tray, the chosen view raised in
    white with dark blue bold text; the others dark ink, a light lift on hover. No black, no white-on-grey. */

@@ -125,6 +125,23 @@ function applyBoardTheme(theme = boardTheme()) {
   document.documentElement.dataset.boardTheme = theme;
 }
 applyBoardTheme();
+// Look choices in Settings (round 4): the glass style and the font. Each is a data attribute on <html>; the CSS in
+// glass-clear.css and fonts.css reads it. Rating and role colours depend on the glass, so a change re-renders.
+const UI_LOOK_SETTINGS = {
+  glass: { key: "nbaGmGlass", label: "Glass", fallback: "clear", options: [["clear", "Clear (see-through)"], ["frosted", "Frosted (light)"]] },
+  font: { key: "nbaGmFont", label: "Font", fallback: "modern", options: [["modern", "Modern (SF Pro)"], ["rounded", "Rounded"], ["avenir", "Avenir Next"], ["helvetica", "Helvetica Neue"], ["classic", "Classic (Tahoma)"]] },
+};
+function uiLook(name) {
+  const setting = UI_LOOK_SETTINGS[name];
+  let saved = "";
+  try { saved = localStorage.getItem(setting.key) || ""; } catch {}
+  return setting.options.some(([key]) => key === saved) ? saved : setting.fallback;
+}
+function applyUiLooks() {
+  for (const name of Object.keys(UI_LOOK_SETTINGS)) document.documentElement.dataset[name === "glass" ? "glass" : "uiFont"] = uiLook(name);
+}
+function clearGlass() { return document.documentElement.dataset.glass === "clear"; }
+applyUiLooks();
 const MULTIPLAYER_MUTATIONS = new Set([
   "apply_contract",
   "submit_extension_offer",
@@ -290,6 +307,20 @@ function wireEvents() {
     try { localStorage.setItem(BOARD_THEME_KEY, theme); } catch {}
     applyBoardTheme(theme);
     button.parentElement.querySelectorAll("[data-board-theme-choice]").forEach(other => other.setAttribute("aria-pressed", String(other === button)));
+  });
+  // Settings > Glass and Font.
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest?.("[data-ui-look-choice]");
+    if (!button) return;
+    const name = button.dataset.uiLook, setting = UI_LOOK_SETTINGS[name];
+    if (!setting) return;
+    try { localStorage.setItem(setting.key, button.dataset.uiLookChoice); } catch {}
+    applyUiLooks();
+    button.parentElement.querySelectorAll("[data-ui-look-choice]").forEach(other => other.setAttribute("aria-pressed", String(other === button)));
+    if (name === "glass") {
+      const modal = state.modal; render(); state.modal = modal; renderModal();
+      document.querySelectorAll(`[data-ui-look="glass"]`).forEach(other => other.setAttribute("aria-pressed", String(other.dataset.uiLookChoice === uiLook("glass"))));
+    }
   });
   // Settings > Season slideshows (delegated, so a re-rendered Settings window keeps working).
   document.addEventListener("click", (event) => {
@@ -3266,7 +3297,10 @@ function playerRatingBarStyle(value) {
 function ratingInkColor(value) {
   const amount = clampNumber(Number(value || 0) / 100, 0, 1);
   // Darkened mid stops (round 3 contrast check): every rating colour is at least 5:1 on the light rows.
-  const stops = [[0, [158, 32, 46]], [0.34, [152, 66, 20]], [0.52, [112, 86, 8]], [0.74, [30, 94, 150]], [1, [20, 64, 158]]];
+  // On clear (dark) glass the same scale runs in light tints, each at least 5:1 on the darkest glass.
+  const stops = typeof clearGlass === "function" && clearGlass()
+    ? [[0, [255, 128, 128]], [0.34, [255, 180, 118]], [0.52, [244, 216, 118]], [0.74, [150, 208, 255]], [1, [182, 198, 255]]]
+    : [[0, [158, 32, 46]], [0.34, [152, 66, 20]], [0.52, [112, 86, 8]], [0.74, [30, 94, 150]], [1, [20, 64, 158]]];
   const upperIndex = Math.max(1, stops.findIndex(([stop]) => amount <= stop));
   const [lowerStop, lowerColor] = stops[upperIndex - 1];
   const [upperStop, upperColor] = stops[upperIndex];
@@ -3531,7 +3565,8 @@ function spatialHeatmapMarkup(profile, options = {}) {
   const head = group => {
     const title = group === "offense" ? "Offense" : "Defense";
     if (groups[group].length === 1) return `<h4>${title}</h4>`;
-    return `<h4 class="spatial-court-tabs" role="group" aria-label="${title} chart"><span class="spatial-court-group-label">${title}</span>${groups[group].map((view, index) => `<button type="button" class="spatial-court-tab" data-court-tab="${view}" data-court-group="${group}" aria-pressed="${index === 0}" title="${escapeAttr(spatialCourtCaption(view, team))}">${escapeHtml(SPATIAL_COURT_VIEWS[view].tab)}</button>`).join("")}</h4>`;
+    // Round 4: the label sits above its three options, centred, so it never reads as one of them.
+    return `<div class="spatial-court-tab-group"><span class="spatial-court-group-label">${title}</span><h4 class="spatial-court-tabs" role="group" aria-label="${title} chart">${groups[group].map((view, index) => `<button type="button" class="spatial-court-tab" data-court-tab="${view}" data-court-group="${group}" aria-pressed="${index === 0}" title="${escapeAttr(spatialCourtCaption(view, team))}">${escapeHtml(SPATIAL_COURT_VIEWS[view].tab)}</button>`).join("")}</h4></div>`;
   };
   const courts = ["offense", "defense"].flatMap(group => groups[group].map((view, index) => spatialCourtSvg(seed, view, spatialHeatmapRegions(profile, view), index > 0))).join("");
   const captions = extended ? `<p class="spatial-court-caption" data-court-caption="offense">${escapeHtml(spatialCourtCaption(groups.offense[0], team))}</p><p class="spatial-court-caption" data-court-caption="defense">${escapeHtml(spatialCourtCaption("defense", team))}</p>` : "";
@@ -4893,6 +4928,8 @@ function setDevelopmentCardExpanded(expanded, card) {
 // uses (extension_analysis.ability_projection: median line, faint scenario range). Each line ends in the player's
 // headshot and name; a checkbox row picks who is drawn (the five with the most minutes to start).
 const DEV_GRAPH_COLORS = ["#2563b0", "#c8563a", "#2f8a57", "#7a3fa8", "#b7791f", "#0f7c8c", "#a8434b", "#4b5b68"];
+// The same hues lightened for the clear glass (each line and its name label at least 4.5:1 on the dark glass).
+const DEV_GRAPH_COLORS_CLEAR = ["#86bfff", "#ffa585", "#7fdca2", "#cfa8f7", "#f2c46d", "#6fd6e0", "#ff9ea7", "#d3dde6"];
 function seasonDevelopmentGraph(candidates) {
   const graph = (state.devGraph ||= {view: "season", picked: null});
   const minutesOf = (id) => Number(rosterRows(state.data.dashboard || {}).find((row) => String(row.id) === String(id))?.minutes_projection || 0);
@@ -4903,7 +4940,8 @@ function seasonDevelopmentGraph(candidates) {
   const projections = state.data.devProjection?.projections || null;
   if (future && !projections && !state.devProjectionLoading) loadDevelopmentProjection();
   const picked = candidates.filter((c) => graph.picked.includes(String(c.player_id)));
-  const color = (id) => DEV_GRAPH_COLORS[graph.picked.indexOf(String(id)) % DEV_GRAPH_COLORS.length];
+  const palette = typeof clearGlass === "function" && clearGlass() ? DEV_GRAPH_COLORS_CLEAR : DEV_GRAPH_COLORS;
+  const color = (id) => palette[graph.picked.indexOf(String(id)) % palette.length];
   const series = picked.map((c) => {
     const pts = future
       ? (projections?.[c.player_id] || []).map((p) => ({label: shortSeasonLabel(p.season), value: Number(p.overall), low: Number(p.low), high: Number(p.high)}))
@@ -4916,11 +4954,15 @@ function seasonDevelopmentGraph(candidates) {
   const shortName = (c) => candidates.filter((o) => lastName(o) === lastName(c)).length > 1 ? `${String(c.name || "").split(" ")[0]} ${lastName(c)}` : lastName(c);
   const labels = series.reduce((longest, s) => s.pts.length > longest.length ? s.pts.map((p) => p.label) : longest, []);
   const all = series.flatMap((s) => s.pts.flatMap((p) => [p.value, p.low ?? p.value, p.high ?? p.value]));
-  const lo = Math.floor((Math.min(...all, 100) - 2) / 5) * 5, hi = Math.ceil((Math.max(...all, 0) + 2) / 5) * 5;
+  // Round 4: the floor reaches at least 60 (lower for lower-rated players), so the scale doesn't jump as players are
+  // picked and the band's low end is never clipped.
+  const lo = Math.min(60, Math.floor((Math.min(...all, 100) - 2) / 5) * 5), hi = Math.ceil((Math.max(...all, 0) + 2) / 5) * 5;
   const x = (i) => left + (labels.length <= 1 ? 0 : i * (W - left - right) / (labels.length - 1));
   const y = (v) => top + (hi - v) / Math.max(1, hi - lo) * (H - top - bottom);
   const grid = [];
   for (let v = lo; v <= hi; v += 5) grid.push(`<line class="dev-grid" x1="${left}" x2="${W - right}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/><text class="dev-axis" x="${left - 6}" y="${(y(v) + 3.5).toFixed(1)}" text-anchor="end">${v}</text>`);
+  // A light grid behind the lines: one rule every 5 points and one per month or season.
+  labels.forEach((_, i) => grid.push(`<line class="dev-grid is-vertical" x1="${x(i).toFixed(1)}" x2="${x(i).toFixed(1)}" y1="${top}" y2="${(H - bottom).toFixed(1)}"/>`));
   const xLabels = labels.map((label, i) => `<text class="dev-axis" x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="middle">${escapeHtml(label)}</text>`).join("");
   // End labels: spread so names never overlap.
   const ends = series.map((s) => ({s, y: y(s.pts.at(-1).value)})).sort((a, b) => a.y - b.y);
@@ -7871,7 +7913,15 @@ function rosterCutdownDashboardWorkspace() {
     const title = kind === "buyout"
       ? `Buyout payout ${money(quote.payout_millions)}${Number(quote.savings_millions) > 0 ? `; saves ${money(quote.savings_millions)} if he clears waivers` : ""}. He clears waivers ${quote.clearance_date || "after two days"}.`
       : `Waived salary that stays on your books: ${money(quote.remaining_cost_millions)}${quote.unverified ? " (includes salary whose protection is unverified, reserved in full)" : ""}. He clears waivers ${quote.clearance_date || "after two days"}.`;
-    return `<span class="cutdown-cost${choice === "keep" ? "" : " is-chosen"}" title="${escapeAttr(title)}">${escapeHtml(money(cost))}</span>`;
+    // Round 4: in the contract form, "$23.1M × 3": this season's charge and the seasons it lasts (each season's
+    // charge is listed in the hover text). Buyouts subtract the surrendered amount season by season, as the engine does.
+    const perSeason = (quote.seasons || []).map((row) => {
+      const charge = Number(row.salary || 0) - (kind === "buyout" ? Number(quote.concessions?.[row.season] || 0) : 0) - Number(row.earned_salary || 0);
+      return {season: row.season, millions: Math.max(0, charge) / 1e6};
+    }).filter((row) => row.millions >= 0.005);
+    const shown = perSeason.length ? `${money(perSeason[0].millions)} × ${perSeason.length}` : money(cost);
+    const seasonsTitle = perSeason.length > 1 ? `\n${perSeason.map((row) => `${row.season}: ${money(row.millions)}`).join("\n")}` : "";
+    return `<span class="cutdown-cost${choice === "keep" ? "" : " is-chosen"}" title="${escapeAttr(title + seasonsTitle)}">${escapeHtml(shown)}</span>`;
   };
   const rules = short ? `You have ${short.count} players; teams must carry ${short.minimum}. The game won't sign anyone onto your roster: sign a free agent, or let your assistant fill the roster with minimum contracts.`
     : room.phase === "regular_season" ? `At most ${summary.target} standard players and ${view.two_way_limit || 3} two-ways.`
@@ -8560,14 +8610,27 @@ function tradeDealSide(row, participants, fresh = "") {
     </div>` : `<button type="button" class="tr-side-team" data-trade-team-roster="${escapeAttr(team)}" title="${escapeAttr(`${team} roster · ${recordText}`)}">${logo}<strong>${escapeHtml(team)}</strong></button>`;
   const remove = side.startsWith("extra:") ? `<button type="button" class="tr-text-button tr-side-remove" data-trade-remove-team="${escapeAttr(team)}" aria-label="Remove ${escapeAttr(team)} from trade" title="Remove ${escapeAttr(team)}">×</button>` : "";
   const total = selectedTradeValue(selected);
+  const colorOf = (index) => TRADE_ASSET_COLORS[index % TRADE_ASSET_COLORS.length];
   const tiles = selected.length
-    ? selected.map(asset => tradeDealTile(asset, {removeSide: side, routeFrom: multi ? team : "", fresh: fresh === `${side}:${asset.kind}:${asset.id}`})).join("")
+    ? selected.map((asset, index) => tradeDealTile(asset, {removeSide: side, routeFrom: multi ? team : "", fresh: fresh === `${side}:${asset.kind}:${asset.id}`, color: colorOf(index)})).join("")
     : `<li class="tr-tiles-empty"><button type="button" class="tr-text-button" data-trade-roster-side="${escapeAttr(side)}" data-trade-view="pick">Choose from ${escapeHtml(team)}'s list</button></li>`;
   return `<section class="tr-side${state.tradeRosterSide === side ? " is-picking" : ""}" data-tr-side="${escapeAttr(side)}" ${teamBrandStyle(team)}>
-    <header class="tr-side-head">${partnerPicker}<span class="tr-side-verb">gives</span><span class="tr-side-total" title="Listed trade value of what ${escapeAttr(team)} gives (before fit and role)">${selected.length ? total.toFixed(1) : ""}</span>${remove}</header>
+    <header class="tr-side-head">${partnerPicker}<span class="tr-side-verb">gives</span>${selected.length ? tradeSideTotalBar(selected, total, participants, colorOf, team) : ""}${remove}</header>
     <ul class="tr-tiles" data-trade-scroll="selected-${escapeAttr(side)}" aria-label="${escapeAttr(team)} gives">${tiles}</ul>
     ${tradeSalaryGauge(flow, {bars: false})}
   </section>`;
+}
+
+// The side's total listed value: the number, then one bar made of each asset's segment in that asset's colour. Every
+// side shares one scale (the larger of 120 and the biggest side), so the two bars compare at a glance.
+function tradeSideTotalBar(selected, total, participants, colorOf, team) {
+  const scale = Math.max(TRADE_VALUE_SCALE, ...participants.map(row => selectedTradeValue(row.selected || [])));
+  const segments = selected.map((asset, index) => {
+    const value = Math.max(0, tradeKnownNumber(asset.trade_value) || 0);
+    const name = asset.name || asset.label || "Asset";
+    return value ? `<b style="width:${(value / scale * 100).toFixed(2)}%;background:${colorOf(index)}" title="${escapeAttr(`${name}: ${value.toFixed(1)}`)}"></b>` : "";
+  }).join("");
+  return `<span class="tr-side-total" title="Listed trade value of what ${escapeAttr(team)} gives (before fit and role)"><strong>${total.toFixed(1)}</strong><i class="tr-side-total-bar" role="img" aria-label="${escapeAttr(`Total value ${total.toFixed(1)}`)}">${segments}</i></span>`;
 }
 
 function tradeLowerTabs(page) {
@@ -9235,12 +9298,25 @@ function tradePayrollAnimation(participants) {
     return `<figure class="tr-payroll-frame" ${teamBrandStyle(team)}>
         <figcaption>${teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : ""}<strong>${escapeHtml(team)}</strong>${change}<span class="tr-payroll-phase"><em class="is-before">Now</em><em class="is-after">After the trade</em></span></figcaption>
         <div class="tr-payroll-stage"><div class="tr-payroll-layer is-before">${chart(false)}</div><div class="tr-payroll-layer is-after">${chart(true)}</div></div>
+        ${tradePayrollTable(payload, after, seasons)}
       </figure>`;
   }).join("");
   return `<section class="tr-payroll${state.tradePayrollPlayed ? " is-settled" : " is-playing"}" aria-label="Four-year payroll, now and after the trade">
       <header class="tr-payroll-head"><h4>Payroll, next four seasons</h4><button type="button" class="tr-text-button" data-trade-payroll-replay>Replay</button></header>
       <div class="tr-payroll-frames" style="--tr-frames:${teams.length}">${frames}</div>
     </section>`;
+}
+
+// Under each payroll chart (round 4): the four seasons as a small table, payroll now, after the trade, and the change.
+function tradePayrollTable(payload, after, seasons) {
+  const rows = seasons.map((season, index) => {
+    const now = tradeKnownNumber(payload.cap_by_year?.[season]?.salary_total_millions);
+    const row = after[index] || {};
+    const delta = row.delta === null || row.delta === undefined ? null : Number(row.delta);
+    const tone = delta > 0.05 ? "is-up" : delta < -0.05 ? "is-down" : "";
+    return `<tr><th scope="row">${escapeHtml(shortSeasonLabel(season))}</th><td>${now === null ? "—" : money(now)}</td><td>${row.payroll === null || row.payroll === undefined ? "—" : money(row.payroll)}</td><td class="${tone}">${delta === null ? "—" : Math.abs(delta) < 0.05 ? "—" : signedMoney(delta)}</td></tr>`;
+  }).join("");
+  return `<table class="tr-payroll-table"><thead><tr><th>Season</th><th>Now</th><th>After</th><th>Change</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 // The asset list for one team: every player and pick it could send. Table rules: one dark header line, centred
@@ -10887,6 +10963,26 @@ function pc4Track(fill, prior, avg, band, tall) {
   return `<div class="pc4-track${tall ? " tall" : ""}">${bandHtml}<i class="pc4-fill${prior ? " prior" : ""}" style="width:${clampNumber(fill, 0, 100)}%"></i>${avgHtml}</div>`;
 }
 
+// Round 4: every rating as a range bar, like Four Factors. Each row's axis runs from the league's lowest to its
+// highest (so every row's range is the same width), the whisker is that full range, the box the middle half, the
+// tick the median; the small mark is the position average and the dot is this player (hollow when estimated from
+// similar players), coloured by his league percentile. The faint strip around the dot is his likely range.
+function pc4RangeTrack(row, value = row.value, avg = row.pos_avg, band = row.interval) {
+  const league = row.league;
+  if (!Array.isArray(league) || league.length < 5 || !Number.isFinite(Number(value))) return null;
+  let lo = Math.min(Number(league[0]), Number(value)), hi = Math.max(Number(league[4]), Number(value));
+  if (!(hi > lo)) hi = lo + 1;
+  const pad = (hi - lo) * .04; lo -= pad; hi += pad;
+  const at = (x) => clampNumber((Number(x) - lo) / (hi - lo) * 100, 0, 100).toFixed(2);
+  const [min, q1, median, q3, max] = league.map(Number);
+  const pct = Number.isFinite(Number(row.pct)) ? Number(row.pct) : 50;
+  const color = typeof ratingInkColor === "function" ? ratingInkColor(pct) : "#3f7fc1";
+  const bandHtml = Array.isArray(band) && band.length === 2 && Number.isFinite(Number(band[0]))
+    ? `<i class="pc4-rg-band" style="left:${at(Math.max(lo, band[0]))}%;width:${Math.max(0.6, at(Math.min(hi, band[1])) - at(Math.max(lo, band[0]))).toFixed(2)}%;background:${color}"></i>` : "";
+  const avgHtml = avg == null || !Number.isFinite(Number(avg)) ? "" : `<i class="pc4-rg-avg" style="left:${at(avg)}%"></i>`;
+  return `<div class="pc4-rg" role="img" aria-label="${escapeAttr(`${row.name}: league percentile ${Math.round(pct)}`)}"><i class="pc4-rg-whisker" style="left:${at(min)}%;width:${(at(max) - at(min)).toFixed(2)}%"></i><i class="pc4-rg-box" style="left:${at(q1)}%;width:${Math.max(0.6, at(q3) - at(q1)).toFixed(2)}%"></i><i class="pc4-rg-median" style="left:${at(median)}%"></i>${bandHtml}${avgHtml}<i class="pc4-rg-dot${row.evidence === "prior" ? " is-prior" : ""}" style="left:${at(value)}%;--dot:${color}"></i></div>`;
+}
+
 function pc4Range(row) {
   if (!row.interval) return "";
   const [lo, hi] = row.interval;
@@ -10900,11 +10996,11 @@ function pc4Tip(row, valueText) {
 
 function pc4GradeRow(row) {
   const value = Math.round(row.value);
-  return `<div class="pc4-r" title="${pc4Tip(row, value)}"><span class="pc4-l">${escapeHtml(row.name)}</span>${pc4Track(row.value, row.evidence === "prior", row.pos_avg, row.interval)}<strong>${value}</strong></div>`;
+  return `<div class="pc4-r" title="${pc4Tip(row, value)}"><span class="pc4-l">${escapeHtml(row.name)}</span>${pc4RangeTrack(row) || pc4Track(row.value, row.evidence === "prior", row.pos_avg, row.interval)}<strong${typeof ratingInkColor === "function" ? ` style="color:${ratingInkColor(Number(row.pct ?? 50))}"` : ""}>${value}</strong></div>`;
 }
 
 function pc4PassingRows(pairs) {
-  const cell = row => `${pc4Track(row.value, row.evidence === "prior", row.pos_avg, row.interval)}<strong title="${pc4Tip(row, Math.round(row.value))}">${Math.round(row.value)}</strong>`;
+  const cell = row => `${pc4RangeTrack(row) || pc4Track(row.value, row.evidence === "prior", row.pos_avg, row.interval)}<strong title="${pc4Tip(row, Math.round(row.value))}"${typeof ratingInkColor === "function" ? ` style="color:${ratingInkColor(Number(row.pct ?? 50))}"` : ""}>${Math.round(row.value)}</strong>`;
   return `<div class="pc4-pass-head"><span></span><b>Read</b><span></span><b>Delivery</b><span></span></div>`
     + pairs.map(pair => `<div class="pc4-r pass" title="${escapeAttr(`${pair.id} · ${pair.name}`)}"><span class="pc4-l">${escapeHtml(pair.name)}</span>${cell(pair.read)}${cell(pair.delivery)}</div>`).join("");
 }
@@ -10917,12 +11013,12 @@ function pc4MeasureText(row, coach) {
 }
 
 function pc4MeasureRow(row, coach) {
-  return `<div class="pc4-r measure" title="${pc4Tip(row, `${Number(row.value).toFixed(1)} ${row.unit || ""}`)}"><span class="pc4-l">${escapeHtml(row.name)}</span>${pc4Track(row.pct, row.evidence === "prior", row.pos_avg_pct, row.interval_pct)}<strong>${pc4MeasureText(row, coach)}</strong></div>`;
+  return `<div class="pc4-r measure" title="${pc4Tip(row, `${Number(row.value).toFixed(1)} ${row.unit || ""}`)}"><span class="pc4-l">${escapeHtml(row.name)}</span>${pc4RangeTrack(row) || pc4Track(row.pct, row.evidence === "prior", row.pos_avg_pct, row.interval_pct)}<strong>${pc4MeasureText(row, coach)}</strong></div>`;
 }
 
 function pc4PropensityRow(row) {
   const band = row.interval ? row.interval.map(x => x * 100) : null;
-  return `<div class="pc4-r" title="${pc4Tip(row, pc4Pct(row.value))}"><span class="pc4-l">${escapeHtml(row.name)}</span>${pc4Track(row.value * 100, row.evidence === "prior", row.pos_avg * 100, band)}<strong>${pc4Pct(row.value)}</strong></div>`;
+  return `<div class="pc4-r" title="${pc4Tip(row, pc4Pct(row.value))}"><span class="pc4-l">${escapeHtml(row.name)}</span>${pc4RangeTrack(row) || pc4Track(row.value * 100, row.evidence === "prior", row.pos_avg * 100, band)}<strong>${pc4Pct(row.value)}</strong></div>`;
 }
 
 function pc4DistributionRow(row) {
@@ -10982,14 +11078,14 @@ function inputsProfilePage(profile) {
   const left = technique.groups.filter(group => group.column === 0).map(group => pc4Group(group, coach)).join("");
   const right = technique.groups.filter(group => group.column === 1).map(group => pc4Group(group, coach)).join("");
   return `<div class="pc4" data-inputs-profile>
-    <div class="pc4-legend">
-      <span><i class="pc4-sw solid"></i>Based on this player's stats</span>
-      <span><i class="pc4-sw hatch"></i>Estimate from similar players</span>
-      <span><i class="pc4-sw band"></i>Likely range</span>
-      <span><i class="pc4-sw tick"></i>Average at his position (${escapeHtml(profile.position || "")})</span>
-      <span style="margin-left:auto">Grades: 50 is a functional NBA level, 75 strong, 90 exceptional. Hover any row for details.</span>
+    <div class="pc4-legend pc4-legend-range">
+      <span><i class="pc4-key whisker"></i>League range</span>
+      <span><i class="pc4-key box"></i>Middle half</span>
+      <span><i class="pc4-key median"></i>Median</span>
+      <span><i class="pc4-key avg"></i>${escapeHtml(profile.position || "Position")} average</span>
+      <span><i class="pc4-key dot"></i>Him</span>
+      <span><i class="pc4-key dot is-prior"></i>Estimated</span>
     </div>
-    <p class="pc4-note">${escapeHtml(profile.header?.scale_note || "")}</p>
     <div class="pc4-layers">
       <section class="pc4-layer">${pc4LayerHeader(1, technique)}<div class="pc4-body"><div class="pc4-cols"><div>${left}</div><div>${right}</div></div></div></section>
       <div class="pc4-stack"><section class="pc4-layer">${pc4LayerHeader(2, physical)}<div class="pc4-body">${physical.groups.map(group => pc4Group({ ...group, note: "" }, coach).replace(/^<h4>.*?<\/h4>/, "")).join("")}<p class="pc4-foot">Measured rows are drawn against the league spread (bar = percentile). Grade rows use the 0-100 scale.</p></div></section>${pc4CoachLayer(profile)}</div>
@@ -12402,6 +12498,7 @@ function openSettingsModal() {
         <button type="button" data-replay-tutorial>Replay Tutorial</button>
         ${seasonSlideshowMenuMarkup()}
         ${boardThemeMenuMarkup()}
+        ${typeof uiLookMenuMarkup === "function" ? uiLookMenuMarkup("glass") + uiLookMenuMarkup("font") : ""}
         <button type="button" class="ui-command" data-report-issue>Report an Issue</button>
         <a class="artwork-credits-link" href="/assets/game-art/CREDITS.md" target="_blank" rel="noopener">Artwork credits</a>
         <button type="button" data-photo-credits>Photo credits</button>
@@ -12486,6 +12583,12 @@ function boardThemeMenuMarkup() {
   const current = boardTheme();
   const buttons = BOARD_THEMES.map(([key, label]) => `<button type="button" data-board-theme-choice="${key}" aria-pressed="${key === current}">${label}</button>`);
   return `<div class="settings-board-theme" role="group" aria-label="Board background"><span>Board background</span>${buttons.join("")}</div>`;
+}
+
+function uiLookMenuMarkup(name) {
+  const setting = UI_LOOK_SETTINGS[name], current = uiLook(name);
+  const buttons = setting.options.map(([key, label]) => `<button type="button" data-ui-look="${name}" data-ui-look-choice="${key}" aria-pressed="${key === current}"${name === "font" ? ` class="ui-font-sample is-${key}"` : ""}>${label}</button>`);
+  return `<div class="settings-board-theme settings-ui-look" role="group" aria-label="${setting.label}"><span>${setting.label}</span>${buttons.join("")}</div>`;
 }
 
 function seasonSlideshowMenuMarkup() {
@@ -16249,7 +16352,9 @@ function tradeAssetRow(asset, {side, removeSide, routeFrom, sortKey = ""} = {}) 
   const runway = tradeKnownNumber(asset.upside_remaining);
   const evidence = [asset.potential != null ? `Potential ${draftMetric(asset.potential)}` : "", asset.mpg != null ? `${draftMetric(asset.mpg)} MPG` : "", asset.ppg != null ? `${draftMetric(asset.ppg)} PPG` : ""].filter(Boolean).join(" · ");
   const salaries = Object.entries(asset.salary_by_year || {}).filter(([,value]) => Number(value) > 0).sort(([a],[b]) => a.localeCompare(b));
-  const roles = typeof playerRoleChip === "function" && (asset.primary_off_role || asset.primary_def_role) ? `<span class="tr-role-pair">${playerRoleChip(asset.primary_off_role)}${playerRoleChip(asset.primary_def_role)}</span>` : "—";
+  // Roles as coloured text, not chips (style guide), offense then defense.
+  const roleText = (role) => { if (!role) return ""; const [label, tone] = (typeof PLAYER_ROLE_CHIPS === "object" && PLAYER_ROLE_CHIPS[role]) || [role, "unknown"]; return `<span class="role-text role-${escapeAttr(tone)}">${escapeHtml(label)}</span>`; };
+  const roles = asset.primary_off_role || asset.primary_def_role ? `<span class="tr-role-pair">${roleText(asset.primary_off_role)}${roleText(asset.primary_def_role)}</span>` : "—";
   return `<tr class="trade-ledger-player${selected ? " is-selected" : ""}${injury ? " is-injured" : ""}"${rowAttrs}>${control}${route}<td class="trade-ledger-portrait">${playerHeadshotMarkup(asset, "trade-player-headshot") || '<span class="trade-portrait-empty" aria-hidden="true">&mdash;</span>'}</td><th scope="row" class="tr-col-name${sortKey === "name" ? " is-sorted" : ""}"><button type="button" class="trade-player-link" data-dashboard-player-card="${escapeAttr(id)}" title="${escapeAttr(evidence || name)}">${playerNameWithInjuryMarkup(asset, name)}</button>${evidence ? `<span class="sr-only">${escapeHtml(evidence)}</span>` : ""}</th>${cell("pos", "tr-col-pos", escapeHtml(asset.position || "—"))}${cell("age", "tr-col-age", asset.age == null ? "—" : escapeHtml(asset.age))}${cell("height", "tr-col-ht", escapeHtml(asset.height || "—"))}${cell("roles", "tr-col-roles", roles)}${values.map(ratingCell).join("")}${cell("runway", "trade-ledger-meter tr-col-runway", runway === null ? "—" : draftMetric(runway), runway === null ? "Runway unavailable" : `Runway ${runway.toFixed(1)}/5`)}${cell("injury", "trade-ledger-meter trade-ledger-injury tr-col-injury", injuryRiskBody(asset.health_risk, asset.injury_body))}${cell("contract", "trade-ledger-contract tr-col-contract", salaries.length ? `<details><summary>${tradeAssetContract(asset)}</summary><div>${salaries.map(([season, amount]) => `<span>${escapeHtml(shortSeasonLabel(season))} <b>${money(Number(amount))}</b></span>`).join("")}${asset.contract ? `<span>${escapeHtml(asset.contract)}</span>` : ""}</div></details>` : tradeAssetContract(asset))}${cell("value", "trade-ledger-value tr-col-value", tradeValueBar(tradeKnownNumber(asset.trade_value)))}</tr>`;
 }
 
@@ -16301,20 +16406,23 @@ function tradeRatingColor(value) {
 // Listed trade value as a bar (taste deck round 2: value is the main thing to read on a player in a deal, and a
 // bare number reads like a grade). One scale for every asset: the league's best contracts list near 120.
 const TRADE_VALUE_SCALE = 120;
-function tradeValueBar(value) {
+// Colours for the assets one side gives (round 4: each asset its own colour, the side's total a segmented bar of them).
+// Mid-light tints that read on both the clear and the frosted glass.
+const TRADE_ASSET_COLORS = ["#5aa2f0", "#e8a04e", "#5dbf83", "#b58ae8", "#e2716f", "#4fc1c0", "#c9b458", "#8f9df0"];
+function tradeValueBar(value, color = "") {
   if (value === null) return `<span class="tr-tile-value is-empty" title="Listed trade value">—</span>`;
   const width = Math.max(2, Math.min(100, value / TRADE_VALUE_SCALE * 100));
-  const fill = typeof performanceBarColor === "function" ? performanceBarColor(Math.min(100, value / 90 * 100)) : "#3978d4";
+  const fill = color || (typeof performanceBarColor === "function" ? performanceBarColor(Math.min(100, value / 90 * 100)) : "#3978d4");
   return `<span class="tr-tile-value" title="Listed trade value ${value.toFixed(1)}: what he is worth on the market before the receiving team's fit and role"><strong>${value.toFixed(1)}</strong><i><b style="width:${width.toFixed(1)}%;background:${fill}"></b></i></span>`;
 }
 
-function tradeDealTile(asset, {removeSide = "", routeFrom = "", fresh = false} = {}) {
+function tradeDealTile(asset, {removeSide = "", routeFrom = "", fresh = false, color = ""} = {}) {
   const id = asset.id || asset.value || "";
   const name = asset.name || asset.label || id || "Asset";
   const remove = removeSide ? `<button type="button" class="tr-tile-remove" data-remove-side="${escapeAttr(removeSide)}" data-asset-id="${escapeAttr(id)}" aria-label="Remove ${escapeAttr(name)}" title="Remove ${escapeAttr(name)}">×</button>` : "";
   const route = routeFrom && typeof tradeWorkspaceParticipants === "function" ? `<label class="tr-tile-route"><span>to</span><select data-trade-destination="${escapeAttr(tradeRouteKey(routeFrom, asset))}" aria-label="Destination for ${escapeAttr(name)}">${tradeWorkspaceParticipants().filter(row => row.team !== routeFrom).map(row => `<option value="${escapeAttr(row.team)}" ${tradeAssetDestination(routeFrom, asset) === row.team ? "selected" : ""}>${escapeHtml(row.team)}</option>`).join("")}</select></label>` : "";
   const value = tradeKnownNumber(asset.trade_value);
-  const valueCell = tradeValueBar(value);
+  const valueCell = tradeValueBar(value, color);
   if (asset.kind !== "player") {
     const pick = tradePickText(asset);
     return `<li class="tr-tile is-pick${fresh ? " is-new" : ""}"${pick.full ? ` title="${escapeAttr(pick.full)}"` : ""}><span class="tr-tile-face">${typeof draftAssetGlyph === "function" ? draftAssetGlyph(asset, true, true) : ""}</span><span class="tr-tile-main"><strong class="tr-tile-name">${escapeHtml(pick.short)}</strong><span class="tr-tile-sub">${route}${asset.kind === "pick_swap" ? "Swap right" : "Draft pick"}${pick.note ? ` · ${escapeHtml(pick.note)}` : ""}</span></span><span class="tr-tile-roles"></span>${valueCell}<span class="tr-tile-ovr"></span><span class="tr-tile-contract"></span>${remove}</li>`;
@@ -16944,7 +17052,7 @@ function compactSalaryYears(rows) {
 function signedMoney(value) {
   const num = Number(value);
   if (!Number.isFinite(num)) return "";
-  return `$${num >= 0 ? "+" : ""}${num.toFixed(1)}M`;
+  return `${num >= 0 ? "+" : "−"}$${Math.abs(num).toFixed(1)}M`;   // "+$14.7M", "−$3.2M"
 }
 
 // Offseason steps live in one chip in the top bar, beside the date (taste deck round 2): the phase name and "Step N

@@ -1,0 +1,18 @@
+/* Font choice (Settings > Font, round 4). The game was built on Tahoma; "Classic" keeps it. Every other choice swaps
+   the family everywhere (sizes and weights stay as each screen sets them) and uses figures of equal width, so numbers
+   in a column line up. System fonts only: the game ships offline. */
+html[data-ui-font="modern"] { --ui-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", Arial, sans-serif; }
+html[data-ui-font="rounded"] { --ui-font: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; }
+html[data-ui-font="avenir"] { --ui-font: "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif; }
+html[data-ui-font="helvetica"] { --ui-font: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+html[data-ui-font]:not([data-ui-font="classic"]) body,
+html[data-ui-font]:not([data-ui-font="classic"]) body *:not(code):not(kbd):not(pre) {
+  font-family: var(--ui-font) !important;
+  font-variant-numeric: tabular-nums;
+}
+/* The Settings buttons show each font in itself. */
+:root body .settings-ui-look .ui-font-sample.ui-font-sample.is-modern { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif !important; }
+:root body .settings-ui-look .ui-font-sample.ui-font-sample.is-rounded { font-family: ui-rounded, "SF Pro Rounded", -apple-system, Arial, sans-serif !important; }
+:root body .settings-ui-look .ui-font-sample.ui-font-sample.is-avenir { font-family: "Avenir Next", Avenir, Arial, sans-serif !important; }
+:root body .settings-ui-look .ui-font-sample.ui-font-sample.is-helvetica { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important; }
+:root body .settings-ui-look .ui-font-sample.ui-font-sample.is-classic { font-family: Tahoma, "Trebuchet MS", Arial, sans-serif !important; }

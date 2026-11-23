@@ -1022,7 +1022,9 @@ test('minutes card migration narrows older windows once, making room for the cur
   for (const [revision,width,height] of [[1,1680,720],[2,1360,720],[5,577,504]]) {
     const layout = {minutes:{width,height,sizeRevision:revision}};
     migrateCardSizes(layout,{cards:{minutes:{sizeRevision:revision}}});
-    assert.deepEqual(layout.minutes,{width:669,height:504,sizeRevision:6});
+    // Round 4: 12% wider again so Fatigue fits in the modern font (749 or 750 after rounding).
+    assert.ok(Math.abs(layout.minutes.width - 749.5) <= 0.5, String(layout.minutes.width));
+    assert.deepEqual([layout.minutes.height, layout.minutes.sizeRevision], [504, 7]);
     const saved = {cards:structuredClone(layout)};
     migrateCardSizes(layout,saved);
     assert.deepEqual(layout,saved.cards);
@@ -1034,11 +1036,12 @@ test('team identity card migration removes excess saved height without changing 
   migrateCardSizes(layout,{cards:{identity:{sizeRevision:1}}});
   assert.equal(layout.identity.width,1320);
   // From revision 1 straight to the current one: 1/1.3 (old excess) times 1.1 (2026-11-23: courts fit above the legend).
-  assert.equal(layout.identity.height,1100);
+  // Round 4: 7% taller for the Offense / Defense labels above the tabs.
+  assert.equal(layout.identity.height,1177);
   assert.equal(layout.identity.scale,1);
-  assert.equal(layout.identity.sizeRevision,4);
-  migrateCardSizes(layout,{cards:{identity:{sizeRevision:4}}});
-  assert.equal(layout.identity.height,1100);
+  assert.equal(layout.identity.sizeRevision,5);
+  migrateCardSizes(layout,{cards:{identity:{sizeRevision:5}}});
+  assert.equal(layout.identity.height,1177);
 });
 
 test('radar cards widen for standings-sized labels without changing height', () => {

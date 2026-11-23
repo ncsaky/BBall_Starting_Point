@@ -278,8 +278,8 @@ function assetsRosterGroups(seasons) {
     {key:'age',label:'Age',width:28,value:p=>Math.floor(p.age)},
     {key:'position',label:'Pos',width:28,value:p=>compactPos(p.position)},
     // Offense and defense roles as coloured text, not chips (taste deck round 3).
-    {key:'primary_off_role',label:'Off. role',width:120,value:p=>p.primary_off_role||'',cell:p=>assetsRoleText(p.primary_off_role)},
-    {key:'primary_def_role',label:'Def. role',width:120,value:p=>p.primary_def_role||'',cell:p=>assetsRoleText(p.primary_def_role)},
+    {key:'primary_off_role',label:'Off. role',width:142,value:p=>p.primary_off_role||'',cell:p=>assetsRoleText(p.primary_off_role)},
+    {key:'primary_def_role',label:'Def. role',width:142,value:p=>p.primary_def_role||'',cell:p=>assetsRoleText(p.primary_def_role)},
     // Value as a bar beside its number: the main thing when sorting by value (taste deck round 3).
     {key:'trade_value',label:'Value',width:120,value:p=>Number(p.trade_value||0),cell:p=>p.trade_value==null?'—':tradeValueBar(Number(p.trade_value))},
   ];

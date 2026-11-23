@@ -5182,6 +5182,14 @@ def team_identity_report(canonical: dict[str, Any], save: dict[str, Any]) -> dic
             "offensive_rebounding": round(clamp(weighted("oreb"), 1, 99), 1),
             "defensive_rebounding": round(clamp(weighted("rebounding"), 1, 99), 1),
             "on_ball_defense": round(clamp(weighted("lateral_agility") * 0.55 + weighted("screen_nav") * 0.45 - age_drag * 0.8, 1, 99), 1),
+            # More radar parts (taste deck round 4: "surely you can add more categories"), each a plain minutes-weighted
+            # average of one existing player summary value, so the chart shows what the roster is made of.
+            "ball_handling": round(clamp(weighted("handle"), 1, 99), 1),
+            "basketball_iq": round(clamp(weighted("iq"), 1, 99), 1),
+            "steal_pressure": round(clamp(weighted("steal"), 1, 99), 1),
+            "shot_blocking": round(clamp(weighted("block"), 1, 99), 1),
+            "switchability": round(clamp(weighted("portability"), 1, 99), 1),
+            "team_defense": round(clamp(weighted("scheme_iq"), 1, 99), 1),
             "depth": round(clamp(depth, 1, 99), 1),
             "age_timeline": round(timeline, 1),
             "average_age": round(weighted_age, 1),

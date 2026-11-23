@@ -99,8 +99,11 @@
   // middle (yellow) stays readable as text.
   const RATING_FLOOR = 60, RATING_CEILING = 98;
   // Same text-safe stops as app.js ratingInkColor (round 3 contrast check: at least 5:1 on the light cards).
-  const RATING_STOPS = [[0, [158, 32, 46]], [0.34, [152, 66, 20]], [0.52, [112, 86, 8]], [0.74, [30, 94, 150]], [1, [20, 64, 158]]];
+  const RATING_STOPS_LIGHT = [[0, [158, 32, 46]], [0.34, [152, 66, 20]], [0.52, [112, 86, 8]], [0.74, [30, 94, 150]], [1, [20, 64, 158]]];
+  // Clear (dark) glass: the same scale in light tints (app.js ratingInkColor).
+  const RATING_STOPS_CLEAR = [[0, [255, 128, 128]], [0.34, [255, 180, 118]], [0.52, [244, 216, 118]], [0.74, [150, 208, 255]], [1, [182, 198, 255]]];
   function ratingColor(value) {
+    const RATING_STOPS = globalThis.document?.documentElement?.dataset?.glass === "clear" ? RATING_STOPS_CLEAR : RATING_STOPS_LIGHT;
     const share = Math.min(1, Math.max(0, (Number(value) - RATING_FLOOR) / (RATING_CEILING - RATING_FLOOR)));
     const upper = Math.max(1, RATING_STOPS.findIndex(([stop]) => share <= stop));
     const [lowStop, low] = RATING_STOPS[upper - 1];
@@ -355,12 +358,20 @@
         return Math.max(0, GROUPS.findIndex(([, list]) => list.includes(first)));
       };
       const columns = GROUPS.map((_, index) => bench.filter((p) => groupOf(p) === index));
-      const depthCell = (p) => p ? `<td class="ss-depth-cell"${opens(p)}><span class="ss-depth-player">${headshot(p)}<span><span class="ss-tile-name">${link(p)}${injury(p)}</span><span class="ss-depth-meta">${ratingNumber(p.overall)}${drop(p)}${p.minutes ? `<i>${esc(p.minutes)} min</i>` : ""}<em>${esc(p.position || "")}</em></span></span></span></td>` : `<td class="ss-depth-cell is-empty"></td>`;
+      // Round 4: every fact its own column (no small text under a name), names left-aligned so the entries line up in
+      // both directions, the headshot centred on the name. Each group: Player | OVR | Min | Pos.
+      const depthCells = (p, index) => p
+        ? `<td class="ss-depth-name${index ? " is-group-start" : ""}"${opens(p)}><span class="ss-depth-player">${headshot(p)}<span class="ss-tile-name">${link(p)}${injury(p)}</span></span></td><td class="ss-depth-num">${ratingNumber(p.overall)}${drop(p)}</td><td class="ss-depth-num">${p.minutes ? esc(p.minutes) : "—"}</td><td class="ss-depth-num">${esc(p.position || "—")}</td>`
+        : `<td class="ss-depth-name is-empty${index ? " is-group-start" : ""}"></td><td></td><td></td><td></td>`;
       const depthRows = Array.from({length: Math.max(1, ...columns.map((col) => col.length))}, (_, row) =>
-        `<tr>${columns.map((col) => depthCell(col[row])).join("")}</tr>`).join("");
-      const depthTable = `<table class="ss-depth-table is-by-group"><thead><tr>${GROUPS.map(([label]) => `<th scope="col">${label}</th>`).join("")}</tr></thead><tbody>${depthRows}</tbody></table>`;
+        `<tr>${columns.map((col, index) => depthCells(col[row], index)).join("")}</tr>`).join("");
+      const depthCols = GROUPS.map(() => `<col class="ss-depth-col-name"><col class="ss-depth-col-ovr"><col class="ss-depth-col-num"><col class="ss-depth-col-num">`).join("");
+      const depthTable = `<table class="ss-depth-table is-by-group is-fields"><colgroup>${depthCols}</colgroup><thead>
+          <tr class="ss-depth-groups">${GROUPS.map(([label], index) => `<th colspan="4" scope="colgroup"${index ? ` class="is-group-start"` : ""}>${label}</th>`).join("")}</tr>
+          <tr class="ss-depth-fields">${GROUPS.map((_, index) => `<th scope="col" class="ss-depth-name${index ? " is-group-start" : ""}">Player</th><th scope="col">OVR</th><th scope="col">Min</th><th scope="col">Pos</th>`).join("")}</tr>
+        </thead><tbody>${depthRows}</tbody></table>`;
       return `<div class="ss-team-board${rowsIn()}">
-          <section class="ss-starters">${panelTitle("Projected starting five")}<ol class="ss-starter-row">${starters.map(starterTile).join("")}</ol></section>
+          <section class="ss-starters">${panelTitle("Starting five")}<ol class="ss-starter-row">${starters.map(starterTile).join("")}</ol></section>
           ${bench.length ? `<section class="ss-depth">${panelTitle("Depth chart")}${depthTable}</section>` : ""}
         </div>`;
     },

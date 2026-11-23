@@ -61,3 +61,30 @@
 .pc4-tag { background:var(--pc4-head); border:1px solid var(--pc4-line); font-size:.85em; margin-right:3px; padding:1px 5px; }
 .pc4-ph { color:var(--pc4-muted); font-style:italic; font-weight:400; }
 .pc4-foot { color:var(--pc4-muted); font-size:.85em; line-height:1.4; margin:7px 0 0; }
+
+/* Round 4: every rating as a range bar (league range whisker, middle-half box, median tick, position-average mark,
+   his dot coloured by league percentile, hollow when estimated; a faint strip of his likely range). */
+.pc4 { --pc4-rg-line: #5b6976; --pc4-rg-box: rgba(91, 105, 118, .22); --pc4-rg-median: #24323e; --pc4-rg-avg: #8a5a12; --pc4-rg-ring: #fff; }
+.pc4-rg { position: relative; height: 14px; }
+.pc4-rg > i { position: absolute; display: block; }
+.pc4-rg-whisker { top: 6.5px; height: 1px; background: var(--pc4-rg-line); }
+.pc4-rg-box { top: 3px; height: 8px; background: var(--pc4-rg-box); border: 1px solid var(--pc4-rg-line); border-radius: 2px; box-sizing: border-box; }
+.pc4-rg-median { top: 2px; width: 2px; height: 10px; margin-left: -1px; background: var(--pc4-rg-median); }
+.pc4-rg-band { top: 5.5px; height: 3px; opacity: .22; border-radius: 2px; }
+.pc4-rg-avg { top: 0; width: 0; height: 0; margin-left: -4px; border: 4px solid transparent; border-top: 5px solid var(--pc4-rg-avg); }
+.pc4-rg-dot { top: 2px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--dot); box-shadow: 0 0 0 1.5px var(--pc4-rg-ring); z-index: 1; }
+.pc4-rg-dot.is-prior { background: transparent; box-shadow: inset 0 0 0 2px var(--dot), 0 0 0 1.5px var(--pc4-rg-ring); }
+.pc4-r strong { font-weight: 700; font-variant-numeric: tabular-nums; }
+/* Legend keys drawn like the marks. */
+.pc4-legend-range .pc4-key { position: relative; display: inline-block; width: 18px; height: 12px; }
+.pc4-legend-range .pc4-key.whisker::before { content: ""; position: absolute; left: 0; right: 0; top: 5.5px; height: 1px; background: var(--pc4-rg-line); }
+.pc4-legend-range .pc4-key.box::before { content: ""; position: absolute; left: 2px; right: 2px; top: 2px; bottom: 2px; background: var(--pc4-rg-box); border: 1px solid var(--pc4-rg-line); border-radius: 2px; }
+.pc4-legend-range .pc4-key.median::before { content: ""; position: absolute; left: 8px; width: 2px; top: 1px; bottom: 1px; background: var(--pc4-rg-median); }
+.pc4-legend-range .pc4-key.avg::before { content: ""; position: absolute; left: 5px; top: 2px; border: 4px solid transparent; border-top: 5px solid var(--pc4-rg-avg); }
+.pc4-legend-range .pc4-key.dot::before { content: ""; position: absolute; left: 4px; top: 1px; width: 10px; height: 10px; border-radius: 50%; background: #3f7fc1; }
+.pc4-legend-range .pc4-key.dot.is-prior::before { background: transparent; box-shadow: inset 0 0 0 2px #3f7fc1; }
+/* On the clear glass: light lines, a light box, white median; the dot keeps its percentile colour. */
+html[data-glass="clear"] .pc4 { --pc4-rg-line: rgba(255, 255, 255, .45); --pc4-rg-box: rgba(255, 255, 255, .16); --pc4-rg-median: #fff; --pc4-rg-avg: #f2c46d; --pc4-rg-ring: rgba(10, 18, 28, .9);
+  --pc4-line: rgba(255, 255, 255, .22); --pc4-soft: rgba(255, 255, 255, .10); --pc4-head: transparent; --pc4-panel: transparent; --pc4-muted: #c9d5e0; --pc4-text: #f3f7fb; }
+html[data-glass="clear"] .pc4-legend-range .pc4-key.dot::before { background: #8fc4ff; }
+html[data-glass="clear"] .pc4-legend-range .pc4-key.dot.is-prior::before { box-shadow: inset 0 0 0 2px #8fc4ff; }

@@ -85,6 +85,20 @@
   function measureRow(row, column) {
     const cell = row?.children?.[column - 1];
     if (!cell || typeof row.getBoundingClientRect !== "function") return null;
+    // Grid rows: place the fill from the column's grid track, not the cell's box, so a cell that doesn't fill its
+    // track (the Minutes slider cell) can't make the header and row fills differ (taste deck round 4).
+    const style = getComputedStyle(row);
+    const tracks = String(style.gridTemplateColumns || "").split(/\s+/).map(parseFloat);
+    if (String(style.display).includes("grid") && tracks.length === row.children.length && tracks.every(Number.isFinite)) {
+      const gap = parseFloat(style.columnGap) || 0;
+      const padLeft = parseFloat(style.paddingLeft) || 0;
+      const width = row.clientWidth || tracks.reduce((sum, value) => sum + value, 0);
+      let start = padLeft;
+      for (let index = 0; index < column - 1; index += 1) start += tracks[index] + gap;
+      const left = column === 1 ? 0 : Math.max(0, start - gap / 2);
+      const right = column === row.children.length ? width : Math.min(width, start + tracks[column - 1] + gap / 2);
+      return {left, width: Math.max(0, right - left)};
+    }
     const rowBox = row.getBoundingClientRect();
     const cellBox = cell.getBoundingClientRect();
     if (!rowBox.width || !cellBox.width) return null;

@@ -619,6 +619,59 @@ body.unified-terminal-ui #modalRoot .trade-ledger .tr-col-value { min-width: 120
 body.unified-terminal-ui #modalRoot .trade-ledger .tr-col-value .tr-tile-value > i { height: 8px; }
 body.unified-terminal-ui #modalRoot .trade-ledger .tr-rating-plain { font-size: 11.5px; font-weight: 400; color: #2a3a48; }
 body.unified-terminal-ui #modalRoot .trade-ledger :is(th, td).tr-col-name { width: 1%; max-width: 230px; white-space: nowrap; }
-body.unified-terminal-ui #modalRoot .tr-payroll-stage { height: 300px !important; }
-body.unified-terminal-ui #modalRoot .tr-payroll-frames { grid-template-columns: repeat(var(--tr-frames, 2), minmax(0, 440px)) !important; justify-content: center; gap: 28px !important; }
+/* Round 4: the payroll chart keeps exactly its own card's shape (190 × 256): it is drawn at that size and scaled up
+   evenly (× 1.2), never stretched or squashed. Its four-season table sits underneath at the same width. */
+body.unified-terminal-ui #modalRoot .tr-payroll { --tr-chart-k: 1.2; }
+body.unified-terminal-ui #modalRoot .tr-payroll-stage { width: calc(190px * var(--tr-chart-k)) !important; height: calc(256px * var(--tr-chart-k)) !important; }
+body.unified-terminal-ui #modalRoot .tr-payroll-layer { width: 190px; height: 256px; transform: scale(var(--tr-chart-k)); transform-origin: top left; }
+body.unified-terminal-ui #modalRoot .tr-payroll-layer .salary-horizon-chart { width: 190px !important; height: 256px !important; max-height: none !important; }
+body.unified-terminal-ui #modalRoot .tr-payroll-frames { grid-template-columns: repeat(var(--tr-frames, 2), calc(190px * var(--tr-chart-k))) !important; justify-content: center; gap: 56px !important; }
+body.unified-terminal-ui #modalRoot .tr-payroll-frame { width: calc(190px * var(--tr-chart-k)); }
+body.unified-terminal-ui #modalRoot .tr-payroll-table { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 11px; }
+body.unified-terminal-ui #modalRoot .tr-payroll-table :is(th, td) { height: 21px; padding: 0 4px; text-align: center; white-space: nowrap; border-bottom: 1px solid var(--tr-rule); }
+body.unified-terminal-ui #modalRoot .tr-payroll-table thead th { font-size: 10px; font-weight: 700; border-bottom: 2px solid var(--tr-ink); }
+body.unified-terminal-ui #modalRoot .tr-payroll-table tbody th { text-align: left; font-weight: 700; }
+body.unified-terminal-ui #modalRoot .tr-payroll-table td.is-up { color: #b3242c; font-weight: 700; }
+body.unified-terminal-ui #modalRoot .tr-payroll-table td.is-down { color: #2f7a4a; font-weight: 700; }
 
+
+/* Round 4: a side's total value is its number and a segmented bar, one segment per asset in that asset's colour (the
+   same colour as the asset's own value bar below). One scale for both sides. */
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-side-total { display: inline-flex; align-items: center; gap: 7px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-side-total > strong { font-size: 13px; font-weight: 700; min-width: 34px; text-align: right; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-side-total-bar { display: flex; gap: 1px; width: 120px; height: 10px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-side-total-bar > b { display: block; height: 100%; border-radius: 1px; flex: none; }
+
+/* Round 4, the picking list: larger text and rows, a narrow name column (roles take the spare width), names bold like
+   the picks, OFF and DEF bold (OVR alone keeps colour), and every value number in one column with its bar after it. */
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger { table-layout: fixed; width: 100%; font-size: 13px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger thead th { font-size: 11px !important; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger :is(th, td).trade-ledger-control { width: 34px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger :is(th, td).trade-ledger-portrait { width: 46px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger :is(th, td).tr-col-name { width: 190px !important; max-width: 190px !important; overflow: hidden; text-overflow: ellipsis; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger :is(th, td).tr-col-pos { width: 52px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger :is(th, td).tr-col-age { width: 46px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger :is(th, td).tr-col-ht { width: 54px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger :is(th, td).tr-col-rating { width: 58px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger :is(th, td).tr-col-runway { width: 70px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger :is(th, td).tr-col-injury { width: 88px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger :is(th, td).tr-col-contract { width: 112px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger :is(th, td).tr-col-value { width: 176px; min-width: 0; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger tbody tr { height: 48px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger tbody :is(td, th) { font-size: 13px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger button.trade-player-link,
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger button.trade-player-link .player-name-text { font-weight: 700 !important; font-size: 13.5px !important; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger tbody .tr-col-name strong { font-size: 13.5px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger .tr-rating { font-size: 14px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger .tr-rating-plain { font-size: 13px; font-weight: 700; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger .tr-role-pair { display: inline-flex; gap: 8px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger .tr-role-pair .role-text { font-size: 12px; font-weight: 600; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger .tr-col-value .tr-tile-value { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 7px; align-items: center; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger .tr-col-value .tr-tile-value > strong { text-align: right; font-size: 13px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger .tr-col-value .tr-tile-value.is-empty { display: block; text-align: center; }
+body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger :is(th, td).tr-col-roles { width: 300px !important; max-width: none !important; }
+/* Deal tiles: the full name gets the room (position and age live in the picking list), no small text beside it. */
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-side .tr-tile-meta { display: none; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-side .tr-tile-name { font-size: 13px !important; font-weight: 700 !important; }
+body.unified-terminal-ui #modalRoot .tr-tile { grid-template-columns: 40px minmax(96px, 1fr) minmax(88px, 112px) 104px 28px 78px 22px !important; }
+body.unified-terminal-ui #modalRoot .tr-tile:not(:has(.tr-tile-remove)) { grid-template-columns: 40px minmax(96px, 1fr) minmax(88px, 112px) 104px 28px 78px !important; }

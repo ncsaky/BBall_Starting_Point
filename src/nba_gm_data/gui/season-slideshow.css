@@ -443,3 +443,24 @@ body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-fam
 .ss-depth-cell .ss-depth-player { padding: 0; }
 .ss-depth-cell .ss-depth-player:hover { background: transparent; }
 .ss-depth-meta em { font-style: normal; color: #3b4a57; }
+
+/* Depth chart, round 4: a group label centred over each group's four columns, then Player | OVR | Min | Pos. Names are
+   left-aligned so entries line up across rows; the headshot sits centred on the name; a thin divider starts each group. */
+.ss-depth-table.is-fields { table-layout: fixed; width: 100%; border-collapse: collapse; }
+.ss-depth-table.is-fields col.ss-depth-col-name { width: auto; }
+.ss-depth-table.is-fields col.ss-depth-col-num { width: 40px; }
+.ss-depth-table.is-fields col.ss-depth-col-ovr { width: 70px; }
+.ss-depth-table.is-fields td.ss-depth-num .rating-drop { margin-left: 3px; }
+.ss-depth-table.is-fields thead tr.ss-depth-groups th { text-align: center !important; font-size: 12px; font-weight: 800; padding: 4px 6px 2px; border-bottom: 0 !important; }
+.ss-depth-table.is-fields thead tr.ss-depth-fields th { text-align: center !important; font-size: 10px; font-weight: 700; padding: 2px 4px 4px; border-bottom: 2px solid #3f4b55 !important; }
+.ss-depth-table.is-fields thead tr.ss-depth-fields th.ss-depth-name { text-align: left !important; padding-left: 8px; }
+.ss-depth-table.is-fields td { padding: 3px 4px; text-align: center; vertical-align: middle; white-space: nowrap; }
+.ss-depth-table.is-fields td.ss-depth-name { text-align: left; padding-left: 8px; overflow: hidden; }
+.ss-depth-table.is-fields .ss-depth-player { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ss-depth-table.is-fields .ss-depth-player img { flex: none; width: 30px; height: 30px; object-fit: cover; object-position: top; border-radius: 50%; }
+.ss-depth-table.is-fields .ss-depth-player .ss-tile-name { display: inline-flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ss-depth-table.is-fields .ss-depth-num { font-variant-numeric: tabular-nums; }
+.ss-depth-table.is-fields :is(th, td).is-group-start { border-left: 1px solid rgba(63, 75, 85, .35); }
+.ss-depth-table.is-fields td.is-empty { background: transparent; }
+html[data-glass="clear"] .ss-depth-table.is-fields :is(th, td).is-group-start { border-left-color: rgba(255, 255, 255, .16); }
+html[data-glass="clear"] .ss-depth-table.is-fields thead tr.ss-depth-fields th { border-bottom: 1px solid rgba(255, 255, 255, .55) !important; }

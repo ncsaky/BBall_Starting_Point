@@ -1091,14 +1091,18 @@ def outlook_your_team_slide(ctx: dict[str, Any]) -> dict[str, Any]:
               "rim_pressure": "Rim pressure", "rebounding": "Rebounding", "athleticism": "Athleticism",
               "defensive_disruption": "Disruption", "rim_protection": "Rim protection", "depth": "Depth",
               "playmaking": "Playmaking", "offensive_rebounding": "Off. rebounding",
-              "defensive_rebounding": "Def. rebounding", "on_ball_defense": "On-ball defense"}
+              "defensive_rebounding": "Def. rebounding", "on_ball_defense": "On-ball defense",
+              "ball_handling": "Ball handling", "basketball_iq": "Basketball IQ", "steal_pressure": "Steals",
+              "shot_blocking": "Shot blocking", "switchability": "Switchability", "team_defense": "Team defense"}
     ranked = sorted(((labels[key], rank) for key, rank in (identity.get("ranks") or {}).items() if key in labels), key=lambda item: item[1])
     ranks = identity.get("ranks") or {}
     # Two radars (taste deck round 3): each side drawn from what it is made of, not from the side's own overall
     # ("Offense", "Defense") or neutral traits (depth, athleticism).
     radar = [{"key": key, "label": labels[key], "side": side, "rank": ranks.get(key)}
-             for side, keys in (("offense", ("spacing", "creation", "playmaking", "rim_pressure", "offensive_rebounding")),
-                                ("defense", ("rim_protection", "defensive_disruption", "on_ball_defense", "defensive_rebounding")))
+             for side, keys in (("offense", ("spacing", "creation", "playmaking", "ball_handling", "rim_pressure", "athleticism",
+                                             "offensive_rebounding", "basketball_iq")),
+                                ("defense", ("rim_protection", "shot_blocking", "defensive_disruption", "steal_pressure",
+                                             "on_ball_defense", "switchability", "team_defense", "defensive_rebounding")))
              for key in keys if key in ranks]
     cap = team_cap_summary(active, save, user, ctx["season"])
     payout = cap.get("tax_payout") or {}
@@ -1346,7 +1350,7 @@ def ensure_year_end_recap(canonical: dict[str, Any], save: dict[str, Any], save_
     return recap
 
 
-OUTLOOK_FORMAT = 3   # bump when the outlook's slides change shape; a preseason outlook in an older format is rebuilt
+OUTLOOK_FORMAT = 4   # bump when the outlook's slides change shape; a preseason outlook in an older format is rebuilt
 
 
 def ensure_preseason_outlook(canonical: dict[str, Any], save: dict[str, Any], save_path: str | Path | None = None) -> dict[str, Any] | None:

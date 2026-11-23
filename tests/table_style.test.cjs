@@ -11,9 +11,9 @@ const read = name => fs.readFileSync(path.join(gui, name), 'utf8');
 test('table style sheet loads after every other style sheet', () => {
   const html = read('index.html');
   const links = [...html.matchAll(/href="\/([^"?]+\.css)/g)].map(m => m[1]);
-  // The glass look loads last (round 3); the table style sheet just before it.
-  assert.equal(links.at(-1), 'glass.css');
-  assert.equal(links.at(-2), 'table-style.css');
+  // The glass look loads last (round 3): the light glass, then the clear glass (round 4) and the font choice; the
+  // table style sheet just before them.
+  assert.deepEqual(links.slice(-4), ['table-style.css', 'glass.css', 'glass-clear.css', 'fonts.css']);
 });
 
 test('rows have no left bar on hover', () => {
