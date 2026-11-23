@@ -3846,13 +3846,11 @@ th {
 }
 
 tbody tr {
-  border-left: 2px solid transparent;
-  transition: background 120ms ease, border-color 120ms ease;
+  transition: background 120ms ease;
 }
 
 tbody tr:hover {
   background: #151922;
-  border-left-color: var(--accent);
 }
 
 tr:last-child td {

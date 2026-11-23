@@ -2,6 +2,22 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "game",
+      "runtimeExecutable": "/Users/noahtyler/Developer/BBall_data/BBall_Starting_Point/.venv/bin/python",
+      "runtimeArgs": [
+        "-m",
+        "nba_gm_data.app_server",
+        "--root",
+        ".",
+        "--port",
+        "8766"
+      ],
+      "env": {
+        "PYTHONPATH": "src"
+      },
+      "port": 8766
+    },
+    {
       "name": "gui-preview",
       "runtimeExecutable": "/Users/noahtyler/Documents/BBall_data/BBall_Starting_Point/.venv/bin/python",
       "runtimeArgs": [
