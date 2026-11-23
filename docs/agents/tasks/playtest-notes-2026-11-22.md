@@ -75,6 +75,9 @@ Game runs from the browser pane: launch entry `game` (port 8766, normal `saves/`
   no frame; it now has the same 1px border as other cards. "Roster view"/"Cut down" opened the Opening Roster window
   locked and empty in preseason: its roster wasn't loaded (the preseason dashboard loads through the snapshot) and
   the window looked for a wrapper that exists only in the required cut-down phase. Both fixed (`openRosterView`).
+- **Centred pop-ups and charcoal board (done 2026-11-23):** cards that pop up (phase windows on entry, windows
+  opened from closed, windows whose default size changed) open in the middle of the screen, vertically too. The
+  board's grid is charcoal (#24282c) with grey lines (#3a4046) instead of cream paper with blue lines.
 - **Rating bars (done 2026-11-22):** every player OVR/OFF/DEF bar is one look: 36 x 5px on the house tables' dark
   track, fill and colour spread over 60-98 (`playerRatingBarStyle` in app.js) instead of 0-100, so a 77 and a 94
   differ at a glance (77 fills ~45% amber, 94 ~90% blue). Numbers unchanged. Skill and coach bars keep 0-100.

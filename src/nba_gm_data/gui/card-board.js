@@ -409,7 +409,11 @@
       const shrink = Math.max(0, availableHeight - titles) / Math.max(1, total - titles);
       fitted.forEach((row, index) => { scales[index] = Math.max(Math.max(...row.map(minScale)), scales[index] * shrink); });
     }
-    let y = (viewport.scrollTop || 0) + top;
+    // Pop-ups open in the middle of the screen: the group is centred vertically as well as across (playtest
+    // 2026-11-23), unless it fills the window anyway.
+    const finalHeight = fitted.reduce((sum, row, index) => sum + rowHeight(row, Math.max(Math.max(...row.map(minScale)), scales[index])), 0)
+      + gutter * (fitted.length - 1);
+    let y = (viewport.scrollTop || 0) + top + Math.max(0, (availableHeight - finalHeight) / 2);
     const placed = [];
     fitted.forEach((row, index) => {
       const scale = Math.round(Math.max(Math.max(...row.map(minScale)), scales[index]) * 1000) / 1000;
@@ -553,6 +557,12 @@
     for (const {id, measured, sizingKey} of options.extraCards || []) {
       if (measured && (!saved?.cards?.[id]?.measured || sizingKey && saved?.cards?.[id]?.sizingKey !== sizingKey)) {
         Object.assign(layout[id], {width:defaults[id].width, height:defaults[id].height, measured:true, sizingKey});
+        // A window given a new default size reopens centred rather than at its old spot (playtest 2026-11-23).
+        if (saved?.cards?.[id]) {
+          const width = layout[id].width * (layout[id].scale || 1), height = TITLE_HEIGHT + layout[id].height * (layout[id].scale || 1);
+          layout[id].x = bounded(board.scrollLeft + Math.max(0, (board.clientWidth - width) / 2), 0, LIMIT);
+          layout[id].y = bounded(board.scrollTop + Math.max(0, (board.clientHeight - height) / 2), 0, LIMIT);
+        }
       }
     }
     const entering = enterPhase(layout, defaults, saved, phaseCards, options.phaseContext);

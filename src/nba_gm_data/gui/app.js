@@ -8958,7 +8958,7 @@ function setRosterClipboardCard() {
   card.innerHTML = `<div class="unified-phase-dashboard" data-seasonal-context>${setRosterChecklistPanel(list)}</div>`;
   const rows = (list.items || []).length;
   return {id: "phase-set_roster-checklist", title: "Set The Roster", card, width: 1120,
-          height: Math.min(720, Math.max(560, 260 + rows * 48)), sizingKey: "set-roster-v2", locked: false, galleryVisible: true,
+          height: Math.min(720, Math.max(560, 260 + rows * 48)), sizingKey: "set-roster-v3", locked: false, galleryVisible: true,
           mandatory: false, required: false, measured: true, phaseActive: true};
 }
 
