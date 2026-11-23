@@ -3688,6 +3688,7 @@ def roster_cutdown_payload(canonical: dict[str, Any], save_path: Path) -> dict[s
         row["convert"] = two_way.conversion_quote(active, save, row["player_id"])
     status = "required" if pending else ("short" if short.get("blocking") else "clear")
     return {
+        "two_way_candidates": two_way_candidates_view(active, save, str(team_id), season, today, open_places),
         "status": status,
         "date": save.get("state", {}).get("current_date"),
         "team": team,
@@ -3699,6 +3700,33 @@ def roster_cutdown_payload(canonical: dict[str, Any], save_path: Path) -> dict[s
         "short": short or None,
         "phase": (save.get("state") or {}).get("phase"),
     }
+
+
+def two_way_candidates_view(active: dict[str, Any], save: dict[str, Any], team_id: str, season: str, today: str,
+                             open_places: int, limit: int = 6) -> list[dict[str, Any]]:
+    """The best free agents the user could sign to an open two-way place right now (taste deck round 2: the user saw
+    players he wanted on two-ways but found no way to sign them from the roster screen). Same eligibility the signing
+    applies (two_way.eligibility) and the same preference AI teams use (two_way.candidate_score)."""
+    from . import two_way
+    if open_places <= 0:
+        return []
+    restricted = two_way.restricted_two_way_ids(save)
+    rows = []
+    for player in two_way.eligible_free_agents(active, save, season, today):
+        if player["id"] in restricted or not two_way.eligibility(save, player, team_id, season, 1, today=today)["ok"]:
+            continue
+        rows.append((two_way.candidate_score(active, save, player, team_id, season), player))
+    rows.sort(key=lambda item: (-item[0], str(item[1].get("name") or "")))
+    pay = round(two_way.pay(season) * two_way.season_fraction_left(save, season, today) / 1e6, 3)
+    out = []
+    for _score, player in rows[:limit]:
+        out.append({
+            "player_id": player["id"], "name": player.get("name"), "position": player.get("position"),
+            "age": player.get("display_age", player.get("age")), "headshot_url": player.get("headshot_url"),
+            "overall": round(two_way.overall(active, player["id"]), 1), "pay_millions": pay,
+            "two_years": bool(two_way.eligibility(save, player, team_id, season, 2, today=today)["ok"]),
+        })
+    return out
 
 
 ROSTER_EDGE_ACTIONS = {

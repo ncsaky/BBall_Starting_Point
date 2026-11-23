@@ -2,10 +2,14 @@
 body .season-command-dashboard.has-card-board {
   position:relative;
   grid-template-rows:50px minmax(0,1fr);
-  background-color:#fffce8 !important;
-  background-image:linear-gradient(to right, #9fc4e0 1px, transparent 1px),linear-gradient(to bottom, #9fc4e0 1px, transparent 1px) !important;
+  /* Board theme (Settings > Board): slate blue with a faint grid by default; warm charcoal and cream paper optional. */
+  --board-bg:#2f3e4e; --board-grid:rgba(255,255,255,.08);
+  background-color:var(--board-bg) !important;
+  background-image:linear-gradient(to right, var(--board-grid) 1px, transparent 1px),linear-gradient(to bottom, var(--board-grid) 1px, transparent 1px) !important;
   background-size:24px 24px;
 }
+html[data-board-theme="charcoal"] body .season-command-dashboard.has-card-board { --board-bg:#34363a; --board-grid:rgba(255,255,255,.07); }
+html[data-board-theme="cream"] body .season-command-dashboard.has-card-board { --board-bg:#fffce8; --board-grid:#9fc4e0; }
 @media (max-height:780px) {
   body .season-command-dashboard.has-card-board { grid-template-rows:44px minmax(0,1fr); }
 }
@@ -829,7 +833,7 @@ body .has-card-board [data-board-window^="award-"] :is(.season-award-leader-face
   width:100%;
 }
 body .has-card-board [data-board-window^="award-"] :is(.season-award-leader-face,.season-award-chaser-face) img.award-player-headshot {
-  filter:grayscale(1) contrast(1.12);
+  filter:saturate(.45) contrast(1.05);
   image-rendering:pixelated;
 }
 body .has-card-board [data-board-window^="award-"] :is(.season-award-leader-face,.season-award-chaser-face) img.award-team-fallback { object-fit:contain; padding:15%; box-sizing:border-box; }
@@ -1320,7 +1324,7 @@ body .has-card-board [data-board-window="prospects"] .season-prospect-face {
 }
 body .has-card-board [data-board-window="prospects"] .season-prospect-face img {
   display:block;
-  filter:grayscale(1) contrast(1.12);
+  filter:saturate(.45) contrast(1.05);
   height:100%;
   image-rendering:pixelated;
   object-fit:cover;
@@ -2251,7 +2255,7 @@ body .has-card-board [data-board-window="minutes"] .card-board-minutes-reset { f
 body .has-card-board [data-board-window="minutes"] .season-minute-row > button { gap:7px; }
 body .has-card-board [data-board-window="minutes"] .season-minute-player-name { overflow:hidden; text-overflow:ellipsis; }
 body .has-card-board [data-board-window="minutes"] .player-headshot-frame { display:block; flex:0 0 20px; width:20px; height:22px; }
-body .has-card-board [data-board-window="minutes"] .roster-player-headshot { display:block; width:100%; height:100%; object-fit:cover; object-position:top center; filter:grayscale(1) contrast(1.12); image-rendering:pixelated; }
+body .has-card-board [data-board-window="minutes"] .roster-player-headshot { display:block; width:100%; height:100%; object-fit:cover; object-position:top center; filter:saturate(.45) contrast(1.05); image-rendering:pixelated; }
 
 /* Portraits sit on the row's bottom rule while labels remain centered. */
 body.unified-terminal-ui .has-card-board [data-board-window="minutes"] .season-minute-row > button {
@@ -2305,7 +2309,7 @@ body .has-card-board [data-board-window="league-wire"] .wire-subject > span { fo
 body .has-card-board [data-board-window="league-wire"] .wire-subject-art { height:160px; width:100%; position:relative; display:flex; align-items:end; justify-content:center; isolation:isolate; }
 body .has-card-board [data-board-window="league-wire"] .wire-team-backdrop { position:absolute; width:135px; height:135px; max-width:100%; object-fit:contain; top:7px; opacity:.18; z-index:-1; }
 body .has-card-board [data-board-window="league-wire"] .wire-subject-art .player-headshot-frame { display:block; position:static; width:100%; height:145px; max-height:none; background:transparent; border:0; }
-body .has-card-board [data-board-window="league-wire"] .wire-player-headshot { display:block; width:100%; height:100%; object-fit:contain; object-position:center bottom; background:transparent; image-rendering:pixelated; filter:grayscale(1); }
+body .has-card-board [data-board-window="league-wire"] .wire-player-headshot { display:block; width:100%; height:100%; object-fit:contain; object-position:center bottom; background:transparent; image-rendering:pixelated; filter:saturate(.45) contrast(1.05); }
 body .has-card-board [data-board-window="league-wire"] .wire-staff-portrait { width:110px; height:150px; display:block; }
 body .has-card-board [data-board-window="league-wire"] .wire-staff-portrait img { width:100%; height:100%; object-fit:contain; object-position:bottom; }
 body .has-card-board [data-board-window="league-wire"] .wire-pick-label { align-self:center; text-align:center; font-size:22px; }
@@ -2358,7 +2362,7 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-profile-headshot {
   display:block; width:100%; height:100%; object-fit:contain; object-position:center bottom;
-  filter:grayscale(1) contrast(1.12); image-rendering:pixelated;
+  filter:saturate(.45) contrast(1.05); image-rendering:pixelated;
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-profile-name h3 { margin:0 0 8px; font-size:24px; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-profile-name p { margin:0; white-space:nowrap; }
@@ -3111,7 +3115,7 @@ body.unified-terminal-ui .modal-trade-room .trade-asset-card.selected { backgrou
 body.unified-terminal-ui .modal-trade-room .trade-asset-main { display:grid; grid-template-columns:44px minmax(0,1fr) 36px; gap:7px; align-items:center; min-height:48px; }
 body.unified-terminal-ui .modal-trade-room .trade-asset-mark { display:flex; align-self:end; width:44px; height:48px; align-items:end; justify-content:center; }
 body.unified-terminal-ui .modal-trade-room .trade-asset-mark .player-headshot-frame { width:44px; height:48px; flex:0 0 44px; display:block; }
-body.unified-terminal-ui .modal-trade-room .trade-asset-mark .trade-player-headshot { width:100%; height:100%; max-width:none; max-height:none; object-fit:contain; object-position:center bottom; filter:grayscale(1); }
+body.unified-terminal-ui .modal-trade-room .trade-asset-mark .trade-player-headshot { width:100%; height:100%; max-width:none; max-height:none; object-fit:contain; object-position:center bottom; filter:saturate(.45) contrast(1.05); }
 body.unified-terminal-ui .modal-trade-room .trade-asset-copy { display:grid; gap:3px; min-width:0; }
 body.unified-terminal-ui .modal-trade-room .trade-asset-copy strong { font-size:11px; overflow-wrap:anywhere; white-space:normal; overflow:visible; text-overflow:clip; }
 body.unified-terminal-ui .modal-trade-room .trade-asset-copy small { font-size:10px; color:#425566 !important; line-height:1.3; white-space:normal; }
@@ -3196,7 +3200,7 @@ body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-playe
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player:last-child { border-bottom:0; }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-identity { display:flex; gap:7px; align-items:center; min-height:48px; padding:0; }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-identity .player-headshot-frame { width:44px; height:48px; flex:0 0 44px; align-self:end; display:block; }
-body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-headshot { width:100%; height:100%; max-width:none; max-height:none; object-fit:contain; object-position:center bottom; filter:grayscale(1); }
+body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-headshot { width:100%; height:100%; max-width:none; max-height:none; object-fit:contain; object-position:center bottom; filter:saturate(.45) contrast(1.05); }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-identity > div { display:grid; gap:3px; min-width:0; }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-identity .trade-player-link { font:700 11px Tahoma,Arial,sans-serif !important; color:#1a2934 !important; padding:0 !important; margin:0; background:transparent !important; border:0 !important; box-shadow:none !important; min-height:0; text-align:left; overflow-wrap:anywhere; }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-identity .trade-player-link:hover { color:#16344a !important; background:#dce8f1 !important; }
@@ -5114,7 +5118,7 @@ body.unified-terminal-ui .player-rest-status.player-resting > span { color:#fff 
 .minutes-coach-rest {
   align-items:center; cursor:pointer; display:inline-flex; font-weight:normal; gap:2px; margin-left:8px; vertical-align:middle;
 }
-.minutes-coach-rest input { height:9px; margin:0; width:9px; }
+.minutes-coach-rest input { height:11px; margin:0; width:11px; }
 .minutes-coach-rest span { font-size:8px; text-transform:none; }
 .settings-coach-rest { align-items:center; cursor:pointer; display:flex; font-weight:bold; gap:6px; }
 .settings-coach-rest + p { color:var(--muted, #6b7680); font-size:12px; margin:0; max-width:58ch; }
@@ -5375,7 +5379,7 @@ body.unified-terminal-ui .has-card-board .card-board-window-mark.has-window-icon
    Greyscale like every other headshot in the game. */
 .staff-face-art img.coach-portrait-face { display:block; width:100%; height:100%; object-fit:cover; object-position:center bottom; }
 .staff-face-art.is-photo img.coach-portrait-face { object-fit:cover; object-position:center 18%; }
-body.unified-terminal-ui .staff-face-art img.coach-portrait-face { filter:grayscale(1) contrast(1.08); }
+body.unified-terminal-ui .staff-face-art img.coach-portrait-face { filter:saturate(.45) contrast(1.05); }
 body .has-card-board [data-board-window="staff"] .staff-face-art { overflow:hidden; align-self:end; }
 .draft-board-name .prospect-board-face { flex:0 0 30px; width:30px; height:31px; align-self:flex-end; display:block; overflow:hidden; }
 .draft-board-name { height:32px; }
@@ -5401,4 +5405,8 @@ body.unified-terminal-ui .modal-shell.modal-settings.modal-photo-credits { width
 .photo-credits-table a { color:inherit; text-underline-offset:2px; }
 .photo-credits-table td.photo-credit-face, .photo-credits-table th.photo-credit-face-col { width:46px; padding:0 2px; vertical-align:bottom; }
 .photo-credits-table td.photo-credit-face .player-headshot-frame { display:block; width:46px; height:34px; overflow:hidden; }
-.photo-credits-table td.photo-credit-face img { display:block; width:100%; height:100%; object-fit:cover; object-position:center bottom; filter:grayscale(1); }
+.photo-credits-table td.photo-credit-face img { display:block; width:100%; height:100%; object-fit:cover; object-position:center bottom; filter:saturate(.45) contrast(1.05); }
+/* Settings > Board background: three choices; the chosen one gets a light tint and an underline (never black). */
+.settings-board-theme { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.settings-board-theme > span { font-weight: 700; margin-right: 4px; }
+body.unified-terminal-ui .settings-board-theme button[aria-pressed="true"] { background: #dfe8f0 !important; color: #1f3346 !important; box-shadow: inset 0 -2px #50799c; }

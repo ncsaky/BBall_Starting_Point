@@ -26,11 +26,11 @@ function context(extra = {}) {
     tradeLegalityBadge: () => '', tradeLegalityIssues: () => '', frontOfficeReadMarkup: () => '<div class="front-office-read"></div>',
     playerHeadshotMarkup: asset => asset.headshot_url ? `<img src="${asset.headshot_url}">` : '',
     playerNameWithInjuryMarkup: (asset, name) => escape(name), shortSeasonLabel: value => value,
-    playerRoleChip: role => `<span class="role-chip">${role}</span>`,
+    playerRoleChip: role => `<span class="role-chip">${role}</span>`, performanceBarColor: () => '#3978d4', TRADE_VALUE_SCALE: 120,
     ...extra,
   };
   vm.createContext(ctx);
-  vm.runInContext(['tradeSalaryFlow', 'tradeReadout', 'tradeCounterOffer', 'tradeAssetContract', 'tradePickText', 'tradeRatingColor', 'tradeDealTile'].map(extract).join('\n'), ctx);
+  vm.runInContext(['tradeSalaryFlow', 'tradeReadout', 'tradeCounterOffer', 'tradeAssetContract', 'tradePickText', 'tradeRatingColor', 'tradeValueBar', 'tradeDealTile'].map(extract).join('\n'), ctx);
   return ctx;
 }
 
@@ -79,14 +79,16 @@ test('the answer is one word, a dial and one short line; the numbers wait behind
   assert.match(blocked, /Not possible/); assert.match(blocked, /ATL incoming salary exceeds/);
 });
 
-test('a deal tile shows face, name, position and age, the role pair, coloured OVR, $X × N and value', () => {
+test('a deal tile shows face, name, position and age, value as a bar, coloured OVR, $X × N, roles on hover', () => {
   const ctx = context();
   const html = ctx.tradeDealTile({kind: 'player', id: 'p1', name: 'Isaiah Hartenstein', headshot_url: '/h.png', position: 'C', age: 28,
     primary_off_role: 'Rollman', primary_def_role: 'Rim Protector', overall: 83.1, trade_value: 67.2,
     salary_by_year: {'2026-27': 23.1, '2027-28': 23.1, '2028-29': 23.1}}, {removeSide: 'from', fresh: true});
-  for (const piece of ['/h.png', 'Isaiah Hartenstein', 'C · 28', 'Rollman', 'Rim Protector', '83.1', '$23.1M × 3', '67.2', 'data-remove-side="from"', 'is-new'])
+  // Taste deck round 2: value first, as a bar with its number; roles move to the hover text; OVR as a whole number.
+  for (const piece of ['/h.png', 'Isaiah Hartenstein', 'C · 28', 'title="Rollman / Rim Protector"', '$23.1M × 3', '<strong>67.2</strong>', 'data-remove-side="from"', 'is-new'])
     assert.ok(html.includes(piece), piece);
-  assert.match(html, /<b style="color:#[0-9a-f]{6}">83\.1<\/b>/);
+  assert.match(html, /<b style="color:#[0-9a-f]{6}">83<\/b>/);
+  assert.match(html, /class="tr-tile-value"[^>]*><i><b style="width:56\.0%/);
   const pick = ctx.tradeDealTile({kind: 'pick', id: 'k', season: '2027', round: 1, original_team_abbrev: 'NOP', protection_summary: 'top-4 protected',
     label: '2027 R1 NOP (owned by ATL); top-4 protected; NOP keeps this pick if it lands in the protected range; ATL instead receives 2028 R1 NOP', trade_value: 92});
   assert.match(pick, />2027 R1 NOP</); assert.match(pick, /Draft pick · top-4 protected/); assert.match(pick, /title="2027 R1 NOP \(owned by ATL\)/);

@@ -92,8 +92,11 @@
     const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
     const width = row.clientWidth || rowBox.width / scale;
     const left = Math.max(0, (cellBox.left - rowBox.left) / scale - (row.clientLeft || 0) - gap / 2);
-    const right = Math.min(width, (cellBox.right - rowBox.left) / scale - (row.clientLeft || 0) + gap / 2);
-    return {left, width: Math.max(0, right - left)};
+    // The first and last columns run to the row's edges (past its padding), so the fill never stops a few pixels
+    // short of the card border (taste deck round 2: Development's Change column).
+    const last = column === row.children.length;
+    const right = last ? width : Math.min(width, (cellBox.right - rowBox.left) / scale - (row.clientLeft || 0) + gap / 2);
+    return {left: column === 1 ? 0 : left, width: Math.max(0, right - (column === 1 ? 0 : left))};
   }
 
   function measureSortColumn(table) {

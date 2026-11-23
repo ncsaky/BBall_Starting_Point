@@ -103,9 +103,9 @@
 .ss-player { display: inline-flex; align-items: flex-end; gap: 8px; min-height: 40px; }
 .ss-player > span:last-child { display: flex; flex-direction: column; padding-bottom: 3px; }
 .ss-player small, .ss-allnba small { color: #52616e; font-size: 11px; }
-/* Headshots match the rest of the game: no backdrop, greyscale with a little contrast, crisp pixels, feet on the row. */
+/* Headshots match the rest of the game: no backdrop, soft colour, crisp pixels, feet on the row. */
 .ss-headshot { display: inline-flex; align-items: flex-end; width: 52px; height: 40px; overflow: hidden; flex: none; background: transparent; }
-.ss-headshot img { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; display: block; filter: grayscale(1) contrast(1.12); image-rendering: pixelated; }
+.ss-headshot img { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; display: block; filter:saturate(.45) contrast(1.05); image-rendering: pixelated; }
 .ss-headshot-empty { background: linear-gradient(#e4e8eb, #c9d2d9); }
 
 /* Tables: house style */
@@ -388,3 +388,17 @@ body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-fam
   .ss-rows-in :is(tbody tr, .ss-continuity li, .ss-tile, .ss-bar-row, .ss-fact) { animation: none !important; }
 }
 
+
+/* Team profile, round 2 (taste deck 2026-11-23): offense and defense as two radars side by side, each able to fill
+   to the edge; the payroll numbers as a small two-column table under the chart. Your team: a tile that highlights on
+   hover opens the player's card wherever it is clicked. */
+.ss-radar-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; flex: 1; min-height: 0; align-items: center; }
+.ss-radar-pair .ss-radar svg { max-height: 250px; }
+.ss-radar-single figcaption { justify-content: center; font-weight: 700; }
+.ss-cap-table { width: 100%; max-width: 420px; margin: 8px auto 0; border-collapse: collapse; font-size: 12.5px; border-top: 2px solid #3f4b55; }
+.ss-cap-table td { padding: 4px 12px; border-bottom: 1px solid #d5dde3; background: none; }
+.ss-cap-table td.ss-cap-label { text-align: left; font-weight: 400; color: #3e4d59; text-transform: none; }
+.ss-cap-table td.ss-cap-value { text-align: right; font-weight: 700; color: #17212a; font-variant-numeric: tabular-nums; }
+.ss-cap-table tr:nth-child(even) { background: #f1f4f7; }
+.ss-cap-table tr:hover { background: #e3ebf2; }
+.ss-tile[data-ss-tile-player] { cursor: pointer; }

@@ -45,7 +45,18 @@ body.unified-terminal-ui :is(input:not([type="range"]):not([type="checkbox"]), s
   background: var(--ui-bg); border: 1px solid var(--ui-line); border-radius: 2px;
   color: var(--ui-text); font-size: 12px; min-height: 28px;
 }
-body.unified-terminal-ui input[type="checkbox"] { width: 13px; height: 13px; min-height: 0; margin: 0; accent-color: #b9c3cc; }
+/* Checkboxes are never filled black (style guide): a white box with a thin border; checked keeps the white box and adds a dark tick. */
+body.unified-terminal-ui input[type="checkbox"] {
+  -webkit-appearance: none; appearance: none; flex: none; display: inline-block; vertical-align: middle;
+  width: 13px; height: 13px; min-height: 0; margin: 0; padding: 0; border: 1px solid #8f9aa3; border-radius: 2px;
+  background: #fff center / 100% 100% no-repeat; cursor: pointer;
+}
+body.unified-terminal-ui input[type="checkbox"]:hover { border-color: #50799c; }
+body.unified-terminal-ui input[type="checkbox"]:checked {
+  border-color: #50799c;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.6 6.3l2.3 2.3 4.6-5' fill='none' stroke='%2321303c' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+body.unified-terminal-ui input[type="checkbox"]:disabled { opacity: .45; cursor: default; }
 body.unified-terminal-ui button.ui-command,
 body.unified-terminal-ui :is(.trade-evaluate-button,.trade-clear-button,.settings-return-button,.free-agency-market-tools button,.market-intelligence-actions button) {
   align-items: center; background: var(--ui-header); border: 1px solid transparent;
@@ -753,3 +764,4 @@ body.unified-terminal-ui .unified-phase-dashboard:is([data-phase="cutdown"],[dat
 .ask-confirm p { margin:0; padding:12px; font-size:12.5px; line-height:1.45; white-space:pre-wrap; overflow:auto; }
 .ask-confirm footer { display:flex; justify-content:flex-end; gap:8px; padding:8px 12px; border-top:1px solid var(--ui-line, #c9d0d6); }
 .ask-confirm .ask-confirm-ok { background:#2f6fb0; border-color:#22558a; color:#fff; }
+body.unified-terminal-ui .free-agency-compare-checkbox::before { display: none; }

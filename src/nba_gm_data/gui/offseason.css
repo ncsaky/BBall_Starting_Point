@@ -131,7 +131,7 @@ body.unified-terminal-ui .offseason-table thead th { font-size: 9px !important; 
 .offseason-table th.offseason-player:has(.offseason-player-cell) { padding-left: 0; vertical-align: bottom; }
 .offseason-player-cell .player-headshot-frame { display: block; flex: 0 0 40px; width: 40px; height: 30px; overflow: hidden; }
 .offseason-player-cell .roster-player-headshot { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center bottom;
-  filter: grayscale(1) contrast(1.12); image-rendering: pixelated; }
+  filter:saturate(.45) contrast(1.05); image-rendering: pixelated; }
 .offseason-player-cell .fa-player-name { align-self: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .offseason-team { display: inline-flex; align-items: center; gap: 5px; }
 .offseason-team img { width: 18px; height: 18px; object-fit: contain; }

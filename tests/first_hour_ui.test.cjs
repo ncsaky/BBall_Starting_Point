@@ -37,7 +37,7 @@ test('rotation autosave failures restore the persisted dashboard and report the 
 });
 
 test('the dashboard Settings dialog exposes a working replay control', () => {
-  const scope = {state: {}, renderModal() {}};
+  const scope = {state: {}, renderModal() {}, boardTheme: () => 'slate', BOARD_THEMES: [['slate', 'Slate blue']]};
   vm.createContext(scope);
   vm.runInContext(functionSource('openSettingsModal', 'openExtensionNegotiation'), scope);
   scope.openSettingsModal();

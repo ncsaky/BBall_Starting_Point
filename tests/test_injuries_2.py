@@ -33,7 +33,12 @@ class OpeningNightListTests(unittest.TestCase):
             self.assertGreaterEqual(row["games_missed"], 1, row["name"])
             self.assertLessEqual(row["games_missed"], 82, row["name"])
             self.assertTrue(row["sources"], row["name"])
-            self.assertTrue(str(row["opener_reason"]).startswith("Injury/Illness"), row["name"])
+            if row.get("user_report"):
+                # A user-reported absence (Porzingis 2026-11-23: an illness the official report listed as "Not With
+                # Team") keeps the official reason and cites the user's report as its source.
+                self.assertTrue(any("user report" in str(s.get("what")) for s in row["sources"]), row["name"])
+            else:
+                self.assertTrue(str(row["opener_reason"]).startswith("Injury/Illness"), row["name"])
             self.assertIn(row["body_part"], im.PART_LABELS, row["name"])
             if row["apply"]:
                 self.assertTrue(row["player_id"], row["name"])

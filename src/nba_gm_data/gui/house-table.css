@@ -17,7 +17,7 @@
   --house-head-text: var(--season-text, #1d2a33);
   --house-focus: #42667a;
   /* Bars: one height, one width for rating bars, one unfilled (track) darkness. */
-  --house-bar-track: #172228;
+  --house-bar-track: transparent;   /* style guide: no track behind a bar; the empty space implies the remainder */
   --house-bar-height: 5px;
   --house-bar-width: 36px;   /* same as the player rating bar */
 }

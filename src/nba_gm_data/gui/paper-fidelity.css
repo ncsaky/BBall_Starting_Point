@@ -280,7 +280,7 @@ body.unified-terminal-ui .assets-block-table { grid-template-rows:14px repeat(6,
 body.unified-terminal-ui .team-block-table { grid-template-rows:20px repeat(6,28px); height:188px; }
 body.unified-terminal-ui .team-block-table .team-block-row { height:28px; }
 body.unified-terminal-ui .team-block-table .assets-block-team .player-headshot-frame { flex:0 0 24px; height:26px; width:24px; }
-body.unified-terminal-ui .team-block-table .assets-block-team .roster-player-headshot { display:block; filter:grayscale(1) contrast(1.12); height:100%; image-rendering:pixelated; object-fit:cover; object-position:top center; width:100%; }
+body.unified-terminal-ui .team-block-table .assets-block-team .roster-player-headshot { display:block; filter:saturate(.45) contrast(1.05); height:100%; image-rendering:pixelated; object-fit:cover; object-position:top center; width:100%; }
 body.unified-terminal-ui .team-block-row select {
   box-sizing:border-box; height:17px !important; min-height:0 !important; padding:0 3px; border-radius:0; font-size:9px !important;
 }
@@ -331,7 +331,7 @@ body.unified-terminal-ui .assets-roster [data-linked-scope="assets"] .linked-rat
 body.unified-terminal-ui .assets-roster .roster-player-card-button { align-items:center; display:inline-flex; gap:6px; max-width:100%; min-width:0; vertical-align:middle; }
 body.unified-terminal-ui .assets-roster .summary-player-name-label { display:block; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 body.unified-terminal-ui .player-headshot-frame { align-items:center; background:transparent; border:0; box-sizing:border-box; display:inline-flex; flex:0 0 24px; height:26px; justify-content:center; overflow:hidden; width:24px; }
-body.unified-terminal-ui .roster-player-headshot { display:block; filter:grayscale(1) contrast(1.12); height:100%; image-rendering:pixelated; object-fit:cover; object-position:top center; width:100%; }
+body.unified-terminal-ui .roster-player-headshot { display:block; filter:saturate(.45) contrast(1.05); height:100%; image-rendering:pixelated; object-fit:cover; object-position:top center; width:100%; }
 
 /* Render graticules in SVG so they cannot be lost behind chart backgrounds. */
 body.unified-terminal-ui .season-efficiency-chart,
@@ -508,7 +508,7 @@ body.unified-terminal-ui .assets-block:not(.assets-team-block) .assets-block-tab
 body.unified-terminal-ui .assets-block:not(.assets-team-block) .assets-block-row { height:28px; }
 body.unified-terminal-ui .league-block-portrait { position:relative; overflow:visible; }
 body.unified-terminal-ui .league-block-portrait .player-headshot-frame { display:block; width:24px; height:26px; }
-body.unified-terminal-ui .league-block-portrait .roster-player-headshot { display:block; width:100%; height:100%; object-fit:cover; object-position:top center; filter:grayscale(1) contrast(1.12); image-rendering:pixelated; }
+body.unified-terminal-ui .league-block-portrait .roster-player-headshot { display:block; width:100%; height:100%; object-fit:cover; object-position:top center; filter:saturate(.45) contrast(1.05); image-rendering:pixelated; }
 body.unified-terminal-ui .assets-block-team .league-block-team-badge { position:absolute; width:12px; height:12px; right:0; bottom:0; background:#fff; border-radius:50%; padding:1px; }
 body.unified-terminal-ui .league-block-group-label { display:flex; align-items:center; }
 body.unified-terminal-ui .league-block-group-label > img { width:20px; height:20px; object-fit:contain; }

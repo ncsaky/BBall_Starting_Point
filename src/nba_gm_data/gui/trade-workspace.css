@@ -73,7 +73,7 @@ body.unified-terminal-ui .trade-ledger tbody tr { height:46px; background:#f3f5f
 body.unified-terminal-ui .trade-ledger tbody tr:nth-child(even) { background:#eaf0f4; }
 body.unified-terminal-ui .trade-ledger tbody tr:hover { background:#e0e9f0; }
 body.unified-terminal-ui .trade-ledger tbody tr.is-selected { background:#d3e3ef; box-shadow:inset 3px 0 #50799c; }
-body.unified-terminal-ui .trade-ledger input[type=checkbox] { width:17px; height:17px; accent-color:#527d9f; cursor:pointer; }
+body.unified-terminal-ui .trade-ledger input[type=checkbox] { width:15px; height:15px; cursor:pointer; }
 body.unified-terminal-ui .trade-ledger .player-headshot-frame { display:block; width:34px; height:38px; overflow:hidden; background:transparent; }
 body.unified-terminal-ui .trade-ledger .trade-player-headshot { width:100%; height:100%; object-fit:contain; }
 body.unified-terminal-ui .trade-ledger .trade-portrait-empty { display:grid; place-items:center; width:34px; height:38px; color:#687b8a; background:#e0e7ed; }
@@ -201,7 +201,7 @@ body.unified-terminal-ui .modal-shell.modal-trade-room #tradeRead .trade-evaluat
 body.unified-terminal-ui .modal-shell.modal-trade-room #tradeRead .trade-evaluation-empty > strong { margin:0; flex:none; }
 body.unified-terminal-ui .modal-shell.modal-trade-room #tradeRead .trade-evaluation-empty > span { width:auto; height:auto; min-height:0; min-width:0; padding:0; border:0; background:transparent; font-size:12px; line-height:1.4; text-align:left; }
 body.unified-terminal-ui .modal-shell .trade-ledger thead th { text-transform:none; letter-spacing:0; }
-body.unified-terminal-ui .modal-shell .trade-ledger .player-headshot-frame img { position:static; width:34px; height:38px; max-width:none; max-height:none; object-fit:contain; object-position:center; transform:none; filter:grayscale(1); }
+body.unified-terminal-ui .modal-shell .trade-ledger .player-headshot-frame img { position:static; width:34px; height:38px; max-width:none; max-height:none; object-fit:contain; object-position:center; transform:none; filter:saturate(.45) contrast(1.05); }
 /* Match the actual clipboard controls, overriding the retired trade skin. */
 body.unified-terminal-ui #modalRoot .modal-shell:is(.modal-trade-room,.modal-trade-offers) button:not(:is(.trade-player-link,.approved-trade-team)) {
   background:#edf0f3 !important; background-image:none !important; color:#111 !important;

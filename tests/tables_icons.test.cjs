@@ -210,7 +210,7 @@ test('house table CSS: double header rule, small bold headers, stripes, whole-ro
   assert.match(css, /\[data-house-row\]\[data-house-alt\] \{ background-color: var\(--house-row-alt\) !important; \}/);
   assert.match(css, /\[data-house-row\]:is\(:hover, :focus-within\) \{ background-color: var\(--house-row-hover\) !important; \}/);
   assert.match(css, /--house-sorted-cell: rgba\(118, 156, 190, \.28\);/);
-  assert.match(css, /--house-bar-track: #172228;/);
+  assert.match(css, /--house-bar-track: transparent;/, 'no dark track behind table bars (style guide)');
   const index = fs.readFileSync(path.join(gui, 'index.html'), 'utf8');
   assert.ok(index.indexOf('house-table.css') > index.indexOf('card-board.css'), 'house styles load after the card board');
   assert.ok(index.indexOf('house-table.js') < index.indexOf('/app.js'), 'the sort helper loads before app.js');

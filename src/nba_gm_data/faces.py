@@ -427,7 +427,19 @@ def assign_class_faces(prospects: list[Any], real_ids: dict[str, str] | None = N
 def stage_player_headshots(players: Iterable[dict[str, Any]]) -> None:
     """Made-up players drafted with a library face show the stage for their current age (rookie, prime, veteran,
     late career). Real NBA players and real prospects keep their own photos. Display only: no game value reads it."""
+    players = list(players)
+    used = {face for face in (_face_id_of(player.get("headshot_url")) for player in players) if face}
     for player in players:
         url = player.get("headshot_url")
         if url and str(url).startswith(URL_ROOT):
             player["headshot_url"] = stage_url(url, player.get("age"))
+        elif not url:
+            # Nobody shows a blank picture (taste deck round 2): a real player without an NBA photo (a two-way or
+            # undrafted rookie) gets his college photo when we have one, else a library face, same as a prospect.
+            filled = prospect_headshot_url({"id": player.get("id"), "name": player.get("name"), "age": player.get("age"),
+                                            "league": player.get("league")}, used)
+            face_id = _face_id_of(filled)
+            if face_id:
+                used.add(face_id)
+            if filled:
+                player["headshot_url"] = filled

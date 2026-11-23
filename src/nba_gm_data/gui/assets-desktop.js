@@ -67,7 +67,15 @@ function assetContractCell(row,season,seasons) {
   const extensionEligible=Boolean(row.extension_eligible && dash.extension_window_open);
   const editable=teamLabel(dash.team||state.dashboardTeam||userTeam())===userTeam();
   if(extensionEligible && editable) return html(`<button type="button" class="extension-eligible-contract extension-contract-button" data-asset-extension="${escapeAttr(row.id)}" title="Extension eligible: click to negotiate an extension with ${escapeAttr(row.name)}">${money(amount)}</button>`);
-  return html(`<span${extensionEligible?' class="extension-eligible-contract" title="Extension eligible"':expires?' class="asset-contract-expiring" title="Contract expires after this season"':''}>${money(amount)}</span>`);
+  // A new deal (an extension starting) shows in its own text colour: the salary moves by more than a contract's
+  // yearly raise or cut (at most 8% of year one), so a jump or drop that size means a different contract.
+  const earlier=Object.keys(row.salary_by_year||{}).filter(year=>year<season).sort().pop();
+  const prior=earlier?Number(row.salary_by_year[earlier]||0):0;
+  const newDeal=prior>0&&Math.abs(amount-prior)/prior>0.09;
+  const attrs=extensionEligible?' class="extension-eligible-contract" title="Extension eligible"'
+    :newDeal?` class="asset-contract-new-deal" title="New contract from ${escapeAttr(season)}: ${money(amount)}, was ${money(prior)}"`
+    :expires?' class="asset-contract-expiring" title="Contract expires after this season"':'';
+  return html(`<span${attrs}>${money(amount)}</span>`);
 }
 function assetExtensionCell(row) {
   const dash=state.data.dashboard||{};
@@ -281,9 +289,11 @@ function assetsRosterGroups(seasons) {
     {id:'contracts',className:'linked-contracts',fields:contracts},
   ];
 }
-function assetsRosterSort(id) {
+function assetsRosterSort(id, seasons) {
   state.assetsRosterSortByCard ||= {};
   if(id==='roster'&&!state.assetsRosterSortByCard.roster) state.assetsRosterSortByCard.roster=state.assetsRosterSort||{key:'trade_value',direction:'desc'};
+  // Contracts open sorted by this season's salary, highest first (taste deck round 2).
+  if(id==='contracts'&&!state.assetsRosterSortByCard.contracts&&seasons?.length) return (state.assetsRosterSortByCard.contracts={key:seasons[0],direction:'desc'});
   return state.assetsRosterSortByCard[id]||(state.assetsRosterSortByCard[id]={key:'name',direction:'asc'});
 }
 function assetsRosterMarkup(rows,group,sort) {
@@ -508,7 +518,7 @@ function assetsDesktopCards() {
   const groups=assetsRosterGroups(seasons);
   const roster=assetsRosterMarkup(rows,groups[0],assetsRosterSort('roster'));
   const stats=assetsRosterMarkup(rows,groups[1],assetsRosterSort('stats'));
-  const contracts=assetsRosterMarkup(rows,groups[2],assetsRosterSort('contracts'));
+  const contracts=assetsRosterMarkup(rows,groups[2],assetsRosterSort('contracts',seasons));
   const picks=payload?.draft_assets || [...(payload?.picks||[]),...(payload?.pick_swaps||[])];
   return {rows,seasons,markup:`<div class="assets-grid">
       ${panel('',roster,'roster')}
@@ -533,7 +543,7 @@ function wireAssetsCards(root, rows, seasons) {
     const group=assetsRosterGroups(seasons).find(item=>item.id===id);
     const body=rosterCard.querySelector('.assets-panel-body');
     const wireRoster=()=>wireLinkedRoster(rosterCard,key=>{
-      const prior=assetsRosterSort(id);
+      const prior=assetsRosterSort(id,seasons);
       const sort={key,direction:prior.key===key&&prior.direction==='desc'?'asc':'desc'};
       state.assetsRosterSortByCard[id]=sort;
       if(id==='roster')state.assetsRosterSort=sort;

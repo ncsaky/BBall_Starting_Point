@@ -324,3 +324,214 @@ body.unified-terminal-ui .season-award-trophy img { mix-blend-mode: multiply; }
 body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-trophy { height: 50% !important; top: 8px !important; right: 6px !important; }
 body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-leader:has(.season-award-trophy img) :is(.season-award-leader-name, .season-award-leader > .season-award-team) { padding-right: 58px; box-sizing: border-box; min-width: 0; }
 body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-leader-name strong { white-space: normal !important; overflow-wrap: anywhere; line-height: 1.1; }
+
+/* Minutes + Availability, round 2 (taste deck 2026-11-23): Player | OVR | Roles | Pos | Height | Minutes | Fatigue.
+   Roles get their own column as coloured text (offense over defense); the overall is its own column; the window's
+   controls sit in a slim bar above the table (never in a table header or the title bar); the rest "zZ" is a small
+   superscript on the minutes number; the minutes slider and fatigue bar are thin, light and calm (no black). */
+body.unified-terminal-ui .has-card-board [data-board-window="minutes"] .season-minutes-panel { display: flex; flex-direction: column; }
+body.unified-terminal-ui .season-minutes-tools {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 3px 8px;
+  background: #f4f6f8; border-bottom: 1px solid #c9d1d8; font-size: 11px;
+}
+body.unified-terminal-ui .season-minutes-tools .minutes-coach-rest { margin: 0; gap: 5px; font-size: 11px; }
+body.unified-terminal-ui .season-minutes-tools .minutes-coach-rest span { font-size: 11px; }
+body.unified-terminal-ui .season-minutes-tools .minutes-coach-rest input { width: 12px; height: 12px; }
+body.unified-terminal-ui .season-minutes-reset-all {
+  background: #fff !important; color: #2c4a63 !important; border: 1px solid #a9b6c1 !important; border-radius: 3px;
+  font-size: 11px; line-height: 1; padding: 3px 8px; min-height: 0; cursor: pointer; box-shadow: none !important;
+}
+body.unified-terminal-ui .season-minutes-reset-all:hover:not(:disabled) { background: #eaf0f5 !important; }
+body.unified-terminal-ui .season-minutes-reset-all:disabled { opacity: .45; cursor: default; }
+body.unified-terminal-ui .has-card-board [data-board-window="minutes"] :is(.season-minutes-head,.season-minute-row) {
+  grid-template-columns: minmax(150px,1.5fr) 38px minmax(118px,1.15fr) 34px 44px minmax(120px,1.2fr) minmax(76px,.7fr) !important;
+  column-gap: 6px !important;
+}
+body.unified-terminal-ui .has-card-board [data-board-window="minutes"] .season-minutes-head > span { width: auto !important; max-width: none !important; justify-self: stretch !important; text-align: center; }
+body.unified-terminal-ui .has-card-board [data-board-window="minutes"] .season-minutes-head > span:first-child { text-align: left; }
+body.unified-terminal-ui .season-minute-ovr-cell { display: flex; align-items: center; justify-content: center; }
+body.unified-terminal-ui .season-minute-ovr-cell .season-minute-ovr { margin: 0; padding: 0; font-size: 12px; }
+body.unified-terminal-ui .season-minute-role-cell { display: flex; align-items: center; justify-content: center; min-width: 0; overflow: hidden; }
+body.unified-terminal-ui .season-minute-role-cell .season-minute-roles { flex-direction: column; align-items: center; gap: 0; line-height: 1.12; font-size: 9.5px; }
+body.unified-terminal-ui .season-minute-role-cell .role-text { max-width: 100%; white-space: nowrap; }
+/* Today's overall with the rust drop (back from injury): the drop is a small red figure tucked beside the number. */
+body.unified-terminal-ui .player-rating-bar.has-rating-drop { display: inline-flex; align-items: baseline; gap: 2px; }
+body.unified-terminal-ui .rating-drop { color: #b3242c; font-size: 8.5px; font-weight: 700; font-style: normal; letter-spacing: -.2px; }
+/* Minutes control: slider, the number with its zZ superscript, then the reset ×. */
+body.unified-terminal-ui .has-card-board [data-board-window="minutes"] .season-minute-control {
+  grid-template-columns: minmax(0,1fr) 26px 12px !important; gap: 5px !important; margin-right: 4px !important;
+}
+body.unified-terminal-ui .season-minute-number { display: inline-flex; align-items: center; justify-content: flex-start; gap: 0; position: relative; align-self: center; height: 100%; }
+body.unified-terminal-ui .season-minute-number output { font-weight: 700; text-align: right; min-width: 14px; line-height: 1; }
+body.unified-terminal-ui .has-card-board [data-board-window="minutes"] .season-minute-number .season-minute-rest {
+  grid-column: auto !important; font-size: 7.5px !important; margin: 0 0 0 1px !important; padding: 0 !important; align-self: center; position: relative; top: -5px; letter-spacing: -.4px;
+}
+body.unified-terminal-ui .has-card-board [data-board-window="minutes"] .season-minute-reset { grid-column: 3 !important; }
+body.unified-terminal-ui [data-house-table="minutes"] [data-house-row] .season-minute-slider > i { background-color: #d3dbe2 !important; height: 3px !important; top: calc(50% - 1.5px) !important; border-radius: 2px; }
+body.unified-terminal-ui .season-minute-slider > i b { background: #7d9ab3 !important; border-radius: 2px; }
+body.unified-terminal-ui .season-minute-slider.user-locked > i b { background: #3a76c4 !important; }
+body.unified-terminal-ui .season-minute-control input[type="range"]::-webkit-slider-thumb {
+  background: #fff !important; border: 1.5px solid #50799c !important; border-radius: 50% !important; width: 10px !important; height: 10px !important; margin-top: 0 !important;
+}
+body.unified-terminal-ui .season-minute-control input[type="range"]::-moz-range-thumb { background: #fff !important; border: 1.5px solid #50799c !important; }
+/* Fatigue: one thin bar coloured by level (no blocks, no track) and the number. */
+body.unified-terminal-ui .has-card-board [data-board-window="minutes"] .season-fatigue {
+  display: grid !important; grid-template-columns: minmax(0,1fr) 18px !important; align-items: center; gap: 5px !important;
+  max-width: none !important; width: 100% !important; justify-self: stretch !important;
+}
+body.unified-terminal-ui [data-house-table="minutes"] [data-house-row] .season-fatigue > i { display: block; height: 5px !important; background: transparent !important; border-radius: 2px; overflow: hidden; }
+body.unified-terminal-ui .season-fatigue > i > b { display: block; height: 100%; border-radius: 2px; background: #4e9a6a; }
+body.unified-terminal-ui .season-fatigue.medium > i > b { background: #d09a2c; }
+body.unified-terminal-ui .season-fatigue.high > i > b { background: #c8434c; }
+body.unified-terminal-ui .season-fatigue > em { font-style: normal; font-size: 10px; text-align: right; color: #4a5863; }
+
+/* Contracts: a season where a new deal starts (an extension) shows its salary in its own colour, not a highlight. */
+body.unified-terminal-ui .asset-contract-new-deal { color: #7a3fa8 !important; font-weight: 700; }
+
+/* Next Opponent (taste deck round 2): the table meets the banner and the injury strip with no gap and no doubled
+   line; each league rank in the banner is its coloured number over a small grey label, with clear space between. */
+body.unified-terminal-ui .has-card-board [data-board-window="opponent"] .season-opponent-table { padding-top: 0 !important; padding-bottom: 0 !important; }
+body.unified-terminal-ui [data-house-table="opponent"] > [data-house-row]:last-child::after { display: none !important; }
+body.unified-terminal-ui .season-opponent-title .season-opponent-header-rating { display: inline-flex; align-items: baseline; gap: 3px; margin-left: 12px !important; }
+body.unified-terminal-ui .season-opponent-title > span:not(.season-opponent-header-rating) + .season-opponent-header-rating { margin-left: 18px !important; }
+body.unified-terminal-ui .season-opponent-header-rating > b { font-size: 12px; font-weight: 700; }
+body.unified-terminal-ui .season-opponent-header-rating > small { font-size: 9px; font-weight: 700; color: #6a7782; letter-spacing: .2px; }
+
+/* Player Development: Outlook bar (replaces the ring gauge). Centre line; growth fills right in green, a veteran's
+   expected decline fills left in red; no track. */
+body.unified-terminal-ui .season-development-outlook { display: grid !important; grid-template-columns: 54px 30px !important; align-items: center; justify-content: center; gap: 5px; width: auto !important; height: auto !important; }
+body.unified-terminal-ui .season-development-outlook > i { position: relative !important; display: block !important; width: 54px !important; height: 5px !important; background: transparent !important; }
+body.unified-terminal-ui .season-development-outlook > i::before { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: #8d9aa6; }
+body.unified-terminal-ui .season-development-outlook > i > b { position: absolute; top: 0; bottom: 0; display: block; border-radius: 1px; }
+body.unified-terminal-ui .season-development-outlook.up > i > b { left: 50%; background: #3f8f5f; }
+body.unified-terminal-ui .season-development-outlook.down > i > b { right: 50%; background: #b8463c; }
+body.unified-terminal-ui .season-development-outlook > strong { font-size: 11px; text-align: left; position: static !important; transform: none !important; }
+body.unified-terminal-ui .season-development-outlook.down > strong { color: #b8463c !important; }
+body.unified-terminal-ui .season-development-outlook svg { display: none; }
+
+/* Set The Roster (offseason checklist): tables reach the window edges; every row rule is the same light line
+   (the player column's rule was darker and broke the line). */
+body.unified-terminal-ui .offseason-checklist .offseason-scroll { padding-left: 0 !important; padding-right: 0 !important; }
+body.unified-terminal-ui .offseason-checklist .offseason-scroll h4 { padding-left: 10px; padding-right: 10px; }
+body.unified-terminal-ui .offseason-checklist .offseason-table tbody :is(th, td) { border-bottom: 1px solid #cbd2d8 !important; }
+body.unified-terminal-ui .offseason-checklist .offseason-table tbody tr:last-child :is(th, td) { border-bottom: 0 !important; }
+
+/* Four Factors: the team dot has no white ring (it washed out on the card); a thin dark edge keeps it crisp.
+   A one-line key sits under the four rows. */
+body .season-factor-box > .season-factor-dot { border: 0 !important; box-shadow: 0 0 0 1px rgba(20,33,43,.55) !important; width: 9px !important; height: 9px !important; }
+body.unified-terminal-ui .season-factor-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 12px; padding: 5px 6px 2px; font-size: 9px; color: #5d6a74; }
+body.unified-terminal-ui .season-factor-legend > span { display: inline-flex; align-items: center; gap: 4px; }
+body.unified-terminal-ui .season-factor-legend i { display: inline-block; position: relative; box-sizing: border-box; }
+body.unified-terminal-ui .season-factor-legend i.whisker { width: 16px; height: 7px; border-left: 1px solid #7d8a95; border-right: 1px solid #7d8a95; }
+body.unified-terminal-ui .season-factor-legend i.whisker::before { content: ""; position: absolute; left: 0; right: 0; top: 3px; height: 1px; background: #7d8a95; }
+body.unified-terminal-ui .season-factor-legend i.iqr { width: 12px; height: 9px; background: #dde4ea; border: 1px solid #7d8a95; }
+body.unified-terminal-ui .season-factor-legend i.median { width: 2px; height: 9px; background: #24323c; }
+body.unified-terminal-ui .season-factor-legend i.dot { width: 8px; height: 8px; border-radius: 50%; background: #3978d4; box-shadow: 0 0 0 1px rgba(20,33,43,.55); }
+
+/* Award race leader (taste deck round 2): a smaller headshot centred at the top, the name centred under it, then the
+   team; the stat line below heads the rows underneath. The trophy sits in a round medallion (soft light centre, thin
+   gold ring) in the corner instead of a raw photo on the card. */
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-race > .season-award-leader {
+  grid-template-rows: auto auto auto 6px auto auto !important; padding-top: 8px !important;
+}
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-leader > .season-award-leader-face {
+  grid-column: 1 / -1 !important; grid-row: 1 !important; justify-self: center; align-self: end;
+  width: 92px !important; height: 82px !important; margin: 0 !important; border-bottom: 1px solid color-mix(in srgb, var(--award-accent) 35%, #9aa6b0);
+}
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-leader > .season-award-leader-face img { object-fit: contain !important; object-position: center bottom !important; }
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-leader > .season-award-leader-name {
+  grid-column: 1 / -1 !important; grid-row: 2 !important; justify-content: center; align-self: center; padding: 5px 0 0 !important; text-align: center;
+}
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-leader > .season-award-team {
+  grid-column: 1 / -1 !important; grid-row: 3 !important; justify-content: center !important; padding: 0 !important; margin-top: 2px;
+}
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-leader .season-award-stat-label { grid-row: 5 !important; }
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-leader .season-award-stat,
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-leader > .season-rank-change { grid-row: 6 !important; }
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-leader:has(.season-award-trophy img) :is(.season-award-leader-name, .season-award-leader > .season-award-team) { padding-right: 0 !important; }
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-trophy:not(:empty) {
+  position: absolute !important; top: 10px !important; right: 12px !important; left: auto !important; bottom: auto !important;
+  width: 66px !important; height: 66px !important; border-radius: 50%; box-sizing: border-box;
+  background: radial-gradient(circle at 50% 42%, #ffffff 0 52%, color-mix(in srgb, var(--award-accent) 14%, #f3efe4) 100%);
+  border: 2px solid #c8a24a; box-shadow: 0 0 0 1px rgba(255,255,255,.9), 0 1px 3px rgba(20,33,43,.25);
+  display: grid !important; place-items: center; overflow: hidden;
+}
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-trophy:not(:empty) img {
+  height: 50px !important; width: auto !important; mix-blend-mode: multiply; filter: drop-shadow(0 1px 1px rgba(0,0,0,.18));
+}
+
+/* Settings > Board background: three compact choices on one line; the chosen one is tinted, bold, with a blue edge. */
+body.unified-terminal-ui .settings-board-theme { flex-wrap: nowrap !important; gap: 4px !important; }
+body.unified-terminal-ui .settings-board-theme > span { white-space: nowrap; }
+body.unified-terminal-ui .settings-board-theme button { padding: 4px 8px !important; min-height: 0 !important; font-size: 12px !important; white-space: nowrap; }
+body.unified-terminal-ui .settings-board-theme button[aria-pressed="true"] {
+  background: #dfe8f0 !important; color: #1f3346 !important; font-weight: 700 !important; border-color: #50799c !important;
+  box-shadow: inset 0 -2px 0 #50799c !important;
+}
+
+/* Offseason steps chip (taste deck round 2): the phase in the top bar is a chip; it opens the four steps. */
+body .has-card-board .season-command-date { overflow: visible !important; }
+body .has-card-board .season-command-header, body .has-card-board .season-command-club { overflow: visible !important; }
+.season-steps-chip { position: relative; margin-left: 2px; }
+.season-steps-chip > summary {
+  list-style: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;
+  padding: 2px 8px; border: 1px solid #a9b6c1; border-radius: 12px; background: #fff; font-size: 11px; color: #1d2a33; white-space: nowrap;
+}
+.season-steps-chip > summary::-webkit-details-marker { display: none; }
+.season-steps-chip > summary:hover { background: #eaf0f5; }
+.season-steps-chip[open] > summary { background: #dfe8f0; border-color: #50799c; }
+.season-steps-chip > summary b { font-size: 10px; color: #50799c; font-weight: 700; }
+.season-steps-chip > summary em { font-style: normal; font-size: 9.5px; font-weight: 700; color: #fff; background: #b3242c; border-radius: 8px; padding: 0 5px; line-height: 15px; }
+.season-steps-chip > summary i { font-style: normal; font-size: 8px; color: #5d6a74; }
+.season-steps-menu {
+  position: absolute; z-index: 5000; top: calc(100% + 6px); left: 0; width: 250px; padding: 6px;
+  background: #fff; border: 1px solid #8f9aa3; border-radius: 4px; box-shadow: 0 6px 18px rgba(16, 28, 38, .28);
+}
+.season-steps-menu .offseason-stops { display: grid !important; grid-template-columns: 1fr !important; gap: 4px !important; padding: 0 !important; }
+.season-steps-menu .offseason-stops li { white-space: normal; }
+/* The main action of a phase (Start The Season): one filled blue button. */
+body .has-card-board .card-board-phase-actions > button#presetStartSeason,
+body .has-card-board .card-board-phase-actions > button#presetSetRoster {
+  background: #2f6fb7 !important; border-color: #245a96 !important; color: #fff !important; box-shadow: none !important; font-weight: 700 !important; padding: 0 12px;
+}
+body .has-card-board .card-board-phase-actions > button#presetStartSeason:hover,
+body .has-card-board .card-board-phase-actions > button#presetSetRoster:hover { background: #285f9d !important; color: #fff !important; }
+
+/* Opening roster, round 2 (taste deck 2026-11-23): one short line instead of a paragraph, more about each player
+   (OVR, roles, "$X × N", guarantee in one word, what releasing him costs), the Keep / Waive / Buy out buttons kept;
+   two-way places as a small table whose open places list the best free agents to sign. Headshots are positioned
+   inside their own cell (they used to pile up over the window's bottom-left corner). */
+.cutdown-player { position: relative; }
+.cutdown-workspace.is-compact .cutdown-head { padding: 8px 12px; gap: 12px; }
+.cutdown-workspace.is-compact .cutdown-title h3 { margin: 0 0 2px; font-size: 15px; }
+.cutdown-workspace.is-compact .cutdown-title > span { font-size: 11px; color: var(--season-muted, #5d6b77); }
+.cutdown-workspace.is-compact .cutdown-counter { display: grid; grid-template-columns: auto auto auto auto; align-items: baseline; justify-items: start; column-gap: 6px; min-width: 0; padding: 4px 10px; }
+.cutdown-workspace.is-compact .cutdown-counter strong b { font-size: 20px; }
+.cutdown-workspace.is-compact .cutdown-counter span { margin-right: 8px; }
+.cutdown-workspace.is-compact .cutdown-table td, .cutdown-workspace.is-compact .cutdown-table th { text-align: center; }
+.cutdown-workspace.is-compact .cutdown-table tbody th { text-align: left; }
+.cutdown-workspace.is-compact .cutdown-table .season-minute-roles { flex-direction: column; align-items: center; gap: 0; line-height: 1.12; font-size: 9.5px; font-weight: 600; }
+.cutdown-ovr { font-size: 12.5px; font-weight: 700; }
+.cutdown-guarantee { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.cutdown-guarantee small { font-size: 9px; color: #2f6f8f; }
+.cutdown-guarantee.is-none, .cutdown-guarantee.is-camp { color: #2f7a4a; }
+.cutdown-guarantee.is-partial { color: #9a6a12; }
+.cutdown-workspace.is-compact td > .is-idle { opacity: .55; }
+.cutdown-workspace.is-compact td > .is-chosen { font-weight: 700; color: #a8434b; }
+.cutdown-workspace.is-compact .cutdown-quote small { display: block; font-size: 9px; }
+.cutdown-twoways { margin-top: 10px; border-top: 2px solid #3f4b55; }
+.cutdown-twoways > header { display: flex; align-items: baseline; gap: 10px; padding: 6px 12px; }
+.cutdown-twoways > header strong { font-size: 13px; }
+.cutdown-twoways > header span { font-weight: 700; color: #50799c; }
+.cutdown-twoways > header small { margin-left: auto; font-size: 10px; color: var(--season-muted, #5d6b77); }
+.cutdown-twoway-table { width: 100%; }
+.cutdown-twoway-open-head td { text-align: left !important; font-size: 10px; font-weight: 700; color: var(--season-muted, #5d6b77); background: #f4f6f8; padding: 3px 12px !important; }
+.cutdown-twoway-none { color: var(--season-muted, #5d6b77); font-size: 11px; }
+.cutdown-twoway-games { display: inline-grid; grid-template-columns: 50px auto; align-items: center; gap: 5px; }
+.cutdown-twoway-games i { display: block; height: 5px; background: transparent; }
+.cutdown-twoway-games i b { display: block; height: 100%; background: #50799c; border-radius: 1px; }
+.cutdown-twoway-games em { font-style: normal; font-size: 10.5px; }
+body.unified-terminal-ui .cutdown-text-button { min-height: 0; padding: 2px 8px; margin: 0 2px; border: 1px solid #a9b6c1; border-radius: 3px; background: #fff; color: #2c4a63; font-size: 11px; cursor: pointer; box-shadow: none; }
+body.unified-terminal-ui .cutdown-text-button:hover:not(:disabled) { background: #eaf0f5; }
+body.unified-terminal-ui .cutdown-text-button:disabled { opacity: .45; cursor: default; }
+body.unified-terminal-ui .cutdown-text-button.is-sign { border-color: #2f6fb7; color: #1f4f86; font-weight: 700; }

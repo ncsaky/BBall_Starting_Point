@@ -3207,6 +3207,11 @@ def starting_slot_score(player: dict[str, Any], slot: str, minutes: float, attrs
         score += 12.0
     if height >= 84.0 and slot in {"1", "2", "3"} and "SF" not in tokens:
         score -= 35.0
+    # A pure center is not a perimeter starter: without this the height bonus at small forward let a 6'9" centre
+    # outscore the guards and wings, and OKC started three centres (Jaylin Williams at the 3 beside Holmgren and
+    # Hartenstein; user playtest 2026-11-23). Soft, so an all-big roster can still field five.
+    if slot in {"1", "2", "3"} and tokens and all(token == "C" for token in tokens):
+        score -= 40.0
     return score
 
 

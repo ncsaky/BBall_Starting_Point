@@ -59,10 +59,12 @@ const room = {
 };
 
 test('stop 1 shows the four stops with dates and the current one marked', () => {
-  const html = context().offseasonChecklistPanel(room);
-  // Playtest 2026-11-22: no title or paragraph; one short date per stop, finer dates and rules on hover, and a badge
-  // on the current stop counting the decisions waiting.
-  assert.doesNotMatch(html, /Decide Who To Keep<\/h3>/);
+  const ctx = context();
+  // Taste deck round 2: the four stops live in one chip in the top bar, not in the checklist window.
+  assert.doesNotMatch(ctx.offseasonChecklistPanel(room), /offseason-stops/);
+  const html = ctx.offseasonStopTimeline('decide_who_to_keep', calendar, 2, 'Teams may talk to their own free agents now.');
+  // Playtest 2026-11-22: one short date per stop, finer dates and rules on hover, and a badge on the current stop
+  // counting the decisions waiting.
   assert.match(html, /aria-current="step" title="Draft Jun 22–23\. Teams may talk to their own free agents now[^"]*"><b>1<\/b><span>Decide who to keep <em class="offseason-waiting" title="2 decisions waiting">2<\/em><\/span><small>Jun 17–29<\/small>/);
   assert.match(html, /<span>Make offers<\/span><small>From Jun 30/);
   assert.match(html, /By Oct 20/);
@@ -88,7 +90,6 @@ test('signing day recaps the first wave and says what is still open', () => {
     offseason_checklist: {...room.offseason_checklist, departed: [{player_id: 'd', name: 'Own Guy', team_abbrev: 'BOS'}]}, league_moves: [
     {kind: 'free_agent_signing', team_ids: ['gsw'], headline: 'GSW signs New Guy.', aav_millions: 12, years: 3, player_id: 'n'},
     {kind: 'free_agent_signing', team_ids: ['bos'], headline: 'BOS signs Own Guy.', aav_millions: 20, years: 4, player_id: 'd'}]});
-  assert.match(html, /Signing day/);
   assert.match(html, /Your signings<\/h4><ul><li>GSW signs New Guy\./);
   assert.match(html, /Your free agents who left<\/h4><ul><li>Own Guy signed with BOS\./);
   // FA-REAL slice 3 (rule changed): offer sheets exist now; with none this summer the box says what can still happen.

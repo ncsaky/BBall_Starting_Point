@@ -135,9 +135,23 @@
       }
       return d + " Z";
     };
+    const sides = new Set(axes.map((a) => a.side));
+    // Closed smooth curve through every point (wrapping round), for a radar that covers one side's axes only.
+    const smoothClosed = (pts) => {
+      const m = pts.length;
+      let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+      for (let i = 0; i < m; i += 1) {
+        const p0 = pts[(i - 1 + m) % m], p1 = pts[i], p2 = pts[(i + 1) % m], p3 = pts[(i + 2) % m];
+        const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+        const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+        d += ` C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+      }
+      return d + " Z";
+    };
     const layer = (side) => {
       const idx = axes.map((a, i) => (a.side === side ? i : -1)).filter((i) => i >= 0);
       if (!idx.length) return "";
+      if (sides.size === 1 && idx.length >= 3) return `<path class="ss-radar-${side}" d="${smoothClosed(idx.map((i) => at(i, pct(axes[i].rank))))}"></path>`;
       return `<path class="ss-radar-${side}" d="${smooth([[c, c], ...idx.map((i) => at(i, pct(axes[i].rank))), [c, c]])}"></path>`;
     };
     const rings = [25, 50, 75, 100].map((v) => `<circle class="ss-radar-ring" cx="${c}" cy="${c}" r="${(r * v / 100).toFixed(1)}"></circle>`).join("");
@@ -147,8 +161,10 @@
       const anchor = Math.abs(x - c) < 6 ? "middle" : x < c ? "end" : "start";
       return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anchor}" class="ss-radar-label"><tspan>${esc(a.label)}</tspan><tspan class="ss-radar-rank" dx="4">${ordinalRank(a.rank)}</tspan></text>`;
     }).join("");
-    return `<figure class="ss-radar"><svg viewBox="-112 -16 ${size + 224} ${size + 32}" role="img" aria-label="Team Signals: offense and defense league ranks">${rings}${spokes}${layer("offense")}${layer("defense")}${labels}</svg>
-      <figcaption><span class="ss-key ss-key-offense">Offense</span><span class="ss-key ss-key-defense">Defense</span></figcaption></figure>`;
+    const only = sides.size === 1 ? [...sides][0] : "";
+    const caption = only ? `<span class="ss-key ss-key-${only}">${only === "offense" ? "Offense" : "Defense"}</span>` : `<span class="ss-key ss-key-offense">Offense</span><span class="ss-key ss-key-defense">Defense</span>`;
+    return `<figure class="ss-radar${only ? ` ss-radar-single ss-radar-only-${only}` : ""}"><svg viewBox="-112 -16 ${size + 224} ${size + 32}" role="img" aria-label="Team Signals: ${only || "offense and defense"} league ranks">${rings}${spokes}${layer("offense")}${layer("defense")}${labels}</svg>
+      <figcaption>${caption}</figcaption></figure>`;
   }
 
   // A name opens that player's card (players who left the league have no card).
@@ -315,13 +331,14 @@
       const bench = byMinutes.filter((p) => !starters.includes(p));
       const injury = (p) => (p.injury ? `<span class="ss-injury" title="${attr(`${p.injury.label || "Injured"}${p.injury.whole_season ? ", expected to miss the season" : `, about ${p.injury.games} games`}${p.injury.return_date ? `, back around ${p.injury.return_date}` : ""}`)}">✚ ${p.injury.whole_season ? "season" : esc(p.injury.games)}</span>` : "");
       const link = (p) => name({...p, player_id: p.id});
-      const starterTile = (p, i) => `<li class="ss-tile ss-tile-starter" style="--i:${i}">
+      const opens = (p) => (p.id && !String(p.id).startsWith("real:") ? ` data-ss-tile-player="${attr(p.id)}"` : "");
+      const starterTile = (p, i) => `<li class="ss-tile ss-tile-starter" style="--i:${i}"${opens(p)}>
           <span class="ss-tile-pos">${esc(p.position || "")}</span>
           <span class="ss-tile-photo">${headshot(p)}</span>
           <span class="ss-tile-name">${link(p)}${injury(p)}</span>
           <span class="ss-tile-ovr" title="Overall">${ratingNumber(p.overall)}</span>
           <span class="ss-role-pair">${roleChip(p.off_role)}${roleChip(p.def_role)}</span></li>`;
-      const benchTile = (p, i) => `<li class="ss-tile ss-tile-bench" style="--i:${i + 5}">
+      const benchTile = (p, i) => `<li class="ss-tile ss-tile-bench" style="--i:${i + 5}"${opens(p)}>
           ${headshot(p)}<span class="ss-tile-text"><span class="ss-tile-name">${link(p)}</span><span class="ss-tile-meta">${ratingNumber(p.overall)}${injury(p)}</span></span></li>`;
       const t = slide.takeaways || {};
       const teams = t.teams || slide.league_teams || 30;
@@ -350,10 +367,16 @@
       const figures = [["Payroll", money(cap.payroll_millions)], ["Tax line", money(cap.tax_line_millions)],
                        room(cap.tax_space_millions, "Room under the tax", "Over the tax by"),
                        room(cap.hard_cap_space_millions, "Hard cap room", "Over the hard cap by"), ["Tax payout share", payoutText]];
+      const radarAxes = slide.radar || [];
+      const bySide = ["offense", "defense"].map((side) => radarAxes.filter((a) => a.side === side));
+      const radars = !radarAxes.length ? `<p class="ss-empty">—</p>`
+        : bySide.every((axes) => axes.length >= 3)
+          ? `<div class="ss-radar-pair">${bySide.map((axes) => curvedRadar(axes, slide.league_teams || 30)).join("")}</div>`
+          : curvedRadar(radarAxes, slide.league_teams || 30);
       return `<div class="ss-profile">
-          <section class="ss-panel ss-panel-radar">${panelTitle("Strengths by league rank")}${(slide.radar || []).length ? curvedRadar(slide.radar, slide.league_teams || 30) : `<p class="ss-empty">—</p>`}</section>
+          <section class="ss-panel ss-panel-radar">${panelTitle("Strengths by league rank")}${radars}</section>
           <section class="ss-panel ss-panel-payroll">${panelTitle("Payroll, next four seasons")}<div class="ss-payroll">${chart}</div>
-            <dl class="ss-cap-figures">${figures.map(([label, value]) => `<div><dt>${esc(label)}</dt><dd>${value}</dd></div>`).join("")}</dl></section>
+            <table class="ss-cap-table"><tbody>${figures.map(([label, value]) => `<tr><td class="ss-cap-label">${esc(label)}</td><td class="ss-cap-value">${value}</td></tr>`).join("")}</tbody></table></section>
         </div>`;
     },
     // Contracts to watch: bar charts, not salary tables. Every contract reads "$X × N" (UI style guide).
@@ -547,8 +570,8 @@
     show.root.addEventListener("click", (event) => {
       const header = event.target.closest(".ss-table th[data-ss-sort]");
       if (header) return sortTable(header);
-      const playerLink = event.target.closest("[data-ss-player]");
-      if (playerLink) return openPlayer(playerLink.dataset.ssPlayer);
+      const playerLink = event.target.closest("[data-ss-player]") || event.target.closest("[data-ss-tile-player]");
+      if (playerLink) return openPlayer(playerLink.dataset.ssPlayer || playerLink.dataset.ssTilePlayer);
       const viewAll = event.target.closest("[data-ss-view-all]");
       if (viewAll) { show.viewAll = viewAll.dataset.ssViewAll || null; render(0); return; }
       const button = event.target.closest("[data-ss-action]");

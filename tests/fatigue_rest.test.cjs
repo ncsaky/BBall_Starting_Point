@@ -29,7 +29,9 @@ test('fatigue bar shows exactly the engine value, with the next tip-off value in
   for (const fatigue of [0, 12.4, 37.5, 50, 63.2, 91]) {
     const html = ctx.seasonFatigueCell({health: {status: 'ok', label: '', fatigue, fatigue_next: fatigue * 0.62, fatigue_next_date: '2026-12-03'}});
     assert.match(html, new RegExp(`data-fatigue-value="${fatigue.toFixed(1)}"`));
-    assert.equal((html.match(/class="filled"/g) || []).length, Math.round(fatigue / 100 * 6));
+    // One thin bar whose length is the fatigue value (taste deck round 2: no blocks, no dark track).
+    assert.match(html, new RegExp(`width:${Math.max(fatigue > 0 ? 3 : 0, fatigue).toFixed(1)}%`));
+    assert.match(html, new RegExp(`<em>${fatigue.toFixed(0)}</em>`));
     assert.match(html, new RegExp(`Fatigue ${fatigue.toFixed(0)} / 100 today`));
     assert.match(html, new RegExp(`About ${(fatigue * 0.62).toFixed(0)} at his next tip-off \\(2026-12-03\\)`));
   }

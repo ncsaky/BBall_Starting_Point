@@ -377,7 +377,7 @@ test('next opponent injury list shows remaining games without repeating injured 
     teamLabel:value=>typeof value==='string'?value:value?.abbrev||'NYK', seasonGameOpponent:()=>'NYK', teamLogoSrc:()=>'',
     clampNumber:value=>value, performanceBarStyle:()=>'', playerRatingBarStyle: ()=>'', ratingInkColor: ()=>'#333', escapeAttr:value=>String(value), escapeHtml:value=>String(value),
     formatDashboardShortDate:value=>value, isPlayerInjured:health=>health?.status==='injured', injuryGamesRemaining:()=>4,
-    rating:()=>80, seasonMiniRating:()=>'<span>80</span>', statNumber:()=>0,
+    rating:()=>80, seasonMiniRating:()=>'<span>80</span>', statNumber:()=>0, playerOverallToday:()=>null,
   };
   vm.createContext(scope);
   loadHouseTables(scope, {block:false});

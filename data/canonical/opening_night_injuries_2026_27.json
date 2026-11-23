@@ -2887,6 +2887,41 @@
     }
    ],
    "apply": true
+  },
+  {
+   "name": "Kristaps Porzingis",
+   "espn_id": "3102531",
+   "team": "GSW",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Not With Team",
+   "player_id": "player_gsw-kristaps-porzingis",
+   "universe_team": "GSW",
+   "body_part": "illness",
+   "diagnosis": "Illness (no timeline for a return)",
+   "games_missed": 82,
+   "games_missed_by_capture": null,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": true,
+   "expected_return": null,
+   "return_estimate_source": "User report 2026-11-23: out with an illness, no timeline, possible retirement",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Not With Team"
+    },
+    {
+     "what": "user report (playtest notes)",
+     "date": "2026-11-23",
+     "note": "Sick, no timeline for a return, possibly facing retirement; treated as out for the season. A one-off: listed as an illness although the report said Not With Team."
+    }
+   ],
+   "apply": true,
+   "user_report": true
   }
  ],
  "not_injuries": [
@@ -2953,14 +2988,6 @@
    "opener_date": "2026-10-20",
    "opener_status": "Out",
    "opener_reason": "G League - Two- Way"
-  },
-  {
-   "name": "Kristaps Porzingis",
-   "espn_id": "3102531",
-   "team": "GSW",
-   "opener_date": "2026-10-21",
-   "opener_status": "Out",
-   "opener_reason": "Not With Team"
   },
   {
    "name": "Julian Phillips",

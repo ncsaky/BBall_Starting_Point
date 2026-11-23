@@ -140,7 +140,7 @@ test('preseason outlook taste pass: projected ranks, rows that fall in, your tea
 
   // Team profile: two titled panels; the cap numbers sit under the payroll chart.
   const profile = RENDER.team_profile({radar: [{key: 'defense', label: 'Defense', side: 'defense', rank: 3}], cap: {payroll_millions: 152.1}});
-  assert.match(profile, /Strengths by league rank[\s\S]*Payroll, next four seasons[\s\S]*ss-cap-figures/);
+  assert.match(profile, /Strengths by league rank[\s\S]*Payroll, next four seasons[\s\S]*ss-cap-table/);
 
   // Contracts: never a bare salary; bar charts; players who could be on the move grouped by reason.
   const contracts = RENDER.contracts({

@@ -22,6 +22,7 @@ const scope = () => {
     compactPos: (value) => value, shortDate: (value) => String(value || '').slice(5),
     playerHeadshotMarkup: () => '', shortSeasonLabel: (value) => value, teamLabel: (value) => value,
     clipboardLegalActions: () => new Set(['free_agent_signings']),
+    ratingInkColor: () => '#226ca8', clampNumber: (v, lo, hi) => Math.min(hi, Math.max(lo, v)),
   };
   vm.createContext(context);
   return context;
@@ -47,11 +48,17 @@ test('the opening-roster window shows the two-way places, their games and open p
   const html = context.cutdownTwoWayPlaces({roster: {two_way_limit: 3, two_ways: [
     {player_id: 'p', name: 'Young Guard', position: 'PG', age: 22, overall: 48, active_games: 12, active_limit: 50,
      seasons: [{season: '2027-28', salary_millions: 0.7}], convert: {ok: false, reason: 'No standard roster spot'}}]}});
-  assert.match(html, /Two-way places · 1 \/ 3/);
-  assert.match(html, /12 \/ 50 games/);
-  assert.match(html, /outside the cap/);
-  assert.equal((html.match(/Open two-way place/g) || []).length, 2);
+  // Taste deck round 2: a small table; open places list the best eligible free agents with a Sign button.
+  assert.match(html, /Two-way places<\/strong><span>1 \/ 3 filled/);
+  assert.match(html, /12 \/ 50/);
+  assert.match(html, /Outside the cap/);
+  assert.match(html, /2 open places/);
+  assert.match(html, /No free agent is eligible/);
   assert.match(html, /data-two-way-convert="p" disabled/);
+  const open = context.cutdownTwoWayPlaces({roster: {two_way_limit: 3, two_ways: []}, two_way_candidates: [
+    {player_id: 'fa', name: 'Free Agent', position: 'SF', age: 20, overall: 53.3, pay_millions: 0.679}]});
+  assert.match(open, /3 open places: best available/);
+  assert.match(open, /data-two-way-sign="fa"/);
   const camp = context.cutdownGuaranteeCell({contract_kind: 'camp', guarantee: {kind: 'camp', words: 'Camp deal: not guaranteed'}});
   assert.match(camp, /Camp deal/);
 });
