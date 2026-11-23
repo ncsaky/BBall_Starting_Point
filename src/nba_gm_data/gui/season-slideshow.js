@@ -34,7 +34,8 @@
     // widths, row heights and alignment), whatever their contents (playtest 2026-11-22).
     const fixed = columns.some((col) => col.width);
     const cols = fixed ? `<colgroup>${columns.map((col) => `<col${col.width ? ` style="width:${col.width}"` : ""}>`).join("")}</colgroup>` : "";
-    return `<table class="ss-table${fixed ? " ss-fixed" : ""}">${caption ? `<caption>${esc(caption)}</caption>` : ""}${cols}<thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+    const total = fixed && columns.every((col) => col.width) ? columns.reduce((sum, col) => sum + parseFloat(col.width), 0) : 0;
+    return `<table class="ss-table${fixed ? " ss-fixed" : ""}"${total ? ` style="width:${total}px"` : ""}>${caption ? `<caption>${esc(caption)}</caption>` : ""}${cols}<thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
   }
   // Click (or Enter / Space on) any header to sort by it; click again to flip the order. Ranks, seeds and names
   // start smallest-first; every other column starts biggest-first. Blank cells ("—") always sort last.
@@ -86,7 +87,13 @@
 
   const ordinalRank = (n) => { const v = Number(n); if (!Number.isFinite(v) || !v) return "—"; const s = ["th", "st", "nd", "rd"], m = v % 100; return v + (s[(m - 20) % 10] || s[m] || s[0]); };
   // Team slides lead with the logo and the team's overall instead of spelling out the name (playtest 2026-11-22).
-  const titleTeam = (slide) => `${logo(slide.logo, "ss-title-logo")}<span class="ss-title-stat"><b>${num(slide.team_overall)}</b><span>Overall${slide.overall_rank ? ` · ${ordinalRank(slide.overall_rank)} in the league` : ""}</span></span>`;
+  const titleTeam = (slide) => `${logo(slide.logo, "ss-title-logo")}<span class="ss-title-stat"><b>${slide.overall_rank ? `${ordinalRank(slide.overall_rank)} in the league` : ""}</b></span>`;
+  // Ratings always carry the game's bar, and a contract is always one field: salary × years (playtest 2026-11-22).
+  const ratingBar = (v) => (v === null || v === undefined || !Number.isFinite(Number(v)) ? "—"
+    : typeof compactRatingBar === "function" ? compactRatingBar(Number(v))  // the roster tables' own bar
+    : `<span class="linked-rating assets-rating-bar"><span>${num(v)}</span><i><b style="--fill:${Number(v)}%"></b></i></span>`);
+  const contract = (salary, years) => (typeof contractLabel === "function" ? contractLabel(salary, years)
+    : salary ? `${money(salary)}${years ? ` × ${years}` : ""}` : "—");
 
   // One radar, offense on one half and defense on the other, with smooth (Catmull-Rom) curves. Values are league
   // percentiles from Team Signals ranks.
@@ -194,7 +201,7 @@
       return table([
         {label: "Player", render: (p) => playerCell(p, esc(`${p.position || ""} · age ${num(p.age, 0)}`)), cls: "ss-player-col"},
         {label: "Team", render: (p) => teamCell(p.team)},
-        {label: "Rating", render: (p) => num(p.overall), cls: "ss-num"},
+        {label: "Rating", render: (p) => ratingBar(p.overall)},
         {label: "Salary now", render: (p) => money(p.current_salary_millions), cls: "ss-num"},
         {label: "Market value / yr", render: (p) => money(p.market_value_millions), cls: "ss-num"},
       ], slide.players || [], {sorted: 4}) + note("Each one's team can re-sign him in the exclusive window before free agency opens.");
@@ -277,25 +284,24 @@
       const value = (v, digits = 1) => (v === null || v === undefined ? "—" : num(v, digits));
       const injury = (p) => (p.injury ? ` <span class="ss-injury" title="${attr(`${p.injury.label || "Injured"}${p.injury.whole_season ? ", expected to miss the season" : `, about ${p.injury.games} games`}${p.injury.return_date ? `, back around ${p.injury.return_date}` : ""}`)}">✚ ${p.injury.whole_season ? "season" : p.injury.games}</span>` : "");
       const roster = table([
-        {label: "Player", render: (p) => `<span class="ss-player">${headshot(p)}<span class="ss-player-name">${name({...p, player_id: p.id})}${injury(p)}</span></span>`, cls: "ss-player-col"},
-        {label: "Pos", render: (p) => esc(p.position || "—"), width: "52px"},
-        {label: "Age", render: (p) => value(p.age, 0), cls: "ss-num", width: "48px"},
-        {label: "OVR", render: (p) => value(p.overall), cls: "ss-num", width: "58px"},
-        {label: "OFF", render: (p) => value(p.offense), cls: "ss-num", width: "58px"},
-        {label: "DEF", render: (p) => value(p.defense), cls: "ss-num", width: "58px"},
-        {label: "MIN", render: (p) => (p.minutes ? p.minutes : "—"), cls: "ss-num", width: "52px"},
-        {label: "PTS", render: (p) => value(p.points), cls: "ss-num", width: "52px"},
-        {label: "REB", render: (p) => value(p.rebounds), cls: "ss-num", width: "52px"},
-        {label: "AST", render: (p) => value(p.assists), cls: "ss-num", width: "52px"},
-        {label: "Salary", render: (p) => (p.salary_millions ? money(p.salary_millions) : "—"), cls: "ss-num", width: "72px"},
-        {label: "Years", render: (p) => p.years_left ?? "—", cls: "ss-num", width: "52px"},
+        {label: "Player", render: (p) => `<span class="ss-player">${headshot(p)}<span class="ss-player-name">${name({...p, player_id: p.id})}${injury(p)}</span></span>`, cls: "ss-player-col", width: "270px"},
+        {label: "Pos", render: (p) => esc(p.position || "—"), width: "46px"},
+        {label: "Age", render: (p) => value(p.age, 0), cls: "ss-num", width: "44px"},
+        {label: "OVR", render: (p) => ratingBar(p.overall), width: "70px"},
+        {label: "OFF", render: (p) => ratingBar(p.offense), width: "70px"},
+        {label: "DEF", render: (p) => ratingBar(p.defense), width: "70px"},
+        {label: "MIN", render: (p) => (p.minutes ? p.minutes : "—"), cls: "ss-num", width: "46px"},
+        {label: "PTS", render: (p) => value(p.points), cls: "ss-num", width: "46px"},
+        {label: "REB", render: (p) => value(p.rebounds), cls: "ss-num", width: "46px"},
+        {label: "AST", render: (p) => value(p.assists), cls: "ss-num", width: "46px"},
+        {label: "Contract", render: (p) => contract(p.salary_millions, p.years_left), cls: "ss-num", width: "96px"},
       ], slide.rotation || [], {sorted: 3});
       const horizon = slide.salary_horizon || {};
       const chart = typeof salaryHorizonChart === "function" && (horizon.seasons || []).length
         ? salaryHorizonChart({seasons: horizon.seasons, rows: horizon.rows || [], capByYear: horizon.cap_by_year || {}, className: "ss-payroll-chart"}) : "";
-      return `<section class="ss-roster">${roster}</section>
+      return `<div class="ss-team-top"><section class="ss-roster">${roster}</section>
+          ${(slide.radar || []).length ? curvedRadar(slide.radar, slide.league_teams || 30) : ""}</div>
         <div class="ss-team-facts">
-          ${(slide.radar || []).length ? curvedRadar(slide.radar, slide.league_teams || 30) : ""}
           <section class="ss-payroll">${chart}</section>
           <section><dl class="ss-dl"><dt>Payroll</dt><dd>${money(cap.payroll_millions)}</dd><dt>Tax line</dt><dd>${money(cap.tax_line_millions)}</dd><dt>Room under the tax</dt><dd>${money(cap.tax_space_millions)}</dd><dt>Hard cap room</dt><dd>${money(cap.hard_cap_space_millions)}</dd>
           <dt>Tax payout share</dt><dd>${payout ? (payout.payout_millions > 0 ? `${money(payout.payout_millions)} (${esc(payout.season)}, paid ${esc(payout.paid_on)})` : payout.tax_bill_millions > 0 ? `None: paid ${money(payout.tax_bill_millions)} in tax (${esc(payout.season)})` : `None for ${esc(payout.season)}`) : "No payout recorded yet"}</dd></dl></section>

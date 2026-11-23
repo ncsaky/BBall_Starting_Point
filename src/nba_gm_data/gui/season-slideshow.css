@@ -273,16 +273,14 @@ body.unified-terminal-ui .ss-return:hover { background: #2b3a48 !important; }
 .ss-roster .ss-player > .ss-player-name { align-self: center; display: inline-flex; flex-direction: row; align-items: center; gap: 6px; min-width: 0; padding: 0; }
 .ss-roster .ss-headshot { width: 40px; height: 30px; }
 .ss-injury { color: #b23b3b; font-size: 11px; font-weight: 700; white-space: nowrap; }
-/* Header: logo and the team's overall. */
+/* Header: logo and the team's league rank. */
 .ss-content h2.ss-title-team { display: flex; align-items: center; gap: 12px; }
 .ss-content h2.ss-title-team .ss-title-logo { width: 40px; height: 40px; }
-.ss-title-stat { display: inline-flex; align-items: baseline; gap: 8px; }
-.ss-title-stat b { font-size: 28px; font-weight: 750; }
-.ss-title-stat span { font-size: 13px; color: #4a5a67; font-weight: 600; }
-/* Bottom row: curved radar, payroll chart, payroll numbers. */
-.ss-team-facts { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 18px; align-items: stretch; margin-top: 10px; height: 218px; }
+.ss-title-stat b { font-size: 24px; font-weight: 750; }
+/* Top: the rotation table at its natural width, the radar beside it. Bottom: payroll chart and numbers. */
+.ss-team-top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: start; }
 .ss-radar { margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 0; }
-.ss-radar svg { width: 100%; height: 100%; min-height: 0; overflow: visible; }
+.ss-radar svg { width: 100%; max-height: 330px; overflow: visible; }
 .ss-radar-ring { fill: none; stroke: #c9d2da; stroke-width: 1; }
 .ss-radar-spoke { stroke: #d5dde3; stroke-width: 1; }
 .ss-radar-offense { fill: rgba(61, 130, 197, .32); stroke: #3d82c5; stroke-width: 1.6; }
@@ -293,5 +291,10 @@ body.unified-terminal-ui .ss-return:hover { background: #2b3a48 !important; }
 .ss-key::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: -1px; border-radius: 2px; }
 .ss-key-offense::before { background: rgba(61, 130, 197, .6); border: 1px solid #3d82c5; }
 .ss-key-defense::before { background: rgba(196, 122, 44, .55); border: 1px solid #c47a2c; }
-.ss-payroll { min-height: 0; height: 100%; }
-.ss-payroll .salary-horizon-chart { height: 100%; }
+.ss-team-facts { display: flex; gap: 24px; align-items: stretch; margin-top: 12px; height: 210px; }
+/* The payroll chart keeps the player card's proportions (190 x 256) wherever it appears. */
+.ss-payroll { height: 100%; flex: none; display: flex; }
+body.unified-terminal-ui .ss-payroll .salary-horizon-chart { height: 100% !important; width: auto !important; aspect-ratio: 190 / 256; max-height: none !important; }
+.ss-team-facts > section:last-child { flex: 0 1 360px; }
+/* Rating cells: number + the game's bar. */
+.ss-table td .ss-rating { width: auto; }

@@ -49,7 +49,15 @@ Game runs from the browser pane: launch entry `game` (port 8766, normal `saves/`
   ends at the headshot's base. Round 2: header is the logo plus the team's overall and league rank (no
   spelled-out name); injured players join the table with a red "✚ games" marker; rows 31px with smaller headshots;
   strengths/weaknesses lists replaced by one curved radar (offense half blue, defense half orange, user's pick);
-  the game's four-season payroll chart sits beside the payroll numbers.
+  the game's four-season payroll chart sits beside the payroll numbers. Round 3: header is just the logo and
+  "1st in the league"; the table sits at its natural width (player column 270px fits the longest names) with the
+  radar beside it; OVR/OFF/DEF use the roster's rating bar; contract is one field ("$40.8M × 5").
+- **Game-wide rules (user, 2026-11-22):** a contract is always one field, salary × years (`contractLabel` in
+  app.js; done for the slideshow, fantasy draft list, staff market). OVR/OFF/DEF always carry the roster's bar
+  (`compactRatingBar`); still to sweep: other tables showing plain OVR/OFF/DEF numbers (FA market OFF/DEF,
+  cut-down OVR, draft and trade tables). The segmented payroll chart keeps the player card's proportions
+  (190 x 256, ratio 0.742) wherever it appears; the slideshow locks it with aspect-ratio. Check the Payroll
+  window too.
 - **Power-ranking notes (done 2026-11-22).** Rookies at rotation level (value 56.5+) are always named
   ("drafted Cameron Boozer"). Chosen by rating, not draft slot.
 - **Tables, still open:** the user wants consistent row height and header centering across all tables. Not done

@@ -4803,7 +4803,7 @@ function fantasyDraftDashboardWorkspace() {
         </div>
         <div class="fantasy-player-table">
           <div class="fantasy-player-row fantasy-player-labels">
-            <span>Player</span><span>Age</span><span>OVR</span><span>Ceiling</span><span>Fit</span><span>Salary</span><span>Years</span><span>Watch</span>
+            <span>Player</span><span>Age</span><span>OVR</span><span>Ceiling</span><span>Fit</span><span>Contract</span><span>Watch</span>
           </div>
           ${available.map((player) => {
             const value = Number(player.display_overall || player.ratings?.overall || player.ratings_prior_overall || player.impact || 0);
@@ -4817,8 +4817,7 @@ function fantasyDraftDashboardWorkspace() {
               <span class="fantasy-meter" style="--meter:${Math.max(0, Math.min(100, value))}%"><i></i><em>${plainNumber(value)}</em></span>
               <span class="fantasy-ceiling"><strong>${plainNumber(player.ceiling_overall || value)}</strong><small>+${plainNumber(player.growth_runway || 0)}</small></span>
               <span class="fantasy-meter fit" style="--meter:${Math.max(0, Math.min(100, fit))}%"><i></i><em>${plainNumber(fit)}</em></span>
-              <span>${money(player.salary_millions)}</span>
-              <span>${escapeHtml(player.contract_years || 0)}</span>
+              <span>${contractLabel(player.salary_millions, player.contract_years)}</span>
               <button class="fantasy-watch-button ${player.is_watchlisted ? "active" : ""}" data-fantasy-watch="${escapeAttr(player.player_id)}">${player.is_watchlisted ? "Watching" : "Watch"}</button>
             </div>`;
           }).join("") || `<div class="empty">No available players match these filters.</div>`}
@@ -10524,7 +10523,7 @@ function renderStaff(target = els.content) {
             ${["head_coach", "offensive_coordinator", "defensive_coordinator", "development_lead", "scouting_lead", "performance_lead"].map((slot) => `<option value="${slot}" ${slot === state.staffSlot ? "selected" : ""}>${rowLabel(slot)}</option>`).join("")}
           </select>
         </div>
-        ${table(["Name", "Role", "Grade", "Specialty", "Asking salary", "Years", ""], market, (candidate) => [candidate.name, rowLabel(candidate.slot), html(`<span class="staff-grade-cell"><i><b style="${performanceBarStyle(Number(candidate.grade||0))}"></b></i>${draftMetric(candidate.grade)}</span>`), candidate.archetype || "—", money(candidate.asking_salary_millions), candidate.asking_years || 2, html(`<button type="button" data-staff-id="${escapeAttr(candidate.id)}" ${staffActionAttributes(candidate.slot, "negotiate", report.staff_action_permissions)}>Negotiate</button>`)], "staff-market")}
+        ${table(["Name", "Role", "Grade", "Specialty", "Asking contract", ""], market, (candidate) => [candidate.name, rowLabel(candidate.slot), html(`<span class="staff-grade-cell"><i><b style="${performanceBarStyle(Number(candidate.grade||0))}"></b></i>${draftMetric(candidate.grade)}</span>`), candidate.archetype || "—", contractLabel(candidate.asking_salary_millions, candidate.asking_years || 2), html(`<button type="button" data-staff-id="${escapeAttr(candidate.id)}" ${staffActionAttributes(candidate.slot, "negotiate", report.staff_action_permissions)}>Negotiate</button>`)], "staff-market")}
       </section>
     </div>`;
   wireDashboardStaffCards(target);
@@ -13056,6 +13055,13 @@ function modalWindowMark(kind) {
   const key = `modal:${kind}`;
   if (window.WindowIcons?.typeFor(key)) return `<span class="card-board-window-mark has-window-icon" aria-hidden="true">${window.WindowIcons.svg(key)}</span>`;
   return `<span class="card-board-window-mark" aria-hidden="true"></span>`;
+}
+
+// A contract is always one field: salary per season × years (playtest 2026-11-22).
+function contractLabel(salaryMillions, years) {
+  const salary = Number(salaryMillions);
+  if (!Number.isFinite(salary) || salary <= 0) return "—";
+  return `${money(salary)}${Number(years) > 0 ? ` × ${Number(years)}` : ""}`;
 }
 
 function playerHeadshotMarkup(row, className = "player-headshot") {

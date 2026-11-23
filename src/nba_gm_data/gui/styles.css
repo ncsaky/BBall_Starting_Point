@@ -747,7 +747,7 @@ main {
   display: grid;
   font-size: 11px;
   gap: 8px;
-  grid-template-columns: minmax(170px, 1.35fr) 38px minmax(68px, 0.62fr) 52px minmax(68px, 0.62fr) 60px 32px 58px;
+  grid-template-columns: minmax(170px, 1.35fr) 38px minmax(68px, 0.62fr) 52px minmax(68px, 0.62fr) 84px 58px;
   min-height: 42px;
   padding: 4px 7px;
   text-align: left;
