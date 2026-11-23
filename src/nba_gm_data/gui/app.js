@@ -3676,6 +3676,10 @@ function seasonOpponentCard(dash, viewedTeam) {
   const leaders = seasonOpponentOrderedRows(selectedLeaders, state.dashboardOpponentSort);
   const logo = teamLogoSrc(opponentTeam);
   const homeAway = game.is_home === true ? "Home" : game.is_home === false ? "Away" : "";
+  // Players resting for this game are listed too, marked as resting rather than injured.
+  const resting = (opponent.rotation || [])
+    .filter((row) => !isPlayerInjured(row.health) && typeof playerIsResting === "function" && playerIsResting(row))
+    .map((row) => `${row.name || "Unknown"} — resting`);
   const injuries = (opponent.rotation || [])
     .filter((row) => isPlayerInjured(row.health))
     .map((row) => {
@@ -3686,7 +3690,7 @@ function seasonOpponentCard(dash, viewedTeam) {
         .replace(/^\s*[—–·-]+|[—–·-]+\s*$/g, "")
         .trim();
       return [row.name || "Unknown", remaining === null ? fallback : `${remaining} G`].filter(Boolean).join(" — ");
-    });
+    }).concat(resting);
   const headerRatings = [
     ["OVR", rankings.overall], ["OFF", rankings.offense], ["DEF", rankings.defense],
   ];
