@@ -1031,7 +1031,7 @@ def outlook_leaders_slide(ctx: dict[str, Any]) -> dict[str, Any]:
 def outlook_your_team_slide(ctx: dict[str, Any]) -> dict[str, Any]:
     from .save import team_cap_summary, team_identity_report, team_rotation_projection
 
-    from .save import contract_last_season, contract_salary_for_season, player_display_attribute_summary
+    from .save import contract_last_season, contract_salary_for_season, player_display_attribute_summary, player_salary_table
 
     active, save, user, teams = ctx["active"], ctx["save"], ctx["user"], ctx["teams"]
     projection = team_rotation_projection(active, save, user, integer=True)
@@ -1058,15 +1058,42 @@ def outlook_your_team_slide(ctx: dict[str, Any]) -> dict[str, Any]:
 
     rotation = [rotation_row(pid, minutes)
                 for pid, minutes in sorted(projection.items(), key=lambda item: (-float(item[1]), item[0])) if float(minutes) > 0][:10]
+    # Injured players join the table with how many games they will miss.
+    injured = {pid: row for pid, row in long_injuries(active, save, min_games=0).items()
+               if (next((p for p in active.get("players", []) if p.get("id") == pid), {}) or {}).get("team_id") == user}
+    shown = {row["id"] for row in rotation}
+    rotation += [rotation_row(pid, 0) for pid in injured if pid not in shown]
+    for row in rotation:
+        hurt = injured.get(row["id"])
+        row["injury"] = ({"games": hurt["games"], "label": hurt.get("injury"), "return_date": hurt.get("return_date"),
+                          "whole_season": hurt.get("whole_season")} if hurt else None)
     rotation.sort(key=lambda row: (-float(row.get("overall") or 0), row["name"]))
+    # The game's four-season payroll chart: every player's salary by season, and each season's tax line and hard cap.
+    horizon = [f"{season_start + offset}-{str(season_start + offset + 1)[-2:]}" for offset in range(4)] if season_start else []
+    roster_ids = [p["id"] for p in active.get("players", []) if p.get("team_id") == user]
+    names = {p["id"]: p.get("name") for p in active.get("players", [])}
+    salary_rows = [{"id": pid, "name": names.get(pid), "salary_by_year": player_salary_table(active, pid)} for pid in roster_ids]
+    cap_by_year = {}
+    for season_label in horizon:
+        summary = team_cap_summary(active, save, user, season_label)
+        cap_by_year[season_label] = {key: summary.get(key) for key in ("salary_total_millions", "tax_line_millions", "hard_cap_millions",
+                                                                       "waived_salary_millions")}
     identity = team_identity_report(active, save).get(user) or {}
     labels = {"offense": "Offense", "defense": "Defense", "spacing": "Spacing", "creation": "Shot creation",
               "rim_pressure": "Rim pressure", "rebounding": "Rebounding", "athleticism": "Athleticism",
               "defensive_disruption": "Defensive disruption", "rim_protection": "Rim protection", "depth": "Depth"}
     ranked = sorted(((labels[key], rank) for key, rank in (identity.get("ranks") or {}).items() if key in labels), key=lambda item: item[1])
+    ranks = identity.get("ranks") or {}
+    # One curved radar, offense on one half and defense on the other (user's pick, 2026-11-22).
+    radar = [{"key": key, "label": labels[key], "side": side, "rank": ranks.get(key)}
+             for side, keys in (("offense", ("offense", "spacing", "creation", "rim_pressure", "depth")),
+                                ("defense", ("defense", "rim_protection", "defensive_disruption", "rebounding", "athleticism")))
+             for key in keys if key in ranks]
     cap = team_cap_summary(active, save, user, ctx["season"])
     payout = cap.get("tax_payout") or {}
     return {"key": "your_team", "title": _team_ref(teams, user)["name"], "kicker": "Your team",
+            "logo": _team_ref(teams, user)["abbrev"], "team_overall": (identity.get("metrics") or {}).get("overall"),
+            "radar": radar, "league_teams": len(teams), "salary_horizon": {"seasons": horizon, "rows": salary_rows, "cap_by_year": cap_by_year},
             "rotation": rotation, "overall_rank": (identity.get("ranks") or {}).get("overall"),
             "strengths": [{"label": label, "rank": rank} for label, rank in ranked[:3]],
             "weaknesses": [{"label": label, "rank": rank} for label, rank in ranked[-3:][::-1]],

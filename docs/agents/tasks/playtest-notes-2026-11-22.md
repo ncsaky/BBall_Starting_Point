@@ -46,7 +46,10 @@ Game runs from the browser pane: launch entry `game` (port 8766, normal `saves/`
   Your team slide (was "Your team at a glance"): title is the team name, no subtext. Full-width rotation table
   sorted by overall: headshot + name, Pos, Age, OVR, OFF, DEF, MIN, last season's PTS/REB/AST, Salary, Years.
   Headshots use the game's look (greyscale, a little contrast, crisp pixels, no grey box), flush left, and each row
-  ends at the headshot's base. "Overall rank N of 30" became an "Overall 1st" chip beside strengths and weaknesses.
+  ends at the headshot's base. Round 2: header is the logo plus the team's overall and league rank (no
+  spelled-out name); injured players join the table with a red "✚ games" marker; rows 31px with smaller headshots;
+  strengths/weaknesses lists replaced by one curved radar (offense half blue, defense half orange, user's pick);
+  the game's four-season payroll chart sits beside the payroll numbers.
 - **Power-ranking notes (done 2026-11-22).** Rookies at rotation level (value 56.5+) are always named
   ("drafted Cameron Boozer"). Chosen by rating, not draft slot.
 - **Tables, still open:** the user wants consistent row height and header centering across all tables. Not done

@@ -84,6 +84,44 @@
     bodies.forEach((b, i) => { b.append(...rows.slice(start, start + sizes[i])); start += sizes[i]; });
   }
 
+  const ordinalRank = (n) => { const v = Number(n); if (!Number.isFinite(v) || !v) return "—"; const s = ["th", "st", "nd", "rd"], m = v % 100; return v + (s[(m - 20) % 10] || s[m] || s[0]); };
+  // Team slides lead with the logo and the team's overall instead of spelling out the name (playtest 2026-11-22).
+  const titleTeam = (slide) => `${logo(slide.logo, "ss-title-logo")}<span class="ss-title-stat"><b>${num(slide.team_overall)}</b><span>Overall${slide.overall_rank ? ` · ${ordinalRank(slide.overall_rank)} in the league` : ""}</span></span>`;
+
+  // One radar, offense on one half and defense on the other, with smooth (Catmull-Rom) curves. Values are league
+  // percentiles from Team Signals ranks.
+  function curvedRadar(axes, teams = 30) {
+    const size = 230, c = size / 2, r = 72;
+    const n = axes.length || 1;
+    const angle = (i) => -Math.PI / 2 + (i * 2 * Math.PI) / n;
+    const pct = (rank) => Math.max(6, ((teams - Math.min(teams, Math.max(1, Number(rank) || teams)) + 0.5) / teams) * 100);
+    const at = (i, value) => [c + Math.cos(angle(i)) * r * value / 100, c + Math.sin(angle(i)) * r * value / 100];
+    const smooth = (pts) => {
+      let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+      for (let i = 0; i < pts.length - 1; i += 1) {
+        const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+        const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+        const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+        d += ` C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+      }
+      return d + " Z";
+    };
+    const layer = (side) => {
+      const idx = axes.map((a, i) => (a.side === side ? i : -1)).filter((i) => i >= 0);
+      if (!idx.length) return "";
+      return `<path class="ss-radar-${side}" d="${smooth([[c, c], ...idx.map((i) => at(i, pct(axes[i].rank))), [c, c]])}"></path>`;
+    };
+    const rings = [25, 50, 75, 100].map((v) => `<circle class="ss-radar-ring" cx="${c}" cy="${c}" r="${(r * v / 100).toFixed(1)}"></circle>`).join("");
+    const spokes = axes.map((_, i) => { const [x, y] = at(i, 100); return `<line class="ss-radar-spoke" x1="${c}" y1="${c}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"></line>`; }).join("");
+    const labels = axes.map((a, i) => {
+      const [x, y] = at(i, 128);
+      const anchor = Math.abs(x - c) < 6 ? "middle" : x < c ? "end" : "start";
+      return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anchor}" class="ss-radar-label"><tspan>${esc(a.label)}</tspan><tspan class="ss-radar-rank" dx="4">${ordinalRank(a.rank)}</tspan></text>`;
+    }).join("");
+    return `<figure class="ss-radar"><svg viewBox="-70 -14 ${size + 140} ${size + 28}" role="img" aria-label="Team Signals: offense and defense league ranks">${rings}${spokes}${layer("offense")}${layer("defense")}${labels}</svg>
+      <figcaption><span class="ss-key ss-key-offense">Offense</span><span class="ss-key ss-key-defense">Defense</span></figcaption></figure>`;
+  }
+
   // A name opens that player's card (players who left the league have no card).
   const name = (r) => (r.player_id && !String(r.player_id).startsWith("real:") && r.now?.status !== "No longer in the league"
     ? `<button type="button" class="ss-player-link" data-ss-player="${attr(r.player_id)}">${esc(r.name)}</button>` : `<b>${esc(r.name)}</b>`);
@@ -237,30 +275,31 @@
       const cap = slide.cap || {};
       const payout = slide.tax_payout;
       const value = (v, digits = 1) => (v === null || v === undefined ? "—" : num(v, digits));
+      const injury = (p) => (p.injury ? ` <span class="ss-injury" title="${attr(`${p.injury.label || "Injured"}${p.injury.whole_season ? ", expected to miss the season" : `, about ${p.injury.games} games`}${p.injury.return_date ? `, back around ${p.injury.return_date}` : ""}`)}">✚ ${p.injury.whole_season ? "season" : p.injury.games}</span>` : "");
       const roster = table([
-        {label: "Player", render: (p) => `<span class="ss-player">${headshot(p)}${name({...p, player_id: p.id})}</span>`, cls: "ss-player-col"},
+        {label: "Player", render: (p) => `<span class="ss-player">${headshot(p)}<span class="ss-player-name">${name({...p, player_id: p.id})}${injury(p)}</span></span>`, cls: "ss-player-col"},
         {label: "Pos", render: (p) => esc(p.position || "—"), width: "52px"},
         {label: "Age", render: (p) => value(p.age, 0), cls: "ss-num", width: "48px"},
         {label: "OVR", render: (p) => value(p.overall), cls: "ss-num", width: "58px"},
         {label: "OFF", render: (p) => value(p.offense), cls: "ss-num", width: "58px"},
         {label: "DEF", render: (p) => value(p.defense), cls: "ss-num", width: "58px"},
-        {label: "MIN", render: (p) => p.minutes, cls: "ss-num", width: "52px"},
+        {label: "MIN", render: (p) => (p.minutes ? p.minutes : "—"), cls: "ss-num", width: "52px"},
         {label: "PTS", render: (p) => value(p.points), cls: "ss-num", width: "52px"},
         {label: "REB", render: (p) => value(p.rebounds), cls: "ss-num", width: "52px"},
         {label: "AST", render: (p) => value(p.assists), cls: "ss-num", width: "52px"},
         {label: "Salary", render: (p) => (p.salary_millions ? money(p.salary_millions) : "—"), cls: "ss-num", width: "72px"},
         {label: "Years", render: (p) => p.years_left ?? "—", cls: "ss-num", width: "52px"},
       ], slide.rotation || [], {sorted: 3});
-      const ordinal = (n) => { const v = Number(n); const s = ["th", "st", "nd", "rd"], m = v % 100; return v + (s[(m - 20) % 10] || s[m] || s[0]); };
+      const horizon = slide.salary_horizon || {};
+      const chart = typeof salaryHorizonChart === "function" && (horizon.seasons || []).length
+        ? salaryHorizonChart({seasons: horizon.seasons, rows: horizon.rows || [], capByYear: horizon.cap_by_year || {}, className: "ss-payroll-chart"}) : "";
       return `<section class="ss-roster">${roster}</section>
-        <div class="ss-split ss-team-facts"><section>
-          <div class="ss-chips"><span class="ss-chip-head">Overall</span><span class="ss-chip">${slide.overall_rank ? ordinal(slide.overall_rank) : "—"}</span></div>
-          <div class="ss-chips"><span class="ss-chip-head">Strengths</span>${(slide.strengths || []).map((s) => `<span class="ss-chip ss-good">${esc(s.label)} · ${s.rank}</span>`).join("")}</div>
-          <div class="ss-chips"><span class="ss-chip-head">Weaknesses</span>${(slide.weaknesses || []).map((s) => `<span class="ss-chip ss-bad">${esc(s.label)} · ${s.rank}</span>`).join("")}</div>
-        </section><section>
-          <dl class="ss-dl"><dt>Payroll</dt><dd>${money(cap.payroll_millions)}</dd><dt>Tax line</dt><dd>${money(cap.tax_line_millions)}</dd><dt>Room under the tax</dt><dd>${money(cap.tax_space_millions)}</dd><dt>Hard cap room</dt><dd>${money(cap.hard_cap_space_millions)}</dd>
-          <dt>Tax payout share</dt><dd>${payout ? (payout.payout_millions > 0 ? `${money(payout.payout_millions)} (${esc(payout.season)}, paid ${esc(payout.paid_on)})` : payout.tax_bill_millions > 0 ? `None: paid ${money(payout.tax_bill_millions)} in tax (${esc(payout.season)})` : `None for ${esc(payout.season)}`) : "No payout recorded yet"}</dd></dl>
-        </section></div>`;
+        <div class="ss-team-facts">
+          ${(slide.radar || []).length ? curvedRadar(slide.radar, slide.league_teams || 30) : ""}
+          <section class="ss-payroll">${chart}</section>
+          <section><dl class="ss-dl"><dt>Payroll</dt><dd>${money(cap.payroll_millions)}</dd><dt>Tax line</dt><dd>${money(cap.tax_line_millions)}</dd><dt>Room under the tax</dt><dd>${money(cap.tax_space_millions)}</dd><dt>Hard cap room</dt><dd>${money(cap.hard_cap_space_millions)}</dd>
+          <dt>Tax payout share</dt><dd>${payout ? (payout.payout_millions > 0 ? `${money(payout.payout_millions)} (${esc(payout.season)}, paid ${esc(payout.paid_on)})` : payout.tax_bill_millions > 0 ? `None: paid ${money(payout.tax_bill_millions)} in tax (${esc(payout.season)})` : `None for ${esc(payout.season)}`) : "No payout recorded yet"}</dd></dl></section>
+        </div>`;
     },
     contracts(slide) {
       return `<div class="ss-two">${table([
@@ -315,7 +354,7 @@
       <article class="ss-card${reducedMotion() || !direction ? "" : direction > 0 ? " ss-enter-next" : " ss-enter-prev"}" role="dialog" aria-modal="true" aria-labelledby="ssTitle" tabindex="-1" data-slide="${attr(slide.key)}">
         <header class="game-tutorial-titlebar ss-titlebar"><span>${esc(KIND_LABEL[data.kind] || "SEASON")} · ${esc(data.season)}</span><span aria-label="Slide ${index + 1} of ${slides.length}">${counter}</span></header>
         <div class="ss-content" aria-live="polite">
-          <h2 id="ssTitle">${esc(slide.title || "")}</h2>
+          <h2 id="ssTitle"${slide.logo ? ` class="ss-title-team" aria-label="${attr(slide.title || "")}"` : ""}>${slide.logo ? titleTeam(slide) : esc(slide.title || "")}</h2>
           ${slide.note ? `<p class="ss-subtitle">${esc(slide.note)}</p>` : ""}
           <div class="ss-body">${slideBody(slide)}</div>
         </div>

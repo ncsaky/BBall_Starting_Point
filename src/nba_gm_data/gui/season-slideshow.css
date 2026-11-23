@@ -266,10 +266,32 @@ body.unified-terminal-ui .ss-return:hover { background: #2b3a48 !important; }
 .ss-table.ss-fixed td small.ss-clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; overflow: hidden; line-height: 1.25; }
 
 /* Your team: the rotation table runs full width; headshots sit flush left and the row ends at the headshot's base. */
-.ss-roster .ss-table.ss-fixed tbody tr { height: 44px; }
+.ss-roster .ss-table.ss-fixed tbody tr { height: 30px; }
 .ss-roster .ss-table td.ss-player-col { padding: 0 6px 0 0; vertical-align: bottom; }
 .ss-roster .ss-table th:first-child { padding-left: 6px; }
-.ss-roster .ss-player { display: flex; min-height: 0; align-items: flex-end; height: 44px; }
-.ss-roster .ss-player > :last-child { align-self: center; padding: 0; }
-.ss-roster .ss-headshot { width: 58px; height: 44px; }
-.ss-team-facts { margin-top: 14px; }
+.ss-roster .ss-player { display: flex; min-height: 0; align-items: flex-end; height: 30px; }
+.ss-roster .ss-player > .ss-player-name { align-self: center; display: inline-flex; flex-direction: row; align-items: center; gap: 6px; min-width: 0; padding: 0; }
+.ss-roster .ss-headshot { width: 40px; height: 30px; }
+.ss-injury { color: #b23b3b; font-size: 11px; font-weight: 700; white-space: nowrap; }
+/* Header: logo and the team's overall. */
+.ss-content h2.ss-title-team { display: flex; align-items: center; gap: 12px; }
+.ss-content h2.ss-title-team .ss-title-logo { width: 40px; height: 40px; }
+.ss-title-stat { display: inline-flex; align-items: baseline; gap: 8px; }
+.ss-title-stat b { font-size: 28px; font-weight: 750; }
+.ss-title-stat span { font-size: 13px; color: #4a5a67; font-weight: 600; }
+/* Bottom row: curved radar, payroll chart, payroll numbers. */
+.ss-team-facts { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 18px; align-items: stretch; margin-top: 10px; height: 218px; }
+.ss-radar { margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 0; }
+.ss-radar svg { width: 100%; height: 100%; min-height: 0; overflow: visible; }
+.ss-radar-ring { fill: none; stroke: #c9d2da; stroke-width: 1; }
+.ss-radar-spoke { stroke: #d5dde3; stroke-width: 1; }
+.ss-radar-offense { fill: rgba(61, 130, 197, .32); stroke: #3d82c5; stroke-width: 1.6; }
+.ss-radar-defense { fill: rgba(196, 122, 44, .30); stroke: #c47a2c; stroke-width: 1.6; }
+.ss-radar-label { font-size: 10px; fill: #2b3a46; }
+.ss-radar-rank { font-weight: 700; fill: #17212a; }
+.ss-radar figcaption { display: flex; gap: 14px; font-size: 11px; color: #3e4d59; }
+.ss-key::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: -1px; border-radius: 2px; }
+.ss-key-offense::before { background: rgba(61, 130, 197, .6); border: 1px solid #3d82c5; }
+.ss-key-defense::before { background: rgba(196, 122, 44, .55); border: 1px solid #c47a2c; }
+.ss-payroll { min-height: 0; height: 100%; }
+.ss-payroll .salary-horizon-chart { height: 100%; }
