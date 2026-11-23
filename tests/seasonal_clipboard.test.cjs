@@ -27,6 +27,20 @@ test('prospect origins use bundled college marks or country flags', () => {
   assert.match(originContext.prospectOriginMarkup('KK Mega Basket'),/🇷🇸/);
   assert.match(originContext.prospectOriginMarkup('Valencia'),/🇪🇸/);
   assert.match(originContext.prospectOriginMarkup('Unknown Academy'),/season-prospect-source-fallback/);
+  // Source names spelled differently from the logo files still find their logo or flag.
+  assert.match(originContext.prospectOriginMarkup('Ohio St.'),/colleges\/ohio-state\.png/);
+  assert.match(originContext.prospectOriginMarkup('Connecticut'),/colleges\/uconn\.png/);
+  assert.match(originContext.prospectOriginMarkup('Baskonia'),/🇪🇸/);
+  assert.match(originContext.prospectOriginMarkup('Prolific Prep (Fort Lauderdale, FL)'),/>PP</);
+  // Draft-range box plot: whiskers (every team), box (middle half), league tick and your scouts' dot on one scale.
+  originContext.clampNumber = (value,min,max)=>Math.min(max,Math.max(min,value));
+  const range = originContext.seasonProspectRankRange({consensusRank:9,rank:14,draftRangeLow:7,draftRangeHigh:12,consensusBest:5,consensusWorst:22},25,'rank');
+  assert.match(range,/range-whisker" style="left:16\.7%;width:70\.8%"/);
+  assert.match(range,/range-box" style="left:25\.0%;width:20\.8%"/);
+  assert.match(range,/range-median" style="left:33\.3%"/);
+  assert.match(range,/range-ours" style="left:54\.2%"/);
+  assert.match(range,/range-number">9</);
+  assert.equal(originContext.seasonProspectRankRange({},25,'rank'),'—');
   assert.match(appSource,/sourceTeam:\s*prospect\.source_team/);
   assert.match(appSource,/prospectOriginMarkup\(row\.sourceTeam\)/);
 
@@ -569,13 +583,13 @@ test('prospects and staff expand inside their existing cards, with wider prospec
   }
   assert.match(desktop,/setProspectsCardExpanded\(expanded,card\)/);
   assert.match(desktop,/setStaffCardExpanded\(expanded,card\)/);
-  assert.match(appSource,/\[\["rank", "#"\][\s\S]*?\["age", "Age"\], \["height", "Height"\]/);
+  assert.match(appSource,/SEASON_PROSPECT_COLUMNS = \[[\s\S]*?\["age", \[\["age", "Age"\]\]\],\s*\["height", \[\["height", "Height"\]\]\]/);
   assert.match(appSource,/season-prospects-expanded-body[\s\S]*?seasonProspectsCard\(\{rows, expanded:true\}\)/);
   assert.doesNotMatch(desktop,/clipboardWindowCards\(\)|loadClipboardWindow/);
   assert.doesNotMatch(board,/data-dashboard-view="draft"|data-dashboard-view="staff"/);
-  assert.match(css,/\.season-prospects-table\s*\{[^}]*grid-template-rows:24px repeat\(6,/);
-  assert.match(css,/\.season-prospects-expanded-body \.season-prospects-table\s*\{[^}]*grid-auto-rows:[^;]+;[^}]*overflow:auto;/);
-  assert.match(css,/\.season-prospects-expanded-body \.season-prospects-head\s*\{[^}]*position:sticky;/);
+  assert.match(css,/\.season-prospect-list\s*\{[^}]*height:100%;[^}]*overflow:hidden;/);
+  assert.match(css,/\.season-prospect-list-expanded\s*\{[^}]*overflow:auto;/);
+  assert.match(css,/\.season-prospect-table thead th\s*\{[^}]*position:sticky;/);
   assert.match(css,/season-staff-expanded/);
 });
 test('Calendar opens compact and unmarked legacy weekly layouts migrate once', () => {

@@ -754,67 +754,168 @@ body .has-card-board [data-board-window="opponent"] .season-mini-rating {
 body .has-card-board [data-board-window="opponent"] .season-mini-rating em {
   font-size:11px;
 }
-body .has-card-board [data-board-window="prospects"] :is(.season-prospects-head,.season-prospect-row > span) { font-size:9px; }
-body .has-card-board [data-board-window="prospects"] .season-rank-change { font-size:10px; }
 body .has-card-board [data-board-window="staff"] .season-staff-head { font-size:10px; }
 body .has-card-board [data-board-window="staff"] .season-staff-row > span,
 body .has-card-board [data-board-window="staff"] .season-staff-grade em { font-size:11px; }
-body .has-card-board [data-board-window^="award-"] .season-award-rows > button > span,
-body .has-card-board [data-board-window^="award-"] .season-award-rows > button strong { font-size:9px; }
-body .has-card-board [data-board-window^="award-"] .season-award-rows > button img { width:84px; max-width:100%; height:72px; background:transparent; border:0; grid-column:1 / -1; grid-row:2; justify-self:center; }
-body .has-card-board [data-board-window^="award-"] .season-award-rows > button .award-player-headshot { filter:grayscale(1) contrast(1.12); image-rendering:pixelated; object-fit:contain; object-position:center bottom; }
-body .has-card-board [data-board-window^="award-"] .season-award-rows > button .award-team-fallback { object-fit:contain; }
-body .has-card-board [data-board-window^="award-"] .season-award-rows {
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  grid-template-rows:repeat(2,minmax(0,1fr));
-  column-gap:0;
+/* Award races (MVP, DPOY, ROTY; taste deck 2026-11-23): the leader large on top (face, name, team, stat line, weekly
+   move), second to fourth as table rows underneath with their stats under the leader's stat labels. One accent colour
+   per award for the rank numbers and the leader's tint; rating stats are coloured numbers; moves are green or red.
+   The [data-trophy] slot in the leader holds the real trophy picture once its file is listed in app.js. */
+body .has-card-board [data-board-window^="award-"] .season-award-card { --award-accent:#5d6b77; --award-stat-width:30px; --award-move-width:38px; }
+body .has-card-board [data-board-window^="award-"] .season-award-card[data-award="mvp"] { --award-accent:#a87718; }
+body .has-card-board [data-board-window^="award-"] .season-award-card[data-award="dpoy"] { --award-accent:#2f6fae; }
+body .has-card-board [data-board-window^="award-"] .season-award-card[data-award="roty"] { --award-accent:#3b8653; }
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-card.card-board-headerless {
+  grid-template-rows:minmax(0,1fr);
+  padding:0;
+}
+body .has-card-board [data-board-window^="award-"] .season-award-race {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:minmax(0,1fr) repeat(3,30px);
+  height:100%;
+  min-height:0;
+}
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-race > button {
+  appearance:none;
+  background:#fff !important;
+  border:0 !important;
+  border-bottom:1px solid var(--season-soft-line, #d5dde3) !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  box-sizing:border-box;
+  color:var(--season-text) !important;
+  column-gap:4px;
+  cursor:pointer;
+  display:grid;
+  font-size:11px;
+  height:auto;
+  min-height:0;
+  min-width:0;
+  padding:0 8px 0 0;
+  text-align:left;
+  transform:none !important;
+}
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-race > button:last-child { border-bottom:0 !important; }
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-race > .season-award-chaser:nth-child(odd) { background:#eef1f3 !important; }
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-race > button:is(:hover,:focus-visible) { background:#dce8f2 !important; color:var(--season-text) !important; }
+/* Leader. */
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-race > .season-award-leader {
+  align-items:center;
+  background:color-mix(in srgb, var(--award-accent) 9%, #fff) !important;
+  grid-template-columns:minmax(64px,30%) minmax(0,1fr) repeat(var(--award-stat-count,4),var(--award-stat-width)) var(--award-move-width);
+  grid-template-rows:minmax(0,1fr) auto minmax(4px,.6fr) auto auto;
+  overflow:hidden;
+  padding-bottom:5px;
   position:relative;
 }
-body .has-card-board [data-board-window^="award-"] .season-award-rows::before,
-body .has-card-board [data-board-window^="award-"] .season-award-rows::after {
-  background:var(--season-line);
-  content:"";
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-race > .season-award-leader:is(:hover,:focus-visible) {
+  background:color-mix(in srgb, var(--award-accent) 16%, #fff) !important;
+}
+body .has-card-board [data-board-window^="award-"] .season-award-leader-face {
+  align-self:end;
+  display:block;
+  grid-column:1;
+  grid-row:1 / -1;
+  height:100%;
+  margin-bottom:-5px;
+  overflow:hidden;
+}
+body .has-card-board [data-board-window^="award-"] :is(.season-award-leader-face,.season-award-chaser-face) img {
+  display:block;
+  height:100%;
+  object-fit:cover;
+  object-position:center bottom;
+  width:100%;
+}
+body .has-card-board [data-board-window^="award-"] :is(.season-award-leader-face,.season-award-chaser-face) img.award-player-headshot {
+  filter:grayscale(1) contrast(1.12);
+  image-rendering:pixelated;
+}
+body .has-card-board [data-board-window^="award-"] :is(.season-award-leader-face,.season-award-chaser-face) img.award-team-fallback { object-fit:contain; padding:15%; box-sizing:border-box; }
+body .has-card-board [data-board-window^="award-"] .season-award-leader-name {
+  align-items:baseline;
+  align-self:end;
+  display:flex;
+  gap:6px;
+  grid-column:2 / -1;
+  grid-row:1;
+  min-width:0;
+  padding-top:8px;
+}
+body .has-card-board [data-board-window^="award-"] .season-award-leader-name strong {
+  font-size:16px;
+  font-weight:700;
+  line-height:1.1;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+body .has-card-board [data-board-window^="award-"] .season-award-rank { color:var(--award-accent); font-weight:700; text-align:center; }
+body .has-card-board [data-board-window^="award-"] .season-award-leader .season-award-rank { font-size:16px; line-height:1.1; }
+body .has-card-board [data-board-window^="award-"] .season-award-leader > .season-award-team { grid-column:2 / -1; grid-row:2; margin-top:3px; }
+body .has-card-board [data-board-window^="award-"] .season-award-team {
+  align-items:center;
+  color:var(--season-text);
+  display:inline-flex;
+  font-size:11px;
+  gap:4px;
+  justify-content:center;
+  min-width:0;
+  white-space:nowrap;
+}
+body .has-card-board [data-board-window^="award-"] .season-award-leader > .season-award-team { justify-content:flex-start; }
+body .has-card-board [data-board-window^="award-"] .season-award-team img { display:block; flex:0 0 auto; height:16px; object-fit:contain; width:16px; }
+body .has-card-board [data-board-window^="award-"] .season-award-trophy {
+  bottom:auto;
+  display:block;
+  height:58%;
   pointer-events:none;
   position:absolute;
-  z-index:2;
+  right:8px;
+  top:6px;
 }
-body .has-card-board [data-board-window^="award-"] .season-award-rows::before { height:1px; left:0; right:0; top:50%; }
-body .has-card-board [data-board-window^="award-"] .season-award-rows::after { bottom:0; left:50%; top:0; width:1px; }
-body .has-card-board [data-board-window^="award-"] .season-award-rows > button {
-  align-content:center;
-  border:0 !important;
-  grid-template-columns:minmax(0,1fr);
-  grid-template-rows:16px 68px max-content 14px;
-  gap:1px;
-  padding:3px 0;
-  position:relative;
-  z-index:1;
-}
-body .has-card-board [data-board-window^="award-"] .season-award-rows > button > .award-player-rank {
+body .has-card-board [data-board-window^="award-"] .season-award-trophy:empty { display:none; }
+body .has-card-board [data-board-window^="award-"] .season-award-trophy img { display:block; height:100%; object-fit:contain; width:auto; }
+/* Stat labels head the column for the leader and the rows below; the values line up under them. */
+body .has-card-board [data-board-window^="award-"] .season-award-stat-label {
   color:var(--season-text);
-  font-size:12px !important;
-  font-weight:700 !important;
-  grid-column:1;
-  grid-row:1;
-  justify-self:center;
-  line-height:1;
-  text-align:center;
-}
-body .has-card-board [data-board-window^="award-"] .season-award-rows > button > .season-rank-change {
-  grid-column:1;
+  font-size:10px;
+  font-weight:700;
   grid-row:4;
-  justify-self:center;
   text-align:center;
 }
-body .has-card-board [data-board-window^="award-"] .season-award-rows > button strong {
-  align-self:center;
-  grid-column:1;
-  grid-row:3;
-  line-height:14px;
-  text-align:center;
-  white-space:normal;
+body .has-card-board [data-board-window^="award-"] .season-award-move-label,
+body .has-card-board [data-board-window^="award-"] .season-award-race > button > .season-rank-change { grid-column:-2 / -1; }
+body .has-card-board [data-board-window^="award-"] .season-award-stat { display:block; min-width:0; text-align:center; }
+body .has-card-board [data-board-window^="award-"] .season-award-stat b { font-size:11px; font-weight:400; }
+body .has-card-board [data-board-window^="award-"] .season-award-leader .season-award-stat { grid-row:5; }
+body .has-card-board [data-board-window^="award-"] .season-award-leader .season-award-stat b { font-size:15px; font-weight:700; }
+body .has-card-board [data-board-window^="award-"] .season-award-stat b.season-award-rating {
+  color:color-mix(in srgb, var(--bar-color, #5b86b8) 80%, #000);
+  font-weight:700;
 }
-body .has-card-board [data-board-window^="award-"] .season-award-rows > button:hover:not(:disabled) { background:var(--season-raised) !important; }
+body .has-card-board [data-board-window^="award-"] .season-award-race > button > .season-rank-change {
+  font-size:11px !important;
+  font-weight:700;
+  text-align:center;
+}
+body .has-card-board [data-board-window^="award-"] .season-award-leader > .season-rank-change { font-size:13px !important; grid-row:5; }
+/* Second to fourth. */
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-race > .season-award-chaser {
+  align-items:center;
+  grid-template-columns:18px 26px minmax(0,1fr) 16px repeat(var(--award-stat-count,4),var(--award-stat-width)) var(--award-move-width);
+}
+body .has-card-board [data-board-window^="award-"] .season-award-chaser .season-award-rank { font-size:12px; }
+body .has-card-board [data-board-window^="award-"] .season-award-chaser-face { align-self:end; display:block; height:30px; overflow:hidden; width:26px; }
+body .has-card-board [data-board-window^="award-"] .season-award-chaser > strong {
+  font-size:11px;
+  font-weight:600;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+body .has-card-board [data-board-window^="award-"] .season-award-chaser .season-award-team img { height:14px; width:14px; }
 body .has-card-board [data-board-window="league-wire"] .season-wire-item em,
 body .has-card-board [data-board-window="league-wire"] .season-wire-item strong { font-size:9px; }
 body .has-card-board [data-board-window="league-wire"] .season-wire-item img { width:17px; height:17px; }
@@ -1096,98 +1197,123 @@ body .has-card-board .card-board-gallery-group-toggle:focus-visible {
   .card-board-gallery-group-items-inner { grid-template-columns:minmax(0,1fr); }
 }
 
-/* Scouting board: sortable fields, player-first rows, and legible evidence rails. */
+/* Upcoming Prospects (taste deck 2026-11-23): a real table in the house style. Edge to edge, stripes, whole-row
+   hover, every header sorts, centred columns except the player, same-size greyscale faces bottom-aligned in the row,
+   coloured rating numbers, and one mini box plot of draft ranks per player. The header line, header text and
+   sorted-column shading come from table-style.css. */
 body .has-card-board [data-board-window="prospects"] .season-prospects-panel {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
   grid-template-rows:minmax(0,1fr);
+  overflow:hidden;
+  position:relative;
 }
-body .has-card-board [data-board-window="prospects"] .season-prospects-table {
-  grid-template-rows:24px repeat(6,minmax(29px,1fr));
-  overflow:auto;
-  padding:4px 9px 8px;
-}
-body .has-card-board [data-board-window="prospects"] :is(.season-prospects-head,.season-prospect-row) {
-  gap:6px;
-  grid-template-columns:24px minmax(88px,1.65fr) minmax(28px,.55fr) minmax(52px,.95fr) minmax(52px,.9fr) minmax(38px,.65fr) minmax(54px,1fr);
-}
-body .has-card-board [data-board-window="prospects"] .season-prospects-head {
-  border-bottom:1px solid var(--season-line);
-  color:var(--season-muted);
-  font-size:8px;
-  font-weight:600;
-}
-body .has-card-board [data-board-window="prospects"] .season-prospects-head button {
-  background:transparent;
-  border:0;
-  border-radius:0;
-  box-shadow:none;
-  color:inherit;
-  cursor:pointer;
-  font:inherit;
+body .has-card-board [data-board-window="prospects"] .season-prospect-list {
+  box-sizing:border-box;
+  height:100%;
+  min-height:0;
   min-width:0;
   overflow:hidden;
-  padding:3px 0;
-  text-align:left;
+  padding:0;
+}
+body .has-card-board [data-board-window="prospects"] .season-prospect-list-expanded { overflow:auto; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-table {
+  border-collapse:collapse;
+  border-spacing:0;
+  height:100%;
+  margin:0;
+  table-layout:auto;
+  width:100%;
+}
+body .has-card-board [data-board-window="prospects"] .season-prospect-list-expanded .season-prospect-table { height:auto; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-table :is(th,td) {
+  border-bottom:1px solid var(--season-soft-line, #d5dde3);
+  box-sizing:border-box;
+  color:var(--season-text);
+  font-size:11px;
+  line-height:1.15;
+  overflow:hidden;
+  padding:0 5px;
+  text-align:center;
   text-overflow:ellipsis;
+  vertical-align:middle;
   white-space:nowrap;
 }
-body .has-card-board [data-board-window="prospects"] .season-prospects-head button[aria-pressed="true"] {
-  color:var(--season-cyan);
-  font-weight:700;
+body .has-card-board [data-board-window="prospects"] .season-prospect-table :is(th,td):first-child { padding-left:0; text-align:left; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-table td:first-child { vertical-align:bottom; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-table tbody tr:last-child > td { border-bottom:0; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-table thead th {
+  background-color:var(--season-panel, #fff);
+  height:24px;
+  padding-bottom:3px;
+  padding-top:0;
+  position:sticky;
+  top:0;
+  z-index:2;
 }
-body .has-card-board [data-board-window="prospects"] .season-prospects-head button[data-season-prospect-sort="rank"] {
-  color:var(--season-text);
-}
-body .has-card-board [data-board-window="prospects"] .season-prospect-row {
-  border-top:1px solid var(--season-soft-line) !important;
+body .has-card-board [data-board-window="prospects"] .season-prospect-table thead th:first-child { padding-left:8px; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-table thead th button {
+  appearance:none;
+  background:transparent !important;
+  border:0 !important;
+  border-radius:0;
+  box-shadow:none !important;
+  color:inherit !important;
   cursor:pointer;
-  gap:6px;
-  padding:2px 0;
-  transition:background-color 100ms ease;
-}
-body .has-card-board [data-board-window="prospects"] .season-prospect-row:hover {
-  background:var(--season-raised) !important;
-}
-body .has-card-board [data-board-window="prospects"] .season-prospect-row:focus-visible {
-  outline:1px solid var(--season-cyan) !important;
-  outline-offset:-1px;
-}
-body .has-card-board [data-board-window="prospects"] .season-prospect-row > span { font-size:9px; }
-body .has-card-board [data-board-window="prospects"] .season-prospect-rank {
-  color:var(--season-text);
-  font-weight:400;
-}
-body .has-card-board [data-board-window="prospects"] .season-prospect-name {
-  display:flex;
-  flex-direction:column;
+  display:inline-flex;
+  align-items:center;
   gap:2px;
-  line-height:1.1;
+  min-height:0;
   min-width:0;
+  padding:0;
+  text-decoration:none;
+  transform:none !important;
 }
-body .has-card-board [data-board-window="prospects"] .season-prospect-name-main {
+body .has-card-board [data-board-window="prospects"] .season-prospect-table thead th button:hover { background:transparent !important; color:inherit !important; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-sort-arrow { font-size:6px; font-style:normal; line-height:1; text-decoration:none; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-sort-divider { color:var(--season-muted); font-style:normal; margin:0 3px; }
+/* Rows: medium height, white and light-grey stripes, the whole row lights on hover (every cell, sorted one too). */
+body .has-card-board [data-board-window="prospects"] .season-prospect-table tbody tr { cursor:pointer; height:28px; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-list-expanded .season-prospect-table tbody tr { height:30px; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-table tbody tr > td { background-color:#fff; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-table tbody tr:nth-child(even) > td { background-color:#eef1f3; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-table tbody tr:is(:hover,:focus-within) > td { background-color:#dce8f2; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-table tbody tr:focus-within { outline:1px solid #42667a; outline-offset:-1px; }
+/* Player cell: face, origin logo or flag, name, injury mark. */
+body .has-card-board [data-board-window="prospects"] .season-prospect-name {
   align-items:center;
   display:flex;
   gap:5px;
+  height:28px;
   min-width:0;
 }
-body .has-card-board [data-board-window="prospects"] .season-prospect-name strong {
-  color:var(--season-text);
-  font-size:10px;
-  font-weight:600;
+body .has-card-board [data-board-window="prospects"] .season-prospect-list-expanded :is(.season-prospect-name,.season-prospect-face) { height:30px; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-face {
+  align-self:flex-end;
+  display:block;
+  flex:0 0 30px;
+  height:28px;
   overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
+  width:30px;
+}
+body .has-card-board [data-board-window="prospects"] .season-prospect-face img {
+  display:block;
+  filter:grayscale(1) contrast(1.12);
+  height:100%;
+  image-rendering:pixelated;
+  object-fit:cover;
+  object-position:center bottom;
+  width:100%;
 }
 body .has-card-board [data-board-window="prospects"] .season-prospect-origin {
   align-items:center;
   display:inline-flex;
-  flex:0 0 17px;
-  height:17px;
+  flex:0 0 18px;
+  height:18px;
   justify-content:center;
-  width:17px;
+  width:18px;
 }
-body .has-card-board [data-board-window="prospects"] .season-prospect-college-logo {
-  object-fit:contain;
-}
+body .has-card-board [data-board-window="prospects"] .season-prospect-college-logo { object-fit:contain; }
 body .has-card-board [data-board-window="prospects"] .season-prospect-flag {
   font-family:"Apple Color Emoji","Segoe UI Emoji",sans-serif;
   font-size:15px;
@@ -1197,57 +1323,113 @@ body .has-card-board [data-board-window="prospects"] .season-prospect-source-fal
   background:var(--season-raised);
   border:1px solid var(--season-line);
   border-radius:50%;
+  box-sizing:border-box;
   color:var(--season-muted);
-  font:700 7px Consolas,"Courier New",monospace;
+  font:700 7px Tahoma,Arial,sans-serif;
 }
-body .has-card-board [data-board-window="prospects"] .season-prospect-name small {
-  color:var(--season-muted);
-  font-size:8px;
+body .has-card-board [data-board-window="prospects"] .season-prospect-open {
+  appearance:none;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  color:var(--season-text) !important;
+  cursor:pointer;
+  font-size:11px;
+  font-weight:600;
+  min-height:0;
+  min-width:0;
+  overflow:hidden;
+  padding:0;
+  text-align:left;
+  text-decoration:none !important;
+  text-overflow:ellipsis;
+  transform:none !important;
+  white-space:nowrap;
 }
-body .has-card-board [data-board-window="prospects"] .season-prospect-position {
-  color:var(--season-muted);
-  font-size:9px;
-  font-weight:400;
-}
-body .has-card-board [data-board-window="prospects"] .season-prospect-nowpot {
-  align-items:center;
-  display:flex;
-  gap:4px;
-}
-body .has-card-board [data-board-window="prospects"] .season-prospect-nowpot strong {
-  color:var(--season-muted);
-  font-size:9px;
-  font-weight:400;
-}
-body .has-card-board [data-board-window="prospects"] .season-prospect-nowpot i {
-  color:var(--season-muted);
-  font-size:8px;
-  font-style:normal;
-}
-body .has-card-board [data-board-window="prospects"] .season-prospect-nowpot b {
-  color:var(--season-text);
-  font-size:10px;
+body .has-card-board [data-board-window="prospects"] .season-prospect-open:hover { background:transparent !important; color:var(--season-text) !important; }
+/* Ratings as coloured numbers (red low to blue high), darkened a touch so the light middle colours stay readable. */
+body .has-card-board [data-board-window="prospects"] .season-prospect-rating {
+  color:color-mix(in srgb, var(--bar-color, #5b86b8) 80%, #000);
+  font-size:11px;
   font-weight:700;
 }
+/* Draft range: the shown rank, then the box plot (no track; faint guides every 5 or 10 ranks). */
 body .has-card-board [data-board-window="prospects"] .season-prospect-range {
+  align-items:center;
+  display:grid;
+  gap:6px;
+  grid-template-columns:20px minmax(56px,1fr);
+  min-width:96px;
+}
+body .has-card-board [data-board-window="prospects"] .season-prospect-range-number { font-size:11px; font-weight:400; text-align:right; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-range-number.is-ours { color:#2f6fae; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-range-plot {
   display:block;
-  color:var(--season-text);
+  height:14px;
+  margin:0 4px;
+  position:relative;
 }
-body .has-card-board [data-board-window="prospects"] .season-rank-change {
-  font-size:9px;
-  font-weight:600;
+body .has-card-board [data-board-window="prospects"] .season-prospect-range-plot > i { display:block; position:absolute; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-range-guide { background:rgba(29,42,51,.12); bottom:0; top:0; width:1px; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-range-whisker {
+  border-left:1px solid #5d6b77;
+  border-right:1px solid #5d6b77;
+  box-sizing:border-box;
+  height:8px;
+  min-width:1px;
+  top:3px;
+  background:linear-gradient(#5d6b77,#5d6b77) center / 100% 1px no-repeat;
 }
-body .has-card-board [data-board-window="prospects"] .season-rank-change.positive { color:var(--season-green); }
-body .has-card-board [data-board-window="prospects"] .season-rank-change.negative { color:var(--season-red); }
+body .has-card-board [data-board-window="prospects"] .season-prospect-range-box {
+  background:#c9d8e6;
+  border:1px solid #7d93a8;
+  box-sizing:border-box;
+  height:10px;
+  min-width:3px;
+  top:2px;
+}
+body .has-card-board [data-board-window="prospects"] .season-prospect-range-median {
+  background:#1d2a33;
+  height:14px;
+  margin-left:-1px;
+  top:0;
+  width:2px;
+}
+body .has-card-board [data-board-window="prospects"] :is(.season-prospect-range-ours,.season-prospect-ours-key) {
+  background:#2f6fae;
+  border:1px solid #fff;
+  border-radius:50%;
+  box-sizing:border-box;
+  height:8px;
+  width:8px;
+}
+body .has-card-board [data-board-window="prospects"] .season-prospect-range-ours { margin-left:-4px; top:3px; z-index:1; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-ours-key { border:0; display:inline-block; height:6px; margin-right:2px; width:6px; }
+/* Scouted: bar without a track, then the percentage. */
 body .has-card-board [data-board-window="prospects"] .season-scouted {
+  align-items:center;
+  display:grid;
   gap:5px;
-  grid-template-columns:minmax(0,1fr) 25px;
+  grid-template-columns:minmax(24px,1fr) 28px;
+  min-width:62px;
 }
-body .has-card-board [data-board-window="prospects"] .season-scouted > i { height:6px; }
-body .has-card-board [data-board-window="prospects"] .season-scouted strong {
-  font-size:9px;
-  font-weight:600;
+body .has-card-board [data-board-window="prospects"] .season-scouted > i { background:transparent !important; height:6px; }
+body .has-card-board [data-board-window="prospects"] .season-scouted strong { font-size:11px; font-weight:400; text-align:right; }
+/* Expanded window: the whole class, scrolling under a sticky header. */
+body .has-card-board [data-board-window="prospects"].season-prospects-expanded {
+  background:var(--season-panel);
+  display:block;
+  overflow:hidden;
 }
+body .has-card-board [data-board-window="prospects"] .season-prospects-expanded-body,
+body .has-card-board [data-board-window="prospects"] .season-prospects-expanded-loading {
+  box-sizing:border-box;
+  height:100%;
+  min-height:0;
+  overflow:hidden;
+  padding:0;
+}
+body .has-card-board [data-board-window="prospects"] .season-prospects-expanded-loading { align-content:center; display:grid; color:var(--season-muted); }
 
 /* Staff roster: payroll strip above a compact, role-led contract table. */
 body .has-card-board [data-board-window="staff"] .season-staff-panel.card-board-headerless {
@@ -1621,66 +1803,6 @@ body .has-card-board [data-board-window="opponent"] .season-opponent-title > img
   width:20px;
 }
 
-/* Prospect scouting stays in its small card until its window is expanded. */
-body .has-card-board [data-board-window="prospects"] .season-prospects-panel {
-  display:grid;
-  grid-template-columns:minmax(0,1fr);
-  grid-template-rows:minmax(0,1fr);
-  overflow:hidden;
-  position:relative;
-}
-body .has-card-board [data-board-window="prospects"] .season-prospects-table {
-  box-sizing:border-box;
-  grid-column:1;
-  grid-row:1;
-  grid-template-rows:24px repeat(6,minmax(29px,1fr));
-  height:100%;
-  overflow:auto;
-  min-width:0;
-  padding:3px 9px 7px;
-  position:relative;
-  z-index:1;
-}
-body .has-card-board [data-board-window="prospects"] :is(.season-prospects-head,.season-prospect-row) {
-  gap:7px;
-  grid-template-columns:24px minmax(120px,1.8fr) minmax(32px,.52fr) minmax(32px,.52fr) minmax(48px,.72fr) minmax(60px,.95fr) minmax(54px,.82fr) minmax(64px,1fr);
-}
-body .has-card-board [data-board-window="prospects"] .season-prospects-head { font-size:10px; }
-body .has-card-board [data-board-window="prospects"] .season-prospect-row > span { font-size:11px; }
-body .has-card-board [data-board-window="prospects"] .season-prospect-name { display:block; line-height:1.2; }
-body .has-card-board [data-board-window="prospects"] .season-prospect-name strong { font-size:11px; }
-body .has-card-board [data-board-window="prospects"] .season-prospect-name small { display:none; }
-body .has-card-board [data-board-window="prospects"] .season-prospect-origin { flex-basis:18px; height:18px; width:18px; }
-
-body .has-card-board [data-board-window="prospects"].season-prospects-expanded {
-  background:var(--season-panel);
-  display:block;
-  overflow:hidden;
-}
-body .has-card-board [data-board-window="prospects"] .season-prospects-expanded-body,
-body .has-card-board [data-board-window="prospects"] .season-prospects-expanded-loading {
-  box-sizing:border-box;
-  height:100%;
-  min-height:0;
-  overflow:hidden;
-  padding:0;
-}
-body .has-card-board [data-board-window="prospects"] .season-prospects-expanded-body .season-prospects-table {
-  box-sizing:border-box;
-  grid-template-rows:24px;
-  grid-auto-rows:minmax(29px,1fr);
-  height:100%;
-  overflow:auto;
-  padding:4px 9px 0;
-}
-body .has-card-board [data-board-window="prospects"] .season-prospects-expanded-body .season-prospects-head {
-  background:var(--season-panel);
-  position:sticky;
-  top:0;
-  z-index:2;
-}
-body .has-card-board [data-board-window="prospects"] .season-prospects-expanded-loading { align-content:center; display:grid; color:var(--season-muted); }
-
 /* Expanded staff adds an action column and market beneath the compact roster. */
 body.unified-terminal-ui .has-card-board [data-board-window="staff"] .season-staff-panel.season-staff-expanded {
   display:block;
@@ -1748,9 +1870,6 @@ body .has-card-board [data-board-window="staff"] .season-staff-market-head selec
 }
 body .has-card-board [data-board-window="staff"] .season-staff-action {
   justify-self:center;
-}
-body.unified-terminal-ui .has-card-board [data-board-window="prospects"] .season-prospects-head button {
-  font-weight:700;
 }
 body .has-card-board [data-board-window="staff"] .season-staff-expanded-loading {
   align-content:center;
@@ -2052,21 +2171,6 @@ body.unified-terminal-ui .has-card-board [data-board-window="staff"] .season-sta
   box-sizing:border-box;
   height:100%;
   padding-bottom:0;
-}
-body.unified-terminal-ui .has-card-board [data-board-window="prospects"] .season-prospects-table:not(.season-prospects-table-expanded) {
-  box-sizing:border-box;
-  grid-template-rows:24px repeat(6,minmax(0,1fr));
-  height:100%;
-  overflow:hidden;
-  padding-bottom:0;
-}
-body.unified-terminal-ui .has-card-board [data-board-window="prospects"] .season-prospects-expanded-body .season-prospects-table-expanded {
-  box-sizing:border-box;
-  grid-template-rows:24px;
-  grid-auto-rows:minmax(29px,1fr);
-  height:100%;
-  overflow:auto;
-  padding:4px 9px 0;
 }
 body.unified-terminal-ui .has-card-board [data-board-window="standings"] .season-standings-table:not(.season-standings-table-expanded) {
   box-sizing:border-box;
@@ -5039,18 +5143,6 @@ body.unified-terminal-ui .player-decline-watch strong { color:#c4585f; }
 .draft-pick-reveal .draft-pick-why { display:block; font-size:11px; opacity:.8; }
 .prospect-two-boards b { white-space:nowrap; }
 .prospect-two-boards small { white-space:normal; line-height:1.2; }
-/* Upcoming-prospects card: one more column (your scouts' rank). */
-.season-prospects-head,
-.season-prospect-row {
-  grid-template-columns:
-    15px minmax(0, 1.6fr) minmax(0, .5fr) minmax(0, .5fr) minmax(0, .8fr)
-    minmax(0, .9fr) minmax(0, .8fr) minmax(0, .9fr) minmax(0, 1.1fr);
-}
-body .has-card-board [data-board-window="prospects"] :is(.season-prospects-head,.season-prospect-row) {
-  gap:6px;
-  grid-template-columns:24px minmax(110px,1.7fr) minmax(30px,.5fr) minmax(30px,.5fr) minmax(46px,.7fr) minmax(56px,.9fr) minmax(46px,.7fr) minmax(50px,.8fr) minmax(60px,1fr);
-}
-.season-prospect-yours { white-space:nowrap; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards { max-width:230px; text-align:center; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards b { font-size:13px; font-weight:600; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards strong { font-size:14px; font-weight:600; }
@@ -5266,8 +5358,6 @@ body .has-card-board [data-board-window="staff"] .staff-face-art { overflow:hidd
 .draft-board-name .prospect-board-face { flex:0 0 30px; width:30px; height:31px; align-self:flex-end; display:block; overflow:hidden; }
 .draft-board-name { height:32px; }
 .draft-board-name .prospect-board-face img { display:block; width:100%; height:100%; object-fit:cover; object-position:center bottom; }
-body .has-card-board [data-board-window="prospects"] .season-prospect-name-main .prospect-board-face { flex:0 0 22px; width:22px; height:24px; align-self:flex-end; margin:-2px 0; display:block; overflow:hidden; }
-body .has-card-board [data-board-window="prospects"] .season-prospect-name-main .prospect-board-face img { display:block; width:100%; height:100%; object-fit:cover; object-position:center bottom; }
 
 /* Photo credits (Settings > Photo credits), in the house table style. */
 body.unified-terminal-ui .modal-shell.modal-settings.modal-photo-credits { width:min(980px, calc(100vw - 32px)); height:min(760px, calc(100vh - 48px)); }

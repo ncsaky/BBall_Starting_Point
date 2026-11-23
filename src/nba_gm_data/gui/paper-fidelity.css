@@ -262,9 +262,6 @@ body.unified-terminal-ui .season-opponent-row {
   grid-template-columns:minmax(0,1fr) repeat(3,minmax(52px,.65fr));
 }
 body.unified-terminal-ui .season-standing-row { border-radius:0 !important; }
-body.unified-terminal-ui .season-prospect-row {
-  border-bottom:1px solid var(--season-soft-line) !important; border-radius:0 !important;
-}
 body.unified-terminal-ui .salary-tax-line,
 body.unified-terminal-ui .salary-hard-line { border-top-width:2px; }
 body.unified-terminal-ui .season-standing-row.playoff-line { border-bottom-width:2px !important; }
@@ -275,7 +272,6 @@ body.unified-terminal-ui .season-standing-row:last-child,
 body.unified-terminal-ui .season-award-rows > button:last-child {
   border-bottom:1px solid var(--season-soft-line);
 }
-body.unified-terminal-ui .season-prospect-row:nth-child(2) { border-top:1px solid var(--season-soft-line) !important; }
 body.unified-terminal-ui :is(.assets-team-block,.assets-block) .assets-panel-body { padding:0 8px; }
 body.unified-terminal-ui .assets-block-caption { height:16px; }
 body.unified-terminal-ui .assets-block-caption button { height:14px; }
@@ -430,8 +426,6 @@ body.unified-terminal-ui .season-panel-header button.ui-command,
 body.unified-terminal-ui .season-panel-header button {
   align-self:center; box-sizing:border-box; height:20px; min-height:20px !important; margin-block:0; padding-block:0; transform:none;
 }
-body.unified-terminal-ui .season-prospects-head button { background:transparent; border:0; box-shadow:none; min-height:0; height:100%; padding:0; font:inherit; color:inherit; text-align:left; white-space:nowrap; }
-body.unified-terminal-ui .season-prospects-head button:focus-visible { outline:1px solid #42667a; }
 body.unified-terminal-ui .season-rank-change { font-size:8px; font-weight:600; white-space:nowrap; text-align:right; }
 body.unified-terminal-ui .season-rank-change.positive { color:#4b9932 !important; }
 body.unified-terminal-ui .season-rank-change.negative { color:#b44f48 !important; }

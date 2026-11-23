@@ -3972,9 +3972,21 @@ const PROSPECT_COUNTRY_FLAGS = Object.freeze({
 const PROSPECT_CLUB_COUNTRIES = Object.freeze({
   "kk-mega-basket":"RS", valencia:"ES", "real-madrid":"ES", barcelona:"ES", "fc-barcelona":"ES", "ratiopharm-ulm":"DE",
   "partizan-belgrade":"RS", "crvena-zvezda":"RS", "red-star-belgrade":"RS", "olympiacos":"GR", "panathinaikos":"GR",
+  baskonia:"ES", joventut:"ES", "nanterre-92":"FR", "elan-chalon":"FR", "paris-basketball":"FR", asvel:"FR",
+  "south-east-melbourne":"AU", "cedevita-olimpija":"SI", zalgiris:"LT", trento:"IT", "mega-basket-okk-beograd":"RS",
+  "le-mans":"FR",
 });
+// Source names written differently from the logo file names ("Ohio St.", "Connecticut").
+const PROSPECT_ORIGIN_ALIASES = Object.freeze({connecticut:"uconn"});
 
 function prospectOriginKey(value) {
+  // A school's "(City, ST)" or a note in brackets is not part of its name.
+  const key = prospectOriginSlug(String(value || "").replace(/\s*\([^)]*\)/g, ""));
+  const named = PROSPECT_ORIGIN_ALIASES[key] || key;
+  return named.endsWith("-st") && !PROSPECT_COLLEGE_LOGOS[named] ? named.replace(/-st$/, "-state") : named;
+}
+
+function prospectOriginSlug(value) {
   return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
@@ -3997,39 +4009,121 @@ function prospectOriginMarkup(origin) {
   return `<span class="season-prospect-origin season-prospect-source-fallback" role="img" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}">${escapeHtml(initials)}</span>`;
 }
 
-function seasonProspectsCard(options = {}) {
-  const sort = state.dashboardProspectSort.key === "stock" ? {key:"rank", direction:"asc"} : state.dashboardProspectSort;
-  const value = (row) => ({rank:Number(row.consensusRank ?? row.rank), yours:Number(row.rank), name:row.name, position:row.position, age:Number(row.age), height:row.height, now:Number(row.now), range:row.draftRangeLow ?? Infinity, scouted:Number(row.scoutedPct ?? Number(row.confidence || 0) * 100)})[sort.key];
-  const sourceRows = [...(options.rows || draftBoardRows(state.data.dashboardProspects || {}))];
-  const sortedRows = sourceRows.sort((a, b) => {
-    if (sort.key === "range" && (a.draftRangeLow == null || b.draftRangeLow == null)) {
-      return Number(a.draftRangeLow == null) - Number(b.draftRangeLow == null) || Number(a.rank) - Number(b.rank);
-    }
-    const av = value(a), bv = value(b);
-    return (typeof av === "string" ? av.localeCompare(String(bv)) : av - bv) * (sort.direction === "asc" ? 1 : -1)
-      || (sort.key === "range" ? (Number(a.draftRangeHigh) - Number(b.draftRangeHigh)) * (sort.direction === "asc" ? 1 : -1) : 0)
-      || Number(a.consensusRank ?? a.rank) - Number(b.consensusRank ?? b.rank);
+// Upcoming Prospects table. Columns: [column, [[sort key, header label, header tip], ...]]. The draft-range column holds two sorts
+// (league consensus, your scouts). Numbers start high-to-low on the first click; ranks, names and ages low-to-high.
+const SEASON_PROSPECT_COLUMNS = [
+  ["name", [["name", "Prospect"]]],
+  ["position", [["position", "Pos", "Position"]]],
+  ["age", [["age", "Age"]]],
+  ["height", [["height", "Height"]]],
+  ["now", [["now", "Now", "Your scouts' estimate of his level today"]]],
+  ["potential", [["potential", "Potential", "Your scouts' estimate of his realistic peak"]]],
+  ["range", [["rank", "League rank", "League consensus rank: the middle of all 30 teams' boards"], ["yours", "Ours", "Your scouts' board rank (talent only)"]]],
+  ["scouted", [["scouted", "Scouted", "How much of him your scouts have seen"]]],
+];
+const SEASON_PROSPECT_DESC_FIRST = new Set(["now", "potential", "scouted"]);
+
+function seasonProspectSortValue(row, key) {
+  const number = (value) => (value == null || value === "" || !Number.isFinite(Number(value)) ? null : Number(value));
+  if (key === "name") return String(row.name || "") || null;
+  if (key === "position") return typeof housePositionRank === "function" ? number(housePositionRank(row.position)) : String(row.position || "") || null;
+  if (key === "height") { const inches = heightToInches(row.height); return Number.isFinite(inches) ? inches : null; }
+  if (key === "rank") return number(row.consensusRank);
+  if (key === "yours") return number(row.rank);
+  if (key === "scouted") return number(row.scoutedPct ?? (row.confidence == null ? null : Number(row.confidence) * 100));
+  return number(row[key]);
+}
+
+function sortSeasonProspectRows(rows, sort) {
+  const direction = sort.direction === "desc" ? -1 : 1;
+  const tieBreak = (row) => Number(row.consensusRank ?? row.rank) || Infinity;
+  return [...rows].sort((a, b) => {
+    const av = seasonProspectSortValue(a, sort.key), bv = seasonProspectSortValue(b, sort.key);
+    if ((av == null) !== (bv == null)) return av == null ? 1 : -1;  // missing values always last
+    const compared = av == null ? 0 : typeof av === "string" ? av.localeCompare(String(bv), undefined, {sensitivity:"base"}) : av - bv;
+    return compared * direction || tieBreak(a) - tieBreak(b);
   });
+}
+
+function nextSeasonProspectSort(key) {
+  const prior = state.dashboardProspectSort || {};
+  if (prior.key === key) return {key, direction: prior.direction === "asc" ? "desc" : "asc"};
+  return {key, direction: SEASON_PROSPECT_DESC_FIRST.has(key) ? "desc" : "asc"};
+}
+
+// Prospect ratings as coloured numbers on the game-wide rating colours (red low, blue high).
+function seasonProspectRating(value) {
+  const number = Number(value);
+  if (value == null || value === "" || !Number.isFinite(number)) return "—";
+  return `<strong class="season-prospect-rating" style="${playerRatingBarStyle(number)}">${number.toFixed(0)}</strong>`;
+}
+
+// Same-size greyscale face, bottom-aligned in the row; an empty frame keeps names lined up when there is no photo.
+function seasonProspectFace(row) {
+  const source = String(row?.prospect?.headshot_url || row?.headshot_url || "").trim();
+  return `<span class="season-prospect-face" aria-hidden="true">${source ? `<img src="${escapeAttr(source)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" />` : ""}</span>`;
+}
+
+// One mini box plot per prospect on a shared rank scale (#1 at the left): the whiskers reach every team's best and
+// worst rank for him, the box is where the middle half of teams rank him, the dark tick is the league consensus and
+// the blue dot is your scouts' rank. Faint guide lines every 5 (or 10) ranks give the scale.
+function seasonProspectRankRange(row, maxRank, sortKey) {
+  const rank = (value) => (value == null || value === "" || !Number.isFinite(Number(value)) ? null : Number(value));
+  const place = (value) => clampNumber((value - 1) / Math.max(1, maxRank - 1) * 100, 0, 100).toFixed(1);
+  const consensus = rank(row.consensusRank), ours = rank(row.rank);
+  const low = rank(row.draftRangeLow), high = rank(row.draftRangeHigh);
+  const best = rank(row.consensusBest) ?? low, worst = rank(row.consensusWorst) ?? high;
+  if (consensus == null && ours == null) return "—";
+  const step = maxRank > 30 ? 10 : 5;
+  const guides = Array.from({length: Math.floor((maxRank - 1) / step)}, (_unused, index) => `<i class="season-prospect-range-guide" style="left:${place((index + 1) * step)}%"></i>`).join("");
+  const move = Number(row.rankChange);
+  const title = [
+    consensus != null ? `League consensus: #${consensus}` : "",
+    low != null && high != null ? `Most teams (the middle half): #${low} to #${high}` : "",
+    best != null && worst != null ? `Every team: #${best} to #${worst}` : "",
+    ours != null ? `Your scouts: #${ours}${Number.isFinite(move) && move ? ` (${move > 0 ? "up" : "down"} ${Math.abs(move)} since last month)` : ""}` : "",
+  ].filter(Boolean).join("\n");
+  const shown = sortKey === "yours" ? ours : consensus ?? ours;
+  return `<span class="season-prospect-range" title="${escapeAttr(title)}" aria-label="${escapeAttr(title.replace(/\n/g, ". "))}">
+      <b class="season-prospect-range-number${sortKey === "yours" ? " is-ours" : ""}">${shown == null ? "—" : shown}</b>
+      <span class="season-prospect-range-plot" aria-hidden="true">${guides}${best != null && worst != null ? `<i class="season-prospect-range-whisker" style="left:${place(best)}%;width:${(place(worst) - place(best)).toFixed(1)}%"></i>` : ""}${low != null && high != null ? `<i class="season-prospect-range-box" style="left:${place(low)}%;width:${(place(high) - place(low)).toFixed(1)}%"></i>` : ""}${consensus != null ? `<i class="season-prospect-range-median" style="left:${place(consensus)}%"></i>` : ""}${ours != null ? `<i class="season-prospect-range-ours" style="left:${place(ours)}%"></i>` : ""}</span>
+    </span>`;
+}
+
+function seasonProspectsCard(options = {}) {
+  const stored = state.dashboardProspectSort || {};
+  const known = SEASON_PROSPECT_COLUMNS.some(([, keys]) => keys.some(([key]) => key === stored.key));
+  const sort = known ? stored : {key:"rank", direction:"asc"};
+  const sourceRows = options.rows || draftBoardRows(state.data.dashboardProspects || {});
+  const sortedRows = sortSeasonProspectRows(sourceRows, sort);
   const rows = options.expanded ? sortedRows : sortedRows.slice(0, 6);
-  return `<div class="season-prospects-table${options.expanded ? " season-prospects-table-expanded" : ""}">
-      <div class="season-prospects-head">${[["rank", "#"], ["name", "Prospect"], ["position", "Pos"], ["age", "Age"], ["height", "Height"], ["now", "Now/Pot"], ["yours", "Yours"], ["range", "Range"], ["scouted", "Scouted"]].map(([key, label]) => `<button type="button" data-season-prospect-sort="${key}" aria-pressed="${sort.key === key}" title="${{rank: "League consensus rank (median of all 30 teams' scouting)", yours: "Your scouts' board rank (talent only); arrow: change since last month", range: "Where most teams (the middle half) rank him"}[key] || `Sort by ${label}`}" aria-label="Sort by ${label}${sort.key === key ? `, ${sort.direction === "asc" ? "ascending" : "descending"}` : ""}">${label}${sort.key === key ? (sort.direction === "asc" ? " ↑" : " ↓") : ""}</button>`).join("")}</div>
-      ${rows.map((row) => {
-        const confidence = clampNumber(Number(row.scoutedPct ?? Number(row.confidence || 0) * 100), 0, 100);
-        const hasRange = row.draftRangeLow != null && row.draftRangeHigh != null;
-        const draftRange = hasRange ? `${row.draftRangeLow}–${row.draftRangeHigh}` : "—";
-        const now = Number(row.now), potential = Number(row.potential);
-        return `<button type="button" class="season-prospect-row" data-draft-prospect-card="${escapeAttr(row.id)}" title="Open scouting report for ${escapeAttr(row.name)}">
-          <span class="season-prospect-rank">${String(row.consensusRank ?? row.rank).padStart(2, "0")}</span>
-          <span class="season-prospect-name"><span class="season-prospect-name-main">${prospectFaceMarkup(row)}${prospectOriginMarkup(row.sourceTeam)}<strong>${escapeHtml(row.name)}</strong>${prospectInjuryMarkup(row.injuryReport, { compact: true })}</span></span>
-          <span class="season-prospect-position">${escapeHtml(row.position)}</span>
-          <span>${escapeHtml(row.age ?? "—")}</span>
-          <span>${escapeHtml(row.height || "—")}</span>
-          <span class="season-prospect-nowpot"><strong>${Number.isFinite(now) ? now.toFixed(0) : "—"}</strong><i aria-hidden="true">→</i><b>${Number.isFinite(potential) ? potential.toFixed(0) : "—"}</b></span>
-          <span class="season-prospect-yours" title="${escapeAttr(row.developmentLabel ? `Your scouts: ${row.developmentLabel}` : "Your scouts' board")}">#${escapeHtml(row.rank)}${draftRankMove(row.rankChange)}</span>
-          <span class="season-prospect-range" title="${hasRange ? `Most teams rank him #${row.draftRangeLow} to #${row.draftRangeHigh}${row.consensusBest != null ? ` (every team: #${row.consensusBest} to #${row.consensusWorst})` : ""}` : "Team ranks unavailable"}">${draftRange}</span>
-          <span class="season-scouted" aria-label="Scouted ${confidence.toFixed(0)} percent"><i><b style="${performanceBarStyle(confidence)}"></b></i><strong>${confidence.toFixed(0)}%</strong></span>
-        </button>`;
-      }).join("") || `<div class="empty">Prospect board unavailable.</div>`}
+  const ranks = rows.flatMap((row) => [row.consensusWorst, row.draftRangeHigh, row.consensusRank, row.rank]).map(Number).filter(Number.isFinite);
+  const maxRank = Math.max(10, Math.ceil(Math.max(1, ...ranks) / 5) * 5);
+  const arrow = (key) => (sort.key === key ? `<i class="season-prospect-sort-arrow" aria-hidden="true">${sort.direction === "desc" ? "▼" : "▲"}</i>` : "");
+  const head = SEASON_PROSPECT_COLUMNS.map(([column, keys]) => {
+    const active = keys.some(([key]) => key === sort.key);
+    const buttons = keys.map(([key, label, tip]) => `<button type="button" data-season-prospect-sort="${key}" aria-pressed="${sort.key === key}" title="${escapeAttr(`${tip || `Sort by ${label}`}${column === "range" ? `. Bar: whiskers every team, box the middle half, dark tick the league, blue dot your scouts (scale #1 to #${maxRank})` : ""}`)}">${key === "yours" ? `<i class="season-prospect-ours-key" aria-hidden="true"></i>` : ""}${escapeHtml(label)}${arrow(key)}</button>`).join(`<i class="season-prospect-sort-divider" aria-hidden="true">·</i>`);
+    return `<th scope="col" class="season-prospect-col-${column}${active ? " is-sorted" : ""}" aria-sort="${active ? (sort.direction === "desc" ? "descending" : "ascending") : "none"}">${buttons}</th>`;
+  }).join("");
+  const sortedColumn = SEASON_PROSPECT_COLUMNS.find(([, keys]) => keys.some(([key]) => key === sort.key))?.[0];
+  const cell = (column, content) => `<td class="season-prospect-col-${column}${column === sortedColumn ? " is-sorted" : ""}">${content}</td>`;
+  return `<div class="season-prospect-list${options.expanded ? " season-prospect-list-expanded" : ""}">
+      <table class="season-prospect-table" data-local-sort aria-label="Upcoming prospects">
+        <thead><tr>${head}</tr></thead>
+        <tbody>${rows.map((row) => {
+          const confidence = clampNumber(Number(row.scoutedPct ?? Number(row.confidence || 0) * 100), 0, 100);
+          return `<tr data-draft-prospect-card="${escapeAttr(row.id)}" title="Open scouting report for ${escapeAttr(row.name)}">
+            ${cell("name", `<span class="season-prospect-name">${seasonProspectFace(row)}${prospectOriginMarkup(row.sourceTeam)}<button type="button" class="season-prospect-open">${escapeHtml(row.name || "Unknown")}</button>${prospectInjuryMarkup(row.injuryReport, { compact: true })}</span>`)}
+            ${cell("position", escapeHtml(row.position || "—"))}
+            ${cell("age", escapeHtml(row.age === "" || row.age == null ? "—" : row.age))}
+            ${cell("height", escapeHtml(row.height || "—"))}
+            ${cell("now", seasonProspectRating(row.now))}
+            ${cell("potential", seasonProspectRating(row.potential))}
+            ${cell("range", seasonProspectRankRange(row, maxRank, sort.key))}
+            ${cell("scouted", `<span class="season-scouted" aria-label="Scouted ${confidence.toFixed(0)} percent"><i><b style="${performanceBarStyle(confidence)}"></b></i><strong>${confidence.toFixed(0)}%</strong></span>`)}
+          </tr>`;
+        }).join("") || `<tr><td colspan="${SEASON_PROSPECT_COLUMNS.length}" class="empty">Prospect board unavailable.</td></tr>`}</tbody>
+      </table>
     </div>`;
 }
 
@@ -4052,15 +4146,81 @@ function seasonAwardsCard(editable) {
     ["DPOY", state.data.dashboardSummaryLeaders?.award_races?.DPOY || (fields.defense?.length ? fields.defense : fields.rim_deterrence || [])],
     ["ROTY", state.data.dashboardSummaryLeaders?.award_races?.ROTY || state.data.dashboardSummaryLeaders?.rookies || []],
   ];
-  return `<div class="season-awards-grid">${races.map(([label, leaders]) => `<section class="season-command-panel season-award-card">
+  return `<div class="season-awards-grid">${races.map(([label, leaders]) => {
+    const award = label.toLowerCase();
+    const stats = SEASON_AWARD_STATS[label] || SEASON_AWARD_STATS.MVP;
+    const [leader, ...chasers] = leaders.slice(0, 4);
+    return `<section class="season-command-panel season-award-card" data-award="${award}" style="--award-stat-count:${stats.length}">
       <header class="season-award-head"><h3>${label}</h3></header>
-      <div class="season-award-rows">${leaders.slice(0, 4).map((row, index) => {
-      const team = row.team_abbrev || teamLabel(row.team_id);
-      const logo = teamLogoSrc(team);
-      const portrait = row.headshot_url || logo;
-      return `<button type="button" data-dashboard-player-card="${escapeAttr(row.player_id)}"><span class="award-player-rank">${row.rank || index + 1}</span>${portrait ? `<img class="${row.headshot_url ? "award-player-headshot" : "award-team-fallback"}" src="${escapeAttr(portrait)}" alt="" aria-hidden="true" loading="lazy" decoding="async" referrerpolicy="no-referrer" />` : ""}<strong>${escapeHtml(row.player_name)}</strong>${seasonRankChange(row.rank_change, row.previous_week_rank ?? row.season_start_rank)}</button>`;
-      }).join("") || `<div class="empty">No candidates yet.</div>`}</div>
-    </section>`).join("")}</div>`;
+      ${leader ? `<div class="season-award-race">
+        ${seasonAwardLeader(leader, label, stats)}
+        ${chasers.map((row, index) => seasonAwardChaser(row, index + 2, stats)).join("")}
+      </div>` : `<div class="empty">No candidates yet.</div>`}
+    </section>`;
+  }).join("")}</div>`;
+}
+
+// Award race columns: [stat key, label, rating?]. Ratings show as coloured numbers; per-game stats need games played
+// (an em dash before then). Stats come from the race rows (dashboard_metrics.award_watch_payload "stats").
+const SEASON_AWARD_STATS = Object.freeze({
+  MVP: [["overall", "OVR", true], ["points", "PTS"], ["rebounds", "REB"], ["assists", "AST"]],
+  DPOY: [["defense", "DEF", true], ["steals", "STL"], ["blocks", "BLK"]],
+  ROTY: [["overall", "OVR", true], ["points", "PTS"], ["rebounds", "REB"], ["assists", "AST"]],
+});
+// Real-world trophy pictures by award (data-trophy slot in the leader block). Empty until the files are added, e.g.
+// mvp: "assets/trophies/mvp.png"; an award with no file listed shows no picture.
+const SEASON_AWARD_TROPHIES = Object.freeze({});
+
+function seasonAwardStatCells(row, stats, firstColumn) {
+  const values = row.stats || {};
+  return stats.map(([key, label, rating], index) => {
+    const number = Number(values[key]);
+    const known = values[key] != null && Number.isFinite(number);
+    const text = known ? (rating ? number.toFixed(0) : number.toFixed(1)) : "—";
+    return `<span class="season-award-stat" data-stat="${key}" title="${escapeAttr(label)}" style="grid-column:${firstColumn + index}"><b${known && rating ? ` class="season-award-rating" style="${playerRatingBarStyle(number)}"` : ""}>${text}</b></span>`;
+  }).join("");
+}
+
+// Team as logo plus abbreviation; the rows below the leader use the logo alone (the card is narrow).
+function seasonAwardTeam(row, {logoOnly = false} = {}) {
+  const team = row.team_abbrev || teamLabel(row.team_id);
+  const logo = teamLogoSrc(team);
+  const label = logo && logoOnly ? "" : escapeHtml(team || "—");
+  return `<span class="season-award-team" title="${escapeAttr(team || "")}">${logo ? `<img src="${escapeAttr(logo)}" alt="${logoOnly ? escapeAttr(team || "") : ""}" loading="lazy" decoding="async" />` : ""}${label}</span>`;
+}
+
+function seasonAwardFace(row, className) {
+  const team = row.team_abbrev || teamLabel(row.team_id);
+  const portrait = row.headshot_url || teamLogoSrc(team);
+  return `<span class="${className}" aria-hidden="true">${portrait ? `<img class="${row.headshot_url ? "award-player-headshot" : "award-team-fallback"}" src="${escapeAttr(portrait)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" />` : ""}</span>`;
+}
+
+// The race leader: large face, name, team, the stat line (its labels head the rows below) and the weekly move.
+function seasonAwardLeader(row, label, stats) {
+  const award = label.toLowerCase();
+  const trophy = SEASON_AWARD_TROPHIES[award];
+  return `<button type="button" class="season-award-leader" data-dashboard-player-card="${escapeAttr(row.player_id)}">
+      ${seasonAwardFace(row, "season-award-leader-face")}
+      <span class="season-award-leader-name"><b class="season-award-rank">${row.rank || 1}</b><strong>${escapeHtml(row.player_name)}</strong></span>
+      ${seasonAwardTeam(row)}
+      <span class="season-award-trophy" data-trophy="${award}" aria-hidden="true">${trophy ? `<img src="${escapeAttr(trophy)}" alt="" loading="lazy" decoding="async" />` : ""}</span>
+      ${stats.map(([key, statLabel], index) => `<small class="season-award-stat-label" data-stat="${key}" style="grid-column:${3 + index}">${statLabel}</small>`).join("")}
+      <small class="season-award-stat-label season-award-move-label">Change</small>
+      ${seasonAwardStatCells(row, stats, 3)}
+      ${seasonRankChange(row.rank_change, row.previous_week_rank ?? row.season_start_rank)}
+    </button>`;
+}
+
+// Second to fourth: one table-style row each (rank, small face, name, team, the same stats, the weekly move).
+function seasonAwardChaser(row, rank, stats) {
+  return `<button type="button" class="season-award-chaser" data-dashboard-player-card="${escapeAttr(row.player_id)}">
+      <b class="season-award-rank">${row.rank || rank}</b>
+      ${seasonAwardFace(row, "season-award-chaser-face")}
+      <strong>${escapeHtml(row.player_name)}</strong>
+      ${seasonAwardTeam(row, {logoOnly:true})}
+      ${seasonAwardStatCells(row, stats, 5)}
+      ${seasonRankChange(row.rank_change, row.previous_week_rank ?? row.season_start_rank)}
+    </button>`;
 }
 
 function seasonRankChange(change, previousRank) {
@@ -9114,9 +9274,7 @@ async function setProspectsCardExpanded(expanded, card) {
 function wireSeasonProspectSort(root) {
   wireDashboardProspectCards(root);
   root.querySelectorAll("[data-season-prospect-sort]").forEach(button => button.addEventListener("click", () => {
-    const key = button.dataset.seasonProspectSort;
-    const prior = state.dashboardProspectSort;
-    state.dashboardProspectSort = {key, direction:prior.key === key && prior.direction === "asc" ? "desc" : "asc"};
+    state.dashboardProspectSort = nextSeasonProspectSort(button.dataset.seasonProspectSort);
     const panel = button.closest(".season-prospects-panel");
     if (panel) {
       panel.innerHTML = seasonProspectsCard();
@@ -14413,9 +14571,7 @@ function wireDashboardOverview(editable) {
   wireSeasonEfficiencyChart();
   wirePlayerGameScoreCharts();
   els.content.querySelectorAll("[data-season-prospect-sort]").forEach((button) => button.addEventListener("click", () => {
-    const key = button.dataset.seasonProspectSort;
-    const prior = state.dashboardProspectSort;
-    state.dashboardProspectSort = {key, direction: prior.key === key && prior.direction === "asc" ? "desc" : "asc"};
+    state.dashboardProspectSort = nextSeasonProspectSort(button.dataset.seasonProspectSort);
     renderDashboard();
   }));
   els.content.querySelectorAll("[data-unified-workspace]").forEach((button) => {

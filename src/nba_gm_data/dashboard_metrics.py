@@ -51,6 +51,9 @@ def build_award_baselines(active: dict[str, Any], save: dict[str, Any]) -> dict[
     return result
 
 
+AWARD_CARD_STATS = ("points", "rebounds", "assists", "steals", "blocks")
+
+
 def award_watch_payload(rows: list[dict[str, Any]], save: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
     season = str((save.get("meta") or {}).get("season") or "")
     baselines = (save.get("award_preseason_baselines") or {}).get(season, {})
@@ -76,10 +79,18 @@ def award_watch_payload(rows: list[dict[str, Any]], save: dict[str, Any]) -> dic
             if not season_has_games:
                 score = (baseline or {}).get("score", score)
             candidates.append({key: row[key] for key in ("player_id", "player_name", "headshot_url", "team_id", "team_abbrev")})
+            values = row.get("values") or {}
+            played = int(player_totals.get("games") or 0) > 0
             candidates[-1].update(
                 score=score,
                 season_start_rank=(baseline or {}).get("rank"),
                 _award_ratings=row.get("award_ratings", row.get("values", {})),
+                # Display only (the award cards' stat line): ratings always, per-game numbers once he has played.
+                stats={
+                    "overall": values.get("overall"),
+                    "defense": values.get("defense"),
+                    **({key: values.get(key) for key in AWARD_CARD_STATS} if played else {}),
+                },
             )
         candidates.sort(key=lambda row: (-row["score"], row["player_id"]))
         previous_ranks = _award_ranks_as_of(award, candidates, save, previous_week_date)
