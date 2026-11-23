@@ -194,13 +194,18 @@
         <ol class="ss-continuity">${rows}</ol>`;
     },
     leaders_revisited(slide) {
-      const now = (r) => r.now?.team ? `${r.moved ? "→ " : ""}${teamCell(r.now.team)}` : `<span class="ss-muted">${esc(r.now?.status)}</span>`;
+      // Player, his number, and his team: a player who changed teams shows old logo → new logo (playtest 2026-11-22).
+      const where = (then, now) => {
+        if (!now?.team) return `<span class="ss-muted">${esc(now?.status || "")}</span>`;
+        if (!then || then === now.team.abbrev) return teamCell(now.team);
+        return `<span class="ss-team ss-move">${logo(then)}<span class="ss-arrow" aria-label="moved to">→</span>${logo(now.team.abbrev)}<b>${esc(now.team.abbrev)}</b></span>`;
+      };
       const cats = (slide.categories || []).map((cat) => table([
-        {label: "Player", render: (r) => `<b>${esc(r.name)}</b><small class="ss-muted">${esc(r.team_abbrev || "")} · ${num(r.per_game)}</small>`},
-        {label: "Now", render: now},
-        {label: "Expected role", render: (r) => `<small>${esc(r.now?.team ? r.now.status : "")}</small>`},
-      ], cat.rows, {caption: `${cat.label} leaders`})).join("");
-      const winners = (slide.award_winners || []).map((w) => `<li><b>${esc(w.label)}</b>: ${esc(w.name)} (${esc(w.then)}) ${w.now?.team ? `→ ${teamCell(w.now.team)} <small>${esc(w.now.status)}</small>` : `<small>${esc(w.now?.status)}</small>`}</li>`).join("");
+        {label: "Player", render: (r) => `<b>${esc(r.name)}</b>`},
+        {label: "Per game", render: (r) => num(r.per_game), cls: "ss-num"},
+        {label: "Team", render: (r) => where(r.team_abbrev, r.now)},
+      ], cat.rows, {sorted: 1, caption: `${cat.label} leaders`})).join("");
+      const winners = (slide.award_winners || []).map((w) => `<li><b>${esc(w.label)}</b>: ${esc(w.name)} ${where(w.then, w.now)}</li>`).join("");
       return `<div class="ss-grid ss-grid-3">${cats}</div>${winners ? `<section class="ss-feature"><h4>Award winners</h4><ul class="ss-list">${winners}</ul></section>` : ""}`;
     },
     your_team(slide) {

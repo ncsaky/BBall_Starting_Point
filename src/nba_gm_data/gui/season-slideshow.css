@@ -225,3 +225,4 @@
 }
 
 .ss-card > .ss-titlebar { border-radius: 2px 2px 0 0; }
+.ss-move .ss-arrow { margin: 0 3px; color: #52616e; font-weight: 700; }

@@ -33,6 +33,8 @@ Game runs from the browser pane: launch entry `game` (port 8766, normal `saves/`
   Continuity slide: the repeated source line and the "% kept · +N new / N had no NBA minutes" text are gone;
   just the bars (names are still in the hover tooltip). Its subtext no longer says "A new league…"; it reads
   "Last season's minutes, by whether the player is still on the team." The "Skip" button text is no longer underlined.
+  Leaders revisited: Player | Per game | Team; a player who changed teams shows old logo → new logo. No "Expected
+  role" column (leaders are all starters). Subtext trimmed to "Real 2025-26 leaders (65+ games)."
 - **Power-ranking notes (done 2026-11-22).** Rookies at rotation level (value 56.5+) are always named
   ("drafted Cameron Boozer"). Chosen by rating, not draft slot.
 - **Tables, still open:** the user wants consistent row height and header centering across all tables. Not done

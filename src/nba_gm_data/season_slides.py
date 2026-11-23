@@ -1011,7 +1011,7 @@ def outlook_leaders_slide(ctx: dict[str, Any]) -> dict[str, Any]:
                if row.get("award") in AWARD_ORDER]
     return {"key": "leaders_revisited", "title": "Last season's leaders, revisited", "kicker": f"Where the {last['season']} leaders play now",
             "categories": categories, "award_winners": winners,
-            "note": None if last["source"] == "save" else "Real 2025-26 leaders (65+ games). The game has no record of the real 2025-26 awards."}
+            "note": None if last["source"] == "save" else "Real 2025-26 leaders (65+ games)."}
 
 
 def outlook_your_team_slide(ctx: dict[str, Any]) -> dict[str, Any]:
