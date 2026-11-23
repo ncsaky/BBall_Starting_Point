@@ -1,6 +1,6 @@
 # UI style guide
 
-Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards) and round 2 (2026-11-23 day, 22 priority questions plus references). The answers live in the deck artifact's `answers` collection; round 2 ids start with `q2-`. Also draws on the playtest notes in `docs/agents/tasks/playtest-notes-2026-11-22.md`. Every agent doing GUI work follows this. When a rule here conflicts with older docs, this file wins. Where round 2 changed a round 1 rule, the rule below already says the new thing.
+Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), round 2 (2026-11-23 day, 22 priority questions plus references) and round 3 (2026-11-23 evening, 19 questions on the five batches). The answers live in the deck artifact's `answers` collection; round 2 ids start with `q2-`. Also draws on the playtest notes in `docs/agents/tasks/playtest-notes-2026-11-22.md`. Every agent doing GUI work follows this. When a rule here conflicts with older docs, this file wins. Where round 2 changed a round 1 rule, the rule below already says the new thing.
 
 ## What the user wants overall
 
@@ -21,6 +21,20 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards) and r
 - **Apple Sports**: clean and polished.
 - **Anti-reference: Basketball GM.** Clicking between plain tables, a player page that is a scroll of tables, no players or game feel. Never ship anything that looks like it.
 
+## The look: glass (round 3)
+- **JFresh-style glass, game-wide** (`gui/glass.css`): windows and pop-ups are frosted, slightly see-through panels with rounded corners and depth; title bars and the top bar are dark glass tinted with the user's team colour, with white text; the board behind is lit by soft team-colour light. Content stays light frosted with near-black text so dense tables read easily.
+- **Pop-ups are glass too:** dark tinted glass frames with team-colour light; every chart, table and tile inside sits on a light frosted card. Text turns white only where it sits directly on the frame.
+- **Depth charts:** columns are position groups (Guards, Wings, Bigs), never single positions; one player per row.
+- **Cards are page prototypes.** The user expects to move to a fixed page layout later; making each card right now is how each page gets designed.
+
+## Contrast (the user's most repeated complaint)
+- Check every text, icon and control against what is really behind it, in every state: normal, hover, selected, disabled.
+- Text on light glass: near-black (#121d27) or the soft ink (#3b4a57) at the lightest. Never light grey on white, never grey on grey.
+- Text on dark glass: white (#f5f8fb) or #d3dde6 at the lightest. Icons drawn white.
+- Hover changes the surface a little; it never turns text white on a light grey, or grey on a dark.
+- Not too harsh either: no black fills on white (checkboxes, clicked rows).
+- Big status text never sits over content.
+
 ## Game-wide rules
 
 ### Tables
@@ -29,7 +43,9 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards) and r
 - **Alignment:** centre everything (numbers and words), with the header centred over its column. Only the first field (player name) is left-aligned.
 - **Rows:** medium height (about 30px) or compact. Never roomy. Alternating stripes.
 - **Sorted column:** shaded and bold, on every row including the striped ones, reaching both edges of its column (no gap at the card's right edge, no double border on top). Columns hug their content.
-- **Every header sorts.** The sort arrow is never underlined. Pick a useful default sort (contracts: this season's salary, high to low).
+- **Every header sorts** in data tables (a small fixed list such as an award race's chasers needs no sorting). The sort arrow is never underlined.
+- **One border colour per row rule.** The player cell's rule matches the other cells. Every table in a card reaches both edges, and its fields are labelled like the table above it.
+- **No subheader strip** between a window's title bar and its table. Deadlines and rules go in a Details drop-down or the footer. Pick a useful default sort (contracts: this season's salary, high to low).
 - **Edge to edge:** a table fills its card's width. No inner margin around it, no gap between the card header, any sub-header and the table, and no gap at the bottom border.
 - **Hover and click:** whole-row highlight. Every cell, including the player cell and its links, keeps the highlight. Hovering never underlines icons. If a row or box highlights on hover, clicking anywhere in it opens the player. Clicking a row never turns it black.
 - **Controls never sit in a table header.** Window-level controls (reset, "coach rests players") go in the window header or a sub-header bar, and must look like buttons for the content, not like window controls.
@@ -42,12 +58,15 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards) and r
 - If a bar is used: no track behind it. The empty space implies the remainder.
 - Colour is the point. Never grey out ratings or make them one colour.
 - **Injured players:** show today's rating, with the drop as a small red subtext (for example 84 with "−6" beside it). Spacing and size need care so it reads as one unit.
+- **Value bars:** wherever value is shown or sorted (trade lists, Roster), it's a bar with the number right next to it. The bar is the main thing.
+- **OVR is the coloured number; OFF and DEF** next to it are plain dark, smaller and lighter weight, so the eye goes to OVR.
+- **Injured players:** the drop shows beside every rating that drops (OVR and the parts), as small red text.
 - **Trade value** is never a bare grade number. Show it visually (a bar or something better), and make it the first thing you see on a player in a deal, ahead of roles.
 
 ### Marks and chips
 - **Injury:** red cross plus red games-out number. One darker red (not pink), one size, everywhere. No chip and no greyed-out row.
 - **Status (kept, declined, signed...):** a coloured icon plus plain black text, regular weight. No coloured pill chips.
-- **Roles:** in tables, roles get their own column(s) as coloured text, not chips and not squeezed under the player's name. Offense and defense roles read as a pair.
+- **Roles:** in tables and tiles, roles get their own column(s) as coloured text, not chips, not under the player's name and not hidden in hover text. Offense and defense roles read as a pair.
 - **Small flags** (resting, the "Zz" mark) are a small superscript on the value they qualify (minutes or fatigue), not a column of their own.
 - **Changed values** (a new salary after an extension) show in a different text colour. Never a highlight box.
 
@@ -71,6 +90,7 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards) and r
 - **Hover never turns text white** or inverts the button. Hover only shades the background slightly.
 - **Nothing is filled black.** Not selected tabs, not checked checkboxes (white box, dark tick), not clicked rows.
 - **Selected tab style: undecided.** The user wants to judge it against the rest of the game. Until then: light tint, darker label and an underline, evenly sized and centred.
+- **Phases, not days, in the offseason:** outside the regular season, a phase's one button moves to the next phase. Simulating day by day only matters in the season.
 - **One obvious next step.** When a phase's work is done (the roster is set), show one clear button to move on and hide the sim buttons that don't apply.
 
 ### Windows and cards
@@ -88,6 +108,8 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards) and r
 - Axis labels small and at round values (0, 10, 20...).
 - Distributions use a range or box plot (min, middle half, max) with a coloured dot for us. Add a small legend. Dots have no white outline on the dark card.
 - Shape markers (the Team Identity hexagons) stay small; they must not dominate by size.
+- **Charts keep their proportions.** Never squash a chart to fit (the trade payroll chart was unreadable flattened). Give it the room it needs.
+- **Range charts** (Four Factors) use the same width per row, with right always meaning better.
 - **Payroll is always the four-year segmented payroll chart.** Anything that changes payroll (a trade) shows the chart, with the change animated (plays once, then a replay button).
 - Each player keeps one colour across all years of the payroll chart.
 - No circular "runway" gauges; the user doesn't find them clear.
@@ -96,6 +118,8 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards) and r
 - Slides can animate rows in (falling into place) instead of hard cuts. Keep it quick.
 
 ## Preserve (the user's favourites; don't redesign)
+- Team Identity heat maps at the current hexagon size (round 3: "looks great"). The tab style there still needs a new try.
+- Four Factors range charts (round 3: "maybe one of my favourite things").
 - Preseason power rankings and the continuity slide.
 - The four-year payroll share chart (only tweaks: consistent player colours, slightly livelier colours).
 - The top toolbar.
@@ -108,6 +132,12 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards) and r
 - Contracts to Watch slide (fine for now).
 - The release / buyout / waive buttons on the opening roster window.
 - Trade room: the simple payroll line ("takes $10M too much back"), the final-offer checkbox next to Ask.
+
+## Next priorities (round 3)
+- Player cards (very high): the ratings page has far too much text.
+- More Taylor Wyman-style graphs.
+- News cards (low).
+- Free agency and draft windows: not reviewed yet.
 
 ## Never do
 - Title-bar icons, AI-drawn decorative SVGs.

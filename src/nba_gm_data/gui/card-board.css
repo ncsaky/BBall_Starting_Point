@@ -5141,7 +5141,7 @@ body.unified-terminal-ui .player-decline-watch strong { color:#c4585f; }
 
 /* Draft boards (2026-11-19): consensus beside your scouts' board. Shared table style: double header rule, small
    bold headings, stripes, whole-row hover, sorted-column shading. */
-.draft-prospect-table.draft-two-boards thead th { border-bottom:3px double var(--season-line, var(--line-soft)); font-size:8px; font-weight:700; }
+.draft-prospect-table.draft-two-boards thead th { border-bottom:2px solid var(--season-line, var(--line-soft)); font-size:8px; font-weight:700; }
 .draft-prospect-table.draft-two-boards tbody tr:nth-child(even) td { background-color:#eef1f3; }
 .draft-prospect-table.draft-two-boards tbody tr:is(:hover,:focus-within) td { background-color:#dce8f2; }
 .draft-prospect-table.draft-two-boards thead th.is-sorted { background-color:#d1dde8; }
@@ -5224,7 +5224,7 @@ body.unified-terminal-ui .draft-night-board { background:#fff; }
 body.unified-terminal-ui .draft-board-table.draft-prospect-table :is(th,td) { padding:0 6px; font-size:12px; }
 .draft-board-table.draft-prospect-table thead th {
   position:sticky; top:0; z-index:2; height:24px; background:#fff; color:var(--season-text, #1d2a33);
-  border-bottom:3px double var(--season-line, #b7c2cb); font-size:9px; font-weight:700; text-transform:none;
+  border-bottom:2px solid var(--season-line, #b7c2cb); font-size:9px; font-weight:700; text-transform:none;
 }
 body.unified-terminal-ui .draft-board-table.draft-prospect-table thead th { font-size:9px; }
 .draft-board-table .draft-sort-button { width:auto; padding:0 !important; border:0 !important; background:transparent !important; box-shadow:none !important; color:inherit !important; font:inherit; font-size:9px !important; font-weight:700 !important; cursor:pointer; text-transform:none; min-height:0 !important; }
@@ -5300,7 +5300,7 @@ body.unified-terminal-ui .playoff-injuries-scope button[aria-pressed="true"] { b
 body.unified-terminal-ui .playoff-injuries-scope button:focus-visible { outline:2px solid #42667a; outline-offset:-2px; }
 .playoff-injuries-count { color:var(--season-muted); font:10px Tahoma,"Trebuchet MS",Arial,sans-serif; white-space:nowrap; }
 body.unified-terminal-ui .playoff-stats-panel .playoff-injuries-table { min-width:544px; }
-body.unified-terminal-ui .playoff-stats-panel .playoff-injuries-table thead th { border-bottom:3px double var(--season-line); }
+body.unified-terminal-ui .playoff-stats-panel .playoff-injuries-table thead th { border-bottom:2px solid var(--season-line); }
 body.unified-terminal-ui .playoff-stats-panel .playoff-injuries-table :is(.playoff-stats-col-status,.playoff-stats-col-back) { text-align:left; }
 body.unified-terminal-ui .playoff-stats-panel .playoff-injuries-table tbody tr.is-user-team > .playoff-stats-col-player { box-shadow:inset 3px 0 #3d82c5; }
 .playoff-injury-rating { display:grid; grid-template-columns:18px minmax(0,1fr); align-items:center; gap:4px; }
@@ -5332,7 +5332,7 @@ body.unified-terminal-ui .cutdown-title h3 { margin:2px 0 3px; font:700 18px Tah
 .cutdown-scroll { flex:1 1 auto; min-height:0; overflow:auto; }
 .cutdown-table { table-layout:fixed; width:100%; min-width:960px; border-collapse:separate; border-spacing:0; background:#fff; }
 .cutdown-table :is(th,td) { box-sizing:border-box; height:33px; padding:0 6px; border:0; border-bottom:1px solid var(--season-soft-line, #d5dde3); text-align:left; vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font:400 12px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-text, #1d2a33); background-clip:padding-box; }
-.cutdown-table thead th { position:sticky; top:0; z-index:2; height:24px; background:#fff; border-bottom:3px double var(--season-line, #b7c2cb); font-size:9px; font-weight:700; text-transform:none; letter-spacing:0; }
+.cutdown-table thead th { position:sticky; top:0; z-index:2; height:24px; background:#fff; border-bottom:2px solid var(--season-line, #b7c2cb); font-size:9px; font-weight:700; text-transform:none; letter-spacing:0; }
 body.unified-terminal-ui .cutdown-table thead th { text-transform:none; letter-spacing:0; color:var(--season-text, #1d2a33); }
 .cutdown-table tbody tr { background-color:#fff; }
 .cutdown-table tbody tr:nth-child(even) { background-color:#eef1f3; }
@@ -5396,7 +5396,7 @@ body.unified-terminal-ui .modal-shell.modal-settings.modal-photo-credits { width
 .photo-credits-table th[data-credit-col="use"] { width:150px; }
 .photo-credits-table th[data-credit-col="author"] { width:26%; }
 .photo-credits-table th[data-credit-col="licence"] { width:120px; }
-.photo-credits-table thead th { position:sticky; top:0; z-index:1; background:var(--ui-panel, #f4f6f8); border-bottom:3px double var(--ui-line, #9aa7b3); font-size:10px; font-weight:700; padding:3px 6px; text-align:left; }
+.photo-credits-table thead th { position:sticky; top:0; z-index:1; background:var(--ui-panel, #f4f6f8); border-bottom:2px solid var(--ui-line, #9aa7b3); font-size:10px; font-weight:700; padding:3px 6px; text-align:left; }
 .photo-credits-table thead th button { all:unset; cursor:pointer; font:inherit; }
 .photo-credits-table tbody tr:nth-child(even) { background:color-mix(in srgb, var(--ui-soft, #dde3e8) 45%, transparent); }
 .photo-credits-table tbody tr:hover { background:color-mix(in srgb, var(--ui-soft, #dde3e8) 95%, transparent); }

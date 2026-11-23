@@ -5177,6 +5177,11 @@ def team_identity_report(canonical: dict[str, Any], save: dict[str, Any]) -> dic
             "athleticism": round(clamp(athleticism, 1, 99), 1),
             "defensive_disruption": round(clamp(disruption, 1, 99), 1),
             "rim_protection": round(max(1.0, weighted("rim_deterrence")), 1),
+            # Parts for the Team Profile radars (taste deck round 3): each side drawn from what it is made of.
+            "playmaking": round(clamp(weighted("passing"), 1, 99), 1),
+            "offensive_rebounding": round(clamp(weighted("oreb"), 1, 99), 1),
+            "defensive_rebounding": round(clamp(weighted("rebounding"), 1, 99), 1),
+            "on_ball_defense": round(clamp(weighted("lateral_agility") * 0.55 + weighted("screen_nav") * 0.45 - age_drag * 0.8, 1, 99), 1),
             "depth": round(clamp(depth, 1, 99), 1),
             "age_timeline": round(timeline, 1),
             "average_age": round(weighted_age, 1),
@@ -8979,12 +8984,20 @@ def player_health_label(state: dict[str, Any] | None, current_date: str | None,
     # v2 injuries carry a real diagnosis ("Ankle sprain", "ACL tear"); older saves show the severity band.
     diagnosis = str(state.get("current_injury_label") or "").strip()
     label = diagnosis[:1].upper() + diagnosis[1:] if diagnosis else f"{severity}"
+    games_left = None
     if return_date and current_date and team_days is not None:
         # As in the engine, the player can play on the return date itself.
         games_left = sum(current_date <= day < return_date for day in team_days)
         label = f"{label} ~{games_left}g"
+    # The rating drop he will carry when he returns (taste deck round 3): the engine's own return rust for the whole
+    # absence (games already missed in this injury plus the games left), as in-game rating points. Display only.
+    from .injury_model import return_rust
+    from .sim import rust_penalty_points
+    absence = int(state.get("current_absence_games") or 0) + int(games_left or 0)
+    return_penalty = round(rust_penalty_points(return_rust(absence)), 1) if absence else 0.0
     return {"status": status, "label": label, "days_left": days_left, "games_missed": int(state.get("games_missed") or 0), "fatigue": fatigue,
-            "severity": severity, "body_part": state.get("current_injury_part"), "diagnosis": diagnosis or None}
+            "severity": severity, "body_part": state.get("current_injury_part"), "diagnosis": diagnosis or None,
+            "return_penalty": return_penalty}
 
 
 def cap_lines_for_season(season: str | None) -> dict[str, float]:

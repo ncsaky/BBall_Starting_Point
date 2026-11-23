@@ -20,7 +20,7 @@
 .offseason-empty { margin: 14px 12px; font-size: 12px; color: #5c6b75; }
 .offseason-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-size: 11px; }
 .offseason-table thead th { position: sticky; top: 0; z-index: 2; height: 24px; padding: 0 6px; text-align: left; background: #fff;
-  border-bottom: 3px double var(--season-line, #b7c2cb); font-size: 9px; font-weight: 700; color: var(--season-text, #1d2a33); }
+  border-bottom: 2px solid var(--season-line, #b7c2cb); font-size: 9px; font-weight: 700; color: var(--season-text, #1d2a33); }
 .offseason-table tbody tr { background: #fff; }
 .offseason-table tbody tr:nth-child(even) { background: #eef1f3; }
 .offseason-table tbody tr:is(:hover, :focus-within) { background: #dce8f2; }
@@ -85,7 +85,7 @@ body.unified-terminal-ui .offseason-table thead th { font-size: 9px !important; 
 .cutdown-tag.is-camp { border-color: #c2862a; background: #fff4e0; color: #6b4610; }
 .cutdown-choice-twoway.is-active { background: #2f6f9a !important; color: #fff !important; }
 .cutdown-twoways { margin: 10px 12px 12px; border: 1px solid #b7c2cb; background: #fbfcfd; }
-.cutdown-twoways > header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding: 6px 10px; border-bottom: 3px double #b7c2cb; background: #eef2f5; }
+.cutdown-twoways > header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding: 6px 10px; border-bottom: 2px solid #b7c2cb; background: #eef2f5; }
 .cutdown-twoways > header strong { font-size: 12px; }
 .cutdown-twoways > header small { font-size: 10px; color: #5d6b77; }
 .cutdown-twoways ol { margin: 0; padding: 0; list-style: none; }

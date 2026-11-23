@@ -59,7 +59,7 @@ body.unified-terminal-ui .modal-standings .section-head { padding: 6px 2px 4px; 
 body.unified-terminal-ui .modal-standings .section-head h3 { font: 700 12px Tahoma, Arial, sans-serif; }
 body.unified-terminal-ui .modal-standings .dashboard-standings { width: 100%; border-collapse: collapse; background: var(--house-row, #fff); }
 body.unified-terminal-ui .modal-standings .dashboard-standings thead th {
-  border-bottom: 3px double var(--house-head-rule, #89949f);
+  border-bottom: 2px solid var(--house-head-rule, #89949f);
   color: var(--house-head-text, #17212a);
   font: 700 9px Tahoma, Arial, sans-serif;
   letter-spacing: 0;

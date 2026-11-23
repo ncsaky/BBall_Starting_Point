@@ -98,7 +98,8 @@
   // and hues as the game's rating bars (app.js playerRatingBarStyle / performanceBarColor), a shade darker so the
   // middle (yellow) stays readable as text.
   const RATING_FLOOR = 60, RATING_CEILING = 98;
-  const RATING_STOPS = [[0, [200, 54, 66]], [0.34, [206, 100, 50]], [0.52, [170, 132, 30]], [0.74, [58, 128, 192]], [1, [30, 88, 190]]];
+  // Same text-safe stops as app.js ratingInkColor (round 3 contrast check: at least 5:1 on the light cards).
+  const RATING_STOPS = [[0, [158, 32, 46]], [0.34, [152, 66, 20]], [0.52, [112, 86, 8]], [0.74, [30, 94, 150]], [1, [20, 64, 158]]];
   function ratingColor(value) {
     const share = Math.min(1, Math.max(0, (Number(value) - RATING_FLOOR) / (RATING_CEILING - RATING_FLOOR)));
     const upper = Math.max(1, RATING_STOPS.findIndex(([stop]) => share <= stop));
@@ -332,25 +333,35 @@
       const injury = (p) => (p.injury ? `<span class="ss-injury" title="${attr(`${p.injury.label || "Injured"}${p.injury.whole_season ? ", expected to miss the season" : `, about ${p.injury.games} games`}${p.injury.return_date ? `, back around ${p.injury.return_date}` : ""}`)}">✚ ${p.injury.whole_season ? "season" : esc(p.injury.games)}</span>` : "");
       const link = (p) => name({...p, player_id: p.id});
       const opens = (p) => (p.id && !String(p.id).startsWith("real:") ? ` data-ss-tile-player="${attr(p.id)}"` : "");
+      const drop = (p) => (p.injury && Number(p.injury.return_penalty) >= 0.1 ? `<small class="rating-drop is-on-return" title="${attr(`Out injured: ${Number(p.injury.return_penalty).toFixed(1)} lower for his first games back`)}">−${Number(p.injury.return_penalty).toFixed(1)}</small>` : "");
+      const roleText = (role) => {
+        if (!role) return "";
+        const [label, tone] = (typeof PLAYER_ROLE_CHIPS === "object" && PLAYER_ROLE_CHIPS[role]) || [role, "unknown"];
+        return `<span class="role-text role-${attr(tone)}">${esc(label)}</span>`;
+      };
+      const SLOTS = ["PG", "SG", "SF", "PF", "C"];
       const starterTile = (p, i) => `<li class="ss-tile ss-tile-starter" style="--i:${i}"${opens(p)}>
-          <span class="ss-tile-pos">${esc(p.position || "")}</span>
+          <span class="ss-tile-pos">${SLOTS[i] || esc(p.position || "")}</span>
           <span class="ss-tile-photo">${headshot(p)}</span>
           <span class="ss-tile-name">${link(p)}${injury(p)}</span>
-          <span class="ss-tile-ovr" title="Overall">${ratingNumber(p.overall)}</span>
-          <span class="ss-role-pair">${roleChip(p.off_role)}${roleChip(p.def_role)}</span></li>`;
-      const benchTile = (p, i) => `<li class="ss-tile ss-tile-bench" style="--i:${i + 5}"${opens(p)}>
-          ${headshot(p)}<span class="ss-tile-text"><span class="ss-tile-name">${link(p)}</span><span class="ss-tile-meta">${ratingNumber(p.overall)}${injury(p)}</span></span></li>`;
-      const t = slide.takeaways || {};
-      const teams = t.teams || slide.league_teams || 30;
-      const fact = (label, value, sub, cls = "") => `<div class="ss-fact${cls}"><span class="ss-fact-label">${esc(label)}</span><b class="ss-fact-value">${value}</b>${sub ? `<span class="ss-fact-sub">${sub}</span>` : ""}</div>`;
-      const facts = [];
-      if (t.age) facts.push(fact("Rotation age", num(t.age.value), t.age.rank ? `${ordinalRank(t.age.rank)} youngest of ${teams}` : ""));
-      if (t.shape?.label) facts.push(fact("Talent spread", esc(t.shape.label), `Top three ${ordinalRank(t.shape.top_rank)} · bench ${ordinalRank(t.shape.depth_rank)}`));
-      if (t.payroll) facts.push(fact("Payroll", money(t.payroll.value), t.payroll.rank ? `${ordinalRank(t.payroll.rank)} highest of ${teams}` : ""));
+          <span class="ss-tile-ovr" title="Overall">${ratingNumber(p.overall)}${drop(p)}</span>
+          <span class="ss-role-pair">${roleText(p.off_role)}${roleText(p.def_role)}</span></li>`;
+      // Depth chart (round 3): a column per position group (guards, wings, bigs), a row per player in the order the
+      // coach uses them (most minutes first). A player's group comes from his first listed position.
+      const GROUPS = [["Guards", ["PG", "SG", "G"]], ["Wings", ["SF", "GF", "F"]], ["Bigs", ["PF", "C", "FC"]]];
+      const groupOf = (p) => {
+        const tokens = String(p.position || "").toUpperCase().split(/[^A-Z]+/).filter(Boolean);
+        const first = tokens[0] || "F";
+        return Math.max(0, GROUPS.findIndex(([, list]) => list.includes(first)));
+      };
+      const columns = GROUPS.map((_, index) => bench.filter((p) => groupOf(p) === index));
+      const depthCell = (p) => p ? `<td class="ss-depth-cell"${opens(p)}><span class="ss-depth-player">${headshot(p)}<span><span class="ss-tile-name">${link(p)}${injury(p)}</span><span class="ss-depth-meta">${ratingNumber(p.overall)}${drop(p)}${p.minutes ? `<i>${esc(p.minutes)} min</i>` : ""}<em>${esc(p.position || "")}</em></span></span></span></td>` : `<td class="ss-depth-cell is-empty"></td>`;
+      const depthRows = Array.from({length: Math.max(1, ...columns.map((col) => col.length))}, (_, row) =>
+        `<tr>${columns.map((col) => depthCell(col[row])).join("")}</tr>`).join("");
+      const depthTable = `<table class="ss-depth-table is-by-group"><thead><tr>${GROUPS.map(([label]) => `<th scope="col">${label}</th>`).join("")}</tr></thead><tbody>${depthRows}</tbody></table>`;
       return `<div class="ss-team-board${rowsIn()}">
           <section class="ss-starters">${panelTitle("Projected starting five")}<ol class="ss-starter-row">${starters.map(starterTile).join("")}</ol></section>
-          ${bench.length ? `<section class="ss-bench">${panelTitle("Bench")}<ol class="ss-bench-row">${bench.map(benchTile).join("")}</ol></section>` : ""}
-          ${facts.length ? `<section class="ss-facts">${facts.join("")}</section>` : ""}
+          ${bench.length ? `<section class="ss-depth">${panelTitle("Depth chart")}${depthTable}</section>` : ""}
         </div>`;
     },
     // Team profile: two titled panels, the strengths radar and the payroll chart with its numbers underneath.
@@ -374,9 +385,9 @@
           ? `<div class="ss-radar-pair">${bySide.map((axes) => curvedRadar(axes, slide.league_teams || 30)).join("")}</div>`
           : curvedRadar(radarAxes, slide.league_teams || 30);
       return `<div class="ss-profile">
-          <section class="ss-panel ss-panel-radar">${panelTitle("Strengths by league rank")}${radars}</section>
-          <section class="ss-panel ss-panel-payroll">${panelTitle("Payroll, next four seasons")}<div class="ss-payroll">${chart}</div>
-            <table class="ss-cap-table"><tbody>${figures.map(([label, value]) => `<tr><td class="ss-cap-label">${esc(label)}</td><td class="ss-cap-value">${value}</td></tr>`).join("")}</tbody></table></section>
+          <section class="ss-panel ss-panel-radar is-centred-title">${panelTitle("Strengths")}${radars}</section>
+          <section class="ss-panel ss-panel-payroll is-centred-title">${panelTitle("Payroll")}<div class="ss-payroll-block"><div class="ss-payroll">${chart}</div>
+            <table class="ss-cap-table"><tbody>${figures.map(([label, value]) => `<tr><td class="ss-cap-label">${esc(label)}</td><td class="ss-cap-value">${value}</td></tr>`).join("")}</tbody></table></div></section>
         </div>`;
     },
     // Contracts to watch: bar charts, not salary tables. Every contract reads "$X × N" (UI style guide).

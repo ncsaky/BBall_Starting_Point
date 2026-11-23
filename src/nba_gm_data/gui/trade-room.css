@@ -309,7 +309,7 @@ body.unified-terminal-ui #modalRoot table.tr-table .trade-ledger-pick .trade-led
 body.unified-terminal-ui #modalRoot .modal-shell table.tr-table button.trade-player-link { padding: 0 !important; color: var(--tr-ink) !important; font: 12px Tahoma, Arial, sans-serif !important; text-align: left; }
 body.unified-terminal-ui #modalRoot .modal-shell table.tr-table button.trade-player-link:hover { text-decoration: underline !important; text-underline-offset: 2px; background: none !important; }
 body.unified-terminal-ui #modalRoot table.tr-table .trade-pick-condition { margin-left: 6px; color: var(--tr-muted); font-size: 11px; text-transform: none !important; letter-spacing: 0 !important; font-weight: 400 !important; }
-body.unified-terminal-ui #modalRoot table.tr-table tbody tr.trade-ledger-pick > td:not(.tr-col-value) { color: #9aa6b0; }
+body.unified-terminal-ui #modalRoot table.tr-table tbody tr.trade-ledger-pick > td:not(.tr-col-value) { color: #4b5b68; }
 body.unified-terminal-ui #modalRoot table.tr-table .tr-rating { font-weight: 700 !important; font-size: 12.5px; }
 body.unified-terminal-ui #modalRoot table.tr-table .tr-role-pair { display: inline-flex; gap: 3px; }
 body.unified-terminal-ui #modalRoot table.tr-table .role-chip { font-size: 10px; }
@@ -604,3 +604,21 @@ body.unified-terminal-ui #modalRoot .tr-payroll.is-playing .salary-segment.is-ar
 /* The answer and the Ask button stay together at the top of the right column. */
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal > .tr-verdict > #tradeRead { flex: none !important; overflow: visible !important; min-height: 0 !important; }
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal > .tr-verdict > .tr-verdict-actions { flex: none !important; margin-top: 0 !important; }
+
+/* ---------- Round 3 (taste deck 2026-11-23) ----------
+   Tiles: roles are a field again (coloured text), value is its number with the bar right beside it.
+   Asset lists: value as a bar too; OFF and DEF plain and lighter than the coloured OVR; a narrower name column.
+   Payroll chart: tall enough to read (it was squashed flat). */
+body.unified-terminal-ui #modalRoot .tr-tile { grid-template-columns: 40px minmax(110px, 1fr) minmax(96px, 120px) 110px 30px 80px 22px !important; }
+body.unified-terminal-ui #modalRoot .tr-tile:not(:has(.tr-tile-remove)) { grid-template-columns: 40px minmax(110px, 1fr) minmax(96px, 120px) 110px 30px 80px !important; }
+body.unified-terminal-ui #modalRoot .tr-tile-roles { display: flex; flex-direction: column; justify-content: center; min-width: 0; line-height: 1.15; font-size: 10px; font-weight: 600; }
+body.unified-terminal-ui #modalRoot .tr-tile-roles .role-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.unified-terminal-ui #modalRoot .tr-tile-value, body.unified-terminal-ui #modalRoot .trade-ledger .tr-tile-value { display: grid !important; grid-template-columns: 34px minmax(0, 1fr) !important; align-items: center; gap: 5px; }
+body.unified-terminal-ui #modalRoot .tr-tile-value > strong { text-align: right; }
+body.unified-terminal-ui #modalRoot .trade-ledger .tr-col-value { min-width: 120px; }
+body.unified-terminal-ui #modalRoot .trade-ledger .tr-col-value .tr-tile-value > i { height: 8px; }
+body.unified-terminal-ui #modalRoot .trade-ledger .tr-rating-plain { font-size: 11.5px; font-weight: 400; color: #2a3a48; }
+body.unified-terminal-ui #modalRoot .trade-ledger :is(th, td).tr-col-name { width: 1%; max-width: 230px; white-space: nowrap; }
+body.unified-terminal-ui #modalRoot .tr-payroll-stage { height: 300px !important; }
+body.unified-terminal-ui #modalRoot .tr-payroll-frames { grid-template-columns: repeat(var(--tr-frames, 2), minmax(0, 440px)) !important; justify-content: center; gap: 28px !important; }
+

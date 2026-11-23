@@ -721,7 +721,7 @@ body.unified-terminal-ui .unified-phase-dashboard:is([data-phase="cutdown"],[dat
 .injury-body-note { color:var(--ui-muted); font-size:10px; }
 .injury-body-current b { color:rgb(190,40,70); }
 .injury-body-table { border-collapse:collapse; font-size:10px; width:100%; }
-.injury-body-table thead th { border-bottom:3px double var(--ui-line, #bbb); font-size:9px; font-weight:700; padding:3px 5px; text-align:left; }
+.injury-body-table thead th { border-bottom:2px solid var(--ui-line, #bbb); font-size:9px; font-weight:700; padding:3px 5px; text-align:left; }
 .injury-body-table tbody tr:nth-child(even) { background:color-mix(in srgb, var(--ui-soft, #ddd) 45%, transparent); }
 .injury-body-table tbody tr:hover { background:color-mix(in srgb, var(--ui-soft, #ddd) 90%, transparent); }
 .injury-body-table td, .injury-body-table tbody th { font-weight:400; padding:3px 5px; white-space:nowrap; }

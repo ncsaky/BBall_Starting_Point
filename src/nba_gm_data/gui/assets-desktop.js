@@ -217,6 +217,11 @@ function assetsTradeTools(legal) {
   </div>`;
 }
 // Player OVR/OFF/DEF: the one rating bar every table uses (scale and look in app.js playerRatingBarStyle).
+function assetsRoleText(role) {
+  if (!role) return '—';
+  const [label, tone] = (typeof PLAYER_ROLE_CHIPS === 'object' && PLAYER_ROLE_CHIPS[role]) || [role, 'unknown'];
+  return `<span class="role-text role-${escapeAttr(tone)}">${escapeHtml(label)}</span>`;
+}
 function compactRatingBar(value) {
   return `<span class="linked-rating assets-rating-bar player-rating-bar" style="${Number.isFinite(Number(value)) && value !== null && value !== "" ? playerRatingBarStyle(value) : ""}"><span>${draftMetric(value)}</span><i><b style="${playerRatingBarStyle(value)}"></b></i></span>`;
 }
@@ -272,15 +277,16 @@ function assetsRosterGroups(seasons) {
     player,
     {key:'age',label:'Age',width:28,value:p=>Math.floor(p.age)},
     {key:'position',label:'Pos',width:28,value:p=>compactPos(p.position)},
-    // Offense and defense roles as colour-coded chips (playtest 2026-11-22; app.js playerRoleChip).
-    {key:'primary_off_role',label:'Off. role',width:120,value:p=>p.primary_off_role||'',cell:p=>playerRoleChip(p.primary_off_role)},
-    {key:'primary_def_role',label:'Def. role',width:120,value:p=>p.primary_def_role||'',cell:p=>playerRoleChip(p.primary_def_role)},
-    {key:'trade_value',label:'Value',width:65,value:p=>Number(p.trade_value||0),cell:p=>p.trade_value==null?'—':draftMetric(p.trade_value)},
+    // Offense and defense roles as coloured text, not chips (taste deck round 3).
+    {key:'primary_off_role',label:'Off. role',width:120,value:p=>p.primary_off_role||'',cell:p=>assetsRoleText(p.primary_off_role)},
+    {key:'primary_def_role',label:'Def. role',width:120,value:p=>p.primary_def_role||'',cell:p=>assetsRoleText(p.primary_def_role)},
+    // Value as a bar beside its number: the main thing when sorting by value (taste deck round 3).
+    {key:'trade_value',label:'Value',width:120,value:p=>Number(p.trade_value||0),cell:p=>p.trade_value==null?'—':tradeValueBar(Number(p.trade_value))},
   ];
   // OFF comes from the server like OVR and DEF (one display scale; OVERALL-SCALE, 2026-11-21). rating() reads the row's
   // display ratings first and only averages subratings when no OFF was sent. Reading p.ratings.offense first skipped the
   // roster rows' display_ratings and showed a three-subrating average under the OFF label.
-  const ratings=[['OVR','overall'],['OFF','offense'],['DEF','defense'],['Shot','shooting'],['Cre','creation'],['Pass','passing'],['Reb','rebounding'],['Rim','rim_deterrence'],['Ath','athleticism'],['Range','range']].map(([label,key],i)=>({label,key,width:i<3?80:([5,9].includes(i)?38:39),value:p=>Number(key==='offense'?(p.ratings?.offense??rating(p,'offense')):rating(p,key)),cell:p=>i<3?compactRatingBar(key==='offense'?(p.ratings?.offense??rating(p,'offense')):rating(p,key)):draftMetric(rating(p,key))}));
+  const ratings=[['OVR','overall'],['OFF','offense'],['DEF','defense'],['Shot','shooting'],['Cre','creation'],['Pass','passing'],['Reb','rebounding'],['Rim','rim_deterrence'],['Ath','athleticism'],['Range','range']].map(([label,key],i)=>({label,key,width:i<3?80:([5,9].includes(i)?38:39),value:p=>Number(key==='offense'?(p.ratings?.offense??rating(p,'offense')):rating(p,key)),cell:p=>{const value=key==='offense'?(p.ratings?.offense??rating(p,'offense')):rating(p,key); const drop=typeof ratingDropMarkup==='function'?ratingDropMarkup(p):''; return (`<span class="assets-rating-cell">${i===0?compactRatingBar(value):`<span class="assets-rating-plain">${draftMetric(value)}</span>`}${drop}</span>`);}}));
   const stats=[compactPlayer,{key:'games',label:'GP',value:p=>Number(p.games||0),cell:p=>escapeHtml(p.gp_display||p.games||0)},{key:'mpg',label:'MPG',value:p=>Number(mpgFromRow(p)),cell:p=>draftMetric(mpgFromRow(p))},...['points','rebounds','assists','steals','blocks','turnovers'].map((key,i)=>({key,label:['PTS','REB','AST','STL','BLK','TO'][i],value:p=>Number(statNumber(p,key)),cell:p=>statNumber(p,key)}))];
   const contracts=[compactPlayer,{key:'health_risk',label:'Risk',width:44,value:p=>Number(p.health_risk||0),cell:p=>playerEvidenceRing('Health risk',p.health_risk,10,Number(p.health_risk)>=7?'#e04d55':Number(p.health_risk)>=4?'#bd5b5d':'#8e6263','/10')},{key:'upside_remaining',label:'Runway',width:44,value:p=>Number(p.upside_remaining||0),cell:p=>playerEvidenceRing('Growth runway',p.upside_remaining,5,playerUpsideColor(Number(p.upside_remaining||0)),' / 5')},...seasons.map(season=>({key:season,label:shortSeasonLabel(season),width:48,value:p=>Number(p.salary_by_year?.[season]||0),cell:p=>formatCell(assetContractCell(p,season,seasons))}))];
   return [

@@ -266,6 +266,22 @@ function wireEvents() {
   document.addEventListener("click", (event) => {
     document.querySelectorAll("details[data-season-steps][open]").forEach((chip) => { if (!chip.contains(event.target)) chip.removeAttribute("open"); });
   });
+  // Player Development graph: view tabs and player checkboxes (delegated; the graph re-renders in place).
+  document.addEventListener("click", (event) => {
+    const view = event.target.closest?.("[data-dev-view]");
+    if (!view) return;
+    (state.devGraph ||= {}).view = view.dataset.devView;
+    rerenderDevelopmentGraph();
+  });
+  document.addEventListener("change", (event) => {
+    const box = event.target.closest?.("[data-dev-pick]");
+    if (!box) return;
+    const graph = (state.devGraph ||= {view: "season", picked: []});
+    const id = box.dataset.devPick;
+    graph.picked = box.checked ? [...new Set([...(graph.picked || []), id])] : (graph.picked || []).filter((item) => item !== id);
+    if (!graph.picked.length) graph.picked = [id];
+    rerenderDevelopmentGraph();
+  });
   // Settings > Board background (delegated, like the slideshow buttons below).
   document.addEventListener("click", (event) => {
     const button = event.target.closest?.("[data-board-theme-choice]");
@@ -371,6 +387,7 @@ function wireEvents() {
         'resign-day':()=>advanceReSigning('day'), 'resign-open':openFreeAgencyFromStopOne,
         'fa-day':()=>advanceFreeAgency('day'), 'fa-end':()=>advanceFreeAgency('end'), 'fa-next':()=>advanceFreeAgency('end'),
         'preseason-roster':()=>window.CardBoard?.open('phase-set_roster-checklist'), 'preseason-start':()=>advance({ next_event: true }),
+        'offseason-next':()=>advance({ next_event: true }),
       };
       const run = handlers[command.dataset.phaseCommand];
       if (run) Promise.resolve().then(run).catch(error=>showToast(error.message || String(error),true));
@@ -2968,7 +2985,27 @@ function restoreFantasyBoardScroll() {
   });
 }
 
+// Glass look: the board's light and the title-bar tint come from the user's team colours. A colour too light to tint
+// dark glass (Brooklyn's white, San Antonio's silver) falls back to a deep slate blue.
+function applyTeamGlass(team = userTeam()) {
+  const [first, second] = TEAM_BRAND_COLORS[team] || [];
+  const usable = (hex) => {
+    const value = String(hex || "").replace("#", "");
+    if (value.length !== 6) return false;
+    const [r, g, b] = [0, 2, 4].map((i) => parseInt(value.slice(i, i + 2), 16));
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) < 200;
+  };
+  const a = usable(first) ? first : usable(second) ? second : "#2f6fb7";
+  const b = usable(second) && second !== a ? second : "#c8563a";
+  document.documentElement.style.setProperty("--team-a", a);
+  document.documentElement.style.setProperty("--team-b", b);
+}
+
 function renderDashboardTab(rows) {
+  applyTeamGlass();
+  // Development projections are per day: drop them when the date or save changes.
+  const devKey = `${state.currentSave}:${state.home?.save?.current_date || ""}`;
+  if (state.devProjectionKey !== devKey) { state.devProjectionKey = devKey; state.data.devProjection = null; }
   const target = document.getElementById("dashboardTab");
   const dash = state.data.dashboard || {};
   const editable = !state.hydrating && teamLabel(dash.team || state.dashboardTeam) === userTeam();
@@ -3161,7 +3198,7 @@ const FOUR_FACTOR_MEANINGS = {
 // colour, red to blue by league rank (rank already accounts for turnovers being better low).
 // One small key under the Four Factors range charts (taste deck round 2): what the line, box, tick and dot mean.
 function seasonFactorLegend() {
-  return `<div class="season-factor-legend" aria-hidden="true"><span><i class="whisker"></i>League range</span><span><i class="iqr"></i>Middle half</span><span><i class="median"></i>Median</span><span><i class="dot"></i>Us</span></div>`;
+  return `<div class="season-factor-legend" aria-hidden="true"><span><i class="whisker"></i>League range</span><span><i class="iqr"></i>Middle half</span><span><i class="median"></i>Median</span><span><i class="dot"></i>Us</span><span class="season-factor-legend-better">right is better</span></div>`;
 }
 
 function seasonFactorBar(factor) {
@@ -3170,10 +3207,16 @@ function seasonFactorBar(factor) {
   const average = Number(factor.league_average || 0);
   const spread = factor.league_spread || {};
   const known = ["min", "q1", "median", "q3", "max"].every(key => Number.isFinite(Number(spread[key])));
-  const low = Math.min(value, known ? Number(spread.min) : average);
-  const high = Math.max(value, known ? Number(spread.max) : average);
-  const pad = Math.max((high - low) * 0.06, 0.2);
-  const at = number => `${clampNumber((Number(number) - (low - pad)) / ((high + pad) - (low - pad)) * 100, 0, 100).toFixed(1)}%`;
+  // Round 3: every row's league range spans the same width (lowest team at 8%, highest at 92%), and right is always
+  // better: turnovers, where lower is better, are drawn mirrored.
+  const low = known ? Number(spread.min) : Math.min(value, average) - 1;
+  const high = known ? Number(spread.max) : Math.max(value, average) + 1;
+  const lowerIsBetter = factor.key === "tov";
+  const at = number => {
+    const share = clampNumber(8 + (Number(number) - low) / Math.max(0.001, high - low) * 84, 1, 99);
+    return `${(lowerIsBetter ? 100 - share : share).toFixed(1)}%`;
+  };
+  const between = (a, b) => { const [x1, x2] = [parseFloat(at(a)), parseFloat(at(b))].sort((m, n) => m - n); return `left:${x1.toFixed(1)}%;right:${(100 - x2).toFixed(1)}%`; };
   const color = performanceBarColor(score);
   const meaning = FOUR_FACTOR_MEANINGS[factor.key] ? `${FOUR_FACTOR_MEANINGS[factor.key]} ` : "";
   const rank = factor.rank && factor.team_count ? ` Rank #${factor.rank} of ${factor.team_count}.` : "";
@@ -3181,7 +3224,7 @@ function seasonFactorBar(factor) {
     ? `League: lowest ${Number(spread.min).toFixed(1)}, middle half ${Number(spread.q1).toFixed(1)}–${Number(spread.q3).toFixed(1)}, median ${Number(spread.median).toFixed(1)}, highest ${Number(spread.max).toFixed(1)}.`
     : `League average ${average.toFixed(1)}.`;
   const box = known
-    ? `<span class="season-factor-whisker" style="left:${at(spread.min)};right:calc(100% - ${at(spread.max)})"></span><span class="season-factor-iqr" style="left:${at(spread.q1)};right:calc(100% - ${at(spread.q3)})"></span><span class="season-factor-median" style="left:${at(spread.median)}"></span>`
+    ? `<span class="season-factor-whisker" style="${between(spread.min, spread.max)}"></span><span class="season-factor-iqr" style="${between(spread.q1, spread.q3)}"></span><span class="season-factor-median" style="left:${at(spread.median)}"></span>`
     : `<span class="season-factor-median" style="left:${at(average)}"></span>`;
   return `<div class="season-signal-row season-factor-row" title="${escapeAttr(`${meaning}${league}${rank}`)}" style="--factor-color:${color}">
     <span>${escapeHtml(factor.label || "Factor")}</span><span class="season-factor-box" role="img" aria-label="${escapeAttr(`${factor.label || "Factor"} ${value.toFixed(1)}. ${league}`)}">${box}<span class="season-factor-dot" style="left:${at(value)}"></span></span><strong class="season-factor-value">${value.toFixed(1)}</strong>
@@ -3222,7 +3265,8 @@ function playerRatingBarStyle(value) {
 // red low to blue high). Same stops as performanceBarColor, darkened so the number reads on light rows.
 function ratingInkColor(value) {
   const amount = clampNumber(Number(value || 0) / 100, 0, 1);
-  const stops = [[0, [168, 38, 52]], [0.34, [178, 82, 30]], [0.52, [134, 104, 16]], [0.74, [38, 108, 168]], [1, [22, 70, 170]]];
+  // Darkened mid stops (round 3 contrast check): every rating colour is at least 5:1 on the light rows.
+  const stops = [[0, [158, 32, 46]], [0.34, [152, 66, 20]], [0.52, [112, 86, 8]], [0.74, [30, 94, 150]], [1, [20, 64, 158]]];
   const upperIndex = Math.max(1, stops.findIndex(([stop]) => amount <= stop));
   const [lowerStop, lowerColor] = stops[upperIndex - 1];
   const [upperStop, upperColor] = stops[upperIndex];
@@ -3727,7 +3771,7 @@ function seasonOpponentCard(dash, viewedTeam) {
     ["OVR", rankings.overall], ["OFF", rankings.offense], ["DEF", rankings.defense],
   ];
   return `<header class="season-panel-header season-opponent-header">
-      <div class="season-opponent-title">${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(opponentTeam)} logo" />` : ""}<span>${escapeHtml(opponentTeam || "—")}</span><span>${Number(record.wins || 0)}-${Number(record.losses || 0)}</span>${opponent.pending ? "" : `<span>L10 ${lastTenWins}-${Math.max(0, lastTen.length - lastTenWins)}</span>${headerRatings.map(([label, rank]) => {
+      <div class="season-opponent-title">${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(opponentTeam)} logo" />` : ""}<span class="season-opponent-abbrev">${escapeHtml(opponentTeam || "—")}</span><span class="season-opponent-record" title="Record">${Number(record.wins || 0)}-${Number(record.losses || 0)}</span>${opponent.pending ? "" : `<span>L10 ${lastTenWins}-${Math.max(0, lastTen.length - lastTenWins)}</span>${headerRatings.map(([label, rank]) => {
         const score = clampNumber(((30 - Number(rank || 30) + 1) / 30) * 100, 3, 100);
         // League rank as a coloured number (red near 30th, blue near 1st), no bar (taste deck 2026-11-23).
         return `<span class="season-opponent-header-rating"><b style="color:${ratingInkColor(score)}">#${Number(rank || 30)}</b><small>${label}</small></span>`;
@@ -3744,7 +3788,7 @@ function seasonOpponentCard(dash, viewedTeam) {
         // Headshot where the rank number was (taste deck 2026-11-23).
         const playerMarkup = (playerHeadshotMarkup(row, "roster-player-headshot") || "") + playerNameWithInjuryMarkup(row, playerName)
           .replace('class="player-name-text"', 'class="player-name-text" data-opponent-player-text');
-        return `<div class="season-opponent-row${isPlayerInjured(row.health) ? " injured" : ""}" role="row" data-opponent-index="${originalIndex}" data-house-row data-house-order="${originalIndex}"${displayIndex % 2 ? " data-house-alt" : ""}${seasonOpponentSortData(row)}><span class="season-opponent-player-cell" role="rowheader" data-opponent-column="player"><button type="button" class="season-opponent-player-link" data-dashboard-player-card="${escapeAttr(row.id || row.player_id || "")}" aria-label="Open ${escapeAttr(playerName)} player card">${playerMarkup}</button></span>${seasonOpponentRatingCell(rating(row, "overall"), "overall", playerOverallToday(row)?.drop || 0)}${seasonOpponentRatingCell(rating(row, "offense"), "offense")}${seasonOpponentRatingCell(rating(row, "defense"), "defense")}${["points", "rebounds", "assists"].map((key) => `<span role="cell" data-opponent-column="${key}">${escapeHtml(statNumber(row, key))}</span>`).join("")}</div>`;
+        return `<div class="season-opponent-row${isPlayerInjured(row.health) ? " injured" : ""}" role="row" data-opponent-index="${originalIndex}" data-house-row data-house-order="${originalIndex}"${displayIndex % 2 ? " data-house-alt" : ""}${seasonOpponentSortData(row)}><span class="season-opponent-player-cell" role="rowheader" data-opponent-column="player"><button type="button" class="season-opponent-player-link" data-dashboard-player-card="${escapeAttr(row.id || row.player_id || "")}" aria-label="Open ${escapeAttr(playerName)} player card">${playerMarkup}</button></span>${seasonOpponentRatingCell(rating(row, "overall"), "overall", playerRatingDrop(row).out ? 0 : playerRatingDrop(row).drop)}${seasonOpponentRatingCell(rating(row, "offense"), "offense")}${seasonOpponentRatingCell(rating(row, "defense"), "defense")}${["points", "rebounds", "assists"].map((key) => `<span role="cell" data-opponent-column="${key}">${escapeHtml(statNumber(row, key))}</span>`).join("")}</div>`;
       }).join("") || `<div class="empty">${opponent.pending ? "Rotation updates as the sim reaches this game." : "Opponent rotation unavailable."}</div>`}
     </div>
     <div class="season-opponent-injuries"><span>Current injuries:</span><div class="season-opponent-injury-ticker" data-injury-ticker title="${escapeAttr(injuries.join(" · ") || (opponent.pending ? "—" : "No active injuries"))}"><div class="season-opponent-injury-track"><span data-injury-ticker-text>${escapeHtml(injuries.join(" · ") || (opponent.pending ? "—" : "No active injuries"))}</span><span data-injury-ticker-copy aria-hidden="true"></span></div></div></div>`;
@@ -3763,8 +3807,8 @@ const HOUSE_TABLE_COLUMNS = {
     minutes: {col: 6}, fatigue: {col: 7},
   },
   development: {
-    player: {type: "text", col: 1}, age: {first: "asc", col: 2}, runway: {col: 3},
-    movement: {col: 4}, season: {col: 4}, month: {col: 4},
+    player: {type: "text", col: 1}, age: {first: "asc", col: 2},
+    movement: {col: 3}, season: {col: 3}, month: {col: 3},
   },
   staff: {role: {first: "asc", col: 1}, grade: {col: 2}, contract: {col: 3}},
   standings: {seed: {first: "asc", col: 1}, team: {type: "text", col: 2}, record: {col: 3}, pct: {col: 4}, gb: {first: "asc", col: 5}},
@@ -4419,15 +4463,18 @@ function seasonAwardFace(row, className) {
 function seasonAwardLeader(row, label, stats) {
   const award = label.toLowerCase();
   const trophy = SEASON_AWARD_TROPHIES[award];
-  return `<button type="button" class="season-award-leader" data-dashboard-player-card="${escapeAttr(row.player_id)}">
-      ${seasonAwardFace(row, "season-award-leader-face")}
+  // Round 3: one centred composition: the trophy and the leader's headshot side by side, his name and team under
+  // them, and his stat line centred under the name (its own small grid, not the chasers' columns).
+  return `<button type="button" class="season-award-leader is-centred" data-dashboard-player-card="${escapeAttr(row.player_id)}">
+      <span class="season-award-hero">${trophy ? `<span class="season-award-trophy" data-trophy="${award}" aria-hidden="true"><img src="${escapeAttr(trophy)}" alt="" loading="lazy" decoding="async" /></span>` : ""}${seasonAwardFace(row, "season-award-leader-face")}</span>
       <span class="season-award-leader-name"><b class="season-award-rank">${row.rank || 1}</b><strong>${escapeHtml(row.player_name)}</strong></span>
       ${seasonAwardTeam(row)}
-      <span class="season-award-trophy" data-trophy="${award}" aria-hidden="true">${trophy ? `<img src="${escapeAttr(trophy)}" alt="" loading="lazy" decoding="async" />` : ""}</span>
-      ${stats.map(([key, statLabel], index) => `<small class="season-award-stat-label" data-stat="${key}" style="grid-column:${3 + index}">${statLabel}</small>`).join("")}
-      <small class="season-award-stat-label season-award-move-label">Change</small>
-      ${seasonAwardStatCells(row, stats, 3)}
-      ${seasonRankChange(row.rank_change, row.previous_week_rank ?? row.season_start_rank)}
+      <span class="season-award-leader-stats" style="--leader-stats:${stats.length + 1}">
+        ${stats.map(([key, statLabel]) => `<small class="season-award-stat-label" data-stat="${key}">${statLabel}</small>`).join("")}
+        <small class="season-award-stat-label season-award-move-label">Change</small>
+        ${seasonAwardStatCells(row, stats, 3)}
+        ${seasonRankChange(row.rank_change, row.previous_week_rank ?? row.season_start_rank)}
+      </span>
     </button>`;
 }
 
@@ -4638,15 +4685,33 @@ function seasonMinuteOverall(row) {
 // A player's overall as the engine uses it today. Back from an injury he is rusty: the engine lowers his in-game
 // ratings by `rust_penalty` for his first games back, so tables show today's number with the drop in small red
 // beside it (taste deck round 2). A player who is out shows his healthy number: he doesn't play, so nothing is lowered.
+// The engine's injury drop for one player, in rating points (the same for every rating): back from an injury and
+// still rusty, today's `rust_penalty`; out injured, the rust he will carry when he returns (`return_penalty`: he
+// doesn't play while out, so nothing is lowered until then).
+function playerRatingDrop(row) {
+  const health = row?.health;
+  if (playerHasRust(health)) return {drop: Number(health.rust_penalty), out: false};
+  if (health && isPlayerInjured(health) && Number(health.return_penalty) >= 0.1) return {drop: Number(health.return_penalty), out: true};
+  return {drop: 0, out: false};
+}
+
+function ratingDropMarkup(row, label = "his ratings") {
+  const {drop, out} = playerRatingDrop(row);
+  if (!drop) return "";
+  const title = out ? `Out injured: ${label} will be ${drop.toFixed(1)} lower for his first games back, while he shakes off the rust` : `${label[0].toUpperCase()}${label.slice(1)} ${drop.toFixed(1)} lower today, while he shakes off the rust from his injury`;
+  return `<small class="rating-drop${out ? " is-on-return" : ""}" title="${escapeAttr(title)}">−${drop.toFixed(1)}</small>`;
+}
+
 function playerOverallToday(row) {
   const healthy = Number(rating(row, "overall"));
   if (!Number.isFinite(healthy)) return null;
-  const drop = playerHasRust(row?.health) ? Number(row.health.rust_penalty) : 0;
-  return {healthy, drop, today: healthy - drop};
+  const {drop, out} = playerRatingDrop(row);
+  return {healthy, drop, out, today: out ? healthy : healthy - drop};
 }
 
-function overallTodayMarkup({healthy, drop, today}, className = "") {
+function overallTodayMarkup({healthy, drop, out, today}, className = "") {
   if (!drop) return `<span class="${className} player-rating-bar" style="${playerRatingBarStyle(today)}" title="Overall ${today.toFixed(0)}"><em>${today.toFixed(0)}</em></span>`;
+  if (out) return `<span class="${className} player-rating-bar has-rating-drop" style="${playerRatingBarStyle(today)}" title="${escapeAttr(`Overall ${today.toFixed(0)} healthy. Out injured; ${drop.toFixed(1)} lower for his first games back`)}"><em>${today.toFixed(0)}</em><small class="rating-drop is-on-return">−${drop.toFixed(1)}</small></span>`;
   const title = `Overall ${today.toFixed(0)} today: ${healthy.toFixed(0)} healthy, −${drop.toFixed(1)} while he shakes off the rust from his injury`;
   return `<span class="${className} player-rating-bar has-rating-drop" style="${playerRatingBarStyle(today)}" title="${escapeAttr(title)}"><em>${today.toFixed(0)}</em><small class="rating-drop">−${drop.toFixed(1)}</small></span>`;
 }
@@ -4689,7 +4754,7 @@ function seasonFatigueTooltip(health = {}) {
 function seasonFatigueCell(row) {
   const fatigue = clampNumber(Number(row.health?.fatigue || 0), 0, 100);
   const tone = seasonFatigueTone(fatigue);
-  return `<span class="season-fatigue ${tone}" data-fatigue-value="${fatigue.toFixed(1)}" title="${escapeAttr(seasonFatigueTooltip(row.health || {}))}"><i><b style="width:${Math.max(fatigue > 0 ? 3 : 0, fatigue).toFixed(1)}%"></b></i><em>${fatigue.toFixed(0)}</em></span>`;
+  return `<span class="season-fatigue ${tone}" data-fatigue-value="${fatigue.toFixed(1)}" title="${escapeAttr(seasonFatigueTooltip(row.health || {}))}"><i><b style="width:${Math.max(fatigue > 0 ? 3 : 0, fatigue).toFixed(1)}%;background:${fatigue >= FATIGUE_VERY_TIRED ? "#c8434c" : fatigue >= FATIGUE_TIRED ? "#d09a2c" : "#4e9a6a"}"></b></i><em>${fatigue.toFixed(0)}</em></span>`;
 }
 
 const AWARD_MIN_GAMES = 65;
@@ -4788,8 +4853,9 @@ function seasonDevelopmentCard(rows) {
   const monthLabel = seasonDevelopmentMonthLabel(
     state.data?.dashboardTrends?.development?.latest_month || candidates[0]?.points?.at(-1)?.label,
   );
-  return `<div class="season-development-list" style="--development-count:${Math.max(1, Math.min(9, candidates.length))};--development-total:${Math.max(1, candidates.length)}" data-house-table="development">
-      <div class="season-development-head" data-house-head>${houseHeader("development", "player", "Player")}${houseHeader("development", "age", "Age")}${houseHeader("development", "runway", "Outlook", {title:"Outlook: growth runway (young players, bar to the right) or decline watch (veterans, bar to the left, rating points per year). Growth runway: room this player has left to improve, from age, role and current level, on a 0-5 scale. Not a prediction of a future rating; 0 for most players 27 and older. Sorts most room to grow first, steepest expected decline last."})}${houseHeader("development", "movement", "Change", {title:"Change in overall rating this season (October to June, top bar) and in the latest month (bottom bar), from the game's actual rating changes. Sorts the biggest movers first, up or down."})}</div>
+  state.devGraphCandidates = candidates;
+  return `${seasonDevelopmentGraph(candidates)}<div class="season-development-list" style="--development-count:${Math.max(1, Math.min(9, candidates.length))};--development-total:${Math.max(1, candidates.length)}" data-house-table="development">
+      <div class="season-development-head" data-house-head>${houseHeader("development", "player", "Player")}${houseHeader("development", "age", "Age")}${houseHeader("development", "movement", "Change", {title:"Change in overall rating this season (October to June, top bar) and in the latest month (bottom bar), from the game's actual rating changes. Sorts the biggest movers first, up or down."})}</div>
       ${candidates.map((player, index) => {
         const points = player.points || [];
         const values = points.map((point) => Number(point.value)).filter(Number.isFinite);
@@ -4802,7 +4868,6 @@ function seasonDevelopmentCard(rows) {
         return `<button type="button" class="season-development-row" data-dashboard-player-card="${escapeAttr(player.player_id)}" aria-label="${escapeAttr(summary)}" data-house-row data-house-order="${index}"${index % 2 ? " data-house-alt" : ""} data-sort-player="${escapeAttr(player.name || "")}" data-sort-age="${escapeAttr(age === "—" ? "" : age)}" data-sort-runway="${Number.isFinite(runway) ? runway.toFixed(2) : ""}" data-sort-movement="${Math.abs(seasonDelta).toFixed(3)}" data-sort-season="${seasonDelta.toFixed(3)}" data-sort-month="${monthDelta.toFixed(3)}">
           <span class="season-development-player">${playerHeadshotMarkup(player, "roster-player-headshot")}<span class="season-development-name">${escapeHtml(player.name)}</span></span>
           <span class="season-development-age">${escapeHtml(age)}</span>
-          ${declineWatchApplies(player) ? seasonDevelopmentDecline(player.decline_watch) : seasonDevelopmentUpside(upside)}
           <span class="season-development-metrics">
             ${seasonDevelopmentMetric("Season", seasonDelta, 2)}
             ${seasonDevelopmentMetric(monthLabel, monthDelta, 0.5)}
@@ -4821,6 +4886,85 @@ function setDevelopmentCardExpanded(expanded, card) {
   }
   panel.classList.toggle('is-expanded', Boolean(expanded));
   if (!expanded) panel.querySelector('.season-development-list')?.scrollTo(0, 0);
+}
+
+// Player Development graph (taste deck round 3: a graph instead of a table). "This season": each picked player's
+// overall month by month (the game's own monthly rating changes). "Next 3 seasons": the projection the extension page
+// uses (extension_analysis.ability_projection: median line, faint scenario range). Each line ends in the player's
+// headshot and name; a checkbox row picks who is drawn (the five with the most minutes to start).
+const DEV_GRAPH_COLORS = ["#2563b0", "#c8563a", "#2f8a57", "#7a3fa8", "#b7791f", "#0f7c8c", "#a8434b", "#4b5b68"];
+function seasonDevelopmentGraph(candidates) {
+  const graph = (state.devGraph ||= {view: "season", picked: null});
+  const minutesOf = (id) => Number(rosterRows(state.data.dashboard || {}).find((row) => String(row.id) === String(id))?.minutes_projection || 0);
+  if (!graph.picked || !graph.picked.length || !graph.picked.every((id) => candidates.some((c) => String(c.player_id) === id))) {
+    graph.picked = [...candidates].sort((a, b) => minutesOf(b.player_id) - minutesOf(a.player_id)).slice(0, 5).map((c) => String(c.player_id));
+  }
+  const future = graph.view === "future";
+  const projections = state.data.devProjection?.projections || null;
+  if (future && !projections && !state.devProjectionLoading) loadDevelopmentProjection();
+  const picked = candidates.filter((c) => graph.picked.includes(String(c.player_id)));
+  const color = (id) => DEV_GRAPH_COLORS[graph.picked.indexOf(String(id)) % DEV_GRAPH_COLORS.length];
+  const series = picked.map((c) => {
+    const pts = future
+      ? (projections?.[c.player_id] || []).map((p) => ({label: shortSeasonLabel(p.season), value: Number(p.overall), low: Number(p.low), high: Number(p.high)}))
+      : (c.points || []).map((p) => ({label: seasonDevelopmentMonthLabel(p.label) || String(p.label || ""), value: Number(p.value)}));
+    return {c, pts: pts.filter((p) => Number.isFinite(p.value))};
+  }).filter((s) => s.pts.length);
+  const W = 660, H = 210, left = 34, right = 178, top = 14, bottom = 26;
+  // Short names: last name, with the first initial when two players share it (J. Williams, J. Williams → Jalen/Jaylin).
+  const lastName = (c) => String(c.name || "").split(" ").slice(-1)[0];
+  const shortName = (c) => candidates.filter((o) => lastName(o) === lastName(c)).length > 1 ? `${String(c.name || "").split(" ")[0]} ${lastName(c)}` : lastName(c);
+  const labels = series.reduce((longest, s) => s.pts.length > longest.length ? s.pts.map((p) => p.label) : longest, []);
+  const all = series.flatMap((s) => s.pts.flatMap((p) => [p.value, p.low ?? p.value, p.high ?? p.value]));
+  const lo = Math.floor((Math.min(...all, 100) - 2) / 5) * 5, hi = Math.ceil((Math.max(...all, 0) + 2) / 5) * 5;
+  const x = (i) => left + (labels.length <= 1 ? 0 : i * (W - left - right) / (labels.length - 1));
+  const y = (v) => top + (hi - v) / Math.max(1, hi - lo) * (H - top - bottom);
+  const grid = [];
+  for (let v = lo; v <= hi; v += 5) grid.push(`<line class="dev-grid" x1="${left}" x2="${W - right}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/><text class="dev-axis" x="${left - 6}" y="${(y(v) + 3.5).toFixed(1)}" text-anchor="end">${v}</text>`);
+  const xLabels = labels.map((label, i) => `<text class="dev-axis" x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="middle">${escapeHtml(label)}</text>`).join("");
+  // End labels: spread so names never overlap.
+  const ends = series.map((s) => ({s, y: y(s.pts.at(-1).value)})).sort((a, b) => a.y - b.y);
+  for (let k = 1; k < ends.length; k += 1) ends[k].y = Math.max(ends[k].y, ends[k - 1].y + 22);
+  const lines = series.map((s) => {
+    const id = s.c.player_id, col = color(id);
+    const path = s.pts.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.value).toFixed(1)}`).join("");
+    const band = future && s.pts.every((p) => Number.isFinite(p.low)) ? `<path class="dev-band" style="fill:${col}" d="${s.pts.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.high).toFixed(1)}`).join("")}${[...s.pts].reverse().map((p, k) => `L${x(s.pts.length - 1 - k).toFixed(1)},${y(p.low).toFixed(1)}`).join("")}Z"/>` : "";
+    return `${band}<path class="dev-line${future ? " is-future" : ""}" style="stroke:${col}" d="${path}"/>${s.pts.map((p, i) => `<circle class="dev-dot" style="fill:${col}" cx="${x(i).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="2.6"><title>${escapeHtml(`${s.c.name}: ${p.label} ${p.value.toFixed(1)}`)}</title></circle>`).join("")}`;
+  }).join("");
+  const endLabels = ends.map(({s, y: ly}) => {
+    const id = s.c.player_id, col = color(id), last = s.pts.at(-1);
+    const shot = s.c.headshot_url ? `<image href="${escapeAttr(s.c.headshot_url)}" x="${W - right + 10}" y="${(ly - 11).toFixed(1)}" width="20" height="22" preserveAspectRatio="xMidYMax slice"/>` : "";
+    return `<line class="dev-leader" style="stroke:${col}" x1="${(x(s.pts.length - 1) + 3).toFixed(1)}" y1="${y(last.value).toFixed(1)}" x2="${W - right + 8}" y2="${ly.toFixed(1)}"/>${shot}<text class="dev-name" x="${W - right + 34}" y="${(ly + 4).toFixed(1)}" style="fill:${col}">${escapeHtml(shortName(s.c))} ${last.value.toFixed(1)}</text>`;
+  }).join("");
+  const plot = series.length
+    ? `<svg class="dev-plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="${future ? "Projected overall, next three seasons" : "Overall this season, month by month"}">${grid.join("")}${xLabels}${lines}${endLabels}</svg>`
+    : `<div class="dev-empty">${future && !projections ? "Loading projections…" : future ? "No projection available." : "The first monthly update will draw this season's lines."}</div>`;
+  const picks = candidates.map((c) => {
+    const on = graph.picked.includes(String(c.player_id));
+    return `<label class="dev-pick${on ? " is-on" : ""}"${on ? ` style="--dev-color:${color(c.player_id)}"` : ""}><input type="checkbox" data-dev-pick="${escapeAttr(c.player_id)}" ${on ? "checked" : ""}/>${escapeHtml(shortName(c))}</label>`;
+  }).join("");
+  return `<section class="dev-graph" data-dev-graph>
+      <div class="dev-graph-bar"><div class="dev-views" role="tablist"><button type="button" role="tab" data-dev-view="season" aria-selected="${!future}">This season</button><button type="button" role="tab" data-dev-view="future" aria-selected="${future}">Next 3 seasons</button></div><span class="dev-note">${future ? "Projected overall: line is the middle case, the band the range of scenarios" : "Overall each month"}</span></div>
+      ${plot}
+      <div class="dev-picks">${picks}</div>
+    </section>`;
+}
+
+async function loadDevelopmentProjection() {
+  state.devProjectionLoading = true;
+  try {
+    state.data.devProjection = await action("development_projection", savePayload());
+  } catch (error) {
+    showToast(error.message || "Could not load projections.", true);
+  } finally {
+    state.devProjectionLoading = false;
+    rerenderDevelopmentGraph();
+  }
+}
+
+function rerenderDevelopmentGraph() {
+  const node = document.querySelector("[data-dev-graph]");
+  if (node && state.devGraphCandidates) node.outerHTML = seasonDevelopmentGraph(state.devGraphCandidates);
 }
 
 function seasonDevelopmentUpside(value) {
@@ -6066,6 +6210,14 @@ function clipboardPhaseCommands() {
   if (state.home?.save?.postseason_exit_required) return button('postseasonAdvance','postseason-exit','Start The Offseason (Jun 17)');
   if (dashboardPhaseKind() === 'free_agency') return freeAgencyPhaseCommands(button);
   if (!dashboardPhaseKind() && state.home?.save?.phase === 'preseason') return preseasonPhaseCommands(button);
+  // Late summer and training camp (taste deck round 3): nothing happens day to day in the offseason, so one button
+  // goes straight to the next stop (the engine's next event: camp, then opening week). No Sim menu.
+  if (!dashboardPhaseKind() && ['offseason', 'training_camp'].includes(state.home?.save?.phase)) {
+    const dates = offseasonCalendar();
+    const today = String(state.home?.save?.current_date || '');
+    const next = dates.camp && today < dates.camp ? `Go To Training Camp (${shortDate(dates.camp)})` : 'Go To The Preseason';
+    return button('offseasonNextStop', 'offseason-next', next);
+  }
   if (dashboardPhaseKind() !== 'draft') return '';
   const draft = state.data.draft || {};
   if (state.draftPresentationStage === 'odds') return button('draftRevealLottery','lottery-reveal','Reveal Lottery');
@@ -6626,8 +6778,22 @@ function setRosterChecklistPanel(list = state.data.setRoster || {}) {
   // No four-stop offseason timeline here: the preseason card is just the decisions, each with its own due date
   // (taste deck 2026-11-23: the offseason stops felt forced into this card).
   void dates; void pending;
-  return `<section class="fa-panel offseason-checklist" data-set-roster-checklist aria-label="Set the roster">
+  // Round 3 ("too bare"): beside the decisions, what they are for: the next four seasons' payroll and this
+  // season's room under the tax and the hard cap.
+  const dash = state.data.dashboard || {};
+  const rows = rosterRows(dash);
+  const seasons = contractSeasons(rows).slice(0, 4);
+  const cap = (dash.cap_by_year || {})[seasons[0]] || {};
+  const payroll = Number(cap.salary_total_millions), tax = Number(cap.tax_line_millions), hard = Number(cap.hard_cap_millions);
+  const room = (line) => Number.isFinite(payroll) && Number.isFinite(line) && line > 0 ? `<b class="${payroll > line ? "is-over" : "is-under"}">${money(Math.abs(line - payroll))}</b> ${payroll > line ? "over" : "under"}` : "—";
+  const outlook = rows.length && seasons.length ? `<aside class="set-roster-outlook">
+      <h4>Payroll, next four seasons</h4>
+      <div class="set-roster-chart">${summaryContractChart(rows, seasons, dash)}</div>
+      <dl class="set-roster-room"><div><dt>Payroll ${escapeHtml(shortSeasonLabel(seasons[0]))}</dt><dd>${Number.isFinite(payroll) ? money(payroll) : "—"}</dd></div><div><dt>Tax line</dt><dd>${room(tax)}</dd></div><div><dt>Hard cap</dt><dd>${room(hard)}</dd></div><div><dt>Roster</dt><dd>${rows.length} players</dd></div></dl>
+    </aside>` : "";
+  return `<section class="fa-panel offseason-checklist has-outlook" data-set-roster-checklist aria-label="Set the roster">
     <div class="offseason-scroll">${optionDecisionsMarkup(list.option_decisions, !state.hydrating)}${offseasonChecklistTable(list.option_decisions ? items.filter((item) => !OPTION_ITEM_KINDS.has(item.kind)) : items, !state.hydrating)}</div>
+    ${outlook}
   </section>`;
 }
 
@@ -7600,42 +7766,40 @@ function cutdownGuaranteeCell(row) {
   return `<span class="cutdown-guarantee is-${escapeAttr(row.guarantee?.kind || "unknown")}">${tag}<small>${escapeHtml(words)}</small></span>`;
 }
 
-// Two-way places (taste deck round 2: clearer, and signable from here). Filled places: player, games used of the 50,
-// this season's pay, Make standard / Release. Open places: the best free agents eligible for a two-way right now (the
-// engine's own eligibility and the AI teams' own preference order), each with a Sign button.
-function cutdownTwoWayPlaces(room) {
+// Two-way places (taste deck round 3): rows of the opening-roster table itself, under a section row, with the same
+// columns and buttons as the standard players above. Filled places: contract, "Two-way" as the guarantee, the NBA games
+// used of the 50 in the cost column, Make standard / Release. Open places list the best free agents eligible right
+// now (the engine's eligibility and the AI teams' preference order) with a Sign button.
+function cutdownTwoWayRows(room, roleCell) {
   const view = room.roster || {};
   const rows = view.two_ways || [];
   const limit = Number(view.two_way_limit || 3);
   const editable = !state.hydrating;
   const face = (row) => `<span class="cutdown-player">${playerHeadshotMarkup(row, "roster-player-headshot") || playerHeadshotMarkup({is_prospect:true}, "roster-player-headshot")}<button type="button" class="cutdown-player-name" data-dashboard-player-card="${escapeAttr(row.player_id)}">${escapeHtml(row.name || "")}</button></span>`;
-  const meta = (row) => [compactPos(row.position), Number.isFinite(Number(row.age)) ? `${Math.round(Number(row.age))}` : ""].filter(Boolean).join(" · ");
   const ovr = (row) => Number.isFinite(Number(row.overall)) ? `<b class="cutdown-ovr" style="color:${ratingInkColor(clampNumber((Number(row.overall) - 60) / 38 * 100, 0, 100))}">${Number(row.overall).toFixed(0)}</b>` : "—";
+  const age = (row) => Number.isFinite(Number(row.age)) ? Math.round(Number(row.age)) : "—";
+  const buttons = (list) => `<div class="cutdown-choice" role="group">${list.join("")}</div>`;
   const filled = rows.map((row) => {
     const convert = row.convert || {};
     const pct = Math.min(100, Math.round(100 * Number(row.active_games || 0) / Math.max(1, Number(row.active_limit || 50))));
     const pay = (row.seasons || [])[0];
-    return `<tr>
-      <th scope="row">${face(row)}</th><td>${escapeHtml(meta(row))}</td><td>${ovr(row)}</td>
-      <td><span class="cutdown-twoway-games" title="NBA games used this season (limit ${escapeAttr(row.active_limit)})"><i aria-hidden="true"><b style="width:${pct}%"></b></i><em>${escapeHtml(row.active_games)} / ${escapeHtml(row.active_limit)}</em></span></td>
+    return `<tr class="cutdown-tw-row">
+      <th scope="row">${face(row)}</th><td>${escapeHtml(compactPos(row.position) || "—")}</td><td>${age(row)}</td><td>${ovr(row)}</td><td>${roleCell(row)}</td>
       <td>${pay ? `${money(pay.salary_millions)} × ${(row.seasons || []).length}` : "—"}</td>
-      <td>${editable ? `<button type="button" class="cutdown-text-button" data-two-way-convert="${escapeAttr(row.player_id)}" ${convert.ok ? "" : "disabled"} title="${escapeAttr(convert.ok ? `Convert to a standard minimum contract (${money(convert.salary_millions)} this season): he can play every game and in the playoffs.` : (convert.reason || ""))}">Make standard</button><button type="button" class="cutdown-text-button" data-two-way-release="${escapeAttr(row.player_id)}">Release</button>` : ""}</td>
+      <td><span class="cutdown-guarantee is-twoway">Two-way</span></td>
+      <td><span class="cutdown-twoway-games" title="NBA games he has been active for this season, of the ${escapeAttr(row.active_limit)} a two-way allows"><i aria-hidden="true"><b style="width:${pct}%"></b></i><em>${escapeHtml(row.active_games)} / ${escapeHtml(row.active_limit)} games</em></span></td>
+      <td>${editable ? buttons([`<button type="button" data-two-way-convert="${escapeAttr(row.player_id)}" ${convert.ok ? "" : "disabled"} title="${escapeAttr(convert.ok ? `Convert to a standard minimum contract (${money(convert.salary_millions)} this season): he can play every game and in the playoffs.` : (convert.reason || ""))}">Make standard</button>`, `<button type="button" data-two-way-release="${escapeAttr(row.player_id)}">Release</button>`]) : ""}</td>
     </tr>`;
   });
   const open = Math.max(0, limit - rows.length);
-  const candidates = room.two_way_candidates || [];
-  const openRows = open && candidates.length ? candidates.map((row) => `<tr class="is-candidate">
-      <th scope="row">${face(row)}</th><td>${escapeHtml(meta(row))}</td><td>${ovr(row)}</td><td><small>Free agent</small></td>
-      <td>${money(row.pay_millions)} × 1</td>
-      <td>${editable ? `<button type="button" class="cutdown-text-button is-sign" data-two-way-sign="${escapeAttr(row.player_id)}" title="Sign ${escapeAttr(row.name || "him")} to a one-season two-way contract: outside the cap and your 15 spots, up to 50 NBA games">Sign two-way</button>` : ""}</td>
-    </tr>`).join("") : open ? `<tr><td colspan="6" class="cutdown-twoway-none">No free agent is eligible for a two-way right now.</td></tr>` : "";
-  return `<section class="cutdown-twoways" aria-label="Two-way places">
-      <header><strong>Two-way places</strong><span>${escapeHtml(rows.length)} / ${escapeHtml(limit)} filled</span><small title="Outside the 15 standard spots and the salary cap. Up to 50 NBA games a season; convert one to a standard deal before the last regular-season game to keep him for the playoffs.">Outside the cap · up to 50 games</small></header>
-      <table class="cutdown-table cutdown-twoway-table"><colgroup><col style="width:200px"><col style="width:70px"><col style="width:50px"><col style="width:120px"><col style="width:100px"><col></colgroup><tbody>
-        ${filled.join("")}
-        ${open ? `<tr class="cutdown-twoway-open-head"><td colspan="6">${open} open place${open === 1 ? "" : "s"}${candidates.length ? ": best available" : ""}</td></tr>${openRows}` : ""}
-      </tbody></table>
-    </section>`;
+  const candidates = open ? room.two_way_candidates || [] : [];
+  const candidateRows = candidates.map((row) => `<tr class="cutdown-tw-row is-candidate">
+      <th scope="row">${face(row)}</th><td>${escapeHtml(compactPos(row.position) || "—")}</td><td>${age(row)}</td><td>${ovr(row)}</td><td>${roleCell(row)}</td>
+      <td>${money(row.pay_millions)} × 1</td><td><span class="cutdown-guarantee is-twoway">Free agent</span></td><td>—</td>
+      <td>${editable ? buttons([`<button type="button" class="is-sign" data-two-way-sign="${escapeAttr(row.player_id)}" title="Sign ${escapeAttr(row.name || "him")} to a one-season two-way contract: outside the cap and your 15 spots, up to 50 NBA games">Sign two-way</button>`]) : ""}</td>
+    </tr>`);
+  const section = `<tr class="cutdown-section-row"><th scope="rowgroup" colspan="9"><span>Two-way places · ${escapeHtml(rows.length)} / ${escapeHtml(limit)}${open ? ` · ${open} open` : ""}</span><details class="cutdown-details"><summary>Details</summary><p>Two-way players sit outside your 15 standard spots and the salary cap. Each can be active for up to 50 NBA games a season; convert one to a standard contract before the last regular-season game to keep him for the playoffs.${open && candidates.length ? " The free agents listed can be signed into an open place now." : open ? " No free agent is eligible for a two-way right now." : ""}</p></details></th></tr>`;
+  return section + filled.join("") + candidateRows.join("");
 }
 
 function cutdownQuoteCell(row, kind) {
@@ -7681,7 +7845,7 @@ function rosterCutdownDashboardWorkspace() {
     : "No one marked yet";
   const dashRows = new Map(rosterRows(state.data.dashboard || {}).map((row) => [String(row.id), row]));
   const roleText = (row) => {
-    const dashRow = dashRows.get(String(row.player_id)) || {};
+    const dashRow = row.primary_off_role || row.primary_def_role ? row : dashRows.get(String(row.player_id)) || {};
     return `<span class="season-minute-roles">${[dashRow.primary_off_role, dashRow.primary_def_role].filter(Boolean).map((role) => {
       const [label, tone] = PLAYER_ROLE_CHIPS[role] || [role, "unknown"];
       return `<span class="role-text role-${escapeAttr(tone)}">${escapeHtml(label)}</span>`;
@@ -7700,23 +7864,23 @@ function rosterCutdownDashboardWorkspace() {
   };
   const releaseCost = (row, choice) => {
     const kind = choice === "buyout" ? "buyout" : "waive";
-    return `<span class="${choice === "keep" ? "is-idle" : "is-chosen"}">${cutdownQuoteCell(row, kind)}</span>`;
+    const quote = kind === "buyout" ? row.buyout : row.waiver;
+    if (!quote) return "—";
+    if (quote.unquantified) return `<span title="The contract's protection is unknown, so the cost cannot be quoted.">Unknown</span>`;
+    const cost = kind === "buyout" ? quote.payout_millions : quote.remaining_cost_millions;
+    const title = kind === "buyout"
+      ? `Buyout payout ${money(quote.payout_millions)}${Number(quote.savings_millions) > 0 ? `; saves ${money(quote.savings_millions)} if he clears waivers` : ""}. He clears waivers ${quote.clearance_date || "after two days"}.`
+      : `Waived salary that stays on your books: ${money(quote.remaining_cost_millions)}${quote.unverified ? " (includes salary whose protection is unverified, reserved in full)" : ""}. He clears waivers ${quote.clearance_date || "after two days"}.`;
+    return `<span class="cutdown-cost${choice === "keep" ? "" : " is-chosen"}" title="${escapeAttr(title)}">${escapeHtml(money(cost))}</span>`;
   };
-  const line = short ? `You have ${short.count}; teams must carry ${short.minimum}.`
+  const rules = short ? `You have ${short.count} players; teams must carry ${short.minimum}. The game won't sign anyone onto your roster: sign a free agent, or let your assistant fill the roster with minimum contracts.`
     : room.phase === "regular_season" ? `At most ${summary.target} standard players and ${view.two_way_limit || 3} two-ways.`
-    : `Due ${shortDate(view.roster_deadline)} · at most ${summary.target} standard + ${view.two_way_limit || 3} two-way · waive by ${shortDate(view.clear_by)} to clear before opening night`;
+    : `Due ${shortDate(view.roster_deadline)}, the day before opening night: at most ${summary.target} standard players plus ${view.two_way_limit || 3} two-ways (up to ${view.offseason_limit || 21} through camp). Waive a player by ${shortDate(view.clear_by)} and he clears waivers before opening night, so non-guaranteed money is never owed.`;
   const moves = summary.releasing + summary.moving;
   return `<div class="cutdown-workspace is-compact" data-cutdown-workspace>
-    <header class="cutdown-head">
-      <div class="cutdown-title"><h3>${short ? "Reach the roster minimum" : room.phase === "regular_season" ? "Roster and two-way places" : "Opening roster"}</h3><span>${escapeHtml(line)}</span></div>
-      <div class="cutdown-counter${(summary.ready || summary.required === 0) && !short ? " is-ready" : ""}" role="status" aria-live="polite">
-        <strong><b>${escapeHtml(summary.after)}</b> / ${escapeHtml(summary.target)}</strong><span>standard</span>
-        <strong><b>${escapeHtml(view.two_way_count ?? 0)}</b> / ${escapeHtml(view.two_way_limit || 3)}</strong><span>two-way</span>
-      </div>
-    </header>
     <div class="cutdown-scroll"><table class="cutdown-table" aria-label="Opening roster choices">
-      <colgroup><col style="width:200px"><col style="width:40px"><col style="width:34px"><col style="width:42px"><col style="width:136px"><col style="width:96px"><col style="width:72px"><col style="width:104px"><col style="width:206px"></colgroup>
-      <thead><tr><th scope="col">Player</th><th scope="col">Pos</th><th scope="col">Age</th><th scope="col">OVR</th><th scope="col">Roles</th><th scope="col" title="This season's salary × seasons left; hover for every season">Contract</th><th scope="col" title="This season's guarantee: what you owe if you release him">Guaranteed</th><th scope="col" title="What releasing him costs: waived salary that stays on your books (or the buyout payout when you pick Buy out)">Cost to release</th><th scope="col">Keep or release</th></tr></thead>
+      <colgroup><col style="width:200px"><col style="width:40px"><col style="width:34px"><col style="width:42px"><col style="width:136px"><col style="width:96px"><col style="width:80px"><col style="width:120px"><col style="width:220px"></colgroup>
+      <thead><tr><th scope="col">Player</th><th scope="col">Pos</th><th scope="col">Age</th><th scope="col">OVR</th><th scope="col">Roles</th><th scope="col" title="This season's salary × seasons left; hover for every season">Contract</th><th scope="col" title="This season's guarantee: what you owe if you release him">Guaranteed</th><th scope="col" title="Waiving: salary that stays on your books. Buying out: the payout. Two-way players: NBA games used.">Cost to release</th><th scope="col">Keep or release</th></tr></thead>
       <tbody>${players.map((row) => {
         const choice = choices[String(row.player_id)] || "keep";
         const overall = Number(row.overall);
@@ -7732,10 +7896,13 @@ function rosterCutdownDashboardWorkspace() {
           <td>${releaseCost(row, choice)}</td>
           <td>${decision(row)}</td>
         </tr>`;
-      }).join("") || `<tr><td colspan="9" class="empty">No roster loaded.</td></tr>`}</tbody>
-    </table>${cutdownTwoWayPlaces(room)}</div>
+      }).join("") || `<tr><td colspan="9" class="empty">No roster loaded.</td></tr>`}
+      ${cutdownTwoWayRows(room, roleText)}</tbody>
+    </table></div>
     <footer class="cutdown-foot">
-      <div><strong>${escapeHtml(status)}</strong>${summary.names.length ? `<span>${escapeHtml(summary.names.join(", "))} · ${escapeHtml(costText)}</span>` : ""}</div>
+      <div class="cutdown-foot-status"><strong>${escapeHtml(status)}</strong>${summary.names.length ? `<span>${escapeHtml(summary.names.join(", "))} · ${escapeHtml(costText)}</span>` : ""}</div>
+      <div class="cutdown-foot-count${(summary.ready || summary.required === 0) && !short ? " is-ready" : ""}" role="status" aria-live="polite"><b>${escapeHtml(summary.after)}</b>/${escapeHtml(summary.target)} standard<i aria-hidden="true">·</i><b>${escapeHtml(view.two_way_count ?? 0)}</b>/${escapeHtml(view.two_way_limit || 3)} two-way</div>
+      <details class="cutdown-details is-foot"><summary>Rules</summary><p>${escapeHtml(rules)}</p></details>
       ${short ? `<button type="button" class="ui-command cutdown-confirm" data-roster-fill>Fill with minimum contracts</button>` : ""}
       ${moves ? `<button type="button" class="ui-command" data-cutdown-clear>Clear</button>` : ""}
       ${moves || summary.required ? `<button type="button" class="ui-command cutdown-confirm" data-cutdown-confirm ${summary.ready ? "" : "disabled"}>${moves ? `Apply ${moves} move${moves === 1 ? "" : "s"}` : "Release players"}</button>` : ""}
@@ -16071,18 +16238,19 @@ function tradeAssetRow(asset, {side, removeSide, routeFrom, sortKey = ""} = {}) 
     const rule=(side || removeSide) ? (state.tradePickRules || []).find(r=>r.pick_id===id && r.enabled!==false) : null;
     const authored = rule ? rule.type==='pick_swap' ? `${rule.benefit==='worse'?'Less':'More'} favorable swap right` : `Picks ${rule.from}–${rule.through} protected` : '';
     const kind = asset.kind === "pick_swap" || rule?.type==='pick_swap' ? "Swap right" : "Draft pick";
-    return `<tr class="trade-ledger-pick${selected ? " is-selected" : ""}"${rowAttrs}>${control}${route}<td class="trade-ledger-portrait">${draftAssetGlyph(asset, true, true)}</td><th scope="row" class="tr-col-name${sortKey === "name" ? " is-sorted" : ""}"${pick.full ? ` title="${escapeAttr(pick.full)}"` : ""}><strong>${escapeHtml(pick.short)}</strong>${pick.note || authored ? `<span class="trade-pick-condition">${escapeHtml(authored || pick.note)}</span>` : ""}</th><td class="tr-col-pos">${kind === "Swap right" ? "Swap" : "Pick"}</td><td class="tr-col-age">—</td><td class="tr-col-ht">—</td><td class="tr-col-roles">—</td><td class="tr-col-rating">—</td><td class="tr-col-rating">—</td><td class="tr-col-rating">—</td><td class="tr-col-runway">—</td><td class="tr-col-injury">—</td><td class="tr-col-contract">—</td>${cell("value", "trade-ledger-value tr-col-value", draftMetric(tradeKnownNumber(asset.trade_value)))}</tr>`;
+    return `<tr class="trade-ledger-pick${selected ? " is-selected" : ""}"${rowAttrs}>${control}${route}<td class="trade-ledger-portrait">${draftAssetGlyph(asset, true, true)}</td><th scope="row" class="tr-col-name${sortKey === "name" ? " is-sorted" : ""}"${pick.full ? ` title="${escapeAttr(pick.full)}"` : ""}><strong>${escapeHtml(pick.short)}</strong>${pick.note || authored ? `<span class="trade-pick-condition">${escapeHtml(authored || pick.note)}</span>` : ""}</th><td class="tr-col-pos">${kind === "Swap right" ? "Swap" : "Pick"}</td><td class="tr-col-age">—</td><td class="tr-col-ht">—</td><td class="tr-col-roles">—</td><td class="tr-col-rating">—</td><td class="tr-col-rating">—</td><td class="tr-col-rating">—</td><td class="tr-col-runway">—</td><td class="tr-col-injury">—</td><td class="tr-col-contract">—</td>${cell("value", "trade-ledger-value tr-col-value", tradeValueBar(tradeKnownNumber(asset.trade_value)))}</tr>`;
   }
   const ratings = asset.ratings || {};
   const offense = [ratings.shooting, ratings.creation, ratings.passing].map(tradeKnownNumber).filter(value => value !== null);
   const values = [["ovr", asset.overall ?? ratings.overall], ["off", asset.offense ?? ratings.offense ?? (offense.length ? offense.reduce((a,b) => a+b,0) / offense.length : null)], ["def", asset.defense ?? ratings.defense]];
   const injury = typeof isPlayerInjured === "function" && isPlayerInjured(asset.health);
-  const ratingCell = ([key, value]) => { const n = tradeKnownNumber(value); return cell(key, "trade-ledger-rating tr-col-rating", n === null ? "—" : `<b class="tr-rating" style="color:${tradeRatingColor(n)}">${draftMetric(n)}</b>`); };
+  // OVR is the coloured number; OFF and DEF are plain, smaller and lighter, so the eye lands on OVR (taste deck round 3).
+  const ratingCell = ([key, value]) => { const n = tradeKnownNumber(value); return cell(key, "trade-ledger-rating tr-col-rating", n === null ? "—" : key === "ovr" ? `<b class="tr-rating" style="color:${tradeRatingColor(n)}">${draftMetric(n)}</b>` : `<span class="tr-rating-plain">${draftMetric(n)}</span>`); };
   const runway = tradeKnownNumber(asset.upside_remaining);
   const evidence = [asset.potential != null ? `Potential ${draftMetric(asset.potential)}` : "", asset.mpg != null ? `${draftMetric(asset.mpg)} MPG` : "", asset.ppg != null ? `${draftMetric(asset.ppg)} PPG` : ""].filter(Boolean).join(" · ");
   const salaries = Object.entries(asset.salary_by_year || {}).filter(([,value]) => Number(value) > 0).sort(([a],[b]) => a.localeCompare(b));
   const roles = typeof playerRoleChip === "function" && (asset.primary_off_role || asset.primary_def_role) ? `<span class="tr-role-pair">${playerRoleChip(asset.primary_off_role)}${playerRoleChip(asset.primary_def_role)}</span>` : "—";
-  return `<tr class="trade-ledger-player${selected ? " is-selected" : ""}${injury ? " is-injured" : ""}"${rowAttrs}>${control}${route}<td class="trade-ledger-portrait">${playerHeadshotMarkup(asset, "trade-player-headshot") || '<span class="trade-portrait-empty" aria-hidden="true">&mdash;</span>'}</td><th scope="row" class="tr-col-name${sortKey === "name" ? " is-sorted" : ""}"><button type="button" class="trade-player-link" data-dashboard-player-card="${escapeAttr(id)}" title="${escapeAttr(evidence || name)}">${playerNameWithInjuryMarkup(asset, name)}</button>${evidence ? `<span class="sr-only">${escapeHtml(evidence)}</span>` : ""}</th>${cell("pos", "tr-col-pos", escapeHtml(asset.position || "—"))}${cell("age", "tr-col-age", asset.age == null ? "—" : escapeHtml(asset.age))}${cell("height", "tr-col-ht", escapeHtml(asset.height || "—"))}${cell("roles", "tr-col-roles", roles)}${values.map(ratingCell).join("")}${cell("runway", "trade-ledger-meter tr-col-runway", runway === null ? "—" : draftMetric(runway), runway === null ? "Runway unavailable" : `Runway ${runway.toFixed(1)}/5`)}${cell("injury", "trade-ledger-meter trade-ledger-injury tr-col-injury", injuryRiskBody(asset.health_risk, asset.injury_body))}${cell("contract", "trade-ledger-contract tr-col-contract", salaries.length ? `<details><summary>${tradeAssetContract(asset)}</summary><div>${salaries.map(([season, amount]) => `<span>${escapeHtml(shortSeasonLabel(season))} <b>${money(Number(amount))}</b></span>`).join("")}${asset.contract ? `<span>${escapeHtml(asset.contract)}</span>` : ""}</div></details>` : tradeAssetContract(asset))}${cell("value", "trade-ledger-value tr-col-value", draftMetric(tradeKnownNumber(asset.trade_value)))}</tr>`;
+  return `<tr class="trade-ledger-player${selected ? " is-selected" : ""}${injury ? " is-injured" : ""}"${rowAttrs}>${control}${route}<td class="trade-ledger-portrait">${playerHeadshotMarkup(asset, "trade-player-headshot") || '<span class="trade-portrait-empty" aria-hidden="true">&mdash;</span>'}</td><th scope="row" class="tr-col-name${sortKey === "name" ? " is-sorted" : ""}"><button type="button" class="trade-player-link" data-dashboard-player-card="${escapeAttr(id)}" title="${escapeAttr(evidence || name)}">${playerNameWithInjuryMarkup(asset, name)}</button>${evidence ? `<span class="sr-only">${escapeHtml(evidence)}</span>` : ""}</th>${cell("pos", "tr-col-pos", escapeHtml(asset.position || "—"))}${cell("age", "tr-col-age", asset.age == null ? "—" : escapeHtml(asset.age))}${cell("height", "tr-col-ht", escapeHtml(asset.height || "—"))}${cell("roles", "tr-col-roles", roles)}${values.map(ratingCell).join("")}${cell("runway", "trade-ledger-meter tr-col-runway", runway === null ? "—" : draftMetric(runway), runway === null ? "Runway unavailable" : `Runway ${runway.toFixed(1)}/5`)}${cell("injury", "trade-ledger-meter trade-ledger-injury tr-col-injury", injuryRiskBody(asset.health_risk, asset.injury_body))}${cell("contract", "trade-ledger-contract tr-col-contract", salaries.length ? `<details><summary>${tradeAssetContract(asset)}</summary><div>${salaries.map(([season, amount]) => `<span>${escapeHtml(shortSeasonLabel(season))} <b>${money(Number(amount))}</b></span>`).join("")}${asset.contract ? `<span>${escapeHtml(asset.contract)}</span>` : ""}</div></details>` : tradeAssetContract(asset))}${cell("value", "trade-ledger-value tr-col-value", tradeValueBar(tradeKnownNumber(asset.trade_value)))}</tr>`;
 }
 
 function tradeLegalityBadge(candidate) {
@@ -16123,8 +16291,9 @@ function tradePickText(asset) {
 function tradeRatingColor(value) {
   const number = Number(value);
   const fill = Number.isFinite(number) ? Math.max(3, Math.min(100, (number - 60) / 38 * 100)) : 0;
-  if (typeof performanceBarColor === "function") return performanceBarColor(fill);
-  return fill >= 74 ? "#3978d4" : fill >= 52 ? "#b58a2e" : "#d84b57";
+  // Text-safe colours (round 3 contrast check): the bar colours were too light for numbers on white.
+  if (typeof ratingInkColor === "function") return ratingInkColor(fill);
+  return fill >= 74 ? "#1e5e96" : fill >= 52 ? "#705608" : "#9e202e";
 }
 
 // One asset in a deal, as a compact tile: greyscale headshot, name, position and age, the role pair, OVR as a
@@ -16135,7 +16304,8 @@ const TRADE_VALUE_SCALE = 120;
 function tradeValueBar(value) {
   if (value === null) return `<span class="tr-tile-value is-empty" title="Listed trade value">—</span>`;
   const width = Math.max(2, Math.min(100, value / TRADE_VALUE_SCALE * 100));
-  return `<span class="tr-tile-value" title="Listed trade value ${value.toFixed(1)}: what he is worth on the market before the receiving team's fit and role"><i><b style="width:${width.toFixed(1)}%;background:${performanceBarColor(Math.min(100, value / 90 * 100))}"></b></i><strong>${value.toFixed(1)}</strong></span>`;
+  const fill = typeof performanceBarColor === "function" ? performanceBarColor(Math.min(100, value / 90 * 100)) : "#3978d4";
+  return `<span class="tr-tile-value" title="Listed trade value ${value.toFixed(1)}: what he is worth on the market before the receiving team's fit and role"><strong>${value.toFixed(1)}</strong><i><b style="width:${width.toFixed(1)}%;background:${fill}"></b></i></span>`;
 }
 
 function tradeDealTile(asset, {removeSide = "", routeFrom = "", fresh = false} = {}) {
@@ -16147,15 +16317,15 @@ function tradeDealTile(asset, {removeSide = "", routeFrom = "", fresh = false} =
   const valueCell = tradeValueBar(value);
   if (asset.kind !== "player") {
     const pick = tradePickText(asset);
-    return `<li class="tr-tile is-pick${fresh ? " is-new" : ""}"${pick.full ? ` title="${escapeAttr(pick.full)}"` : ""}><span class="tr-tile-face">${typeof draftAssetGlyph === "function" ? draftAssetGlyph(asset, true, true) : ""}</span><span class="tr-tile-main"><strong class="tr-tile-name">${escapeHtml(pick.short)}</strong><span class="tr-tile-sub">${route}${asset.kind === "pick_swap" ? "Swap right" : "Draft pick"}${pick.note ? ` · ${escapeHtml(pick.note)}` : ""}</span></span><span class="tr-tile-ovr"></span><span class="tr-tile-contract"></span>${valueCell}${remove}</li>`;
+    return `<li class="tr-tile is-pick${fresh ? " is-new" : ""}"${pick.full ? ` title="${escapeAttr(pick.full)}"` : ""}><span class="tr-tile-face">${typeof draftAssetGlyph === "function" ? draftAssetGlyph(asset, true, true) : ""}</span><span class="tr-tile-main"><strong class="tr-tile-name">${escapeHtml(pick.short)}</strong><span class="tr-tile-sub">${route}${asset.kind === "pick_swap" ? "Swap right" : "Draft pick"}${pick.note ? ` · ${escapeHtml(pick.note)}` : ""}</span></span><span class="tr-tile-roles"></span>${valueCell}<span class="tr-tile-ovr"></span><span class="tr-tile-contract"></span>${remove}</li>`;
   }
   const overall = tradeKnownNumber(asset.overall ?? asset.ratings?.overall);
   const roles = typeof playerRoleChip === "function" && (asset.primary_off_role || asset.primary_def_role) ? `<span class="tr-role-pair">${playerRoleChip(asset.primary_off_role)}${playerRoleChip(asset.primary_def_role)}</span>` : "";
   const sub = [asset.position, asset.age != null ? `${asset.age}` : ""].filter(Boolean).map(escapeHtml).join(" · ");
   const contract = Object.keys(asset.salary_by_year || {}).length || asset.contract_terms?.length || asset.contract ? tradeAssetContract(asset) : "—";
-  const roleText = [asset.primary_off_role, asset.primary_def_role].filter(Boolean).map(role => ((typeof PLAYER_ROLE_CHIPS === "object" && PLAYER_ROLE_CHIPS[role]) || [role])[0]).join(" / ");
   void roles;
-  return `<li class="tr-tile${fresh ? " is-new" : ""}"${roleText ? ` title="${escapeAttr(roleText)}"` : ""}><span class="tr-tile-face">${playerHeadshotMarkup(asset, "trade-player-headshot") || ""}</span><span class="tr-tile-main"><span class="tr-tile-top"><button type="button" class="trade-player-link tr-tile-name" data-dashboard-player-card="${escapeAttr(id)}">${playerNameWithInjuryMarkup(asset, name)}</button>${sub ? `<span class="tr-tile-meta">${sub}</span>` : ""}</span>${route ? `<span class="tr-tile-sub">${route}</span>` : ""}</span>${valueCell}<span class="tr-tile-ovr" title="Overall rating">${overall === null ? "—" : `<b style="color:${tradeRatingColor(overall)}">${overall.toFixed(0)}</b>`}</span><span class="tr-tile-contract">${contract}</span>${remove}</li>`;
+  const roleField = `<span class="tr-tile-roles">${[asset.primary_off_role, asset.primary_def_role].filter(Boolean).map(role => { const [label, tone] = (typeof PLAYER_ROLE_CHIPS === "object" && PLAYER_ROLE_CHIPS[role]) || [role, "unknown"]; return `<span class="role-text role-${escapeAttr(tone)}">${escapeHtml(label)}</span>`; }).join("") || "—"}</span>`;
+  return `<li class="tr-tile${fresh ? " is-new" : ""}"><span class="tr-tile-face">${playerHeadshotMarkup(asset, "trade-player-headshot") || ""}</span><span class="tr-tile-main"><span class="tr-tile-top"><button type="button" class="trade-player-link tr-tile-name" data-dashboard-player-card="${escapeAttr(id)}">${playerNameWithInjuryMarkup(asset, name)}</button>${sub ? `<span class="tr-tile-meta">${sub}</span>` : ""}</span>${route ? `<span class="tr-tile-sub">${route}</span>` : ""}</span>${roleField}${valueCell}<span class="tr-tile-ovr" title="Overall rating">${overall === null ? "—" : `<b style="color:${tradeRatingColor(overall)}">${overall.toFixed(0)}</b>`}</span><span class="tr-tile-contract">${contract}</span>${remove}</li>`;
 }
 
 function incomingOfferAsset(asset) {

@@ -24,7 +24,7 @@
 
 /* Header row: small bold dark labels over a double rule. */
 body.unified-terminal-ui [data-house-table] > [data-house-head] {
-  border-bottom: 3px double var(--house-head-rule) !important;
+  border-bottom: 2px solid var(--house-head-rule) !important;
   color: var(--house-head-text) !important;
   background-color: var(--house-row);
   background-repeat: no-repeat;

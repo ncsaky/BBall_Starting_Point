@@ -239,7 +239,7 @@
 /* View all: plain grey text, no box. */
 body.unified-terminal-ui .ss-leader-cat .ss-view-all {
   min-height: 0 !important; height: auto !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important;
-  background: transparent !important; box-shadow: none !important; color: #6b7883 !important;
+  background: transparent !important; box-shadow: none !important; color: #2c4a63 !important;
   font-size: 10px !important; font-weight: 400 !important; text-decoration: none !important; cursor: pointer;
 }
 body.unified-terminal-ui .ss-leader-cat .ss-view-all:hover { color: #18212a !important; text-decoration: underline !important; }
@@ -402,3 +402,44 @@ body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-fam
 .ss-cap-table tr:nth-child(even) { background: #f1f4f7; }
 .ss-cap-table tr:hover { background: #e3ebf2; }
 .ss-tile[data-ss-tile-player] { cursor: pointer; }
+
+/* Round 3: Team Profile titles centred and short; the cap table exactly as wide as the payroll chart; bigger radars.
+   Your Team: the starting five, then a depth chart by position (the fact boxes are gone). */
+.season-slideshow .is-centred-title .ss-panel-head { justify-content: center; text-align: center; }
+.season-slideshow .is-centred-title .ss-panel-title { text-align: center; width: 100%; }
+.ss-payroll-block { display: flex; flex-direction: column; align-items: center; }
+.ss-payroll-block > .ss-payroll { width: min(100%, 460px); }
+.ss-payroll-block > .ss-cap-table { width: min(100%, 460px); max-width: none; margin: 6px 0 0; }
+.ss-radar-pair .ss-radar svg { max-height: 330px !important; }
+.ss-radar-pair { gap: 0 !important; }
+.ss-depth { margin-top: 10px; }
+.ss-depth-table { width: 100%; border-collapse: collapse; }
+.ss-depth-table th { width: 40px; padding: 4px 8px; text-align: center; font-size: 12px; font-weight: 800; color: #18212a; border-bottom: 1px solid #d5dde3; }
+.ss-depth-table td { padding: 3px 6px; border-bottom: 1px solid #d5dde3; }
+.ss-depth-table tr:nth-child(even) td, .ss-depth-table tr:nth-child(even) th { background: rgba(234, 240, 246, .7); }
+.ss-depth-list { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; padding: 0; list-style: none; }
+.ss-depth-player { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px 2px 2px; border-radius: 6px; cursor: pointer; }
+.ss-depth-player:hover { background: var(--house-row-hover, #dce8f2); }
+.ss-depth-player .ss-headshot { width: 30px; height: 32px; }
+.ss-depth-player > span { display: grid; line-height: 1.15; }
+.ss-depth-meta { display: inline-flex; align-items: baseline; gap: 5px; font-size: 11px; }
+.ss-depth-meta i { font-style: normal; color: #3b4a57; }
+.ss-depth-empty { color: #3b4a57; font-size: 11px; }
+.ss-tile-starter .ss-role-pair { display: flex; flex-direction: column; align-items: center; gap: 0; font-size: 10.5px; font-weight: 600; line-height: 1.2; }
+/* Team profile: the two radars stacked (the panel is tall, not wide), each much larger; the payroll chart fills the
+   same width as the table under it. */
+.ss-radar-pair { grid-template-columns: 1fr !important; grid-template-rows: 1fr 1fr; align-items: stretch !important; }
+.ss-radar-pair .ss-radar svg { max-height: 280px !important; height: 100%; width: 100%; }
+.ss-payroll-block { display: grid !important; grid-template-columns: max-content; justify-content: center; }
+.ss-payroll-block > .ss-payroll { width: auto !important; height: 300px; }
+.ss-payroll-block > .ss-cap-table { width: 100% !important; min-width: 0; }
+/* Depth chart by group: three columns, a player per row, stripes per row, a whole-cell hover. */
+.ss-depth-table.is-by-group { table-layout: fixed; }
+.ss-depth-table.is-by-group thead th { width: auto; padding: 4px 8px; text-align: left; font-size: 11px; font-weight: 800; color: #18212a; border-bottom: 2px solid #3f4b55 !important; background: transparent !important; }
+.ss-depth-table.is-by-group td { padding: 3px 8px; border-bottom: 1px solid #d5dde3; vertical-align: middle; }
+.ss-depth-table.is-by-group tbody tr:nth-child(even) td { background: rgba(234, 240, 246, .8); }
+.ss-depth-cell[data-ss-tile-player] { cursor: pointer; }
+.ss-depth-cell[data-ss-tile-player]:hover { background: var(--house-row-hover, #dce8f2) !important; }
+.ss-depth-cell .ss-depth-player { padding: 0; }
+.ss-depth-cell .ss-depth-player:hover { background: transparent; }
+.ss-depth-meta em { font-style: normal; color: #3b4a57; }

@@ -66,7 +66,7 @@ body.unified-terminal-ui .fa-market-tools .ui-command.is-active { font-weight:70
   vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font:400 12px Tahoma,"Trebuchet MS",Arial,sans-serif;
   color:var(--season-text, #1d2a33); background-clip:padding-box;
 }
-.fa-market-table thead th { position:sticky; top:0; z-index:2; height:24px; padding:0; background:#fff; border-bottom:3px double var(--season-line, #b7c2cb); }
+.fa-market-table thead th { position:sticky; top:0; z-index:2; height:24px; padding:0; background:#fff; border-bottom:2px solid var(--season-line, #b7c2cb); }
 body.unified-terminal-ui .fa-market-table thead th button {
   display:block; width:100%; height:100%; min-height:0; padding:0 5px; border:0; border-radius:0; background:transparent; box-shadow:none;
   color:var(--season-text, #1d2a33); font:700 9px Tahoma,Arial,sans-serif; text-align:left; text-transform:none; letter-spacing:0; cursor:pointer; white-space:nowrap;
@@ -121,7 +121,7 @@ body.unified-terminal-ui .fa-star.is-active { color:#c48a12; }
 /* ---- Offer builder ---- */
 .fa-builder-identity {
   position:relative; display:grid; grid-template-columns:64px minmax(0,1fr) auto; grid-template-rows:auto auto; gap:2px 10px; align-items:end;
-  flex:0 0 auto; padding:6px 10px 0; min-height:74px; border-bottom:3px double var(--season-line, #b7c2cb); background:var(--season-raised, #eef2f5);
+  flex:0 0 auto; padding:6px 10px 0; min-height:74px; border-bottom:2px solid var(--season-line, #b7c2cb); background:var(--season-raised, #eef2f5);
 }
 body.unified-terminal-ui .fa-builder-identity > .player-headshot-frame { grid-row:1 / span 2; align-self:end; width:64px; height:66px; overflow:hidden; display:block; }
 .fa-builder-identity .approved-profile-headshot { display:block; width:100%; height:100%; object-fit:cover; object-position:center bottom; }
@@ -188,7 +188,7 @@ body.unified-terminal-ui .fa-offer-quick .ui-command { min-height:20px; padding:
 
 .fa-cap-table { width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; }
 .fa-cap-table :is(th,td) { height:24px; padding:0 4px; border-bottom:1px solid var(--season-soft-line, #d5dde3); font:400 11px Tahoma,Arial,sans-serif; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-body.unified-terminal-ui .fa-cap-table thead th { height:20px; text-transform:none; letter-spacing:0; font:700 9px Tahoma,Arial,sans-serif; border-bottom:3px double var(--season-line, #b7c2cb); background:#fff; }
+body.unified-terminal-ui .fa-cap-table thead th { height:20px; text-transform:none; letter-spacing:0; font:700 9px Tahoma,Arial,sans-serif; border-bottom:2px solid var(--season-line, #b7c2cb); background:#fff; }
 .fa-cap-table :is(thead th, tbody th):first-child { text-align:left; }
 .fa-cap-table tbody th small { margin-left:4px; font-size:8px; color:var(--season-muted, #5d6b77); text-transform:uppercase; }
 .fa-cap-table tbody tr:nth-child(even) { background:#eef1f3; }
@@ -226,7 +226,7 @@ body.unified-terminal-ui .fa-builder-foot .fa-submit { min-height:26px; padding:
 body.unified-terminal-ui .fa-builder-foot .fa-submit.is-ready:not(:disabled) { background:#2f8a57; border-color:#22683f; color:#fff; }
 
 /* ---- Signing wire ---- */
-.fa-wire-head { display:grid; gap:5px; flex:0 0 auto; padding:7px 8px; border-bottom:3px double var(--season-line, #b7c2cb); background:var(--season-raised, #eef2f5); }
+.fa-wire-head { display:grid; gap:5px; flex:0 0 auto; padding:7px 8px; border-bottom:2px solid var(--season-line, #b7c2cb); background:var(--season-raised, #eef2f5); }
 .fa-wire-head p { margin:0; font-size:10px; color:var(--season-muted, #5d6b77); }
 .fa-wire-head .fa-scope button { padding:1px 6px; font-size:10px; }
 .fa-wire-list { flex:1 1 auto; min-height:0; overflow:auto; margin:0; padding:0; list-style:none; }

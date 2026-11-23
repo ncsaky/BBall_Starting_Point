@@ -1030,6 +1030,12 @@ def outlook_leaders_slide(ctx: dict[str, Any]) -> dict[str, Any]:
             "categories": categories, "players": sorted(rows, key=lambda row: -row["points"]), "award_winners": winners, "note": None}
 
 
+def _return_penalty(games: int) -> float:
+    from .injury_model import return_rust
+    from .sim import rust_penalty_points
+    return round(rust_penalty_points(return_rust(games)), 1) if games > 0 else 0.0
+
+
 def outlook_your_team_slide(ctx: dict[str, Any]) -> dict[str, Any]:
     from .save import (contract_salary_for_season, player_display_attribute_summary, player_salary_table,
                        starting_lineup_slots, team_cap_summary, team_identity_report, team_rotation_projection)
@@ -1066,7 +1072,9 @@ def outlook_your_team_slide(ctx: dict[str, Any]) -> dict[str, Any]:
     for row in rotation:
         hurt = injured.get(row["id"])
         row["injury"] = ({"games": hurt["games"], "label": hurt.get("injury"), "return_date": hurt.get("return_date"),
-                          "whole_season": hurt.get("whole_season")} if hurt else None)
+                          "whole_season": hurt.get("whole_season"),
+                          # The rust he carries back (the engine's own return rust for this absence), in rating points.
+                          "return_penalty": _return_penalty(int(hurt.get("games") or 0))} if hurt else None)
     rotation.sort(key=lambda row: (-float(row.get("overall") or 0), row["name"]))
     # The game's four-season payroll chart: every player's salary by season, and each season's tax line and hard cap.
     horizon = [f"{season_start + offset}-{str(season_start + offset + 1)[-2:]}" for offset in range(4)] if season_start else []
@@ -1079,15 +1087,18 @@ def outlook_your_team_slide(ctx: dict[str, Any]) -> dict[str, Any]:
         cap_by_year[season_label] = {key: summary.get(key) for key in ("salary_total_millions", "tax_line_millions", "hard_cap_millions",
                                                                        "waived_salary_millions")}
     identity = team_identity_report(active, save).get(user) or {}
-    labels = {"offense": "Offense", "defense": "Defense", "spacing": "Spacing", "creation": "Shot creation",
+    labels = {"offense": "Offense", "defense": "Defense", "spacing": "Shooting", "creation": "Shot creation",
               "rim_pressure": "Rim pressure", "rebounding": "Rebounding", "athleticism": "Athleticism",
-              "defensive_disruption": "Defensive disruption", "rim_protection": "Rim protection", "depth": "Depth"}
+              "defensive_disruption": "Disruption", "rim_protection": "Rim protection", "depth": "Depth",
+              "playmaking": "Playmaking", "offensive_rebounding": "Off. rebounding",
+              "defensive_rebounding": "Def. rebounding", "on_ball_defense": "On-ball defense"}
     ranked = sorted(((labels[key], rank) for key, rank in (identity.get("ranks") or {}).items() if key in labels), key=lambda item: item[1])
     ranks = identity.get("ranks") or {}
-    # One curved radar, offense on one half and defense on the other (user's pick, 2026-11-22).
+    # Two radars (taste deck round 3): each side drawn from what it is made of, not from the side's own overall
+    # ("Offense", "Defense") or neutral traits (depth, athleticism).
     radar = [{"key": key, "label": labels[key], "side": side, "rank": ranks.get(key)}
-             for side, keys in (("offense", ("offense", "spacing", "creation", "rim_pressure", "depth")),
-                                ("defense", ("defense", "rim_protection", "defensive_disruption", "rebounding", "athleticism")))
+             for side, keys in (("offense", ("spacing", "creation", "playmaking", "rim_pressure", "offensive_rebounding")),
+                                ("defense", ("rim_protection", "defensive_disruption", "on_ball_defense", "defensive_rebounding")))
              for key in keys if key in ranks]
     cap = team_cap_summary(active, save, user, ctx["season"])
     payout = cap.get("tax_payout") or {}
@@ -1335,14 +1346,19 @@ def ensure_year_end_recap(canonical: dict[str, Any], save: dict[str, Any], save_
     return recap
 
 
+OUTLOOK_FORMAT = 3   # bump when the outlook's slides change shape; a preseason outlook in an older format is rebuilt
+
+
 def ensure_preseason_outlook(canonical: dict[str, Any], save: dict[str, Any], save_path: str | Path | None = None) -> dict[str, Any] | None:
     """Build and store the outlook at the start of a season (idempotent)."""
     season = str((save.get("meta") or {}).get("season") or "")
     existing = stored_outlook(save, season)
-    if existing:
+    stale = existing and existing.get("format") != OUTLOOK_FORMAT and str((save.get("state") or {}).get("phase") or "") == "preseason"
+    if existing and not stale:
         return existing
     if not outlook_due(save):
         return None
     outlook = build_preseason_outlook(canonical, save, save_path)
+    outlook["format"] = OUTLOOK_FORMAT
     slideshow_store(save)["outlooks"][season] = outlook
     return outlook

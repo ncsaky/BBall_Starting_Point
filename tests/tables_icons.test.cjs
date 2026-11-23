@@ -205,7 +205,7 @@ test('standings sort by any column but # always shows the real seed and the line
 
 test('house table CSS: double header rule, small bold headers, stripes, whole-row hover, sorted fill, one bar style', () => {
   const css = fs.readFileSync(path.join(gui, 'house-table.css'), 'utf8');
-  assert.match(css, /\[data-house-head\] \{\s*border-bottom: 3px double/);
+  assert.match(css, /\[data-house-head\] \{\s*border-bottom: 2px solid/);
   assert.match(css, /\[data-house-head\] > \* \{[^}]*font-size: 9px !important;[^}]*font-weight: 700 !important;/);
   assert.match(css, /\[data-house-row\]\[data-house-alt\] \{ background-color: var\(--house-row-alt\) !important; \}/);
   assert.match(css, /\[data-house-row\]:is\(:hover, :focus-within\) \{ background-color: var\(--house-row-hover\) !important; \}/);

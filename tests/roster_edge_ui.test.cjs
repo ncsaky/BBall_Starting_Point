@@ -45,19 +45,20 @@ test('a camp deal moved to a two-way place counts toward the cut', () => {
 test('the opening-roster window shows the two-way places, their games and open places', () => {
   const context = scope();
   vm.runInContext(slice('function cutdownGuaranteeCell(', 'function cutdownQuoteCell('), context);
-  const html = context.cutdownTwoWayPlaces({roster: {two_way_limit: 3, two_ways: [
+  vm.runInContext(slice('function cutdownTwoWayRows(', 'function cutdownQuoteCell('), context);
+  const roles = () => '<span class="season-minute-roles"></span>';
+  const html = context.cutdownTwoWayRows({roster: {two_way_limit: 3, two_ways: [
     {player_id: 'p', name: 'Young Guard', position: 'PG', age: 22, overall: 48, active_games: 12, active_limit: 50,
-     seasons: [{season: '2027-28', salary_millions: 0.7}], convert: {ok: false, reason: 'No standard roster spot'}}]}});
-  // Taste deck round 2: a small table; open places list the best eligible free agents with a Sign button.
-  assert.match(html, /Two-way places<\/strong><span>1 \/ 3 filled/);
-  assert.match(html, /12 \/ 50/);
-  assert.match(html, /Outside the cap/);
-  assert.match(html, /2 open places/);
+     seasons: [{season: '2027-28', salary_millions: 0.7}], convert: {ok: false, reason: 'No standard roster spot'}}]}}, roles);
+  // Taste deck round 3: rows of the opening-roster table under a section row, with a Details drop-down.
+  assert.match(html, /Two-way places · 1 \/ 3 · 2 open/);
+  assert.match(html, /12 \/ 50 games/);
+  assert.match(html, /outside your 15 standard spots and the salary cap/);
   assert.match(html, /No free agent is eligible/);
   assert.match(html, /data-two-way-convert="p" disabled/);
-  const open = context.cutdownTwoWayPlaces({roster: {two_way_limit: 3, two_ways: []}, two_way_candidates: [
-    {player_id: 'fa', name: 'Free Agent', position: 'SF', age: 20, overall: 53.3, pay_millions: 0.679}]});
-  assert.match(open, /3 open places: best available/);
+  const open = context.cutdownTwoWayRows({roster: {two_way_limit: 3, two_ways: []}, two_way_candidates: [
+    {player_id: 'fa', name: 'Free Agent', position: 'SF', age: 20, overall: 53.3, pay_millions: 0.679}]}, roles);
+  assert.match(open, /3 open/);
   assert.match(open, /data-two-way-sign="fa"/);
   const camp = context.cutdownGuaranteeCell({contract_kind: 'camp', guarantee: {kind: 'camp', words: 'Camp deal: not guaranteed'}});
   assert.match(camp, /Camp deal/);

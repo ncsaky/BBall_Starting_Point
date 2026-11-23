@@ -1,0 +1,232 @@
+/* Glass look (taste deck round 3, after JFresh's NHL GM player cards): frosted, slightly see-through windows over a
+   board lit by the user's team colours, dark tinted glass for title bars and the top bar with white text, light
+   frosted content so dense tables stay easy to read. Loaded last.
+
+   Contrast rules (user, 2026-11-23): every text and control is checked against what is actually behind it, in every
+   state. Dark glass carries white text (never grey); light glass carries near-black text (never light grey); hover
+   only lightens or darkens the surface a little and never changes the text to a colour that loses contrast; nothing
+   is filled black on white. --team-a / --team-b come from the user's team (app.js applyTeamGlass). */
+
+:root {
+  --team-a: #2f6fb7;
+  --team-b: #c8563a;
+  --glass-ink: #121d27;            /* body text on light glass (about 15:1 on the panel) */
+  --glass-ink-soft: #3b4a57;       /* secondary text on light glass (about 8:1), never lighter */
+  --glass-panel: rgba(248, 250, 253, .86);
+  --glass-panel-edge: rgba(255, 255, 255, .62);
+  --glass-dark: rgba(14, 24, 36, .74);
+  --glass-dark-edge: rgba(255, 255, 255, .16);
+  --glass-on-dark: #f5f8fb;        /* text on dark glass (about 14:1) */
+  --glass-on-dark-soft: #d3dde6;   /* secondary text on dark glass (about 9:1) */
+}
+
+/* ---------- The board: slate (or the chosen theme) lit by soft team-colour light, so the glass has colour to blur. */
+body .season-command-dashboard.has-card-board {
+  background-image:
+    radial-gradient(1100px 700px at 12% 18%, color-mix(in srgb, var(--team-a) 42%, transparent), transparent 62%),
+    radial-gradient(900px 640px at 88% 82%, color-mix(in srgb, var(--team-b) 30%, transparent), transparent 60%),
+    linear-gradient(to right, var(--board-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--board-grid) 1px, transparent 1px) !important;
+  background-size: 100% 100%, 100% 100%, 24px 24px, 24px 24px !important;
+  background-attachment: fixed, fixed, local, local;
+}
+html[data-board-theme="cream"] body .season-command-dashboard.has-card-board {
+  background-image:
+    radial-gradient(1100px 700px at 12% 18%, color-mix(in srgb, var(--team-a) 18%, transparent), transparent 62%),
+    radial-gradient(900px 640px at 88% 82%, color-mix(in srgb, var(--team-b) 14%, transparent), transparent 60%),
+    linear-gradient(to right, var(--board-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--board-grid) 1px, transparent 1px) !important;
+}
+
+/* ---------- Windows: frosted panels with a soft edge and depth. */
+body .has-card-board .card-board-window {
+  background: var(--glass-panel) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid var(--glass-panel-edge);
+  border-radius: 9px;
+  box-shadow: 0 12px 32px rgba(6, 14, 24, .34), 0 1px 0 rgba(255, 255, 255, .5) inset;
+  overflow: hidden;
+}
+body .has-card-board .card-board-window.is-active { box-shadow: 0 16px 40px rgba(6, 14, 24, .42), 0 1px 0 rgba(255, 255, 255, .5) inset; }
+
+/* Title bars: dark tinted glass, white title, light window controls. */
+body .has-card-board .card-board-titlebar,
+body.unified-terminal-ui .modal-shell > .card-board-titlebar,
+body.unified-terminal-ui .modal-shell > .modal-head {
+  height: 24px !important; min-height: 24px !important; padding: 1px 4px 1px 9px !important;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--team-a) 34%, rgba(14, 24, 36, .9)), var(--glass-dark)) !important;
+  border: 0 !important; border-bottom: 1px solid var(--glass-dark-edge) !important; border-radius: 0 !important;
+  color: var(--glass-on-dark) !important;
+}
+body .has-card-board .is-active > .card-board-titlebar {
+  background: linear-gradient(100deg, color-mix(in srgb, var(--team-a) 52%, rgba(14, 24, 36, .9)), rgba(14, 24, 36, .82)) !important;
+}
+body .has-card-board .card-board-move,
+body .has-card-board .card-board-move span:last-child,
+body.unified-terminal-ui .modal-shell > :is(.card-board-titlebar, .modal-head) :is(h2, h3, strong, span) {
+  color: var(--glass-on-dark) !important; font-size: 12px !important; font-weight: 600 !important; letter-spacing: .1px;
+}
+body .has-card-board .card-board-window-mark { display: none; }
+body .has-card-board .card-board-titlebar .card-board-control,
+body.unified-terminal-ui .modal-shell .card-board-titlebar .card-board-control {
+  width: 19px !important; height: 19px !important; flex-basis: 19px !important; min-height: 19px !important;
+  background: rgba(255, 255, 255, .10) !important; border: 1px solid rgba(255, 255, 255, .22) !important; border-radius: 5px !important;
+}
+body .has-card-board .card-board-titlebar .card-board-control:hover,
+body.unified-terminal-ui .modal-shell .card-board-titlebar .card-board-control:hover { background: rgba(255, 255, 255, .24) !important; border-color: rgba(255, 255, 255, .4) !important; }
+body .has-card-board .card-board-close:hover,
+body.unified-terminal-ui .modal-shell .card-board-close:hover { background: #c0393f !important; border-color: #e0767a !important; }
+body .has-card-board .card-board-titlebar .card-board-control[aria-pressed="true"] { background: rgba(255, 255, 255, .32) !important; }
+/* The control icons are dark line drawings: drawn white on the dark bar. */
+body .has-card-board :is(.card-board-titlebar, .card-board-tools) .card-board-control img,
+body.unified-terminal-ui .modal-shell .card-board-titlebar .card-board-control img { filter: brightness(0) invert(1); opacity: .92; }
+
+/* Content keeps light frosted surfaces so tables stay legible; panels let a little of the glass through. */
+body .has-card-board .card-board-body > .season-command-panel,
+body .has-card-board .card-board-body.assets-desktop,
+body .has-card-board .card-board-body .seasonal-clipboard-card { background: transparent !important; border: 0 !important; box-shadow: none !important; }
+body.unified-terminal-ui [data-house-table] > [data-house-row] { background-color: rgba(255, 255, 255, .78) !important; }
+body.unified-terminal-ui [data-house-table] > [data-house-row][data-house-alt] { background-color: rgba(234, 240, 246, .80) !important; }
+body.unified-terminal-ui [data-house-table] > [data-house-row]:is(:hover, :focus-within) { background-color: rgba(214, 229, 244, .95) !important; }
+body.unified-terminal-ui [data-house-table] > [data-house-head] { background-color: #f4f7fa !important; }   /* headers stay solid: rows scroll under them */
+body.unified-terminal-ui .has-card-board table tbody tr { background-color: rgba(255, 255, 255, .78); }
+body.unified-terminal-ui .has-card-board table tbody tr:nth-child(even) { background-color: rgba(234, 240, 246, .80); }
+body.unified-terminal-ui .has-card-board table thead th { background-color: #f4f7fa; }
+
+/* ---------- Top bar: dark glass, white text, light glass buttons. */
+body .has-card-board .season-command-header {
+  background: linear-gradient(100deg, color-mix(in srgb, var(--team-a) 30%, rgba(12, 21, 32, .88)), rgba(12, 21, 32, .82)) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%);
+  border: 0 !important; border-bottom: 1px solid var(--glass-dark-edge) !important; box-shadow: 0 6px 20px rgba(6, 14, 24, .3) !important;
+  border-radius: 0 !important; color: var(--glass-on-dark);
+}
+body .has-card-board .season-command-club > span,
+body .has-card-board .season-command-date time { color: var(--glass-on-dark) !important; }
+body .has-card-board .season-command-date > span { color: var(--glass-on-dark) !important; border-left-color: rgba(255, 255, 255, .3) !important; }
+body .has-card-board :is(.season-command-actions > button, .season-command-club > button, .card-board-tools > button, .card-board-menu-trigger, .card-board-layout-control > [data-layout-menu-trigger], button.card-board-sim-trigger, button.card-board-trade-trigger, .card-board-gallery-toggle) {
+  background: rgba(255, 255, 255, .12) !important; border: 1px solid rgba(255, 255, 255, .28) !important; border-radius: 6px !important;
+  color: var(--glass-on-dark) !important; box-shadow: none !important;
+}
+body .has-card-board :is(.season-command-actions > button, .season-command-club > button, .card-board-tools > button, .card-board-layout-control > [data-layout-menu-trigger], button.card-board-sim-trigger, button.card-board-trade-trigger, .card-board-gallery-toggle):hover:not(:disabled) {
+  background: rgba(255, 255, 255, .24) !important; border-color: rgba(255, 255, 255, .45) !important; color: #fff !important;
+}
+/* Shortcut hints: light on the dark bar, dark inside the light drop-down menus. */
+body .has-card-board .card-board-tools .shortcut-hint,
+body .has-card-board .season-command-actions .shortcut-hint {
+  color: var(--glass-on-dark-soft) !important; border-color: rgba(255, 255, 255, .35) !important; background: transparent !important;
+}
+body .has-card-board .card-board-menu .shortcut-hint { color: var(--glass-ink-soft) !important; border-color: rgba(20, 32, 44, .25) !important; }
+body .has-card-board .card-board-tools > .card-board-control { width: auto !important; flex-basis: auto !important; padding: 0 9px !important; }
+/* Drop-down menus from the top bar: light glass, dark text. */
+body .has-card-board .card-board-menu {
+  background: rgba(250, 252, 254, .96) !important; -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  border: 1px solid rgba(20, 32, 44, .18) !important; border-radius: 8px !important; box-shadow: 0 12px 28px rgba(6, 14, 24, .3) !important;
+}
+body .has-card-board .card-board-menu > button { background: transparent !important; color: var(--glass-ink) !important; border: 0 !important; border-radius: 5px !important; }
+body .has-card-board .card-board-menu > button:hover:not(:disabled) { background: rgba(47, 111, 183, .12) !important; color: var(--glass-ink) !important; }
+/* The phase's main action: one filled blue button (white text on #2563b0 is about 6:1). */
+body .has-card-board .card-board-phase-actions > button {
+  background: #2563b0 !important; border: 1px solid #5d93d6 !important; border-radius: 6px !important; color: #fff !important; font-weight: 700 !important; box-shadow: 0 2px 8px rgba(37, 99, 176, .35) !important;
+}
+body .has-card-board .card-board-phase-actions > button:hover:not(:disabled) { background: #1d559c !important; color: #fff !important; }
+/* The offseason steps chip on the dark bar: a light chip with dark text, never grey on grey. */
+.season-steps-chip > summary { background: rgba(255, 255, 255, .94) !important; border-color: rgba(255, 255, 255, .6) !important; color: var(--glass-ink) !important; }
+.season-steps-chip > summary b { color: #1f5590 !important; }
+.season-steps-chip > summary i { color: var(--glass-ink-soft) !important; }
+.season-steps-chip > summary:hover { background: #fff !important; }
+.season-steps-chip[open] > summary { background: #e3edf8 !important; border-color: #9fc0e4 !important; }
+
+/* ---------- Pop-up windows (trade room, settings, box scores, offers): dark tinted glass frames. Generic pop-ups put
+   their whole body on one light frosted card; the trade room's own cards each get the frosted surface, so the glass
+   shows in the gaps between them. Text directly on the frame is white. */
+body.unified-terminal-ui #modalRoot .modal-shell.modal-shell.modal-shell {   /* repeated class: outranks older per-dialog backgrounds */
+  background-color: rgba(13, 22, 34, .70) !important;
+  background-image: radial-gradient(900px 520px at 0% 0%, color-mix(in srgb, var(--team-a) 36%, transparent), transparent 65%),
+                    radial-gradient(800px 520px at 100% 100%, color-mix(in srgb, var(--team-b) 22%, transparent), transparent 65%) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(160%); backdrop-filter: blur(26px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, .22) !important; border-radius: 14px !important; overflow: hidden;
+  box-shadow: 0 30px 70px rgba(3, 8, 14, .55), inset 0 1px 0 rgba(255, 255, 255, .18) !important;
+}
+body.unified-terminal-ui #modalRoot .modal-shell > .modal-head { background: rgba(255, 255, 255, .06) !important; }
+body.unified-terminal-ui #modalRoot .modal-shell > .modal-body {
+  background: rgba(248, 250, 253, .93) !important; margin: 8px !important; border-radius: 10px !important;
+  border: 1px solid rgba(255, 255, 255, .6) !important; box-shadow: 0 6px 18px rgba(3, 8, 14, .22) !important; color: var(--glass-ink);
+}
+body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room > .modal-body {
+  background: transparent !important; border: 0 !important; box-shadow: none !important; margin: 0 !important; padding: 8px !important;
+}
+body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room :is(.tr-toolbar, .tr-pick-bar, .tr-side, .tr-verdict, .tr-lower, .tr-picker, .tr-payroll, .tr-terms, .tr-finder-brief, .tr-finder-results, .trade-market-section, .trade-candidate-card) {
+  background: rgba(248, 250, 253, .93) !important; border: 1px solid rgba(255, 255, 255, .6) !important; border-radius: 10px !important;
+  box-shadow: 0 6px 18px rgba(3, 8, 14, .22) !important; overflow: hidden;
+}
+body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room .tr-toolbar { margin-bottom: 8px; }
+/* Loose links on the frame (the deal view's "Add or change players"): white text, a light lift on hover. */
+body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room .tr-deal-bar .tr-text-button { color: #fff !important; background: rgba(255, 255, 255, .12) !important; border: 1px solid rgba(255, 255, 255, .3) !important; border-radius: 6px !important; padding: 3px 10px !important; }
+body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room .tr-deal-bar .tr-text-button:hover { background: rgba(255, 255, 255, .24) !important; color: #fff !important; }
+body.unified-terminal-ui #modalRoot .modal-backdrop, body.unified-terminal-ui #modalRoot > .modal-overlay { background: rgba(8, 14, 22, .42) !important; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+
+/* ---------- Pop-ups: dark tinted glass frames (round 3, after JFresh's cards), light frosted content.
+   Contrast plan: only text sitting directly on the dark glass turns white (titles, subtitles, legends, footers, tabs);
+   every chart, table, tile and panel keeps a light frosted surface (92% opaque) so the colours designed for light
+   backgrounds stay legible. */
+:root { --glass-frame: rgba(13, 22, 34, .70); --glass-card: rgba(248, 250, 253, .93); }
+.season-slideshow { background: rgba(6, 12, 20, .30) !important; -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+.season-slideshow .ss-card {
+  background-color: var(--glass-frame) !important;
+  background-image: radial-gradient(900px 500px at 0% 0%, color-mix(in srgb, var(--team-a) 38%, transparent), transparent 65%),
+                    radial-gradient(800px 500px at 100% 100%, color-mix(in srgb, var(--team-b) 24%, transparent), transparent 65%) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(160%); backdrop-filter: blur(26px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, .22) !important; border-radius: 14px !important; overflow: hidden;
+  box-shadow: 0 30px 70px rgba(3, 8, 14, .55), inset 0 1px 0 rgba(255, 255, 255, .18) !important; color: var(--glass-on-dark);
+}
+.season-slideshow .ss-card > .ss-titlebar { background: rgba(255, 255, 255, .06) !important; border: 0 !important; border-bottom: 1px solid rgba(255, 255, 255, .14) !important; }
+.season-slideshow .ss-card > .ss-titlebar, .season-slideshow .ss-card > .ss-titlebar * { color: var(--glass-on-dark) !important; }
+.season-slideshow .ss-content h2, .season-slideshow .ss-content h2 * { color: #fff !important; }
+.season-slideshow .ss-subtitle { color: var(--glass-on-dark-soft) !important; }
+.season-slideshow .ss-legend, .season-slideshow .ss-legend * { color: var(--glass-on-dark) !important; }
+.season-slideshow .ss-card > .ss-actions { background: rgba(255, 255, 255, .06) !important; border-top: 1px solid rgba(255, 255, 255, .14) !important; }
+body.unified-terminal-ui .season-slideshow .ss-actions :is(.game-tutorial-skip, .game-tutorial-arrow) {
+  background: rgba(255, 255, 255, .12) !important; border: 1px solid rgba(255, 255, 255, .3) !important; color: #fff !important; border-radius: 6px !important; box-shadow: none !important;
+}
+body.unified-terminal-ui .season-slideshow .ss-actions :is(.game-tutorial-skip, .game-tutorial-arrow):hover:not(:disabled) { background: rgba(255, 255, 255, .24) !important; color: #fff !important; }
+.season-slideshow .ss-dots i { background: rgba(255, 255, 255, .25) !important; border-color: rgba(255, 255, 255, .5) !important; }
+.season-slideshow .ss-dots i.on { background: #fff !important; border-color: #fff !important; }
+/* The light frosted cards every chart and table sits on. */
+.season-slideshow .ss-body :is(.ss-boxed, .ss-leader-cat, .ss-starters, .ss-depth, .ss-panel, .ss-story, .ss-continuity, .ss-feature, .ss-winners, .ss-contracts-left > section) ,
+.season-slideshow .ss-body > table.ss-table {
+  background: var(--glass-card) !important; border: 1px solid rgba(255, 255, 255, .6) !important; border-radius: 10px !important;
+  box-shadow: 0 6px 18px rgba(3, 8, 14, .22) !important; color: var(--glass-ink);
+}
+.season-slideshow .ss-body :is(.ss-boxed, .ss-leader-cat, .ss-starters, .ss-depth, .ss-story) { padding: 8px 10px !important; }
+.season-slideshow .ss-body > table.ss-table { border-collapse: separate !important; border-spacing: 0; overflow: hidden; }
+.season-slideshow .ss-body .ss-continuity { padding: 4px 6px !important; }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  body .has-card-board .card-board-window, body.unified-terminal-ui #modalRoot .modal-shell { background: #f4f7fa !important; }
+}
+
+/* One solid dark line under every table header (the old 3px double rule read as two lines with a white gap). */
+:root { --house-head-rule: #3f4b55; }
+body.unified-terminal-ui [data-house-table] > [data-house-head] { border-bottom: 2px solid #3f4b55 !important; }
+
+/* Team Identity view tabs (round 3: try a new style): a segmented control. A soft tray, the chosen view raised in
+   white with dark blue bold text; the others dark ink, a light lift on hover. No black, no white-on-grey. */
+body .spatial-heatmap .spatial-court-head h4.spatial-court-tabs { gap: 2px !important; padding: 2px !important; background: rgba(20, 32, 44, .08) !important; border: 0 !important; border-radius: 7px !important; }
+body .spatial-heatmap .spatial-court-tabs .spatial-court-group-label { color: var(--glass-ink-soft) !important; font-weight: 700 !important; padding: 0 6px 0 4px !important; }
+body .spatial-heatmap .spatial-court-tabs .spatial-court-tab { background: transparent !important; border: 0 !important; border-radius: 5px !important; color: var(--glass-ink) !important; box-shadow: none !important; }
+body .spatial-heatmap .spatial-court-tabs .spatial-court-tab:hover { background: rgba(255, 255, 255, .7) !important; color: var(--glass-ink) !important; }
+body .spatial-heatmap .spatial-court-tabs .spatial-court-tab[aria-pressed="true"],
+body .spatial-heatmap .spatial-court-tabs .spatial-court-tab[aria-pressed="true"]:hover { background: #fff !important; color: #10406f !important; font-weight: 700 !important; box-shadow: 0 1px 3px rgba(10, 20, 30, .2) !important; }
+
+/* Contrast fixes from the round 3 check (measured against the real backgrounds). */
+body.unified-terminal-ui .season-opponent-header-rating > small { color: var(--glass-ink-soft) !important; }
+body.unified-terminal-ui .season-opponent-injuries > span { color: #8f2f2a !important; }
+body .has-card-board [data-board-window^="award-"] .season-award-rank { color: color-mix(in srgb, var(--award-accent) 55%, #000) !important; }
+
+body.unified-terminal-ui #modalRoot .value-asset_value, body.unified-terminal-ui #modalRoot [class*="value-asset"] { color: var(--glass-ink-soft) !important; }
+body.unified-terminal-ui #modalRoot .tr-salary-status.is-good b { color: #23663e !important; }
+/* The page behind a pop-up: dimmed and softly blurred, not blacked out, so the board's colour shows through the glass. */
+body.unified-terminal-ui .modal-root, body.unified-terminal-ui #modalRoot.modal-root { background: rgba(6, 12, 20, .38) !important; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+body.unified-terminal-ui #modalRoot .tr-payroll-frame figcaption b.is-down { color: #23663e !important; }
+body.unified-terminal-ui #modalRoot .tr-payroll-frame figcaption b.is-up { color: #9e2a31 !important; }

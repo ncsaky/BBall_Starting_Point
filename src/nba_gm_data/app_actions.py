@@ -377,6 +377,7 @@ def runtime_status(root: Path, save_dir: Path) -> dict[str, Any]:
                 "coach_card",
                 "social_feed",
                 "calendar",
+                "development_projection",
                 "box_score",
                 "morale",
                 "free_agents",
@@ -645,6 +646,9 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return social_feed_view(canonical, save_path, str(team), limit=int(payload.get("limit") or 12))
     if action == "calendar":
         return calendar_view(root, canonical, save_path, from_date=payload.get("from_date"), through_date=payload.get("through_date"))
+    if action == "development_projection":
+        return development_projection_view(canonical, save_path, str(payload.get("team") or user_team_abbrev(canonical, save_path)),
+                                           int(payload.get("years") or 3))
     if action == "box_score":
         return box_score_view(canonical, save_path, str(payload["game_id"]))
     if action == "morale":
@@ -3663,6 +3667,7 @@ def roster_cutdown_payload(canonical: dict[str, Any], save_path: Path) -> dict[s
                 "age": player.get("display_age", player.get("age")),
                 "height": player.get("height_display") or player.get("height") or height_label(player),
                 "headshot_url": player.get("headshot_url"),
+                "primary_off_role": player.get("primary_off_role"), "primary_def_role": player.get("primary_def_role"),
                 "minutes": round(display_minutes_projection(player), 1),
                 "overall": round(float(attrs.get("overall") or 0.0), 1),
                 "health": player_health_label(health_by_player.get(player["id"]), save.get("state", {}).get("current_date")),
@@ -3684,8 +3689,12 @@ def roster_cutdown_payload(canonical: dict[str, Any], save_path: Path) -> dict[s
     rows.sort(key=lambda row: (row["can_waive"], float(row["minutes"]), float(row["overall"]), str(row["name"])), reverse=False)
     short = save.get("pending_roster_minimum") or {}
     roster = camp.roster_view(active, save, str(team_id))
+    players_by_id = {p["id"]: p for p in active.get("players", [])}
     for row in roster["two_ways"]:
         row["convert"] = two_way.conversion_quote(active, save, row["player_id"])
+        who = players_by_id.get(row["player_id"]) or {}
+        row.setdefault("primary_off_role", who.get("primary_off_role"))
+        row.setdefault("primary_def_role", who.get("primary_def_role"))
     status = "required" if pending else ("short" if short.get("blocking") else "clear")
     return {
         "two_way_candidates": two_way_candidates_view(active, save, str(team_id), season, today, open_places),
@@ -3724,9 +3733,26 @@ def two_way_candidates_view(active: dict[str, Any], save: dict[str, Any], team_i
             "player_id": player["id"], "name": player.get("name"), "position": player.get("position"),
             "age": player.get("display_age", player.get("age")), "headshot_url": player.get("headshot_url"),
             "overall": round(two_way.overall(active, player["id"]), 1), "pay_millions": pay,
+            "primary_off_role": player.get("primary_off_role"), "primary_def_role": player.get("primary_def_role"),
             "two_years": bool(two_way.eligibility(save, player, team_id, season, 2, today=today)["ok"]),
         })
     return out
+
+
+def development_projection_view(canonical: dict[str, Any], save_path: Path, team_query: str, years: int = 3) -> dict[str, Any]:
+    """Each player's projected overall for the next seasons (Player Development graph, taste deck round 3): the same
+    scenario model the extension page shows (extension_analysis.ability_projection), median and range. Read-only."""
+    from .extension_analysis import ability_projection
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = canonical_with_save(canonical, save)
+    team = resolve_team(active, team_query)
+    start = int(str((save.get("meta") or {}).get("season") or CANONICAL_SEASON)[:4])
+    out = {}
+    for player in active.get("players", []):
+        if player.get("team_id") != team["id"] or player.get("_inactive_player"):
+            continue
+        out[player["id"]] = ability_projection(active, player, start, start + max(1, min(5, years)))
+    return {"team": team.get("abbrev"), "start_season": start, "projections": out}
 
 
 ROSTER_EDGE_ACTIONS = {
@@ -5968,6 +5994,10 @@ def season_slideshow_action(canonical: dict[str, Any], save_path: Path, payload:
     current = str((save.get("meta") or {}).get("season") or "")
     season = str(payload.get("season") or current)
     data = stored_recap(save, season) if kind == "recap" else stored_outlook(save, season)
+    from .season_slides import OUTLOOK_FORMAT
+    if kind == "outlook" and data is not None and season == current and data.get("format") != OUTLOOK_FORMAT \
+            and str((save.get("state") or {}).get("phase") or "") == "preseason":
+        data = None   # an older layout, rebuilt below while the season has not started
     if data is None and season == current:
         data = (ensure_year_end_recap(canonical, save, save_path) if kind == "recap"
                 else ensure_preseason_outlook(canonical, save, save_path))

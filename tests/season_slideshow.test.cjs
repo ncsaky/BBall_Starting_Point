@@ -120,19 +120,18 @@ test('preseason outlook taste pass: projected ranks, rows that fall in, your tea
   const leaders = RENDER.leaders_revisited({categories: [{stat: 'points', label: 'Points', rows: [{name: 'Scorer', team_abbrev: 'DAL', per_game: 27.5, now: {team: team('DAL')}}]}]});
   assert.match(leaders, /<h4 class="ss-panel-title">Points<\/h4>/);
 
-  // Your team: starting five tiles with a role pair, bench tiles, three numbers; no roster table.
+  // Your team (round 3): starting five tiles with roles as coloured text, then a depth chart by position (no fact boxes).
   const starter = (n, extra = {}) => ({...player(`Starter ${n}`), id: `s${n}`, minutes: 30 - n, off_role: 'Primary Ball Handler', def_role: 'Versatile Stopper', ...extra});
-  const rotation = [1, 2, 3, 4, 5].map((n) => starter(n)).concat([starter(6, {minutes: 15}), starter(7, {minutes: 0, injury: {games: 30, label: 'Knee'}})]);
+  const rotation = [1, 2, 3, 4, 5].map((n) => starter(n)).concat([starter(6, {minutes: 15}), starter(7, {minutes: 0, injury: {games: 30, label: 'Knee', return_penalty: 1.6}})]);
   const yours = RENDER.your_team({rotation, starters: ['s5', 's1', 's2', 's3', 's4'],
     takeaways: {teams: 30, age: {value: 25.5, rank: 8}, shape: {label: 'Top-heavy', top_rank: 2, depth_rank: 18}, payroll: {value: 216.9, rank: 5}}});
-  assert.doesNotMatch(yours, /<table/);
   assert.equal((yours.match(/ss-tile-starter/g) || []).length, 5);
-  assert.equal((yours.match(/ss-tile-bench/g) || []).length, 2);
+  assert.equal((yours.match(/class="ss-depth-player"/g) || []).length, 2);
+  assert.match(yours, /Depth chart/);
+  assert.doesNotMatch(yours, /youngest of 30|Top-heavy/);
   assert.ok(yours.indexOf('Starter 5') < yours.indexOf('Starter 1'), 'starters follow the lineup slots');
-  assert.match(yours, /<span class="ss-role-pair">Primary Ball HandlerVersatile Stopper<\/span>/);
-  assert.match(yours, /8th youngest of 30/);
-  assert.match(yours, /Top-heavy/);
-  assert.match(yours, /\$216\.9M/);
+  assert.match(yours, /class="role-text role-[a-z-]+">Primary Ball Handler<\/span>/);
+  assert.match(yours, /−1\.6/);
   assert.match(yours, /✚ 30/);
   assert.match(yours, /class="ss-rating" style="color:#[0-9a-f]{6}">70\.1</);
   // An outlook stored before this change (no starters) still shows five starters: the most minutes.
@@ -140,7 +139,7 @@ test('preseason outlook taste pass: projected ranks, rows that fall in, your tea
 
   // Team profile: two titled panels; the cap numbers sit under the payroll chart.
   const profile = RENDER.team_profile({radar: [{key: 'defense', label: 'Defense', side: 'defense', rank: 3}], cap: {payroll_millions: 152.1}});
-  assert.match(profile, /Strengths by league rank[\s\S]*Payroll, next four seasons[\s\S]*ss-cap-table/);
+  assert.match(profile, /Strengths<[\s\S]*Payroll<[\s\S]*ss-cap-table/);
 
   // Contracts: never a bare salary; bar charts; players who could be on the move grouped by reason.
   const contracts = RENDER.contracts({

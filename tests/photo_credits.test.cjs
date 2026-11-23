@@ -50,7 +50,7 @@ test('every stock photo is listed with its author, licence and source', async ()
 });
 
 test('the credits table follows the house table style', () => {
-  assert.match(css, /\.photo-credits-table thead th \{[^}]*border-bottom:3px double/);
+  assert.match(css, /\.photo-credits-table thead th \{[^}]*border-bottom:2px solid/);
   assert.match(css, /\.photo-credits-table tbody tr:nth-child\(even\)/);
   assert.match(css, /\.photo-credits-table tbody tr:hover/);
   assert.match(css, /\.photo-credits-table \.is-sorted/);
