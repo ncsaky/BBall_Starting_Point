@@ -358,8 +358,9 @@ def season_leaders(stats: dict[str, dict[str, Any]], names: dict[str, str], limi
 def recap_leaders_slide(ctx: dict[str, Any]) -> dict[str, Any]:
     names = {row["id"]: row.get("name") for row in ctx["active"].get("players", [])}
     return {"key": "leaders", "title": "League leaders", "kicker": "Per game, regular season",
-            "categories": season_leaders(ctx["save"].get("player_season_stats") or {}, names),
-            "note": "Qualifying players: the same 65-game rule as the awards."}
+            "categories": season_leaders(ctx["save"].get("player_season_stats") or {}, names,
+                                         qualifies=lambda t: int(t.get("games") or 0) >= LEADER_MIN_GAMES),
+            "note": "Minimum 30 games."}
 
 
 def team_stint_minutes(rows: list[dict[str, Any]]) -> dict[tuple[str, str], dict[str, Any]]:
@@ -968,12 +969,13 @@ def outlook_continuity_slide(ctx: dict[str, Any]) -> dict[str, Any]:
 
 
 # Last season's leaders: nine categories in a 3 x 3 grid, and every qualifying player for "View all" (playtest
-# 2026-11-22). Percentages use the NBA's own minimums, the three-point one per game as the user asked.
+# 2026-11-22). Leaders need 30 games (softer than the awards' 65); percentages also need attempts per game.
 OUTLOOK_LEADER_STATS = (("points", "Points"), ("rebounds", "Rebounds"), ("assists", "Assists"), ("steals", "Steals"),
                         ("blocks", "Blocks"), ("fg3m", "Threes made"), ("fg3_pct", "Three-point %"),
                         ("ft_pct", "Free-throw %"), ("minutes", "Minutes"))
+LEADER_MIN_GAMES = 30
 THREE_PCT_MIN_ATTEMPTS = 3.0     # three-point attempts per game
-FT_PCT_MIN_MADE = 125            # free throws made, the NBA's rule
+FT_PCT_MIN_ATTEMPTS = 2.0        # free-throw attempts per game
 
 
 def _leader_line(totals: dict[str, Any]) -> dict[str, Any]:
@@ -984,18 +986,17 @@ def _leader_line(totals: dict[str, Any]) -> dict[str, Any]:
     line["fg3_pct"] = (round(100 * float(totals.get("fg3m") or 0) / fg3a, 1)
                        if fg3a and fg3a / games >= THREE_PCT_MIN_ATTEMPTS else None)
     line["ft_pct"] = (round(100 * float(totals.get("ftm") or 0) / fta, 1)
-                      if fta and float(totals.get("ftm") or 0) >= FT_PCT_MIN_MADE else None)
+                      if fta and fta / games >= FT_PCT_MIN_ATTEMPTS else None)
     line["games"] = int(totals.get("games") or 0)
     return line
 
 
 def outlook_leaders_slide(ctx: dict[str, Any]) -> dict[str, Any]:
-    from .save import AWARD_LABELS, AWARD_MIN_GAMES, award_qualifying_games
+    from .save import AWARD_LABELS
 
     active, last, teams = ctx["active"], ctx["last"], ctx["teams"]
     players = {row["id"]: row for row in active.get("players", [])}
-    real = last["source"] != "save"
-    qualifies = (lambda t: int(t.get("games") or 0) >= 65) if real else (lambda t: award_qualifying_games(t) >= AWARD_MIN_GAMES)
+    qualifies = lambda t: int(t.get("games") or 0) >= LEADER_MIN_GAMES  # noqa: E731
 
     def now(pid: str | None) -> dict[str, Any]:
         player = players.get(pid or "")

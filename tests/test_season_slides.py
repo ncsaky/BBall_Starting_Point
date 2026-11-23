@@ -357,7 +357,7 @@ if __name__ == "__main__":
 
 
 class LeaderLineTests(unittest.TestCase):
-    """Last season's leaders: percentages only count past the minimums (3 three-point tries a game, 125 free throws made)."""
+    """Last season's leaders: percentages only count past the minimums (3 three-point and 2 free-throw tries a game)."""
 
     def test_percentage_minimums(self):
         from nba_gm_data.season_slides import _leader_line
@@ -365,6 +365,6 @@ class LeaderLineTests(unittest.TestCase):
         self.assertEqual(shooter["fg3_pct"], 40.0)
         self.assertEqual(shooter["ft_pct"], 86.7)
         self.assertEqual(shooter["points"], 20.0)
-        big = _leader_line({"games": 70, "fg3m": 10, "fg3a": 20, "ftm": 90, "fta": 100})
+        big = _leader_line({"games": 70, "fg3m": 10, "fg3a": 20, "ftm": 90, "fta": 130})
         self.assertIsNone(big["fg3_pct"])
         self.assertIsNone(big["ft_pct"])
