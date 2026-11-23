@@ -66,3 +66,17 @@ body.unified-terminal-ui [data-house-table] .house-sort {
 /* Clickable sort headers. */
 body.unified-terminal-ui table thead th:is([data-ss-sort], .auto-sort-head) { cursor: pointer; user-select: none; }
 body.unified-terminal-ui table thead th:is([data-ss-sort], .auto-sort-head):hover { text-decoration: underline; text-underline-offset: 2px; }
+
+/* Player rating bars (OVR/OFF/DEF), one look everywhere: 36 x 5px on the house tables' dark track, so how full a
+   bar is reads at a glance. Fill and colour come from app.js playerRatingBarStyle (playtest 2026-11-22). */
+body.unified-terminal-ui .player-rating-bar.player-rating-bar > i {
+  display: block !important; flex: none !important; box-sizing: content-box;
+  width: 36px !important; min-width: 36px !important; max-width: 36px !important; height: 5px !important;
+  margin: 0 !important; background: var(--house-bar-track, #172228) !important; overflow: hidden;
+}
+body.unified-terminal-ui .player-rating-bar.player-rating-bar > i > b {
+  display: block !important; height: 100% !important; width: var(--fill, 0%) !important;
+  background: var(--bar-color, #5b86b8) !important; background-image: none !important; transform: none !important;
+}
+body.unified-terminal-ui .assets-rating-bar.player-rating-bar { grid-template-columns: 28px 36px !important; align-items: center; }
+body.unified-terminal-ui .trade-ledger-rating.player-rating-bar > i { margin-top: 4px !important; }

@@ -298,7 +298,7 @@ test('rating bars use the provided reference (e.g. positional) and never a made-
   const grab = (name) => app.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n}\\n`))[0];
   const ctx = {
     escapeHtml: (v) => String(v), escapeAttr: (v) => String(v), draftMetric: (v) => String(v),
-    clampNumber: (v, lo, hi) => Math.min(hi, Math.max(lo, v)), performanceBarStyle: () => '', ratingTone: () => 'average',
+    clampNumber: (v, lo, hi) => Math.min(hi, Math.max(lo, v)), performanceBarStyle: () => '', playerRatingBarStyle: () => '', ratingTone: () => 'average',
   };
   vm.createContext(ctx);
   vm.runInContext(`${grab('ratingQuartileTone')}\n${grab('playerCardRatingBar')}`, ctx);

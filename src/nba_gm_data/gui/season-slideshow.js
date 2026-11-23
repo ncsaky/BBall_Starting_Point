@@ -91,7 +91,7 @@
   // Ratings always carry the game's bar, and a contract is always one field: salary × years (playtest 2026-11-22).
   const ratingBar = (v) => (v === null || v === undefined || !Number.isFinite(Number(v)) ? "—"
     : typeof compactRatingBar === "function" ? compactRatingBar(Number(v))  // the roster tables' own bar
-    : `<span class="linked-rating assets-rating-bar"><span>${num(v)}</span><i><b style="--fill:${Number(v)}%"></b></i></span>`);
+    : `<span class="linked-rating assets-rating-bar player-rating-bar"><span>${num(v)}</span><i><b style="--fill:${Number(v)}%"></b></i></span>`);
   const contract = (salary, years) => (typeof contractLabel === "function" ? contractLabel(salary, years)
     : salary ? `${money(salary)}${years ? ` × ${years}` : ""}` : "—");
 
@@ -287,9 +287,9 @@
         {label: "Player", render: (p) => `<span class="ss-player">${headshot(p)}<span class="ss-player-name">${name({...p, player_id: p.id})}${injury(p)}</span></span>`, cls: "ss-player-col", width: "270px"},
         {label: "Pos", render: (p) => esc(p.position || "—"), width: "46px"},
         {label: "Age", render: (p) => value(p.age, 0), cls: "ss-num", width: "44px"},
-        {label: "OVR", render: (p) => ratingBar(p.overall), width: "70px"},
-        {label: "OFF", render: (p) => ratingBar(p.offense), width: "70px"},
-        {label: "DEF", render: (p) => ratingBar(p.defense), width: "70px"},
+        {label: "OVR", render: (p) => ratingBar(p.overall), width: "82px"},
+        {label: "OFF", render: (p) => ratingBar(p.offense), width: "82px"},
+        {label: "DEF", render: (p) => ratingBar(p.defense), width: "82px"},
         {label: "MIN", render: (p) => (p.minutes ? p.minutes : "—"), cls: "ss-num", width: "46px"},
         {label: "PTS", render: (p) => value(p.points), cls: "ss-num", width: "46px"},
         {label: "REB", render: (p) => value(p.rebounds), cls: "ss-num", width: "46px"},

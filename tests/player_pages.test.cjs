@@ -17,7 +17,7 @@ function runtime() {
     clampNumber:(value, min, max) => Math.min(max, Math.max(min, value)),
     draftMetric:value => value == null ? '—' : Number(value).toFixed(1),
     decimalNumber:value => Number(value).toFixed(1),
-    performanceBarStyle:value => `--fill:${value}%`, ratingTone:() => 'average',
+    performanceBarStyle:value => `--fill:${value}%`, playerRatingBarStyle: value => `--fill:${value}%`, ratingTone:() => 'average',
     money:value => `$${Number(value).toFixed(1)}M`, shortSeasonLabel:value => value,
     playerHeadshotMarkup:detail => `<span class="player-headshot-frame"><img alt="${escape(detail.name)}" src="headshot"></span>`,
     teamLogoSrc:abbrev => abbrev ? `/logos/${abbrev}.png` : '',

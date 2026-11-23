@@ -3158,6 +3158,19 @@ function performanceBarColor(value) {
   return `#${channel(0)}${channel(1)}${channel(2)}`;
 }
 
+// Player rating bars (OVR/OFF/DEF), everywhere in the game: the fill and colour spread across the range players
+// actually occupy on the display scale (about 65-95 in the 2026-27 league), so a 77 and a 94 differ at a glance. Only
+// the drawing changes; the number beside the bar is the rating itself (playtest 2026-11-22).
+const PLAYER_BAR_FLOOR = 60;
+const PLAYER_BAR_CEILING = 98;
+function playerRatingBarStyle(value) {
+  const number = Number(value);
+  const fill = Number.isFinite(number)
+    ? clampNumber((number - PLAYER_BAR_FLOOR) / (PLAYER_BAR_CEILING - PLAYER_BAR_FLOOR) * 100, 3, 100)
+    : 0;
+  return `--fill:${fill.toFixed(1)}%;--bar-color:${performanceBarColor(fill)}`;
+}
+
 function performanceBarStyle(value) {
   const score = clampNumber(Number(value || 0), 0, 100);
   return `--fill:${score}%;--bar-color:${performanceBarColor(score)}`;
@@ -3706,7 +3719,7 @@ function seasonOpponentSortHeader(key, label) {
 
 function seasonOpponentRatingCell(value, key) {
   const score = clampNumber(Number(value || 0), 0, 99);
-  return `<span class="season-mini-rating" role="cell" data-opponent-column="${key}"><em>${score.toFixed(0)}</em><i><b style="${performanceBarStyle(score)}"></b></i></span>`;
+  return `<span class="season-mini-rating player-rating-bar" role="cell" data-opponent-column="${key}"><em>${score.toFixed(0)}</em><i><b style="${playerRatingBarStyle(score)}"></b></i></span>`;
 }
 
 function seasonOpponentSortData(row) {
@@ -3880,7 +3893,7 @@ function seasonEfficiencyCard(dash, chartWidth = 420, chartHeight = 220, chartOn
 
 function efficiencyEventDetail(event) {
   const heading = `<strong>${escapeHtml(event.title)}</strong><small>${escapeHtml(event.date)}</small>`;
-  if (event.coaches) return heading + event.coaches.map(coach => `<div class="efficiency-event-coach"><span>${escapeHtml(coach.label)} · ${escapeHtml(coach.role)}</span><b>${escapeHtml(coach.name)}</b>${compactRatingBar(coach.grade)}</div>`).join("");
+  if (event.coaches) return heading + event.coaches.map(coach => `<div class="efficiency-event-coach"><span>${escapeHtml(coach.label)} · ${escapeHtml(coach.role)}</span><b>${escapeHtml(coach.name)}</b>${effectRatingBar(coach.grade)}</div>`).join("");
   const risk = event.injury_body ? `<div class="injury-event-body">${injuryRiskBody(event.health_risk, event.injury_body, event.risk_label || "Health risk")}<small>${escapeHtml(event.risk_label || "Health risk")}</small></div>`
     : event.health_risk == null ? '<p>Health risk unavailable</p>' : playerEvidenceRing(event.risk_label || "Health risk", Number(event.health_risk), 10, "#b34d49", "/10");
   return heading + `<p>${escapeHtml(event.body_area)} · Expected absence: ${event.expected_games_missed == null ? "unknown" : escapeHtml(event.expected_games_missed) + (Number(event.expected_games_missed) === 1 ? " game" : " games")}</p>${risk}<p>${Number(event.minutes_lost || 0).toFixed(1)} minutes per night lost</p><small>${escapeHtml(event.distribution_note)}</small>${(event.distribution || []).map(row => `<div class="efficiency-event-minute"><span>${escapeHtml(row.name)}</span><b>+${Number(row.minutes).toFixed(1)} min</b></div>`).join("")}`;
@@ -5304,9 +5317,9 @@ const PLAYOFF_INJURIES_DEFAULT_SORT = { key: "overall", direction: "desc" };
 const PLAYOFF_INJURIES_COLUMNS = [
   { key: "player", label: "Player", title: "Player", text: true, width: 128 },
   { key: "team", label: "Team", title: "Team", text: true, width: 52 },
-  { key: "overall", label: "OVR", title: "Overall rating (his usual level)", width: 58 },
-  { key: "offense", label: "OFF", title: "Offense rating (his usual level)", width: 58 },
-  { key: "defense", label: "DEF", title: "Defense rating (his usual level)", width: 58 },
+  { key: "overall", label: "OVR", title: "Overall rating (his usual level)", width: 66 },
+  { key: "offense", label: "OFF", title: "Offense rating (his usual level)", width: 66 },
+  { key: "defense", label: "DEF", title: "Defense rating (his usual level)", width: 66 },
   { key: "status", label: "Status", title: "Out injured, or back but rusty / on a minutes limit", text: true, width: 116 },
   { key: "back", label: "Expected back", title: "Expected return date and games, or when rust and the minutes limit wear off", width: 76 },
 ];
@@ -5357,7 +5370,7 @@ function playoffInjuriesRows(payload, scope, sort) {
 function playoffInjuryRatingCell(value) {
   const number = Number(value);
   if (!Number.isFinite(number)) return "—";
-  return `<span class="playoff-injury-rating"><em>${number.toFixed(0)}</em><i aria-hidden="true"><b style="${performanceBarStyle(number)}"></b></i></span>`;
+  return `<span class="playoff-injury-rating player-rating-bar"><em>${number.toFixed(0)}</em><i aria-hidden="true"><b style="${playerRatingBarStyle(number)}"></b></i></span>`;
 }
 
 function playoffInjuryStatusCell(row) {
@@ -6384,9 +6397,9 @@ const FREE_AGENCY_MARKET_COLUMNS = [
   { key: "name", label: "Player", width: 146 },
   { key: "position", label: "Pos", width: 36 },
   { key: "age", label: "Age", width: 32 },
-  { key: "overall", label: "OVR", width: 60, title: "Overall rating (the same number the roster tables show)" },
-  { key: "offense", label: "OFF", width: 60 },
-  { key: "defense", label: "DEF", width: 60 },
+  { key: "overall", label: "OVR", width: 80, title: "Overall rating (the same number the roster tables show)" },
+  { key: "offense", label: "OFF", width: 80 },
+  { key: "defense", label: "DEF", width: 80 },
   { key: "production", label: "Last season", width: 66, title: "Points / rebounds / assists per game last season (sorts by points)" },
   { key: "ask_millions", label: "Ask", width: 66, title: "His market ask per season: what rival teams bid against. It moves each day." },
   { key: "bids", label: "Bids", width: 90, title: "Live rival bids and the best one" },
@@ -6415,7 +6428,7 @@ function freeAgencyMarketTable(rows, room = state.data.freeagency || {}) {
     const selected = String(state.selectedFreeAgent || "") === id;
     const shortlisted = state.freeAgentShortlistIds.includes(player.id);
     const compared = state.freeAgentCompareIds.includes(player.id);
-    const bar = (value) => `<span class="fa-rating"><em>${draftMetric(value)}</em><i aria-hidden="true"><b style="${performanceBarStyle(Number(value || 0))}"></b></i></span>`;
+    const bar = (value) => `<span class="fa-rating player-rating-bar"><em>${draftMetric(value)}</em><i aria-hidden="true"><b style="${playerRatingBarStyle(value)}"></b></i></span>`;
     return `<tr class="${selected ? "is-selected" : ""}" data-fa-select="${escapeAttr(id)}" tabindex="${selected ? 0 : -1}" aria-selected="${selected}">
       ${state.freeAgentCompareMode ? `<td class="fa-col-compare"><input type="checkbox" class="free-agency-compare-checkbox" data-fa-compare="${escapeAttr(id)}" tabindex="${selected ? 0 : -1}" aria-label="Compare ${escapeAttr(player.name)}" ${compared ? "checked" : ""} /></td>` : ""}
       <td class="fa-col-shortlist"><button type="button" class="fa-star${shortlisted ? " is-active" : ""}" data-fa-shortlist="${escapeAttr(id)}" tabindex="${selected ? 0 : -1}" aria-pressed="${shortlisted}" aria-label="${shortlisted ? "Remove from" : "Add to"} shortlist: ${escapeAttr(player.name)}" title="${shortlisted ? "On your shortlist" : "Add to shortlist"}">${shortlisted ? "★" : "☆"}</button></td>
@@ -6669,7 +6682,7 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
   const shortlisted = state.freeAgentShortlistIds.includes(player.id);
   const safe = preview.safe;
   const stat = (label, value) => `<span><small>${label}</small><strong>${draftMetric(value)}</strong></span>`;
-  const rating = (label, value) => `<span class="fa-id-rating"><small>${label}</small><strong>${draftMetric(value)}</strong><i aria-hidden="true"><b style="${performanceBarStyle(Number(value || 0))}"></b></i></span>`;
+  const rating = (label, value) => `<span class="fa-id-rating player-rating-bar"><small>${label}</small><strong>${draftMetric(value)}</strong><i aria-hidden="true"><b style="${playerRatingBarStyle(value)}"></b></i></span>`;
   const radio = (name, value, label, checked, disabled = false, title = "") => `<button type="button" role="radio" aria-checked="${checked}" class="${checked ? "is-active" : ""}" data-fa-offer-${name}="${escapeAttr(value)}" tabindex="${checked ? 0 : -1}"${disabled ? " disabled" : ""}${title ? ` title="${escapeAttr(title)}"` : ""}>${escapeHtml(label)}</button>`;
   const bids = (room.active_offers || [])
     .filter((offer) => String(offer.player_id || "") === String(player.id))
@@ -7174,7 +7187,7 @@ function rosterCutdownDashboardWorkspace() {
           <td>${escapeHtml(compactPos(row.position) || "—")}</td>
           <td>${escapeHtml(Number.isFinite(Number(row.age)) ? Math.round(Number(row.age)) : "—")}</td>
           <td>${Number(row.minutes || 0).toFixed(1)}</td>
-          <td>${Number.isFinite(overall) ? `<span class="playoff-injury-rating"><em>${overall.toFixed(0)}</em><i aria-hidden="true"><b style="${performanceBarStyle(overall)}"></b></i></span>` : "—"}</td>
+          <td>${Number.isFinite(overall) ? `<span class="playoff-injury-rating player-rating-bar"><em>${overall.toFixed(0)}</em><i aria-hidden="true"><b style="${playerRatingBarStyle(overall)}"></b></i></span>` : "—"}</td>
           <td>${cutdownContractCell(row)}</td>
           <td>${cutdownGuaranteeCell(row)}</td>
           <td class="${choice === "waive" ? "is-chosen" : ""}">${cutdownQuoteCell(row, "waive")}</td>
@@ -7320,7 +7333,7 @@ function staffRetentionDashboardWorkspace() {
         <h3>${escapeHtml(staff.name || windowRow.staff_name || "Staff member")}</h3>
         <p class="phase-prospect-name">Grade ${plainNumber(room.staff_grade)}</p>
         <div class="staff-retention-effects">
-          ${(room.effect_rows || []).map((effect) => `<div><strong>${escapeHtml(effect.label || effect.name || "Impact")}</strong>${compactRatingBar(effect.value ?? effect.rating)}</div>`).join("")}
+          ${(room.effect_rows || []).map((effect) => `<div><strong>${escapeHtml(effect.label || effect.name || "Impact")}</strong>${effectRatingBar(effect.value ?? effect.rating)}</div>`).join("")}
         </div>
       </section>
       <section class="phase-offer-panel staff-retention-offer">
@@ -15105,7 +15118,7 @@ function playerSummaryRatings(player) {
     ["OFF", player.offense ?? ratings.offense ?? (offenseParts.length ? offenseParts.reduce((sum,value) => sum + value, 0) / offenseParts.length : null)],
     ["DEF", player.defense ?? ratings.defense],
   ];
-  return `<span class="player-summary-ratings">${values.map(([label,value]) => `<span class="player-summary-rating"><small>${label}</small><span class="linked-rating assets-rating-bar"><span>${value == null ? "—" : draftMetric(value)}</span><i>${value == null ? "" : `<b style="${performanceBarStyle(Number(value))}"></b>`}</i></span></span>`).join("")}</span>`;
+  return `<span class="player-summary-ratings">${values.map(([label,value]) => `<span class="player-summary-rating"><small>${label}</small><span class="linked-rating assets-rating-bar player-rating-bar"><span>${value == null ? "—" : draftMetric(value)}</span><i>${value == null ? "" : `<b style="${playerRatingBarStyle(value)}"></b>`}</i></span></span>`).join("")}</span>`;
 }
 
 function tradeAssetContract(asset) {
@@ -15224,7 +15237,7 @@ function tradeAssetRow(asset, {side, removeSide, routeFrom} = {}) {
   const offense = [ratings.shooting, ratings.creation, ratings.passing].map(tradeKnownNumber).filter(value => value !== null);
   const values = [asset.overall ?? ratings.overall, asset.offense ?? ratings.offense ?? (offense.length ? offense.reduce((a,b) => a+b,0) / offense.length : null), asset.defense ?? ratings.defense];
   const injury = typeof isPlayerInjured === "function" && isPlayerInjured(asset.health);
-  const ratingCell = value => { const n = tradeKnownNumber(value); return `<td class="trade-ledger-rating">${draftMetric(n)}<i aria-hidden="true">${n === null ? "" : `<b style="width:${clampNumber(n,0,100)}%"></b>`}</i></td>`; };
+  const ratingCell = value => { const n = tradeKnownNumber(value); return `<td class="trade-ledger-rating player-rating-bar">${draftMetric(n)}<i aria-hidden="true">${n === null ? "" : `<b style="${playerRatingBarStyle(n)}"></b>`}</i></td>`; };
   const meter = (label, value, max) => { const n = tradeKnownNumber(value); return `<td class="trade-ledger-meter" title="${escapeAttr(label)}${n === null ? " unavailable" : ` ${n.toFixed(1)}${label === "Runway" ? `/${max}` : " model index"}`}"><span>${draftMetric(n)}${n === null || label !== "Runway" ? "" : `<small>/${max}</small>`}</span><i aria-hidden="true">${n === null ? "" : `<b style="width:${clampNumber(n/max*100,0,100)}%"></b>`}</i></td>`; };
   const evidence = [asset.potential != null ? `Potential ${draftMetric(asset.potential)}` : "", asset.mpg != null ? `${draftMetric(asset.mpg)} MPG` : "", asset.ppg != null ? `${draftMetric(asset.ppg)} PPG` : ""].filter(Boolean).join(" · ");
   const salaries = Object.entries(asset.salary_by_year || {}).filter(([,value]) => Number(value) > 0).sort(([a],[b]) => a.localeCompare(b));

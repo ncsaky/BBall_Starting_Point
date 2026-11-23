@@ -360,7 +360,7 @@ test('next opponent injury list shows remaining games without repeating injured 
       name:'Test Player',minutes_projection:30,health:{status:'injured',label:'injured ~4g',days_left:10},
     }]}}},
     teamLabel:value=>typeof value==='string'?value:value?.abbrev||'NYK', seasonGameOpponent:()=>'NYK', teamLogoSrc:()=>'',
-    clampNumber:value=>value, performanceBarStyle:()=>'', escapeAttr:value=>String(value), escapeHtml:value=>String(value),
+    clampNumber:value=>value, performanceBarStyle:()=>'', playerRatingBarStyle: ()=>'', escapeAttr:value=>String(value), escapeHtml:value=>String(value),
     formatDashboardShortDate:value=>value, isPlayerInjured:health=>health?.status==='injured', injuryGamesRemaining:()=>4,
     rating:()=>80, seasonMiniRating:()=>'<span>80</span>', statNumber:()=>0,
   };
@@ -439,7 +439,7 @@ test('coaching staff card keeps payroll only and displays compact single-line co
     staffName:row=>row.name, money:value=>`$${(value / 1000000).toFixed(1)}M`,
     escapeAttr:value=>String(value), escapeHtml:value=>String(value),
     seasonPanelHeader:title=>`<header>${title}</header>`,
-    performanceBarStyle:()=>'',
+    performanceBarStyle:()=>'', playerRatingBarStyle: ()=>'',
   };
   vm.createContext(scope);
   loadHouseTables(scope);
@@ -470,7 +470,7 @@ test('staff rows and coach cards share six distinct transparent coach portraits'
     staffYears:row=>row.years, staffName:row=>row.name,
     staffBudgetSummary:()=>({used:27,max:40}), money:value=>`$${Number(value).toFixed(1)}M`,
     rowLabel:value=>String(value).replaceAll('_',' '), draftMetric:value=>Number.isFinite(Number(value))?Number(value).toFixed(1):'—',
-    performanceBarStyle:value=>`--fill:${value}%`, escapeAttr:value=>String(value), escapeHtml:value=>String(value),
+    performanceBarStyle:value=>`--fill:${value}%`, playerRatingBarStyle: value=>`--fill:${value}%`, escapeAttr:value=>String(value), escapeHtml:value=>String(value),
     seasonPanelHeader:title=>`<header>${title}</header>`, showToast:()=>{}, renderModal:()=>{},
     state:{data:{dashboard:{staff_slots:rows}}},
     savePayload:()=>({}),

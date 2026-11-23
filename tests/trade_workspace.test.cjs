@@ -22,7 +22,7 @@ function fixture() {
     clipboardLegalActions:()=>new Set(['trades']),savePayload:()=>({save_path:'save'}),
     syncDefaultPartner:()=>{},escapeAttr:value=>String(value??''),escapeHtml:value=>String(value??''),
     money:value=>`$${Number(value||0).toFixed(1)}M`,signedMoney:value=>String(value),draftMetric:value=>value==null?'—':Number(value).toFixed(1),shortSeasonLabel:value=>value,
-    clampNumber:(value,min,max)=>Math.max(min,Math.min(max,value)),playerUpsideColor:()=> '#5a8',rowLabel:value=>value,
+    clampNumber:(value,min,max)=>Math.max(min,Math.min(max,value)),playerUpsideColor:()=> '#5a8',rowLabel:value=>value,playerRatingBarStyle:value=>`--fill:${value}%`,
     playerHeadshotMarkup:asset=>`<span class="player-headshot-frame"><img src="${asset.headshot_url}" /></span>`,
     playerNameWithInjuryMarkup:(asset,name)=>String(name),
     playerEvidenceRing:(label,value)=>`<span class="ring">${label} ${value}</span>`,draftAssetGlyph:()=>'<span class="pick-glyph"></span>',

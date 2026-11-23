@@ -16,7 +16,7 @@ function fixture() {
     playerNameWithInjuryMarkup:(asset,name)=>escape(name),
     clampNumber:(value,min,max)=>Math.max(min,Math.min(max,value)),
     playerEvidenceRing:(label,value)=>`<span data-ring="${label}">${value}</span>`,
-    performanceBarStyle:value=>`--fill:${value}%`, playerUpsideColor:()=> '#468563', draftAssetGlyph:()=>'<span class="draft-asset-glyph"></span>',
+    performanceBarStyle:value=>`--fill:${value}%`, playerRatingBarStyle: value=>`--fill:${value}%`, playerUpsideColor:()=> '#468563', draftAssetGlyph:()=>'<span class="draft-asset-glyph"></span>',
     rowLabel:value=>value, textValue:value=>value,
     tradeSegmentedValueBoard:()=>'<section>Value breakdown</section>',
     tradeEvaluationPanel:()=>'<section>Evaluation</section>',

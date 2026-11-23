@@ -206,7 +206,12 @@ function assetsTradeTools(legal) {
     <button type="button" data-assets-trade="finder" ${legal?'':'disabled'}><strong>Trade finder</strong>${gameArtwork('trade-finder','trade-launch-art')}</button>
   </div>`;
 }
+// Player OVR/OFF/DEF: the one rating bar every table uses (scale and look in app.js playerRatingBarStyle).
 function compactRatingBar(value) {
+  return `<span class="linked-rating assets-rating-bar player-rating-bar"><span>${draftMetric(value)}</span><i><b style="${playerRatingBarStyle(value)}"></b></i></span>`;
+}
+// Coach effects and other 0-100 values keep the plain scale.
+function effectRatingBar(value) {
   return `<span class="linked-rating assets-rating-bar"><span>${draftMetric(value)}</span><i><b style="${performanceBarStyle(Number(value||0))}"></b></i></span>`;
 }
 function blockValueBar(value) {
@@ -262,7 +267,7 @@ function assetsRosterGroups(seasons) {
   // OFF comes from the server like OVR and DEF (one display scale; OVERALL-SCALE, 2026-11-21). rating() reads the row's
   // display ratings first and only averages subratings when no OFF was sent. Reading p.ratings.offense first skipped the
   // roster rows' display_ratings and showed a three-subrating average under the OFF label.
-  const ratings=[['OVR','overall'],['OFF','offense'],['DEF','defense'],['Shot','shooting'],['Cre','creation'],['Pass','passing'],['Reb','rebounding'],['Rim','rim_deterrence'],['Ath','athleticism'],['Range','range']].map(([label,key],i)=>({label,key,width:i<3?72:([5,9].includes(i)?38:39),value:p=>Number(key==='offense'?(p.ratings?.offense??rating(p,'offense')):rating(p,key)),cell:p=>i<3?compactRatingBar(key==='offense'?(p.ratings?.offense??rating(p,'offense')):rating(p,key)):draftMetric(rating(p,key))}));
+  const ratings=[['OVR','overall'],['OFF','offense'],['DEF','defense'],['Shot','shooting'],['Cre','creation'],['Pass','passing'],['Reb','rebounding'],['Rim','rim_deterrence'],['Ath','athleticism'],['Range','range']].map(([label,key],i)=>({label,key,width:i<3?80:([5,9].includes(i)?38:39),value:p=>Number(key==='offense'?(p.ratings?.offense??rating(p,'offense')):rating(p,key)),cell:p=>i<3?compactRatingBar(key==='offense'?(p.ratings?.offense??rating(p,'offense')):rating(p,key)):draftMetric(rating(p,key))}));
   const stats=[compactPlayer,{key:'games',label:'GP',value:p=>Number(p.games||0),cell:p=>escapeHtml(p.gp_display||p.games||0)},{key:'mpg',label:'MPG',value:p=>Number(mpgFromRow(p)),cell:p=>draftMetric(mpgFromRow(p))},...['points','rebounds','assists','steals','blocks','turnovers'].map((key,i)=>({key,label:['PTS','REB','AST','STL','BLK','TO'][i],value:p=>Number(statNumber(p,key)),cell:p=>statNumber(p,key)}))];
   const contracts=[compactPlayer,{key:'health_risk',label:'Risk',width:44,value:p=>Number(p.health_risk||0),cell:p=>playerEvidenceRing('Health risk',p.health_risk,10,Number(p.health_risk)>=7?'#e04d55':Number(p.health_risk)>=4?'#bd5b5d':'#8e6263','/10')},{key:'upside_remaining',label:'Upside',width:44,value:p=>Number(p.upside_remaining||0),cell:p=>playerEvidenceRing('Upside remaining',p.upside_remaining,5,playerUpsideColor(Number(p.upside_remaining||0)),' OVR')},...seasons.map(season=>({key:season,label:shortSeasonLabel(season),width:48,value:p=>Number(p.salary_by_year?.[season]||0),cell:p=>formatCell(assetContractCell(p,season,seasons))}))];
   return [

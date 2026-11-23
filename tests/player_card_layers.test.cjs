@@ -11,7 +11,7 @@ function runtime() {
     escapeHtml: escape, escapeAttr: escape,
     clampNumber: (value, min, max) => Math.min(max, Math.max(min, value)),
     draftMetric: value => value == null ? '—' : Number(value).toFixed(1),
-    performanceBarStyle: value => `--fill:${value}%`,
+    performanceBarStyle: value => `--fill:${value}%`, playerRatingBarStyle: value => `--fill:${value}%`,
   };
   vm.createContext(context);
   vm.runInContext(source.slice(source.indexOf('const PC4_SEG'), source.indexOf('function approvedPlayerCardBody(')), context);
