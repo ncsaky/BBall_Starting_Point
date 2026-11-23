@@ -17,7 +17,10 @@ Method (declared, not fitted to simulation outcomes):
    season-to-season rank correlation of that metric among players with 1,000+ minutes in both seasons, divided by
    RELIABILITY_REF and capped at 1. A metric that barely repeats from one season to the next (help effectiveness,
    isolation turnover rate, and-one conversion: r 0.1-0.25) mostly measures small samples and context, so it can no
-   longer decide an input on its own; repeatable metrics (r >= 0.6) keep their full weight.
+   longer decide an input on its own; repeatable metrics (r >= 0.6) keep their full weight. Tied values share their
+   average rank in that check (2026-11-23). Two mapped metrics that are near-copies of one measurement carry the same
+   "vote_group" and count as one vote; a metric with a "valid_range" is not read for a player-season whose value is
+   impossible (a success rate above 100%).
 3. Across seasons: weights 2025-26 1.0, 2024-25 0.6, 2023-24 0.35, each times minutes/(minutes+800), times the
    strength of the strongest mapped metric available (1 primary, 0.5 supporting, 0.25 weak). A metric with
    "per" in the mapping (per-75 counts such as turnovers) is first divided by that exposure metric (touches); a
@@ -54,7 +57,7 @@ STRENGTH = {"primary": 1.0, "supporting": 0.5, "weak": 0.25}
 PRIOR_WEIGHT = 0.35
 MINUTES_HALF = 800
 GRADE_SLOPE = 1.31
-VERSION = "bbi_evidence_overlay_v4_2026_11_19"
+VERSION = "bbi_evidence_overlay_v5_2026_11_23"
 # Metrics that repeat at least this well from season to season (rank correlation, 1,000+ minutes both seasons) keep
 # their full mapped weight; noisier metrics are scaled down in proportion. 0.6 is about the repeatability of a stable
 # per-possession rate in this data (rim FG%, role-adjusted potential assists per pass, steals per possession).
@@ -177,19 +180,40 @@ def _summed_exposure(table: Mapping[tuple[str, str], dict[str, tuple[float, floa
 def _metric_values(table: Mapping[tuple[str, str], dict[str, tuple[float, float, str | None]]], season: str,
                    m: Mapping[str, Any]) -> dict[str, tuple[float, float, str | None]]:
     values = table.get((season, m["metric"]), {})
+    if m.get("valid_range"):
+        # A rate outside its possible range (a success rate of 125%, a contested share of 200%) is a capture or
+        # denominator error, not a great rebounder: that player-season is not read (INPUT-DATA-FIXES, 2026-11-23).
+        lo, hi = (float(x) for x in m["valid_range"])
+        values = {k: row for k, row in values.items() if lo <= row[0] <= hi}
     names = _exposure_names(m)
     return _per_exposure(values, _summed_exposure(table, season, names)) if names else values
 
 
+def _average_ranks(values: list[float]) -> list[float]:
+    """Ranks with ties sharing their average rank (Spearman's convention)."""
+    order = sorted(range(len(values)), key=lambda i: values[i])
+    ranks = [0.0] * len(values)
+    i = 0
+    while i < len(order):
+        j = i
+        while j + 1 < len(order) and values[order[j + 1]] == values[order[i]]:
+            j += 1
+        for k in range(i, j + 1):
+            ranks[order[k]] = (i + j) / 2.0
+        i = j + 1
+    return ranks
+
+
 def _rank_correlation(x: Mapping[str, float], y: Mapping[str, float]) -> float | None:
+    """Season-to-season rank correlation. Tied values share their average rank: until 2026-11-23 they got distinct
+    ranks in sort order, so a column that is mostly one value (Movement Distance Rating, zero for 92-94% of players)
+    read as highly repeatable (0.94; 0.44 with tied ranks). A constant column has no rank correlation (None)."""
     ids = [k for k in x if k in y]
     if len(ids) < 40:
         return None
-    rx = {k: i for i, k in enumerate(sorted(ids, key=lambda k: x[k]))}
-    ry = {k: i for i, k in enumerate(sorted(ids, key=lambda k: y[k]))}
     from statistics import correlation
     try:
-        return correlation([rx[k] for k in ids], [ry[k] for k in ids])
+        return correlation(_average_ranks([x[k] for k in ids]), _average_ranks([y[k] for k in ids]))
     except ValueError:
         return None
 
@@ -294,8 +318,10 @@ def player_input_scores(root: Path, mapping: Mapping[str, Any] | None = None) ->
             for cid, minutes in players.items():
                 num = den = top = 0.0
                 used = []
+                groups: dict[str, list[tuple[float, float]]] = defaultdict(list)
                 for m in spec["metrics"]:
-                    key = (season, m["metric"], int(m.get("direction", 1)), _exposure_names(m))
+                    key = (season, m["metric"], int(m.get("direction", 1)), _exposure_names(m),
+                           tuple(m.get("valid_range") or ()))
                     if key not in pct_cache:
                         pct_cache[key] = _percentiles(_metric_values(table, season, m), int(m.get("direction", 1)))
                     p = pct_cache[key].get(cid)
@@ -305,10 +331,16 @@ def player_input_scores(root: Path, mapping: Mapping[str, Any] | None = None) ->
                          * reliability_of(m))
                     if w <= 0:
                         continue
-                    num += w * _ND.inv_cdf(p)
+                    used.append(m["metric"])
+                    # vote_group: near-copies of one measurement (rank r > 0.98 every build season) share one vote,
+                    # weighted like the strongest of them, instead of voting once each (INPUT-DATA-FIXES).
+                    groups[m.get("vote_group") or m["metric"]].append((w, _ND.inv_cdf(p)))
+                for members in groups.values():
+                    total = sum(w for w, _ in members)
+                    w = max(w for w, _ in members)
+                    num += w * sum(wi * zi for wi, zi in members) / total
                     den += w
                     top = max(top, w)
-                    used.append(m["metric"])
                 if not den:
                     continue
                 z = num / den
