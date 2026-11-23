@@ -71,6 +71,10 @@ Game runs from the browser pane: launch entry `game` (port 8766, normal `saves/`
 - **Injury figure in card headers (done 2026-11-22):** the body figure spilled out of player and extension card
   headers (a card style set its width, so its height ran to 105-148px). It now takes its 48px slot's height. The text
   beside it is just "Injury risk"; the index number and "Watch: Shoulder" moved to the hover text.
+- **Card borders and Roster view (done 2026-11-23):** the free-agency/offseason windows' top panel (`fa-panel`) had
+  no frame; it now has the same 1px border as other cards. "Roster view"/"Cut down" opened the Opening Roster window
+  locked and empty in preseason: its roster wasn't loaded (the preseason dashboard loads through the snapshot) and
+  the window looked for a wrapper that exists only in the required cut-down phase. Both fixed (`openRosterView`).
 - **Rating bars (done 2026-11-22):** every player OVR/OFF/DEF bar is one look: 36 x 5px on the house tables' dark
   track, fill and colour spread over 60-98 (`playerRatingBarStyle` in app.js) instead of 0-100, so a 77 and a 94
   differ at a glance (77 fills ~45% amber, 94 ~90% blue). Numbers unchanged. Skill and coach bars keep 0-100.

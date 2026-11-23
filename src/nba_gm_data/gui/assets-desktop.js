@@ -29,6 +29,8 @@ async function loadAssetsDesktop() {
   return request.promise;
 }
 function loadOpenedAssetsCard(target,id) {
+  // The opening-roster window loads its roster when opened in preseason (from the gallery or Roster view).
+  if(id==='phase-cutdown-decision'){ if(!state.data.cutdown&&!state.hydrating&&preseasonRosterViewOpen()) openRosterView(); return; }
   if(!ASSETS_CARD_IDS.has(id)) return;
   const saved=state.data.assetsDesktop;
   if(!state.currentSave||state.hydrating||state.tutorial||assetsErrorForContext()||

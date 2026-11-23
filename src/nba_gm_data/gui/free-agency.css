@@ -322,3 +322,9 @@ body.unified-terminal-ui .fa-hold-table .ui-command { min-height:18px; padding:0
 .fa-snt-verdict p { margin: 0 0 4px; }
 .fa-snt-verdict ul { margin: 0; padding-left: 16px; }
 .fa-snt-verdict li.is-no { color: #a8434b; }
+
+/* Every card has a border on all sides (playtest 2026-11-22): the free-agency and offseason windows' top-level panel
+   draws the same 1px frame as the other cards' command panels. */
+body.unified-terminal-ui .card-board-body .seasonal-clipboard-card :is(.unified-phase-dashboard, [data-seasonal-context]) > .fa-panel {
+  border: 1px solid #89949f;
+}

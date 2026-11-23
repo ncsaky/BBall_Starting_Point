@@ -6173,6 +6173,22 @@ function setRosterChecklistPanel(list = state.data.setRoster || {}) {
   </section>`;
 }
 
+// The opening-roster (cut-down) window is open all preseason, but the preseason dashboard loads through the snapshot,
+// which leaves its roster unloaded: the window opened locked and empty ("Available during Cutdown"). Load the roster
+// first, rebuild the board so the window has content, then open it (playtest 2026-11-22).
+async function openRosterView() {
+  if (!state.data.cutdown && preseasonRosterViewOpen()) {
+    try {
+      state.data.cutdown = await action("roster_cutdown", savePayload());
+    } catch (error) {
+      showToast(error.message || "Could not load the roster.", true);
+      return;
+    }
+    renderDashboard();
+  }
+  window.CardBoard?.open("phase-cutdown-decision");
+}
+
 function wireOffseasonChecklist(panel) {
   panel.querySelectorAll("[data-offseason-option]").forEach((button) => button.addEventListener("click", () =>
     decideOffseasonOption(button.dataset.playerId || "", button.dataset.offseasonOption === "exercise")));
@@ -6187,7 +6203,7 @@ function wireOffseasonChecklist(panel) {
   }));
   panel.querySelectorAll("[data-fa-renounce]").forEach((button) => button.addEventListener("click", () => renounceCapHold(button.dataset.faRenounce || "")));
   panel.querySelectorAll("[data-offseason-extend]").forEach((button) => button.addEventListener("click", () => openExtensionNegotiation(button.dataset.offseasonExtend || "")));
-  panel.querySelectorAll("[data-offseason-cutdown]").forEach((button) => button.addEventListener("click", () => window.CardBoard?.open("phase-cutdown-decision")));
+  panel.querySelectorAll("[data-offseason-cutdown]").forEach((button) => button.addEventListener("click", () => openRosterView()));
   panel.querySelectorAll("[data-offseason-twqo]").forEach((button) => button.addEventListener("click", async () => {
     const result = await action("two_way_qualifying_offer", { ...savePayload(), team: userTeam(), player_id: button.dataset.playerId || "", tender: button.dataset.offseasonTwqo === "tender" });
     await afterOffseasonDecision(result, result?.status === "tendered" ? "Two-way qualifying offer sent" : "No two-way offer");
@@ -8828,7 +8844,8 @@ function seasonalClipboardCards(dashboard) {
   const kind = dashboardPhaseKind();
   const sections = {
     staff_retention: [["decision", ".required-decision-workspace", "Staff Retention - Required"]],
-    cutdown: [["decision", ".required-decision-workspace", "Roster Cutdown - Required"]],
+    // The wrapper exists only while the cut is required; in preseason the roster view is the workspace itself.
+    cutdown: [["decision", ".required-decision-workspace, .cutdown-workspace", "Roster Cutdown - Required"]],
     playoffs: [
       ["bracket", ".phase-bracket-shell", "Playoff Bracket"],
       ["leaders", ".phase-leaders-panel", "Playoff Stats"],
