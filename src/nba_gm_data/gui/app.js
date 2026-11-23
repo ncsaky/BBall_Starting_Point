@@ -9828,7 +9828,8 @@ function injuryBodyMini(detail) {
   const top = map.current_part ? map.parts.find(part => part.current) : [...map.parts].sort((a, b) => (b.expected_games - b.typical_games) - (a.expected_games - a.typical_games))[0];
   const note = map.current_part ? `Injured: ${map.current_label || top?.label || "out"}` : top && top.relative > 1.15 ? `Watch: ${top.label}` : "No hotspot";
   const summary = `Injury risk ${draftMetric(risk)} model index (the front office's injury-risk score; most players 1–4). Body map: about ${map.expected_games_total} games a season expected to be missed to injury, against ${map.typical_games_total} for a typical rotation player. ${note}. See the Health page for the full map.`;
-  return `<div class="player-evidence-ring injury-body-evidence" title="${escapeAttr(summary)}" aria-label="${escapeAttr(summary)}"><span>${injuryBodyFigure(map, "front", { mini: true })}</span><div><b>Injury risk ${draftMetric(risk)}</b><small>${escapeHtml(note)}</small></div></div>`;
+  // The figure carries it: no index number or "Watch" line beside it (playtest 2026-11-22); both stay in the tooltip.
+  return `<div class="player-evidence-ring injury-body-evidence" title="${escapeAttr(summary)}" aria-label="${escapeAttr(summary)}"><span>${injuryBodyFigure(map, "front", { mini: true })}</span><div><b>Injury risk</b></div></div>`;
 }
 
 function injuryBodyMapPanel(detail) {

@@ -99,3 +99,10 @@ body.unified-terminal-ui .trade-ledger-rating.player-rating-bar > i { margin-top
 .role-def-hidden { background: #e6e9ec; color: #4b5763; border-color: #c3cad1; }
 .role-def-big-1 { background: #f2d9d6; color: #7a2620; border-color: #dda59f; }
 .role-unknown { background: #eef1f3; color: #3e4d59; border-color: #cbd2d8; }
+
+/* Injury body figure in card headers: the figure takes its slot's height (it is tall and narrow), so it never spills
+   out of the header, whatever size the card gives the slot (playtest 2026-11-22). */
+body.unified-terminal-ui .player-evidence-ring.injury-body-evidence > span { display: block !important; overflow: hidden; }
+body.unified-terminal-ui .player-evidence-ring.injury-body-evidence > span > svg.injury-body-figure.mini {
+  display: block; margin: 0 auto; height: 100% !important; width: auto !important; max-width: 100% !important; max-height: 100% !important; transform: none !important;
+}
