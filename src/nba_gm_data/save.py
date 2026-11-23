@@ -5022,6 +5022,7 @@ def team_dashboard(
                     else float(rotation_projection.get(player["id"], display_minutes_projection(player)))
                 ),
                 "rotation_priority": player.get("rotation_priority"),
+                "primary_off_role": player.get("primary_off_role"), "primary_def_role": player.get("primary_def_role"),
                 "games": season_stats.get(player["id"], {}).get("games", 0),
                 "team_games": team_games,
                 "gp_display": f"{season_stats.get(player['id'], {}).get('games', 0)}/{team_games}",

@@ -262,6 +262,9 @@ function assetsRosterGroups(seasons) {
     player,
     {key:'age',label:'Age',width:28,value:p=>Math.floor(p.age)},
     {key:'position',label:'Pos',width:28,value:p=>compactPos(p.position)},
+    // Offense and defense roles as colour-coded chips (playtest 2026-11-22; app.js playerRoleChip).
+    {key:'primary_off_role',label:'Off. role',width:120,value:p=>p.primary_off_role||'',cell:p=>playerRoleChip(p.primary_off_role)},
+    {key:'primary_def_role',label:'Def. role',width:120,value:p=>p.primary_def_role||'',cell:p=>playerRoleChip(p.primary_def_role)},
     {key:'trade_value',label:'Value',width:65,value:p=>Number(p.trade_value||0),cell:p=>p.trade_value==null?'—':draftMetric(p.trade_value)},
   ];
   // OFF comes from the server like OVR and DEF (one display scale; OVERALL-SCALE, 2026-11-21). rating() reads the row's

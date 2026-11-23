@@ -1776,6 +1776,7 @@ def team_assets_payload(canonical: dict[str, Any], save_path: Path, team_query: 
                 "contract": salary,
                 "contract_terms": block_contract_terms(contract_for_player(active, player["id"]), str(active.get("meta", {}).get("active_season") or "")),
                 "salary_by_year": player_salary_table(active, player["id"]),
+                "primary_off_role": player.get("primary_off_role"), "primary_def_role": player.get("primary_def_role"),
                 "ratings": attrs,
                 "trade_value": round(market_trade_target_value(player, valuation), 2),
                 "health_risk": round(float(valuation.get("health_risk") or 0), 1),
