@@ -12,6 +12,7 @@
   --table-head-size: 10px;
   --table-sorted-head: #d1dde8;
   --table-sorted-cell: rgba(118, 156, 190, .28);
+  --table-sorted-rule: #a3b3c2;
 }
 
 /* Header line: no borders on the header row itself; two flush bars drawn inside the header cells. */
@@ -45,6 +46,11 @@ body.unified-terminal-ui table tbody :is(td, th):is(.ss-sorted, .is-sorted, .is-
   font-weight: 700 !important;
 }
 body.unified-terminal-ui table tbody :is(td, th):is(.ss-sorted, .is-sorted, .is-sorted-value) * { font-weight: 700 !important; }
+/* Row lines stay visible through the sorted fill: a darker line inside the sorted column only. */
+body.unified-terminal-ui table tbody :is(td, th):is(.ss-sorted, .is-sorted, .is-sorted-value) {
+  border-bottom-color: var(--table-sorted-rule) !important;
+  border-top-color: var(--table-sorted-rule) !important;
+}
 
 /* Grid-style "house" tables (Standings, Minutes, Development, Coaching Staff, Next Opponent): same header line. */
 body.unified-terminal-ui [data-house-table] > [data-house-head] {
