@@ -1031,9 +1031,8 @@ def outlook_leaders_slide(ctx: dict[str, Any]) -> dict[str, Any]:
 
 
 def outlook_your_team_slide(ctx: dict[str, Any]) -> dict[str, Any]:
-    from .save import team_cap_summary, team_identity_report, team_rotation_projection
-
-    from .save import contract_last_season, contract_salary_for_season, player_display_attribute_summary, player_salary_table
+    from .save import (contract_salary_for_season, player_display_attribute_summary, player_salary_table,
+                       starting_lineup_slots, team_cap_summary, team_identity_report, team_rotation_projection)
 
     active, save, user, teams = ctx["active"], ctx["save"], ctx["user"], ctx["teams"]
     projection = team_rotation_projection(active, save, user, integer=True)
@@ -1048,8 +1047,7 @@ def outlook_your_team_slide(ctx: dict[str, Any]) -> dict[str, Any]:
         line = last_totals.get(pid) or {}
         games = int(line.get("games") or 0)
         contract = contracts.get(pid)
-        end = contract_last_season(contract) if contract else None
-        years = (_season_years(end)[0] - season_start + 1) if end and season_start else None
+        years = _years_left(contract, ctx["season"])
         salary = contract_salary_for_season(contract, ctx["season"]) if contract else None
         return {**_player_ref(active, pid), "minutes": round(float(minutes)),
                 "offense": ratings.get("offense"), "defense": ratings.get("defense"),
@@ -1093,10 +1091,18 @@ def outlook_your_team_slide(ctx: dict[str, Any]) -> dict[str, Any]:
              for key in keys if key in ranks]
     cap = team_cap_summary(active, save, user, ctx["season"])
     payout = cap.get("tax_payout") or {}
+    # The slide is a picture of the team, not a table (taste deck 2026-11-23): the projected starting five, the bench,
+    # and three numbers that say what kind of team this is.
+    starters = [pid for _, pid in sorted(starting_lineup_slots(active, save, user, persist=False).items(), key=lambda item: int(item[0])) if pid]
+    shown = {row["id"] for row in rotation}
+    for pid in starters:
+        if pid not in shown:
+            rotation.append({**rotation_row(pid, projection.get(pid) or 0), "injury": None})
     slide = {"key": "your_team", "title": _team_ref(teams, user)["name"], "kicker": "Your team",
             "logo": _team_ref(teams, user)["abbrev"], "team_overall": (identity.get("metrics") or {}).get("overall"),
             "radar": radar, "league_teams": len(teams), "salary_horizon": {"seasons": horizon, "rows": salary_rows, "cap_by_year": cap_by_year},
-            "rotation": rotation, "overall_rank": (identity.get("ranks") or {}).get("overall"),
+            "rotation": rotation, "starters": starters, "takeaways": team_takeaways(ctx, identity),
+            "overall_rank": (identity.get("ranks") or {}).get("overall"),
             "strengths": [{"label": label, "rank": rank} for label, rank in ranked[:3]],
             "weaknesses": [{"label": label, "rank": rank} for label, rank in ranked[-3:][::-1]],
             "cap": {"payroll_millions": cap.get("salary_total_millions"), "tax_line_millions": cap.get("tax_line_millions"),
@@ -1105,6 +1111,61 @@ def outlook_your_team_slide(ctx: dict[str, Any]) -> dict[str, Any]:
             "tax_payout": payout or None, "note": None}
     ctx["your_team_slide"] = slide
     return slide
+
+
+SHAPE_GAP = 8          # league ranks apart before a team reads as top-heavy or deep rather than balanced
+SHAPE_LOADED = 8       # top-three and bench both ranked this high or better
+
+
+def team_shape(top_rank: int | None, depth_rank: int | None) -> str | None:
+    """A word for how a team's talent is spread: its best three players' rank against its bench's rank."""
+    if not top_rank or not depth_rank:
+        return None
+    if top_rank <= SHAPE_LOADED and depth_rank <= SHAPE_LOADED:
+        return "Loaded"
+    if depth_rank - top_rank >= SHAPE_GAP:
+        return "Top-heavy"
+    if top_rank - depth_rank >= SHAPE_GAP:
+        return "Deep"
+    return "Balanced"
+
+
+def _rank_of(values: dict[str, float], team_id: str, *, highest_first: bool) -> int | None:
+    if team_id not in values:
+        return None
+    ordered = sorted(values, key=lambda tid: (-values[tid] if highest_first else values[tid], tid))
+    return 1 + ordered.index(team_id)
+
+
+def team_takeaways(ctx: dict[str, Any], identity: dict[str, Any]) -> dict[str, Any]:
+    """Three league-relative numbers for the user's team: the rotation's age (weighted by the coach's projected
+    minutes), how its talent is spread (best three players against the bench) and its payroll."""
+    from .save import player_display_attribute_summary, team_cap_summary, team_rotation_projection
+
+    active, save, user, teams = ctx["active"], ctx["save"], ctx["user"], ctx["teams"]
+    players = {row["id"]: row for row in active.get("players", [])}
+    ages: dict[str, float] = {}
+    top3: dict[str, float] = {}
+    payroll: dict[str, float] = {}
+    for team_id in teams:
+        minutes = {pid: float(m) for pid, m in team_rotation_projection(active, save, team_id, integer=True).items()
+                   if float(m) > 0 and pid in players}
+        weighted = [(float(players[pid].get("display_age", players[pid].get("age")) or 0), m) for pid, m in minutes.items()]
+        total = sum(m for age, m in weighted if age)
+        if total:
+            ages[team_id] = sum(age * m for age, m in weighted if age) / total
+        overalls = sorted((float(player_display_attribute_summary(active, pid).get("overall") or 0)
+                           for pid, row in players.items() if row.get("team_id") == team_id), reverse=True)
+        if overalls:
+            top3[team_id] = sum(overalls[:3]) / len(overalls[:3])
+        payroll[team_id] = float(team_cap_summary(active, save, team_id, ctx["season"]).get("salary_total_millions") or 0)
+    top_rank = _rank_of(top3, user, highest_first=True)
+    depth_rank = (identity.get("ranks") or {}).get("depth")
+    return {"teams": len(teams),
+            "age": {"value": round(ages[user], 1) if user in ages else None, "rank": _rank_of(ages, user, highest_first=False)},
+            "shape": {"label": team_shape(top_rank, depth_rank), "top_rank": top_rank, "depth_rank": depth_rank},
+            "payroll": {"value": round(payroll.get(user, 0.0), 1) if user in payroll else None,
+                        "rank": _rank_of(payroll, user, highest_first=True)}}
 
 
 def outlook_team_profile_slide(ctx: dict[str, Any]) -> dict[str, Any]:
@@ -1128,14 +1189,68 @@ def outlook_contracts_slide(ctx: dict[str, Any]) -> dict[str, Any]:
     mine.sort(key=lambda row: (-float(row.get("projected_aav") or 0), row.get("player_id")))
     extensions = [{**_player_ref(active, row["player_id"]), "years_left": row.get("years_remaining"),
                    "salary_millions": round(float(row.get("current_salary") or 0) / 1e6, 1),
-                   "projected_millions": round(float(row.get("projected_aav") or 0) / 1e6, 1)} for row in mine[:6]]
+                   "projected_millions": round(float(row.get("projected_aav") or 0) / 1e6, 1),
+                   "projected_years": row.get("projected_years")} for row in mine[:6]]
     expiring = sorted(expiring_players(active, season), key=lambda item: (-float(contract_salary_for_season(item[1], season) or 0), item[0]["id"]))
     biggest = [{**_player_ref(active, player["id"]), "team": _team_ref(teams, player.get("team_id")),
-                "salary_millions": round(float(contract_salary_for_season(contract, season) or 0) / 1e6, 1)}
+                "salary_millions": round(float(contract_salary_for_season(contract, season) or 0) / 1e6, 1), "years_left": 1}
                for player, contract in expiring[:8]]
     start, end = _season_years(season)
     return {"key": "contracts", "title": "Contracts to watch", "kicker": f"Extensions before Jan 15, {end}; next summer's free agents",
-            "extensions": extensions, "expiring": biggest}
+            "extensions": extensions, "expiring": biggest, "movers": trade_candidates(ctx)}
+
+
+# The front offices' own trade block (transactions.trade_block_score), in plain words. The first reason is the
+# biggest one the engine found.
+TRADE_REASON_WORDS = {
+    "older_than_team_timeline": "Older than his team's timeline", "negative_contract_value": "Paid above his value",
+    "upgradeable_expensive_rotation_slot": "Pricey for his role", "position_surplus": "Crowded position",
+    "veteran_surplus_slot": "Veteran at a crowded spot", "health_risk_for_win_now_team": "Injury risk for a contender",
+    "blocked_prospect": "Blocked young player", "gm_listed": "Listed by his GM", "extension_talks_stalled": "Extension talks stalled",
+    "soft_market_listening": "Team is listening",
+}
+TRADE_CANDIDATE_MIN_OVERALL = 70.0
+TRADE_CANDIDATE_LIMIT = 8
+
+
+def _years_left(contract: dict[str, Any] | None, season: str) -> int | None:
+    from .save import contract_last_season
+
+    end = contract_last_season(contract) if contract else None
+    if not end or not season:
+        return None
+    return max(1, _season_years(end)[0] - _season_years(season)[0] + 1)
+
+
+def trade_candidates(ctx: dict[str, Any]) -> list[dict[str, Any]]:
+    """Players who could be on the move: the league's trade block as the AI front offices see it (older than the
+    team's timeline, paid above value, a crowded position...), other teams only, rotation-level players, most
+    likely first, then by rating."""
+    from .save import contract_salary_for_season
+    from .transactions import with_transaction_context
+
+    active, user, season, teams = ctx["active"], ctx["user"], ctx["season"], ctx["teams"]
+    try:
+        entries = with_transaction_context(active).get("trade_block_entries") or []
+    except Exception:  # pragma: no cover - the trade model is optional for this slide
+        LOG.exception("slideshow trade block failed")
+        return []
+    contracts = {row.get("player_id"): row for row in active.get("contracts", [])}
+    rows = []
+    for entry in entries:
+        if entry.get("team_id") == user:
+            continue
+        ref = _player_ref(active, entry["player_id"])
+        if float(ref.get("overall") or 0) < TRADE_CANDIDATE_MIN_OVERALL:
+            continue
+        contract = contracts.get(entry["player_id"])
+        salary = contract_salary_for_season(contract, season) if contract else None
+        reasons = [TRADE_REASON_WORDS.get(code, code.replace("_", " ").capitalize()) for code in entry.get("reasons") or []]
+        rows.append({**ref, "team": _team_ref(teams, entry.get("team_id")), "block_score": entry.get("block_score"),
+                     "salary_millions": round(float(salary) / 1e6, 1) if salary else None,
+                     "years_left": _years_left(contract, season), "reason": reasons[0] if reasons else None, "reasons": reasons})
+    rows.sort(key=lambda row: (-float(row.get("block_score") or 0), -float(row.get("overall") or 0), row["id"]))
+    return rows[:TRADE_CANDIDATE_LIMIT]
 
 
 def outlook_prospects_slide(ctx: dict[str, Any]) -> dict[str, Any]:

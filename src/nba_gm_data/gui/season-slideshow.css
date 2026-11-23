@@ -1,6 +1,7 @@
 /* Season slideshows: the tutorial card (tutorial.css), made large, alone on a dimmed full-screen backdrop.
-   Tables follow the house table style (house-table.css values): double header rule, small bold header text,
-   alternating rows, whole-row hover, sorted-column fill, headshots bottom-aligned filling the row. */
+   Tables follow docs/UI_STYLE_GUIDE.md: one thick dark header line, 10px bold header text, every column centred
+   (header over its values) except the name, alternating rows, whole-row hover, sorted column shaded and bold,
+   headshots bottom-aligned filling the row. (table-style.css draws the header line and sorted shading game-wide.) */
 .season-slideshow[hidden] { display: none; }
 
 .season-slideshow {
@@ -109,24 +110,26 @@
 
 /* Tables: house style */
 .ss-table { width: 100%; border-collapse: collapse; background: var(--house-row, #fff); font-size: 12px; }
-.ss-table caption { caption-side: top; text-align: left; font-weight: 750; font-size: 13px; padding: 0 0 5px; color: #17212a; }
+.ss-table caption { caption-side: top; text-align: left; font-weight: 800; font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase; padding: 0 0 3px; margin-bottom: 0; border-bottom: 2px solid #18212a; color: #18212a; }
 .ss-table th {
-  border-bottom: 3px double var(--house-head-rule, #b7c2cb);
+  border-bottom: 3px solid #2b3640;
   color: var(--house-head-text, #1d2a33);
   font-size: 10px;
   font-weight: 700;
   padding: 4px 6px;
-  text-align: left;
+  text-align: center;
   text-transform: none;
   letter-spacing: 0;
   white-space: nowrap;
 }
-.ss-table td { border-bottom: 1px solid var(--house-rule, #d5dde3); padding: 3px 6px; vertical-align: middle; }
+.ss-table td { border-bottom: 1px solid var(--house-rule, #d5dde3); padding: 3px 6px; vertical-align: middle; text-align: center; }
 .ss-table tbody tr:nth-child(even) td { background: var(--house-row-alt, #eef1f3); }
 .ss-table tbody tr:hover td { background: var(--house-row-hover, #dce8f2); }
 .ss-table th.ss-sorted { background: var(--house-sorted-head, #d1dde8); }
-.ss-table td.ss-sorted { box-shadow: inset 0 0 0 999px var(--house-sorted-cell, rgba(118, 156, 190, .28)); }
-.ss-table .ss-num { text-align: right; font-variant-numeric: tabular-nums; }
+.ss-table td.ss-sorted { box-shadow: inset 0 0 0 999px var(--house-sorted-cell, rgba(118, 156, 190, .28)); font-weight: 700; }
+.ss-table td.ss-sorted * { font-weight: 700; }
+.ss-table .ss-num { text-align: center; font-variant-numeric: tabular-nums; }
+.ss-table :is(th, td):is(.ss-left, .ss-player-col) { text-align: left; }
 .ss-table td.ss-player-col { padding-top: 0; padding-bottom: 0; vertical-align: bottom; }
 .ss-table tr.ss-user td { background: var(--house-row-active, #cfe1f1); font-weight: 700; }
 .ss-table tr.ss-user td:first-child { box-shadow: inset 3px 0 0 var(--house-active-mark, #3d82c5); }
@@ -186,7 +189,7 @@
 .ss-legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 0 0 8px; font-size: 11.5px; }
 .ss-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .ss-legend i { display: inline-block; width: 14px; height: 10px; }
-.ss-continuity { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 18px; }
+.ss-continuity { list-style: none; margin: 0; padding: 0; }
 .ss-continuity li { break-inside: avoid; display: grid; grid-template-columns: 62px minmax(100px, 1fr); gap: 8px; align-items: center; min-height: 32px; padding: 1px 6px; background: var(--house-row, #fff); }
 .ss-continuity .ss-logo { width: 16px; height: 16px; }
 .ss-pct small { display: block; color: #52616e; font-size: 10.5px; }
@@ -210,7 +213,7 @@
   .ss-awards { grid-template-columns: repeat(3, 1fr); }
   .ss-grid-3 { grid-template-columns: 1fr 1fr; }
   .ss-allnba ul { grid-template-columns: repeat(3, 1fr); }
-  .ss-continuity { columns: 1; }
+  .ss-continuity-cols { grid-template-columns: 1fr; }
   .ss-continuity li { min-height: 26px; grid-template-columns: 64px minmax(140px, 1fr); }
   .ss-compact { grid-template-columns: 1fr; }
 }
@@ -228,9 +231,11 @@
 .ss-card > .ss-titlebar { border-radius: 2px 2px 0 0; }
 .ss-move .ss-arrow { flex: none; display: block; margin: 0 2px; color: #52616e; }  /* drawn arrow: centres exactly on the logos */
 
-/* Last season's leaders: 3 x 3 grid, each table with a View all button; View all is one scrolling table. */
-.ss-leader-cat > header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0 0 4px; }
-.ss-leader-cat > header h4 { margin: 0; font-size: 16px; font-weight: 750 !important; color: #18212a; }
+/* Last season's leaders: 3 x 3 grid with room between the mini tables; each has a titled header (small capitals,
+   a rule under it) and a View all button; View all is one scrolling table. */
+.ss-leader-grid { gap: 22px 30px; }
+.ss-leader-cat .ss-panel-head { margin-bottom: 0; }
+.ss-winners { margin-top: 18px; }
 /* View all: plain grey text, no box. */
 body.unified-terminal-ui .ss-leader-cat .ss-view-all {
   min-height: 0 !important; height: auto !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important;
@@ -244,12 +249,12 @@ body.unified-terminal-ui .ss-leader-cat .ss-view-all:hover { color: #18212a !imp
 .ss-viewall .ss-table thead th { position: sticky; top: 0; z-index: 2; background-color: var(--house-head, #e4e8ec); }
 
 /* Player names open the player card; the slideshow steps aside and this button brings it back. */
-body.unified-terminal-ui .ss-table .ss-player-link {
+body.unified-terminal-ui .season-slideshow .ss-player-link {
   min-height: 0 !important; height: auto !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important;
   background: transparent !important; box-shadow: none !important; color: inherit !important;
   font: inherit !important; font-weight: 700 !important; text-align: left; text-decoration: none !important; cursor: pointer;
 }
-body.unified-terminal-ui .ss-table .ss-player-link:hover { text-decoration: underline !important; }
+body.unified-terminal-ui .season-slideshow .ss-player-link:hover { text-decoration: underline !important; }
 body.unified-terminal-ui .ss-return {
   position: fixed; top: 10px; left: 50%; transform: translateX(-50%) !important; z-index: 2147483000;
   padding: 7px 14px !important; border: 1px solid #405363 !important; border-radius: 3px !important;
@@ -265,20 +270,11 @@ body.unified-terminal-ui .ss-return:hover { background: #2b3a48 !important; }
 .ss-compact .ss-table.ss-fixed tbody tr { height: 32px; }
 .ss-table.ss-fixed td small.ss-clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; overflow: hidden; line-height: 1.25; }
 
-/* Your team: the rotation table runs full width; headshots sit flush left and the row ends at the headshot's base. */
-.ss-roster .ss-table.ss-fixed tbody tr { height: 30px; }
-.ss-roster .ss-table td.ss-player-col { padding: 0 6px 0 0; vertical-align: bottom; }
-.ss-roster .ss-table th:first-child { padding-left: 6px; }
-.ss-roster .ss-player { display: flex; min-height: 0; align-items: flex-end; height: 30px; }
-.ss-roster .ss-player > .ss-player-name { align-self: center; display: inline-flex; flex-direction: row; align-items: center; gap: 6px; min-width: 0; padding: 0; }
-.ss-roster .ss-headshot { width: 40px; height: 30px; }
 .ss-injury { color: #b23b3b; font-size: 11px; font-weight: 700; white-space: nowrap; }
 /* Header: logo and the team's league rank. */
 .ss-content h2.ss-title-team { display: flex; align-items: center; gap: 12px; }
 .ss-content h2.ss-title-team .ss-title-logo { width: 40px; height: 40px; }
 .ss-title-stat b { font-size: 24px; font-weight: 750; }
-/* Top: the rotation table at its natural width, the radar beside it. Bottom: payroll chart and numbers. */
-.ss-team-top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: start; }
 .ss-radar { margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 0; }
 .ss-radar svg { width: 100%; max-height: 330px; overflow: visible; }
 .ss-radar-ring { fill: none; stroke: #c9d2da; stroke-width: 1; }
@@ -291,16 +287,104 @@ body.unified-terminal-ui .ss-return:hover { background: #2b3a48 !important; }
 .ss-key::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: -1px; border-radius: 2px; }
 .ss-key-offense::before { background: rgba(61, 130, 197, .6); border: 1px solid #3d82c5; }
 .ss-key-defense::before { background: rgba(196, 122, 44, .55); border: 1px solid #c47a2c; }
-.ss-team-facts { display: flex; gap: 24px; align-items: stretch; margin-top: 12px; height: 210px; }
 /* The payroll chart keeps the player card's proportions (190 x 256) wherever it appears. */
 .ss-payroll { height: 100%; flex: none; display: flex; }
 body.unified-terminal-ui .ss-payroll .salary-horizon-chart { height: 100% !important; width: auto !important; aspect-ratio: 190 / 256; max-height: none !important; }
-.ss-team-facts > section:last-child { flex: 0 1 360px; }
-/* Rating cells: number + the game's bar. */
-.ss-table td .ss-rating { width: auto; }
 
-/* Team profile slide: a large radar beside the payroll chart and numbers. */
-.ss-profile { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 28px; align-items: center; height: 100%; }
-.ss-profile .ss-radar svg { max-height: 520px; }
-.ss-profile-money { display: flex; gap: 24px; align-items: stretch; height: 340px; }
-.ss-profile-money > section:last-child { flex: 1 1 auto; align-self: center; }
+/* ---------------------------------------------------------------- taste pass (2026-11-23) */
+/* Coloured rating numbers (red low to blue high; colour set inline by the script). */
+.ss-rating { font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* Panel titles: small capitals with a dark rule under them, clearly apart from row text. */
+.ss-panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0 0 8px; padding: 0 0 3px; border-bottom: 2px solid #18212a; }
+body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-family: inherit; font-size: 11.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #18212a; line-height: 1.3; }
+.ss-panel { background: #f7f9fa; border: 1px solid #a9b5bf; padding: 10px 12px; min-width: 0; }
+.ss-panel-empty { margin: 6px 0 0; color: #3e4d59; font-size: 13px; }
+
+/* Power rankings and continuity: a full border around each half. */
+.ss-boxed .ss-table, .ss-continuity-cols .ss-continuity { border: 1px solid #8796a3; }
+.ss-continuity-cols { gap: 18px; }
+
+/* Rows fall into place when a slide opens: quick (about 0.4 s for a column of 15) and skipped for reduced motion. */
+@keyframes ss-row-fall { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+.ss-rows-in :is(tbody tr, .ss-continuity li, .ss-tile, .ss-bar-row, .ss-fact) {
+  animation: ss-row-fall 200ms cubic-bezier(.2, .8, .3, 1) both;
+  animation-delay: calc(var(--i, 0) * 14ms);
+}
+.ss-rows-in .ss-fact { animation-delay: 220ms; }
+
+/* Your team: the projected starting five as large tiles, the bench as small ones, three numbers underneath. */
+.ss-team-board { display: grid; gap: 20px; }
+.ss-starter-row, .ss-bench-row { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.ss-starter-row { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.ss-bench-row { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.ss-tile-bench .ss-headshot { width: 54px; height: 46px; }
+.ss-tile { background: #fff; border: 1px solid #a9b5bf; min-width: 0; }
+.ss-tile:hover { background: var(--house-row-hover, #dce8f2); }
+.ss-tile-starter { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 8px 10px; text-align: center; }
+.ss-tile-starter .ss-tile-photo { display: flex; justify-content: center; width: 100%; border-bottom: 1px solid #d5dde3; }
+.ss-tile-starter .ss-headshot { width: 196px; height: 144px; }
+.ss-tile-pos { position: absolute; top: 6px; left: 8px; font-size: 10px; font-weight: 700; color: #52616e; }
+.ss-tile-name { display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%; min-width: 0; font-weight: 700; }
+.ss-tile-name > :first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ss-tile-starter .ss-tile-name { font-size: 15px; }
+.ss-tile-ovr .ss-rating { font-size: 30px; line-height: 1; }
+/* Offense and defense roles read as one pair: "Primary handler / Versatile stopper". */
+.ss-role-pair { display: inline-flex; max-width: 100%; }
+.ss-role-pair > * { min-width: 0; }
+.ss-role-pair > :first-child { border-radius: 3px 0 0 3px; }
+.ss-role-pair > :last-child { border-radius: 0 3px 3px 0; border-left-width: 0; }
+.ss-tile-bench { display: flex; align-items: flex-end; gap: 6px; padding-right: 6px; }
+.ss-tile-bench .ss-tile-text { display: flex; flex-direction: column; min-width: 0; padding: 4px 0; }
+.ss-tile-bench .ss-tile-name { font-size: 12px; }
+.ss-tile-meta { display: inline-flex; align-items: baseline; gap: 6px; font-size: 13px; }
+.ss-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.ss-fact { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 12px 12px 14px; background: #fff; border: 1px solid #a9b5bf; }
+.ss-fact-label { font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #3e4d59; }
+.ss-fact-value { font-size: 28px; font-weight: 800; line-height: 1.15; color: #18212a; font-variant-numeric: tabular-nums; }
+.ss-fact-sub { font-size: 12px; color: #3e4d59; }
+
+/* Team profile: two titled panels, the radar and the payroll chart with its numbers underneath. */
+.ss-profile { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; align-items: stretch; height: 100%; min-height: 470px; }
+.ss-panel-radar, .ss-panel-payroll { display: flex; flex-direction: column; }
+.ss-panel-radar .ss-radar { flex: 1; justify-content: center; }
+.ss-profile .ss-radar svg { max-height: 450px; }
+.ss-panel-payroll .ss-payroll { flex: 1 1 auto; height: auto; min-height: 300px; max-height: 420px; justify-content: center; }
+.ss-cap-figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 12px; margin: 14px 0 0; }
+.ss-cap-figures div { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.ss-cap-figures dt { font-size: 10.5px; font-weight: 700; color: #3e4d59; }
+.ss-cap-figures dd { margin: 0; font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* Contracts to watch: bar charts. Your extension candidates (now against projected) and the league's trade block,
+   grouped by the main reason, each bar the salary coloured by the player's rating. */
+.ss-contracts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px; align-items: start; }
+.ss-contracts-left { display: grid; gap: 16px; min-width: 0; }
+.ss-bar-list, .ss-bar-groups { list-style: none; margin: 0; padding: 0; }
+.ss-bar-group h5 { margin: 10px 0 2px; font-size: 11px; font-weight: 700; color: #3e4d59; }
+.ss-bar-group:first-child h5 { margin-top: 0; }
+.ss-bar-row { display: grid; align-items: center; gap: 8px; min-height: 40px; background: #fff; border-bottom: 1px solid #d5dde3; }
+.ss-bar-row:nth-child(even) { background: var(--house-row-alt, #eef1f3); }
+.ss-bar-row:hover { background: var(--house-row-hover, #dce8f2); }
+.ss-ext-row { grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1.25fr); padding: 3px 6px 3px 0; }
+.ss-move-row { grid-template-columns: minmax(0, 1.2fr) 64px 40px minmax(0, 1.5fr); padding-right: 6px; }
+.ss-panel-expiring .ss-move-row { grid-template-columns: minmax(0, 1.4fr) 58px 36px minmax(0, 1.1fr); gap: 6px; }
+.ss-bar-row > .ss-rating { text-align: center; }
+.ss-bar-player { min-width: 0; min-height: 40px; }
+.ss-bar-player > span.ss-player-name { display: block; align-self: center; padding: 0 !important; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.ss-hbar { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ss-hbar i { display: block; flex: none; height: 12px; width: calc((100% - 92px) * var(--share, 0)); background-color: #3d82c5; }
+.ss-hbar em { font-style: normal; font-size: 12px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ss-pair-bars { display: flex; flex-direction: column; gap: 3px; }
+.ss-hbar i.ss-hbar-now, .ss-bar-key i.ss-hbar-now { background-color: #9aa6b1; }
+.ss-hbar i.ss-hbar-next, .ss-bar-key i.ss-hbar-next { background-color: #3d82c5; }
+.ss-bar-key { display: inline-flex; gap: 10px; font-size: 10.5px; color: #3e4d59; font-weight: 400; letter-spacing: 0; text-transform: none; }
+.ss-bar-key i { display: inline-block; width: 12px; height: 8px; margin-right: 4px; }
+
+@media (max-width: 1100px) {
+  .ss-starter-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ss-contracts, .ss-profile { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ss-rows-in :is(tbody tr, .ss-continuity li, .ss-tile, .ss-bar-row, .ss-fact) { animation: none !important; }
+}
+

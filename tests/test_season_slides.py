@@ -21,6 +21,7 @@ from nba_gm_data.save import (
 )
 from nba_gm_data.season_slides import (
     available_slideshows,
+    build_preseason_outlook,
     coaching_changes,
     continuity_rows,
     roster_note,
@@ -32,6 +33,7 @@ from nba_gm_data.season_slides import (
     real_season_summary,
     stored_recap,
     team_postseason_results,
+    team_shape,
     team_stint_minutes,
     trade_receipts,
 )
@@ -117,6 +119,32 @@ class LeagueAwardTests(unittest.TestCase):
             save["season_history"] = history
         return {row["award"] + (f":{row['player_id']}" if row["award"].startswith("ALL_NBA") else ""): row
                 for row in generate_league_awards(self.canonical, save, season, seed=7)}
+
+    def test_preseason_outlook_team_and_contract_slides(self):
+        """Your team is a picture (starting five, bench, three numbers); contracts carry years and the trade block."""
+        save = deepcopy(self.base)
+        outlook = build_preseason_outlook(self.canonical, save)
+        slides = {slide["key"]: slide for slide in outlook["slides"]}
+        self.assertFalse([key for key, slide in slides.items() if slide.get("unavailable")])
+        team = slides["your_team"]
+        self.assertEqual(len(team["starters"]), 5)
+        rotation_ids = {row["id"] for row in team["rotation"]}
+        self.assertTrue(set(team["starters"]) <= rotation_ids)
+        facts = team["takeaways"]
+        self.assertEqual(facts["teams"], 30)
+        self.assertTrue(20 < facts["age"]["value"] < 36 and 1 <= facts["age"]["rank"] <= 30)
+        self.assertIn(facts["shape"]["label"], {"Loaded", "Top-heavy", "Deep", "Balanced"})
+        self.assertTrue(facts["payroll"]["value"] > 0 and 1 <= facts["payroll"]["rank"] <= 30)
+        contracts = slides["contracts"]
+        self.assertTrue(all(row["years_left"] == 1 for row in contracts["expiring"]))
+        movers = contracts["movers"]
+        self.assertTrue(movers, "the league's trade block names players who could be on the move")
+        user = save["meta"]["user_team_id"]
+        for row in movers:
+            self.assertNotEqual(row["team"]["id"], user)
+            self.assertGreaterEqual(row["overall"], 70.0)
+            self.assertTrue(row["reason"] and "_" not in row["reason"])  # plain words, not codes
+            self.assertTrue(row["salary_millions"] is None or row["years_left"] >= 1)
 
     def test_sixty_five_game_rule_sixth_man_and_all_nba(self):
         jokic, sga, brunson = self.player("nikola jokic"), self.player("shai gilgeous alexander"), self.player("jalen brunson")
@@ -300,6 +328,14 @@ class RosterNoteTests(unittest.TestCase):
         self.assertEqual(self.note(arrivals=[("rook", 0)]), "Drafted Rook")
         self.assertEqual(self.note(arrivals=[("bench", 900)], continuity=90.0), "Running it back")
         self.assertEqual(self.note(injured=["kawhi"]), "Kawhi out injured")
+
+    def test_team_shape_words(self):
+        # Best three players' league rank against the bench's rank.
+        self.assertEqual(team_shape(1, 2), "Loaded")
+        self.assertEqual(team_shape(3, 20), "Top-heavy")
+        self.assertEqual(team_shape(22, 6), "Deep")
+        self.assertEqual(team_shape(14, 18), "Balanced")
+        self.assertIsNone(team_shape(None, 4))
 
     def test_rotation_ready_rookie_always_named(self):
         # A rookie who would already be a rotation player gets named beside bigger moves; a raw one does not.
