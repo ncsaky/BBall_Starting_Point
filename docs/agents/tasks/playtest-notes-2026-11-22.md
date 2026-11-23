@@ -54,8 +54,9 @@ Game runs from the browser pane: launch entry `game` (port 8766, normal `saves/`
   radar beside it; OVR/OFF/DEF use the roster's rating bar; contract is one field ("$40.8M × 5").
 - **Game-wide rules (user, 2026-11-22):** a contract is always one field, salary × years (`contractLabel` in
   app.js; done for the slideshow, fantasy draft list, staff market). OVR/OFF/DEF always carry the roster's bar
-  (`compactRatingBar`); still to sweep: other tables showing plain OVR/OFF/DEF numbers (FA market OFF/DEF,
-  cut-down OVR, draft and trade tables). The segmented payroll chart keeps the player card's proportions
+  (`compactRatingBar`). Sweep done 2026-11-22: the only plain numbers left were the free-agent market's OFF/DEF
+  (now bars, 60px like OVR); roster table, finder, trade ledger, roster blocks, cut-down, next opponent, playoff
+  injuries and the fantasy list already had bars. Roster-block contracts now use "×". The segmented payroll chart keeps the player card's proportions
   (190 x 256, ratio 0.742) wherever it appears; the slideshow locks it with aspect-ratio. Check the Payroll
   window too.
 - **Power-ranking notes (done 2026-11-22).** Rookies at rotation level (value 56.5+) are always named

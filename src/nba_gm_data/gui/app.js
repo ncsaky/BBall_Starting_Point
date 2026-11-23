@@ -6385,8 +6385,8 @@ const FREE_AGENCY_MARKET_COLUMNS = [
   { key: "position", label: "Pos", width: 36 },
   { key: "age", label: "Age", width: 32 },
   { key: "overall", label: "OVR", width: 60, title: "Overall rating (the same number the roster tables show)" },
-  { key: "offense", label: "OFF", width: 34 },
-  { key: "defense", label: "DEF", width: 34 },
+  { key: "offense", label: "OFF", width: 60 },
+  { key: "defense", label: "DEF", width: 60 },
   { key: "production", label: "Last season", width: 66, title: "Points / rebounds / assists per game last season (sorts by points)" },
   { key: "ask_millions", label: "Ask", width: 66, title: "His market ask per season: what rival teams bid against. It moves each day." },
   { key: "bids", label: "Bids", width: 90, title: "Live rival bids and the best one" },
@@ -6423,8 +6423,8 @@ function freeAgencyMarketTable(rows, room = state.data.freeagency || {}) {
       <td class="${sorted("position").trim()}">${escapeHtml(player.position || "—")}</td>
       <td class="${sorted("age").trim()}">${escapeHtml(Number.isFinite(Number(player.age)) ? Math.round(Number(player.age)) : "—")}</td>
       <td class="${sorted("overall").trim()}">${bar(ratings.overall)}</td>
-      <td class="${sorted("offense").trim()}">${draftMetric(ratings.offense ?? ratings.overall)}</td>
-      <td class="${sorted("defense").trim()}">${draftMetric(ratings.defense)}</td>
+      <td class="${sorted("offense").trim()}">${bar(ratings.offense ?? ratings.overall)}</td>
+      <td class="${sorted("defense").trim()}">${bar(ratings.defense)}</td>
       <td class="${sorted("production").trim()}">${Number(player.games || 0) ? `${draftMetric(player.ppg)}/${draftMetric(player.rpg)}/${draftMetric(player.apg)}` : `<span class="fa-muted" title="No games played last season">—</span>`}</td>
       <td class="${sorted("ask_millions").trim()}"><span class="fa-ask"><strong>${escapeHtml(compactMarketMoney(player.ask_millions))}</strong>${freeAgencyAskChange(player.ask_change_millions)}</span></td>
       <td class="${sorted("bids").trim()}">${freeAgencyBidsCell(player, exclusive)}</td>

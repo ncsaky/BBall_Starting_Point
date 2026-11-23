@@ -220,7 +220,7 @@ function blockTableStyle(rows) {
   return `--block-contract-width:${contractWidth}px;min-width:${526 + contractWidth}px`;
 }
 function compactBlockContract(value, terms, activeSeason=state.home?.save?.season) {
-  if(terms?.length) return terms.map(term=>`${money(term.salary/1_000_000)} x ${term.years}`).join(', ');
+  if(terms?.length) return terms.map(term=>`${money(term.salary/1_000_000)} × ${term.years}`).join(', ');
   const salaries=String(value||'').split('/').filter(part=>!activeSeason||!part.match(/\d{4}-\d{2}/)||part.match(/\d{4}-\d{2}/)[0]>=activeSeason).map(part=>part.match(/\$([\d.]+)M/i)?.[1]).filter(Boolean);
   if(!salaries.length)return String(value||'—');
   const runs=[];
@@ -229,7 +229,7 @@ function compactBlockContract(value, terms, activeSeason=state.home?.save?.seaso
     if(last)last.years+=1;
     else runs.push({salary,years:1});
   });
-  return runs.map(run=>`$${run.salary}M x ${run.years}`).join(', ');
+  return runs.map(run=>`$${run.salary}M × ${run.years}`).join(', ');
 }
 
 // Grouped roster sections share one player order and scroll surface.
