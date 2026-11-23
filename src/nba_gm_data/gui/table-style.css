@@ -309,3 +309,6 @@ body.unified-terminal-ui .card-board-body .ui-command:not(.is-primary):disabled 
   body.unified-terminal-ui .card-board-window:not([hidden]) { animation: board-window-open 170ms cubic-bezier(.2, .8, .2, 1); }
 }
 @keyframes board-window-open { from { opacity: 0; translate: 0 8px; scale: .985; } to { opacity: 1; translate: 0 0; scale: 1; } }
+
+/* Cells a table marks as left-aligned on purpose (slideshow names and notes) stay left under the centring rule. */
+body.unified-terminal-ui table :is(thead th, tbody td):is(.ss-left, .is-left, .text-left) { text-align: left !important; }
