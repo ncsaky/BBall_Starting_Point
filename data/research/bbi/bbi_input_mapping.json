@@ -1,6 +1,6 @@
 {
- "version": "bbi_input_mapping_v6_2026_11_21",
- "notes": "Reviewed map from Basketball Index (BBI) metric names to the 94 approved player-model inputs. Metric names only; BBI definition text stays in the git-ignored capture catalog. Layers are kept separate: technique inputs (S/F) use rate, per-shot or versus-expected quality metrics; tendency inputs (T) use frequencies, shares and attempt rates; physical inputs (P) use only listed height/weight and weak in-game speed; coach usage, teammates, opponents and on/off impact are context only. direction: +1 means a higher metric value means more of the input (better skill, larger tool, or more frequent choice); -1 the reverse. Direction is about the raw BBI value; check whether a capture stores a percentile already ordered by desirability before applying it. strength: primary = the most direct available measure; supporting = relevant but mixed with other factors; weak = indirect, use only as a small nudge. Every BBI result is an effective on-court observation that also contains physical tools, role and teammates. It constrains the estimate; it is not 'technique only'. Metrics named '... Per 75' must be divided by the relevant exposure (touches, drives, attempts, contests) before informing a skill. A metric listed under several inputs is one shared signal (one correlation group), never independent evidence. BBI 'Talent' grades fold in volume or self-creation, so per-shot 'Shot Making Efficiency' and 'Stable' percentages are preferred as primary. Passing families share three generic recognition metrics and two generic execution metrics; only drive-and-kick, connector, skip and outlet passes have any family-specific signal. For distribution inputs, outcome names the registry outcome the metric informs; T02 outcomes three_corner_share and three_deep_share describe detail within the three region. volume (2026-11-19): a metric for a secondary shot type (pull-up, movement, deep) may carry {\"per75\": metric, \"minus\": optional metric, \"half\": n}; its weight in a season is multiplied by attempts / (attempts + half), attempts = (per75 - minus) / 75 x minutes x 99/48. A pull-up or off-screen percentage on a handful of attempts (or one shrunk to the league mean) no longer outweighs the player's three-point or midrange shooting as a whole, which stays ungated as the fallback (talent metrics include volume, so non-shooters stay low). measured_by (2026-11-21, RATINGS-FT-TOV): an input whose entry names a module is measured there from opportunity-adjusted counts (foul_security_evidence: free throws and turnovers against what an average player earns or commits from the same chances); the overlay skips it so the same data is not counted twice, and its metric list stays as the record of what Basketball Index offers.",
+ "version": "bbi_input_mapping_v7_2026_11_23",
+ "notes": "Reviewed map from Basketball Index (BBI) metric names to the 94 approved player-model inputs. Metric names only; BBI definition text stays in the git-ignored capture catalog. Layers are kept separate: technique inputs (S/F) use rate, per-shot or versus-expected quality metrics; tendency inputs (T) use frequencies, shares and attempt rates; physical inputs (P) use only listed height/weight and weak in-game speed; coach usage, teammates, opponents and on/off impact are context only. direction: +1 means a higher metric value means more of the input (better skill, larger tool, or more frequent choice); -1 the reverse. Direction is about the raw BBI value; check whether a capture stores a percentile already ordered by desirability before applying it. strength: primary = the most direct available measure; supporting = relevant but mixed with other factors; weak = indirect, use only as a small nudge. Every BBI result is an effective on-court observation that also contains physical tools, role and teammates. It constrains the estimate; it is not 'technique only'. Metrics named '... Per 75' must be divided by the relevant exposure (touches, drives, attempts, contests) before informing a skill. A metric listed under several inputs is one shared signal (one correlation group), never independent evidence. BBI 'Talent' grades fold in volume or self-creation, so per-shot 'Shot Making Efficiency' and 'Stable' percentages are preferred as primary. Passing families share three generic recognition metrics and two generic execution metrics; only drive-and-kick, connector, skip and outlet passes have any family-specific signal. For distribution inputs, outcome names the registry outcome the metric informs; T02 outcomes three_corner_share and three_deep_share describe detail within the three region. volume (2026-11-19): a metric for a secondary shot type (pull-up, movement, deep) may carry {\"per75\": metric, \"minus\": optional metric, \"half\": n}; its weight in a season is multiplied by attempts / (attempts + half), attempts = (per75 - minus) / 75 x minutes x 99/48. A pull-up or off-screen percentage on a handful of attempts (or one shrunk to the league mean) no longer outweighs the player's three-point or midrange shooting as a whole, which stays ungated as the fallback (talent metrics include volume, so non-shooters stay low). measured_by (2026-11-21, RATINGS-FT-TOV): an input whose entry names a module is measured there from opportunity-adjusted counts (foul_security_evidence: free throws and turnovers against what an average player earns or commits from the same chances); the overlay skips it so the same data is not counted twice, and its metric list stays as the record of what Basketball Index offers. INPUT-DATA-FIXES (2026-11-23): vote_group names near-copies of one measurement (rank r above 0.98 in every build season); the overlay counts a group as one vote, weighted like its strongest member, so the same signal is not counted twice. valid_range [lo, hi] marks a rate that cannot fall outside that range; a player-season outside it is a capture or denominator error and is not read (the input itself is never capped). Removed columns are listed under excluded with the reason.",
  "inputs": {
   "P01": {
    "name": "Height",
@@ -572,20 +572,6 @@
      "why": "Raw floater percentage."
     },
     {
-     "metric": "Paint Shot Making Efficiency",
-     "direction": 1,
-     "strength": "supporting",
-     "outcome": null,
-     "why": "Non-rim paint shot-making against expectation (floaters, push shots, short hooks)."
-    },
-    {
-     "metric": "Paint Shooting Talent",
-     "direction": 1,
-     "strength": "weak",
-     "outcome": null,
-     "why": "BBI non-rim paint talent grade."
-    },
-    {
      "metric": "Stable Short Midrange FG%",
      "direction": 1,
      "strength": "weak",
@@ -601,7 +587,7 @@
     }
    ],
    "coverage": "good",
-   "gap_note": "Low-volume floater shooters stay uncertain."
+   "gap_note": "Low-volume floater shooters stay uncertain. Paint Shot Making Efficiency and Paint Shooting Talent were removed 2026-11-23: in every captured season (2013-14 to 2025-26) they are exact copies of Pull-Up Shot Making Efficiency and Pull-Up Shooting Talent (also Paint Shot Quality and Paint Shot Creation copy their pull-up columns), so they graded pull-up shooting, not short-paint touch. No verified non-rim paint per-shot column exists in the capture; floater measures and short-midrange percentage remain."
   },
   "S12": {
    "name": "Dunk execution",
@@ -1121,32 +1107,48 @@
      "direction": 1,
      "strength": "supporting",
      "outcome": null,
-     "why": "Win rate on offensive rebound chances, excluding deferrals."
+     "why": "Win rate on offensive rebound chances, excluding deferrals.",
+     "valid_range": [
+      0,
+      100
+     ]
     },
     {
      "metric": "Adjusted Defensive Rebounding Success Rate",
      "direction": 1,
      "strength": "supporting",
      "outcome": null,
-     "why": "Win rate on defensive rebound chances, excluding deferrals."
+     "why": "Win rate on defensive rebound chances, excluding deferrals.",
+     "valid_range": [
+      0,
+      100
+     ]
     },
     {
      "metric": "Percentage of Offensive Rebounds Contested",
      "direction": 1,
      "strength": "weak",
      "outcome": null,
-     "why": "Share of offensive boards won in traffic."
+     "why": "Share of offensive boards won in traffic.",
+     "valid_range": [
+      0,
+      100
+     ]
     },
     {
      "metric": "Percentage of Defensive Rebounds Contested",
      "direction": 1,
      "strength": "weak",
      "outcome": null,
-     "why": "Share of defensive boards won in traffic."
+     "why": "Share of defensive boards won in traffic.",
+     "valid_range": [
+      0,
+      100
+     ]
     }
    ],
    "coverage": "good",
-   "gap_note": "Conversion is heavily helped by height, reach and jump; subtract those effects rather than double-counting."
+   "gap_note": "Conversion is heavily helped by height, reach and jump; subtract those effects rather than double-counting. Rates above 100% (eight player-seasons in the build window, all under 150 minutes: success rates up to 125%, one contested share of 200%) are not read since 2026-11-23."
   },
   "S33": {
    "name": "On-ball containment technique",
@@ -1252,7 +1254,8 @@
      "direction": -1,
      "strength": "primary",
      "outcome": null,
-     "why": "Opponent rim percentage against expectation when contested, shrunk for sample (lower is better)."
+     "why": "Opponent rim percentage against expectation when contested, shrunk for sample (lower is better).",
+     "vote_group": "stable_rim_defensive_fg"
     },
     {
      "metric": "Rim dFG% vs Expected",
@@ -1266,7 +1269,8 @@
      "direction": -1,
      "strength": "supporting",
      "outcome": null,
-     "why": "Opponent rim percentage when contested, shrunk (lower is better)."
+     "why": "Opponent rim percentage when contested, shrunk (lower is better).",
+     "vote_group": "stable_rim_defensive_fg"
     },
     {
      "metric": "Rim Disruption",
@@ -1284,7 +1288,7 @@
     }
    ],
    "coverage": "partial",
-   "gap_note": "Only rim contests are measured; no perimeter contest effectiveness. Height/reach/jump also drive these."
+   "gap_note": "Only rim contests are measured; no perimeter contest effectiveness. Height/reach/jump also drive these. The two stable rim percentages (raw and against expectation) rank the same contests (r 0.99 every build season) and count as one vote since 2026-11-23."
   },
   "S38": {
    "name": "Rotation recognition",
@@ -2317,14 +2321,16 @@
      "direction": 1,
      "strength": "primary",
      "outcome": null,
-     "why": "Dribbles per touch."
+     "why": "Dribbles per touch.",
+     "vote_group": "time_on_ball_per_touch"
     },
     {
      "metric": "Average Seconds Per Touch",
      "direction": 1,
      "strength": "primary",
      "outcome": null,
-     "why": "Seconds per touch."
+     "why": "Seconds per touch.",
+     "vote_group": "time_on_ball_per_touch"
     },
     {
      "metric": "Dribbles Per Second on Offense",
@@ -2342,7 +2348,7 @@
     }
    ],
    "coverage": "good",
-   "gap_note": "Role (primary handler vs spacer) drives most of this; condition on role."
+   "gap_note": "Role (primary handler vs spacer) drives most of this; condition on role. Dribbles per touch and seconds per touch move together (r 0.98) and count as one vote since 2026-11-23."
   },
   "T07": {
    "name": "Passing risk appetite",
@@ -2588,17 +2594,10 @@
      "strength": "supporting",
      "outcome": "defense",
      "why": "Defensive distance per possession."
-    },
-    {
-     "metric": "Movement Distance Rating",
-     "direction": 1,
-     "strength": "supporting",
-     "outcome": "offense",
-     "why": "Offensive distance compared with the same offensive role."
     }
    ],
    "coverage": "partial",
-   "gap_note": "No transition effort data. Distance is also tied to assignment and scheme."
+   "gap_note": "No transition effort data. Distance is also tied to assignment and scheme. Offense has no measure since 2026-11-23: Movement Distance Rating, the only offensive vote, is zero for 92-94% of players in each build season (272 of 278 players with 1,000+ minutes in 2025-26) and no other offensive distance column exists, so the offense share keeps the estimate."
   },
   "T18": {
    "name": "Contact-seeking preference",
@@ -4963,6 +4962,18 @@
   {
    "metric": "Stable Shooting Fouls Drawn Per 75",
    "why": "Captured column is zero for every player in every recent season (broken export); removed from contact seeking 2026-11-21."
+  },
+  {
+   "metric": "Paint Shot Making Efficiency",
+   "why": "Exact copy of Pull-Up Shot Making Efficiency in every captured season (2013-14 to 2025-26); a capture field binding error, not short-paint evidence. Removed from floater / short-paint touch 2026-11-23."
+  },
+  {
+   "metric": "Paint Shooting Talent",
+   "why": "Exact copy of Pull-Up Shooting Talent in every captured season (2013-14 to 2025-26); removed from floater / short-paint touch 2026-11-23."
+  },
+  {
+   "metric": "Movement Distance Rating",
+   "why": "Zero for 92-94% of players in each build season (272 of 278 with 1,000+ minutes in 2025-26); its apparent repeatability (0.94) came from tied zeros ranked in sort order (0.44 with shared ranks). Removed from effort allocation 2026-11-23."
   }
  ]
 }

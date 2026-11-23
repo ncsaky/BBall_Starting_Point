@@ -1,0 +1,547 @@
+{
+ "crafted_impact": {
+  "CraftedDPM": {
+   "alias_equals_text_value": 269,
+   "alias_vs_april_mean_abs": 0.165,
+   "april_matches": 499,
+   "march_alias": "CDPM",
+   "march_numeric_cells": 22,
+   "march_rows": 526,
+   "march_text_cells": 498,
+   "text_value_vs_april_mean_abs": 0.67
+  },
+  "CraftedOPM": {
+   "alias_equals_text_value": 497,
+   "alias_vs_april_mean_abs": 0.125,
+   "april_matches": 499,
+   "march_alias": "COPM",
+   "march_numeric_cells": 23,
+   "march_rows": 526,
+   "march_text_cells": 497,
+   "text_value_vs_april_mean_abs": 0.125
+  },
+  "march_rows_reached_for_impact": 0
+ },
+ "impossible_rates": {
+  "Adjusted Defensive Rebounding Success Rate": [
+   {
+    "minutes": 49,
+    "player": "player_ind-jay-huff",
+    "season": "2023-24",
+    "value": 112.5
+   },
+   {
+    "minutes": 142,
+    "player": "name:Jeff Dowtin Jr.",
+    "season": "2023-24",
+    "value": 106.25
+   },
+   {
+    "minutes": 46,
+    "player": "name:DaQuan Jeffries",
+    "season": "2023-24",
+    "value": 125.0
+   },
+   {
+    "minutes": 60,
+    "player": "name:Jermaine Samuels Jr.",
+    "season": "2023-24",
+    "value": 111.11
+   },
+   {
+    "minutes": 53,
+    "player": "name:Juan Toscano-Anderson",
+    "season": "2023-24",
+    "value": 125.0
+   },
+   {
+    "minutes": 30,
+    "player": "name:Dexter Dennis",
+    "season": "2023-24",
+    "value": 114.29
+   }
+  ],
+  "Adjusted Offensive Rebounding Success Rate": [
+   {
+    "minutes": 44,
+    "player": "player_uta-mo-bamba",
+    "season": "2025-26",
+    "value": 125.0
+   }
+  ],
+  "Percentage of Offensive Rebounds Contested": [
+   {
+    "minutes": 43,
+    "player": "name:Frank Ntilikina",
+    "season": "2023-24",
+    "value": 200.0
+   }
+  ]
+ },
+ "mapping_version": "bbi_input_mapping_v7_2026_11_23",
+ "movement_distance_zeros": {
+  "2023-24": {
+   "rows": 570,
+   "rows_1000_minutes": 266,
+   "zero": 524,
+   "zero_1000_minutes": 259
+  },
+  "2024-25": {
+   "rows": 567,
+   "rows_1000_minutes": 270,
+   "zero": 525,
+   "zero_1000_minutes": 261
+  },
+  "2025-26": {
+   "rows": 578,
+   "rows_1000_minutes": 278,
+   "zero": 544,
+   "zero_1000_minutes": 272
+  }
+ },
+ "near_duplicates": {
+  "Average Dribbles Per Touch | Average Seconds Per Touch": {
+   "2023-24": {
+    "identical": 2,
+    "paired": 569,
+    "pearson": 0.9791
+   },
+   "2024-25": {
+    "identical": 1,
+    "paired": 567,
+    "pearson": 0.9848
+   },
+   "2025-26": {
+    "identical": 1,
+    "paired": 578,
+    "pearson": 0.9842
+   }
+  },
+  "Movement Distance Rating | Movement Speed Rating": {
+   "2023-24": {
+    "identical": 9,
+    "paired": 570,
+    "pearson": 0.7036
+   },
+   "2024-25": {
+    "identical": 9,
+    "paired": 567,
+    "pearson": 0.3824
+   },
+   "2025-26": {
+    "identical": 11,
+    "paired": 578,
+    "pearson": 0.3676
+   }
+  },
+  "Rim dFG% vs Expected | Stable Rim dFG% vs. Expected": {
+   "2023-24": {
+    "identical": 0,
+    "paired": 553,
+    "pearson": 0.4588
+   },
+   "2024-25": {
+    "identical": 1,
+    "paired": 558,
+    "pearson": 0.42
+   },
+   "2025-26": {
+    "identical": 0,
+    "paired": 568,
+    "pearson": 0.4271
+   }
+  },
+  "Stable Defensive FG% at Rim | Stable Rim dFG% vs. Expected": {
+   "2023-24": {
+    "identical": 0,
+    "paired": 553,
+    "pearson": 0.9904
+   },
+   "2024-25": {
+    "identical": 0,
+    "paired": 558,
+    "pearson": 0.9932
+   },
+   "2025-26": {
+    "identical": 0,
+    "paired": 568,
+    "pearson": 0.9918
+   }
+  }
+ },
+ "paint_vs_pull_up": {
+  "Openness Rating": {
+   "2023-24": {
+    "identical": 10,
+    "paired": 549,
+    "pearson": 0.4733
+   },
+   "2024-25": {
+    "identical": 13,
+    "paired": 546,
+    "pearson": 0.4348
+   },
+   "2025-26": {
+    "identical": 13,
+    "paired": 557,
+    "pearson": 0.4896
+   }
+  },
+  "Shooting Talent": {
+   "2023-24": {
+    "identical": 570,
+    "paired": 570,
+    "pearson": 1.0
+   },
+   "2024-25": {
+    "identical": 567,
+    "paired": 567,
+    "pearson": 1.0
+   },
+   "2025-26": {
+    "identical": 578,
+    "paired": 578,
+    "pearson": 1.0
+   }
+  },
+  "Shot Creation": {
+   "2023-24": {
+    "identical": 554,
+    "paired": 554,
+    "pearson": 1.0
+   },
+   "2024-25": {
+    "identical": 552,
+    "paired": 552,
+    "pearson": 1.0
+   },
+   "2025-26": {
+    "identical": 566,
+    "paired": 566,
+    "pearson": 1.0
+   }
+  },
+  "Shot Making": {
+   "2023-24": {
+    "identical": 25,
+    "paired": 549,
+    "pearson": 0.7695
+   },
+   "2024-25": {
+    "identical": 22,
+    "paired": 546,
+    "pearson": 0.7471
+   },
+   "2025-26": {
+    "identical": 20,
+    "paired": 557,
+    "pearson": 0.7566
+   }
+  },
+  "Shot Making Efficiency": {
+   "2023-24": {
+    "identical": 554,
+    "paired": 554,
+    "pearson": 1.0
+   },
+   "2024-25": {
+    "identical": 552,
+    "paired": 552,
+    "pearson": 1.0
+   },
+   "2025-26": {
+    "identical": 566,
+    "paired": 566,
+    "pearson": 1.0
+   }
+  },
+  "Shot Quality": {
+   "2023-24": {
+    "identical": 554,
+    "paired": 554,
+    "pearson": 1.0
+   },
+   "2024-25": {
+    "identical": 552,
+    "paired": 552,
+    "pearson": 1.0
+   },
+   "2025-26": {
+    "identical": 566,
+    "paired": 566,
+    "pearson": 1.0
+   }
+  }
+ },
+ "play_type_units": {
+  "april": {
+   "percent_unit_rows": [],
+   "rows": 535
+  },
+  "march": {
+   "percent_unit_rows": [
+    {
+     "after": {
+      "cut_pct": 0.03,
+      "handoff_pct": 0.02,
+      "iso_pct": 0.03,
+      "offscreen_pct": 0.02,
+      "pnrr_pct": 0.01,
+      "post_pct": 0.0,
+      "prbh_pct": 0.22,
+      "putback_pct": 0.002,
+      "spotup_pct": 0.24,
+      "transition_pct": 0.18
+     },
+     "name": "Zyon Pullin",
+     "shares": {
+      "cut_pct": 3.0,
+      "handoff_pct": 2.0,
+      "iso_pct": 3.0,
+      "offscreen_pct": 2.0,
+      "pnrr_pct": 1.0,
+      "post_pct": 0.0,
+      "prbh_pct": 22.0,
+      "putback_pct": 0.2,
+      "spotup_pct": 24.0,
+      "transition_pct": 18.0
+     }
+    },
+    {
+     "after": {
+      "cut_pct": 0.02,
+      "handoff_pct": 0.02,
+      "iso_pct": 0.05,
+      "offscreen_pct": 0.012,
+      "pnrr_pct": 0.01,
+      "post_pct": 0.002,
+      "prbh_pct": 0.25,
+      "putback_pct": 0.005,
+      "spotup_pct": 0.18,
+      "transition_pct": 0.14
+     },
+     "name": "Killian Hayes",
+     "shares": {
+      "cut_pct": 2.0,
+      "handoff_pct": 2.0,
+      "iso_pct": 5.0,
+      "offscreen_pct": 1.2,
+      "pnrr_pct": 1.0,
+      "post_pct": 0.2,
+      "prbh_pct": 25.0,
+      "putback_pct": 0.5,
+      "spotup_pct": 18.0,
+      "transition_pct": 14.0
+     }
+    }
+   ],
+   "rows": 526
+  }
+ },
+ "repeatability": {
+  "changed": [
+   {
+    "exposure": [],
+    "factor_tied": 0.7285,
+    "factor_untied": 1.0,
+    "inputs": [
+     "T17"
+    ],
+    "metric": "Movement Distance Rating",
+    "r_tied": 0.4371,
+    "r_untied": 0.9441
+   },
+   {
+    "exposure": [],
+    "factor_tied": 0.6281,
+    "factor_untied": 0.5392,
+    "inputs": [
+     "S43"
+    ],
+    "metric": "Pick 6s per 75 Poss",
+    "r_tied": 0.3769,
+    "r_untied": 0.3235
+   },
+   {
+    "exposure": [],
+    "factor_tied": 0.9584,
+    "factor_untied": 0.8744,
+    "inputs": [
+     "S45"
+    ],
+    "metric": "Stable Defensive Goaltends Per 75",
+    "r_tied": 0.5751,
+    "r_untied": 0.5246
+   },
+   {
+    "exposure": [],
+    "factor_tied": 0.7713,
+    "factor_untied": 0.6893,
+    "inputs": [
+     "S19"
+    ],
+    "metric": "Stable Charge Fouls Per 75",
+    "r_tied": 0.4628,
+    "r_untied": 0.4136
+   },
+   {
+    "exposure": [],
+    "factor_tied": 0.8175,
+    "factor_untied": 0.744,
+    "inputs": [
+     "S45"
+    ],
+    "metric": "Stable Non Shooting Penalty Non Take Fouls Per 75",
+    "r_tied": 0.4905,
+    "r_untied": 0.4464
+   },
+   {
+    "exposure": [],
+    "factor_tied": 0.154,
+    "factor_untied": 0.1985,
+    "inputs": [
+     "T01"
+    ],
+    "metric": "Post Up Impact Per 75 Possessions",
+    "r_tied": 0.0924,
+    "r_untied": 0.1191
+   },
+   {
+    "exposure": [],
+    "factor_tied": 0.2817,
+    "factor_untied": 0.2518,
+    "inputs": [
+     "S03",
+     "S06",
+     "S26"
+    ],
+    "metric": "Stable Off-Ball Screen PPP",
+    "r_tied": 0.169,
+    "r_untied": 0.1511
+   },
+   {
+    "exposure": [],
+    "factor_tied": 0.5326,
+    "factor_untied": 0.5045,
+    "inputs": [
+     "S22"
+    ],
+    "metric": "Stable Post Up PPP",
+    "r_tied": 0.3196,
+    "r_untied": 0.3027
+   },
+   {
+    "exposure": [],
+    "factor_tied": 0.4522,
+    "factor_untied": 0.4266,
+    "inputs": [
+     "S25"
+    ],
+    "metric": "Stable Cut PPP",
+    "r_tied": 0.2713,
+    "r_untied": 0.256
+   },
+   {
+    "exposure": [],
+    "factor_tied": 0.6328,
+    "factor_untied": 0.6139,
+    "inputs": [
+     "S19"
+    ],
+    "metric": "Stable P&R Ball Handler PPP",
+    "r_tied": 0.3797,
+    "r_untied": 0.3683
+   },
+   {
+    "exposure": [],
+    "factor_tied": 0.448,
+    "factor_untied": 0.4309,
+    "inputs": [
+     "S16"
+    ],
+    "metric": "Stable Isolation PPP",
+    "r_tied": 0.2688,
+    "r_untied": 0.2585
+   },
+   {
+    "exposure": [],
+    "factor_tied": 0.7211,
+    "factor_untied": 0.706,
+    "inputs": [
+     "S02"
+    ],
+    "metric": "3PT Pull Up FG%",
+    "r_tied": 0.4326,
+    "r_untied": 0.4236
+   },
+   {
+    "exposure": [],
+    "factor_tied": 1.0,
+    "factor_untied": 0.9863,
+    "inputs": [
+     "S45"
+    ],
+    "metric": "Stable Loose Ball Fouls Per 75",
+    "r_tied": 0.605,
+    "r_untied": 0.5918
+   },
+   {
+    "exposure": [],
+    "factor_tied": 0.5198,
+    "factor_untied": 0.511,
+    "inputs": [
+     "S09"
+    ],
+    "metric": "Deep 3PT Shot Making",
+    "r_tied": 0.3119,
+    "r_untied": 0.3066
+   },
+   {
+    "exposure": [],
+    "factor_tied": 0.7518,
+    "factor_untied": 0.743,
+    "inputs": [
+     "S16"
+    ],
+    "metric": "Stable Travels Per 75",
+    "r_tied": 0.4511,
+    "r_untied": 0.4458
+   },
+   {
+    "exposure": [],
+    "factor_tied": 0.5593,
+    "factor_untied": 0.5524,
+    "inputs": [
+     "S04"
+    ],
+    "metric": "Non-Paint Midrange Shot Making Efficiency",
+    "r_tied": 0.3356,
+    "r_untied": 0.3315
+   },
+   {
+    "exposure": [],
+    "factor_tied": 0.606,
+    "factor_untied": 0.5992,
+    "inputs": [
+     "S19"
+    ],
+    "metric": "PnR Ball Handler Shot Making Efficiency",
+    "r_tied": 0.3636,
+    "r_untied": 0.3595
+   },
+   {
+    "exposure": [],
+    "factor_tied": 0.5121,
+    "factor_untied": 0.506,
+    "inputs": [
+     "S09"
+    ],
+    "metric": "Deep 3PT Shot Making Efficiency",
+    "r_tied": 0.3073,
+    "r_untied": 0.3036
+   }
+  ],
+  "metrics": 173
+ },
+ "version": "input_data_fixes_v1_2026_11_23"
+}

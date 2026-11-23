@@ -92,6 +92,22 @@ def _get(row: Mapping, *keys: str) -> float | None:
     return None
 
 
+# Crafted NBA play-type shares (fractions of a player's plays). Two rows of the March 2026 snapshot (Killian Hayes,
+# Zyon Pullin) store them in percentage points (22.0 for 22%), so a 1% roll-man share read as 100%.
+PLAY_TYPE_SHARES = ('prbh_pct', 'post_pct', 'pnrr_pct', 'cut_pct', 'offscreen_pct', 'handoff_pct', 'spotup_pct',
+                    'transition_pct', 'iso_pct', 'putback_pct')
+
+
+def _share_units(row: Mapping) -> dict:
+    """The row with its play-type shares as fractions. Shares cannot exceed 1, so a row with any share above 1 is in
+    percentage points and all its shares are divided by 100 (INPUT-DATA-FIXES, 2026-11-23)."""
+    row = dict(row)
+    values = {k: _number(row.get(k)) for k in PLAY_TYPE_SHARES}
+    if any(v is not None and v > 1 for v in values.values()):
+        row.update({k: v / 100 for k, v in values.items() if v is not None})
+    return row
+
+
 def _normalize(name: str) -> str:
     # Match only unique exact normalized names; never fuzzy-match identities.
     name = unicodedata.normalize('NFKD', name).encode('ascii', 'ignore').decode().lower()
@@ -734,8 +750,8 @@ class InputEstimator:
                  stats_rows: list[dict] = (), expert_cells: Mapping = (),
                  additional_evidence: Mapping[str, list[InputEvidence]] = (),
                  legacy_traits: list = (), shot_zones: list = ()):
-        self.skills = _index(list(skill_rows))
-        self.stats = _index(list(stats_rows))
+        self.skills = _index([_share_units(r) for r in skill_rows])
+        self.stats = _index([_share_units(r) for r in stats_rows])
         self.careers = dict(career_players)
         self.experts = dict(expert_cells)
         self.additional = dict(additional_evidence)
@@ -817,8 +833,11 @@ class InputEstimator:
         """
         name = _normalize(player.get('name', ''))
         channel, impact_loading, iq_loading, work_loading = FAMILY_CONTEXT[family]
-        aliases = (('CraftedOPM', 'COPM'), ('OLEBRON',)) if channel == 'offense' else (
-                   ('CraftedDPM', 'CDPM'), ('DLEBRON',))
+        # The March snapshot stores CraftedOPM/DPM as text with an appended percentile ('-1.4 27%'), which the numeric
+        # reader rejects; its numeric COPM/CDPM columns are read first. They agree with the April impact values (mean
+        # gap 0.13 / 0.17), while the text's leading defensive number does not (0.67), so that text is never parsed.
+        aliases = (('COPM', 'CraftedOPM'), ('OLEBRON',)) if channel == 'offense' else (
+                   ('CDPM', 'CraftedDPM'), ('DLEBRON',))
         for row, source in ((self.stats.get(name, {}), STATS_PATH),
                             (self.skills.get(name, {}), SKILL_PATH)):
             mp = _get(row, 'MP')
