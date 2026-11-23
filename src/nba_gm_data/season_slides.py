@@ -765,7 +765,7 @@ def long_injuries(active: dict[str, Any], save: dict[str, Any], min_games: int =
 
     season = str((save.get("meta") or {}).get("season") or "")
     today = str((save.get("state") or {}).get("current_date") or "")
-    espn = {espn_id: team["id"] for espn_id, team in espn_team_id_map(active).items()}
+    espn = {espn_id: team["id"] for espn_id, team in espn_team_id_map(active).items()} if active.get("teams") else {}
     games_by_team: dict[str, list[str]] = {}
     for game in ((save.get("season_schedules") or {}).get(season) or {}).get("games") or []:
         if game.get("phase") not in {None, "regular"}:

@@ -7356,8 +7356,11 @@ class DataFoundationTests(unittest.TestCase):
             self.assertEqual(data["meta"]["id"], "universe_2026_27_offseason")
 
     def test_rebuild_is_deterministic(self):
+        # Two fresh builds, not the shared fixture: other tests install the ratings model on self.plain, which
+        # (by design) fills in drafted players' estimated roles in place (role_estimate, 2026-11-23).
+        first = to_plain(build_universe(ROOT))
         second = to_plain(build_universe(ROOT))
-        self.assertEqual(json.dumps(self.plain, sort_keys=True), json.dumps(second, sort_keys=True))
+        self.assertEqual(json.dumps(first, sort_keys=True), json.dumps(second, sort_keys=True))
 
 
 if __name__ == "__main__":
