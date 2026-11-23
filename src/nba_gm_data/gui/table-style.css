@@ -256,3 +256,28 @@ body.unified-terminal-ui .season-minute-rest:disabled { opacity: .3; cursor: def
 body.unified-terminal-ui .has-card-board [data-board-window="minutes"] :is(.season-minutes-head,.season-minute-row) {
   grid-template-columns: minmax(210px,2.1fr) minmax(32px,.35fr) minmax(42px,.45fr) minmax(142px,1.4fr) minmax(90px,.9fr) !important;
 }
+/* Asset windows (Roster, Stats, Contracts): the table reaches both window edges. */
+body.unified-terminal-ui .has-card-board .assets-panel-body > .linked-roster-scroll { padding-inline: 0 !important; }
+
+/* Payroll share chart: fifteen distinct, livelier colours so no two roster players share one (taste deck 2026-11-23). */
+body.unified-terminal-ui .salary-segment-0 { background: #4f86b3; } body.unified-terminal-ui .salary-segment-1 { background: #6aa57a; }
+body.unified-terminal-ui .salary-segment-2 { background: #d0a248; } body.unified-terminal-ui .salary-segment-3 { background: #b8696f; }
+body.unified-terminal-ui .salary-segment-4 { background: #7d72b0; } body.unified-terminal-ui .salary-segment-5 { background: #4ea3a0; }
+body.unified-terminal-ui .salary-segment-6 { background: #c98458; } body.unified-terminal-ui .salary-segment-7 { background: #5f7491; }
+body.unified-terminal-ui .salary-segment-8 { background: #9bb35a; } body.unified-terminal-ui .salary-segment-9 { background: #a26a9c; }
+body.unified-terminal-ui .salary-segment-10 { background: #82a9cf; } body.unified-terminal-ui .salary-segment-11 { background: #c7b77a; }
+body.unified-terminal-ui .salary-segment-12 { background: #8e8f62; } body.unified-terminal-ui .salary-segment-13 { background: #d89aa0; }
+body.unified-terminal-ui .salary-segment-14 { background: #6c9b95; }
+
+/* Status marks: a coloured icon and plain text (no pill), used for option and offseason decisions. */
+.status-mark { display: inline-flex; align-items: center; gap: 4px; color: var(--ui-text, #1d2a33); font-weight: 400; white-space: nowrap; }
+.status-mark > i { font-style: normal; font-weight: 700; font-size: 12px; line-height: 1; }
+.status-mark.is-good > i { color: #2f7d45; } .status-mark.is-bad > i { color: #b3242c; }
+.status-mark.is-pending > i { color: #b7791f; } .status-mark.is-info > i { color: #2f6fb7; } .status-mark.is-muted > i { color: #7d8a95; }
+.status-mark[title] { cursor: help; }
+/* Option terms behind a Details toggle. */
+.option-terms > summary { cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 4px; }
+.option-terms > summary::-webkit-details-marker { display: none; }
+.option-terms > summary::after { content: "▾"; font-size: 9px; color: #6b7883; }
+.option-terms[open] > summary::after { content: "▴"; }
+.option-terms > p { margin: 3px 0 0; max-width: 240px; font-size: 11px; line-height: 1.35; color: #3d4a55; text-align: left; white-space: normal; }

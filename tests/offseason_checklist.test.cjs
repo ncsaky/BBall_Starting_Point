@@ -34,8 +34,8 @@ function context() {
   vm.createContext(ctx);
   const names = ['shortDate', 'offseasonStopTimeline', 'offseasonItemStatus', 'offseasonItemMoney', 'offseasonItemActions',
     'offseasonChecklistTable', 'signingDayRecap', 'offseasonChecklistPanel', 'offerSheetStillOpen', 'offerSheetStatusWords',
-    'offerSheetDecisionMarkup', 'shortSeasonLabel', 'optionDecisionWords', 'optionDecisionWho', 'optionDecisionsMarkup', 'offseasonPlayerCell'];
-  vm.runInContext(`${extract('OFFSEASON_STOPS', 'const')}\n${extract('OFFSEASON_ITEM_LABELS', 'const')}\n${extract('OPTION_ITEM_KINDS', 'const')}\n${extract('OFFSEASON_COLUMNS', 'const')}\n${names.map((n) => extract(n)).join('\n')}
+    'offerSheetDecisionMarkup', 'shortSeasonLabel', 'optionDecisionWords', 'optionDecisionWho', 'optionDecisionsMarkup', 'offseasonPlayerCell', 'statusMarkMarkup', 'contractLabel'];
+  vm.runInContext(`${extract('OFFSEASON_STOPS', 'const')}\n${extract('OFFSEASON_ITEM_LABELS', 'const')}\n${extract('OPTION_ITEM_KINDS', 'const')}\n${extract('OFFSEASON_COLUMNS', 'const')}\n${extract('STATUS_MARK_TONES', 'const')}\n${names.map((n) => extract(n)).join('\n')}
 this.offseasonChecklistPanel = offseasonChecklistPanel; this.shortDate = shortDate;`, ctx);
   return ctx;
 }
@@ -75,7 +75,8 @@ test('each decision has a plain status and only the user\'s own decisions get bu
   assert.match(html, /data-offseason-qo="maximum"/);
   assert.match(html, /Amount: his fourth-year salary plus 40% \(pick 18\)\./);
   assert.match(html, /Declined if you do nothing\./);
-  assert.match(html, /<span class="offseason-chip is-declined">Declined<\/span>/);
+  // Status is a coloured icon and plain text, not a pill (taste deck 2026-11-23).
+  assert.match(html, /<span class="status-mark is-bad"><i aria-hidden="true">✕<\/i>Declined<\/span>/);
   assert.doesNotMatch(html, /data-player-id="c"/, 'a player option is the player\'s choice: no button');
   assert.match(html, /Full Bird/);
   assert.match(html, /\$18\.0M<small>cap hold<\/small>/);
@@ -151,7 +152,7 @@ test('option decisions card: who decides, the decision, why, and your buttons', 
       salary_millions: 48, status: 'exercised', decided_by: 'player', reason: 'He keeps his $48.0M option.'}]};
   const html = context().offseasonChecklistPanel({...room, offseason_checklist: {...room.offseason_checklist, option_decisions: view}});
   assert.match(html, /Options · 27-28/);
-  assert.match(html, /is-declined" title="[^"]*">Opted out/);
+  assert.match(html, /status-mark is-bad" title="[^"]*"><i aria-hidden="true">✕<\/i>Opted out/);
   assert.match(html, /as a 27-year-old starter/);
   assert.match(html, /data-offseason-option="exercise" data-player-id="a">Keep him/);
   assert.match(html, /Big Star[\s\S]*LAL[\s\S]*Opted in/);

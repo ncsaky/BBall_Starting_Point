@@ -5930,6 +5930,17 @@ const OFFSEASON_ITEM_LABELS = {
   two_way_places: "Two-way places",
 };
 
+// Status as a coloured icon and plain text, never a coloured pill (taste deck 2026-11-23).
+const STATUS_MARK_TONES = {
+  pending: ["pending", "◷"], exercised: ["good", "✓"], kept: ["good", "✓"], accepted: ["good", "✓"], signed: ["good", "✓"], done: ["good", "✓"],
+  tendered: ["info", "➜"], restricted: ["info", "◆"], open: ["info", "○"], free_agent: ["muted", "○"],
+  declined: ["bad", "✕"], not_tendered: ["bad", "✕"], withdrawn: ["bad", "✕"], lapsed: ["bad", "✕"],
+};
+function statusMarkMarkup(status, words, title = "") {
+  const [tone, icon] = STATUS_MARK_TONES[status] || ["muted", "•"];
+  return `<span class="status-mark is-${tone}"${title ? ` title="${escapeAttr(title)}"` : ""}><i aria-hidden="true">${icon}</i>${escapeHtml(words)}</span>`;
+}
+
 function offseasonItemStatus(item) {
   const words = {
     pending: "Your decision", exercised: "Kept", declined: "Declined", tendered: "Offer sent",
@@ -6014,15 +6025,21 @@ function optionDecisionsMarkup(view, editable) {
   const actions = (row) => editable && row.status === "pending" && ["team_option", "rookie_option"].includes(row.kind)
     ? `<button type="button" class="ui-command" data-offseason-option="exercise" data-player-id="${escapeAttr(row.player_id || "")}">Keep him</button>
        <button type="button" class="ui-command" data-offseason-option="decline" data-player-id="${escapeAttr(row.player_id || "")}">Decline</button>` : "";
-  const option = (row) => escapeHtml(row.kind_words.replace(/^./, (c) => c.toUpperCase()));
+  // The option's terms drop down from a Details toggle (game content, not a rule; taste deck 2026-11-23).
+  const option = (row) => {
+    const name = escapeHtml(row.kind_words.replace(/^./, (c) => c.toUpperCase()));
+    const season = shortSeasonLabel(view.season || "");
+    const terms = [`One more season (${season}) at ${money(row.salary_millions)}.`, row.reason || ""].filter(Boolean).join(" ");
+    return `<details class="option-terms"><summary>${name}</summary><p>${escapeHtml(terms)}</p></details>`;
+  };
   // Why the decision went this way (or what happens by default) reads on hover instead of a paragraph per row.
   const why = (row) => [row.reason, row.status === "pending" ? `Declined if you do nothing by ${shortDate(row.deadline)}.` : ""].filter(Boolean).join(" ");
-  const chip = (row) => `<span class="offseason-chip is-${chipTone(row)}"${why(row) ? ` title="${escapeAttr(why(row))}"` : ""}>${escapeHtml(optionDecisionWords(row))}</span>`;
+  const chip = (row) => statusMarkMarkup(row.decided_by === "default" ? "lapsed" : row.status, optionDecisionWords(row), why(row));
   const yourRows = yours.map((row) => `<tr class="${row.status === "pending" ? "is-pending" : ""}">
       <th scope="row" class="offseason-player">${offseasonPlayerCell(row)}</th>
       <td>${row.overall != null ? compactRatingBar(row.overall) : "—"}</td>
       <td>${option(row)}</td>
-      <td class="offseason-money">${money(row.salary_millions)}</td>
+      <td class="offseason-money">${row.salary_millions != null ? escapeHtml(contractLabel(row.salary_millions, 1)) : "—"}</td>
       <td class="offseason-due">${row.status === "pending" ? escapeHtml(shortDate(row.deadline)) : "—"}</td>
       <td class="offseason-status">${chip(row)}</td>
       <td class="offseason-actions">${actions(row)}</td>
@@ -6032,7 +6049,7 @@ function optionDecisionsMarkup(view, editable) {
       <td>${teamLogoSrc(row.team_abbrev) ? `<span class="offseason-team"><img src="${escapeAttr(teamLogoSrc(row.team_abbrev))}" alt="" aria-hidden="true">${escapeHtml(row.team_abbrev || "")}</span>` : escapeHtml(row.team_abbrev || "")}</td>
       <td>${row.overall != null ? compactRatingBar(row.overall) : "—"}</td>
       <td>${option(row)}</td>
-      <td class="offseason-money">${money(row.salary_millions)}</td>
+      <td class="offseason-money">${row.salary_millions != null ? escapeHtml(contractLabel(row.salary_millions, 1)) : "—"}</td>
       <td class="offseason-status">${chip(row)}</td>
     </tr>`).join("");
   return `<section class="option-decisions" data-option-decisions aria-label="Option decisions">
@@ -6067,7 +6084,7 @@ function offseasonChecklistTable(items, editable) {
       <td>${item.player_id ? escapeHtml(label + bird(item)) : ""}</td>
       <td class="offseason-money">${offseasonItemMoney(item)}</td>
       <td class="offseason-due">${escapeHtml(shortDate(item.deadline))}</td>
-      <td class="offseason-status"><span class="offseason-chip is-${escapeAttr(item.status || "")}">${escapeHtml(offseasonItemStatus(item))}</span></td>
+      <td class="offseason-status">${statusMarkMarkup(item.status || "", offseasonItemStatus(item))}</td>
       <td class="offseason-actions">${offseasonItemActions(item, editable)}</td>
     </tr>`;
   }).join("");
@@ -6198,9 +6215,10 @@ function setRosterChecklistPanel(list = state.data.setRoster || {}) {
   const dates = list.calendar || {};
   const items = list.items || [];
   const pending = items.filter((item) => item.status === "pending").length;
+  // No four-stop offseason timeline here: the preseason card is just the decisions, each with its own due date
+  // (taste deck 2026-11-23: the offseason stops felt forced into this card).
+  void dates; void pending;
   return `<section class="fa-panel offseason-checklist" data-set-roster-checklist aria-label="Set the roster">
-    ${offseasonStopTimeline("set_the_roster", {...dates, roster_deadline: dates.roster_deadline || list.roster_deadline}, pending,
-      `Opening rosters and rookie-scale extensions are due ${shortDate(list.roster_deadline)}; rookie-scale options for next season ${shortDate(list.rookie_option_deadline)}.`)}
     <div class="offseason-scroll">${optionDecisionsMarkup(list.option_decisions, !state.hydrating)}${offseasonChecklistTable(list.option_decisions ? items.filter((item) => !OPTION_ITEM_KINDS.has(item.kind)) : items, !state.hydrating)}</div>
   </section>`;
 }
@@ -13122,9 +13140,13 @@ function salaryHorizonChart({seasons=[],rows=[],capByYear={},highlightPlayerId='
   const horizon=[...seasons].slice(0,4);
   while(horizon.length<4) horizon.push(`Year ${horizon.length+1}`);
   const colorIds = [...new Set([...colorPlayerIds,...rows.map((row,index)=>String(row.id||row.player_id||index))])].sort();
+  // Stack order: biggest contract (over the whole horizon) at the bottom, the same order every year.
+  const stackTotal=new Map(rows.map((row,index)=>[String(row.id||row.player_id||index),horizon.reduce((sum,season)=>sum+Number(row.salary_by_year?.[season]||0),0)]));
   const values=horizon.map(season=>{
     const cap=capByYear?.[season]||{};
-    const salaries=rows.map((row,index)=>{const id=String(row.id||row.player_id||index);return {id,name:row.name||row.player_name||row.full_name||'',salary:Number(row.salary_by_year?.[season]||0),index:colorIds.indexOf(id)};}).filter(item=>item.salary>0).sort((a,b)=>b.salary-a.salary||a.id.localeCompare(b.id));
+    const salaries=rows.map((row,index)=>{const id=String(row.id||row.player_id||index);return {id,name:row.name||row.player_name||row.full_name||'',salary:Number(row.salary_by_year?.[season]||0),index:colorIds.indexOf(id)};}).filter(item=>item.salary>0).sort((a,b)=>(stackTotal.get(b.id)||0)-(stackTotal.get(a.id)||0)||a.id.localeCompare(b.id));
+    // Each player keeps one colour and one place in the stack every year, so a contract carrying over reads as the
+    // same block moving right (taste deck 2026-11-23).
     const known=salaries.reduce((sum,item)=>sum+item.salary,0);
     const payroll=Number(payrollByYear?.[season] ?? cap.salary_total_millions ?? known);
     return {season,cap,salaries,payroll:Math.max(payroll,known),remainder:Math.max(0,payroll-known)};
@@ -13145,7 +13167,7 @@ function salaryHorizonChart({seasons=[],rows=[],capByYear={},highlightPlayerId='
     const tax=Number(cap.tax_line_millions||0),hard=Number(cap.hard_cap_millions||0);
     const focusedSalary=salaries.find(item=>item.id===String(highlightPlayerId))?.salary||0;
     const displaySalary=highlightPlayerId?focusedSalary:payroll;
-    return `<div class="salary-horizon-year"><span>${escapeHtml(shortSeasonLabel(season))}</span><div class="salary-horizon-column" role="img" aria-label="${escapeAttr(`${season} payroll ${money(payroll)}, tax ${money(tax)}, hard cap ${money(hard)}`)}"><div class="salary-horizon-stack" style="height:${pct(payroll)}%">${segments.map(item=>`<i class="salary-segment salary-segment-${item.index<0?'other':item.index%8}${item.id===String(highlightPlayerId)?' is-highlighted':''}" style="height:${payroll?clampNumber(item.salary/payroll*100,0,100):0}%" title="${escapeAttr(item.id==='other'?`Other payroll: ${money(item.salary)}`:`${money(item.salary)} · ${item.name || 'Unknown player'}`)}"></i>`).join('')}</div>${tax?`<b class="salary-tax-line" style="bottom:${pct(tax)}%"></b>`:''}${hard?`<b class="salary-hard-line" style="bottom:${pct(hard)}%"></b>`:''}</div><strong>${displaySalary?money(displaySalary):'—'}</strong></div>`;
+    return `<div class="salary-horizon-year"><span>${escapeHtml(shortSeasonLabel(season))}</span><div class="salary-horizon-column" role="img" aria-label="${escapeAttr(`${season} payroll ${money(payroll)}, tax ${money(tax)}, hard cap ${money(hard)}`)}"><div class="salary-horizon-stack" style="height:${pct(payroll)}%">${segments.map(item=>`<i class="salary-segment salary-segment-${item.index<0?'other':item.index%15}${item.id===String(highlightPlayerId)?' is-highlighted':''}" style="height:${payroll?clampNumber(item.salary/payroll*100,0,100):0}%" title="${escapeAttr(item.id==='other'?`Other payroll: ${money(item.salary)}`:`${money(item.salary)} · ${item.name || 'Unknown player'}`)}"></i>`).join('')}</div>${tax?`<b class="salary-tax-line" style="bottom:${pct(tax)}%"></b>`:''}${hard?`<b class="salary-hard-line" style="bottom:${pct(hard)}%"></b>`:''}</div><strong>${displaySalary?money(displaySalary):'—'}</strong></div>`;
   }).join('')}<div class="salary-horizon-legend"><span>Tax</span><span>Hard cap</span></div></div>`;
 }
 
