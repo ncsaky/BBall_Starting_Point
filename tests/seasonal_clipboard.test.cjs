@@ -1033,11 +1033,12 @@ test('team identity card migration removes excess saved height without changing 
   const layout = {identity:{width:1320,height:1300,scale:1,sizeRevision:1}};
   migrateCardSizes(layout,{cards:{identity:{sizeRevision:1}}});
   assert.equal(layout.identity.width,1320);
-  assert.equal(layout.identity.height,1000);
+  // From revision 1 straight to the current one: 1/1.3 (old excess) times 1.1 (2026-11-23: courts fit above the legend).
+  assert.equal(layout.identity.height,1100);
   assert.equal(layout.identity.scale,1);
-  assert.equal(layout.identity.sizeRevision,2);
-  migrateCardSizes(layout,{cards:{identity:{sizeRevision:2}}});
-  assert.equal(layout.identity.height,1000);
+  assert.equal(layout.identity.sizeRevision,4);
+  migrateCardSizes(layout,{cards:{identity:{sizeRevision:4}}});
+  assert.equal(layout.identity.height,1100);
 });
 
 test('radar cards widen for standings-sized labels without changing height', () => {
