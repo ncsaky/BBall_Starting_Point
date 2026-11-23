@@ -2,9 +2,8 @@
 body .season-command-dashboard.has-card-board {
   position:relative;
   grid-template-rows:50px minmax(0,1fr);
-  /* Charcoal board with a grey grid (playtest 2026-11-23; was cream paper with blue lines). */
-  background-color:#24282c !important;
-  background-image:linear-gradient(to right, #3a4046 1px, transparent 1px),linear-gradient(to bottom, #3a4046 1px, transparent 1px) !important;
+  background-color:#fffce8 !important;
+  background-image:linear-gradient(to right, #9fc4e0 1px, transparent 1px),linear-gradient(to bottom, #9fc4e0 1px, transparent 1px) !important;
   background-size:24px 24px;
 }
 @media (max-height:780px) {
