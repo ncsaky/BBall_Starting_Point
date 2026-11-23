@@ -44,8 +44,9 @@ test('every recap and outlook slide renders its data', () => {
                          arrivals: [{name: 'Newcomer', minutes_last_season: 1500, rookie: false}, {name: 'Rookie', minutes_last_season: 0, rookie: true}], is_user: true}]},
     leaders_revisited: {categories: [{label: 'Points', rows: [{name: 'Scorer', team_abbrev: 'DAL', per_game: 27.5, moved: true, now: {team: team('LAL'), status: 'Expected starter, about 34 minutes'}}]}],
                         award_winners: [{label: 'Most Valuable Player', name: 'MVP Guy', then: 'DEN', now: {team: team('DEN'), status: 'Injured (foot fracture)'}}]},
-    your_team: {rotation: [{...player('Starter'), minutes: 34}], overall_rank: 27, strengths: [{label: 'Spacing', rank: 6}], weaknesses: [{label: 'Athleticism', rank: 30}],
-                cap: {payroll_millions: 152.1}, tax_payout: {payout_millions: 9.8, season: '2026-27', paid_on: '2027-07-15'}},
+    your_team: {rotation: [{...player('Starter'), minutes: 34, off_role: 'Connector', def_role: 'Rim Protector'}], overall_rank: 27},
+    team_profile: {radar: [{key: 'spacing', label: 'Spacing', side: 'offense', rank: 6}, {key: 'defense', label: 'Defense', side: 'defense', rank: 30}],
+                   cap: {payroll_millions: 152.1}, tax_payout: {payout_millions: 9.8, season: '2026-27', paid_on: '2027-07-15'}},
     contracts: {extensions: [{...player('Extend Me'), salary_millions: 2.5, projected_millions: 10.4}], expiring: [{...player('Big Deal'), team: team('DEN'), salary_millions: 62.8}]},
     prospects: {prospects: [{consensus_rank: 1, name: 'Prospect One', your_rank: 3, scouted_pct: 85.8}], projected_pick: 4},
     storylines: {items: [{title: 'Youth movement', text: 'Spurs have the best young group.'}]},
@@ -53,7 +54,7 @@ test('every recap and outlook slide renders its data', () => {
   };
   const expected = {champion: 'Finals MVP', standings: 'Won the title', awards: 'Off the bench in 60 games', leaders: 'Screener', your_season: '13th in the West',
                     trades: 'After the trade: 29 G', coaching: 'Rides his stars', free_agents: '$23.9M', look_ahead: 'belongs to Utah Jazz', power: '▲2',
-                    continuity: 'Newcomer (1500)', leaders_revisited: 'aria-label="moved to"', your_team: '$9.8M', contracts: 'Extend Me',
+                    continuity: 'Newcomer (1500)', leaders_revisited: 'aria-label="moved to"', your_team: 'Rim Protector', team_profile: '$9.8M', contracts: 'Extend Me',
                     prospects: 'No. 4', storylines: 'Youth movement', injuries: 'about 35 games'};
   for (const [key, slide] of Object.entries(slides)) {
     const markup = RENDER[key]({key, ...slide});

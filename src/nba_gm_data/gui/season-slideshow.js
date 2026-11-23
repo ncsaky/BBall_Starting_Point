@@ -87,7 +87,8 @@
 
   const ordinalRank = (n) => { const v = Number(n); if (!Number.isFinite(v) || !v) return "—"; const s = ["th", "st", "nd", "rd"], m = v % 100; return v + (s[(m - 20) % 10] || s[m] || s[0]); };
   // Team slides lead with the logo and the team's overall instead of spelling out the name (playtest 2026-11-22).
-  const titleTeam = (slide) => `${logo(slide.logo, "ss-title-logo")}<span class="ss-title-stat"><b>${slide.overall_rank ? `${ordinalRank(slide.overall_rank)} in the league` : ""}</b></span>`;
+  const titleTeam = (slide) => `${logo(slide.logo, "ss-title-logo")}<span class="ss-title-stat"><b>${slide.key === "team_profile" ? "Strengths and payroll" : slide.overall_rank ? `Projected ${ordinalRank(slide.overall_rank)} in the league` : ""}</b></span>`;
+  const roleChip = (role) => (typeof playerRoleChip === "function" ? playerRoleChip(role) : esc(role || "—"));
   // Ratings always carry the game's bar, and a contract is always one field: salary × years (playtest 2026-11-22).
   const ratingBar = (v) => (v === null || v === undefined || !Number.isFinite(Number(v)) ? "—"
     : typeof compactRatingBar === "function" ? compactRatingBar(Number(v))  // the roster tables' own bar
@@ -125,7 +126,7 @@
       const anchor = Math.abs(x - c) < 6 ? "middle" : x < c ? "end" : "start";
       return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anchor}" class="ss-radar-label"><tspan>${esc(a.label)}</tspan><tspan class="ss-radar-rank" dx="4">${ordinalRank(a.rank)}</tspan></text>`;
     }).join("");
-    return `<figure class="ss-radar"><svg viewBox="-70 -14 ${size + 140} ${size + 28}" role="img" aria-label="Team Signals: offense and defense league ranks">${rings}${spokes}${layer("offense")}${layer("defense")}${labels}</svg>
+    return `<figure class="ss-radar"><svg viewBox="-112 -16 ${size + 224} ${size + 32}" role="img" aria-label="Team Signals: offense and defense league ranks">${rings}${spokes}${layer("offense")}${layer("defense")}${labels}</svg>
       <figcaption><span class="ss-key ss-key-offense">Offense</span><span class="ss-key ss-key-defense">Defense</span></figcaption></figure>`;
   }
 
@@ -284,27 +285,36 @@
       const value = (v, digits = 1) => (v === null || v === undefined ? "—" : num(v, digits));
       const injury = (p) => (p.injury ? ` <span class="ss-injury" title="${attr(`${p.injury.label || "Injured"}${p.injury.whole_season ? ", expected to miss the season" : `, about ${p.injury.games} games`}${p.injury.return_date ? `, back around ${p.injury.return_date}` : ""}`)}">✚ ${p.injury.whole_season ? "season" : p.injury.games}</span>` : "");
       const roster = table([
-        {label: "Player", render: (p) => `<span class="ss-player">${headshot(p)}<span class="ss-player-name">${name({...p, player_id: p.id})}${injury(p)}</span></span>`, cls: "ss-player-col", width: "270px"},
+        {label: "Player", render: (p) => `<span class="ss-player">${headshot(p)}<span class="ss-player-name">${name({...p, player_id: p.id})}${injury(p)}</span></span>`, cls: "ss-player-col", width: "254px"},
         {label: "Pos", render: (p) => esc(p.position || "—"), width: "46px"},
         {label: "Age", render: (p) => value(p.age, 0), cls: "ss-num", width: "44px"},
         {label: "OVR", render: (p) => ratingBar(p.overall), width: "82px"},
         {label: "OFF", render: (p) => ratingBar(p.offense), width: "82px"},
         {label: "DEF", render: (p) => ratingBar(p.defense), width: "82px"},
+        {label: "Offense role", render: (p) => roleChip(p.off_role), width: "128px"},
+        {label: "Defense role", render: (p) => roleChip(p.def_role), width: "128px"},
         {label: "MIN", render: (p) => (p.minutes ? p.minutes : "—"), cls: "ss-num", width: "46px"},
         {label: "PTS", render: (p) => value(p.points), cls: "ss-num", width: "46px"},
         {label: "REB", render: (p) => value(p.rebounds), cls: "ss-num", width: "46px"},
         {label: "AST", render: (p) => value(p.assists), cls: "ss-num", width: "46px"},
-        {label: "Contract", render: (p) => contract(p.salary_millions, p.years_left), cls: "ss-num", width: "96px"},
+        {label: "Contract", render: (p) => contract(p.salary_millions, p.years_left), cls: "ss-num", width: "92px"},
       ], slide.rotation || [], {sorted: 3});
       const horizon = slide.salary_horizon || {};
       const chart = typeof salaryHorizonChart === "function" && (horizon.seasons || []).length
         ? salaryHorizonChart({seasons: horizon.seasons, rows: horizon.rows || [], capByYear: horizon.cap_by_year || {}, className: "ss-payroll-chart"}) : "";
-      return `<div class="ss-team-top"><section class="ss-roster">${roster}</section>
-          ${(slide.radar || []).length ? curvedRadar(slide.radar, slide.league_teams || 30) : ""}</div>
-        <div class="ss-team-facts">
-          <section class="ss-payroll">${chart}</section>
+      return `<section class="ss-roster">${roster}</section>`;
+    },
+    team_profile(slide) {
+      const cap = slide.cap || {};
+      const payout = slide.tax_payout;
+      const horizon = slide.salary_horizon || {};
+      const chart = typeof salaryHorizonChart === "function" && (horizon.seasons || []).length
+        ? salaryHorizonChart({seasons: horizon.seasons, rows: horizon.rows || [], capByYear: horizon.cap_by_year || {}, className: "ss-payroll-chart"}) : "";
+      return `<div class="ss-profile">
+          ${(slide.radar || []).length ? curvedRadar(slide.radar, slide.league_teams || 30) : ""}
+          <div class="ss-profile-money"><section class="ss-payroll">${chart}</section>
           <section><dl class="ss-dl"><dt>Payroll</dt><dd>${money(cap.payroll_millions)}</dd><dt>Tax line</dt><dd>${money(cap.tax_line_millions)}</dd><dt>Room under the tax</dt><dd>${money(cap.tax_space_millions)}</dd><dt>Hard cap room</dt><dd>${money(cap.hard_cap_space_millions)}</dd>
-          <dt>Tax payout share</dt><dd>${payout ? (payout.payout_millions > 0 ? `${money(payout.payout_millions)} (${esc(payout.season)}, paid ${esc(payout.paid_on)})` : payout.tax_bill_millions > 0 ? `None: paid ${money(payout.tax_bill_millions)} in tax (${esc(payout.season)})` : `None for ${esc(payout.season)}`) : "No payout recorded yet"}</dd></dl></section>
+          <dt>Tax payout share</dt><dd>${payout ? (payout.payout_millions > 0 ? `${money(payout.payout_millions)} (${esc(payout.season)}, paid ${esc(payout.paid_on)})` : payout.tax_bill_millions > 0 ? `None: paid ${money(payout.tax_bill_millions)} in tax (${esc(payout.season)})` : `None for ${esc(payout.season)}`) : "No payout recorded yet"}</dd></dl></section></div>
         </div>`;
     },
     contracts(slide) {

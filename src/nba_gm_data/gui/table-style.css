@@ -80,3 +80,22 @@ body.unified-terminal-ui .player-rating-bar.player-rating-bar > i > b {
 }
 body.unified-terminal-ui .assets-rating-bar.player-rating-bar { grid-template-columns: 28px 36px !important; align-items: center; }
 body.unified-terminal-ui .trade-ledger-rating.player-rating-bar > i { margin-top: 4px !important; }
+
+/* Role chips (app.js playerRoleChip): one colour per role, grouped by family. */
+.role-chip { display: inline-block; max-width: 100%; box-sizing: border-box; padding: 1px 6px; border-radius: 3px; font-size: 10.5px;
+  font-weight: 600; line-height: 1.45; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 1px solid transparent; }
+.role-off-handler-1 { background: #cfe0f3; color: #173f6b; border-color: #8fb4dc; }
+.role-off-handler-2 { background: #dde9f6; color: #24507e; border-color: #a9c5e4; }
+.role-off-handler-3 { background: #d8e1f8; color: #2c3f86; border-color: #a3b3e6; }
+.role-off-wing-1 { background: #d6eedb; color: #1e5a2c; border-color: #9fd0aa; }
+.role-off-wing-2 { background: #dff1e3; color: #2b6a3a; border-color: #b0d9b9; }
+.role-off-wing-3 { background: #e4efd4; color: #46602a; border-color: #bcd59c; }
+.role-off-big-1 { background: #f6e0cf; color: #7a3d12; border-color: #e2b38f; }
+.role-off-big-2 { background: #f3e6d2; color: #6e4a1a; border-color: #dcc199; }
+.role-def-guard-1 { background: #e6dcf3; color: #4b2a78; border-color: #c2acdf; }
+.role-def-guard-2 { background: #efdcf0; color: #6a2a6e; border-color: #d6acd8; }
+.role-def-wing-1 { background: #d3ecec; color: #155a5c; border-color: #93cbcc; }
+.role-def-wing-2 { background: #ddf0f0; color: #24676a; border-color: #aad6d7; }
+.role-def-hidden { background: #e6e9ec; color: #4b5763; border-color: #c3cad1; }
+.role-def-big-1 { background: #f2d9d6; color: #7a2620; border-color: #dda59f; }
+.role-unknown { background: #eef1f3; color: #3e4d59; border-color: #cbd2d8; }

@@ -162,7 +162,8 @@ def _player_ref(active: dict[str, Any], player_id: str, fallback_name: str | Non
     overall = player_display_attribute_summary(active, player_id).get("overall")
     return {"id": player_id, "name": player.get("name") or fallback_name, "team_id": player.get("team_id"),
             "position": player.get("position"), "age": player.get("display_age", player.get("age")),
-            "headshot_url": player.get("headshot_url"), "overall": overall}
+            "headshot_url": player.get("headshot_url"), "overall": overall,
+            "off_role": player.get("primary_off_role"), "def_role": player.get("primary_def_role")}
 
 
 def _per_game(totals: dict[str, Any], key: str) -> float:
@@ -841,6 +842,7 @@ def build_preseason_outlook(canonical: dict[str, Any], save: dict[str, Any], sav
         _safe(lambda: outlook_continuity_slide(ctx), "continuity", "Continuity"),
         _safe(lambda: outlook_leaders_slide(ctx), "leaders_revisited", "Last season's leaders"),
         _safe(lambda: outlook_your_team_slide(ctx), "your_team", "Your team"),
+        _safe(lambda: outlook_team_profile_slide(ctx), "team_profile", "Team profile"),
         _safe(lambda: outlook_contracts_slide(ctx), "contracts", "Contracts to watch"),
         _safe(lambda: outlook_prospects_slide(ctx), "prospects", "Prospect watch"),
         _safe(lambda: outlook_storylines_slide(ctx), "storylines", "Storylines"),
@@ -1091,7 +1093,7 @@ def outlook_your_team_slide(ctx: dict[str, Any]) -> dict[str, Any]:
              for key in keys if key in ranks]
     cap = team_cap_summary(active, save, user, ctx["season"])
     payout = cap.get("tax_payout") or {}
-    return {"key": "your_team", "title": _team_ref(teams, user)["name"], "kicker": "Your team",
+    slide = {"key": "your_team", "title": _team_ref(teams, user)["name"], "kicker": "Your team",
             "logo": _team_ref(teams, user)["abbrev"], "team_overall": (identity.get("metrics") or {}).get("overall"),
             "radar": radar, "league_teams": len(teams), "salary_horizon": {"seasons": horizon, "rows": salary_rows, "cap_by_year": cap_by_year},
             "rotation": rotation, "overall_rank": (identity.get("ranks") or {}).get("overall"),
@@ -1101,6 +1103,16 @@ def outlook_your_team_slide(ctx: dict[str, Any]) -> dict[str, Any]:
                     "tax_space_millions": cap.get("tax_space_millions"), "hard_cap_millions": cap.get("hard_cap_millions"),
                     "hard_cap_space_millions": cap.get("hard_cap_space_millions")},
             "tax_payout": payout or None, "note": None}
+    ctx["your_team_slide"] = slide
+    return slide
+
+
+def outlook_team_profile_slide(ctx: dict[str, Any]) -> dict[str, Any]:
+    """The team slide's second half, on its own card so each part has room (playtest 2026-11-22): the offense and
+    defense radar beside the four-season payroll chart and the cap numbers."""
+    team = ctx.get("your_team_slide") or outlook_your_team_slide(ctx)
+    keep = ("title", "logo", "overall_rank", "team_overall", "radar", "league_teams", "salary_horizon", "cap", "tax_payout")
+    return {"key": "team_profile", "kicker": "Your team", "note": None, **{key: team.get(key) for key in keep}}
 
 
 def outlook_contracts_slide(ctx: dict[str, Any]) -> dict[str, Any]:

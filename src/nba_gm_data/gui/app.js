@@ -13070,6 +13070,24 @@ function modalWindowMark(kind) {
   return `<span class="card-board-window-mark" aria-hidden="true"></span>`;
 }
 
+// Offensive and defensive roles (the player's primary roles), as colour-coded chips so a team's deployment reads at
+// a glance: handlers blue, shooters and connectors green, bigs warm; on the other end guards purple, wings teal, the
+// rim protector red-brown and "hidden" assignments grey (playtest 2026-11-22).
+const PLAYER_ROLE_CHIPS = {
+  "Primary Ball Handler": ["Primary handler", "off-handler-1"], "Secondary Ball Handler": ["Secondary handler", "off-handler-2"],
+  "Movement Ball Handler": ["Movement handler", "off-handler-3"], "Spot Up Shooter": ["Spot-up shooter", "off-wing-1"],
+  "Movement Shooter": ["Movement shooter", "off-wing-2"], "Connector": ["Connector", "off-wing-3"],
+  "Rollman": ["Roll man", "off-big-1"], "Versatile Big": ["Versatile big", "off-big-2"],
+  "On-Ball Guard": ["On-ball guard", "def-guard-1"], "Disruptor": ["Disruptor", "def-guard-2"],
+  "Versatile Stopper": ["Versatile stopper", "def-wing-1"], "Mobile Forward": ["Mobile forward", "def-wing-2"],
+  "Hidden": ["Hidden", "def-hidden"], "Rim Protector": ["Rim protector", "def-big-1"],
+};
+function playerRoleChip(role) {
+  if (!role) return "—";
+  const [label, tone] = PLAYER_ROLE_CHIPS[role] || [String(role), "unknown"];
+  return `<span class="role-chip role-${tone}" title="${escapeAttr(role)}">${escapeHtml(label)}</span>`;
+}
+
 // A contract is always one field: salary per season × years (playtest 2026-11-22).
 function contractLabel(salaryMillions, years) {
   const salary = Number(salaryMillions);

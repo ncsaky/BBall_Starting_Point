@@ -298,3 +298,9 @@ body.unified-terminal-ui .ss-payroll .salary-horizon-chart { height: 100% !impor
 .ss-team-facts > section:last-child { flex: 0 1 360px; }
 /* Rating cells: number + the game's bar. */
 .ss-table td .ss-rating { width: auto; }
+
+/* Team profile slide: a large radar beside the payroll chart and numbers. */
+.ss-profile { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 28px; align-items: center; height: 100%; }
+.ss-profile .ss-radar svg { max-height: 520px; }
+.ss-profile-money { display: flex; gap: 24px; align-items: stretch; height: 340px; }
+.ss-profile-money > section:last-child { flex: 1 1 auto; align-self: center; }

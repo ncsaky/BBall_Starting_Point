@@ -52,6 +52,10 @@ Game runs from the browser pane: launch entry `game` (port 8766, normal `saves/`
   the game's four-season payroll chart sits beside the payroll numbers. Round 3: header is just the logo and
   "1st in the league"; the table sits at its natural width (player column 270px fits the longest names) with the
   radar beside it; OVR/OFF/DEF use the roster's rating bar; contract is one field ("$40.8M × 5").
+- **Team slides, round 4 (done 2026-11-22):** split in two so each part has room. "Your team": logo + "Projected
+  1st in the league", the rotation table with colour-coded offense and defense role chips (`playerRoleChip` in
+  app.js; the player's primary roles). "Team profile": logo + "Strengths and payroll", the large curved radar beside
+  the payroll chart (player card proportions) and the cap numbers. Roles could also go on the main roster table.
 - **Rating bars (done 2026-11-22):** every player OVR/OFF/DEF bar is one look: 36 x 5px on the house tables' dark
   track, fill and colour spread over 60-98 (`playerRatingBarStyle` in app.js) instead of 0-100, so a 77 and a 94
   differ at a glance (77 fills ~45% amber, 94 ~90% blue). Numbers unchanged. Skill and coach bars keep 0-100.
