@@ -307,8 +307,9 @@ const GameInterface = (() => {
   // Every table with a header row sorts on a header click (again to flip), unless it already has its own sorting or
   // is a year-by-year ledger (user playtest 2026-11-22). Ranks, names and positions start smallest-first; other
   // columns biggest-first. Rows that span the table (DNP lines) and blank cells stay at the bottom.
-  const AUTO_SORT_SKIP = '.ss-table, .fa-cap-table, .trade-ledger, [data-no-sort], [data-local-sort], .free-agency-roster-table';
-  const AUTO_SORT_ASCENDING = /^(#|rk|rank|seed|pick|team|player|name|prospect|pos|position|from|year|season|date|body part|opp|opponent|why|note|decision|option|who decides)\.?$/i;
+  // The trade asset list (.trade-ledger) sorts too (playtest 2026-11-23); only year-by-year cap tables are skipped.
+  const AUTO_SORT_SKIP = '.ss-table, .fa-cap-table, [data-no-sort], [data-local-sort], .free-agency-roster-table';
+  const AUTO_SORT_ASCENDING = /^(#|rk|rank|seed|pick|team|player|name|prospect|pos|position|from|year|season|date|body part|opp|opponent|why|note|decision|option|who decides|player \/ asset|destination|item)\.?$/i;
   function autoSortValue(cell) {
     const text = (cell?.textContent || '').trim();
     if (!text || /^(—|-|–)$/.test(text)) return null;
@@ -318,6 +319,8 @@ const GameInterface = (() => {
     if (arrow) return (/[▼↓−-]/.test(arrow[1]) ? -1 : 1) * Number(arrow[2]);
     const plain = text.replace(/[$,%M]/g, '').replace('−', '-').replace(/\.$/, '');
     if (/^-?[\d.]+$/.test(plain)) return Number(plain);
+    const dollars = text.match(/\$\s?(-?[\d.]+)\s?M/i);  // contracts ("$40.8M × 5") sort by their salary
+    if (dollars) return Number(dollars[1]);
     return text.toLowerCase();
   }
   function sortAutoTable(th) {

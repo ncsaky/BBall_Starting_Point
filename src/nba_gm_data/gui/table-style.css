@@ -159,3 +159,19 @@ body.unified-terminal-ui .salary-mark:hover { color: #18212a !important; text-de
 .salary-mark.is-off[data-side="below"] span::before { content: "\2039 "; }
 body.unified-terminal-ui .salary-mark.is-end { transform: translateX(calc(-100% + 3px)) !important; align-items: flex-end; }
 body.unified-terminal-ui .salary-mark.is-start { transform: translateX(-3px) !important; align-items: flex-start; }
+
+/* Card header metrics (injury risk, growth runway, trade value): the label sits centred above its metric, the
+   injury figure is larger and its hotspots read clearly (playtest 2026-11-23). */
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages .player-evidence-rings { align-items: flex-start !important; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages .player-evidence-ring.player-evidence-ring {
+  display: flex !important; flex-direction: column-reverse !important; align-items: center !important; justify-content: flex-end !important;
+  gap: 4px !important; grid-template-columns: none !important; text-align: center;
+}
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages .player-evidence-ring.player-evidence-ring > div {
+  display: flex !important; flex-direction: row !important; align-items: baseline; justify-content: center; gap: 4px; text-align: center; white-space: nowrap;
+}
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages .player-evidence-ring.player-evidence-ring :is(b, small) { white-space: nowrap !important; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages .player-evidence-ring.injury-body-evidence > span {
+  width: 64px !important; height: 76px !important;
+}
+.injury-body-figure.mini .injury-spot > g { transform-box: fill-box; transform-origin: center; transform: scale(1.6); }

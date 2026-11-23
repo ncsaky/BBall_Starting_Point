@@ -4115,7 +4115,7 @@ function seasonStaffRowMarkup(row, portraitId, {actions = false, candidate = fal
   const grade = Number(staffGrade(row) || 0);
   const salary = staffAav(row);
   const years = candidate ? row.asking_years || 2 : staffYears(row);
-  const contract = `${salary ? money(salary) : "—"} x ${years || "—"}`;
+  const contract = `${salary ? money(salary) : "—"} × ${years || "—"}`;
   const personAction = candidate ? `data-staff-id="${escapeAttr(row.id)}"` : `data-dashboard-staff-card="${escapeAttr(staffIdentity(row))}"`;
   const actionAttributes = staffActionAttributes(row.slot || row.role, candidate ? "negotiate" : "fire", permissions);
   const roleRank = ["Head Coach", "Offensive Coordinator", "Defensive Coordinator", "Performance Lead", "Development Lead", "Scouting Lead"].indexOf(role);
@@ -4173,7 +4173,7 @@ function coachProfileCardMarkup(staff, portraitId, info = {}, options = {}) {
     <section class="coach-profile-identity">
       ${staffPortraitMarkup(staff, portraitId, "coach-profile-portrait")}
       <div class="coach-profile-bio">${options.context ? `<p class="coach-profile-context">${escapeHtml(options.context)}</p>` : ""}<h2>${escapeHtml(staffName(staff))}</h2><p>${escapeHtml(role)}</p></div>
-      <dl class="coach-profile-contract" aria-label="${options.candidate ? "Candidate asking contract" : "Coach contract"}"><dt>${options.candidate ? "Asking contract" : "Contract"}</dt><dd>${salary ? `${money(salary)} x ${years || "—"}` : "—"}</dd></dl>
+      <dl class="coach-profile-contract" aria-label="${options.candidate ? "Candidate asking contract" : "Coach contract"}"><dt>${options.candidate ? "Asking contract" : "Contract"}</dt><dd>${salary ? `${money(salary)} × ${years || "—"}` : "—"}</dd></dl>
       <div class="coach-profile-overview" aria-label="Coach overview ratings">${coachRatingRow("Grade", staffGrade(staff), "grade", info)}${options.candidate ? (options.gradeChange == null ? "" : `<p class="coach-profile-grade-change"><strong>${options.gradeChange > 0 ? "+" : ""}${options.gradeChange.toFixed(1)}</strong> rating points vs current coach</p>`) : `${coachRatingRow("Morale", staff.morale, "morale", info)}${coachRatingRow("Job security", staff.job_security, "job_security", info)}`}</div>
     </section>
     <div class="coach-profile-panels">
@@ -7380,7 +7380,7 @@ function staffRetentionDashboardWorkspace() {
         </div>
       </section>
       <section class="phase-offer-panel staff-retention-offer">
-        ${sectionHead("Re-sign", `${money(room.ask_millions)} x ${room.ask_years || 2}`)}
+        ${sectionHead("Re-sign", `${money(room.ask_millions)} × ${room.ask_years || 2}`)}
         <label>Annual salary<input id="staffRetentionSalary" type="number" min="0.1" max="${escapeAttr(room.max_offer_millions || 0)}" step="0.1" value="${escapeAttr(Math.min(Number(room.ask_millions || 0), Number(room.max_offer_millions || 0)).toFixed(2))}"></label>
         <label>Years<input id="staffRetentionYears" type="number" min="1" max="5" step="1" value="${escapeAttr(room.ask_years || 2)}"></label>
         <div class="toolbar">
@@ -7393,7 +7393,7 @@ function staffRetentionDashboardWorkspace() {
         ${candidates.length ? table(["Name","Grade","Contract"],candidates,candidate=>[
           html(`<button type="button" data-retention-candidate="${escapeAttr(candidate.id)}">${escapeHtml(candidate.name || "Candidate")}</button>`),
           html(`<span class="staff-grade-cell"><i><b style="${performanceBarStyle(Number(candidate.grade||0))}"></b></i>${draftMetric(candidate.grade)}</span>`),
-          `${money(candidate.asking_salary_millions)} x ${candidate.asking_years || 1}`
+          `${money(candidate.asking_salary_millions)} × ${candidate.asking_years || 1}`
         ],"retention-market") : `<div class="empty">No replacements are currently available.</div>`}
       </section>
     </div>`;
@@ -9579,7 +9579,7 @@ async function openFreeAgentNegotiation(playerId) {
 function freeAgentOfferSummary(player) {
   const offer = player.highest_offer;
   if (!offer) return `<span>${state.data.freeagency?.phase === "re_signing" ? "Exclusive rights · no outside bids" : "No active offers"}</span>`;
-  return `<span class="free-agent-modal-leading">${teamLogoSrc(offer.team_abbrev) ? `<img src="${escapeAttr(teamLogoSrc(offer.team_abbrev))}" alt="${escapeAttr(offer.team_abbrev)} logo" />` : ""}${escapeHtml(offer.team_abbrev || "—")} leads at ${money(offer.aav_millions)} x ${escapeHtml(offer.years || 1)}</span>`;
+  return `<span class="free-agent-modal-leading">${teamLogoSrc(offer.team_abbrev) ? `<img src="${escapeAttr(teamLogoSrc(offer.team_abbrev))}" alt="${escapeAttr(offer.team_abbrev)} logo" />` : ""}${escapeHtml(offer.team_abbrev || "—")} leads at ${money(offer.aav_millions)} × ${escapeHtml(offer.years || 1)}</span>`;
 }
 
 function freeAgentPlayerCard(playerId) {
@@ -10572,7 +10572,7 @@ function renderStaff(target = els.content) {
     <div class="staff-workspace">
       <section class="section featured">
         <div class="section-head"><h3>Coaching Staff</h3><span>${money(report.budget?.annual_spend_millions)} / ${money(report.budget?.annual_budget_millions)}</span><span class="pill">${signedMoney(report.budget?.available_millions)} available</span></div>
-        ${table(["Role", "Name", "Grade", "Contract", ""], slots, (row) => [rowLabel(row.slot || row.role), row.name, row.grade, `${money(row.contract?.annual_salary_millions)} x ${row.contract?.years_remaining || 0}`, `<button data-fire-slot="${escapeAttr(row.slot)}" ${staffActionAttributes(row.slot, "fire", report.staff_action_permissions)}>Fire</button>`])}
+        ${table(["Role", "Name", "Grade", "Contract", ""], slots, (row) => [rowLabel(row.slot || row.role), row.name, row.grade, `${money(row.contract?.annual_salary_millions)} × ${row.contract?.years_remaining || 0}`, `<button data-fire-slot="${escapeAttr(row.slot)}" ${staffActionAttributes(row.slot, "fire", report.staff_action_permissions)}>Fire</button>`])}
       </section>
       <section class="section">
         <div class="section-head">
@@ -10925,7 +10925,7 @@ function staffRoleButton(row, editable = true) {
       <em>${grade !== "" ? Number(grade).toFixed(1) : "—"}</em>
     </span>
     <span class="staff-meta">
-      ${aav ? `${money(aav)}${years ? ` x ${years}` : ""}` : "No contract data"}
+      ${aav ? `${money(aav)}${years ? ` × ${years}` : ""}` : "No contract data"}
     </span>
     ${editable ? `<span class="staff-fire-hover">Fire</span>` : ""}
   </button>`;
@@ -10957,7 +10957,7 @@ function staffMarketPopover() {
         return `<button type="button" class="staff-market-candidate" data-staff-candidate="${escapeAttr(candidate.id || "")}" data-staff-candidate-slot="${escapeAttr(role)}" ${staffActionAttributes(role, "negotiate")}>
           <span class="staff-market-candidate-main"><strong>${escapeHtml(staffName(candidate))}</strong><small>${escapeHtml(rowLabel(role))}</small></span>
           <span class="staff-market-candidate-grade">${Number(staffGrade(candidate) || 0).toFixed(1)}</span>
-          <span class="staff-market-candidate-ask">${money(candidate.asking_salary_millions || staffAav(candidate))} x ${escapeHtml(candidate.asking_years || staffYears(candidate) || 1)}</span>
+          <span class="staff-market-candidate-ask">${money(candidate.asking_salary_millions || staffAav(candidate))} × ${escapeHtml(candidate.asking_years || staffYears(candidate) || 1)}</span>
         </button>`;
       }).join("") || `<div class="empty">No available staff.</div>`}
     </div>
@@ -15235,7 +15235,7 @@ function tradeAssetContract(asset) {
   if (!salaries.length && !asset.contract_terms?.length) return escapeHtml(asset.contract || "—");
   const schedule = salaries.map(([season, amount]) => `${shortSeasonLabel(season)} ${money(amount)}`).join(" · ");
   const terms = asset.contract_terms?.length ? asset.contract_terms : [{salary:Number(salaries[0][1])*1_000_000, years:salaries.length}];
-  const label = terms.map(term => `${money(Number(term.salary)/1_000_000)} x ${term.years}`).join(", ");
+  const label = terms.map(term => `${money(Number(term.salary)/1_000_000)} × ${term.years}`).join(", ");
   return `<span title="${escapeAttr(schedule)}">${escapeHtml(label)}</span>`;
 }
 
@@ -15513,7 +15513,7 @@ function staffCandidateCard(candidate) {
   return `
     <div class="item">
       <strong>${escapeHtml(candidate.name)} <span class="pill">${Number(candidate.grade || 0).toFixed(1)}</span></strong>
-      <div class="asset-meta">${escapeHtml(rowLabel(candidate.slot))} | ${escapeHtml(candidate.archetype || "")} | ask ${money(candidate.asking_salary_millions)} x ${candidate.asking_years || 2}</div>
+      <div class="asset-meta">${escapeHtml(rowLabel(candidate.slot))} | ${escapeHtml(candidate.archetype || "")} | ask ${money(candidate.asking_salary_millions)} × ${candidate.asking_years || 2}</div>
       <div class="toolbar"><button ${staffActionAttributes(candidate.slot, "negotiate")} data-staff-id="${escapeAttr(candidate.id)}" data-staff-slot="${escapeAttr(candidate.slot)}" data-staff-ask="${escapeAttr(candidate.asking_salary_millions)}" data-staff-years="${escapeAttr(candidate.asking_years || 2)}">Offer And Hire</button></div>
     </div>`;
 }

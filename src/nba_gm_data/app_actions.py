@@ -6359,7 +6359,7 @@ def contract_summary(contract: dict[str, Any] | None, active_season: str = "") -
     if not contract:
         return ""
     terms = block_contract_terms(contract, active_season or str(contract.get("_active_season") or ""))
-    return ", ".join(f"${term['salary'] / 1_000_000:.1f}M x {term['years']}" for term in terms)
+    return ", ".join(f"${term['salary'] / 1_000_000:.1f}M × {term['years']}" for term in terms)
 
 
 def top_trait_snapshot(attrs: dict[str, Any]) -> str:

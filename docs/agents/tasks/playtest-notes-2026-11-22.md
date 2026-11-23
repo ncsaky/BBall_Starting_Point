@@ -88,6 +88,11 @@ Game runs from the browser pane: launch entry `game` (port 8766, normal `saves/`
   Salary slider: the "His price from you / Market ask / Minimum" buttons became marks on the track where those values
   fall (click to set). Out-of-reach marks pin to the end, muted, with an arrow; close marks drop a row. Both the
   extension card and the free-agent offer builder.
+- **Card header metrics and trade table (done 2026-11-23):** "Injury risk", "Growth runway"/"Decline watch" and
+  "Trade Value" labels sit centred above their metrics; the injury figure is larger (64x76 slot) with hotspots drawn
+  1.6x. The trade asset table sorts on every header (it had been wrongly skipped as a "ledger"); contracts sort by
+  salary. Every remaining "$X x N" contract label in the GUI and the server's contract summary now uses "×" (news
+  and social posts are prose and keep their wording; the CLI keeps plain x).
 - **Rating bars (done 2026-11-22):** every player OVR/OFF/DEF bar is one look: 36 x 5px on the house tables' dark
   track, fill and colour spread over 60-98 (`playerRatingBarStyle` in app.js) instead of 0-100, so a 77 and a 94
   differ at a glance (77 fills ~45% amber, 94 ~90% blue). Numbers unchanged. Skill and coach bars keep 0-100.

@@ -39,6 +39,7 @@ test('tables without their own sorting get click-to-sort; year-by-year ledgers d
   const js = read('interface.js');
   assert.match(js, /function enhanceAutoSort\(scope\)/);
   assert.match(js, /enhance\(scope = document\) \{\n    enhanceAutoSort\(scope\);/);
-  assert.match(js, /AUTO_SORT_SKIP = '\.ss-table, \.fa-cap-table, \.trade-ledger/);
+  assert.match(js, /AUTO_SORT_SKIP = '\.ss-table, \.fa-cap-table, \[data-no-sort\]/);
+  assert.doesNotMatch(js, /AUTO_SORT_SKIP = [^;]*trade-ledger/, 'the trade asset list sorts too');
   assert.match(js, /\^\(year\|season\)\$/);
 });

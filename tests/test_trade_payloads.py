@@ -238,10 +238,10 @@ class ContractSummaryTests(unittest.TestCase):
             {"season": "2027-28", "salary": 30_000_000, "guarantee_status": "extension"},
             {"season": "2028-29", "salary": 32_000_000, "guarantee_status": "extension"},
         ]}
-        self.assertEqual(contract_summary(contract, "2026-27"), "$8.0M x 1, $30.0M x 2")
-        self.assertEqual(contract_summary(contract, "2028-29"), "$32.0M x 1")
+        self.assertEqual(contract_summary(contract, "2026-27"), "$8.0M × 1, $30.0M × 2")
+        self.assertEqual(contract_summary(contract, "2028-29"), "$32.0M × 1")
 
     def test_ordinary_annual_raises_remain_one_contract_with_full_term(self):
         contract = {"seasons": [{"season": f"202{index}-2{index+1}", "salary": (10+index)*1_000_000} for index in range(6, 9)]}
-        self.assertEqual(contract_summary(contract, "2026-27"), "$16.0M x 3")
+        self.assertEqual(contract_summary(contract, "2026-27"), "$16.0M × 3")
         self.assertEqual(contract_summary(None), "")

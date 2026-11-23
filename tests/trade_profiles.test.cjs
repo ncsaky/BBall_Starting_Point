@@ -104,7 +104,7 @@ test('search states and return navigation preserve a prepared trade without refe
 test('contract summaries separate the current deal and extension in the requested compact format',()=>{
   const s=fixture();
   const html=s.tradeAssetContract({salary_by_year:{'2026-27':8,'2027-28':30,'2028-29':32},contract_terms:[{salary:8000000,years:1},{salary:30000000,years:2}]});
-  assert.match(html,/\$8.0M x 1, \$30.0M x 2/);
+  assert.match(html,/\$8.0M × 1, \$30.0M × 2/);
   assert.match(html,/2028-29 \$32.0M/);
 });
 

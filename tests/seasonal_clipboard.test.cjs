@@ -447,8 +447,8 @@ test('coaching staff card keeps payroll only and displays compact single-line co
   const markup = scope.seasonStaffCard({});
   assert.match(markup,/STAFF PAYROLL/);
   assert.doesNotMatch(markup,/FILLED ROLES|AVERAGE GRADE|>01<|>02</);
-  assert.match(markup,/<strong>\$12\.0M x 1<\/strong>/);
-  assert.match(markup,/<strong>\$5\.0M x 3<\/strong>/);
+  assert.match(markup,/<strong>\$12\.0M × 1<\/strong>/);
+  assert.match(markup,/<strong>\$5\.0M × 3<\/strong>/);
   assert.doesNotMatch(markup,/<small>1 yr<\/small>|<small>3 yrs<\/small>/);
   const css = fs.readFileSync(path.join(gui,'card-board.css'),'utf8');
   assert.match(css,/grid-template-columns:minmax\(150px,1\.55fr\) minmax\(64px,\.7fr\) minmax\(116px,1fr\)/);
