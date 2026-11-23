@@ -7846,7 +7846,15 @@ function tradeRoomModalBody() {
             <label class="trade-partner-field" for="tradeFinderTeam"><span class="sr-only">${acquiring ? "Target team" : "Search teams"}</span><select id="tradeFinderTeam">${!acquiring ? `<option value="" ${!scope ? "selected" : ""}>All ${state.teams.length - 1} teams</option>` : ""}${partnerOptions}</select></label>
             <button type="button" class="tr-step" data-trade-team-step="1" aria-label="Next Trade Finder team">›</button>
           </div>
-        </div>` : market ? "" : `
+        </div>` : market ? `
+        <div class="tr-toolbar-controls">
+          <div class="trade-partner-navigation">
+            <button type="button" class="tr-step" data-trade-team-step="-1" aria-label="Previous team">‹</button>
+            ${teamLogoSrc(state.tradePartner) ? `<img src="${escapeAttr(teamLogoSrc(state.tradePartner))}" alt="" />` : ""}
+            <label class="trade-partner-field" for="tradePartner"><span class="sr-only">Front office to read</span><select id="tradePartner">${partnerOptions}</select></label>
+            <button type="button" class="tr-step" data-trade-team-step="1" aria-label="Next team">›</button>
+          </div>
+        </div>` : `
         <div class="tr-toolbar-controls">
           <div class="trade-add-participant"><select id="tradeAddTeam" aria-label="Additional trade team"><option value="">Add a team…</option>${extraTeams.map(team => `<option value="${escapeAttr(team.abbrev)}">${escapeHtml(team.abbrev)} ${escapeHtml(team.name || "")}</option>`).join("")}</select><button type="button" class="tr-text-button" data-trade-add-team aria-label="Add team to trade" ${(state.tradeAdditionalTeams || []).length >= 4 ? "disabled" : ""}>Add</button></div>
         </div>`}
@@ -7876,10 +7884,10 @@ function tradeSalaryFlow(team, payload = {}, sends = [], receives = []) {
   let status = "", tone = "";
   if (!active) status = "";
   else if (after === null) { status = "Salary unknown"; tone = "unknown"; }
-  else if (hard !== null && after > hard && after > payroll + 0.25) { status = `${money(after - hard)} over the hard cap`; tone = "bad"; }
   else if (tax !== null && after > tax && incoming > limit) { status = `Takes back ${money(incoming - limit)} too much`; tone = "bad"; }
+  else if (hard !== null && after > hard && after > payroll + 0.25) { status = `${money(after - hard)} over the hard cap`; tone = "bad"; }
   else if (rosterAfter !== null && rosterAfter < 12 && rosterAfter < players) { status = `Roster drops to ${rosterAfter}`; tone = "bad"; }
-  else if (tax !== null && after <= tax) { status = "Under the tax: no matching"; tone = "good"; }
+  else if (tax !== null && after <= tax) { status = "Under the tax"; tone = "good"; }
   else { status = incoming > 0 ? "Salaries match" : "Salary works"; tone = "good"; }
   return {team, season, out, incoming, payroll, after, tax, hard, limit, rosterNow: players, rosterAfter, status, tone, triggered: triggered !== null};
 }
@@ -8251,7 +8259,7 @@ function renderTradeMarket(root) {
   const yours = row => row.your_offer_note ? html(`<span class="trade-market-yours">${escapeHtml(yoursLabel(row))}<small style="display:block;opacity:.8">${escapeHtml(textValue(row.your_offer_note))}</small></span>`) : yoursLabel(row);
   const stageCell = row => row.sale_note ? html(`<span title="${escapeAttr(textValue(row.sale_note))}">${escapeHtml(stage(row))}</span>`) : stage(row);
   const shopped = table(["Player", "Team", "Why he is available", "Interested", "Stage", "Decision by", "Your offer"], rows, row => [
-    html(`<span class="trade-market-player">${playerHeadshotMarkup(row, "player-headshot")}<span>${escapeHtml(textValue(row.player_name))}${row.overall != null ? ` <small>${escapeHtml(String(Math.round(Number(row.overall))))}</small>` : ""}</span></span>`),
+    html(`<span class="trade-market-player">${playerHeadshotMarkup(row, "player-headshot")}<span>${escapeHtml(textValue(row.player_name))}${row.overall != null ? ` <b class="tr-rating" style="color:${tradeRatingColor(row.overall)}">${escapeHtml(String(Math.round(Number(row.overall))))}</b>` : ""}</span></span>`),
     textValue(row.team),
     (row.why || []).join("; "),
     html(`<span title="${escapeAttr((row.interested || []).join(", "))}">${escapeHtml(String(row.interested_count || 0))} team${row.interested_count === 1 ? "" : "s"}</span>`),
@@ -8261,10 +8269,12 @@ function renderTradeMarket(root) {
   ], "trade-market-table");
   const finals = (board.final_offers || []).map(row => `<li><strong>${escapeHtml(textValue(row.team))}</strong> ${escapeHtml(textValue(row.text))}${row.why ? `<div>${escapeHtml(textValue(row.why))}</div>` : ""}</li>`).join("");
   const partnerRead = (board.front_offices || {})[state.tradePartner];
-  body.innerHTML = `<div class="trade-market-board" data-trade-scroll="market">
-      <section class="trade-market-section"><h4>Players on the market</h4><p class="trade-market-note">Teams shop players they have a reason to move. Make your offer in the Trade Builder: it is compared with every other team's offer.</p>${shopped}</section>
-      ${finals ? `<section class="trade-market-section"><h4>Final offers waiting for you</h4><ul class="trade-market-finals">${finals}</ul><button type="button" class="ui-command" data-open-trade-offers>Review offers</button></section>` : ""}
-      <section class="trade-market-section">${frontOfficeReadMarkup(partnerRead, "Your assistant GM's read")}</section>
+  body.innerHTML = `<div class="trade-market-board tr-market" data-trade-scroll="market">
+      <section class="trade-market-section tr-market-main"><h4 title="Teams shop players they have a reason to move. Make your offer in the Trade Builder: it is compared with every other team's offer.">Players on the market <span class="ext-info" aria-hidden="true">i</span></h4>${rows.length ? shopped : `<p class="trade-results-empty">No team is shopping a player right now.</p>`}</section>
+      <div class="tr-market-side">
+        ${finals ? `<section class="trade-market-section"><h4>Final offers waiting for you</h4><ul class="trade-market-finals">${finals}</ul><div class="tr-market-actions"><button type="button" class="tr-button is-primary" data-open-trade-offers>Review offers</button></div></section>` : ""}
+        <section class="trade-market-section">${frontOfficeReadMarkup(partnerRead, "Your assistant GM's read")}</section>
+      </div>
     </div>`;
   body.querySelector("[data-open-trade-offers]")?.addEventListener("click", () => openTradeOffersModal().catch(error => showToast(error.message || String(error), true)));
   body.querySelectorAll("[data-sort-table]").forEach(button => button.addEventListener("click", () => {
@@ -8629,7 +8639,7 @@ function renderTradeFinder(root) {
           <header class="tr-side-head"><span class="tr-side-team">${teamLogoSrc(finderTeam) ? `<img src="${escapeAttr(teamLogoSrc(finderTeam))}" alt="" />` : ""}<strong>${targetMode ? `Get from ${escapeHtml(finderTeam)}` : `Shop to ${escapeHtml(scopeName)}`}</strong></span><span class="trade-selection-count">${selection.length} of 2</span></header>
           <ul class="tr-tiles" data-trade-scroll="selected-${escapeAttr(side)}">${selection.length ? selection.map(asset => tradeDealTile(asset, {removeSide: side, fresh: fresh === `${side}:${asset.kind}:${asset.id}`})).join("") : `<li class="tr-tiles-empty"><span>Choose up to two assets from the list</span></li>`}</ul>
           <div class="trade-finder-cap"><header>${escapeHtml(userTeam())} salary ${targetMode ? "added" : "cleared"}</header>${tradeCapDeltaChart(capRows)}</div>
-          ${tradePickTermsMarkup()}
+          ${selection.some(asset => asset.kind !== "player") || (state.tradePickRules || []).length ? tradePickTermsMarkup() : ""}
           <div class="trade-finder-actions"><button id="clearTradeMarket" type="button" class="tr-text-button" ${selection.length || state.tradeResults.length ? "" : "disabled"}>Clear</button><button id="runTrade" type="button" class="tr-button is-primary" ${selection.length && !tradePickRuleErrors().length ? "" : "disabled"}>Find trades</button></div>
         </section>
         <section class="trade-finder-results tr-finder-results">
@@ -15569,7 +15579,9 @@ function tradeCandidateInsights(candidate, key) {
 function tradePickText(asset) {
   const label = String(asset.label || asset.name || asset.id || "Draft pick");
   const known = asset.season && asset.round && asset.original_team_abbrev;
-  const short = known ? `${asset.season} R${asset.round} ${asset.original_team_abbrev}` : label.split(";")[0].trim();
+  const swapTeams = (asset.original_team_abbrevs || []).filter(Boolean);
+  const short = asset.kind === "pick_swap" && asset.season && asset.round ? `${asset.season} R${asset.round} swap${swapTeams.length ? ` ${swapTeams.join("/")}` : ""}`
+    : known ? `${asset.season} R${asset.round} ${asset.original_team_abbrev}` : label.split(/[;:]/)[0].trim();
   const protection = String(asset.protection_summary || "").trim();
   const condition = String(asset.condition_summary || "").trim();
   const plainProtection = protection && !/^unprotected[.\s]*$/i.test(protection) && !short.toLowerCase().includes(protection.toLowerCase()) ? protection : "";
@@ -15598,13 +15610,13 @@ function tradeDealTile(asset, {removeSide = "", routeFrom = "", fresh = false} =
   const valueCell = `<span class="tr-tile-value" title="Listed trade value">${value === null ? "—" : value.toFixed(1)}</span>`;
   if (asset.kind !== "player") {
     const pick = tradePickText(asset);
-    return `<li class="tr-tile is-pick${fresh ? " is-new" : ""}"${pick.full ? ` title="${escapeAttr(pick.full)}"` : ""}><span class="tr-tile-face">${typeof draftAssetGlyph === "function" ? draftAssetGlyph(asset, true, true) : ""}</span><span class="tr-tile-main"><strong class="tr-tile-name">${escapeHtml(pick.short)}</strong><span class="tr-tile-sub">${asset.kind === "pick_swap" ? "Swap right" : "Draft pick"}${pick.note ? ` · ${escapeHtml(pick.note)}` : ""}</span></span><span class="tr-tile-ovr"></span><span class="tr-tile-contract"></span>${valueCell}${route}${remove}</li>`;
+    return `<li class="tr-tile is-pick${fresh ? " is-new" : ""}"${pick.full ? ` title="${escapeAttr(pick.full)}"` : ""}><span class="tr-tile-face">${typeof draftAssetGlyph === "function" ? draftAssetGlyph(asset, true, true) : ""}</span><span class="tr-tile-main"><strong class="tr-tile-name">${escapeHtml(pick.short)}</strong><span class="tr-tile-sub">${route}${asset.kind === "pick_swap" ? "Swap right" : "Draft pick"}${pick.note ? ` · ${escapeHtml(pick.note)}` : ""}</span></span><span class="tr-tile-ovr"></span><span class="tr-tile-contract"></span>${valueCell}${remove}</li>`;
   }
   const overall = tradeKnownNumber(asset.overall ?? asset.ratings?.overall);
   const roles = typeof playerRoleChip === "function" && (asset.primary_off_role || asset.primary_def_role) ? `<span class="tr-role-pair">${playerRoleChip(asset.primary_off_role)}${playerRoleChip(asset.primary_def_role)}</span>` : "";
   const sub = [asset.position, asset.age != null ? `${asset.age}` : ""].filter(Boolean).map(escapeHtml).join(" · ");
   const contract = Object.keys(asset.salary_by_year || {}).length || asset.contract_terms?.length || asset.contract ? tradeAssetContract(asset) : "—";
-  return `<li class="tr-tile${fresh ? " is-new" : ""}"><span class="tr-tile-face">${playerHeadshotMarkup(asset, "trade-player-headshot") || ""}</span><span class="tr-tile-main"><span class="tr-tile-top"><button type="button" class="trade-player-link tr-tile-name" data-dashboard-player-card="${escapeAttr(id)}">${playerNameWithInjuryMarkup(asset, name)}</button>${sub ? `<span class="tr-tile-meta">${sub}</span>` : ""}</span>${roles ? `<span class="tr-tile-sub">${roles}</span>` : ""}</span><span class="tr-tile-ovr" title="Overall rating">${overall === null ? "—" : `<b style="color:${tradeRatingColor(overall)}">${overall.toFixed(1)}</b>`}</span><span class="tr-tile-contract">${contract}</span>${valueCell}${route}${remove}</li>`;
+  return `<li class="tr-tile${fresh ? " is-new" : ""}"><span class="tr-tile-face">${playerHeadshotMarkup(asset, "trade-player-headshot") || ""}</span><span class="tr-tile-main"><span class="tr-tile-top"><button type="button" class="trade-player-link tr-tile-name" data-dashboard-player-card="${escapeAttr(id)}">${playerNameWithInjuryMarkup(asset, name)}</button>${sub ? `<span class="tr-tile-meta">${sub}</span>` : ""}</span>${roles || route ? `<span class="tr-tile-sub">${route}${roles}</span>` : ""}</span><span class="tr-tile-ovr" title="Overall rating">${overall === null ? "—" : `<b style="color:${tradeRatingColor(overall)}">${overall.toFixed(1)}</b>`}</span><span class="tr-tile-contract">${contract}</span>${valueCell}${remove}</li>`;
 }
 
 function incomingOfferAsset(asset) {
@@ -15717,11 +15729,10 @@ function tradeEvaluationPanel(row) {
   return `
     <div class="trade-evaluation-panel ${outcomeClass}">
       <header><strong>${escapeHtml(row.team_abbrev || teamLabel(row.perspective_team_id))}</strong><span>${outcome}</span></header>
-      ${margin === null ? "" : `<div class="trade-evaluation-score" title="Net benefit minus required benefit. A positive margin passes the value test; core, premium-return, roster and legality safeguards can still block a trade. Not an acceptance probability."><span>Value margin</span><strong>${signed(margin)} ${margin >= 0 ? 'above' : 'below'} line</strong></div><div class="trade-evaluation-meter"><i style="width:${score.toFixed(1)}%"></i></div>`}
+      ${margin === null ? "" : `<div class="trade-evaluation-score" title="Net benefit minus required benefit. A positive margin passes the value test; core, premium-return, roster and legality safeguards can still block a trade. Not an acceptance probability."><span>Value margin</span><strong>${signed(margin)} ${margin >= 0 ? 'above' : 'below'} line</strong></div><div class="trade-evaluation-meter tr-margin-meter" aria-hidden="true"><i class="${margin >= 0 ? "is-above" : "is-below"}" style="left:${Math.min(50, score).toFixed(1)}%;width:${Math.abs(score - 50).toFixed(1)}%"></i><b></b></div>`}
       ${details.length ? `<dl class="trade-evaluation-details">${details.map(([label, value]) => `<div><dt>${label}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>` : ""}
-      ${notes && !noteHasBreakdown ? `<p>${escapeHtml(notes)}</p>` : ""}
       ${(row.decision_reasons || []).length ? `<ul class="trade-decision-reasons">${row.decision_reasons.map(reason=>`<li>${escapeHtml(reason)}</li>`).join('')}</ul>` : ''}
-      <details class="trade-value-help"><summary>Why this decision?</summary><p>Receives − sends + strategy and roster plan + manager lean = net benefit. The required benefit is specific to this deal. Meeting it is necessary for ordinary approval, but does not override core commitments, premium-player returns, roster planning or trade rules.${decision === 'accept_bounded_ai_discretion' ? ' This GM accepted a limited value loss through bounded negotiation discretion.' : ''}</p>${notes && noteHasBreakdown ? `<p>${escapeHtml(notes)}</p>` : ''}</details>
+      <details class="trade-value-help"><summary>Why this decision?</summary><p>Receives − sends + strategy and roster plan + manager lean = net benefit. The required benefit is specific to this deal. Meeting it is necessary for ordinary approval, but does not override core commitments, premium-player returns, roster planning or trade rules.${decision === 'accept_bounded_ai_discretion' ? ' This GM accepted a limited value loss through bounded negotiation discretion.' : ''}</p>${notes ? `<p>${escapeHtml(notes)}</p>` : ''}</details>
     </div>`;
 }
 
