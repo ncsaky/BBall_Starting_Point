@@ -1329,15 +1329,19 @@ class DataFoundationTests(unittest.TestCase):
                 item for item in save.get("free_agent_player_ids", []) if item not in set(injected)
             ]
             refresh_roster_cutdowns(self.plain, save)
-            player_id = next(
-                item for item in injected if save["roster_overrides"].get(item) is None
-            )
-            # Board T3: cuts go through waivers. Let the first waiver clear, then give BOS a genuinely over-full roster again
-            # (the cleared player returns) so the second cut of the same player on the same day must upsert, not duplicate.
+            cut_ids = [item for item in injected if save["roster_overrides"].get(item) is None]
+            self.assertTrue(cut_ids)
+            # Board T3: cuts go through waivers. Run every pending waiver and take a cut player nobody claimed
+            # (AI teams claim the ones they want, which depends on the current ratings, so the fixture must not
+            # assume a particular player clears). Then give BOS a genuinely over-full roster again (the cleared
+            # player returns) so the second cut of the same player on the same day must upsert, not duplicate.
             from nba_gm_data.waivers import process_waivers
-            first = next(row for row in save["waiver_wire"] if row["player_id"] == player_id)
-            process_waivers(self.plain, save, first["clearance_date"])
-            self.assertEqual(first["status"], "cleared")
+            pending = [row for row in save["waiver_wire"] if row["player_id"] in cut_ids and row["status"] == "pending"]
+            process_waivers(self.plain, save, max(row["clearance_date"] for row in pending))
+            cleared = [row for row in pending if row["status"] == "cleared"]
+            self.assertTrue(cleared, "no cut player cleared waivers; the fixture needs at least one unclaimed player")
+            first = cleared[0]
+            player_id = first["player_id"]
             save["roster_overrides"][player_id] = team_id
             save["free_agent_player_ids"] = [
                 item for item in save.get("free_agent_player_ids", []) if item != player_id
@@ -3023,20 +3027,26 @@ class DataFoundationTests(unittest.TestCase):
                 current = state["draft"]["pending_draft_selections"][index]
                 candidate = best_ai_draft_trade_candidate(active, save, state, current, save["meta"]["user_team_id"], seed=77)
                 if candidate:
-                    found.append(candidate)
-            for candidate in found:
+                    found.append((index + 1, candidate))
+            self.assertTrue(found)
+            for overall_pick, candidate in found:
                 self.assertEqual(candidate["legality"]["status"], "legal")
                 self.assertTrue(candidate["accepted_by_all"])
                 self.assertTrue(all(evaluation.get("accepted") for evaluation in candidate["evaluations"]))
                 self.assertTrue(candidate.get("trade_reasons", {}).get("text"))
                 to_assets = (candidate["proposal"] or {}).get("to_assets") or []
-                self.assertTrue(
-                    any(
-                        asset.get("kind") == "pick"
-                        and int((next((pick for pick in active["draft_picks"] if pick["id"] == (asset.get("id") or asset.get("value"))), {}) or {}).get("round") or 0) == 1
-                        for asset in to_assets
+                self.assertTrue(to_assets and all(asset.get("kind") == "pick" for asset in to_assets))
+                if overall_pick <= 20:
+                    # Before pick 21 a buyer pays with a first-round pick (its lower first or a future first).
+                    self.assertTrue(
+                        any(
+                            asset.get("kind") == "pick"
+                            and int((next((pick for pick in active["draft_picks"] if pick["id"] == (asset.get("id") or asset.get("value"))), {}) or {}).get("round") or 0) == 1
+                            for asset in to_assets
+                        )
                     )
-                )
+                # From pick 21 a team may also move up with its early second (real 2026: #35 to #26, #34 to #29;
+                # draft_trade_lower_pick_for_buyer), so the late-first deals may be paid in second-round picks.
 
     def test_future_draft_pick_recommendations_use_generated_class(self):
         future_pick = next(
