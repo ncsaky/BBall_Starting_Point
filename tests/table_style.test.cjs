@@ -34,3 +34,11 @@ test('every slideshow table header sorts on click, and split halves sort as one 
   assert.match(js, /class="ss-two ss-compact" data-ss-split/);
   assert.match(js, /closest\("\[data-ss-split\]"\)/);
 });
+
+test('tables without their own sorting get click-to-sort; year-by-year ledgers do not', () => {
+  const js = read('interface.js');
+  assert.match(js, /function enhanceAutoSort\(scope\)/);
+  assert.match(js, /enhance\(scope = document\) \{\n    enhanceAutoSort\(scope\);/);
+  assert.match(js, /AUTO_SORT_SKIP = '\.ss-table, \.fa-cap-table, \.trade-ledger/);
+  assert.match(js, /\^\(year\|season\)\$/);
+});

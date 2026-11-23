@@ -62,3 +62,7 @@ body.unified-terminal-ui [data-house-table] .house-sort {
   color: var(--table-head-text) !important;
   font-size: var(--table-head-size) !important;
 }
+
+/* Clickable sort headers. */
+body.unified-terminal-ui table thead th:is([data-ss-sort], .auto-sort-head) { cursor: pointer; user-select: none; }
+body.unified-terminal-ui table thead th:is([data-ss-sort], .auto-sort-head):hover { text-decoration: underline; text-underline-offset: 2px; }

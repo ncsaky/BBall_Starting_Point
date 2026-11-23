@@ -304,7 +304,61 @@ const GameInterface = (() => {
     syncSortedTable(table);
   }
 
+  // Every table with a header row sorts on a header click (again to flip), unless it already has its own sorting or
+  // is a year-by-year ledger (user playtest 2026-11-22). Ranks, names and positions start smallest-first; other
+  // columns biggest-first. Rows that span the table (DNP lines) and blank cells stay at the bottom.
+  const AUTO_SORT_SKIP = '.ss-table, .fa-cap-table, .trade-ledger, [data-no-sort], [data-local-sort], .free-agency-roster-table';
+  const AUTO_SORT_ASCENDING = /^(#|rk|rank|seed|pick|team|player|name|prospect|pos|position|from|year|season|date|body part|opp|opponent|why|note|decision|option|who decides)\.?$/i;
+  function autoSortValue(cell) {
+    const text = (cell?.textContent || '').trim();
+    if (!text || /^(—|-|–)$/.test(text)) return null;
+    const record = text.match(/^(\d+)-(\d+)$/);
+    if (record) return Number(record[1]) / Math.max(1, Number(record[1]) + Number(record[2]));
+    const arrow = text.match(/^([▲▼↑↓+−-])\s*([\d.]+)/);
+    if (arrow) return (/[▼↓−-]/.test(arrow[1]) ? -1 : 1) * Number(arrow[2]);
+    const plain = text.replace(/[$,%M]/g, '').replace('−', '-').replace(/\.$/, '');
+    if (/^-?[\d.]+$/.test(plain)) return Number(plain);
+    return text.toLowerCase();
+  }
+  function sortAutoTable(th) {
+    const table = th.closest('table'); const body = table.tBodies[0]; if (!body) return;
+    const heads = [...th.parentElement.children]; const index = heads.indexOf(th);
+    const current = th.getAttribute('aria-sort');
+    const asc = current ? current !== 'ascending' : AUTO_SORT_ASCENDING.test(th.textContent.trim());
+    heads.forEach(el => el.removeAttribute('aria-sort'));
+    th.setAttribute('aria-sort', asc ? 'ascending' : 'descending');
+    const rows = [...body.rows];
+    const full = rows.filter(row => row.cells.length === heads.length);
+    const rest = rows.filter(row => row.cells.length !== heads.length);
+    full.sort((a, b) => {
+      const av = autoSortValue(a.cells[index]); const bv = autoSortValue(b.cells[index]);
+      if (av === null || bv === null) return av === bv ? 0 : (av === null ? 1 : -1);
+      const order = typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av).localeCompare(String(bv), undefined, {numeric: true});
+      return asc ? order : -order;
+    });
+    body.append(...full, ...rest);
+    syncSortedTable(table);
+  }
+  function enhanceAutoSort(scope) {
+    const tables = [...(scope.matches?.('table') ? [scope] : []), ...scope.querySelectorAll('table')];
+    tables.forEach(table => {
+      if (table.dataset.autoSort || table.matches(AUTO_SORT_SKIP)) return;
+      const heads = [...(table.tHead?.rows[0]?.cells || [])];
+      if (!heads.length || table.tHead.querySelector('button, [data-ss-sort], [aria-sort]')) return;
+      if (/^(year|season)$/i.test(heads[0].textContent.trim()) || (table.tBodies[0]?.rows.length || 0) < 3) return;
+      table.dataset.autoSort = '1';
+      heads.forEach(th => {
+        const name = th.textContent.trim();
+        if (!name || /^actions?$/i.test(name) || th.querySelector('.sr-only')) return;
+        th.tabIndex = 0; th.classList.add('auto-sort-head'); if (!th.title) th.title = `Sort by ${name}`;
+        th.addEventListener('click', () => sortAutoTable(th));
+        th.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); sortAutoTable(th); } });
+      });
+    });
+  }
+
   function enhance(scope = document) {
+    enhanceAutoSort(scope);
     scope.querySelectorAll('table[data-local-sort], .free-agency-roster-table').forEach(table => {
       table.querySelectorAll('thead th').forEach(th => {
         if (th.querySelector('button') || !th.textContent.trim()) return;

@@ -23,7 +23,10 @@ Game runs from the browser pane: launch entry `game` (port 8766, normal `saves/`
   darker. Header text bold, one size and colour, no capitals. Values in the sorted column bold.
 - **Sortable headers (done 2026-11-22).** Every season slideshow table (preseason outlook, year-end recap) sorts
   by any header on click; click again to flip. Power rankings' two halves sort as one list of 30. The user expects
-  this everywhere. Other tables that still can't sort need a sweep.
+  this everywhere. Sweep done: any table without its own sorting now sorts on a header click (`interface.js`
+  `enhanceAutoSort`): box score, conference standings, offseason and option decisions, roster cut-down, draft
+  results, injury history, recent games. Year-by-year payroll and trade ledgers are left alone; Actions columns
+  aren't clickable.
 - **Slideshow text (done 2026-11-22).** The user wants less text: let graphics speak. Removed the "01 · kicker"
   line on every slide; each slide's footnote now sits right under the title as subtext. Power rankings subtext:
   "Change compares with each team's 2025-26 record finish." Card corners match the board windows (3px top).
