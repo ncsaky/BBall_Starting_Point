@@ -16,7 +16,7 @@ test('an offer follow-up renders one actionable package with its repeat count', 
     legality:{status:'legal'}, repeat_count:3, repeat_dates:['2026-12-01','2026-12-03']},0);
   assert.match(html,/incoming-offer--repeated/);
   assert.match(html,/Sent 3×/);
-  assert.match(html,/latest 2026-12-03/);
+  assert.match(html,/latest (2026-12-03|Dec 3)/); // dates read "Dec 3" when the game's date helper is loaded
   assert.equal((html.match(/data-offer-accept=/g)||[]).length,1);
 });
 

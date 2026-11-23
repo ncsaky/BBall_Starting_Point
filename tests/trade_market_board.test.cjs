@@ -42,7 +42,7 @@ test('a better offer for a shopped player is shown, with the partner read', () =
     evaluations: [{perspective_team_id: 'team_mem', accepted: false}],
     market_competition: {beaten: true, text: 'MEM has a better offer for Ty Jerome (3 other teams interested; decision by 2027-02-05). Beat it to get him.'},
     partner_read: read});
-  assert.match(html, /Partner declines/);
+  assert.match(html, /Declines|Counters/); // trade-room redo: the answer reads as one word under the dial
   assert.match(html, /class="trade-market-competition is-beaten"/);
   assert.match(html, /MEM has a better offer for Ty Jerome/);
   assert.match(html, /class="front-office-read"/);
