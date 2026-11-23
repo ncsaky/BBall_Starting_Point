@@ -43,6 +43,10 @@ Game runs from the browser pane: launch entry `game` (port 8766, normal `saves/`
   "Back to Preseason Outlook" button returns to the same slide. The move arrow is drawn, so it centres on the logos.
   Tables shown together now line up exactly (fixed column widths, one row height): leaders grid (Player | Team |
   stat), power rankings' halves (notes clamp to two lines, full text on hover), standings, recap leaders.
+  Your team slide (was "Your team at a glance"): title is the team name, no subtext. Full-width rotation table
+  sorted by overall: headshot + name, Pos, Age, OVR, OFF, DEF, MIN, last season's PTS/REB/AST, Salary, Years.
+  Headshots use the game's look (greyscale, a little contrast, crisp pixels, no grey box), flush left, and each row
+  ends at the headshot's base. "Overall rank N of 30" became an "Overall 1st" chip beside strengths and weaknesses.
 - **Power-ranking notes (done 2026-11-22).** Rookies at rotation level (value 56.5+) are always named
   ("drafted Cameron Boozer"). Chosen by rating, not draft slot.
 - **Tables, still open:** the user wants consistent row height and header centering across all tables. Not done

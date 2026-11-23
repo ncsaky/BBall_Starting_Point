@@ -236,16 +236,31 @@
     your_team(slide) {
       const cap = slide.cap || {};
       const payout = slide.tax_payout;
-      return `<div class="ss-split"><section>${table([
-          {label: "Player", render: (p) => playerCell(p, esc(`${p.position || ""} · ${num(p.overall)}`)), cls: "ss-player-col"},
-          {label: "Minutes", render: (p) => p.minutes, cls: "ss-num"},
-        ], slide.rotation || [], {sorted: 1, caption: "Projected rotation"})}</section>
-        <section><h4>Team Signals: overall rank ${esc(slide.overall_rank ?? "—")} of 30</h4>
+      const value = (v, digits = 1) => (v === null || v === undefined ? "—" : num(v, digits));
+      const roster = table([
+        {label: "Player", render: (p) => `<span class="ss-player">${headshot(p)}${name({...p, player_id: p.id})}</span>`, cls: "ss-player-col"},
+        {label: "Pos", render: (p) => esc(p.position || "—"), width: "52px"},
+        {label: "Age", render: (p) => value(p.age, 0), cls: "ss-num", width: "48px"},
+        {label: "OVR", render: (p) => value(p.overall), cls: "ss-num", width: "58px"},
+        {label: "OFF", render: (p) => value(p.offense), cls: "ss-num", width: "58px"},
+        {label: "DEF", render: (p) => value(p.defense), cls: "ss-num", width: "58px"},
+        {label: "MIN", render: (p) => p.minutes, cls: "ss-num", width: "52px"},
+        {label: "PTS", render: (p) => value(p.points), cls: "ss-num", width: "52px"},
+        {label: "REB", render: (p) => value(p.rebounds), cls: "ss-num", width: "52px"},
+        {label: "AST", render: (p) => value(p.assists), cls: "ss-num", width: "52px"},
+        {label: "Salary", render: (p) => (p.salary_millions ? money(p.salary_millions) : "—"), cls: "ss-num", width: "72px"},
+        {label: "Years", render: (p) => p.years_left ?? "—", cls: "ss-num", width: "52px"},
+      ], slide.rotation || [], {sorted: 3});
+      const ordinal = (n) => { const v = Number(n); const s = ["th", "st", "nd", "rd"], m = v % 100; return v + (s[(m - 20) % 10] || s[m] || s[0]); };
+      return `<section class="ss-roster">${roster}</section>
+        <div class="ss-split ss-team-facts"><section>
+          <div class="ss-chips"><span class="ss-chip-head">Overall</span><span class="ss-chip">${slide.overall_rank ? ordinal(slide.overall_rank) : "—"}</span></div>
           <div class="ss-chips"><span class="ss-chip-head">Strengths</span>${(slide.strengths || []).map((s) => `<span class="ss-chip ss-good">${esc(s.label)} · ${s.rank}</span>`).join("")}</div>
           <div class="ss-chips"><span class="ss-chip-head">Weaknesses</span>${(slide.weaknesses || []).map((s) => `<span class="ss-chip ss-bad">${esc(s.label)} · ${s.rank}</span>`).join("")}</div>
+        </section><section>
           <dl class="ss-dl"><dt>Payroll</dt><dd>${money(cap.payroll_millions)}</dd><dt>Tax line</dt><dd>${money(cap.tax_line_millions)}</dd><dt>Room under the tax</dt><dd>${money(cap.tax_space_millions)}</dd><dt>Hard cap room</dt><dd>${money(cap.hard_cap_space_millions)}</dd>
           <dt>Tax payout share</dt><dd>${payout ? (payout.payout_millions > 0 ? `${money(payout.payout_millions)} (${esc(payout.season)}, paid ${esc(payout.paid_on)})` : payout.tax_bill_millions > 0 ? `None: paid ${money(payout.tax_bill_millions)} in tax (${esc(payout.season)})` : `None for ${esc(payout.season)}`) : "No payout recorded yet"}</dd></dl>
-          </section></div>`;
+        </section></div>`;
     },
     contracts(slide) {
       return `<div class="ss-two">${table([

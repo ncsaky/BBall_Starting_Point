@@ -102,8 +102,9 @@
 .ss-player { display: inline-flex; align-items: flex-end; gap: 8px; min-height: 40px; }
 .ss-player > span:last-child { display: flex; flex-direction: column; padding-bottom: 3px; }
 .ss-player small, .ss-allnba small { color: #52616e; font-size: 11px; }
-.ss-headshot { display: inline-flex; align-items: flex-end; width: 52px; height: 40px; overflow: hidden; flex: none; background: #dfe5ea; }
-.ss-headshot img { width: 100%; height: 100%; object-fit: cover; object-position: bottom; display: block; }
+/* Headshots match the rest of the game: no backdrop, greyscale with a little contrast, crisp pixels, feet on the row. */
+.ss-headshot { display: inline-flex; align-items: flex-end; width: 52px; height: 40px; overflow: hidden; flex: none; background: transparent; }
+.ss-headshot img { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; display: block; filter: grayscale(1) contrast(1.12); image-rendering: pixelated; }
 .ss-headshot-empty { background: linear-gradient(#e4e8eb, #c9d2d9); }
 
 /* Tables: house style */
@@ -263,3 +264,12 @@ body.unified-terminal-ui .ss-return:hover { background: #2b3a48 !important; }
 .ss-table.ss-fixed tbody tr { height: 30px; }
 .ss-compact .ss-table.ss-fixed tbody tr { height: 32px; }
 .ss-table.ss-fixed td small.ss-clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; overflow: hidden; line-height: 1.25; }
+
+/* Your team: the rotation table runs full width; headshots sit flush left and the row ends at the headshot's base. */
+.ss-roster .ss-table.ss-fixed tbody tr { height: 44px; }
+.ss-roster .ss-table td.ss-player-col { padding: 0 6px 0 0; vertical-align: bottom; }
+.ss-roster .ss-table th:first-child { padding-left: 6px; }
+.ss-roster .ss-player { display: flex; min-height: 0; align-items: flex-end; height: 44px; }
+.ss-roster .ss-player > :last-child { align-self: center; padding: 0; }
+.ss-roster .ss-headshot { width: 58px; height: 44px; }
+.ss-team-facts { margin-top: 14px; }

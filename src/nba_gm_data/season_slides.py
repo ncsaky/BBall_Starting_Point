@@ -840,7 +840,7 @@ def build_preseason_outlook(canonical: dict[str, Any], save: dict[str, Any], sav
         _safe(lambda: outlook_power_slide(ctx), "power", "Power rankings"),
         _safe(lambda: outlook_continuity_slide(ctx), "continuity", "Continuity"),
         _safe(lambda: outlook_leaders_slide(ctx), "leaders_revisited", "Last season's leaders"),
-        _safe(lambda: outlook_your_team_slide(ctx), "your_team", "Your team at a glance"),
+        _safe(lambda: outlook_your_team_slide(ctx), "your_team", "Your team"),
         _safe(lambda: outlook_contracts_slide(ctx), "contracts", "Contracts to watch"),
         _safe(lambda: outlook_prospects_slide(ctx), "prospects", "Prospect watch"),
         _safe(lambda: outlook_storylines_slide(ctx), "storylines", "Storylines"),
@@ -1031,10 +1031,34 @@ def outlook_leaders_slide(ctx: dict[str, Any]) -> dict[str, Any]:
 def outlook_your_team_slide(ctx: dict[str, Any]) -> dict[str, Any]:
     from .save import team_cap_summary, team_identity_report, team_rotation_projection
 
+    from .save import contract_last_season, contract_salary_for_season, player_display_attribute_summary
+
     active, save, user, teams = ctx["active"], ctx["save"], ctx["user"], ctx["teams"]
     projection = team_rotation_projection(active, save, user, integer=True)
-    rotation = [{**_player_ref(active, pid), "minutes": round(float(minutes))}
+    contracts = {row.get("player_id"): row for row in active.get("contracts", [])}
+    season_start = _season_years(ctx["season"])[0] if ctx["season"] else None
+    last_totals = ctx["last"]["totals"]
+
+    def rotation_row(pid: str, minutes: float) -> dict[str, Any]:
+        # One row per rotation player: ratings, the coach's minutes, last season's line and the contract (playtest
+        # 2026-11-22: fields instead of subtext, sorted by overall).
+        ratings = player_display_attribute_summary(active, pid)
+        line = last_totals.get(pid) or {}
+        games = int(line.get("games") or 0)
+        contract = contracts.get(pid)
+        end = contract_last_season(contract) if contract else None
+        years = (_season_years(end)[0] - season_start + 1) if end and season_start else None
+        salary = contract_salary_for_season(contract, ctx["season"]) if contract else None
+        return {**_player_ref(active, pid), "minutes": round(float(minutes)),
+                "offense": ratings.get("offense"), "defense": ratings.get("defense"),
+                "points": round(float(line.get("points") or 0) / games, 1) if games else None,
+                "rebounds": round(float(line.get("rebounds") or 0) / games, 1) if games else None,
+                "assists": round(float(line.get("assists") or 0) / games, 1) if games else None,
+                "salary_millions": round(float(salary) / 1e6, 1) if salary else None, "years_left": years}
+
+    rotation = [rotation_row(pid, minutes)
                 for pid, minutes in sorted(projection.items(), key=lambda item: (-float(item[1]), item[0])) if float(minutes) > 0][:10]
+    rotation.sort(key=lambda row: (-float(row.get("overall") or 0), row["name"]))
     identity = team_identity_report(active, save).get(user) or {}
     labels = {"offense": "Offense", "defense": "Defense", "spacing": "Spacing", "creation": "Shot creation",
               "rim_pressure": "Rim pressure", "rebounding": "Rebounding", "athleticism": "Athleticism",
@@ -1042,15 +1066,14 @@ def outlook_your_team_slide(ctx: dict[str, Any]) -> dict[str, Any]:
     ranked = sorted(((labels[key], rank) for key, rank in (identity.get("ranks") or {}).items() if key in labels), key=lambda item: item[1])
     cap = team_cap_summary(active, save, user, ctx["season"])
     payout = cap.get("tax_payout") or {}
-    return {"key": "your_team", "title": "Your team at a glance", "kicker": _team_ref(teams, user)["name"],
+    return {"key": "your_team", "title": _team_ref(teams, user)["name"], "kicker": "Your team",
             "rotation": rotation, "overall_rank": (identity.get("ranks") or {}).get("overall"),
             "strengths": [{"label": label, "rank": rank} for label, rank in ranked[:3]],
             "weaknesses": [{"label": label, "rank": rank} for label, rank in ranked[-3:][::-1]],
             "cap": {"payroll_millions": cap.get("salary_total_millions"), "tax_line_millions": cap.get("tax_line_millions"),
                     "tax_space_millions": cap.get("tax_space_millions"), "hard_cap_millions": cap.get("hard_cap_millions"),
                     "hard_cap_space_millions": cap.get("hard_cap_space_millions")},
-            "tax_payout": payout or None,
-            "note": "Minutes are the coach's current plan; strengths and weaknesses are your league ranks in Team Signals."}
+            "tax_payout": payout or None, "note": None}
 
 
 def outlook_contracts_slide(ctx: dict[str, Any]) -> dict[str, Any]:
