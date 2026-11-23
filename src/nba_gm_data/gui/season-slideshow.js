@@ -106,14 +106,14 @@
         {label: "Seed", render: (r) => r.playoff_seed || "—", cls: "ss-num"},
         {label: "Finish", render: (r) => esc(r.result_label)},
       ], slide.conferences?.[name] || [], {sorted: 0, caption: `${name}ern Conference`, rowClass: (r) => (r.is_user ? "ss-user" : "")});
-      return `<div class="ss-two">${conf("East")}${conf("West")}</div>${note(slide.note)}`;
+      return `<div class="ss-two">${conf("East")}${conf("West")}</div>`;
     },
     awards(slide) {
       const cards = (slide.awards || []).map((award) => `<section class="ss-award" title="${attr(award.criteria)}"><h4>${esc(award.label)}</h4>
         ${award.player ? `${playerCell(award.player, esc(`${award.team_abbrev || ""} · ${statLine(award.stat_line)}`))}${award.detail ? `<p class="ss-muted">${esc(award.detail)}</p>` : ""}` : `<p class="ss-muted">${esc(award.detail)}</p>`}
         <p class="ss-criteria">${esc(award.criteria)}</p></section>`).join("");
       const teams = (slide.all_nba || []).map((team) => `<div class="ss-allnba-row"><h5>${esc(team.label)}</h5><ul>${team.players.map((p) => `<li>${headshot(p)}<span><b>${esc(p.name)}</b><small>${esc(p.team_abbrev)}</small></span></li>`).join("")}</ul></div>`).join("");
-      return `<div class="ss-awards">${cards}</div><section class="ss-allnba" title="${attr(slide.all_nba_criteria)}">${teams}</section>${note(slide.note)}`;
+      return `<div class="ss-awards">${cards}</div><section class="ss-allnba" title="${attr(slide.all_nba_criteria)}">${teams}</section>`;
     },
     leaders(slide) {
       return `<div class="ss-grid">${(slide.categories || []).map((cat) => table([
@@ -121,7 +121,7 @@
         {label: "Player", render: (r) => `<b>${esc(r.name)}</b>`},
         {label: "Team", render: (r) => esc(r.team_abbrev || "—")},
         {label: "Per game", render: (r) => num(r.per_game), cls: "ss-num"},
-      ], cat.rows, {sorted: 3, caption: cat.label})).join("")}</div>${note(slide.note)}`;
+      ], cat.rows, {sorted: 3, caption: cat.label})).join("")}</div>`;
     },
     your_season(slide) {
       const mvp = slide.team_mvp;
@@ -135,14 +135,14 @@
       return `<div class="ss-stack">${slide.trades.map((trade) => `<section class="ss-trade"><header><span>${esc(trade.date)}</span><span class="ss-muted">Value exchanged ${num(trade.value_involved)} · value swing ${num(trade.value_swing)} · ranked by ${esc(trade.ranked_by)}</span></header>
         <div class="ss-trade-sides">${trade.sides.map((side) => `<div><div class="ss-side-head">${teamCell(side.team)}<small class="ss-muted">${side.phase ? `(${esc(side.phase)}) ` : ""}received:</small></div>
           <ul>${side.received.map((asset) => `<li>${esc(asset.label)}${asset.played_out ? `<small>After the trade: ${asset.played_out.games} G, ${num(asset.played_out.minutes)} min, ${num(asset.played_out.points)} pts, ${num(asset.played_out.rebounds)} reb, ${num(asset.played_out.assists)} ast</small>` : asset.kind === "player" ? `<small>Did not play for them after the trade.</small>` : ""}</li>`).join("") || "<li>—</li>"}</ul></div>`).join("")}</div>
-        ${trade.reasons ? `<p class="ss-reason">${esc(trade.reasons)}</p>` : ""}</section>`).join("")}</div>${note(slide.note)}`;
+        ${trade.reasons ? `<p class="ss-reason">${esc(trade.reasons)}</p>` : ""}</section>`).join("")}</div>`;
     },
     coaching(slide) {
       if (!(slide.changes || []).length) return `<p class="ss-empty">No coaching changes this season.</p>`;
       return `<div class="ss-stack">${slide.changes.map((change) => `<section class="ss-coach">${logo(change.team?.abbrev, "ss-logo-lg")}<div><h4>${esc(change.team?.name)} · ${esc(change.job)}</h4>
         <p>${change.out ? `Out: <b>${esc(change.out.name)}</b> (grade ${num(change.out.grade)})${change.out.reason ? ` — ${esc(change.out.reason)}` : ""}` : "Vacancy filled"}</p>
         <p>${change.in ? `In: <b>${esc(change.in.name)}</b> (grade ${num(change.in.grade)})` : "Not yet replaced"}</p>
-        ${change.in?.style ? `<p class="ss-muted">${esc(change.in.style)}</p>` : ""}<small class="ss-muted">${esc(change.date)}</small></div></section>`).join("")}</div>${note(slide.note)}`;
+        ${change.in?.style ? `<p class="ss-muted">${esc(change.in.style)}</p>` : ""}<small class="ss-muted">${esc(change.date)}</small></div></section>`).join("")}</div>`;
     },
     free_agents(slide) {
       return table([
@@ -151,7 +151,7 @@
         {label: "Rating", render: (p) => num(p.overall), cls: "ss-num"},
         {label: "Salary now", render: (p) => money(p.current_salary_millions), cls: "ss-num"},
         {label: "Market value / yr", render: (p) => money(p.market_value_millions), cls: "ss-num"},
-      ], slide.players || [], {sorted: 4}) + note(slide.note) + note("Each one's team can re-sign him in the exclusive window before free agency opens.");
+      ], slide.players || [], {sorted: 4}) + note("Each one's team can re-sign him in the exclusive window before free agency opens.");
     },
     look_ahead(slide) {
       const d = slide.draft || {};
@@ -178,7 +178,7 @@
       const rows = slide.rows || [];
       const half = Math.ceil(rows.length / 2);
       const options = {sorted: 2, rowClass: (r) => (r.is_user ? "ss-user" : "")};
-      return `<div class="ss-two ss-compact" data-ss-split>${table(columns, rows.slice(0, half), options)}${table(columns, rows.slice(half), options)}</div>${note(slide.note)}`;
+      return `<div class="ss-two ss-compact" data-ss-split>${table(columns, rows.slice(0, half), options)}${table(columns, rows.slice(half), options)}</div>`;
     },
     continuity(slide) {
       const names = (list, unit = "minutes") => list.map((item) => `${item.name} (${item[unit] ?? 0})`).join(", ");
@@ -204,7 +204,7 @@
         {label: "Expected role", render: (r) => `<small>${esc(r.now?.team ? r.now.status : "")}</small>`},
       ], cat.rows, {caption: `${cat.label} leaders`})).join("");
       const winners = (slide.award_winners || []).map((w) => `<li><b>${esc(w.label)}</b>: ${esc(w.name)} (${esc(w.then)}) ${w.now?.team ? `→ ${teamCell(w.now.team)} <small>${esc(w.now.status)}</small>` : `<small>${esc(w.now?.status)}</small>`}</li>`).join("");
-      return `<div class="ss-grid ss-grid-3">${cats}</div>${winners ? `<section class="ss-feature"><h4>Award winners</h4><ul class="ss-list">${winners}</ul></section>` : ""}${note(slide.note)}`;
+      return `<div class="ss-grid ss-grid-3">${cats}</div>${winners ? `<section class="ss-feature"><h4>Award winners</h4><ul class="ss-list">${winners}</ul></section>` : ""}`;
     },
     your_team(slide) {
       const cap = slide.cap || {};
@@ -218,7 +218,7 @@
           <div class="ss-chips"><span class="ss-chip-head">Weaknesses</span>${(slide.weaknesses || []).map((s) => `<span class="ss-chip ss-bad">${esc(s.label)} · ${s.rank}</span>`).join("")}</div>
           <dl class="ss-dl"><dt>Payroll</dt><dd>${money(cap.payroll_millions)}</dd><dt>Tax line</dt><dd>${money(cap.tax_line_millions)}</dd><dt>Room under the tax</dt><dd>${money(cap.tax_space_millions)}</dd><dt>Hard cap room</dt><dd>${money(cap.hard_cap_space_millions)}</dd>
           <dt>Tax payout share</dt><dd>${payout ? (payout.payout_millions > 0 ? `${money(payout.payout_millions)} (${esc(payout.season)}, paid ${esc(payout.paid_on)})` : payout.tax_bill_millions > 0 ? `None: paid ${money(payout.tax_bill_millions)} in tax (${esc(payout.season)})` : `None for ${esc(payout.season)}`) : "No payout recorded yet"}</dd></dl>
-          ${note(slide.note)}</section></div>`;
+          </section></div>`;
     },
     contracts(slide) {
       return `<div class="ss-two">${table([
@@ -242,15 +242,15 @@
         {label: "From", render: (p) => esc(p.school || "—")},
         {label: "Your scouts", render: (p) => (p.your_rank ? `#${p.your_rank}` : "—"), cls: "ss-num"},
         {label: "Scouted", render: (p) => (p.scouted_pct === null || p.scouted_pct === undefined ? "—" : `${num(p.scouted_pct, 0)}%`), cls: "ss-num"},
-      ], slide.prospects || [], {sorted: 0}) + (slide.projected_pick ? `<p class="ss-lead">Your pick projects around No. ${esc(slide.projected_pick)} on current strength.</p>` : "") + note(slide.note);
+      ], slide.prospects || [], {sorted: 0}) + (slide.projected_pick ? `<p class="ss-lead">Your pick projects around No. ${esc(slide.projected_pick)} on current strength.</p>` : "");
     },
     storylines(slide) {
       return `<div class="ss-stories">${(slide.items || []).map((item) => `<section class="ss-story"><h4>${esc(item.title)}</h4><p>${esc(item.text)}</p></section>`).join("") || `<p class="ss-empty">A quiet summer.</p>`}</div>`;
     },
     injuries(slide) {
-      if (!(slide.players || []).length) return `<p class="ss-empty">No rated player starts the season with an absence of more than 20 games.</p>${note(slide.note)}`;
+      if (!(slide.players || []).length) return `<p class="ss-empty">No rated player starts the season with an absence of more than 20 games.</p>`;
       return `<div class="ss-stories">${slide.players.map((p) => `<section class="ss-story ss-injury">${playerCell(p, esc(`${p.team?.abbrev || ""} · ${num(p.overall)} rating`))}
-        <p><b>${esc(capitalize(p.injury || "injury"))}</b>${p.part ? ` (${esc(p.part)})` : ""}</p><p>${p.whole_season ? "Expected to miss the whole season" : `Expected to miss about ${esc(p.games)} games`}${p.return_date ? `, back around ${esc(p.return_date)}` : ""}.</p></section>`).join("")}</div>${note(slide.note)}`;
+        <p><b>${esc(capitalize(p.injury || "injury"))}</b>${p.part ? ` (${esc(p.part)})` : ""}</p><p>${p.whole_season ? "Expected to miss the whole season" : `Expected to miss about ${esc(p.games)} games`}${p.return_date ? `, back around ${esc(p.return_date)}` : ""}.</p></section>`).join("")}</div>`;
     },
   };
 
@@ -273,8 +273,8 @@
       <article class="ss-card${reducedMotion() || !direction ? "" : direction > 0 ? " ss-enter-next" : " ss-enter-prev"}" role="dialog" aria-modal="true" aria-labelledby="ssTitle" tabindex="-1" data-slide="${attr(slide.key)}">
         <header class="game-tutorial-titlebar ss-titlebar"><span>${esc(KIND_LABEL[data.kind] || "SEASON")} · ${esc(data.season)}</span><span aria-label="Slide ${index + 1} of ${slides.length}">${counter}</span></header>
         <div class="ss-content" aria-live="polite">
-          <p class="game-tutorial-kicker">${String(index + 1).padStart(2, "0")} · ${esc(slide.kicker || data.title || "")}</p>
           <h2 id="ssTitle">${esc(slide.title || "")}</h2>
+          ${slide.note ? `<p class="ss-subtitle">${esc(slide.note)}</p>` : ""}
           <div class="ss-body">${slideBody(slide)}</div>
         </div>
         <footer class="game-tutorial-actions ss-actions">

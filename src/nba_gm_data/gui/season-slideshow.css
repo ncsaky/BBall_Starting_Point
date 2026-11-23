@@ -27,6 +27,7 @@
   height: min(800px, calc(100vh - 48px));
   background: var(--panel, #edf1f4);
   border: 1px solid #718294;
+  border-radius: 3px 3px 0 0;  /* same corners as the board windows */
   box-shadow: 1px 1px 0 #fff inset, -1px -1px 0 #a8b4bf inset, 0 14px 40px rgba(0, 0, 0, 0.45);
   color: var(--text, #1a222a);
 }
@@ -78,6 +79,9 @@
 .ss-stack { display: grid; gap: 12px; }
 .ss-scroll { max-height: 100%; overflow: auto; }
 .ss-muted { color: #52616e; }
+/* Each slide's explanation sits right under its title as subtext (playtest 2026-11-22: no kicker line). */
+.ss-content h2:has(+ .ss-subtitle) { margin-bottom: 3px; }
+.ss-subtitle { margin: 0 0 12px; color: #4a5a67; font-size: 12px; line-height: 1.4; }
 .ss-note, .ss-source { margin: 10px 0 0; color: #3e4d59; font-size: 12px; line-height: 1.4; }
 .ss-source { margin: 0 0 8px; font-weight: 650; }
 .ss-empty { color: #3e4d59; font-size: 15px; }
@@ -219,3 +223,5 @@
   .ss-enter-next, .ss-enter-prev { animation: none !important; }
   .season-slideshow * { scroll-behavior: auto !important; transition: none !important; }
 }
+
+.ss-card > .ss-titlebar { border-radius: 2px 2px 0 0; }

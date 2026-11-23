@@ -881,7 +881,7 @@ def outlook_power_slide(ctx: dict[str, Any]) -> dict[str, Any]:
                      "is_user": team_id == ctx["user"]})
     ctx["power_rows"] = rows
     return {"key": "power", "title": "Power rankings", "kicker": "Team Signals' overall strength",
-            "rows": rows, "note": f"Change compares with each team's {ctx['last']['season']} finish (league-wide record rank)."}
+            "rows": rows, "note": f"Change compares with each team's {ctx['last']['season']} record finish."}
 
 
 # A move's weight is how far the player's value sits above a fringe-rotation level, growing faster than linearly so
