@@ -1018,7 +1018,7 @@ def outlook_leaders_slide(ctx: dict[str, Any]) -> dict[str, Any]:
         ranked = sorted((row for row in rows if row.get(key) is not None), key=lambda row: (-row[key], str(row["name"])))
         if ranked and ranked[0][key]:
             categories.append({"stat": key, "label": label,
-                               "rows": [{"name": row["name"], "team_abbrev": row["team_abbrev"], "per_game": row[key],
+                               "rows": [{"player_id": row["player_id"], "name": row["name"], "team_abbrev": row["team_abbrev"], "per_game": row[key],
                                          "now": row["now"]} for row in ranked[:3]]})
     winners = [{"label": AWARD_LABELS.get(row.get("award"), row.get("award")), "name": row.get("player_name"),
                 "then": row.get("team_abbrev"), "now": now(row.get("player_id"))}

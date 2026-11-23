@@ -39,7 +39,8 @@ Game runs from the browser pane: launch entry `game` (port 8766, normal `saves/`
   qualifying player with all nine stats, sorted by that category (Back or Escape returns). Field-goal % isn't
   possible for the real 2025-26 season: the ESPN box scores have no field-goal attempts. Leaders (here and in the
   year-end recap) need 30 games, not the awards' 65. Category titles are bold and larger; View all is small grey
-  text, no box.
+  text, no box. Player names (here and in the recap's leaders) open the player card: the slideshow steps aside and a
+  "Back to Preseason Outlook" button returns to the same slide. The move arrow is drawn, so it centres on the logos.
 - **Power-ranking notes (done 2026-11-22).** Rookies at rotation level (value 56.5+) are always named
   ("drafted Cameron Boozer"). Chosen by rating, not draft slot.
 - **Tables, still open:** the user wants consistent row height and header centering across all tables. Not done

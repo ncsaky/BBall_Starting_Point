@@ -7,6 +7,7 @@
 
   const KIND_LABEL = {recap: "YEAR-END RECAP", outlook: "PRESEASON OUTLOOK"};
   const SKIP_LABEL = {recap: "Skip recap", outlook: "Skip outlook"};
+  const KIND_TITLE = {recap: "Year-End Recap", outlook: "Preseason Outlook"};
   const show = {open: false, data: null, index: 0, returnFocus: null, root: null, viewAll: null};
 
   const esc = (value) => (typeof escapeHtml === "function" ? escapeHtml(value) : String(value ?? "").replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c])));
@@ -79,6 +80,9 @@
     bodies.forEach((b, i) => { b.append(...rows.slice(start, start + sizes[i])); start += sizes[i]; });
   }
 
+  // A name opens that player's card (players who left the league have no card).
+  const name = (r) => (r.player_id && !String(r.player_id).startsWith("real:") && r.now?.status !== "No longer in the league"
+    ? `<button type="button" class="ss-player-link" data-ss-player="${attr(r.player_id)}">${esc(r.name)}</button>` : `<b>${esc(r.name)}</b>`);
   const teamCell = (team) => team ? `<span class="ss-team">${logo(team.abbrev)}<b>${esc(team.abbrev)}</b></span>` : "—";
   const playerCell = (player, extra = "") => `<span class="ss-player">${headshot(player)}<span><b>${esc(player?.name || "—")}</b>${extra ? `<small>${extra}</small>` : ""}</span></span>`;
   const note = (text) => text ? `<p class="ss-note">${esc(text)}</p>` : "";
@@ -118,7 +122,7 @@
     leaders(slide) {
       return `<div class="ss-grid">${(slide.categories || []).map((cat) => table([
         {label: "#", render: (r, i) => i + 1, cls: "ss-num"},
-        {label: "Player", render: (r) => `<b>${esc(r.name)}</b>`},
+        {label: "Player", render: name},
         {label: "Team", render: (r) => esc(r.team_abbrev || "—")},
         {label: "Per game", render: (r) => num(r.per_game), cls: "ss-num"},
       ], cat.rows, {sorted: 3, caption: cat.label})).join("")}</div>`;
@@ -198,7 +202,7 @@
       const where = (then, now) => {
         if (!now?.team) return `<span class="ss-muted">${esc(now?.status || "")}</span>`;
         if (!then || then === now.team.abbrev) return teamCell(now.team);
-        return `<span class="ss-team ss-move">${logo(then)}<span class="ss-arrow" aria-label="moved to">→</span>${logo(now.team.abbrev)}<b>${esc(now.team.abbrev)}</b></span>`;
+        return `<span class="ss-team ss-move">${logo(then)}<svg class="ss-arrow" role="img" aria-label="moved to" viewBox="0 0 14 10" width="14" height="10"><path d="M1 5h11M8 1.5 12 5 8 8.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>${logo(now.team.abbrev)}<b>${esc(now.team.abbrev)}</b></span>`;
       };
       const value = (v) => (v === null || v === undefined ? "—" : num(v));
       if (show.viewAll && (slide.players || []).length) {
@@ -207,7 +211,7 @@
                        ["fg3m", "3PM"], ["fg3_pct", "3P%"], ["ft_pct", "FT%"], ["minutes", "MIN"]];
         const key = show.viewAll;
         const columns = [
-          {label: "Player", render: (r) => `<b>${esc(r.name)}</b>`},
+          {label: "Player", render: name},
           {label: "Team", render: (r) => where(r.team_abbrev, r.now)},
           {label: "G", render: (r) => r.games, cls: "ss-num"},
           ...stats.map(([stat, label]) => ({label, render: (r) => value(r[stat]), cls: "ss-num"})),
@@ -218,7 +222,7 @@
           <div class="ss-viewall">${table(columns, ordered, {sorted})}</div>`;
       }
       const cats = (slide.categories || []).map((cat) => `<section class="ss-leader-cat"><header><h4>${esc(cat.label)}</h4>${(slide.players || []).length ? `<button type="button" class="ss-view-all" data-ss-view-all="${attr(cat.stat)}">View all</button>` : ""}</header>${table([
-        {label: "Player", render: (r) => `<b>${esc(r.name)}</b>`},
+        {label: "Player", render: name},
         {label: /_pct$/.test(cat.stat) ? "Pct" : "Per game", render: (r) => value(r.per_game), cls: "ss-num"},
         {label: "Team", render: (r) => where(r.team_abbrev, r.now)},
       ], cat.rows, {sorted: 1})}</section>`).join("");
@@ -318,9 +322,40 @@
     render(step);
   }
 
+  // Player cards live on the board behind the slideshow: step the slideshow aside, open the card, and offer a way
+  // back to the same slide (playtest 2026-11-22).
+  function openPlayer(playerId) {
+    if (!playerId || typeof dashboardPlayerCard !== "function") return;
+    show.suspended = true;
+    show.root.hidden = true;
+    document.getElementById("app")?.removeAttribute("inert");
+    document.body.classList.remove("season-slideshow-open");
+    let back = document.getElementById("ssReturn");
+    if (!back) {
+      back = document.createElement("button");
+      back.type = "button"; back.id = "ssReturn"; back.className = "ss-return";
+      back.addEventListener("click", resume);
+      document.body.appendChild(back);
+    }
+    back.textContent = `← Back to ${KIND_TITLE[show.data?.kind] || "slideshow"}`;
+    dashboardPlayerCard(playerId);
+  }
+
+  function resume() {
+    document.getElementById("ssReturn")?.remove();
+    if (!show.open || !show.suspended) return;
+    show.suspended = false;
+    show.root.hidden = false;
+    document.getElementById("app")?.setAttribute("inert", "");
+    document.body.classList.add("season-slideshow-open");
+    show.root.querySelector(".ss-card")?.focus({preventScroll: true});
+  }
+
   function close() {
     if (!show.open) return;
     show.open = false;
+    show.suspended = false;
+    document.getElementById("ssReturn")?.remove();
     show.root.hidden = true;
     show.root.innerHTML = "";
     document.getElementById("app")?.removeAttribute("inert");
@@ -332,7 +367,7 @@
   }
 
   function keydown(event) {
-    if (!show.open) return;
+    if (!show.open || show.suspended) return;
     const root = show.root;
     if (event.key === "Escape") { event.preventDefault(); event.stopImmediatePropagation(); if (show.viewAll) { show.viewAll = null; return render(0); } return close(); }
     if (event.key === "ArrowRight") { event.preventDefault(); event.stopImmediatePropagation(); return move(1); }
@@ -377,6 +412,8 @@
     show.root.addEventListener("click", (event) => {
       const header = event.target.closest(".ss-table th[data-ss-sort]");
       if (header) return sortTable(header);
+      const playerLink = event.target.closest("[data-ss-player]");
+      if (playerLink) return openPlayer(playerLink.dataset.ssPlayer);
       const viewAll = event.target.closest("[data-ss-view-all]");
       if (viewAll) { show.viewAll = viewAll.dataset.ssViewAll || null; render(0); return; }
       const button = event.target.closest("[data-ss-action]");
