@@ -889,6 +889,9 @@ def outlook_power_slide(ctx: dict[str, Any]) -> dict[str, Any]:
 # value (team "Overall" is built from the same scale); 58 is about a rotation regular.
 NOTE_VALUE_FLOOR = 55.0
 NOTE_NOTABLE_VALUE = 58.0
+# Rookies are named when they would already be a rotation player (about the league's 190th player; Boozer, Graves,
+# Lendeborg, Wilson and Ejiofor in the 2026 class) and always get a mention, even beside a bigger move (user, 2026-11-22).
+NOTE_DRAFTED_VALUE = 56.5
 NOTE_SECOND_SHARE = 0.35      # a second kind of move is named when its total weight is this share of the lead move
 
 
@@ -921,7 +924,8 @@ def roster_note(row: dict[str, Any] | None, value: Callable[[str], float] | None
     for item in row.get("injured") or []:
         moves["out"].append((value(item["id"]) if item.get("id") else 0.0, item["name"]))
     for kind in moves:
-        moves[kind] = sorted((m for m in moves[kind] if m[0] >= NOTE_NOTABLE_VALUE and m[1]), key=lambda m: (-m[0], m[1]))
+        floor = NOTE_DRAFTED_VALUE if kind == "drafted" else NOTE_NOTABLE_VALUE
+        moves[kind] = sorted((m for m in moves[kind] if m[0] >= floor and m[1]), key=lambda m: (-m[0], m[1]))
     if not any(moves.values()):
         return "Running it back" if row.get("continuity_pct", 0) >= 85 else ""
     weight = {kind: sum(_move_weight(v) for v, _ in items) for kind, items in moves.items()}
@@ -943,8 +947,12 @@ def roster_note(row: dict[str, Any] | None, value: Callable[[str], float] | None
     others = [kind for kind in moves if kind != lead and moves[kind]]
     others.sort(key=lambda kind: (kind not in opposite, -weight[kind]))
     text = phrase(lead, True)
+    named = {lead}
     if others and weight[others[0]] >= NOTE_SECOND_SHARE * _move_weight(moves[lead][0][0]):
         text += "; " + phrase(others[0], False)
+        named.add(others[0])
+    if moves["drafted"] and "drafted" not in named:
+        text += "; " + phrase("drafted", False)
     return text
 
 

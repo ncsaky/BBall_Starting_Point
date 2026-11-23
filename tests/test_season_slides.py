@@ -275,9 +275,10 @@ class RosterNoteTests(unittest.TestCase):
     """The power-ranking note names the biggest change by player value, not by minutes (playtest 2026-11-21)."""
 
     VALUES = {"kawhi": 74.0, "ingram": 61.5, "mamu": 61.0, "grimes": 57.7, "kessler": 66.3, "lebron": 73.2,
-              "hali": 72.5, "oubre": 57.0, "rook": 59.0, "bench": 50.0}
+              "hali": 72.5, "oubre": 57.0, "rook": 59.0, "bench": 50.0,
+              "rotation_rook": 56.8, "raw_rook": 54.0}
     DRAFTED = {"kawhi": 2011, "ingram": 2016, "grimes": 2021, "kessler": 2022, "lebron": 2003, "hali": 2020,
-               "oubre": 2015, "rook": 2026}
+               "oubre": 2015, "rook": 2026, "rotation_rook": 2026, "raw_rook": 2026}
 
     def note(self, gone=(), arrivals=(), injured=(), continuity=60.0):
         row = {"gone": [{"id": pid, "name": pid.title(), "minutes": 2000} for pid in gone],
@@ -299,6 +300,13 @@ class RosterNoteTests(unittest.TestCase):
         self.assertEqual(self.note(arrivals=[("rook", 0)]), "Drafted Rook")
         self.assertEqual(self.note(arrivals=[("bench", 900)], continuity=90.0), "Running it back")
         self.assertEqual(self.note(injured=["kawhi"]), "Kawhi out injured")
+
+    def test_rotation_ready_rookie_always_named(self):
+        # A rookie who would already be a rotation player gets named beside bigger moves; a raw one does not.
+        self.assertEqual(self.note(gone=["ingram", "mamu"], arrivals=[("kawhi", 2087), ("rotation_rook", 0)]),
+                         "Added Kawhi; lost Ingram and Mamu; drafted Rotation_Rook")
+        self.assertEqual(self.note(arrivals=[("rotation_rook", 0)]), "Drafted Rotation_Rook")
+        self.assertEqual(self.note(arrivals=[("raw_rook", 0), ("bench", 900)], continuity=90.0), "Running it back")
 
 
 class OpensOnceTests(unittest.TestCase):

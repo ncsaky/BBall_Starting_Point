@@ -21,5 +21,8 @@ Game runs from the browser pane: launch entry `game` (port 8766, normal `saves/`
   Overall showed no shading in that column: fixed for every table (the old shading was a box shadow, and the
   interface turns all shadows off). Gap between the header and the first row: now two flush bars, the header's
   darker. Header text bold, one size and colour, no capitals. Values in the sorted column bold.
+- **Sortable headers (done 2026-11-22).** Every season slideshow table (preseason outlook, year-end recap) sorts
+  by any header on click; click again to flip. Power rankings' two halves sort as one list of 30. The user expects
+  this everywhere. Other tables that still can't sort need a sweep.
 - **Tables, still open:** the user wants consistent row height and header centering across all tables. Not done
   yet: tables with headshots need taller rows, so decide per table type.
