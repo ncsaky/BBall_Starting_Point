@@ -4126,6 +4126,27 @@ const PROSPECT_COLLEGE_LOGOS = Object.freeze({
   oregon:"oregon", purdue:"purdue", "san-diego-state":"san-diego-state", "santa-clara":"santa-clara", "south-florida":"south-florida",
   "st-johns":"st-johns", stanford:"stanford", tennessee:"tennessee", texas:"texas", "texas-tech":"texas-tech", uconn:"uconn",
   usc:"usc", ucla:"ucla", vanderbilt:"vanderbilt", villanova:"villanova", virginia:"virginia", washington:"washington",
+  // 2026-11-23: 81 more programs from the same ESPN logo source (see colleges/CREDITS.md).
+  "arizona-state":"arizona-state", belmont:"belmont", "boise-state":"boise-state", "boston-college":"boston-college",
+  butler:"butler", california:"california", charlotte:"charlotte", clemson:"clemson",
+  "colorado-state":"colorado-state", davidson:"davidson", dayton:"dayton", depaul:"depaul",
+  "florida-atlantic":"florida-atlantic", georgetown:"georgetown", georgia:"georgia", "georgia-tech":"georgia-tech",
+  "grand-canyon":"grand-canyon", harvard:"harvard", "high-point":"high-point", "illinois-chicago":"illinois-chicago",
+  "illinois-state":"illinois-state", "kansas-state":"kansas-state", lsu:"lsu", maryland:"maryland",
+  "mcneese-state":"mcneese-state", "miami-fl":"miami-fl", "miami-oh":"miami-oh", minnesota:"minnesota",
+  mississippi:"mississippi", "mississippi-state":"mississippi-state", missouri:"missouri",
+  "murray-state":"murray-state", "n-c-state":"n-c-state", nebraska:"nebraska", nevada:"nevada",
+  "new-mexico":"new-mexico", "north-texas":"north-texas", "northern-iowa":"northern-iowa", "notre-dame":"notre-dame",
+  oklahoma:"oklahoma", "oklahoma-state":"oklahoma-state", "oregon-state":"oregon-state", penn:"penn",
+  "penn-state":"penn-state", pittsburgh:"pittsburgh", providence:"providence", "rhode-island":"rhode-island",
+  richmond:"richmond", rutgers:"rutgers", "saint-josephs":"saint-josephs", "saint-louis":"saint-louis",
+  "saint-marys":"saint-marys", seattle:"seattle", "seton-hall":"seton-hall", smu:"smu",
+  "south-carolina":"south-carolina", syracuse:"syracuse", tcu:"tcu", temple:"temple", "texas-a-m":"texas-a-m",
+  "texas-state":"texas-state", tulsa:"tulsa", "uc-irvine":"uc-irvine", "uc-santa-barbara":"uc-santa-barbara",
+  ucf:"ucf", "unc-wilmington":"unc-wilmington", unlv:"unlv", utah:"utah", "utah-state":"utah-state",
+  "utah-valley":"utah-valley", valparaiso:"valparaiso", vcu:"vcu", vermont:"vermont", "virginia-tech":"virginia-tech",
+  "wake-forest":"wake-forest", "west-virginia":"west-virginia", "western-kentucky":"western-kentucky",
+  wisconsin:"wisconsin", "wright-state":"wright-state", wyoming:"wyoming", xavier:"xavier",
 });
 const PROSPECT_COUNTRY_FLAGS = Object.freeze({
   australia:"AU", brazil:"BR", canada:"CA", china:"CN", croatia:"HR", france:"FR", germany:"DE", greece:"GR",
@@ -4332,7 +4353,9 @@ const SEASON_AWARD_STATS = Object.freeze({
 });
 // Real-world trophy pictures by award (data-trophy slot in the leader block). Empty until the files are added, e.g.
 // mvp: "assets/trophies/mvp.png"; an award with no file listed shows no picture.
-const SEASON_AWARD_TROPHIES = Object.freeze({});
+// The real trophies (NBA.com's 2022 trophy photos; see assets/trophies/CREDITS.md): Michael Jordan Trophy (MVP),
+// Hakeem Olajuwon Trophy (DPOY), Wilt Chamberlain Trophy (Rookie of the Year).
+const SEASON_AWARD_TROPHIES = Object.freeze({mvp: "/assets/trophies/mvp.jpg", dpoy: "/assets/trophies/dpoy.jpg", roty: "/assets/trophies/roty.jpg"});
 
 function seasonAwardStatCells(row, stats, firstColumn) {
   const values = row.stats || {};

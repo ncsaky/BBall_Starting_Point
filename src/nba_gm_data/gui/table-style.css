@@ -318,3 +318,9 @@ body.unified-terminal-ui table :is(thead th, tbody td):is(.ss-left, .is-left, .t
 body.unified-terminal-ui .season-identity-panel .spatial-half-courts { min-height: 0; }
 body.unified-terminal-ui .season-identity-panel .spatial-half-courts > svg.spatial-court { height: 100% !important; width: auto !important; max-width: 100%; justify-self: center; }
 body.unified-terminal-ui .season-identity-panel .spatial-court-caption { display: none !important; }
+
+/* Award trophies are photos on white: multiply drops the white into the card's own background. */
+body.unified-terminal-ui .season-award-trophy img { mix-blend-mode: multiply; }
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-trophy { height: 50% !important; top: 8px !important; right: 6px !important; }
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-leader:has(.season-award-trophy img) :is(.season-award-leader-name, .season-award-leader > .season-award-team) { padding-right: 58px; box-sizing: border-box; min-width: 0; }
+body.unified-terminal-ui .has-card-board [data-board-window^="award-"] .season-award-leader-name strong { white-space: normal !important; overflow-wrap: anywhere; line-height: 1.1; }

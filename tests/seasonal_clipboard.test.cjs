@@ -57,7 +57,7 @@ test('prospect origins use bundled college marks or country flags', () => {
   assert.match(draftSource,/available\.pop\(rng\.randrange\(len\(available\)\)\)/);
 
   const collegeAssets = fs.readdirSync(path.join(gui,'assets/team_logos/colleges')).filter(file=>file.endsWith('.png'));
-  assert.equal(collegeAssets.length,44);
+  assert.equal(collegeAssets.length,125); // 44 original marks plus 81 added 2026-11-23 (every college in the prospect data)
 });
 
 test('window switcher follows recent window order and wraps forward and backward', () => {
