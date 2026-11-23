@@ -96,7 +96,15 @@ class ContractImportSeparationTests(unittest.TestCase):
         calibrated = {r["player_id"] for r in json.loads((ROOT / "data/overrides/five_player_calibration_v11.json").read_text())["players"]}
         calibrated.add("player_sas-victor-wembanyama")
         self.assertEqual(len(calibrated), 6)
-        self.assertEqual(filled_measurements(self.old["players"], self.canonical["players"]), self.canonical["players"], "players")
+        # Creating a save estimates roles for 2026+ draftees from their ratings (role_estimate.py, 2026-11-22) and writes
+        # them onto the passed-in player records. Those estimates follow each universe's own ratings, so they are not
+        # import differences: compare players with the estimated role fields set aside.
+        from nba_gm_data.role_estimate import ROLE_SOURCE
+        def without_estimates(rows):
+            fields = ("primary_off_role", "primary_def_role", "role_source")
+            return [{k: v for k, v in row.items() if k not in fields} if row.get("role_source") == ROLE_SOURCE else row for row in rows]
+        self.assertEqual(without_estimates(filled_measurements(self.old["players"], self.canonical["players"])),
+                         without_estimates(self.canonical["players"]), "players")
         self.assertEqual([r for r in self.old["traits"] if r["player_id"] not in calibrated],
                          [r for r in self.canonical["traits"] if r["player_id"] not in calibrated], "traits")
         for key in ("roster_slots", "player_health_profiles", "player_health_states", "injury_events", "draft_picks"):
