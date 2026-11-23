@@ -3651,7 +3651,8 @@ class DataFoundationTests(unittest.TestCase):
             players = {player["id"]: player for player in active["players"]}
             sas = starting_lineup_slots(active, save, "team_sas", persist=False)
             sas_names = [players[player_id]["name"] for _, player_id in sorted(sas.items())]
-            self.assertEqual(sas_names[0], "De'Aaron Fox")
+            # Three starting-calibre guards; the coach may start any of them at the point (user, 2026-11-22).
+            self.assertIn(sas_names[0], {"De'Aaron Fox", "Stephon Castle", "Dylan Harper"})
             self.assertIn("Victor Wembanyama", sas_names[3:5])
             self.assertGreaterEqual(float(players[sas["5"]]["height_inches"]), 80.0)
 
