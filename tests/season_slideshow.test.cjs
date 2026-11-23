@@ -10,8 +10,8 @@ const app = fs.readFileSync(path.join(gui, 'app.js'), 'utf8');
 const css = fs.readFileSync(path.join(gui, 'season-slideshow.css'), 'utf8');
 const html = fs.readFileSync(path.join(gui, 'index.html'), 'utf8');
 
-function load() {
-  const window = {matchMedia: () => ({matches: false}), addEventListener() {}, dispatchEvent() {}};
+function load({reduced = false} = {}) {
+  const window = {matchMedia: () => ({matches: reduced}), addEventListener() {}, dispatchEvent() {}};
   const document = {readyState: 'complete', getElementById: () => null, addEventListener() {}, body: {classList: {add() {}, remove() {}}}};
   const context = vm.createContext({window, document, requestAnimationFrame: (fn) => fn(), CustomEvent: class {}});
   vm.runInContext(source, context);
@@ -80,7 +80,7 @@ test('the slideshow is a large tutorial-style card with Previous, Next, Skip and
   assert.match(source, /reducedMotion\(\) \|\| !direction \? ""/);
   assert.match(css, /prefers-reduced-motion: reduce[\s\S]*animation: none/);
   assert.match(css, /\.ss-backdrop[\s\S]*position: fixed;[\s\S]*inset: 0;/);
-  assert.match(css, /border-bottom: 3px double/);
+  assert.match(css, /\.ss-table th \{\n  border-bottom: 3px solid/);  // one thick dark header line (UI style guide)
   assert.match(html, /id="seasonSlideshow"/);
   assert.match(html, /season-slideshow\.js/);
   assert.match(html, /season-slideshow\.css/);
@@ -96,4 +96,63 @@ test('a due slideshow opens once: it is marked seen as it opens, after the champ
   assert.match(app, /if \(state\.slideshowOpening \|\| window\.SeasonSlideshow\?\.isOpen\(\)\) return;/);
   assert.match(app, /data-season-slideshow=/);
   assert.match(app, /label:"Year-end recap"/);
+});
+
+test('preseason outlook taste pass: projected ranks, rows that fall in, your team as tiles, contracts as bars', () => {
+  const {RENDER} = load();
+  // Preseason ranks say "Projected".
+  assert.match(source, /`Projected \$\{ordinalRank\(slide\.overall_rank\)\} of /);
+  assert.doesNotMatch(source, /in the league`/);
+
+  // Power rankings and continuity: bordered, rows fall into place on entry (not under reduced motion).
+  const power = RENDER.power({rows: [{rank: 1, team: team('OKC'), overall: 63, last_finish: 3, change: 2, note: 'Added Somebody'}]});
+  assert.match(power, /class="ss-boxed ss-rows-in"><div class="ss-two ss-compact" data-ss-split>/);
+  assert.match(power, /<tr class="" style="--i:0">/);
+  const continuity = RENDER.continuity({legend: {}, rows: [1, 2, 3].map((n) => ({team: team(`T${n}`), kept_pct: 50, injured_pct: 0, gone_pct: 50, continuity_pct: 50, kept: [], injured: [], gone: [], arrivals: []}))});
+  assert.equal((continuity.match(/<ol class="ss-continuity"/g) || []).length, 2);
+  assert.match(continuity, /ss-continuity-cols ss-rows-in/);
+  assert.doesNotMatch(load({reduced: true}).RENDER.power({rows: []}), /ss-rows-in/);
+  assert.match(css, /@keyframes ss-row-fall/);
+  assert.match(css, /prefers-reduced-motion: reduce\) \{\n  \.ss-rows-in[^}]*animation: none/);
+  assert.match(source, /closest\("\.ss-rows-in"\)\?\.classList\.remove\("ss-rows-in"\)/);  // a sort does not replay it
+
+  // Last season's leaders: each mini table has a titled header.
+  const leaders = RENDER.leaders_revisited({categories: [{stat: 'points', label: 'Points', rows: [{name: 'Scorer', team_abbrev: 'DAL', per_game: 27.5, now: {team: team('DAL')}}]}]});
+  assert.match(leaders, /<h4 class="ss-panel-title">Points<\/h4>/);
+
+  // Your team: starting five tiles with a role pair, bench tiles, three numbers; no roster table.
+  const starter = (n, extra = {}) => ({...player(`Starter ${n}`), id: `s${n}`, minutes: 30 - n, off_role: 'Primary Ball Handler', def_role: 'Versatile Stopper', ...extra});
+  const rotation = [1, 2, 3, 4, 5].map((n) => starter(n)).concat([starter(6, {minutes: 15}), starter(7, {minutes: 0, injury: {games: 30, label: 'Knee'}})]);
+  const yours = RENDER.your_team({rotation, starters: ['s5', 's1', 's2', 's3', 's4'],
+    takeaways: {teams: 30, age: {value: 25.5, rank: 8}, shape: {label: 'Top-heavy', top_rank: 2, depth_rank: 18}, payroll: {value: 216.9, rank: 5}}});
+  assert.doesNotMatch(yours, /<table/);
+  assert.equal((yours.match(/ss-tile-starter/g) || []).length, 5);
+  assert.equal((yours.match(/ss-tile-bench/g) || []).length, 2);
+  assert.ok(yours.indexOf('Starter 5') < yours.indexOf('Starter 1'), 'starters follow the lineup slots');
+  assert.match(yours, /<span class="ss-role-pair">Primary Ball HandlerVersatile Stopper<\/span>/);
+  assert.match(yours, /8th youngest of 30/);
+  assert.match(yours, /Top-heavy/);
+  assert.match(yours, /\$216\.9M/);
+  assert.match(yours, /✚ 30/);
+  assert.match(yours, /class="ss-rating" style="color:#[0-9a-f]{6}">70\.1</);
+  // An outlook stored before this change (no starters) still shows five starters: the most minutes.
+  assert.equal((RENDER.your_team({rotation}).match(/ss-tile-starter/g) || []).length, 5);
+
+  // Team profile: two titled panels; the cap numbers sit under the payroll chart.
+  const profile = RENDER.team_profile({radar: [{key: 'defense', label: 'Defense', side: 'defense', rank: 3}], cap: {payroll_millions: 152.1}});
+  assert.match(profile, /Strengths by league rank[\s\S]*Payroll, next four seasons[\s\S]*ss-cap-figures/);
+
+  // Contracts: never a bare salary; bar charts; players who could be on the move grouped by reason.
+  const contracts = RENDER.contracts({
+    extensions: [{...player('Extend Me'), salary_millions: 7.8, years_left: 2, projected_millions: 18.5, projected_years: 4}],
+    movers: [{...player('Pricey Vet'), team: team('SAC'), overall: 77.5, salary_millions: 45.5, years_left: 2, reason: 'Paid above his value'},
+             {...player('Old Hand'), team: team('GSW'), overall: 75.9, salary_millions: 27.7, years_left: 1, reason: "Older than his team's timeline"}],
+  });
+  assert.match(contracts, /\$7\.8M × 2[\s\S]*\$18\.5M × 4/);
+  assert.match(contracts, /Could be on the move/);
+  assert.match(contracts, /<h5>Paid above his value<\/h5>[\s\S]*Pricey Vet[\s\S]*\$45\.5M × 2/);
+  assert.equal((contracts.match(/\$[\d.]+M(?! ×)/g) || []).length, 0, 'every contract reads salary × years');
+  assert.doesNotMatch(contracts, /<table/);
+  // An outlook stored before this change (no trade block) falls back to the biggest expiring deals.
+  assert.match(RENDER.contracts({extensions: [], expiring: [{...player('Big Deal'), team: team('DEN'), salary_millions: 62.8}]}), /Biggest expiring deals[\s\S]*\$62\.8M/);
 });

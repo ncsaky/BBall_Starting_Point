@@ -27,9 +27,11 @@
   const capitalize = (text) => String(text || "").replace(/^./, (c) => c.toUpperCase());
   const money = (value) => (value === null || value === undefined ? "—" : `$${Number(value).toFixed(1)}M`);
 
+  // Every column is centred, header over its values; only the first field (player or team name) and prose sit left
+  // (UI style guide). `--i` is the row's place, used by the rows-falling-in entry animation.
   function table(columns, rows, {sorted = null, caption = "", rowClass = () => ""} = {}) {
     const head = columns.map((col, index) => `<th scope="col" class="${col.cls || ""}${index === sorted ? " ss-sorted" : ""}" data-ss-sort tabindex="0" title="Sort by ${attr(col.label)}"${index === sorted ? ` aria-sort="${SORT_ASCENDING_FIRST.test(col.label) ? "ascending" : "descending"}"` : ""}>${esc(col.label)}</th>`).join("");
-    const body = rows.map((row, r) => `<tr class="${rowClass(row, r)}">${columns.map((col, index) => `<td class="${col.cls || ""}${index === sorted ? " ss-sorted" : ""}">${col.render(row, r)}</td>`).join("")}</tr>`).join("");
+    const body = rows.map((row, r) => `<tr class="${rowClass(row, r)}" style="--i:${r}">${columns.map((col, index) => `<td class="${col.cls || ""}${index === sorted ? " ss-sorted" : ""}">${col.render(row, r)}</td>`).join("")}</tr>`).join("");
     // Columns with a set width make a fixed layout: tables shown side by side then line up exactly (same column
     // widths, row heights and alignment), whatever their contents (playtest 2026-11-22).
     const fixed = columns.some((col) => col.width);
@@ -56,6 +58,8 @@
   }
   function sortTable(th) {
     const table = th.closest("table");
+    // Rows moved by a sort must not replay the entry animation.
+    th.closest(".ss-rows-in")?.classList.remove("ss-rows-in");
     const row = th.parentElement;
     const index = [...row.children].indexOf(th);
     const current = th.getAttribute("aria-sort");
@@ -87,14 +91,31 @@
 
   const ordinalRank = (n) => { const v = Number(n); if (!Number.isFinite(v) || !v) return "—"; const s = ["th", "st", "nd", "rd"], m = v % 100; return v + (s[(m - 20) % 10] || s[m] || s[0]); };
   // Team slides lead with the logo and the team's overall instead of spelling out the name (playtest 2026-11-22).
-  const titleTeam = (slide) => `${logo(slide.logo, "ss-title-logo")}<span class="ss-title-stat"><b>${slide.key === "team_profile" ? "Strengths and payroll" : slide.overall_rank ? `Projected ${ordinalRank(slide.overall_rank)} in the league` : ""}</b></span>`;
+  // Preseason ranks are projections, and say so ("Projected 1st of 30"; UI style guide).
+  const titleTeam = (slide) => `${logo(slide.logo, "ss-title-logo")}<span class="ss-title-stat"><b>${slide.key === "team_profile" ? "Team profile" : slide.overall_rank ? `Projected ${ordinalRank(slide.overall_rank)} of ${esc(slide.league_teams || 30)}` : ""}</b></span>`;
   const roleChip = (role) => (typeof playerRoleChip === "function" ? playerRoleChip(role) : esc(role || "—"));
-  // Ratings always carry the game's bar, and a contract is always one field: salary × years (playtest 2026-11-22).
-  const ratingBar = (v) => (v === null || v === undefined || !Number.isFinite(Number(v)) ? "—"
-    : typeof compactRatingBar === "function" ? compactRatingBar(Number(v))  // the roster tables' own bar
-    : `<span class="linked-rating assets-rating-bar player-rating-bar"><span>${num(v)}</span><i><b style="--fill:${Number(v)}%"></b></i></span>`);
+  // Ratings are a coloured number: red (low) to blue (high) across the player display range 60-98, the same range
+  // and hues as the game's rating bars (app.js playerRatingBarStyle / performanceBarColor), a shade darker so the
+  // middle (yellow) stays readable as text.
+  const RATING_FLOOR = 60, RATING_CEILING = 98;
+  const RATING_STOPS = [[0, [200, 54, 66]], [0.34, [206, 100, 50]], [0.52, [170, 132, 30]], [0.74, [58, 128, 192]], [1, [30, 88, 190]]];
+  function ratingColor(value) {
+    const share = Math.min(1, Math.max(0, (Number(value) - RATING_FLOOR) / (RATING_CEILING - RATING_FLOOR)));
+    const upper = Math.max(1, RATING_STOPS.findIndex(([stop]) => share <= stop));
+    const [lowStop, low] = RATING_STOPS[upper - 1];
+    const [highStop, high] = RATING_STOPS[upper];
+    const t = highStop === lowStop ? 0 : (share - lowStop) / (highStop - lowStop);
+    return `#${low.map((c, i) => Math.round(c + (high[i] - c) * t).toString(16).padStart(2, "0")).join("")}`;
+  }
+  const ratingNumber = (v, cls = "") => (v === null || v === undefined || v === "" || !Number.isFinite(Number(v)) ? "—"
+    : `<b class="ss-rating${cls ? ` ${cls}` : ""}" style="color:${ratingColor(v)}">${num(v)}</b>`);
+  // A contract is always one field: salary × years (playtest 2026-11-22).
   const contract = (salary, years) => (typeof contractLabel === "function" ? contractLabel(salary, years)
-    : salary ? `${money(salary)}${years ? ` × ${years}` : ""}` : "—");
+    : Number(salary) > 0 ? `${money(salary)}${Number(years) > 0 ? ` × ${Number(years)}` : ""}` : "—");
+  // Panel title: small capitals with a rule under it, distinct from row text (taste deck 2026-11-23).
+  const panelTitle = (text, extra = "") => `<header class="ss-panel-head"><h4 class="ss-panel-title">${esc(text)}</h4>${extra}</header>`;
+  // Wraps a slide's rows so they fall into place on entry (skipped under reduced motion; a sort switches it off).
+  const rowsIn = () => (reducedMotion() ? "" : " ss-rows-in");
 
   // One radar, offense on one half and defense on the other, with smooth (Catmull-Rom) curves. Values are league
   // percentiles from Team Signals ranks.
@@ -133,7 +154,7 @@
   // A name opens that player's card (players who left the league have no card).
   const name = (r) => (r.player_id && !String(r.player_id).startsWith("real:") && r.now?.status !== "No longer in the league"
     ? `<button type="button" class="ss-player-link" data-ss-player="${attr(r.player_id)}">${esc(r.name)}</button>` : `<b>${esc(r.name)}</b>`);
-  const teamCell = (team) => team ? `<span class="ss-team">${logo(team.abbrev)}<b>${esc(team.abbrev)}</b></span>` : "—";
+  const teamCell = (team) => team?.abbrev ? `<span class="ss-team">${logo(team.abbrev)}<b>${esc(team.abbrev)}</b></span>` : "—";
   const playerCell = (player, extra = "") => `<span class="ss-player">${headshot(player)}<span><b>${esc(player?.name || "—")}</b>${extra ? `<small>${extra}</small>` : ""}</span></span>`;
   const note = (text) => text ? `<p class="ss-note">${esc(text)}</p>` : "";
 
@@ -153,7 +174,7 @@
     standings(slide) {
       const conf = (name) => table([
         {label: "#", render: (r) => r.rank, cls: "ss-num", width: "30px"},
-        {label: "Team", render: (r) => teamCell(r.team), width: "78px"},
+        {label: "Team", render: (r) => teamCell(r.team), cls: "ss-left", width: "78px"},
         {label: "W", render: (r) => r.wins, cls: "ss-num", width: "36px"},
         {label: "L", render: (r) => r.losses, cls: "ss-num", width: "36px"},
         {label: "GB", render: (r) => (r.games_behind ? num(r.games_behind) : "—"), cls: "ss-num", width: "42px"},
@@ -172,8 +193,8 @@
     leaders(slide) {
       return `<div class="ss-grid">${(slide.categories || []).map((cat) => table([
         {label: "#", render: (r, i) => i + 1, cls: "ss-num", width: "28px"},
-        {label: "Player", render: name},
-        {label: "Team", render: (r) => esc(r.team_abbrev || "—"), width: "52px"},
+        {label: "Player", render: name, cls: "ss-left"},
+        {label: "Team", render: (r) => teamCell({abbrev: r.team_abbrev}), width: "64px"},
         {label: "Per game", render: (r) => num(r.per_game), cls: "ss-num", width: "66px"},
       ], cat.rows, {sorted: 3, caption: cat.label})).join("")}</div>`;
     },
@@ -181,7 +202,7 @@
       const mvp = slide.team_mvp;
       return `<div class="ss-split"><section><div class="ss-big">${logo(slide.team?.abbrev, "ss-logo-lg")}<div><h3>${esc(slide.record)}</h3>
           <p>${esc(slide.result_label)} · ${esc(ordinal(slide.conference_rank))} in the ${esc(slide.conference)}</p></div></div>
-        ${table([{label: "Team stat", render: (r) => esc(r.label)}, {label: "Value", render: (r) => esc(r.value), cls: "ss-num"}, {label: "League rank", render: (r) => `${r.rank} of 30`, cls: "ss-num"}], slide.stats || [], {sorted: 2})}</section>
+        ${table([{label: "Team stat", render: (r) => esc(r.label), cls: "ss-left"}, {label: "Value", render: (r) => esc(r.value), cls: "ss-num"}, {label: "League rank", render: (r) => `${r.rank} of 30`, cls: "ss-num"}], slide.stats || [], {sorted: 2})}</section>
         ${mvp ? `<section class="ss-feature"><h4>Team MVP</h4>${playerCell(mvp, esc(`${mvp.position || ""} · ${mvp.overall} rating`))}<p>${esc(slide.team_mvp_why)}</p></section>` : ""}</div>`;
     },
     trades(slide) {
@@ -202,8 +223,8 @@
       return table([
         {label: "Player", render: (p) => playerCell(p, esc(`${p.position || ""} · age ${num(p.age, 0)}`)), cls: "ss-player-col"},
         {label: "Team", render: (p) => teamCell(p.team)},
-        {label: "Rating", render: (p) => ratingBar(p.overall)},
-        {label: "Salary now", render: (p) => money(p.current_salary_millions), cls: "ss-num"},
+        {label: "Rating", render: (p) => ratingNumber(p.overall), cls: "ss-num"},
+        {label: "Contract", render: (p) => contract(p.current_salary_millions, 1), cls: "ss-num"},
         {label: "Market value / yr", render: (p) => money(p.market_value_millions), cls: "ss-num"},
       ], slide.players || [], {sorted: 4}) + note("Each one's team can re-sign him in the exclusive window before free agency opens.");
     },
@@ -214,7 +235,7 @@
         : `Playoff team: projected pick ${esc(d.projected_pick ?? "—")}`) + (d.pick_owner ? `<br><small class="ss-muted">Your own first-round pick belongs to ${esc(d.pick_owner)}${d.protection ? ` (${esc(d.protection)})` : ""}.</small>` : "");
       const cap = slide.cap || {};
       return `<div class="ss-split"><section><h4>The draft</h4><p class="ss-lead">${draftText}</p>
-        ${table([{label: "Cons.", render: (p) => p.consensus_rank, cls: "ss-num"}, {label: "Prospect", render: (p) => `<b>${esc(p.name)}</b>`}, {label: "Pos", render: (p) => esc(p.position)}, {label: "From", render: (p) => esc(p.school || "—")}, {label: "Your scouts", render: (p) => (p.your_rank ? `#${p.your_rank}` : "—"), cls: "ss-num"}], slide.prospects || [], {sorted: 0, caption: "Consensus top 5"})}</section>
+        ${table([{label: "Cons.", render: (p) => p.consensus_rank, cls: "ss-num"}, {label: "Prospect", render: (p) => `<b>${esc(p.name)}</b>`, cls: "ss-left"}, {label: "Pos", render: (p) => esc(p.position)}, {label: "From", render: (p) => esc(p.school || "—")}, {label: "Your scouts", render: (p) => (p.your_rank ? `#${p.your_rank}` : "—"), cls: "ss-num"}], slide.prospects || [], {sorted: 0, caption: "Consensus top 5"})}</section>
         <section class="ss-feature"><h4>Your cap for ${esc(cap.season)}</h4><dl class="ss-dl"><dt>Committed payroll</dt><dd>${money(cap.payroll_millions)}</dd><dt>Tax line</dt><dd>${money(cap.tax_line_millions)}</dd><dt>Room under the tax</dt><dd>${money(cap.tax_space_millions)}</dd><dt>Hard cap room</dt><dd>${money(cap.hard_cap_space_millions)}</dd></dl></section></div>`;
     },
 
@@ -223,29 +244,32 @@
       const change = (r) => r.change === null || r.change === undefined ? "—" : r.change > 0 ? `<span class="ss-up">▲${r.change}</span>` : r.change < 0 ? `<span class="ss-down">▼${-r.change}</span>` : "=";
       const columns = [
         {label: "#", render: (r) => r.rank, cls: "ss-num", width: "30px"},
-        {label: "Team", render: (r) => teamCell(r.team), width: "72px"},
+        {label: "Team", render: (r) => teamCell(r.team), cls: "ss-left", width: "72px"},
         {label: "Overall", render: (r) => num(r.overall), cls: "ss-num", width: "58px"},
         {label: "Last finish", render: (r) => r.last_finish ?? "—", cls: "ss-num", width: "72px"},
         {label: "Change", render: change, cls: "ss-num", width: "60px"},
-        {label: "Note", render: (r) => `<small class="ss-clamp" title="${attr(r.note || "")}">${esc(r.note || "")}</small>`},
+        {label: "Note", render: (r) => `<small class="ss-clamp" title="${attr(r.note || "")}">${esc(r.note || "")}</small>`, cls: "ss-left"},
       ];
       const rows = slide.rows || [];
       const half = Math.ceil(rows.length / 2);
       const options = {sorted: 2, rowClass: (r) => (r.is_user ? "ss-user" : "")};
-      return `<div class="ss-two ss-compact" data-ss-split>${table(columns, rows.slice(0, half), options)}${table(columns, rows.slice(half), options)}</div>`;
+      return `<div class="ss-boxed${rowsIn()}"><div class="ss-two ss-compact" data-ss-split>${table(columns, rows.slice(0, half), options)}${table(columns, rows.slice(half), options)}</div></div>`;
     },
     continuity(slide) {
       const names = (list, unit = "minutes") => list.map((item) => `${item.name} (${item[unit] ?? 0})`).join(", ");
-      const rows = (slide.rows || []).map((row) => {
+      const item = (row, i) => {
         const arrivals = row.arrivals || [];
         const tip = [`Kept: ${names(row.kept)}`, row.injured.length ? `Kept, out long: ${names(row.injured)}` : "", `Gone: ${names(row.gone)}`, arrivals.length ? `New: ${names(arrivals, "minutes_last_season")}` : ""].filter(Boolean).join("\n");
-        return `<li class="${row.is_user ? "ss-user" : ""}" title="${attr(tip)}" tabindex="0" aria-label="${attr(`${row.team.name}: ${row.continuity_pct}% of last season's minutes kept. ${tip}`)}">
+        return `<li class="${row.is_user ? "ss-user" : ""}" style="--i:${i}" title="${attr(tip)}" tabindex="0" aria-label="${attr(`${row.team.name}: ${row.continuity_pct}% of last season's minutes kept. ${tip}`)}">
           <span class="ss-team">${logo(row.team.abbrev)}<b>${esc(row.team.abbrev)}</b></span>
           <span class="ss-bar"><i class="ss-kept" style="width:${row.kept_pct}%"></i><i class="ss-injured" style="width:${row.injured_pct}%"></i><i class="ss-gone" style="width:${row.gone_pct}%"></i></span></li>`;
-      }).join("");
+      };
+      // Two bordered columns, like the power rankings beside it.
+      const rows = slide.rows || [];
+      const half = Math.ceil(rows.length / 2);
       const legend = slide.legend || {};
       return `<div class="ss-legend"><span><i class="ss-kept"></i>${esc(legend.kept)}</span><span><i class="ss-injured"></i>${esc(legend.injured)}</span><span><i class="ss-gone"></i>${esc(legend.gone)}</span></div>
-        <ol class="ss-continuity">${rows}</ol>`;
+        <div class="ss-two ss-continuity-cols${rowsIn()}"><ol class="ss-continuity">${rows.slice(0, half).map(item).join("")}</ol>${rows.length > half ? `<ol class="ss-continuity" start="${half + 1}">${rows.slice(half).map(item).join("")}</ol>` : ""}</div>`;
     },
     leaders_revisited(slide) {
       // Player, his number, and his team: a player who changed teams shows old logo → new logo (playtest 2026-11-22).
@@ -261,7 +285,7 @@
                        ["fg3m", "3PM"], ["fg3_pct", "3P%"], ["ft_pct", "FT%"], ["minutes", "MIN"]];
         const key = show.viewAll;
         const columns = [
-          {label: "Player", render: name},
+          {label: "Player", render: name, cls: "ss-left"},
           {label: "Team", render: (r) => where(r.team_abbrev, r.now)},
           {label: "G", render: (r) => r.games, cls: "ss-num"},
           ...stats.map(([stat, label]) => ({label, render: (r) => value(r[stat]), cls: "ss-num"})),
@@ -271,69 +295,106 @@
         return `<div class="ss-viewall-bar"><button type="button" class="ss-back" data-ss-view-all="">← Back</button></div>
           <div class="ss-viewall">${table(columns, ordered, {sorted})}</div>`;
       }
-      const cats = (slide.categories || []).map((cat) => `<section class="ss-leader-cat"><header><h4>${esc(cat.label)}</h4>${(slide.players || []).length ? `<button type="button" class="ss-view-all" data-ss-view-all="${attr(cat.stat)}">View all</button>` : ""}</header>${table([
-        {label: "Player", render: name},
+      const cats = (slide.categories || []).map((cat) => `<section class="ss-leader-cat">${panelTitle(cat.label, (slide.players || []).length ? `<button type="button" class="ss-view-all" data-ss-view-all="${attr(cat.stat)}">View all</button>` : "")}${table([
+        {label: "Player", render: name, cls: "ss-left"},
         {label: "Team", render: (r) => where(r.team_abbrev, r.now), width: "126px"},
         {label: /_pct$/.test(cat.stat) ? "Pct" : "Per game", render: (r) => value(r.per_game), cls: "ss-num", width: "66px"},
       ], cat.rows, {sorted: 2})}</section>`).join("");
       const winners = (slide.award_winners || []).map((w) => `<li><b>${esc(w.label)}</b>: ${esc(w.name)} ${where(w.then, w.now)}</li>`).join("");
-      return `<div class="ss-grid ss-grid-3">${cats}</div>${winners ? `<section class="ss-feature"><h4>Award winners</h4><ul class="ss-list">${winners}</ul></section>` : ""}`;
+      return `<div class="ss-grid ss-grid-3 ss-leader-grid">${cats}</div>${winners ? `<section class="ss-feature ss-winners">${panelTitle("Award winners")}<ul class="ss-list">${winners}</ul></section>` : ""}`;
     },
+    // Your team: a picture of the team, not a roster table (taste deck 2026-11-23). The projected starting five as
+    // large tiles (headshot, name, coloured overall, offense and defense roles as a pair), the bench as small tiles,
+    // and three league-relative numbers.
     your_team(slide) {
-      const cap = slide.cap || {};
-      const payout = slide.tax_payout;
-      const value = (v, digits = 1) => (v === null || v === undefined ? "—" : num(v, digits));
-      const injury = (p) => (p.injury ? ` <span class="ss-injury" title="${attr(`${p.injury.label || "Injured"}${p.injury.whole_season ? ", expected to miss the season" : `, about ${p.injury.games} games`}${p.injury.return_date ? `, back around ${p.injury.return_date}` : ""}`)}">✚ ${p.injury.whole_season ? "season" : p.injury.games}</span>` : "");
-      const roster = table([
-        {label: "Player", render: (p) => `<span class="ss-player">${headshot(p)}<span class="ss-player-name">${name({...p, player_id: p.id})}${injury(p)}</span></span>`, cls: "ss-player-col", width: "254px"},
-        {label: "Pos", render: (p) => esc(p.position || "—"), width: "46px"},
-        {label: "Age", render: (p) => value(p.age, 0), cls: "ss-num", width: "44px"},
-        {label: "OVR", render: (p) => ratingBar(p.overall), width: "82px"},
-        {label: "OFF", render: (p) => ratingBar(p.offense), width: "82px"},
-        {label: "DEF", render: (p) => ratingBar(p.defense), width: "82px"},
-        {label: "Offense role", render: (p) => roleChip(p.off_role), width: "128px"},
-        {label: "Defense role", render: (p) => roleChip(p.def_role), width: "128px"},
-        {label: "MIN", render: (p) => (p.minutes ? p.minutes : "—"), cls: "ss-num", width: "46px"},
-        {label: "PTS", render: (p) => value(p.points), cls: "ss-num", width: "46px"},
-        {label: "REB", render: (p) => value(p.rebounds), cls: "ss-num", width: "46px"},
-        {label: "AST", render: (p) => value(p.assists), cls: "ss-num", width: "46px"},
-        {label: "Contract", render: (p) => contract(p.salary_millions, p.years_left), cls: "ss-num", width: "92px"},
-      ], slide.rotation || [], {sorted: 3});
-      const horizon = slide.salary_horizon || {};
-      const chart = typeof salaryHorizonChart === "function" && (horizon.seasons || []).length
-        ? salaryHorizonChart({seasons: horizon.seasons, rows: horizon.rows || [], capByYear: horizon.cap_by_year || {}, className: "ss-payroll-chart"}) : "";
-      return `<section class="ss-roster">${roster}</section>`;
+      const rotation = slide.rotation || [];
+      const byId = new Map(rotation.map((p) => [p.id, p]));
+      const byMinutes = [...rotation].sort((a, b) => (Number(b.minutes) || 0) - (Number(a.minutes) || 0) || (Number(b.overall) || 0) - (Number(a.overall) || 0));
+      const starterIds = (slide.starters || []).filter((id) => byId.has(id));
+      const starters = starterIds.length ? starterIds.map((id) => byId.get(id)) : byMinutes.filter((p) => !p.injury).slice(0, 5);
+      const bench = byMinutes.filter((p) => !starters.includes(p));
+      const injury = (p) => (p.injury ? `<span class="ss-injury" title="${attr(`${p.injury.label || "Injured"}${p.injury.whole_season ? ", expected to miss the season" : `, about ${p.injury.games} games`}${p.injury.return_date ? `, back around ${p.injury.return_date}` : ""}`)}">✚ ${p.injury.whole_season ? "season" : esc(p.injury.games)}</span>` : "");
+      const link = (p) => name({...p, player_id: p.id});
+      const starterTile = (p, i) => `<li class="ss-tile ss-tile-starter" style="--i:${i}">
+          <span class="ss-tile-pos">${esc(p.position || "")}</span>
+          <span class="ss-tile-photo">${headshot(p)}</span>
+          <span class="ss-tile-name">${link(p)}${injury(p)}</span>
+          <span class="ss-tile-ovr" title="Overall">${ratingNumber(p.overall)}</span>
+          <span class="ss-role-pair">${roleChip(p.off_role)}${roleChip(p.def_role)}</span></li>`;
+      const benchTile = (p, i) => `<li class="ss-tile ss-tile-bench" style="--i:${i + 5}">
+          ${headshot(p)}<span class="ss-tile-text"><span class="ss-tile-name">${link(p)}</span><span class="ss-tile-meta">${ratingNumber(p.overall)}${injury(p)}</span></span></li>`;
+      const t = slide.takeaways || {};
+      const teams = t.teams || slide.league_teams || 30;
+      const fact = (label, value, sub, cls = "") => `<div class="ss-fact${cls}"><span class="ss-fact-label">${esc(label)}</span><b class="ss-fact-value">${value}</b>${sub ? `<span class="ss-fact-sub">${sub}</span>` : ""}</div>`;
+      const facts = [];
+      if (t.age) facts.push(fact("Rotation age", num(t.age.value), t.age.rank ? `${ordinalRank(t.age.rank)} youngest of ${teams}` : ""));
+      if (t.shape?.label) facts.push(fact("Talent spread", esc(t.shape.label), `Top three ${ordinalRank(t.shape.top_rank)} · bench ${ordinalRank(t.shape.depth_rank)}`));
+      if (t.payroll) facts.push(fact("Payroll", money(t.payroll.value), t.payroll.rank ? `${ordinalRank(t.payroll.rank)} highest of ${teams}` : ""));
+      return `<div class="ss-team-board${rowsIn()}">
+          <section class="ss-starters">${panelTitle("Projected starting five")}<ol class="ss-starter-row">${starters.map(starterTile).join("")}</ol></section>
+          ${bench.length ? `<section class="ss-bench">${panelTitle("Bench")}<ol class="ss-bench-row">${bench.map(benchTile).join("")}</ol></section>` : ""}
+          ${facts.length ? `<section class="ss-facts">${facts.join("")}</section>` : ""}
+        </div>`;
     },
+    // Team profile: two titled panels, the strengths radar and the payroll chart with its numbers underneath.
     team_profile(slide) {
       const cap = slide.cap || {};
       const payout = slide.tax_payout;
       const horizon = slide.salary_horizon || {};
       const chart = typeof salaryHorizonChart === "function" && (horizon.seasons || []).length
         ? salaryHorizonChart({seasons: horizon.seasons, rows: horizon.rows || [], capByYear: horizon.cap_by_year || {}, className: "ss-payroll-chart"}) : "";
+      const payoutText = !payout ? "—" : payout.payout_millions > 0 ? `${money(payout.payout_millions)} (${esc(payout.season)})`
+        : payout.tax_bill_millions > 0 ? `Paid ${money(payout.tax_bill_millions)} tax` : "None";
+      // Room below a line reads as "over" it when negative, never "$-16.5M".
+      const room = (value, under, over) => (Number(value) < 0 ? [over, money(-Number(value))] : [under, money(value)]);
+      const figures = [["Payroll", money(cap.payroll_millions)], ["Tax line", money(cap.tax_line_millions)],
+                       room(cap.tax_space_millions, "Room under the tax", "Over the tax by"),
+                       room(cap.hard_cap_space_millions, "Hard cap room", "Over the hard cap by"), ["Tax payout share", payoutText]];
       return `<div class="ss-profile">
-          ${(slide.radar || []).length ? curvedRadar(slide.radar, slide.league_teams || 30) : ""}
-          <div class="ss-profile-money"><section class="ss-payroll">${chart}</section>
-          <section><dl class="ss-dl"><dt>Payroll</dt><dd>${money(cap.payroll_millions)}</dd><dt>Tax line</dt><dd>${money(cap.tax_line_millions)}</dd><dt>Room under the tax</dt><dd>${money(cap.tax_space_millions)}</dd><dt>Hard cap room</dt><dd>${money(cap.hard_cap_space_millions)}</dd>
-          <dt>Tax payout share</dt><dd>${payout ? (payout.payout_millions > 0 ? `${money(payout.payout_millions)} (${esc(payout.season)}, paid ${esc(payout.paid_on)})` : payout.tax_bill_millions > 0 ? `None: paid ${money(payout.tax_bill_millions)} in tax (${esc(payout.season)})` : `None for ${esc(payout.season)}`) : "No payout recorded yet"}</dd></dl></section></div>
+          <section class="ss-panel ss-panel-radar">${panelTitle("Strengths by league rank")}${(slide.radar || []).length ? curvedRadar(slide.radar, slide.league_teams || 30) : `<p class="ss-empty">—</p>`}</section>
+          <section class="ss-panel ss-panel-payroll">${panelTitle("Payroll, next four seasons")}<div class="ss-payroll">${chart}</div>
+            <dl class="ss-cap-figures">${figures.map(([label, value]) => `<div><dt>${esc(label)}</dt><dd>${value}</dd></div>`).join("")}</dl></section>
         </div>`;
     },
+    // Contracts to watch: bar charts, not salary tables. Every contract reads "$X × N" (UI style guide).
     contracts(slide) {
-      return `<div class="ss-two">${table([
-          {label: "Your player", render: (p) => playerCell(p, esc(p.position || "")), cls: "ss-player-col"},
-          {label: "Salary", render: (p) => money(p.salary_millions), cls: "ss-num"},
-          {label: "Projected", render: (p) => money(p.projected_millions), cls: "ss-num"},
-        ], slide.extensions || [], {sorted: 2, caption: "Extension-eligible on your team"})}
-        ${table([
-          {label: "Player", render: (p) => playerCell(p, esc(p.position || "")), cls: "ss-player-col"},
-          {label: "Team", render: (p) => teamCell(p.team)},
-          {label: "Salary", render: (p) => money(p.salary_millions), cls: "ss-num"},
-        ], slide.expiring || [], {sorted: 2, caption: "Biggest expiring deals"})}</div>
-        ${(slide.extensions || []).length ? "" : note("No one on your team is eligible for an extension right now.")}`;
+      const who = (p) => `<span class="ss-player ss-bar-player">${headshot(p)}<span class="ss-player-name">${name({...p, player_id: p.id})}</span></span>`;
+      const extensions = slide.extensions || [];
+      const extMax = Math.max(1, ...extensions.flatMap((p) => [Number(p.salary_millions) || 0, Number(p.projected_millions) || 0]));
+      const share = (v, max) => Math.max(0.02, Math.min(1, (Number(v) || 0) / max)).toFixed(3);
+      const extRows = extensions.map((p, i) => `<li class="ss-bar-row ss-ext-row" style="--i:${i}">${who(p)}${ratingNumber(p.overall)}
+          <span class="ss-pair-bars"><span class="ss-hbar"><i class="ss-hbar-now" style="--share:${share(p.salary_millions, extMax)}"></i><em>${contract(p.salary_millions, p.years_left)}</em></span>
+          <span class="ss-hbar"><i class="ss-hbar-next" style="--share:${share(p.projected_millions, extMax)}"></i><em>${p.projected_millions ? contract(p.projected_millions, p.projected_years) : "—"}</em></span></span></li>`).join("");
+      const left = `<section class="ss-panel ss-panel-ext">${panelTitle("Your extension candidates", extensions.length ? `<span class="ss-bar-key"><span><i class="ss-hbar-now"></i>Now</span><span><i class="ss-hbar-next"></i>Projected extension</span></span>` : "")}
+          ${extensions.length ? `<ol class="ss-bar-list">${extRows}</ol>` : `<p class="ss-panel-empty">No one on your team is eligible for an extension.</p>`}</section>`;
+      // Players who could be on the move (the front offices' trade block), grouped by the main reason; each bar is
+      // his salary, coloured by his rating, so a long red bar is an expensive, lower-rated player.
+      const movers = slide.movers || [];
+      const list = movers.length ? movers : (slide.expiring || []);
+      const max = Math.max(1, ...list.map((p) => Number(p.salary_millions) || 0));
+      const moverRow = (p, i, scale = max) => `<li class="ss-bar-row ss-move-row" style="--i:${i}">${who(p)}${teamCell(p.team)}${ratingNumber(p.overall)}
+          <span class="ss-hbar"><i style="--share:${share(p.salary_millions, scale)};background-color:${Number.isFinite(Number(p.overall)) ? ratingColor(p.overall) : "#8a97a3"}"></i><em>${contract(p.salary_millions, p.years_left)}</em></span></li>`;
+      let body;
+      if (movers.length) {
+        const groups = [];
+        movers.forEach((p) => { const key = p.reason || "Other"; let g = groups.find((x) => x.key === key); if (!g) groups.push(g = {key, rows: []}); g.rows.push(p); });
+        let i = 0;
+        body = groups.map((g) => `<li class="ss-bar-group"><h5>${esc(g.key)}</h5><ol class="ss-bar-list">${g.rows.map((p) => moverRow(p, i++)).join("")}</ol></li>`).join("");
+        body = `<ol class="ss-bar-groups">${body}</ol>`;
+      } else {
+        body = list.length ? `<ol class="ss-bar-list">${list.map((p, i) => moverRow(p, i)).join("")}</ol>` : `<p class="ss-panel-empty">—</p>`;
+      }
+      const right = `<section class="ss-panel ss-panel-movers">${panelTitle(movers.length ? "Could be on the move" : "Biggest expiring deals")}${body}</section>`;
+      // With the trade block on the right, next summer's biggest expiring deals sit under your extensions.
+      const expiring = movers.length ? (slide.expiring || []).slice(0, 5) : [];
+      const expMax = Math.max(1, ...expiring.map((p) => Number(p.salary_millions) || 0));
+      const expiringPanel = expiring.length ? `<section class="ss-panel ss-panel-expiring">${panelTitle("Biggest expiring deals")}<ol class="ss-bar-list">${expiring.map((p, i) => moverRow(p, i + extensions.length, expMax)).join("")}</ol></section>` : "";
+      return `<div class="ss-contracts${rowsIn()}"><div class="ss-contracts-left">${left}${expiringPanel}</div>${right}</div>`;
     },
     prospects(slide) {
       return table([
         {label: "Cons.", render: (p) => p.consensus_rank, cls: "ss-num"},
-        {label: "Prospect", render: (p) => `<b>${esc(p.name)}</b>`},
+        {label: "Prospect", render: (p) => `<b>${esc(p.name)}</b>`, cls: "ss-left"},
         {label: "Pos", render: (p) => esc(p.position)},
         {label: "Age", render: (p) => num(p.age, 0), cls: "ss-num"},
         {label: "From", render: (p) => esc(p.school || "—")},
