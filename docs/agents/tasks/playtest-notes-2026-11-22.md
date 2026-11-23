@@ -58,7 +58,11 @@ Game runs from the browser pane: launch entry `game` (port 8766, normal `saves/`
   the payroll chart (player card proportions) and the cap numbers. Roles also on the Roster window (Off. role /
   Def. role after Pos). Note: drafted rookies carry placeholder roles from their position (guards "Primary
   handler", everyone else "Connector"; centers "Rim protector", others "Mobile forward"; ingest.py rookie_*_role),
-  so e.g. Aday Mara shows as a Connector until real roles are assigned.
+  so e.g. Aday Mara showed as a Connector. Fixed 2026-11-22 (`role_estimate.py`, run at the end of
+  install_inputs_model): players drafted 2026+ take the roles of the 15 veterans whose ratings are shaped most like
+  theirs (direction of relative strengths plus height). Held-out on veterans: offense 54% right vs 36% for the
+  position placeholder, defense 66% vs 46%. Mara is now a roll man / rim protector, Boozer a versatile big, Wagler a
+  movement shooter. Evidence: data/research/rookie_roles_fit_2026.json.
 - **Rating bars (done 2026-11-22):** every player OVR/OFF/DEF bar is one look: 36 x 5px on the house tables' dark
   track, fill and colour spread over 60-98 (`playerRatingBarStyle` in app.js) instead of 0-100, so a 77 and a 94
   differ at a glance (77 fills ~45% amber, 94 ~90% blue). Numbers unchanged. Skill and coach bars keep 0-100.

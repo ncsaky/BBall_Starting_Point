@@ -1,0 +1,86 @@
+{
+ "version": 2,
+ "date": "2026-11-22",
+ "question": "Do a drafted player's ratings predict his real primary offensive and defensive role better than the position placeholder?",
+ "method": "5-fold held-out accuracy on veterans with real roles (drafted before 2026). Features: derived traits as z-scores, minus the player's own average and scaled to one length (the direction of his relative strengths), plus height z-score counted double. Weighted k nearest veterans (weight 1/(1+distance squared)).",
+ "why_shape": "Matching on rating level made 36 of 53 rookies Connectors and 38 Mobile Forwards: rookies' derived ratings are flatter, so their nearest veterans were low-rated bench connectors. Matching on direction keeps the same held-out accuracy and spreads rookies across roles.",
+ "script": "scripts/research/rookie_roles_fit.py 2.0 --cosine",
+ "chosen": "k=15, direction matching, height weight 2",
+ "level_matching_accuracy": {
+  "offense": {
+   "placeholder": 0.364,
+   "centroid": 0.403,
+   "knn5": 0.519,
+   "knn9": 0.533,
+   "knn15": 0.538,
+   "knn25": 0.542,
+   "most_common_share": 0.248
+  },
+  "defense": {
+   "placeholder": 0.459,
+   "centroid": 0.603,
+   "knn5": 0.63,
+   "knn9": 0.652,
+   "knn15": 0.649,
+   "knn25": 0.636,
+   "most_common_share": 0.31
+  }
+ },
+ "direction_matching": {
+  "offense": {
+   "placeholder": 0.364,
+   "centroid": 0.403,
+   "knn5": 0.503,
+   "knn9": 0.531,
+   "knn15": 0.541,
+   "knn25": 0.52,
+   "most_common_share": 0.248,
+   "rookie_roles_k15": {
+    "Connector": 20,
+    "Primary Ball Handler": 8,
+    "Movement Ball Handler": 7,
+    "Movement Shooter": 7,
+    "Rollman": 6,
+    "Secondary Ball Handler": 3,
+    "Versatile Big": 2
+   }
+  },
+  "defense": {
+   "placeholder": 0.459,
+   "centroid": 0.574,
+   "knn5": 0.643,
+   "knn9": 0.649,
+   "knn15": 0.657,
+   "knn25": 0.682,
+   "most_common_share": 0.31,
+   "rookie_roles_k15": {
+    "Hidden": 18,
+    "Mobile Forward": 18,
+    "Rim Protector": 7,
+    "On-Ball Guard": 6,
+    "Versatile Stopper": 4
+   }
+  }
+ },
+ "veterans": 638,
+ "veteran_role_shares": {
+  "primary_off_role": {
+   "Connector": 158,
+   "Primary Ball Handler": 107,
+   "Rollman": 105,
+   "Spot Up Shooter": 65,
+   "Movement Ball Handler": 57,
+   "Secondary Ball Handler": 57,
+   "Movement Shooter": 53,
+   "Versatile Big": 36
+  },
+  "primary_def_role": {
+   "Mobile Forward": 198,
+   "Rim Protector": 120,
+   "Hidden": 103,
+   "On-Ball Guard": 95,
+   "Versatile Stopper": 81,
+   "Disruptor": 41
+  }
+ }
+}

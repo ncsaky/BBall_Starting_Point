@@ -406,6 +406,9 @@ def install_inputs_model(canonical: dict[str, Any], root: Path | None = None, *,
     # Player value (overall / offense / defense) from the hidden ratings fitted to real impact; see impact_value.
     from .impact_value import install_summary_tables
     install_summary_tables(canonical, root)
+    # Players drafted in 2026 or later take the roles of the veterans their ratings most resemble (no NBA usage yet).
+    from .role_estimate import assign_estimated_roles
+    assign_estimated_roles(canonical, _trait_values(canonical))
 
 
 _SCALE_MAP_CACHE: dict[str, Any] = {}
