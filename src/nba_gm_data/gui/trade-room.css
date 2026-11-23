@@ -10,7 +10,7 @@
   --tr-card: #ffffff;
   --tr-panel: #eef2f5;
   --tr-stripe: #f3f6f8;
-  --tr-hover: #e2ecf5;
+  --tr-hover: #e7edf2;
   --tr-tint: #dce8f3;
   --tr-accent: #2f6fb3;
   --tr-accent-dark: #255d98;
@@ -286,14 +286,14 @@ body.unified-terminal-ui #modalRoot table.tr-table thead th[aria-sort]::after { 
 body.unified-terminal-ui #modalRoot table.tr-table thead th[aria-sort="ascending"]::after { content: " ▴"; }
 body.unified-terminal-ui #modalRoot table.tr-table tbody :is(td, th) {
   height: 32px; padding: 0 6px !important; text-align: center !important; vertical-align: middle; white-space: nowrap;
-  border: 0 !important; border-bottom: 1px solid var(--tr-rule) !important; background: var(--tr-card) !important; color: var(--tr-ink); font-weight: 400 !important;
+  border: 0 !important; border-bottom: 1px solid var(--tr-rule) !important; background-color: var(--tr-card) !important; color: var(--tr-ink); font-weight: 400 !important;
 }
-body.unified-terminal-ui #modalRoot table.tr-table tbody tr:nth-child(even) > :is(td, th) { background: var(--tr-stripe) !important; }
+body.unified-terminal-ui #modalRoot table.tr-table tbody tr:nth-child(even) > :is(td, th) { background-color: var(--tr-stripe) !important; }
 body.unified-terminal-ui #modalRoot table.tr-table tbody :is(td, th).is-sorted { background-image: linear-gradient(var(--tr-sorted-cell), var(--tr-sorted-cell)) !important; font-weight: 700 !important; }
 body.unified-terminal-ui #modalRoot table.tr-table tbody :is(td, th).is-sorted :is(b, span, summary, button) { font-weight: 700 !important; }
-body.unified-terminal-ui #modalRoot table.tr-table tbody tr.is-selected > :is(td, th) { background: #dde9f5 !important; }
+body.unified-terminal-ui #modalRoot table.tr-table tbody tr.is-selected > :is(td, th) { background-color: #d3e3f4 !important; }
 body.unified-terminal-ui #modalRoot table.tr-table tbody tr[data-trade-row] { cursor: pointer; }
-body.unified-terminal-ui #modalRoot table.tr-table tbody tr:hover > :is(td, th) { background: var(--tr-hover) !important; color: var(--tr-ink) !important; }
+body.unified-terminal-ui #modalRoot table.tr-table tbody tr:hover > :is(td, th) { background-color: var(--tr-hover) !important; color: var(--tr-ink) !important; }
 body.unified-terminal-ui #modalRoot table.tr-table tbody tr:hover > :is(td, th) :is(button, a, span, summary) { color: inherit; text-decoration: none; }
 body.unified-terminal-ui #modalRoot table.tr-table tbody tr:hover .tr-rating { color: inherit; }
 body.unified-terminal-ui #modalRoot table.tr-table :is(td, th) { width: 1%; }
@@ -370,9 +370,8 @@ body.unified-terminal-ui #modalRoot :is(.modal-trade-room, .modal-trade-offers) 
 body.unified-terminal-ui #modalRoot :is(.modal-trade-room, .modal-trade-offers) .incoming-offer-side .tr-tiles { overflow: visible; }
 body.unified-terminal-ui #modalRoot :is(.modal-trade-room, .modal-trade-offers) .incoming-offer-side .tr-tiles-empty { height: 40px; }
 @container (max-width: 380px) {
-  body.unified-terminal-ui #modalRoot .incoming-offer-side .tr-tile { grid-template-columns: 34px minmax(0, 1fr) 40px 38px; }
-  body.unified-terminal-ui #modalRoot .incoming-offer-side .tr-tile-contract { display: none; }
-  body.unified-terminal-ui #modalRoot .incoming-offer-side .tr-role-pair { display: none; }
+  body.unified-terminal-ui #modalRoot .incoming-offer-side .tr-tile { grid-template-columns: 40px minmax(0, 1fr) 42px; }
+  body.unified-terminal-ui #modalRoot .incoming-offer-side .tr-tile :is(.tr-tile-contract, .tr-tile-value) { display: none; }
 }
 body.unified-terminal-ui #modalRoot :is(.modal-trade-room, .modal-trade-offers) .trade-candidate-card > footer,
 body.unified-terminal-ui #modalRoot :is(.modal-trade-room, .modal-trade-offers) .incoming-offer-analysis-row {
@@ -499,3 +498,19 @@ body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .trade-payr
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .trade-payroll-ledgers table { width: 100%; background: var(--tr-card); border: 1px solid var(--tr-line); }
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .trade-payroll-ledgers table :is(td, th) { text-align: center !important; }
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .trade-payroll-ledgers table thead th { box-shadow: inset 0 -3px var(--tr-ink) !important; font-size: 10px !important; font-weight: 700 !important; }
+
+/* A counter-offer takes the room: a smaller dial, the counter in one line, its three answers. */
+body.unified-terminal-ui #modalRoot .tr-answer.has-counter .tr-dial { width: 118px; }
+body.unified-terminal-ui #modalRoot .tr-answer.has-counter .tr-answer-word { font-size: 16px !important; }
+body.unified-terminal-ui #modalRoot .tr-answer.has-counter > .tr-answer-line { display: none; }
+body.unified-terminal-ui #modalRoot .tr-answer .tr-counter-actions .tr-text-button { padding: 3px 6px !important; }
+
+/* Pick conditions: the add control reads as a text button; the plus icon image is dropped. */
+body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room .trade-pick-terms button[data-pick-add] {
+  min-height: 0 !important; padding: 3px 8px !important; background: transparent !important; border: 1px solid transparent !important; box-shadow: none !important;
+  color: var(--tr-accent-dark) !important; font: 12px Tahoma, Arial, sans-serif !important;
+}
+body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room .trade-pick-terms button[data-pick-add]::before { content: "+ "; }
+body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room .trade-pick-terms button[data-pick-add]:hover:not(:disabled) { background: rgba(47, 111, 179, .1) !important; }
+body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room .trade-pick-terms button[data-pick-add] img { display: none; }
+body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room .trade-pick-terms button[data-pick-add]:disabled { color: #9aa6b0 !important; }

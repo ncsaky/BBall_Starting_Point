@@ -8298,6 +8298,7 @@ function renderTradeBuilder(root) {
   const userId = state.home?.save?.user_team?.id;
   const partnerAnswers = (candidate?.evaluations || []).filter(row => row.perspective_team_id !== userId && teamLabel(row.perspective_team_id) !== userTeam());
   const canApply = candidate?.legality?.status === "legal" && partnerAnswers.length > 0 && partnerAnswers.every(row => row.accepted);
+  const counterOpen = !canApply && Boolean(candidate?.counter_offer?.proposal && !candidate.counter_offer.proposal.transfers);
   const empty = !participants.some(row => row.selected.length);
   const hasPicks = participants.some(row => row.selected.some(asset => asset.kind !== "player")) || (state.tradePickRules || []).length;
   const fresh = state.tradeFreshAsset || "";
@@ -8318,7 +8319,7 @@ function renderTradeBuilder(root) {
           <div id="tradeRead">${tradeReadout(candidate)}</div>
           <div class="tr-verdict-actions">
             <label class="trade-final-toggle" title="A final offer gets a yes or no, never a counter-offer."><input type="checkbox" id="tradeFinalOffer" ${state.tradeFinalOffer ? "checked" : ""}> Final offer</label>
-            <button type="button" id="evaluateTrade" class="tr-button${canApply ? "" : " is-primary"}" ${tradePickRuleErrors().length || empty ? "disabled" : ""}>${escapeHtml(ask)}</button>
+            <button type="button" id="evaluateTrade" class="${canApply || counterOpen ? "tr-text-button" : "tr-button is-primary"}" ${tradePickRuleErrors().length || empty ? "disabled" : ""}>${escapeHtml(ask)}</button>
           </div>
         </aside>
       </section>
@@ -15376,7 +15377,7 @@ function tradeReadout(candidate) {
     candidate.partner_read ? frontOfficeReadMarkup(candidate.partner_read, "Your assistant GM's read") : "",
   ].join("");
   return `
-    <div class="trade-evaluation-board tr-answer is-${tone}" aria-live="polite">
+    <div class="trade-evaluation-board tr-answer is-${tone}${hasCounter ? " has-counter" : ""}" aria-live="polite">
       ${dial(score, tone, word)}
       <strong class="tr-answer-word">${escapeHtml(word)}</strong>
       ${line ? `<span class="tr-answer-line">${escapeHtml(line)}</span>` : ""}
@@ -15401,8 +15402,8 @@ function tradeCounterOffer(counter, closed) {
   const round = counter.counter?.rounds;
   return `<div class="trade-counter-offer" aria-live="polite">
       <p><strong>Counter-offer${round > 1 ? ` (round ${escapeHtml(textValue(round))})` : ""}:</strong> ${escapeHtml(textValue(counter.counter?.text || "The partner proposes a different package."))}${counter.counter?.last_round && !counter.counter?.final_offer ? " This is its last counter." : ""}</p>
-      <div class="tr-counter-package"><div>${escapeHtml(teamLabel(proposal.from_team_id))} sends: ${names(proposal.from_assets)}</div><div>${escapeHtml(teamLabel(proposal.to_team_id))} sends: ${names(proposal.to_assets)}</div></div>
-      <div class="tr-counter-actions"><button type="button" id="declineCounterTrade" class="tr-text-button">Decline</button><button type="button" id="editCounterTrade" class="tr-text-button">Edit and answer</button><button type="button" id="acceptCounterTrade" class="tr-button is-primary trade-execute-button">Accept counter</button></div>
+      <div class="tr-counter-actions"><button type="button" id="declineCounterTrade" class="tr-text-button">Decline</button><button type="button" id="editCounterTrade" class="tr-text-button">Edit</button><button type="button" id="acceptCounterTrade" class="tr-button is-primary trade-execute-button">Accept counter</button></div>
+      <details class="tr-details"><summary>Their package</summary><div class="tr-counter-package"><div>${escapeHtml(teamLabel(proposal.from_team_id))} sends: ${names(proposal.from_assets)}</div><div>${escapeHtml(teamLabel(proposal.to_team_id))} sends: ${names(proposal.to_assets)}</div></div></details>
       ${history}
     </div>`;
 }
@@ -15645,7 +15646,7 @@ function offerCard(offer, index) {
   const legal = offer.legality?.status || "unknown";
   const repeatCount = Math.max(1, Number(offer.repeat_count) || 1);
   const lastProposed = offer.repeat_dates?.at?.(-1) || offer.offer_context?.last_proposed_date || offer.offer_context?.created_date;
-  const repeatedLabel = repeatCount > 1 ? `<small class="incoming-offer-repeat" title="This identical trade has been proposed ${repeatCount} times">Sent ${repeatCount}×${lastProposed ? ` · latest ${escapeHtml(lastProposed)}` : ""}</small>` : "";
+  const repeatedLabel = repeatCount > 1 ? `<small class="incoming-offer-repeat" title="This identical trade has been proposed ${repeatCount} times">Sent ${repeatCount}×${lastProposed ? ` · latest ${escapeHtml(typeof shortDate === "function" ? shortDate(lastProposed) : lastProposed)}` : ""}</small>` : "";
   return `<article class="incoming-offer${repeatCount > 1 ? " incoming-offer--repeated" : ""}">
     <header class="incoming-offer-heading"><div><span>Offer ${index + 1}</span>${repeatedLabel}<strong>${escapeHtml(proposal.transfers ? tradeReceipts(proposal).map(row=>row.team).join(' ↔ ') : `${from} ↔ ${to}`)}</strong></div>${tradeLegalityBadge(offer)}</header>
     ${incomingOfferPackage(tradeReceipts(proposal))}
