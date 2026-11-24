@@ -483,6 +483,14 @@
     },
   };
 
+  // Pages layout (branch sidebar-pages): the slideshow fills the page area and the sidebar stays usable, so only the
+  // page sheet goes inert; the board keeps the whole app inert as before.
+  function setAppInert(on) {
+    const pages = document.documentElement.dataset.layout === "pages" && document.querySelector(".is-pages .pages-sheet");
+    const target = pages || document.getElementById("app");
+    if (on) target?.setAttribute("inert", ""); else { target?.removeAttribute("inert"); document.getElementById("app")?.removeAttribute("inert"); }
+  }
+
   function slideBody(slide) {
     if (slide.unavailable) return `<p class="ss-empty">${esc(slide.unavailable)}</p>`;
     const render = RENDER[slide.key];
@@ -534,7 +542,7 @@
     if (!playerId || typeof dashboardPlayerCard !== "function") return;
     show.suspended = true;
     show.root.hidden = true;
-    document.getElementById("app")?.removeAttribute("inert");
+    setAppInert(false);
     document.body.classList.remove("season-slideshow-open");
     let back = document.getElementById("ssReturn");
     if (!back) {
@@ -552,7 +560,7 @@
     if (!show.open || !show.suspended) return;
     show.suspended = false;
     show.root.hidden = false;
-    document.getElementById("app")?.setAttribute("inert", "");
+    setAppInert(true);
     document.body.classList.add("season-slideshow-open");
     show.root.querySelector(".ss-card")?.focus({preventScroll: true});
   }
@@ -564,7 +572,7 @@
     document.getElementById("ssReturn")?.remove();
     show.root.hidden = true;
     show.root.innerHTML = "";
-    document.getElementById("app")?.removeAttribute("inert");
+    setAppInert(false);
     document.body.classList.remove("season-slideshow-open");
     const focus = show.returnFocus;
     show.returnFocus = null;
@@ -606,7 +614,7 @@
     show.index = Math.max(0, Math.min(startAt, data.slides.length - 1));
     show.returnFocus = document.activeElement;
     show.open = true;
-    document.getElementById("app")?.setAttribute("inert", "");
+    setAppInert(true);
     document.body.classList.add("season-slideshow-open");
     render(0);
     return true;

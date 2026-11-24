@@ -312,6 +312,14 @@ function wireEvents() {
     applyBoardTheme(theme);
     button.parentElement.querySelectorAll("[data-board-theme-choice]").forEach(other => other.setAttribute("aria-pressed", String(other === button)));
   });
+  // Settings > Layout: pages or the board (re-renders behind the open Settings window).
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest?.("[data-layout-mode-choice]");
+    if (!button || !window.CardPages) return;
+    window.CardPages.setMode(button.dataset.layoutModeChoice);
+    button.parentElement.querySelectorAll("[data-layout-mode-choice]").forEach(other => other.setAttribute("aria-pressed", String(other === button)));
+    const modal = state.modal; render(); state.modal = modal; renderModal();
+  });
   // Settings > Glass and Font.
   document.addEventListener("click", (event) => {
     const button = event.target.closest?.("[data-ui-look-choice]");
@@ -12901,6 +12909,7 @@ function openSettingsModal() {
       </section>` : ""}
       <section class="settings-group">
         <h4>Look</h4>
+        ${layoutModeMenuMarkup()}
         ${boardThemeMenuMarkup()}
         ${typeof uiLookMenuMarkup === "function" ? uiLookMenuMarkup("font") + uiLookMenuMarkup("buttons") : ""}
       </section>
@@ -12997,6 +13006,14 @@ function settingsRow(label, control, info = "") {
 
 function settingsPill(label, buttons) {
   return `<div class="settings-pill" role="group"${label ? ` aria-label="${label}"` : ""}>${buttons}</div>`;
+}
+
+// Settings > Layout (branch sidebar-pages): the sidebar of pages (default) or the free-floating card board.
+function layoutModeMenuMarkup() {
+  if (!window.CardPages) return "";
+  const current = window.CardPages.enabled() ? "pages" : "board";
+  const buttons = [["pages", "Pages"], ["board", "Board"]].map(([key, label]) => `<button type="button" data-layout-mode-choice="${key}" aria-pressed="${key === current}">${label}</button>`);
+  return settingsRow("Layout", settingsPill("Layout", buttons.join("")), "Pages: a sidebar of pages, each filling the screen. Board: the free-floating windows.");
 }
 
 function boardThemeMenuMarkup() {
