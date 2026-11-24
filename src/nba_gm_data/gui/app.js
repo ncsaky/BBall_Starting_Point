@@ -9117,8 +9117,8 @@ function renderTradeBuilder(root) {
       <div class="tr-pick-body">${assetColumn(`${current.team} gives`, current.payload, current.side, current.team)}</div>
     </div>` : `
     <div class="trade-builder-layout tr-builder is-deal${multi ? " is-multi" : ""}">
+      <div class="tr-deal-bar"><button type="button" class="ui-command tr-add-change" data-trade-view="pick"><img src="/assets/window-icons/plus.svg" alt="">Add or change players</button></div>
       <div class="tr-deal-main">
-        <div class="tr-deal-bar">${viewSwitch("pick", "‹ Add or change players")}</div>
         <section class="tr-stage" style="--tr-sides:${participants.length}">
           ${participants.map(row => tradeDealSide(row, participants, fresh)).join("")}
         </section>
@@ -9234,7 +9234,7 @@ function tradeSidePayload(side) {
 async function addTradeParticipant(team) {
   if (!team || !state.teams.some(row => row.abbrev === team)) return;
   if (tradeWorkspaceParticipants().some(row => row.team === team)) return showToast("That team is already in this trade.",true);
-  if ((state.tradeAdditionalTeams || []).length >= 4) return;
+  if ((state.tradeAdditionalTeams || []).length >= 4) return showToast("A trade can include at most six teams.", true);
   const save = state.currentSave;
   const payload = await action("team_assets", {...savePayload(),team});
   if (save !== state.currentSave || state.tradeTab !== "builder" || (state.tradeAdditionalTeams || []).length >= 4 || tradeWorkspaceParticipants().some(row => row.team === team)) return;
@@ -9305,18 +9305,20 @@ function tradeSegmentedValueBoard(candidate, outgoing, incoming, outgoingTeam, i
   )), ...rows.map(([, details]) => Math.abs(details.reduce((sum, asset) => sum + Number(asset.adjusted_value || 0), 0))));
   const labels = { quality: "Quality", age_upside: "Age and growth value", contract: "Contract", scarcity: "Scarcity", playoffs: "Playoffs", health: "Health", fit: "Fit", role: "Projected role", retention: "Recent acquisition", draft_capital: "Draft capital", swap_value: "Swap value", asset_value: "Asset value" };
   const explanations = {quality:"Current on-court contribution.",age_upside:"Age curve and remaining development; older players can have a negative age adjustment even with no upside remaining.",contract:"Salary value relative to contribution, not salary in dollars.",scarcity:"How difficult this skill set is to replace.",playoffs:"Contribution expected to translate to playoff basketball.",health:"Injury risk reduces value.",fit:"Fit with this team's needs.",role:"Change from the listed value for the projected role after outgoing players leave. Fewer usable minutes can mean a large reduction; this is not a ratings penalty.",retention:"Extra cost of moving a recently acquired player.",draft_capital:"Pick value including year, projected position and protections.",swap_value:"Value of the swap right, not ownership of an extra pick."};
-  const bar = (components) => {
+  // Round 7: a listed value (before the other team answers) is drawn in the asset's own colour, the one beside it in
+  // the deal, never grey.
+  const bar = (components, tint = "") => {
     const entries = Object.entries(components || {}).filter(([, value]) => Math.abs(Number(value)) >= 0.005);
     const positive = entries.filter(([, value]) => Number(value) > 0);
     const negative = entries.filter(([, value]) => Number(value) < 0).reverse();
-    return `<div class="trade-value-diverging"><span class="negative-side">${negative.map(([key, value]) => `<i class="value-${escapeAttr(key)}" style="width:${clampNumber(Math.abs(Number(value)) / maximum * 100, 0, 100)}%" title="${escapeAttr(`${labels[key] || rowLabel(key)} ${Number(value).toFixed(1)}`)}"></i>`).join("")}</span><b></b><span class="positive-side">${positive.map(([key, value]) => `<i class="value-${escapeAttr(key)}" style="width:${clampNumber(Number(value) / maximum * 100, 0, 100)}%" title="${escapeAttr(`${labels[key] || rowLabel(key)} +${Number(value).toFixed(1)}`)}"></i>`).join("")}</span></div>`;
+    return `<div class="trade-value-diverging"><span class="negative-side">${negative.map(([key, value]) => `<i class="value-${escapeAttr(key)}" style="width:${clampNumber(Math.abs(Number(value)) / maximum * 100, 0, 100)}%" title="${escapeAttr(`${labels[key] || rowLabel(key)} ${Number(value).toFixed(1)}`)}"></i>`).join("")}</span><b></b><span class="positive-side">${positive.map(([key, value]) => `<i class="value-${escapeAttr(key)}" style="width:${clampNumber(Number(value) / maximum * 100, 0, 100)}%${tint && key === "asset_value" ? `;background:${tint}` : ""}" title="${escapeAttr(`${labels[key] || rowLabel(key)} +${Number(value).toFixed(1)}`)}"></i>`).join("")}</span></div>`;
   };
   const componentKeys = [...new Set(all.flatMap((asset) => Object.keys(asset.components || {})))];
   return `<section class="approved-trade-values"><header>${archived ? 'Archived asset estimates' : 'Receiving-team asset values'}</header>${archived ? '<p class="trade-value-help">This saved offer uses the older chart calculation. Review it in the builder and evaluate again for corrected totals; these archived bars are not the decision ledger.</p>' : ''}<details class="trade-value-help"><summary>What changes the listed value?</summary><p>Listed value is a market reference, not OVR or dollars. These bars show value to the receiving team: right adds value, left subtracts it. Age, upside, contract and health are already included in the reference value; the colored segments explain that value, not extra bonuses. Projected role and fit depend on the destination roster. Package adjustment discounts a bundle of depth relative to a concentrated return. Strategy is separate, so this total is not an acceptance score.</p></details>${rows.map(([team, details, destination, pack]) => {
     const subtotal = details.reduce((sum, asset) => sum + Number(asset.adjusted_value || 0), 0);
     const net = pack?.total == null ? subtotal : Number(pack.total);
     const adjustment = net-subtotal;
-    return `<div class="trade-value-team"><strong>${escapeHtml(team)} sends · valued by ${escapeHtml(destination)}</strong>${details.length ? details.map((asset) => `<div class="approved-value-row" title="${escapeAttr(`${asset.listed_value == null ? '' : `Listed ${Number(asset.listed_value).toFixed(1)} · `}${asset.expected_role || ''}`)}"><span>${escapeHtml(asset.label || asset.id)}</span>${bar(asset.components)}<em>${Number(asset.adjusted_value || 0).toFixed(1)}</em></div>`).join("") : `<div class="trade-value-empty">No assets selected</div>`}${Math.abs(adjustment)>.05 ? `<div class="approved-value-row"><span>Package adjustment</span>${bar({asset_value:adjustment})}<em>${adjustment.toFixed(1)}</em></div>` : ''}<div class="approved-value-row net"><span>Roster value</span>${bar({ asset_value: net })}<em>${net.toFixed(1)}</em></div></div>`;
+    return `<div class="trade-value-team"><strong>${escapeHtml(team)} sends · valued by ${escapeHtml(destination)}</strong>${details.length ? details.map((asset, index) => `<div class="approved-value-row" title="${escapeAttr(`${asset.listed_value == null ? '' : `Listed ${Number(asset.listed_value).toFixed(1)} · `}${asset.expected_role || ''}`)}"><span>${escapeHtml(asset.label || asset.id)}</span>${bar(asset.components, typeof TRADE_ASSET_COLORS === "object" ? TRADE_ASSET_COLORS[index % TRADE_ASSET_COLORS.length] : "")}<em>${Number(asset.adjusted_value || 0).toFixed(1)}</em></div>`).join("") : `<div class="trade-value-empty">No assets selected</div>`}${Math.abs(adjustment)>.05 ? `<div class="approved-value-row"><span>Package adjustment</span>${bar({asset_value:adjustment})}<em>${adjustment.toFixed(1)}</em></div>` : ''}<div class="approved-value-row net"><span>Roster value</span>${bar({ asset_value: net }, "#9ec9ff")}<em>${net.toFixed(1)}</em></div></div>`;
   }).join("")}<footer>${componentKeys.map((key) => `<span class="value-${escapeAttr(key)}" title="${escapeAttr(explanations[key] || labels[key] || rowLabel(key))}">${escapeHtml(labels[key] || rowLabel(key))}</span>`).join("")}</footer><details class="trade-value-help"><summary>Value components</summary><dl>${componentKeys.filter(key=>explanations[key]).map(key=>`<div><dt>${escapeHtml(labels[key])}</dt><dd>${escapeHtml(explanations[key])}</dd></div>`).join('')}</dl></details></section>`;
 }
 
@@ -11400,11 +11402,12 @@ function clipboardPlayerCardWindows(cardId = null) {
       id:entry.id,
       title:entry.title,
       card,
-      width:isExtensionCard ? (sizeRevision >= 8 && entry.width ? entry.width : 1530) : sizeRevision >= 4 && entry.width ? entry.width : isFantasyCard ? 1120 : 1530,
-      height:sizeRevision >= 4 && entry.height ? entry.height : isFantasyCard ? 700 : 900,
-      initialScale:isExtensionCard ? .626166 : isFantasyCard || entry.kind === "coach" ? 1 : .7,
+      // Round 7 ("make it wholesale larger", no scrolling): player cards are 1700 x 1080 and shown at 76%, not 70%.
+      width:isExtensionCard ? (sizeRevision >= 8 && entry.width ? entry.width : 1530) : sizeRevision >= 5 && entry.width ? entry.width : isFantasyCard ? 1120 : entry.kind === "coach" ? 900 : 1700,
+      height:sizeRevision >= 5 && entry.height ? entry.height : isFantasyCard ? 700 : entry.kind === "coach" ? 252 : 1080,
+      initialScale:isExtensionCard ? .626166 : isFantasyCard || entry.kind === "coach" ? 1 : .76,
       minScale:isExtensionCard ? .5 : undefined,
-      sizeRevision:isExtensionCard ? 9 : 4,
+      sizeRevision:isExtensionCard ? 9 : 5,
       galleryVisible:false,
       iconKind:entry.kind,
     };
@@ -11435,7 +11438,7 @@ async function openPlayerCardOnClipboard({key, title, body, kind = "player", con
   if (!entry && kind === "extension") entry = state.clipboardPlayerCards.find(item => item.saveId === saveId && item.key === `dashboard:${context?.selectedPlayerId}`);
   if (!entry) {
     state.clipboardPlayerCardSequence += 1;
-    entry = {id:`player-card-${state.clipboardPlayerCardSequence}`, saveId, key, title, body, kind, width:kind === "coach" ? 900 : kind === "fantasy" ? 1120 : 1530, height:kind === "coach" ? 252 : kind === "fantasy" ? 700 : 900, sizeRevision:kind === "extension" ? 9 : 4};
+    entry = {id:`player-card-${state.clipboardPlayerCardSequence}`, saveId, key, title, body, kind, width:kind === "coach" ? 900 : kind === "fantasy" ? 1120 : kind === "extension" ? 1530 : 1700, height:kind === "coach" ? 252 : kind === "fantasy" ? 700 : kind === "extension" ? 900 : 1080, sizeRevision:kind === "extension" ? 9 : 5};
     state.clipboardPlayerCards.push(entry);
   } else {
     const extensionSizeUpdate = kind === "extension" && (Number(entry.sizeRevision) || 0) < 9
@@ -16545,7 +16548,7 @@ function tradeAssetRow(asset, {side, removeSide, routeFrom, sortKey = ""} = {}) 
     const rule=(side || removeSide) ? (state.tradePickRules || []).find(r=>r.pick_id===id && r.enabled!==false) : null;
     const authored = rule ? rule.type==='pick_swap' ? `${rule.benefit==='worse'?'Less':'More'} favorable swap right` : `Picks ${rule.from}–${rule.through} protected` : '';
     const kind = asset.kind === "pick_swap" || rule?.type==='pick_swap' ? "Swap right" : "Draft pick";
-    return `<tr class="trade-ledger-pick${selected ? " is-selected" : ""}"${rowAttrs}>${control}${route}<td class="trade-ledger-portrait">${draftAssetGlyph(asset, true, true)}</td><th scope="row" class="tr-col-name${sortKey === "name" ? " is-sorted" : ""}"${pick.full ? ` title="${escapeAttr(pick.full)}"` : ""}><strong>${escapeHtml(pick.short)}</strong></th><td class="tr-col-notes" colspan="10">${escapeHtml([kind === "Swap right" ? "Swap right" : "", authored || pick.note || ""].filter(Boolean).join(" · ") || pick.full || "")}</td>${cell("value", "trade-ledger-value tr-col-value", tradeValueBar(tradeKnownNumber(asset.trade_value)))}</tr>`;
+    return `<tr class="trade-ledger-pick${selected ? " is-selected" : ""}"${rowAttrs}>${control}${route}<td class="trade-ledger-portrait">${draftAssetGlyph(asset, true, true)}</td><th scope="row" class="tr-col-name${sortKey === "name" ? " is-sorted" : ""}"${pick.full ? ` title="${escapeAttr(pick.full)}"` : ""}><strong>${escapeHtml(pick.short)}</strong></th><td colspan="3"></td><td class="tr-col-roles tr-col-notes">${escapeHtml([kind === "Swap right" ? "Swap right" : "", authored || pick.note || ""].filter(Boolean).join(" · ") || pick.full || "")}</td><td colspan="6"></td>${cell("value", "trade-ledger-value tr-col-value", tradeValueBar(tradeKnownNumber(asset.trade_value)))}</tr>`;
   // Round 5: a pick's row is its name, then its notes (protection, swap) across the row, then its value; no "Pick"
   // in the position column and no empty dashes.
   }

@@ -116,6 +116,11 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **Phases, not days, in the offseason:** outside the regular season, a phase's one button moves to the next phase. Simulating day by day only matters in the season.
 - **One obvious next step.** When a phase's work is done (the roster is set), show one clear button to move on and hide the sim buttons that don't apply.
 
+- **Side-by-side panels line up (round 7):** in the trade room every side's header sits on one top line and every footer (payroll, totals) on one bottom line, whatever each list holds. A side panel (the verdict) never starts higher or lower than the panels beside it.
+- **Small text buttons sit next to what they act on** ("Add condition" right after "Draft Terms", not pushed to the far edge). Secondary actions ("Add or change players", "Add condition") share one small style.
+- **Charts keep their tables under them** (round 7: the payroll table beside the chart was wrong).
+- **Value bars are never grey** (round 7, again on the Value tab).
+
 ### Settings
 - **One Settings window (user, 2026-11-24: "completely disorganized"):** labelled sections (Game, Look, Season slideshows, Help, Credits), each a row with the label on the left and its control on the right. Choices are the standard long pill; explanations sit behind an "i"; actions are a row of pills; Back to Save Selection sits alone at the bottom. The old separate settings page opens this window.
 

@@ -453,6 +453,10 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-cl
 
 /* Checkboxes: a hollow box with a soft edge and a faint dark well, never a light square. */
 html[data-glass="clear"] body.unified-terminal-ui input[type="checkbox"]:not(:checked) { background-color: rgba(4, 10, 18, .22) !important; border-color: rgba(255, 255, 255, .40) !important; }
+/* Round 7: checkboxes still read white; a dark well with a faint edge, and solid blue with a white tick when checked. */
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-window, .season-slideshow, body) input[type="checkbox"]:not(:checked) { -webkit-appearance: none !important; appearance: none !important; background: rgba(0, 0, 0, .28) !important; border: 1.5px solid rgba(255, 255, 255, .26) !important; box-shadow: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-window, .season-slideshow, body) input[type="checkbox"]:not(:checked):hover { border-color: rgba(255, 255, 255, .6) !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-window, .season-slideshow, body) input[type="checkbox"]:checked { background-color: #2f6bbf !important; border-color: #2f6bbf !important; }
 
 /* Header cells never turn white on hover: a faint shade only. */
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-body, .season-slideshow) thead th:is([data-trade-sort], [data-ss-sort], .auto-sort-head):hover { background-color: rgba(255, 255, 255, .12) !important; }
@@ -591,13 +595,12 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-details > 
   background: rgba(16, 26, 38, .92); -webkit-backdrop-filter: var(--g-blur); backdrop-filter: var(--g-blur); border: 1px solid var(--g-edge); border-radius: var(--g-radius);
   color: var(--g-text); font-size: 12px; line-height: 1.45; box-shadow: 0 18px 44px rgba(3, 8, 14, .5);
 }
-/* Payroll tab: each team's chart with its table beside it (not under it), so the tab fits without scrolling; with
-   three or more teams the frames wrap onto a second row only if the window is too narrow. */
-body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .tr-payroll-frames { grid-template-columns: repeat(var(--tr-frames, 2), max-content) !important; gap: 40px !important; justify-content: center; }
-body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .tr-payroll-frame { width: auto !important; display: grid; grid-template-columns: calc(190px * var(--tr-chart-k)) 236px; grid-template-rows: auto 1fr; column-gap: 14px; align-items: end; }
-body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .tr-payroll-frame > figcaption { grid-column: 1 / -1; }
-body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .tr-payroll-frame > .tr-payroll-table { grid-column: 2; grid-row: 2; align-self: end; margin: 0 0 22px; }
-body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .tr-payroll-frames[style*="--tr-frames:3"], body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .tr-payroll-frames[style*="--tr-frames:4"] { --tr-chart-k: 1; gap: 22px !important; }
+/* Payroll tab (round 7): each team's chart with its table under it, charts at their own shape (scale 1 so the tab
+   fits without scrolling). */
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .tr-payroll { --tr-chart-k: 1; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .tr-payroll-frames { grid-template-columns: repeat(var(--tr-frames, 2), max-content) !important; gap: 48px !important; justify-content: center; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .tr-payroll-frame { width: calc(190px * var(--tr-chart-k)) !important; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .tr-payroll-frame > .tr-payroll-table { margin: 6px 0 0; width: 100%; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-contract .tr-tile-details > p { left: auto; right: 0; }
 
 /* Window content starts right under the 28px title bar (round 6: the content sat at 24px, so the bar covered its
@@ -702,3 +705,59 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-settings:not
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-settings .settings-actions > a { display: inline-flex; align-items: center; min-height: 24px; padding: 0 13px; border-radius: 999px; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .24); color: #fff !important; font-weight: 600; font-size: 12px; }
 #modalRoot .modal-settings .settings-foot { display: flex; justify-content: flex-end; padding: 12px 18px 14px; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-settings .settings-foot > .settings-return-button { width: auto !important; }
+
+/* Trade deal layout (round 7). "Add or change players" sits on its own line above everything, so the answer panel
+   starts level with the sides. */
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal { grid-template-rows: auto minmax(0, 1fr) !important; row-gap: 8px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal > .tr-deal-bar { grid-column: 1 / -1; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room :is(.tr-add-change, .trade-pick-terms > header button) { display: inline-flex !important; align-items: center; gap: 6px; min-height: 24px !important; padding: 0 12px !important; font: 600 12px/1 var(--ui-font, inherit) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room :is(.tr-add-change, .trade-pick-terms > header button) img { width: 12px !important; height: 12px !important; filter: invert(1) brightness(2) !important; }
+/* Draft Terms: "Add condition" right after its label, not pushed to the far edge. */
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-terms .trade-pick-terms > header { justify-content: flex-start !important; gap: 12px !important; }
+/* Every side's header on one top line and every footer on one bottom line (subgrid rows shared across the sides);
+   three or more teams wrap to a new row only when they run out of room. */
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal .tr-stage { grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)) !important; grid-template-rows: none !important; grid-auto-rows: auto; row-gap: 0; align-items: stretch; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal .tr-stage > .tr-side { grid-row: span 3; display: grid !important; grid-template-rows: subgrid !important; grid-template-columns: minmax(0, 1fr) !important; min-width: 0; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal .tr-stage > .tr-side > .tr-salary { align-self: end; }
+/* Three or more teams: narrower asset rows (no contract column), so nothing spills into the next side. */
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi :is(.tr-tile, .tr-tiles-head) { grid-template-columns: 32px minmax(0, 1.25fr) minmax(0, 1fr) 78px 24px 18px !important; column-gap: 6px !important; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi :is(.tr-tile > .tr-tile-contract, .tr-tiles-head > span:nth-child(6)) { display: none !important; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi .tr-tile .tr-tile-roles { display: flex !important; flex-direction: column; align-items: center; gap: 1px; line-height: 1.15; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi .tr-tile .tr-tile-roles .role-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi .tr-tile-face { overflow: visible; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi .tr-tile-face .draft-asset-glyph { transform: scale(.56); transform-origin: left center; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi .tr-tile > .tr-tile-value { display: grid !important; }
+/* Three or more teams: the partner picker and the side total share the header without spilling over. */
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi .tr-side-head { min-width: 0; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi .tr-side-head .trade-partner-navigation { min-width: 0; flex: 0 1 auto; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-builder.is-deal.is-multi .tr-side-head button.glass-select { min-width: 0 !important; max-width: 120px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi .tr-side-head .tr-side-total { flex: 1 1 110px; min-width: 0; }
+
+/* Trade controls (round 7). Review deal: the solid blue pill of the tab picker, not the old primary button. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-pick-bar button.tr-button.is-primary {
+  min-height: 28px !important; height: 28px; padding: 0 18px !important; border: 0 !important; border-radius: 999px !important; background: #2f6bbf !important;
+  color: #fff !important; font: 600 12.5px/1 var(--ui-font, inherit) !important; box-shadow: 0 1px 3px rgba(0, 0, 0, .25) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-pick-bar button.tr-button.is-primary:hover:not(:disabled) { background: #3a7ad4 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-pick-bar button.tr-button.is-primary:disabled { background: rgba(255, 255, 255, .12) !important; color: #aab6c2 !important; box-shadow: none !important; }
+/* Picking list: a pick's terms sit in the Roles column, centred. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot table.tr-table td.tr-col-notes.tr-col-notes { text-align: center !important; white-space: normal; color: var(--g-soft); }
+/* Deal tiles: roles and a pick's terms centred the same way, in one column, so they line up. */
+body.unified-terminal-ui #modalRoot .tr-tile > .tr-tile-roles { display: flex !important; flex-direction: column; align-items: center !important; justify-content: center !important; text-align: center; gap: 1px; line-height: 1.15; }
+body.unified-terminal-ui #modalRoot .tr-tile > .tr-tile-roles .tr-tile-note { white-space: normal !important; overflow: visible !important; text-align: center; }
+/* Details: a small drop-down. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-details > p { width: 240px !important; padding: 7px 9px !important; font-size: 11px !important; line-height: 1.4 !important; border-radius: 8px !important; }
+/* Value tab: each team's total on one bottom line. */
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .approved-trade-values { align-items: stretch !important; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .approved-trade-values > .trade-value-team { display: flex; flex-direction: column; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .approved-trade-values > .trade-value-team > :last-child { margin-top: auto; }
+
+/* Player card (round 7). The card is drawn at 76%, so its controls are sized up to read at the same size as
+   elsewhere: the court-view tab picker and the Offense / Defense labels larger; each heat map's caption centred under
+   it; the season drop-down a glass pill in a taller header, so its edge no longer presses on the panel's lines. */
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .spatial-court-tabs > button { font-size: 15px !important; min-height: 34px !important; padding: 0 20px !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .spatial-court-group-label { font-size: 15px !important; font-weight: 700 !important; letter-spacing: .01em; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .spatial-legend { display: flex !important; flex-direction: column; align-items: center !important; justify-content: center !important; text-align: center !important; gap: 4px; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .spatial-legend > * { margin-inline: auto !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .approved-season-line > header { min-height: 34px !important; display: flex !important; align-items: center !important; padding: 4px 10px !important; box-sizing: border-box; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .player-career-picker > summary { border: 1px solid rgba(255, 255, 255, .24) !important; border-radius: 999px !important; background: rgba(255, 255, 255, .10) !important; padding: 2px 12px !important; box-shadow: none !important; }

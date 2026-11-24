@@ -103,3 +103,15 @@ html[data-glass="clear"] .pc4-legend-range .pc4-key.dot.is-prior::before { box-s
 /* Round 6: bars without a league range still carry his dot, centred on the bar. */
 .pc4-track.has-dot { overflow: visible; }
 .pc4-track.has-dot > .pc4-rg-dot { position: absolute; top: 50%; margin-top: -5px; }
+
+/* Round 7 (no scrolling on the ratings page): Technique & Recognition across the full width in four columns; Physical
+   Tools, Coach Usage and Tendencies side by side under it, Tendencies in two columns. Groups never split across
+   columns. */
+.pc4-layers { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.7fr) !important; }
+.pc4-layers > .pc4-layer:first-child { grid-column: 1 / -1; }
+.pc4-layers > .pc4-stack { display: contents; }
+.pc4-layers > .pc4-layer:first-child .pc4-cols { display: block !important; column-count: 5; column-gap: 18px; }
+.pc4-layers > .pc4-layer:first-child .pc4-cols > div { display: contents; }
+.pc4-layers > .pc4-layer:last-child > .pc4-body { column-count: 3; column-gap: 18px; }
+.pc4 :is(.pc4-r, .pc4-dist, .pc4-pass-head) { break-inside: avoid; }
+.pc4 h4 { break-after: avoid; break-inside: avoid; }
