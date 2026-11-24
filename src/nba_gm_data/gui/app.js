@@ -9411,7 +9411,7 @@ function tradeSegmentedValueBoard(candidate, outgoing, incoming, outgoingTeam, i
     const subtotal = details.reduce((sum, asset) => sum + Number(asset.adjusted_value || 0), 0);
     const net = pack?.total == null ? subtotal : Number(pack.total);
     const adjustment = net-subtotal;
-    return `<div class="trade-value-team"><strong>${tradeValueTeamMark(team)} sends · valued by ${tradeValueTeamMark(destination)}</strong>${details.length ? details.map((asset, index) => `<div class="approved-value-row" title="${escapeAttr(`${asset.listed_value == null ? '' : `Listed ${Number(asset.listed_value).toFixed(1)} · `}${asset.expected_role || ''}`)}">${tradeValueAssetLabel(asset, sourceAssets.get(asset.id))}${bar(asset.components, typeof TRADE_ASSET_COLORS === "object" ? TRADE_ASSET_COLORS[index % TRADE_ASSET_COLORS.length] : "")}<em>${Number(asset.adjusted_value || 0).toFixed(1)}</em></div>`).join("") : `<div class="trade-value-empty">No assets selected</div>`}${Math.abs(adjustment)>.05 ? `<div class="approved-value-row"><span>Package adjustment</span>${bar({asset_value:adjustment}, "", totalMaximum)}<em>${adjustment.toFixed(1)}</em></div>` : ''}<div class="approved-value-row net"><span>Roster value</span>${bar({ asset_value: net }, "#9ec9ff", totalMaximum)}<em>${net.toFixed(1)}</em></div></div>`;
+    return `<div class="trade-value-team"><strong title="${escapeAttr(`Valued by ${destination}`)}">${tradeValueTeamMark(team)} sends</strong>${details.length ? details.map((asset, index) => `<div class="approved-value-row" title="${escapeAttr(`${asset.listed_value == null ? '' : `Listed ${Number(asset.listed_value).toFixed(1)} · `}${asset.expected_role || ''}`)}">${tradeValueAssetLabel(asset, sourceAssets.get(asset.id))}${bar(asset.components, typeof TRADE_ASSET_COLORS === "object" ? TRADE_ASSET_COLORS[index % TRADE_ASSET_COLORS.length] : "")}<em>${Number(asset.adjusted_value || 0).toFixed(1)}</em></div>`).join("") : `<div class="trade-value-empty">No assets selected</div>`}${Math.abs(adjustment)>.05 ? `<div class="approved-value-row"><span>Package adjustment</span>${bar({asset_value:adjustment}, "", totalMaximum)}<em>${adjustment.toFixed(1)}</em></div>` : ''}<div class="approved-value-row net"><span>Roster value</span>${bar({ asset_value: net }, "#9ec9ff", totalMaximum)}<em>${net.toFixed(1)}</em></div></div>`;
   }).join("")}<footer>${componentKeys.map((key) => `<span class="value-${escapeAttr(key)}" title="${escapeAttr(explanations[key] || labels[key] || rowLabel(key))}">${escapeHtml(labels[key] || rowLabel(key))}</span>`).join("")}</footer><details class="trade-value-help"><summary>Value components</summary><dl>${componentKeys.filter(key=>explanations[key]).map(key=>`<div><dt>${escapeHtml(labels[key])}</dt><dd>${escapeHtml(explanations[key])}</dd></div>`).join('')}</dl></details></section>`;
 }
 
@@ -9504,6 +9504,30 @@ function tradePayrollAnimation(participants) {
       <header class="tr-payroll-head"><h4>Payroll, next four seasons</h4><button type="button" class="tr-text-button" data-trade-payroll-replay>Replay</button></header>
       <div class="tr-payroll-frames" style="--tr-frames:${teams.length}">${frames}</div>
     </section>`;
+}
+
+// Round 11: the Finder shows the same four-season payroll chart as the deal (same proportions, colours and scale): the
+// shopped players outlined in today's payroll, or the targets added and outlined, with the small now / after table.
+function tradeFinderPayrollChart(targetMode, selection) {
+  const payload = state.data.tradeUser || {};
+  const seasons = Object.keys(payload.cap_by_year || {}).sort().slice(0, 4);
+  if (seasons.length < 4 || typeof salaryHorizonChart !== "function") return "";
+  const receives = targetMode ? selection : [];
+  const sends = targetMode ? [] : selection;
+  const after = tradeCapImpactRows(payload, receives, sends, seasons);
+  const players = payload.players || [];
+  const arriving = receives.filter(asset => asset.kind === "player");
+  const colorPlayerIds = [...new Set([...players, ...arriving].map(player => player.id))].sort();
+  const scaleMaximum = Math.max(1, ...seasons.flatMap((season, index) => {
+    const cap = payload.cap_by_year?.[season] || {};
+    return [Number(cap.salary_total_millions || 0), Number(cap.tax_line_millions || 0), Number(cap.hard_cap_millions || 0), after[index].payroll || 0];
+  })) * 1.06;
+  const marked = (targetMode ? arriving : sends.filter(asset => asset.kind === "player")).map(asset => String(asset.id));
+  const chart = salaryHorizonChart({seasons, capByYear: payload.cap_by_year || {}, scaleMaximum, colorPlayerIds,
+    rows: targetMode ? [...players, ...arriving] : players,
+    payrollByYear: Object.fromEntries(seasons.map((season, index) => [season, targetMode ? after[index].payroll : payload.cap_by_year?.[season]?.salary_total_millions])),
+    markIds: Object.fromEntries(marked.map(id => [id, targetMode ? "is-arriving" : "is-leaving"]))});
+  return `<div class="tr-finder-payroll">${chart}${tradePayrollTable(payload, after, seasons)}</div>`;
 }
 
 // Under each payroll chart (round 4): the four seasons as a small table, payroll now, after the trade, and the change.
@@ -9636,7 +9660,7 @@ function renderTradeFinder(root) {
         <section class="trade-finder-brief tr-finder-brief" ${teamBrandStyle(userTeam())}>
           <header class="tr-side-head"><span class="tr-side-team">${teamLogoSrc(finderTeam) ? `<img src="${escapeAttr(teamLogoSrc(finderTeam))}" alt="" />` : ""}<strong>${targetMode ? `Get from ${escapeHtml(finderTeam)}` : `Shop to ${escapeHtml(scopeName)}`}</strong></span><span class="trade-selection-count">${selection.length} of 2</span></header>
           <ul class="tr-tiles" data-trade-scroll="selected-${escapeAttr(side)}">${selection.length ? selection.map(asset => tradeDealTile(asset, {removeSide: side, fresh: fresh === `${side}:${asset.kind}:${asset.id}`})).join("") : `<li class="tr-tiles-empty"><span>Choose up to two assets from the list</span></li>`}</ul>
-          <div class="trade-finder-cap"><header>${escapeHtml(userTeam())} salary ${targetMode ? "added" : "cleared"}</header>${tradeCapDeltaChart(capRows)}</div>
+          <div class="trade-finder-cap"><header>${escapeHtml(userTeam())} payroll, next four seasons</header>${tradeFinderPayrollChart(targetMode, selection) || tradeCapDeltaChart(capRows)}</div>
           ${selection.some(asset => asset.kind !== "player") || (state.tradePickRules || []).length ? tradePickTermsMarkup() : ""}
           <div class="trade-finder-actions"><button id="clearTradeMarket" type="button" class="tr-text-button" ${selection.length || state.tradeResults.length ? "" : "disabled"}>Clear</button><button id="runTrade" type="button" class="tr-button is-primary" ${selection.length && !tradePickRuleErrors().length ? "" : "disabled"}>Find trades</button></div>
         </section>
@@ -10872,14 +10896,14 @@ function playerHeaderFacts(detail) {
   const seasons = (detail.salary_seasons || []).filter(row => row.salary_millions !== null && Number.isFinite(Number(row.salary_millions)));
   const row = (label, value, extra = "") => `<div class="player-header-fact"><small>${label}</small><span>${value}${extra}</span></div>`;
   const contract = seasons.length
-    ? row("Contract", escapeHtml(money(Number(seasons[0].salary_millions))), `<em>${seasons.length} season${seasons.length === 1 ? "" : "s"} · through ${escapeHtml(seasons[seasons.length - 1].season)}</em>`)
+    ? row("Contract", `${escapeHtml(money(Number(seasons[0].salary_millions)))} × ${seasons.length}`)
     : row("Contract", detail.is_prospect ? "Prospect" : "None");
   const role = (key, side) => {
     if (!key) return "";
     const [label] = (typeof PLAYER_ROLE_CHIPS === "object" && PLAYER_ROLE_CHIPS[key]) || [rowLabel(key)];
     return row(side, escapeHtml(label));
   };
-  return `<div class="player-header-facts">${contract}${role(coach.primary_off_role, "Offense")}${role(coach.primary_def_role, "Defense")}</div>`;
+  return `<div class="player-header-facts">${contract}${role(coach.primary_off_role, "Offensive role")}${role(coach.primary_def_role, "Defensive role")}</div>`;
 }
 
 function playerCardEvidence(detail) {
@@ -16754,7 +16778,7 @@ function tradeDealTile(asset, {removeSide = "", routeFrom = "", fresh = false, c
     // Round 6: the pick's terms in its own field, with the full wording behind a Details drop-down (not a hover).
     const terms = [asset.kind === "pick_swap" ? "Swap right" : "", pick.note || ""].filter(Boolean).join(" · ");
     const details = pick.full ? `<details class="tr-tile-details"><summary>Details</summary><p>${escapeHtml(pick.full)}</p></details>` : "";
-    return `<li class="tr-tile is-pick${fresh ? " is-new" : ""}"><span class="tr-tile-face">${typeof draftAssetGlyph === "function" ? draftAssetGlyph(asset, true, true) : ""}</span><span class="tr-tile-main"><strong class="tr-tile-name">${escapeHtml(pick.short)}</strong>${route ? `<span class="tr-tile-sub">${route}</span>` : ""}</span><span class="tr-tile-roles tr-tile-terms">${terms ? `<span class="tr-tile-note">${escapeHtml(terms)}</span>` : ""}${removeSide && asset.kind === "pick" && globalThis.TradePickTerms?.eligible(asset) && typeof tradePickRuleSummary === "function" ? `<button type="button" class="tr-text-button tr-tile-conditions" data-pick-terms-open="${escapeAttr(id)}">${escapeHtml(tradePickRuleSummary(id) || "Add conditions")}</button>` : ""}</span>${valueCell}<span class="tr-tile-ovr"></span><span class="tr-tile-contract tr-tile-terms">${details}</span>${remove}</li>`;
+    return `<li class="tr-tile is-pick${fresh ? " is-new" : ""}"><span class="tr-tile-face">${typeof draftAssetGlyph === "function" ? draftAssetGlyph(asset, true, true) : ""}</span><span class="tr-tile-main"><strong class="tr-tile-name">${escapeHtml(pick.short)}</strong>${route ? `<span class="tr-tile-sub">${route}</span>` : ""}</span><span class="tr-tile-roles tr-tile-terms">${terms ? `<span class="tr-tile-note">${escapeHtml(terms)}</span>` : ""}${removeSide && state.tradeTab !== "finder" && asset.kind === "pick" && globalThis.TradePickTerms?.eligible(asset) && typeof tradePickRuleSummary === "function" ? `<button type="button" class="tr-text-button tr-tile-conditions" data-pick-terms-open="${escapeAttr(id)}">${escapeHtml(tradePickRuleSummary(id) || "Add conditions")}</button>` : ""}</span>${valueCell}<span class="tr-tile-ovr"></span><span class="tr-tile-contract tr-tile-terms">${details}</span>${remove}</li>`;
   }
   const overall = tradeKnownNumber(asset.overall ?? asset.ratings?.overall);
   const roles = typeof playerRoleChip === "function" && (asset.primary_off_role || asset.primary_def_role) ? `<span class="tr-role-pair">${playerRoleChip(asset.primary_off_role)}${playerRoleChip(asset.primary_def_role)}</span>` : "";

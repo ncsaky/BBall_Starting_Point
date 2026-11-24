@@ -996,7 +996,7 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-tr
 /* Team identity (round 10): the team choice is a row of clickable logos (the chosen one bright and underlined); before
    and after stacked, so each court sits right over its after-trade version; the room's lower card fills the height. */
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-toolbar > div { display: flex !important; gap: 14px !important; background: none !important; padding: 0 !important; }
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-logo { display: grid !important; justify-items: center; gap: 3px; background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 2px 4px 4px !important; min-height: 0 !important; cursor: pointer; opacity: .5; border-bottom: 2px solid transparent !important; border-radius: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-logo { display: grid !important; justify-items: center; gap: 3px; background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 2px 4px 4px !important; min-height: 0 !important; cursor: pointer; opacity: .62; border-bottom: 2px solid transparent !important; border-radius: 0 !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-logo img { width: 34px; height: 34px; object-fit: contain; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-logo span { font-size: 11px; font-weight: 700; color: #eef3f7; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-logo:hover { opacity: .85; }
@@ -1037,3 +1037,55 @@ html[data-glass="clear"] body.unified-terminal-ui .approved-trade-values.is-posi
    whole mark centred in its row. */
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.tr-tile-face, .trade-ledger-portrait, .tr-value-face) .draft-asset-glyph.is-swap { flex-direction: column-reverse !important; justify-content: center !important; align-items: center !important; gap: 1px !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-face { display: flex !important; align-items: center !important; justify-content: center !important; align-self: stretch !important; }
+
+/* Round 11: the edge pieces of the header were drawn but clipped (header cells hide their overflow); the first and
+   last header cells now let them show, so the header fill and line reach the card edges while the rows stay inset. */
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table > thead > tr > th:is(:first-child, :last-child) { overflow: visible !important; }
+/* Player card header (round 11): headshot, name, rating bars and the contract / role rows spread across the header
+   with even gaps; the bars a moderate length instead of running across half the card. */
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-pages .player-page-identity { display: grid !important; grid-template-columns: auto auto minmax(360px, 560px) max-content !important; justify-content: space-between !important; column-gap: 48px !important; align-items: center !important; padding-right: 48px !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-pages .player-page-identity > .approved-player-profile-head { display: contents !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-pages .approved-player-profile-head > .player-summary-ratings { max-width: none !important; width: 100% !important; align-self: center !important; margin: 0 !important; grid-column: auto !important; grid-row: auto !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-pages .approved-player-profile-head .approved-profile-name { grid-column: auto !important; grid-row: auto !important; align-self: center !important; }
+
+/* Trade room (round 11). Swap and connected picks: just the team logos, centred (no arrow). */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-trade-room .draft-asset-glyph .draft-asset-swap { display: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.tr-tile-face, .trade-ledger-portrait, .tr-value-face) .draft-asset-glyph { justify-content: center !important; align-items: center !important; margin-inline: auto !important; }
+/* The conditions pop-up: more see-through, a white remove X, even spacing between its buttons. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card { background: rgba(22, 34, 48, .58) !important; -webkit-backdrop-filter: blur(22px) saturate(1.2); backdrop-filter: blur(22px) saturate(1.2); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card .trade-icon-button { background: transparent !important; border: 1px solid rgba(255, 255, 255, .35) !important; border-radius: 50% !important; width: 26px !important; height: 26px !important; min-height: 0 !important; padding: 0 !important; display: inline-grid !important; place-items: center; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card .trade-icon-button img { filter: brightness(0) invert(1) !important; width: 12px !important; height: 12px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card > footer > button { margin: 0 !important; flex: none; white-space: nowrap; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card > footer > .tr-text-button { line-height: 32px; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card .trade-pick-rule-fields { display: flex !important; flex-wrap: wrap; align-items: end; gap: 10px 16px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card .trade-pick-rule-fields > label { display: grid !important; gap: 4px; margin: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card .trade-pick-rule-fields > label > span { font-size: 11px; font-weight: 700; color: #c9d5e0; }
+/* Payroll chart box: space under it inside its card, and more see-through. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-lower-body > .tr-payroll { margin-bottom: 0 !important; background: rgba(13, 22, 34, .14) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-lower-body:has(> .tr-payroll) { padding-bottom: 10px !important; box-sizing: border-box !important; }
+/* Team identity: the team labels under the logos always light. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-logo span { color: #eef3f7 !important; }
+
+/* ---------- Round 11: the board is the user's team colour (one flat colour, toned down so the glass reads) with a dark
+   vignette at the edges, like a lit arena floor; still no two-colour gradient. Cards are more see-through. */
+html[data-glass="clear"] body .season-command-dashboard.has-card-board {
+  background-color: color-mix(in srgb, var(--team-a, #2f6fb7) 58%, #0a121c) !important;
+  background-image:
+    radial-gradient(ellipse 85% 80% at 50% 45%, transparent 45%, rgba(4, 8, 14, .58) 100%),
+    linear-gradient(to right, var(--board-grid) 1px, transparent 1px), linear-gradient(to bottom, var(--board-grid) 1px, transparent 1px) !important;
+  background-size: 100% 100%, 24px 24px, 24px 24px !important;
+  background-attachment: scroll, local, local !important;
+}
+html[data-glass="clear"] { --g-glass: rgba(18, 29, 43, .14); --g-head: rgba(16, 27, 40, .2); }
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .rating-drop { color: #ffd2d2 !important; }
+
+/* Trade Finder (round 11): the payroll chart beside its now / after table; "Found trades" with no empty box over it. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-finder-cap { background: transparent !important; border: 0 !important; padding: 6px 10px 8px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-finder-cap > header { color: #eef3f7 !important; font-size: 12px !important; font-weight: 700; padding: 0 0 6px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-finder-payroll { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: center; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-results-head { display: flex !important; align-items: baseline; gap: 10px; padding: 8px 10px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-results-head > span:empty { display: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-results-head :is(strong, span) { color: #eef3f7 !important; font-size: 13px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-results-head > strong { width: auto !important; height: auto !important; min-width: 0 !important; box-shadow: none !important; border: 0 !important; background: none !important; display: inline !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-finder-payroll { grid-template-columns: 230px minmax(0, 1fr) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-finder-payroll > .salary-horizon-chart { width: 230px !important; height: 210px !important; }

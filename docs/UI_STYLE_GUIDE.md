@@ -22,6 +22,9 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **Anti-reference: Basketball GM.** Clicking between plain tables, a player page that is a scroll of tables, no players or game feel. Never ship anything that looks like it.
 
 ## The look: glass (round 3)
+- **Round 11: the board is the team's main colour** (toned down) with a dark vignette at the edges (still never a
+  two-colour gradient). Swap picks show only their team logos, no arrow. Verify visual claims on screen (a marker
+  colour), not only in computed styles: the header-edge fix was "applied" for two rounds but clipped.
 - **Round 10:** a team is always its logo with its abbreviation (never the abbreviation alone). Header facts are set
   exactly like the rows beside them (same font, size, colour, row spacing). Settings' long pills are the model for
   every long pill. Optional extras (pick conditions) open in a pop-up when they become relevant, not as a standing bar.

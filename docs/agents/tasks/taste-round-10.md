@@ -38,3 +38,4 @@ Boundaries: GUI files (`src/nba_gm_data/gui/`), GUI tests, `app_actions.py` only
   - Value tab: logo + abbreviation for teams and pick logos beside pick names; single assets scaled to the largest
     single asset (team totals on their own scale), full-width bars when nothing subtracts value.
   - Swap / connected picks: a wider face column (54px) with the swap arrow above the logos, centred in the row.
+- Round 11 deck published 2026-11-24 (version 14, 9 questions `q11-…`): card header and overview, ratings header, roster header edges, opening roster, pick conditions pop-up, deal, Team identity, Value, which card next.
