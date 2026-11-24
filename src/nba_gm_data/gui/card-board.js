@@ -1112,6 +1112,8 @@
       if (pages?.owns(id)) { pages.show(id); return; }
       const item = layout[id];
       if (!item.visible) {
+        // Pages mode: size the pop-up to the page area first, so it opens centred rather than against the sidebar.
+        if (pagesMode) constrainCardBounds(item, canvasLimit("Width"), canvasLimit("Height"));
         const width = item.width * item.scale, height = TITLE_HEIGHT + item.height * item.scale;
         const playerCardOffset = id.startsWith("player-card-")
           ? Math.min([...nodes.keys()].filter(key => key.startsWith("player-card-") && key !== id && layout[key]?.visible).length * 42, 210)

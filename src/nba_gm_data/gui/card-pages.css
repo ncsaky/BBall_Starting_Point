@@ -199,7 +199,8 @@ html[data-layout="pages"] .pages-viewport {
   padding: 8px 22px 12px 22px;
   box-sizing: border-box;
 }
-html[data-layout="pages"] .pages-page { margin: 0 auto; position: relative; }
+/* Pages line up with their title (left), whatever their width. */
+html[data-layout="pages"] .pages-page { margin: 0; position: relative; }
 html[data-layout="pages"] .pages-page[hidden] { display: none !important; }
 html[data-layout="pages"] .pages-viewport:has(> .pages-page.is-scrolling:not([hidden])) { overflow: auto; }
 html[data-layout="pages"] .pages-page:not([hidden]) { animation: pages-in .2s cubic-bezier(.2, .8, .2, 1) both; }
@@ -354,3 +355,9 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-sidebar .season-c
 }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-sidebar .season-command-club > button:hover { background: rgba(255, 255, 255, .18) !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-sidebar .season-command-club > button + button { margin-top: 4px !important; }
+
+/* Text-only sidebar items carry no frost of their own (the game's glass buttons blur what is behind them, which drew a
+   faint box behind every page name). */
+html[data-layout="pages"] body.unified-terminal-ui #app :is(.pages-nav .pages-nav-item, .pages-sidebar .season-command-actions > button, .pages-slot-head > .pages-slot-link) {
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}

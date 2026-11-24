@@ -75,7 +75,7 @@
 
     // The team.
     {id: "home", group: "team", label: "Home", layout: () => row(
-      col("minutes", card("week", {link: "schedule"})),
+      col("minutes", card("week", {link: "schedule"}), row(card("signals", {link: "identity"}), "morale")),
       col("opponent", card("standings", {link: "standings"})))},
     {id: "roster", group: "team", label: "Roster", layout: () => col(card("roster", {title: "Ratings"}), "stats")},
     {id: "development", group: "team", label: "Development", layout: () => row(card("development", {expanded: true}), card("staff", {expanded: true}))},
