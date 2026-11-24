@@ -375,3 +375,4 @@ html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary { max
 html[data-layout="pages"] body .season-command-dashboard.is-pages .is-page-card [data-seasonal-context] > :not([data-seasonal-context]) {
   border-color: transparent !important; box-shadow: none !important;
 }
+html[data-layout="pages"] .pages-note { color: #d3dde6; font-size: 13px; font-weight: 500; margin-right: 6px; }

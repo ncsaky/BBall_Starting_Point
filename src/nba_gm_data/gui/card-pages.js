@@ -476,12 +476,20 @@
 
     function renderControls(page) {
       controlsEl.replaceChildren();
+      // Every card on the page locked (trading closed, no staff changes now): say so where the page's controls live.
+      const pageIds = page?.layout ? layoutIds(pageLayout(page)).filter(available) : [];
+      const allLocked = pageIds.length > 0 && pageIds.every(isLocked);
+      const legal = typeof clipboardLegalActions === "function" ? clipboardLegalActions() : null;
+      const tradingClosed = page?.id === "trades" && legal && !["trades", "draft_trades"].some(action => legal.has(action));
+      const lockNote = tradingClosed ? `<span class="pages-note">Trading is closed right now</span>`
+        : allLocked ? `<span class="pages-note">Not available right now</span>` : "";
       if (page?.controls === "awards" && typeof openLeagueLeadersModal === "function") {
         controlsEl.innerHTML = `<button type="button" class="pages-control" data-pages-leaders>League Leaders</button>`;
       }
+      if (lockNote && page?.controls !== "trades") controlsEl.insertAdjacentHTML("afterbegin", lockNote);
       if (page?.controls === "trades") {
         const disabled = options.toolbarActions?.tradeDisabled ? " disabled" : "";
-        controlsEl.innerHTML = `<button type="button" class="pages-control" data-pages-trade="finder"${disabled}>Trade Finder</button><button type="button" class="pages-control" data-pages-trade="builder"${disabled}>Trade Builder</button><button type="button" class="pages-control" data-pages-trade="offers"${disabled}>Incoming Offers${offerCount ? ` <em class="pages-nav-badge">${offerCount}</em>` : ""}</button><button type="button" class="pages-control" data-pages-trade="market"${disabled}>Trade Market</button>`;
+        controlsEl.innerHTML = `${lockNote}<button type="button" class="pages-control" data-pages-trade="finder"${disabled}>Trade Finder</button><button type="button" class="pages-control" data-pages-trade="builder"${disabled}>Trade Builder</button><button type="button" class="pages-control" data-pages-trade="offers"${disabled}>Incoming Offers${offerCount ? ` <em class="pages-nav-badge">${offerCount}</em>` : ""}</button><button type="button" class="pages-control" data-pages-trade="market"${disabled}>Trade Market</button>`;
       }
     }
 
