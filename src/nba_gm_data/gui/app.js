@@ -1122,6 +1122,73 @@ const GAME_TUTORIAL_STEPS = [
   },
 ];
 
+// The same tour for the pages layout (branch sidebar-pages): the sidebar, the pages and the next step instead of
+// windows, the gallery and title bars. Each card step opens the page that holds the card.
+const PAGES_TUTORIAL_STEPS = [
+  {
+    title: "Welcome to your front office",
+    target: [".pages-nav", ".pages-sidebar"],
+    body: "Every part of your franchise has a page in the sidebar: the team, the front office and the league. Rooms for the moment (the opening roster, the playoffs, the draft, free agency) appear at the top while they are open.",
+  },
+  {
+    title: "Pages and pop-ups",
+    target: [".pages-sheet"],
+    body: "Each page lays its cards out to fill the screen. Player cards, box scores and the trade room open as pop-ups over the page; Esc closes them. A section title with an arrow opens that section's full page. [ and ] step through the pages.",
+  },
+  {
+    title: "Set the rotation",
+    card: "minutes",
+    target: ['[data-pages-slot="minutes"]', ".season-minutes-panel"],
+    body: "Minutes are one of your most direct coaching decisions. Slider changes save immediately and rebalance unlocked players to 240 team minutes. Blue sliders are your fixed targets; actual game minutes can vary with health and overtime. Use player cards for ratings and context.",
+  },
+  {
+    title: "How team performance is made",
+    card: "signals",
+    target: ['[data-pages-slot="signals"]', ".season-identity-panel"],
+    body: "Game results and box scores come from the players on the floor and the minutes they get, shaped by lineup fit, morale, fatigue, injuries and coaching. Overall rating is only one input: role fit and deployment matter too. The box score reflects those interactions rather than simply repeating player ratings.",
+  },
+  {
+    title: "Health and development",
+    card: "development",
+    target: ['[data-pages-slot="development"]', ".season-development-panel"],
+    body: "Fatigue and injuries affect who is ready to play, so balance workload with recovery. Player Development separates season growth/regression from the latest month. Treat those trends as a trajectory to manage, not a guaranteed outcome.",
+  },
+  {
+    title: "Your coaching staff",
+    card: "staff",
+    target: ['[data-pages-slot="staff"]', ".season-staff-panel"],
+    body: "Coaching Staff sits beside Player Development: review coaches, roles, grades and payroll, and hire from the available staff below. Coaching is part of your team context, alongside the players and their deployment.",
+  },
+  {
+    title: "Read the season",
+    card: "week",
+    target: ['[data-pages-slot="week"]', ".season-week-panel"],
+    body: "The calendar keeps played games and upcoming dates together; open a game for its result and box score. Next Opponent adds form, ratings and availability so you can put each matchup in context. Schedule shows the whole month.",
+  },
+  {
+    title: "Compare efficiency",
+    card: "efficiency",
+    target: ['[data-pages-slot="efficiency"]', ".season-efficiency-panel"],
+    body: "Weekly Efficiency compares your offense and defense with the league average, then shows the net difference. Use it to diagnose where the team is gaining or giving up ground beyond the win-loss record.",
+  },
+  {
+    title: "Explore a trade",
+    target: ['[data-pages-go="trades"]', ".pages-nav"],
+    body: "The Trades page holds the league's trading block, your own block and what teams want; its buttons open the trade finder, builder, incoming offers and the market. The finder suggests packages to evaluate; it does not execute them.",
+  },
+  {
+    title: "Advance the league",
+    target: [".pages-dock", "[data-card-board-tools]"],
+    body: "The next step always sits at the bottom right: Sim To Next Event, with a week or a month behind the arrow, or the phase's own button (Start The Season, Go To Draft Night) when there is one. Advancing changes the save: games resolve and league events may occur.",
+  },
+  {
+    title: "Shortcuts when you need them",
+    target: [".pages-finder", ".pages-nav"],
+    body: "Press ? for the shortcut reference or Cmd/Ctrl+K to search commands. [ and ] move between pages; S then E advances to the next event, and S then W/M advances a week or a month. You can replay this tour from Settings.",
+  },
+];
+const tutorialSteps = () => (globalThis.CardPages?.enabled?.() ? PAGES_TUTORIAL_STEPS : GAME_TUTORIAL_STEPS);
+
 function queueFirstRunTutorial() {
   if (state.home?.save?.postseason_exit_required) return;
   if (state.slideshowOpening || window.SeasonSlideshow?.isOpen()) return;
@@ -1159,7 +1226,7 @@ function moveGameTutorial(direction) {
   if (!state.tutorial) return;
   const nextIndex = state.tutorial.index + direction;
   if (nextIndex < 0) return;
-  if (nextIndex >= GAME_TUTORIAL_STEPS.length) return finishGameTutorial();
+  if (nextIndex >= tutorialSteps().length) return finishGameTutorial();
   state.tutorial.index = nextIndex;
   renderGameTutorial();
 }
@@ -1230,8 +1297,8 @@ function resolveGameTutorialTarget(step) {
 function renderGameTutorial() {
   if (!state.tutorial) return;
   const index = state.tutorial.index;
-  const step = GAME_TUTORIAL_STEPS[index];
-  const last = index === GAME_TUTORIAL_STEPS.length - 1;
+  const step = tutorialSteps()[index];
+  const last = index === tutorialSteps().length - 1;
   window.CardBoard?.previewTutorialWindow(step.card);
   els.gameTutorial.hidden = false;
   els.gameTutorial.innerHTML = `
@@ -1241,7 +1308,7 @@ function renderGameTutorial() {
     <div class="game-tutorial-shade game-tutorial-shade--bottom" aria-hidden="true"></div>
     <div class="game-tutorial-spotlight" aria-hidden="true"></div>
     <article class="game-tutorial-card" role="dialog" aria-modal="true" aria-labelledby="gameTutorialTitle" aria-describedby="gameTutorialCopy" tabindex="-1">
-      <header class="game-tutorial-titlebar"><span>FRANCHISE FIELD GUIDE</span><span>${String(index + 1).padStart(2, "0")} / ${String(GAME_TUTORIAL_STEPS.length).padStart(2, "0")}</span></header>
+      <header class="game-tutorial-titlebar"><span>FRANCHISE FIELD GUIDE</span><span>${String(index + 1).padStart(2, "0")} / ${String(tutorialSteps().length).padStart(2, "0")}</span></header>
       <div class="game-tutorial-content" aria-live="polite">
         <p class="game-tutorial-kicker">${String(index + 1).padStart(2, "0")} · ${escapeHtml(step.kicker || "THE FRONT OFFICE")}</p>
         <h2 id="gameTutorialTitle">${escapeHtml(step.title)}</h2>
@@ -1306,7 +1373,7 @@ function positionGameTutorial(target) {
 
 function repositionGameTutorial() {
   if (!state.tutorial) return;
-  const target = resolveGameTutorialTarget(GAME_TUTORIAL_STEPS[state.tutorial.index]);
+  const target = resolveGameTutorialTarget(tutorialSteps()[state.tutorial.index]);
   positionGameTutorial(target);
 }
 
