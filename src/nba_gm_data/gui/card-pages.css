@@ -79,7 +79,17 @@ html[data-layout="pages"] .pages-sidebar .season-command-club > button {
 }
 /* The offseason steps chip: a small pill; its list opens beside the sidebar. */
 html[data-layout="pages"] .pages-sidebar .season-steps-chip { position: relative; }
-html[data-layout="pages"] .pages-sidebar .season-steps-chip > summary { max-width: 150px; white-space: normal; }
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary.season-steps-summary,
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary {
+  display: inline-flex !important; flex-wrap: wrap; align-items: center; gap: 3px 6px; max-width: 132px; white-space: normal;
+  padding: 4px 8px !important; border-radius: 8px !important; line-height: 1.25;
+  background: rgba(255, 255, 255, .08) !important; border: 1px solid rgba(255, 255, 255, .16) !important;
+  color: rgba(255, 255, 255, .86) !important; font-size: 11px !important; cursor: pointer; box-shadow: none !important;
+}
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary:hover,
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip[open] > summary { background: rgba(255, 255, 255, .15) !important; border-color: rgba(255, 255, 255, .26) !important; }
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary b { color: #a9d6ff !important; font-size: 10.5px !important; }
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary i { color: rgba(255, 255, 255, .6) !important; }
 html[data-layout="pages"] .pages-sidebar .season-steps-chip .season-steps-menu {
   position: fixed !important;
   left: calc(var(--pages-side-w) + 8px) !important;
@@ -151,7 +161,7 @@ html[data-layout="pages"] .pages-sidebar .season-command-actions > button .short
 html[data-layout="pages"] .pages-shell { min-width: 0; min-height: 0; display: flex; padding: var(--pages-gap); padding-left: var(--pages-gap); box-sizing: border-box; }
 html[data-layout="pages"] .pages-sheet {
   flex: 1 1 auto; min-width: 0; min-height: 0;
-  display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr);
   background: rgba(255, 255, 255, .045);
   border: 1px solid rgba(255, 255, 255, .13);
   border-radius: var(--pages-radius);
@@ -246,7 +256,7 @@ html[data-glass="clear"][data-layout="pages"] body .season-command-dashboard.is-
 
 /* ---------- Footer: the league wire ticker on the left, the next step on the right. */
 html[data-layout="pages"] .pages-foot {
-  display: flex; align-items: center; gap: 18px;
+  display: flex; align-items: center; gap: 18px; min-width: 0; overflow: hidden;
   min-height: 58px; padding: 8px 12px 8px 24px; box-sizing: border-box;
   border-top: 1px solid var(--pages-line);
 }
@@ -294,7 +304,7 @@ html[data-layout="pages"] #seasonSlideshow.season-slideshow:not([hidden]) {
   left: var(--pages-side-w) !important;
   padding: var(--pages-gap) !important;
 }
-html[data-layout="pages"] #seasonSlideshow .ss-backdrop { left: var(--pages-side-w) !important; background: rgba(4, 9, 14, .55) !important; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+html[data-layout="pages"] #seasonSlideshow .ss-backdrop { position: absolute !important; inset: 0 !important; background: rgba(4, 9, 14, .22) !important; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 html[data-layout="pages"] #seasonSlideshow .ss-card {
   width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important;
   border-radius: var(--pages-radius) !important;
@@ -314,3 +324,14 @@ html[data-layout="pages"] body.unified-terminal-ui #toast.toast.bad { border-col
 /* The sim menu opens upward from the bottom-right button. */
 html[data-glass="clear"][data-layout="pages"] body.unified-terminal-ui .card-board-menu.opens-up { transform-origin: bottom center; animation-name: pages-rise; }
 @keyframes pages-rise { from { opacity: 0; transform: translateY(6px) scale(.97); } to { opacity: 1; transform: none; } }
+
+/* While a slideshow fills the page area the page behind it steps away (it showed through the glass slide). */
+html[data-layout="pages"] body.season-slideshow-open .is-pages .pages-sheet > *,
+html[data-layout="pages"] body.season-slideshow-open .is-pages > .season-command-grid { visibility: hidden; }
+
+html[data-layout="pages"] .pages-slot-head.is-echo > * { visibility: hidden; }
+
+/* The Assistant GM's phone rises just left of the next-step button, never over it. */
+html[data-layout="pages"] body .assistant-gm-phone { right: calc(var(--pages-dock-w, 240px) + 30px) !important; }
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary > span { flex-basis: 100%; color: #fff !important; font-weight: 600 !important; font-size: 11.5px !important; line-height: 1.2; }
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary > em { font-size: 10px !important; line-height: 15px !important; padding: 0 5px !important; }

@@ -1051,7 +1051,8 @@
       return selectedWindowId(layout, ids, activeId);
     };
     const closeWindow = (id, focusNext = false) => {
-      if (!id || !layout[id]?.visible || nodes.get(id)?.required || pages?.owns(id)) return false;
+      if (pages?.owns(id)) return false;
+      if (!id || !layout[id]?.visible || nodes.get(id)?.required) return false;
       layout[id].visible = false;
       options.onVisibilityChange?.(id, false);
       paint(id);
@@ -1068,7 +1069,8 @@
       return true;
     };
     const toggleWindowMinimized = (id, focusControl = false) => {
-      if (!id || !layout[id]?.visible || locked(id) || nodes.get(id)?.required || pages?.owns(id)) return false;
+      if (pages?.owns(id)) return false;
+      if (!id || !layout[id]?.visible || locked(id) || nodes.get(id)?.required) return false;
       layout[id].minimized = !layout[id].minimized;
       paint(id);
       sizeCanvas();
@@ -1482,7 +1484,7 @@
       save();
     });
 
-    if (pagesMode) pages = window.CardPages.attach({dashboard, board, canvas, toolbar, gallery, status, nodes, frames, layout, defaults, options, locked, save, announce, phaseCards, entering, toggleWindowExpansion: (item, id) => toggleWindowExpansion(item, id), EXPANDABLE_CARDS, TITLE_HEIGHT});
+    if (pagesMode) pages = window.CardPages.attach({dashboard, board, canvas, toolbar, gallery, status, nodes, frames, layout, defaults, options, locked, save, announce, phaseCards, entering, toggleWindowExpansion: (item, id) => toggleWindowExpansion(item, id), EXPANDABLE_CARDS, TITLE_HEIGHT, starterMinWidths: STARTER_CARD_MIN_WIDTHS});
     // Place the startup cards inside the visible board, even though the workspace
     // itself keeps extra canvas area available for arranging cards later.
     initializeStarterLayout(layout, saved, board.clientWidth, board.clientHeight, phaseCards);

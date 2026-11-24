@@ -24,17 +24,20 @@
   const MIN_SCALE = .7;      // below this the page scrolls instead of shrinking further
   const lastPage = new Map();
 
+  const root = () => (typeof document !== "undefined" ? document.documentElement : null);
   const enabled = () => {
-    let mode = document.documentElement.dataset.layout;
+    const html = root();
+    let mode = html?.dataset.layout;
     if (!mode) {
       try { mode = localStorage.getItem(MODE_KEY) || "pages"; } catch { mode = "pages"; }
-      document.documentElement.dataset.layout = mode;
+      if (html) html.dataset.layout = mode;
     }
     return mode !== "board";
   };
   const setMode = (mode) => {
     const value = mode === "board" ? "board" : "pages";
-    document.documentElement.dataset.layout = value;
+    const html = root();
+    if (html) html.dataset.layout = value;
     try { localStorage.setItem(MODE_KEY, value); } catch { /* preference only */ }
   };
 
@@ -43,6 +46,7 @@
   //   grow      "h" | "w" | "both": the card takes spare height / width (lists only; text never scales up for it)
   //   link      page id: the section title becomes a link to that page (a summary card on Home)
   //   bare      no section title (the page title already names it)
+  //   quiet     the title's space is kept (columns stay level) but its words hidden (the card carries its own title)
   const row = (...items) => ({type: "row", items});
   const col = (...items) => ({type: "col", items});
   const card = (id, options = {}) => ({type: "card", id, ...options});
@@ -61,7 +65,9 @@
     {id: "set-roster", group: "now", label: "Set The Roster", layout: () => row(card("phase-set_roster-checklist", {bare: true}))},
     {id: "outlook", group: "now", label: "Preseason Outlook", slideshow: "outlook"},
     {id: "recap", group: "now", label: "Year-End Recap", slideshow: "recap"},
-    {id: "playoffs", group: "now", label: "Playoffs", layout: () => col(card("phase-playoffs-bracket", {bare: true}), row("phase-playoffs-leaders", "phase-playoffs-injuries"))},
+    // The bracket gets a page of its own (it is as wide as the screen); the playoff stats and injuries sit together.
+    {id: "playoffs", group: "now", label: "Playoffs", layout: () => row(card("phase-playoffs-bracket", {bare: true, width: 1100}))},
+    {id: "playoff-stats", group: "now", label: "Playoff Stats", layout: () => row("phase-playoffs-leaders", "phase-playoffs-injuries")},
     {id: "draft-room", group: "now", label: "Draft", layout: draftRoomLayout},
     {id: "free-agency-checklist", group: "now", label: "Offseason Checklist", layout: () => row(card("phase-free_agency-checklist", {grow: "h"}), card("phase-free_agency-selected", {grow: "h"}))},
     {id: "free-agency", group: "now", label: "Free Agency", layout: () => row(card("phase-free_agency-market", {grow: "h"}), card("phase-free_agency-selected", {grow: "h"}), card("phase-free_agency-wire", {grow: "h"}))},
@@ -84,15 +90,15 @@
 
     // The league.
     {id: "standings", group: "league", label: "Standings", layout: () => row(card("standings", {expanded: true}), card("league-wire", {expanded: true, height: 600}))},
-    {id: "awards", group: "league", label: "Awards", layout: () => row("award-mvp", "award-dpoy", "award-roty")},
+    {id: "awards", group: "league", label: "Awards", controls: "awards", layout: () => row("award-mvp", "award-dpoy", "award-roty")},
     {id: "schedule", group: "league", label: "Schedule", layout: () => row(card("week", {expanded: true, grow: "both", bare: true, minHeight: 480}))},
   ];
 
   function draftRoomLayout(ctx) {
     const has = (id) => ctx.available(id);
     if (has("phase-draft-lottery")) return row(card("phase-draft-lottery", {bare: true}));
-    if (has("phase-draft-summary")) return row(card("phase-draft-summary", {grow: "h"}), card("phase-draft-trades", {grow: "h"}));
-    return row(card("phase-draft-board", {grow: "h"}), card("phase-draft-order", {grow: "h"}));
+    if (has("phase-draft-summary")) return row(card("phase-draft-summary", {grow: "h", quiet: true}), card("phase-draft-trades", {grow: "h", quiet: true}));
+    return row(card("phase-draft-board", {grow: "h"}), card("phase-draft-order", {grow: "h", quiet: true}));
   }
 
   function rosterMovesLabel() {
@@ -144,8 +150,15 @@
     const pageLayout = (page) => page.layout ? normalize(page.layout(pageCtx)) : null;
     const normalize = (item) => typeof item === "string" ? card(item) : item.type === "card" ? item : {...item, items: item.items.map(normalize)};
     // A page is listed when one of its cards is there to show (phase rooms appear and disappear with their phase).
+    const SLIDESHOW_PHASES = {
+      outlook: ["preseason", "regular_season", "play_in", "playoffs"],
+      recap: ["playoffs", "draft_lottery", "draft", "re_signing", "free_agency", "offseason", "training_camp"],
+    };
     const pageAvailable = (page) => {
-      if (page.slideshow) return Boolean(slideshowRow(page.slideshow));
+      if (page.slideshow) {
+        const phase = String(appState()?.home?.save?.phase || "");
+        return Boolean(slideshowRow(page.slideshow)) && (!phase || SLIDESHOW_PHASES[page.slideshow].includes(phase));
+      }
       const ids = layoutIds(pageLayout(page));
       return ids.some(available);
     };
@@ -236,6 +249,8 @@
           const head = document.createElement("header");
           head.className = "pages-slot-head";
           const title = esc(item.title || entry.title || item.id);
+          // A section named like its page keeps its place (the columns stay level) but not the repeated words.
+          if (item.quiet || (item.title || entry.title || "") === (page.title || pageLabel(page))) head.classList.add("is-echo");
           head.innerHTML = item.link
             ? `<button type="button" class="pages-slot-link" data-pages-go="${esc(item.link)}">${title}<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`
             : `<h2>${title}</h2>`;
@@ -311,7 +326,8 @@
     function naturalSize(id, expanded) {
       const item = ctx.defaults[id] || layout[id];
       if (!item) return {width: 320, height: 240};
-      const base = {width: item.width, height: item.height, scale: 1, expanded: false};
+      // The board opens its starter windows (Calendar, Standings...) at least this wide; so does a page.
+      const base = {width: Math.max(item.width, ctx.starterMinWidths?.[id] || 0), height: item.height, scale: 1, expanded: false};
       if (expanded && ctx.EXPANDABLE_CARDS.has(id)) {
         const copy = structuredClone(base);
         ctx.toggleWindowExpansion(copy, id);
@@ -422,10 +438,21 @@
         const heading = group === "now" ? nowHeading() : label;
         return `<section class="pages-nav-group" data-pages-group="${group}">${heading ? `<h3>${esc(heading)}</h3>` : ""}${items.map(page => {
           const badge = badgeFor(page);
-          return `<button type="button" class="pages-nav-item${page.id === currentPage ? " is-current" : ""}" data-pages-go="${page.id}"${page.id === currentPage ? ' aria-current="page"' : ""}><span>${esc(pageLabel(page))}</span>${badge}</button>`;
+          const current = shownPageId() === page.id;
+          return `<button type="button" class="pages-nav-item${current ? " is-current" : ""}" data-pages-go="${page.id}"${current ? ' aria-current="page"' : ""}><span>${esc(pageLabel(page))}</span>${badge}</button>`;
         }).join("")}</section>`;
       }).join("");
       nav.innerHTML = groups;
+    }
+
+    // The page the sidebar marks: an open slideshow counts as its page (it can open by itself at the start of a season).
+    function shownPageId() {
+      const show = window.SeasonSlideshow?.isOpen?.() ? window.SeasonSlideshow.current?.() : null;
+      if (show) {
+        const page = PAGES.find(item => item.slideshow === show.kind);
+        if (page && pageEls.has(page.id)) return page.id;
+      }
+      return currentPage;
     }
 
     function nowHeading() {
@@ -446,6 +473,9 @@
 
     function renderControls(page) {
       controlsEl.replaceChildren();
+      if (page?.controls === "awards" && typeof openLeagueLeadersModal === "function") {
+        controlsEl.innerHTML = `<button type="button" class="pages-control" data-pages-leaders>League Leaders</button>`;
+      }
       if (page?.controls === "trades") {
         const disabled = options.toolbarActions?.tradeDisabled ? " disabled" : "";
         controlsEl.innerHTML = `<button type="button" class="pages-control" data-pages-trade="finder"${disabled}>Trade Finder</button><button type="button" class="pages-control" data-pages-trade="builder"${disabled}>Trade Builder</button><button type="button" class="pages-control" data-pages-trade="offers"${disabled}>Incoming Offers${offerCount ? ` <em class="pages-nav-badge">${offerCount}</em>` : ""}</button><button type="button" class="pages-control" data-pages-trade="market"${disabled}>Trade Market</button>`;
@@ -462,8 +492,11 @@
       closeSlideshowFor();
       const previous = currentPage;
       currentPage = pageId;
-      lastPage.set(saveKey, pageId);
-      try { localStorage.setItem(`${PAGE_KEY}:${saveKey}`, pageId); } catch { /* preference only */ }
+      // While a save is still loading only Home exists: don't let that overwrite the page you were on.
+      if (options.phaseContext != null) {
+        lastPage.set(saveKey, pageId);
+        try { localStorage.setItem(`${PAGE_KEY}:${saveKey}`, pageId); } catch { /* preference only */ }
+      }
       for (const [id, el] of pageEls) el.hidden = id !== pageId;
       titleEl.textContent = page.title || pageLabel(page);
       renderControls(page);
@@ -496,17 +529,17 @@
     function openSlideshow(page) {
       if (typeof openLatestSeasonSlideshow !== "function") return;
       slideshowReturn = currentPage;
-      dashboard.classList.add("is-slideshow-page");
       nav.querySelectorAll(".pages-nav-item").forEach(item => item.classList.toggle("is-current", item.dataset.pagesGo === page.id));
       openLatestSeasonSlideshow(page.slideshow);
     }
+    // Opening by itself or from Settings: the sidebar follows the slideshow's open state.
+    const slideshowRoot = document.getElementById("seasonSlideshow");
+    const slideshowWatch = slideshowRoot ? new MutationObserver(() => { if (!disposed) renderNav(); }) : null;
+    slideshowWatch?.observe(slideshowRoot, {attributes: true, attributeFilter: ["hidden"]});
     function closeSlideshowFor() {
       if (window.SeasonSlideshow?.isOpen?.()) window.SeasonSlideshow.close();
     }
-    const onSlideshowClosed = () => {
-      dashboard.classList.remove("is-slideshow-page");
-      if (!disposed) renderNav();
-    };
+    const onSlideshowClosed = () => { if (!disposed) renderNav(); };
     window.addEventListener("season-slideshow-closed", onSlideshowClosed);
 
     function pageFor(id, {expanded = false} = {}) {
@@ -553,6 +586,10 @@
         showPage(go.dataset.pagesGo, {fromNav: true});
         return;
       }
+      if (event.target.closest("[data-pages-leaders]") && typeof openLeagueLeadersModal === "function") {
+        Promise.resolve(openLeagueLeadersModal()).catch(error => typeof showToast === "function" && showToast(error.message || String(error), true));
+        return;
+      }
       const trade = event.target.closest("[data-pages-trade]");
       if (trade && !trade.disabled) {
         const action = trade.dataset.pagesTrade;
@@ -585,6 +622,9 @@
       if (next) { event.preventDefault(); showPage(next.id, {fromNav: true}); }
     };
     document.addEventListener("keydown", onKey);
+    // The Assistant GM's phone keeps clear of the next-step button, however wide the phase's buttons are.
+    const dockObserver = new ResizeObserver(() => document.documentElement.style.setProperty("--pages-dock-w", `${Math.ceil(toolbar.offsetWidth || 0)}px`));
+    dockObserver.observe(toolbar);
     const observer = new ResizeObserver(() => {
       cancelAnimationFrame(resizeFrame);
       resizeFrame = requestAnimationFrame(() => {
@@ -602,7 +642,8 @@
       const required = [...nodes].find(([id, entry]) => entry.required && owned.has(id) && available(id));
       if (required) return pageFor(required[0]);
       if (ctx.entering && ctx.phaseCards.length) {
-        const phasePage = ctx.phaseCards.map(id => owned.has(id) && available(id) ? pageFor(id) : null).find(Boolean);
+        const entryFirst = (options.entryLayout?.rows || []).flat().filter(id => owned.has(id) && available(id));
+        const phasePage = [...entryFirst, ...ctx.phaseCards].map(id => owned.has(id) && available(id) ? pageFor(id) : null).find(Boolean);
         if (phasePage && phasePage !== "roster-moves" && phasePage !== "set-roster") return phasePage;
       }
       let remembered = lastPage.get(saveKey);
@@ -639,6 +680,8 @@
       dispose() {
         disposed = true;
         observer.disconnect();
+        dockObserver.disconnect();
+        slideshowWatch?.disconnect();
         cancelAnimationFrame(resizeFrame);
         dashboard.removeEventListener("click", onClick);
         document.removeEventListener("click", onSlideshowNav, true);
