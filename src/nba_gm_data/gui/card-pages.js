@@ -83,6 +83,8 @@
       col(card("identity", {title: "Heat Maps"}), "signals", "morale"),
       col(row("offense", "defense"), row("factors", "efficiency")))},
 
+    {id: "schedule", group: "team", label: "Schedule", layout: () => row(card("week", {expanded: true, grow: "both", bare: true, minHeight: 480}))},
+
     // The front office.
     {id: "contracts", group: "office", label: "Contracts", title: "Contracts & Payroll", layout: () => row(col("contracts", "picks"), "payroll")},
     {id: "trades", group: "office", label: "Trades", controls: "trades", layout: () => col(row("league-block", "payroll"), row("team-block", "team-wants"))},
@@ -91,7 +93,7 @@
     // The league.
     {id: "standings", group: "league", label: "Standings", layout: () => row(card("standings", {expanded: true}), card("league-wire", {expanded: true, height: 600}))},
     {id: "awards", group: "league", label: "Awards", controls: "awards", layout: () => row("award-mvp", "award-dpoy", "award-roty")},
-    {id: "schedule", group: "league", label: "Schedule", layout: () => row(card("week", {expanded: true, grow: "both", bare: true, minHeight: 480}))},
+
   ];
 
   function draftRoomLayout(ctx) {

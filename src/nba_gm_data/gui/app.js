@@ -265,6 +265,8 @@ function gameCommands() {
     {label:"Simulate to my pick", keys:"s p", run:click('#draftToUser, #fantasyToUser'), available:available('#draftToUser, #fantasyToUser')},
     {label:"Next phase", keys:"s n", run:click('#postseasonAdvance, #draftRevealLottery, #draftEnterNight, #draftAdvanceStage, #faAdvanceStage, [data-advance="next-season"]'), available:available('#postseasonAdvance, #draftRevealLottery, #draftEnterNight, #draftAdvanceStage, #faAdvanceStage, [data-advance="next-season"]')},
     {label:"Keyboard shortcuts", run:() => GameInterface.openPalette(true)},
+    // Pages layout: every page in the sidebar is a command too.
+    ...[...document.querySelectorAll(".pages-nav-item[data-pages-go]")].map(item => ({label:`Go to ${item.querySelector("span")?.textContent || item.textContent}`, run:() => { closeAllModals(); item.click(); }, available:ready})),
   ];
   return commands.map(c => ({group:c.keys?.startsWith('s ') ? 'Simulation' : 'Navigation', ...c}));
 }
@@ -10238,7 +10240,9 @@ async function openClipboardWindow(view) {
     render();
   }
   if (view === "calendar") {
-    window.CardBoard?.open("week");
+    // Pages layout: the calendar's own page is Schedule (the month), not the week on Home.
+    if (globalThis.CardPages?.enabled?.()) window.CardBoard?.expand("week");
+    else window.CardBoard?.open("week");
     return;
   }
   const phase = dashboardPhaseKind();
