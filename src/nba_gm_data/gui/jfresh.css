@@ -1,0 +1,186 @@
+/* JFresh look (branch jfresh-style, 2026-11-24). The user's two references are JFresh's NHL player cards: a deep team
+   colour fills the screen with a soft, out-of-focus depth behind it; the card is barely a layer (a faint frosted lift,
+   one hairline edge, generous corners); sections sit straight on it with big bold white titles; tables have no fills
+   or stripes, just a hairline under the header and between rows; numbers are clean SF-style figures; the accent is a
+   light sky blue; chosen tabs are bold.
+
+   Styling only: every size, column and layout from the taste-deck rounds stays as it is. Loaded last, scoped to the
+   clear glass look. */
+
+html[data-glass="clear"] {
+  --jf-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", "Segoe UI", Arial, sans-serif;
+  --jf-accent: #7cc0ff;
+  --jf-accent-strong: #a9d6ff;
+  --jf-edge: rgba(255, 255, 255, .13);
+  --jf-line: rgba(255, 255, 255, .13);
+  --jf-head-line: rgba(255, 255, 255, .30);
+  --jf-lift: rgba(255, 255, 255, .055);
+  --jf-lift-strong: rgba(255, 255, 255, .09);
+  --jf-chip: rgba(255, 255, 255, .16);
+  --jf-chip-hover: rgba(255, 255, 255, .24);
+  --jf-chip-edge: rgba(255, 255, 255, .26);
+  /* The team colour, deepened the way JFresh's teal and red backgrounds are (still clearly the team's colour). */
+  --jf-team: color-mix(in srgb, var(--team-a, #2f6fb7) 42%, #1b2934);
+  --jf-team-light: color-mix(in srgb, var(--team-a, #2f6fb7) 45%, #7d97a8);
+  --jf-team-deep: color-mix(in srgb, var(--team-a, #2f6fb7) 22%, #050a0f);
+
+  /* Re-point the clear-glass variables. */
+  --g-radius: 16px;
+  --g-radius-inner: 8px;
+  --g-edge: var(--jf-edge);
+  --g-divider: var(--jf-line);
+  --g-row-line: rgba(255, 255, 255, .10);
+  --g-text: #ffffff;
+  --g-soft: #d5e1ea;
+  --g-glass: rgba(255, 255, 255, .045);
+  --g-glass-dark: rgba(6, 12, 20, .30);
+  --g-lift: var(--jf-lift);
+  --g-hover: rgba(255, 255, 255, .07);
+  --g-sorted: rgba(255, 255, 255, .045);
+  --g-stripe: transparent;
+  --g-head: transparent;
+  --g-blur: blur(28px) saturate(140%);
+  --ui-font: var(--jf-font);
+}
+
+/* ---------- Type: SF-style everywhere, figures of equal width. */
+html[data-glass="clear"] body,
+html[data-glass="clear"] body *:not(code):not(kbd):not(pre) { font-family: var(--jf-font) !important; font-variant-numeric: tabular-nums; }
+html[data-glass="clear"] body { -webkit-font-smoothing: antialiased; }
+
+/* ---------- The board: the team colour with soft, out-of-focus depth (lighter and darker pools of the same colour, like
+   JFresh's blurred page behind the card) and a dark edge. One hue only: never a two-colour gradient. No grid. */
+html[data-glass="clear"] body .season-command-dashboard.has-card-board,
+html[data-glass="clear"] body.unified-terminal-ui {
+  background-color: var(--jf-team) !important;
+  background-image:
+    radial-gradient(ellipse 34% 26% at 18% 24%, color-mix(in srgb, var(--jf-team-light) 55%, transparent), transparent 72%),
+    radial-gradient(ellipse 28% 22% at 46% 12%, color-mix(in srgb, var(--jf-team-light) 35%, transparent), transparent 72%),
+    radial-gradient(ellipse 30% 26% at 82% 30%, color-mix(in srgb, var(--jf-team-deep) 60%, transparent), transparent 72%),
+    radial-gradient(ellipse 36% 28% at 70% 72%, color-mix(in srgb, var(--jf-team-light) 40%, transparent), transparent 72%),
+    radial-gradient(ellipse 30% 24% at 28% 78%, color-mix(in srgb, var(--jf-team-deep) 55%, transparent), transparent 72%),
+    radial-gradient(ellipse 22% 18% at 54% 52%, color-mix(in srgb, var(--jf-team-light) 22%, transparent), transparent 72%),
+    radial-gradient(ellipse 95% 90% at 50% 45%, transparent 55%, rgba(2, 6, 10, .55) 100%) !important;
+  background-size: 100% 100% !important;
+  background-attachment: scroll !important;
+}
+
+/* ---------- Windows, pop-ups and slides: barely a layer. A faint frosted lift, one hairline edge, big corners, a soft
+   shadow; the title is part of the card (no bar). */
+html[data-glass="clear"] body .has-card-board .card-board-window,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell.modal-shell.modal-shell,
+html[data-glass="clear"] .season-slideshow .ss-card {
+  background: var(--g-glass) !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: var(--g-blur) !important; backdrop-filter: var(--g-blur) !important;
+  border: 1px solid var(--jf-edge) !important;
+  border-radius: var(--g-radius) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .28), inset 0 1px 0 rgba(255, 255, 255, .06) !important;
+}
+html[data-glass="clear"] body .has-card-board .card-board-window > .card-board-titlebar,
+html[data-glass="clear"] body .has-card-board .is-active > .card-board-titlebar,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell :is(.modal-head, .modal-header, .modal-titlebar) {
+  background: transparent !important; box-shadow: none !important; border-bottom: 1px solid var(--jf-line) !important;
+}
+html[data-glass="clear"] body .has-card-board .card-board-titlebar :is(.card-board-move, .card-board-title, strong, h2, h3),
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell :is(.modal-head, .modal-header) :is(h2, h3, strong) {
+  color: #fff !important; font-weight: 700 !important; letter-spacing: -.005em; font-size: 15px !important;
+}
+/* Modal backdrop: the board dims and blurs a little behind a pop-up. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot#modalRoot.modal-root { background: rgba(3, 8, 14, .16) !important; }
+
+/* ---------- Section titles: big, bold, white (JFresh's "Bio", "Attributes", "Career Stats"). */
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) :is(.approved-card-panel > header, .tr-side-head strong, .tr-payroll-head h4, .trade-results-head strong, .trade-finder-cap > header, .pc4-group > h4, .season-command-panel > header) {
+  color: #fff !important; font-weight: 700 !important; background: transparent !important; border: 0 !important; box-shadow: none !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot) .approved-card-panel { background: transparent !important; border: 0 !important; box-shadow: none !important; }
+
+/* ---------- Tables: no fills, no stripes. Bold white header text over one hairline; a hairline between rows; a faint
+   lift on hover; the sorted column barely tinted. */
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) table thead th {
+  background: transparent !important; color: #fff !important; font-weight: 700 !important;
+  box-shadow: inset 0 -1px 0 var(--jf-head-line) !important; border: 0 !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table > thead > tr > th:first-child::before,
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table > thead > tr > th:last-child::after {
+  background: transparent !important; box-shadow: inset 0 -1px 0 var(--jf-head-line) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) table tbody tr,
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) table tbody tr:nth-child(even) {
+  background-color: transparent !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) table tbody td { border-bottom: 1px solid var(--g-row-line) !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) table tbody tr:is(:hover, :focus-within) { background-color: var(--g-hover) !important; }
+html[data-glass="clear"] body.unified-terminal-ui [data-house-table] > [data-house-row],
+html[data-glass="clear"] body.unified-terminal-ui [data-house-table] > [data-house-row][data-house-alt] { background-color: transparent !important; box-shadow: inset 0 -1px 0 var(--g-row-line) !important; }
+html[data-glass="clear"] body.unified-terminal-ui [data-house-table] > [data-house-row]:is(:hover, :focus-within) { background-color: var(--g-hover) !important; }
+html[data-glass="clear"] body.unified-terminal-ui [data-house-table] > [data-house-head] { background: transparent !important; box-shadow: inset 0 -1px 0 var(--jf-head-line) !important; }
+html[data-glass="clear"] body.unified-terminal-ui [data-house-table] > [data-house-head] * { color: #fff !important; font-weight: 700 !important; }
+
+/* ---------- The standard long pill: a faint frosted tray, white labels, the chosen option a brighter frosted pill with
+   bold white text (JFresh's chosen tab is bold; the "1st Line" chip is a light pill). Keep / Waive / Buy out keep their
+   meaning colours, softened. */
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .settings-pill, [role="tablist"]) {
+  background: rgba(255, 255, 255, .07) !important; border: 1px solid rgba(255, 255, 255, .10) !important; box-shadow: none !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .settings-pill, [role="tablist"]) > :is(button, a) {
+  color: #e6eef5 !important; font-weight: 500 !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .settings-pill, [role="tablist"]) > :is(button, a):is(.active, .is-active, [aria-pressed="true"], [aria-selected="true"]) {
+  color: #fff !important; font-weight: 700 !important;
+}
+html[data-glass="clear"] .tab-slide-pill { background: rgba(255, 255, 255, .22) !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22), 0 2px 8px rgba(0, 0, 0, .18) !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .settings-pill, [role="tablist"]) > :is(button, a):is(.active, .is-active, [aria-pressed="true"], [aria-selected="true"]):not(:has(~ .tab-slide-pill)) {
+  background: rgba(255, 255, 255, .22) !important;
+}
+html[data-glass="clear"] .cutdown-choice-thumb.is-keep { background: rgba(124, 192, 255, .42) !important; }
+html[data-glass="clear"] .cutdown-choice-thumb:is(.is-waive, .is-buyout) { background: rgba(255, 110, 110, .45) !important; }
+
+/* ---------- Buttons: primary actions a frosted light chip with bold white text; ordinary buttons plain light text with a
+   faint chip on hover; text links stay text. */
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-window, .season-command-header, .season-slideshow) :is(.tr-button.is-primary, .ui-command.is-primary, button.primary, .is-primary:is(button, a)) {
+  background: var(--jf-chip) !important; color: #fff !important; font-weight: 700 !important;
+  border: 1px solid var(--jf-chip-edge) !important; box-shadow: none !important; border-radius: 999px !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-window, .season-command-header, .season-slideshow) :is(.tr-button.is-primary, .ui-command.is-primary, button.primary, .is-primary:is(button, a)):hover:not(:disabled) { background: var(--jf-chip-hover) !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-window, .season-slideshow) :is(.tr-button:not(.is-primary), .ui-command:not(.is-primary)) {
+  background: rgba(255, 255, 255, .06) !important; color: #fff !important; border: 1px solid rgba(255, 255, 255, .14) !important; box-shadow: none !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-window, .season-slideshow) :is(.tr-button:not(.is-primary), .ui-command:not(.is-primary)):hover:not(:disabled) { background: rgba(255, 255, 255, .12) !important; }
+
+/* ---------- The top bar: sits on the background like JFresh's page header, buttons as frosted chips. */
+html[data-glass="clear"] body.unified-terminal-ui .season-command-header { background: rgba(4, 10, 16, .16) !important; border-bottom: 1px solid var(--jf-line) !important; box-shadow: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui .season-command-header :is(button, .ui-command) { background: rgba(255, 255, 255, .08) !important; border: 1px solid rgba(255, 255, 255, .14) !important; color: #fff !important; box-shadow: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui .season-command-header :is(button, .ui-command):hover { background: rgba(255, 255, 255, .15) !important; }
+
+/* ---------- Rating and value bars: a light sky-blue fill on a faint track, rounded, thin (JFresh's light blue tick). */
+html[data-glass="clear"] body.unified-terminal-ui .player-summary-rating i { background: rgba(255, 255, 255, .10) !important; border-radius: 3px; overflow: hidden; }
+html[data-glass="clear"] body.unified-terminal-ui .player-summary-rating i > b { border-radius: 3px; }
+
+/* ---------- Checkboxes and inputs read as frosted chips too. */
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-window) :is(input[type="text"], input[type="search"], input[type="number"], .glass-select) {
+  background: rgba(255, 255, 255, .07) !important; border: 1px solid rgba(255, 255, 255, .16) !important; color: #fff !important;
+}
+
+/* ---------- Player card: JFresh's big bold name; labels bold white, values regular (Bio / Contract rows); section titles
+   larger and bold. */
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-profile-name h3 { font-size: 27px !important; font-weight: 700 !important; letter-spacing: -.01em; color: #fff !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-profile-name p { color: #e6eef5 !important; font-size: 14px !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card :is(.player-header-fact > small, .player-summary-rating > small) { color: #fff !important; font-weight: 700 !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .player-header-fact > span { font-weight: 400 !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card :is(.approved-card-panel > header, .approved-season-line > header, .approved-season-line > strong) { font-size: 17px !important; font-weight: 700 !important; color: #fff !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-season-line small { color: #fff !important; font-weight: 700 !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-season-line strong { font-weight: 400 !important; color: #fff !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card :is(.player-page-bar, .approved-player-identity) { background: transparent !important; border-color: var(--jf-line) !important; }
+
+/* ---------- Pop-ups let the team colour through (JFresh's Larkin card): the trade room is the same faint lift as every
+   card, the backdrop only lightly dimmed; the room's inner sections are hairline-edged, not darker boxes. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-shell.modal-shell.modal-trade-room { background-color: rgba(255, 255, 255, .05) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot#modalRoot.modal-root { background: rgba(3, 8, 14, .16) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room :is(.tr-toolbar, .tr-pick-bar, .tr-side, .tr-verdict, .tr-lower, .tr-picker, .tr-payroll, .tr-finder-brief, .tr-finder-results, .trade-room-toolbar) {
+  background: rgba(255, 255, 255, .035) !important; border: 1px solid var(--jf-line) !important; box-shadow: none !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room :is(.tr-add-change, #evaluateTrade.tr-button.is-primary, [data-trade-view].tr-button.is-primary) {
+  background: var(--jf-chip) !important; color: #fff !important; border: 1px solid var(--jf-chip-edge) !important; box-shadow: none !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room :is(.tr-add-change, #evaluateTrade.tr-button.is-primary, [data-trade-view].tr-button.is-primary):hover:not(:disabled) { background: var(--jf-chip-hover) !important; }

@@ -13,7 +13,7 @@ test('table style sheet loads after every other style sheet', () => {
   const links = [...html.matchAll(/href="\/([^"?]+\.css)/g)].map(m => m[1]);
   // The glass look loads last (round 3): the light glass, then the clear glass (round 4) and the font choice; the
   // table style sheet just before them.
-  assert.deepEqual(links.slice(-4), ['table-style.css', 'glass.css', 'glass-clear.css', 'fonts.css']);
+  assert.deepEqual(links.slice(-5), ['table-style.css', 'glass.css', 'glass-clear.css', 'fonts.css', 'jfresh.css']);
 });
 
 test('rows have no left bar on hover', () => {
