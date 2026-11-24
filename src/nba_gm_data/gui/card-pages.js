@@ -451,8 +451,9 @@
     function shownPageId() {
       const show = window.SeasonSlideshow?.isOpen?.() ? window.SeasonSlideshow.current?.() : null;
       if (show) {
+        // A slideshow can become available after the pages were built (a new season's outlook): no page element needed.
         const page = PAGES.find(item => item.slideshow === show.kind);
-        if (page && pageEls.has(page.id)) return page.id;
+        if (page) return page.id;
       }
       return currentPage;
     }
@@ -486,11 +487,11 @@
 
     function showPage(pageId, {focus = false, fromNav = false} = {}) {
       const page = PAGES.find(item => item.id === pageId);
-      if (!page || !pageEls.has(pageId)) return false;
-      if (page.slideshow) {
+      if (page?.slideshow) {
         openSlideshow(page);
         return true;
       }
+      if (!page || !pageEls.has(pageId)) return false;
       closeSlideshowFor();
       const previous = currentPage;
       currentPage = pageId;
