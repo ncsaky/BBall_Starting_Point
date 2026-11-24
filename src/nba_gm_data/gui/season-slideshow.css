@@ -464,3 +464,11 @@ body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-fam
 .ss-depth-table.is-fields td.is-empty { background: transparent; }
 html[data-glass="clear"] .ss-depth-table.is-fields :is(th, td).is-group-start { border-left-color: rgba(255, 255, 255, .16); }
 html[data-glass="clear"] .ss-depth-table.is-fields thead tr.ss-depth-fields th { border-bottom: 1px solid rgba(255, 255, 255, .55) !important; }
+
+/* Team Profile, round 5: the payroll chart fills its panel's height (keeping its 190 × 256 shape), the table under
+   it as wide as the chart. */
+.season-slideshow .ss-panel-payroll { display: flex !important; flex-direction: column; min-height: 0; overflow: hidden !important; }
+.season-slideshow .ss-panel-payroll > .ss-payroll-block { flex: 1 1 auto; min-height: 0; display: flex !important; flex-direction: column; align-items: center; }
+.season-slideshow .ss-panel-payroll .ss-payroll-block > .ss-payroll { flex: 1 1 auto; min-height: 0; height: auto !important; max-height: none !important; display: flex; justify-content: center; }
+.season-slideshow .ss-panel-payroll .ss-payroll-block > .ss-cap-table { flex: none; width: 100% !important; max-width: 420px; }
+.season-slideshow .ss-body:has(.ss-panel-payroll) { overflow: hidden !important; }

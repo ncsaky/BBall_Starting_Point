@@ -88,3 +88,14 @@ html[data-glass="clear"] .pc4 { --pc4-rg-line: rgba(255, 255, 255, .45); --pc4-r
   --pc4-line: rgba(255, 255, 255, .22); --pc4-soft: rgba(255, 255, 255, .10); --pc4-head: transparent; --pc4-panel: transparent; --pc4-muted: #c9d5e0; --pc4-text: #f3f7fb; }
 html[data-glass="clear"] .pc4-legend-range .pc4-key.dot::before { background: #8fc4ff; }
 html[data-glass="clear"] .pc4-legend-range .pc4-key.dot.is-prior::before { box-shadow: inset 0 0 0 2px #8fc4ff; }
+
+/* Round 5: section headers inside a layer read as separators (italic small caps, softer, a hairline), the layer's
+   explanation sits behind an "i" mark, and every row in a layer gives its value the same width so all the bars in
+   that layer are the same length (Physical Tools mixes "7'1" 216 cm" with plain grades). */
+.pc4 h4 { font-style: italic; font-variant: small-caps; letter-spacing: .4px; font-size: 1em; color: var(--pc4-muted); margin: 10px 0 3px; padding: 0 0 2px; }
+.pc4 h4 small { font-style: normal; font-variant: normal; }
+.pc4 h2 { display: inline-flex; align-items: center; gap: 7px; }
+.pc4-info { display: inline-grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; border: 1px solid var(--pc4-muted); color: var(--pc4-muted); font: italic 700 10px Georgia, serif; cursor: help; }
+.pc4-info:hover, .pc4-info:focus-visible { color: var(--pc4-text); border-color: var(--pc4-text); outline: none; }
+.pc4-layer:has(.pc4-r.measure) .pc4-r:not(.pass) { grid-template-columns: minmax(96px, 1.15fr) minmax(50px, 1fr) 96px; }
+.pc4-layer:has(.pc4-r.measure) .pc4-r:not(.pass) > strong { white-space: nowrap; }

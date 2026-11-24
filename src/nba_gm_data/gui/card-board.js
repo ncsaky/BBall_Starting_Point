@@ -24,15 +24,15 @@
     "award-dpoy": [3.05, 1.22],
     "award-roty": [3.05, 1.22],
     roster: [1.16 * 1.6, 1],   // round 4: wide enough for every column, roles in full
-    factors: [1.25 * 1.3, 1.4],   // round 4: the range charts and their key were cut off at the old size
+    factors: [1.25 * 1.3, 1.4 * 1.12],   // round 4: the range charts and their key were cut off at the old size
     staff: [1.58, 1.12],
     "league-wire": [.61, 1.05],
   };
   // Round 4: a new layout never opens these narrower than their tables need (the measured grid cell can be narrow).
-  const CARD_MIN_DEFAULT_WIDTHS = {roster: 1140, minutes: 638, factors: 320};
-  const CARD_SIZE_REVISIONS = {identity:5,signals:2,minutes:7,development:3,staff:7,"league-wire":2,prospects:3,offense:4,defense:4,"award-mvp":4,"award-dpoy":4,"award-roty":4,roster:5,factors:3};
+  const CARD_MIN_DEFAULT_WIDTHS = {roster: 1140, minutes: 740, factors: 360};
+  const CARD_SIZE_REVISIONS = {identity:5,signals:2,minutes:7,development:3,staff:7,"league-wire":2,prospects:3,offense:4,defense:4,"award-mvp":4,"award-dpoy":4,"award-roty":4,roster:5,factors:4};
   const CARD_WIDTH_MIGRATIONS = {minutes:{1:1.03/1.68*.8*.7*1.16*1.12,2:1.03/1.36*.8*.7*1.16*1.12,3:.8*.7*1.16*1.12,4:.7*1.16*1.12,5:1.16*1.12,6:1.12},development:{1:1.4/1.15,2:1.12},"league-wire":{1:.5},prospects:{1:1.92/1.2,2:1.92/1.45},offense:{1:1.1,2:1.1/1.4,3:1.4/1.1},defense:{1:1.1,2:1.1/1.4,3:1.4/1.1},"award-mvp":{1:3.05/1.22,2:3.05/2.05,3:3.05/2.7},"award-dpoy":{1:3.05/1.22,2:3.05/2.05,3:3.05/2.7},"award-roty":{1:3.05/1.22,2:3.05/2.05,3:3.05/2.7},roster:{1:1.16*1.6,3:1.6,4:1.6/1.4},factors:{1:1.25*1.3,2:1.3}};
-  const CARD_HEIGHT_MIGRATIONS = {identity:{1:1.1/1.3*1.07,2:1.1*1.07,3:1.1/1.25*1.07,4:1.07},signals:{1:.75},minutes:{1:.7,2:.7,3:.7,4:.7},staff:{2:1.12/1.8,3:1.12/1.35,4:1.12/1.12,5:1.12/1.12,6:1.12/1.04},offense:{1:1.55},defense:{1:1.55},factors:{1:1.4}};
+  const CARD_HEIGHT_MIGRATIONS = {identity:{1:1.1/1.3*1.07,2:1.1*1.07,3:1.1/1.25*1.07,4:1.07},signals:{1:.75},minutes:{1:.7,2:.7,3:.7,4:.7},staff:{2:1.12/1.8,3:1.12/1.35,4:1.12/1.12,5:1.12/1.12,6:1.12/1.04},offense:{1:1.55},defense:{1:1.55},factors:{1:1.4*1.12,2:1.12,3:1.12}};
   const CARD_SCALE_MIGRATIONS = {staff:{4:1.25}};
   const CARD_MIN_SCALES = {
     identity: .72, signals: .78, morale: .78, factors: .78, offense: .72, defense: .72,
@@ -224,6 +224,8 @@
       }
       layout[id].sizeRevision = revision;
     }
+    // Round 5: windows whose tables need a minimum width never open narrower than it.
+    if (typeof CARD_MIN_DEFAULT_WIDTHS === "object") for (const [id, minimum] of Object.entries(CARD_MIN_DEFAULT_WIDTHS)) if (layout[id] && layout[id].width < minimum) layout[id].width = minimum;
     return layout;
   }
   const icon = (name) => `<img src="/assets/window-icons/${name}.svg" alt="" aria-hidden="true">`;

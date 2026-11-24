@@ -1,6 +1,6 @@
 # UI style guide
 
-Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), round 2 (2026-11-23 day, 22 priority questions plus references) and round 3 (2026-11-23 evening, 19 questions on the five batches) and round 4 (2026-11-23 late, 19 questions on the glass look). The answers live in the deck artifact's `answers` collection; round 2 ids start with `q2-`. Also draws on the playtest notes in `docs/agents/tasks/playtest-notes-2026-11-22.md`. Every agent doing GUI work follows this. When a rule here conflicts with older docs, this file wins. Where round 2 changed a round 1 rule, the rule below already says the new thing.
+Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), round 2 (2026-11-23 day, 22 priority questions plus references) and round 3 (2026-11-23 evening, 19 questions on the five batches) and round 4 (2026-11-23 late, 19 questions on the glass look) and round 5 (2026-11-24, 20 questions on the clear glass). The answers live in the deck artifact's `answers` collection; round 2 ids start with `q2-`. Also draws on the playtest notes in `docs/agents/tasks/playtest-notes-2026-11-22.md`. Every agent doing GUI work follows this. When a rule here conflicts with older docs, this file wins. Where round 2 changed a round 1 rule, the rule below already says the new thing.
 
 ## What the user wants overall
 
@@ -25,7 +25,10 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **JFresh-style glass, game-wide** (`gui/glass.css`): windows and pop-ups are frosted, slightly see-through panels with rounded corners and depth; title bars and the top bar are dark glass tinted with the user's team colour, with white text; the board behind is lit by soft team-colour light. Content stays light frosted with near-black text so dense tables read easily.
 - **Pop-ups are glass too:** dark tinted glass frames with team-colour light; every chart, table and tile inside sits on a light frosted card. Text turns white only where it sits directly on the frame.
 - **Content is glass too (round 4, said on six cards):** a white table or chart sitting on the glass is not the look. Tables, charts and tiles are themselves translucent, tinted surfaces with the team light showing through. The frame is the lighter one (more colour through). Contrast still rules: every colour is re-checked on the real glass.
-- **Font:** a modern sans (SF Pro / system) by default, with a Settings choice to switch fonts and see the change.
+- **One look only (round 5):** the clear glass. The light Frosted option is gone.
+- **Font:** Helvetica Neue by default (round 5 pick), with a Settings choice to switch fonts.
+- **No gradients on windows:** flat tinted glass; a gradient across a window "feels too AI". The board behind keeps its soft team light.
+- **The player card ratings page is the reference** (round 5: "take this style to the rest of the game"): its spacing, bar widths, borders and hairlines.
 - **Depth charts:** columns are position groups (Guards, Wings, Bigs), never single positions; one player per row.
 - **Cards are page prototypes.** The user expects to move to a fixed page layout later; making each card right now is how each page gets designed.
 
@@ -72,7 +75,9 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **Trade value** is never a bare grade number. Show it visually (a bar or something better), and make it the first thing you see on a player in a deal, ahead of roles.
 
 ### Marks and chips
-- **Injury:** red cross plus red games-out number. One darker red (not pink), one size, everywhere. No chip and no greyed-out row.
+- **Injury:** red cross plus red games-out number, and the player's name in red too (round 5), everywhere. No chip and no greyed-out row.
+- **Explanations are hover info, not visible text** (round 5): subtitles under section headers and notes like "Projected overall: line is…" become an info mark with hover text.
+- **Section headers inside a table or list** (Shooting, Rebounding…) are visibly different from rows (italic small caps or similar).
 - **Status (kept, declined, signed...):** a coloured icon plus plain black text, regular weight. No coloured pill chips.
 - **Roles:** in tables and tiles, roles get their own column(s) as coloured text, not chips, not under the player's name and not hidden in hover text. Offense and defense roles read as a pair.
 - **Small flags** (resting, the "Zz" mark) are a small superscript on the value they qualify (minutes or fatigue), not a column of their own.
@@ -94,6 +99,10 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **Trophies** need a treatment (outline, frame or similar). A raw photo pasted on the card looks wrong.
 
 ### Buttons, tabs and checkboxes
+- **Pill-shaped glass buttons** (round 5), like iOS glass buttons: fully rounded ends, a translucent light fill, a thin light edge, vertically centred in their bar. Everywhere: tool bars, row actions (Keep / Waive / Buy out), slideshow navigation, trade room.
+- **Tabs are segmented controls** like Team Identity's (round 5: loved): a soft tray, the chosen option raised. Labels for a group of tabs sit above it, centred.
+- **Checkboxes: transparent fill** with a light edge, never a white box.
+- **Table headers are never buttons:** sortable headers look like Minutes' headers (plain bold text, the line under).
 - Filled primary button for the main action, plain text buttons for the rest.
 - **Hover never turns text white** or inverts the button. Hover only shades the background slightly.
 - **Nothing is filled black.** Not selected tabs, not checked checkboxes (white box, dark tick), not clicked rows.
@@ -121,7 +130,10 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **Line graphs:** a light background grid, a y-axis floor low enough for the lowest player, and prominent (darker) range fills.
 - **Labels for a group of tabs** sit above the group, centred, so they never look like one of the options (Team Identity: Offense / Defense).
 - **Radars:** enough categories to describe a team (round 4: more than four or five per side).
-- **Range charts** (Four Factors) use the same width per row, with right always meaning better.
+- **Range charts** (Four Factors) use the same width per row, with right always meaning better. Bars in one list all have the same length, whatever the value text beside them.
+- **Bars on one card share one scale** (Development's Season and Month bars).
+- **Heat maps:** enough colour steps that the middle isn't washed out; each region can carry a tiny two-line label (two numbers, about 10 characters).
+- **Meters that mean "worse as they fill"** (fatigue) run light yellow to dark red.
 - **Payroll is always the four-year segmented payroll chart.** Anything that changes payroll (a trade) shows the chart, with the change animated (plays once, then a replay button).
 - Each player keeps one colour across all years of the payroll chart.
 - No circular "runway" gauges; the user doesn't find them clear.

@@ -687,3 +687,31 @@ html[data-glass="clear"] .dev-plot .dev-axis { fill: #c9d5e0 !important; }
 body.unified-terminal-ui .has-card-board .assets-roster .linked-ratings table { table-layout: auto !important; }
 body.unified-terminal-ui .has-card-board .assets-roster .linked-ratings :is(th, td):nth-child(6) { width: 124px; min-width: 124px; }
 body.unified-terminal-ui .has-card-board .assets-roster .linked-ratings :is(th, td):is(:nth-child(7), :nth-child(8), :nth-child(9)) { width: 64px; min-width: 64px; }
+
+/* Next Opponent, rebuilt (taste deck round 5: the header lines were still wrong). Cause: the table is a grid whose
+   first row was 15px while the header is 20px, so the header overlapped the first player row; on top of that three
+   separate line layers (the header's ::after, the first row's ::before, a separate sort band) drew extra lines.
+   Now: the header row sizes itself, exactly one line under it (its border), no pseudo-element lines, no separate
+   band (the house sorted fill alone), rows separated by their own hairline. */
+body.unified-terminal-ui .has-card-board [data-board-window="opponent"] .season-opponent-table { grid-template-rows: auto repeat(6, minmax(0, 1fr)) !important; }
+body.unified-terminal-ui .has-card-board [data-board-window="opponent"] :is(.season-opponent-head::after, .season-opponent-row::after, .season-opponent-head + .season-opponent-row::before) { content: none !important; display: none !important; }
+body.unified-terminal-ui .has-card-board [data-board-window="opponent"] .season-opponent-sort-band { display: none !important; }
+body.unified-terminal-ui .has-card-board [data-board-window="opponent"] .season-opponent-head { min-height: 22px !important; border-bottom: 1px solid var(--house-head-rule, #3f4b55) !important; box-sizing: border-box; }
+body.unified-terminal-ui .has-card-board [data-board-window="opponent"] .season-opponent-table > .season-opponent-row { border-top: 0 !important; border-bottom: 1px solid var(--house-rule, rgba(255, 255, 255, .075)) !important; }
+body.unified-terminal-ui .has-card-board [data-board-window="opponent"] .season-opponent-table > .season-opponent-row:last-child { border-bottom: 0 !important; }
+
+/* Minutes, round 5: room for names with the injury mark and for "79 −1.0", a wider centred fatigue meter, and a
+   fatigue colour that gets worse as it fills (light yellow → orange → dark red). */
+body.unified-terminal-ui .has-card-board [data-board-window="minutes"] :is(.season-minutes-head, .season-minute-row) { grid-template-columns: minmax(180px, 1.6fr) 62px minmax(118px, 1.1fr) 34px 44px minmax(120px, 1.1fr) minmax(112px, .9fr) !important; }
+body.unified-terminal-ui [data-house-table="minutes"] [data-house-row] .season-fatigue { grid-template-columns: 1fr 74px 1fr !important; }
+body.unified-terminal-ui [data-house-table="minutes"] [data-house-row] .season-fatigue > i { width: 74px !important; }
+body.unified-terminal-ui .season-fatigue > i > b { background: #f2dd7a !important; }
+body.unified-terminal-ui .season-fatigue.medium > i > b { background: #ef9a45 !important; }
+body.unified-terminal-ui .season-fatigue.high > i > b { background: #c8423a !important; }
+
+/* Opening roster, round 5: roles side by side; the two-way "Details" text opens on its own line under the label
+   (no box), and the footer Rules pop-out is a glass pop-out. */
+body.unified-terminal-ui .cutdown-table .season-minute-roles { display: inline-flex !important; flex-direction: row !important; flex-wrap: nowrap; gap: 0 9px !important; column-gap: 9px !important; justify-content: center; white-space: nowrap; }
+body.unified-terminal-ui .cutdown-section-row .cutdown-details { display: inline; margin-left: 10px; }
+body.unified-terminal-ui .cutdown-section-row .cutdown-details > summary { display: inline; }
+body.unified-terminal-ui .cutdown-section-row .cutdown-details > p { display: block; position: static; margin: 4px 0 2px; max-width: 80ch; }

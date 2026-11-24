@@ -127,9 +127,10 @@ function applyBoardTheme(theme = boardTheme()) {
 applyBoardTheme();
 // Look choices in Settings (round 4): the glass style and the font. Each is a data attribute on <html>; the CSS in
 // glass-clear.css and fonts.css reads it. Rating and role colours depend on the glass, so a change re-renders.
+// Round 5: one glass look only (the light Frosted option is gone); the font default is Helvetica Neue.
 const UI_LOOK_SETTINGS = {
-  glass: { key: "nbaGmGlass", label: "Glass", fallback: "clear", options: [["clear", "Clear (see-through)"], ["frosted", "Frosted (light)"]] },
-  font: { key: "nbaGmFont", label: "Font", fallback: "modern", options: [["modern", "Modern (SF Pro)"], ["rounded", "Rounded"], ["avenir", "Avenir Next"], ["helvetica", "Helvetica Neue"], ["classic", "Classic (Tahoma)"]] },
+  glass: { key: "nbaGmGlass", label: "Glass", fallback: "clear", options: [["clear", "Clear"]] },
+  font: { key: "nbaGmFont", label: "Font", fallback: "helvetica", options: [["helvetica", "Helvetica Neue"], ["modern", "SF Pro"], ["rounded", "Rounded"], ["avenir", "Avenir Next"], ["classic", "Classic (Tahoma)"]] },
 };
 function uiLook(name) {
   const setting = UI_LOOK_SETTINGS[name];
@@ -3323,13 +3324,19 @@ function performanceBarStyle(value) {
 // Red (worse than the league) through neutral grey to blue (better), on the relative score.
 function spatialEfficiencyColor(score, strength = 1) {
   const value = Number.isFinite(Number(score)) ? Math.max(-1, Math.min(1, Number(score))) : 0;
-  const stops = [[-1, [176, 42, 58]], [-0.45, [222, 120, 128]], [0, [182, 191, 199]], [0.45, [108, 160, 214]], [1, [28, 92, 184]]];
+  // Round 5 (dark courts on the clear glass): seven steps a side from a calm slate middle, milder results darker and
+  // muted, stronger ones brighter, so the middle isn't washed out and the extremes stand out.
+  const clear = typeof clearGlass === "function" && clearGlass();
+  const stops = clear
+    ? [[-1, [255, 96, 104]], [-0.66, [226, 72, 84]], [-0.33, [150, 66, 84]], [0, [70, 82, 98]], [0.33, [58, 104, 162]], [0.66, [72, 146, 236]], [1, [128, 196, 255]]]
+    : [[-1, [176, 42, 58]], [-0.45, [222, 120, 128]], [0, [182, 191, 199]], [0.45, [108, 160, 214]], [1, [28, 92, 184]]];
+  const floor = clear ? [24, 34, 46] : SPATIAL_COURT_FLOOR;
   const index = Math.max(1, stops.findIndex(([point]) => value <= point));
   const [low, a] = stops[index - 1], [high, b] = stops[index];
   const fraction = (value - low) / (high - low);
   return `#${a.map((channel, i) => {
     const color = channel + (b[i] - channel) * fraction;
-    return Math.round(SPATIAL_COURT_FLOOR[i] + (color - SPATIAL_COURT_FLOOR[i]) * strength).toString(16).padStart(2, "0");
+    return Math.round(floor[i] + (color - floor[i]) * strength).toString(16).padStart(2, "0");
   }).join("")}`;
 }
 
@@ -3458,7 +3465,8 @@ function spatialHeatmapRegions(profile, side) {
     const score = scores.get(id);
     // The wash fades where this team or player hardly shoots, so a strong colour on a spot nobody uses doesn't dominate.
     const use = ((regionVolume.get(id) || 0) / viewTotal) / Math.max((regionLeague.get(id) || 0) / (leagueTotal || 1), 1e-6);
-    const fill = score == null ? "#dde3e8" : spatialEfficiencyColor(score, 0.12 + 0.33 * Math.min(1, use));
+    const clear = typeof clearGlass === "function" && clearGlass();
+    const fill = score == null ? (clear ? "#263342" : "#dde3e8") : spatialEfficiencyColor(score, clear ? 0.45 + 0.45 * Math.min(1, use) : 0.12 + 0.33 * Math.min(1, use));
     return `<path class="spatial-region-fill" data-region="${Number(region.id)}" d="${spatialRegionGeometry(region.id)}" fill="${fill}" pointer-events="none"/>`;
   }).join("");
   const groups = shown.map(region => {
@@ -3484,7 +3492,27 @@ function spatialHeatmapRegions(profile, side) {
       <path class="spatial-region-hit" d="${spatialRegionGeometry(id)}" fill="transparent" pointer-events="all" tabindex="0" role="img" aria-label="${escapeAttr(title)}"><title>${escapeHtml(title)}</title></path>
     </g>`;
   }).join("");
-  return `<g class="spatial-region-fills">${fills}</g>${groups}`;
+  // Round 5: a tiny two-line label in each region: how much better or worse than the league (points of FG) and the
+  // share of the shots taken there. Drawn upright outside the rotated court group (screen point = (y, 470 − x)).
+  const labels = shown.map(region => {
+    const id = Number(region.id), shape = SPATIAL_REGION_SHAPES[id];
+    const delta = spatialViewDelta(region, view);
+    const share = (regionVolume.get(id) || 0) / viewTotal * 100;
+    if (delta == null && !share) return "";
+    let x, y;
+    if (shape.corner) { x = 76; y = shape.y < 250 ? 16 : 484; }
+    else if (id === 1) { x = 52.5 + 34; y = 250; }
+    else {
+      const from = Math.max(shape.from, -90), to = Math.min(shape.to, 90), angle = (from + to) / 2 * Math.PI / 180;
+      const radius = shape.outer > 400 ? (id === 12 ? 300 : 278) : (shape.inner + shape.outer) / 2;
+      x = 52.5 + Math.cos(angle) * radius; y = 250 + Math.sin(angle) * radius;
+    }
+    let sx = y, sy = 470 - x, anchor = "middle";
+    if (shape.corner) { sx = shape.y < 250 ? 7 : 493; anchor = shape.y < 250 ? "start" : "end"; }
+    const top = delta == null ? "—" : `${delta >= 0 ? "+" : "−"}${Math.abs(delta).toFixed(1)}`;
+    return `<text class="spatial-region-label" x="${sx.toFixed(1)}" y="${sy.toFixed(1)}" text-anchor="${anchor}"><tspan x="${sx.toFixed(1)}" dy="-2">${top}</tspan><tspan class="is-share" x="${sx.toFixed(1)}" dy="15">${share.toFixed(0)}%</tspan></text>`;
+  }).join("");
+  return `<g class="spatial-region-fills">${fills}</g>${groups}<g class="spatial-region-labels" data-labels>${labels}</g>`;
 }
 
 // Court regions as drawn shapes (inner court units: rim at 52.5,250, ten units a foot), matching shot_chart.region_at:
@@ -3523,12 +3551,16 @@ function spatialRegionGeometry(regionId) {
 }
 
 function spatialHeatmapLegend(label, side, entity = "player") {
-  const detail = `Each region is coloured against the league's typical ${entity === "team" ? "team" : "player"} in that same region: blue is better, red is worse, grey is ordinary, and the strongest few reach full colour. ${side === "offense" ? "" : "On defense, blue means opponents shoot worse. "}Hexes mark where the volume is: only spots with at least the league's average volume are drawn, and bigger means more.`;
+  const detail = `Each region is coloured against the league's typical ${entity === "team" ? "team" : "player"} in that same region: blue is better, red is worse, grey is ordinary, and the strongest few reach full colour. ${side === "offense" ? "" : "On defense, blue means opponents shoot worse. "}Hexes mark where the volume is: only spots with at least the league's average volume are drawn, and bigger means more. In each region, the top number is how many points of FG% better (+) or worse (−) than the league, the bottom one the share of the shots taken there.`;
   const stops = [-1, -0.5, 0, 0.5, 1].map(score => `<b style="background:${spatialEfficiencyColor(score)}"></b>`).join("");
   return `<div class="spatial-legend" title="${escapeAttr(detail)}"><span>${escapeHtml(label)}</span><i class="spatial-discrete-key spatial-relative-key" role="img" aria-label="${escapeAttr(detail)}"><em>Worse</em>${stops}<em>Better</em></i></div>`;
 }
 
 function spatialCourtSvg(seed, side, regions, hidden) {
+  // Region labels are drawn upright, outside the rotated court group (see spatialHeatmapRegions).
+  const labelStart = String(regions).indexOf('<g class="spatial-region-labels"');
+  const regionLabels = labelStart >= 0 ? regions.slice(labelStart) : "";
+  if (labelStart >= 0) regions = regions.slice(0, labelStart);
   const label = { offense_total: "Shooting with playmaking", offense: "Projected shooting efficiency", playmaking: "Teammates' shooting change with him on court", defense: "Modeled defensive suppression", onball: "On-ball defense", help: "Off-ball defense" }[side];
   const group = ["offense_total", "offense", "playmaking"].includes(side) ? "offense" : "defense";
   return `<svg class="spatial-court" viewBox="0 0 500 470" role="img" aria-label="${label} versus the league" data-court-view="${side}" data-court-group="${group}"${hidden ? " hidden" : ""}>
@@ -3546,6 +3578,7 @@ function spatialCourtSvg(seed, side, regions, hidden) {
         <path class="spatial-court-line three-point" d="M2 30 H142 A237.5 237.5 0 0 1 142 470 H2"/>
       </g>
       </g>
+      ${regionLabels}
     </svg>`;
 }
 
@@ -4889,6 +4922,11 @@ function seasonDevelopmentCard(rows) {
     state.data?.dashboardTrends?.development?.latest_month || candidates[0]?.points?.at(-1)?.label,
   );
   state.devGraphCandidates = candidates;
+  // Round 5: the Season and Month bars share one scale (the biggest change on the card), so their lengths compare.
+  const deltaScale = Math.max(0.5, ...candidates.map((player) => {
+    const values = (player.points || []).map((point) => Number(point.value)).filter(Number.isFinite);
+    return values.length > 1 ? Math.max(Math.abs(values.at(-1) - values[0]), Math.abs(values.at(-1) - values.at(-2))) : 0;
+  }));
   return `${seasonDevelopmentGraph(candidates)}<div class="season-development-list" style="--development-count:${Math.max(1, Math.min(9, candidates.length))};--development-total:${Math.max(1, candidates.length)}" data-house-table="development">
       <div class="season-development-head" data-house-head>${houseHeader("development", "player", "Player")}${houseHeader("development", "age", "Age")}${houseHeader("development", "movement", "Change", {title:"Change in overall rating this season (October to June, top bar) and in the latest month (bottom bar), from the game's actual rating changes. Sorts the biggest movers first, up or down."})}</div>
       ${candidates.map((player, index) => {
@@ -4904,8 +4942,8 @@ function seasonDevelopmentCard(rows) {
           <span class="season-development-player">${playerHeadshotMarkup(player, "roster-player-headshot")}<span class="season-development-name">${escapeHtml(player.name)}</span></span>
           <span class="season-development-age">${escapeHtml(age)}</span>
           <span class="season-development-metrics">
-            ${seasonDevelopmentMetric("Season", seasonDelta, 2)}
-            ${seasonDevelopmentMetric(monthLabel, monthDelta, 0.5)}
+            ${seasonDevelopmentMetric("Season", seasonDelta, deltaScale)}
+            ${seasonDevelopmentMetric(monthLabel, monthDelta, deltaScale)}
           </span>
         </button>`;
       }).join("") || `<div class="empty">Development history will appear after the first monthly update.</div>`}
@@ -4986,7 +5024,7 @@ function seasonDevelopmentGraph(candidates) {
     return `<label class="dev-pick${on ? " is-on" : ""}"${on ? ` style="--dev-color:${color(c.player_id)}"` : ""}><input type="checkbox" data-dev-pick="${escapeAttr(c.player_id)}" ${on ? "checked" : ""}/>${escapeHtml(shortName(c))}</label>`;
   }).join("");
   return `<section class="dev-graph" data-dev-graph>
-      <div class="dev-graph-bar"><div class="dev-views" role="tablist"><button type="button" role="tab" data-dev-view="season" aria-selected="${!future}">This season</button><button type="button" role="tab" data-dev-view="future" aria-selected="${future}">Next 3 seasons</button></div><span class="dev-note">${future ? "Projected overall: line is the middle case, the band the range of scenarios" : "Overall each month"}</span></div>
+      <div class="dev-graph-bar"><div class="dev-views" role="tablist"><button type="button" role="tab" data-dev-view="season" aria-selected="${!future}">This season</button><button type="button" role="tab" data-dev-view="future" aria-selected="${future}">Next 3 seasons</button></div><i class="g-info" tabindex="0" title="${future ? "Projected overall for the next three seasons: the line is the middle case, the shaded band the range of scenarios." : "Overall rating at each monthly update this season."}">i</i></div>
       ${plot}
       <div class="dev-picks">${picks}</div>
     </section>`;
@@ -7929,7 +7967,7 @@ function rosterCutdownDashboardWorkspace() {
   const moves = summary.releasing + summary.moving;
   return `<div class="cutdown-workspace is-compact" data-cutdown-workspace>
     <div class="cutdown-scroll"><table class="cutdown-table" aria-label="Opening roster choices">
-      <colgroup><col style="width:200px"><col style="width:40px"><col style="width:34px"><col style="width:42px"><col style="width:136px"><col style="width:96px"><col style="width:80px"><col style="width:120px"><col style="width:220px"></colgroup>
+      <colgroup><col style="width:190px"><col style="width:40px"><col style="width:34px"><col style="width:46px"><col style="width:214px"><col style="width:96px"><col style="width:76px"><col style="width:110px"><col style="width:214px"></colgroup>
       <thead><tr><th scope="col">Player</th><th scope="col">Pos</th><th scope="col">Age</th><th scope="col">OVR</th><th scope="col">Roles</th><th scope="col" title="This season's salary × seasons left; hover for every season">Contract</th><th scope="col" title="This season's guarantee: what you owe if you release him">Guaranteed</th><th scope="col" title="Waiving: salary that stays on your books. Buying out: the payout. Two-way players: NBA games used.">Cost to release</th><th scope="col">Keep or release</th></tr></thead>
       <tbody>${players.map((row) => {
         const choice = choices[String(row.player_id)] || "keep";
@@ -8584,7 +8622,7 @@ function tradeSalaryGauge(flow, {bars = true} = {}) {
   const mark = flow.tone === "good" ? "✓" : flow.tone === "bad" ? "✕" : "";
   return `<div class="tr-salary" title="${escapeAttr(detail)}">
     <div class="tr-salary-line"><span>Payroll</span><strong>${money(flow.payroll)}${flow.after !== null && (flow.out || flow.incoming) ? ` <em>→</em> ${money(flow.after)}` : ""}</strong>
-      <span class="tr-salary-status${flow.tone ? ` is-${flow.tone}` : ""}">${mark ? `<b aria-hidden="true">${mark}</b>` : ""}${escapeHtml(flow.status || room)}</span></div>
+      ${flow.out ? `<span class="tr-salary-out" title="This season's salary going out in this deal">Sends <b>${money(flow.out)}</b></span>` : ""}<span class="tr-salary-status${flow.tone ? ` is-${flow.tone}` : ""}">${mark ? `<b aria-hidden="true">${mark}</b>` : ""}${escapeHtml(flow.status || room)}</span></div>
     ${bars ? `<div class="tr-salary-bars" role="img" aria-label="${escapeAttr(detail)}">
       <div class="tr-salary-bar is-before"><i class="tr-kept" style="width:${pct(kept)}"></i>${flow.out ? `<i class="tr-out" style="width:${pct(flow.out)}" title="${escapeAttr(`Sends ${money(flow.out)}`)}"></i>` : ""}</div>
       <div class="tr-salary-bar is-after"><i class="tr-kept" style="width:${pct(kept)}"></i>${flow.incoming ? `<i class="tr-in" style="width:${pct(flow.incoming)}" title="${escapeAttr(`Takes back ${money(flow.incoming)}`)}"></i>` : ""}</div>
@@ -8616,7 +8654,7 @@ function tradeDealSide(row, participants, fresh = "") {
     : `<li class="tr-tiles-empty"><button type="button" class="tr-text-button" data-trade-roster-side="${escapeAttr(side)}" data-trade-view="pick">Choose from ${escapeHtml(team)}'s list</button></li>`;
   return `<section class="tr-side${state.tradeRosterSide === side ? " is-picking" : ""}" data-tr-side="${escapeAttr(side)}" ${teamBrandStyle(team)}>
     <header class="tr-side-head">${partnerPicker}<span class="tr-side-verb">gives</span>${selected.length ? tradeSideTotalBar(selected, total, participants, colorOf, team) : ""}${remove}</header>
-    <ul class="tr-tiles" data-trade-scroll="selected-${escapeAttr(side)}" aria-label="${escapeAttr(team)} gives">${tiles}</ul>
+    <ul class="tr-tiles" data-trade-scroll="selected-${escapeAttr(side)}" aria-label="${escapeAttr(team)} gives">${selected.length ? `<li class="tr-tiles-head" aria-hidden="true"><span></span><span>Player</span><span>Roles</span><span>Value</span><span>OVR</span><span>Contract</span>${remove || side ? "<span></span>" : ""}</li>` : ""}${tiles}</ul>
     ${tradeSalaryGauge(flow, {bars: false})}
   </section>`;
 }
@@ -11047,7 +11085,8 @@ function pc4Group(group, coach) {
 }
 
 function pc4LayerHeader(index, layer) {
-  return `<header><h2>${index} · ${escapeHtml(layer.title)}</h2><span class="pc4-count">${layer.from_player_data} of ${layer.total} from player data</span><span class="pc4-sub">${escapeHtml(layer.subtitle)}</span></header>`;
+  // Round 5: the layer's explanation is hover info (an "i" mark), not a line of text under the header.
+  return `<header><h2>${index} · ${escapeHtml(layer.title)}<i class="pc4-info" tabindex="0" title="${escapeAttr(layer.subtitle || "")}" aria-label="${escapeAttr(layer.subtitle || "")}">i</i></h2><span class="pc4-count">${layer.from_player_data} of ${layer.total} from player data</span></header>`;
 }
 
 function pc4CoachLayer(profile) {
@@ -11060,7 +11099,7 @@ function pc4CoachLayer(profile) {
     : Number.isFinite(minutes)
     ? `<div class="pc4-minbar"><div class="pc4-track tall"><i class="pc4-fill" style="width:${clampNumber(minutes / 40 * 100, 0, 100)}%"></i></div><strong>${minutes.toFixed(1)} per game</strong></div>`
     : "<strong>—</strong>";
-  return `<section class="pc4-layer pc4-coach"><header><h2>4 · Coach Usage &amp; Deployment</h2><span class="pc4-count">Not player talent</span><span class="pc4-sub">Decided by the coach, not player talent. Changes with team, lineup and game.</span></header>
+  return `<section class="pc4-layer pc4-coach"><header><h2>4 · Coach Usage &amp; Deployment<i class="pc4-info" tabindex="0" title="Decided by the coach, not player talent. Changes with team, lineup and game. You set rough minutes for your own team; the coach adjusts game by game (foul trouble, fatigue, hot hands, blowouts, matchups)." aria-label="Decided by the coach, not player talent. Changes with team, lineup and game.">i</i></h2><span class="pc4-count">Not player talent</span></header>
     <div class="pc4-body">
       <div class="pc4-kv"><span>Position</span><strong>${escapeHtml(coach.position || "—")}</strong></div>
       <div class="pc4-kv"><span>Offensive role</span><strong>${tags}</strong></div>
@@ -11068,7 +11107,6 @@ function pc4CoachLayer(profile) {
       <div class="pc4-kv"><span>Projected minutes</span>${minutesRow}</div>
       <div class="pc4-kv"><span>Usage share</span><strong class="pc4-ph">Set by the coach during games</strong></div>
       <div class="pc4-kv"><span>Rotation spot</span><strong>${escapeHtml(PC4_TIER[coach.rotation_priority] || coach.rotation_priority || "—")}</strong></div>
-      <p class="pc4-foot">You set rough minutes for your own team; the coach adjusts game by game (foul trouble, fatigue, hot hands, blowouts, matchups).</p>
     </div></section>`;
 }
 
@@ -11088,7 +11126,7 @@ function inputsProfilePage(profile) {
     </div>
     <div class="pc4-layers">
       <section class="pc4-layer">${pc4LayerHeader(1, technique)}<div class="pc4-body"><div class="pc4-cols"><div>${left}</div><div>${right}</div></div></div></section>
-      <div class="pc4-stack"><section class="pc4-layer">${pc4LayerHeader(2, physical)}<div class="pc4-body">${physical.groups.map(group => pc4Group({ ...group, note: "" }, coach).replace(/^<h4>.*?<\/h4>/, "")).join("")}<p class="pc4-foot">Measured rows are drawn against the league spread (bar = percentile). Grade rows use the 0-100 scale.</p></div></section>${pc4CoachLayer(profile)}</div>
+      <div class="pc4-stack"><section class="pc4-layer">${pc4LayerHeader(2, physical)}<div class="pc4-body">${physical.groups.map(group => pc4Group({ ...group, note: "" }, coach).replace(/^<h4>.*?<\/h4>/, "")).join("")}</div></section>${pc4CoachLayer(profile)}</div>
       <section class="pc4-layer">${pc4LayerHeader(3, tendencies)}<div class="pc4-body">${tendencies.groups.map(group => pc4Group(group, coach)).join("")}</div></section>
     </div></div>`;
 }
@@ -12498,7 +12536,7 @@ function openSettingsModal() {
         <button type="button" data-replay-tutorial>Replay Tutorial</button>
         ${seasonSlideshowMenuMarkup()}
         ${boardThemeMenuMarkup()}
-        ${typeof uiLookMenuMarkup === "function" ? uiLookMenuMarkup("glass") + uiLookMenuMarkup("font") : ""}
+        ${typeof uiLookMenuMarkup === "function" ? uiLookMenuMarkup("font") : ""}
         <button type="button" class="ui-command" data-report-issue>Report an Issue</button>
         <a class="artwork-credits-link" href="/assets/game-art/CREDITS.md" target="_blank" rel="noopener">Artwork credits</a>
         <button type="button" data-photo-credits>Photo credits</button>
@@ -16341,7 +16379,9 @@ function tradeAssetRow(asset, {side, removeSide, routeFrom, sortKey = ""} = {}) 
     const rule=(side || removeSide) ? (state.tradePickRules || []).find(r=>r.pick_id===id && r.enabled!==false) : null;
     const authored = rule ? rule.type==='pick_swap' ? `${rule.benefit==='worse'?'Less':'More'} favorable swap right` : `Picks ${rule.from}–${rule.through} protected` : '';
     const kind = asset.kind === "pick_swap" || rule?.type==='pick_swap' ? "Swap right" : "Draft pick";
-    return `<tr class="trade-ledger-pick${selected ? " is-selected" : ""}"${rowAttrs}>${control}${route}<td class="trade-ledger-portrait">${draftAssetGlyph(asset, true, true)}</td><th scope="row" class="tr-col-name${sortKey === "name" ? " is-sorted" : ""}"${pick.full ? ` title="${escapeAttr(pick.full)}"` : ""}><strong>${escapeHtml(pick.short)}</strong>${pick.note || authored ? `<span class="trade-pick-condition">${escapeHtml(authored || pick.note)}</span>` : ""}</th><td class="tr-col-pos">${kind === "Swap right" ? "Swap" : "Pick"}</td><td class="tr-col-age">—</td><td class="tr-col-ht">—</td><td class="tr-col-roles">—</td><td class="tr-col-rating">—</td><td class="tr-col-rating">—</td><td class="tr-col-rating">—</td><td class="tr-col-runway">—</td><td class="tr-col-injury">—</td><td class="tr-col-contract">—</td>${cell("value", "trade-ledger-value tr-col-value", tradeValueBar(tradeKnownNumber(asset.trade_value)))}</tr>`;
+    return `<tr class="trade-ledger-pick${selected ? " is-selected" : ""}"${rowAttrs}>${control}${route}<td class="trade-ledger-portrait">${draftAssetGlyph(asset, true, true)}</td><th scope="row" class="tr-col-name${sortKey === "name" ? " is-sorted" : ""}"${pick.full ? ` title="${escapeAttr(pick.full)}"` : ""}><strong>${escapeHtml(pick.short)}</strong></th><td class="tr-col-notes" colspan="10">${escapeHtml([kind === "Swap right" ? "Swap right" : "", authored || pick.note || ""].filter(Boolean).join(" · ") || pick.full || "")}</td>${cell("value", "trade-ledger-value tr-col-value", tradeValueBar(tradeKnownNumber(asset.trade_value)))}</tr>`;
+  // Round 5: a pick's row is its name, then its notes (protection, swap) across the row, then its value; no "Pick"
+  // in the position column and no empty dashes.
   }
   const ratings = asset.ratings || {};
   const offense = [ratings.shooting, ratings.creation, ratings.passing].map(tradeKnownNumber).filter(value => value !== null);

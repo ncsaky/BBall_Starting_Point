@@ -316,6 +316,120 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-payroll-table t
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-payroll-table td.is-up { color: #ff9a9a !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-payroll-table td.is-down { color: #86e0a2 !important; }
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot) .cutdown-details :is(summary, > span) { color: #b4d7ff !important; }
-html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot) .cutdown-details > :not(summary) { background: rgba(16, 26, 38, .92) !important; border: 1px solid var(--g-edge) !important; color: var(--g-text) !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot) .cutdown-details > p { background: transparent !important; border: 0 !important; box-shadow: none !important; color: var(--g-soft) !important; padding: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot) .cutdown-details.is-foot > p { background: rgba(16, 26, 38, .86) !important; -webkit-backdrop-filter: var(--g-blur); backdrop-filter: var(--g-blur); border: 1px solid var(--g-edge) !important; border-radius: var(--g-radius) !important; color: var(--g-text) !important; padding: 9px 11px !important; }
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot) .cutdown-guarantee.is-twoway { color: #9fcbff !important; }
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot) .cutdown-foot-count.is-ready b, html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot) .cutdown-foot-count.is-ready > :first-child { color: #86e0a2 !important; }
+
+/* ======================================================================================================================
+   Round 5 (taste deck 2026-11-24): one look only (the clear glass), no gradients across windows ("feels too AI"),
+   pill-shaped glass buttons like iOS, every tab group a segmented control like Team Identity's, transparent
+   checkboxes, and injured players' names in red everywhere. */
+
+/* Flat tinted glass: no team gradient across windows, title bars or pop-up frames (the board keeps its soft light). */
+html[data-glass="clear"] body .has-card-board .card-board-window { background: var(--g-glass) !important; }
+html[data-glass="clear"] body .has-card-board .card-board-titlebar,
+html[data-glass="clear"] body .has-card-board .is-active > .card-board-titlebar,
+html[data-glass="clear"] body.unified-terminal-ui .modal-shell > :is(.card-board-titlebar, .modal-head) { background: rgba(8, 15, 24, .24) !important; }
+html[data-glass="clear"] body .has-card-board .is-active > .card-board-titlebar { background: rgba(255, 255, 255, .06) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell.modal-shell.modal-shell,
+html[data-glass="clear"] .season-slideshow .ss-card { background-image: none !important; }
+html[data-glass="clear"] body .has-card-board .season-command-header { background: rgba(12, 21, 32, .78) !important; }
+
+/* Pill glass buttons. */
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot .modal-body, .season-slideshow .ss-card, .has-card-board .season-command-header) button:not(:where(.house-sort, [data-house-row], [class*="tab"], .is-primary, .ui-command-primary, .season-opponent-team, [class*="player-link"], [class*="name"], :is([data-house-row], tbody, thead) button:not([class]), thead button, th button, .season-minute-rest, .season-minute-reset, :has(img), :has([class*="player-name"]), .g-plain, :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .ss-dots, .card-board-titlebar, .card-board-menu) button, .card-board-control:not(.ui-command), .tr-tile-remove, .tr-step, .tr-side-team)) {
+  border-radius: 999px !important; padding: 0 13px !important; min-height: 24px; display: inline-flex !important; align-items: center; justify-content: center; gap: 6px;
+  background: rgba(255, 255, 255, .12) !important; border: 1px solid rgba(255, 255, 255, .24) !important; color: #fff !important;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16) !important; font-weight: 600 !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot .modal-body, .season-slideshow .ss-card, .has-card-board .season-command-header) button:not(:where(.house-sort, [data-house-row], [class*="tab"], .is-primary, .ui-command-primary, [class*="player-link"], [class*="name"], thead button, th button, :has(img), .g-plain, :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .ss-dots, .card-board-titlebar, .card-board-menu) button, .card-board-control:not(.ui-command), .tr-tile-remove, .tr-step, .tr-side-team)):hover:not(:disabled) {
+  background: rgba(255, 255, 255, .22) !important; border-color: rgba(255, 255, 255, .40) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot .modal-body, .season-slideshow .ss-card) button:is([aria-pressed="true"], [class*="choice"].is-active):not(:where(thead button, th button, :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs) button)) {
+  background: rgba(255, 255, 255, .30) !important; border-color: rgba(255, 255, 255, .60) !important;
+}
+/* The one filled action keeps its blue, as a pill. */
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-body, .has-card-board .season-command-header) :is(.is-primary, .ui-command-primary, .card-board-phase-actions > button):not(:disabled),
+html[data-glass="clear"] body .has-card-board .card-board-phase-actions > button { border-radius: 999px !important; padding: 0 14px !important; }
+/* Top bar buttons: pills too. */
+html[data-glass="clear"] body .has-card-board :is(.season-command-actions > button, .season-command-club > button, .card-board-tools > button, .card-board-menu-trigger, .card-board-layout-control > [data-layout-menu-trigger], button.card-board-sim-trigger, button.card-board-trade-trigger, .card-board-gallery-toggle) { border-radius: 999px !important; padding: 0 12px !important; }
+/* Tool bars: buttons and checkbox labels centred vertically in their bar. */
+html[data-glass="clear"] body.unified-terminal-ui .card-board-body :is([class*="-tools"], [class*="toolbar"]) { display: flex !important; align-items: center !important; gap: 10px; min-height: 34px; padding-block: 4px !important; box-sizing: border-box; }
+html[data-glass="clear"] body.unified-terminal-ui .card-board-body :is([class*="-tools"], [class*="toolbar"]) > * { margin-block: 0 !important; align-self: center !important; }
+
+/* Segmented controls, after Team Identity's (the user's favourite): a soft tray, the chosen option raised. */
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-window, .season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views) {
+  display: inline-flex !important; gap: 2px !important; padding: 2px !important; background: rgba(255, 255, 255, .07) !important;
+  border: 0 !important; border-radius: 8px !important; box-shadow: none !important; width: auto; align-items: stretch;
+}
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-window, .season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views) > button {
+  background: transparent !important; border: 0 !important; border-radius: 6px !important; color: var(--g-text) !important;
+  padding: 3px 12px !important; min-height: 22px !important; font-weight: 600 !important; box-shadow: none !important; text-decoration: none !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-window, .season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views) > button:hover:not(:disabled) { background: rgba(255, 255, 255, .12) !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-window, .season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views) > button:is([aria-pressed="true"], [aria-selected="true"], .active) { background: rgba(255, 255, 255, .24) !important; color: #fff !important; font-weight: 700 !important; }
+
+/* Checkboxes: transparent with a light edge; checked shows a white tick on a faint fill. */
+html[data-glass="clear"] body.unified-terminal-ui input[type="checkbox"] { background-color: transparent !important; border: 1.5px solid rgba(255, 255, 255, .55) !important; border-radius: 4px !important; width: 14px !important; height: 14px !important; }
+html[data-glass="clear"] body.unified-terminal-ui input[type="checkbox"]:hover { border-color: #fff !important; }
+html[data-glass="clear"] body.unified-terminal-ui input[type="checkbox"]:checked {
+  background-color: rgba(255, 255, 255, .14) !important; border-color: #fff !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.6 6.3l2.3 2.3 4.6-5' fill='none' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+}
+
+/* Injured players: the name is red everywhere, beside the red cross. */
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) .player-name-with-injury:has(.season-injury-status) > .player-name-text,
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) .ss-tile-name:has(.ss-injury) :is(button, a, .ss-player-link) { color: #ffb0b0 !important; }
+
+/* Table headers are never buttons (Roster, Stats, Contracts sort buttons): plain bold labels like Minutes'. */
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot, .season-slideshow) :is(thead, [data-house-head]) button {
+  background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 !important; min-height: 0 !important;
+  color: #fff !important; font-weight: 700 !important; -webkit-backdrop-filter: none; backdrop-filter: none; display: inline !important;
+}
+
+/* Four Factors on the glass, matching the player card's range bars: light lines, a glass middle-half box, a white
+   median, and the same marks in the key. */
+html[data-glass="clear"] body .season-factor-box > .season-factor-whisker { border-color: rgba(255, 255, 255, .45) !important; }
+html[data-glass="clear"] body .season-factor-box > .season-factor-whisker::before { background: rgba(255, 255, 255, .45) !important; }
+html[data-glass="clear"] body .season-factor-box > .season-factor-iqr { background: rgba(255, 255, 255, .16) !important; border-color: rgba(255, 255, 255, .45) !important; }
+html[data-glass="clear"] body .season-factor-box > .season-factor-median { background: #fff !important; }
+html[data-glass="clear"] body .season-factor-box > .season-factor-dot { box-shadow: 0 0 0 1.5px rgba(10, 18, 28, .9) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .season-factor-legend i.whisker { border-color: rgba(255, 255, 255, .45) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .season-factor-legend i.whisker::before { background: rgba(255, 255, 255, .45) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .season-factor-legend i.iqr { background: rgba(255, 255, 255, .16) !important; border-color: rgba(255, 255, 255, .45) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .season-factor-legend i.median { background: #fff !important; }
+
+/* Info marks: explanations live behind an "i" (round 5: no explanatory text lines). */
+.g-info { display: inline-grid; place-items: center; flex: none; width: 15px; height: 15px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .5); color: #c9d5e0; font: italic 700 10px Georgia, serif; cursor: help; font-style: italic; }
+.g-info:hover, .g-info:focus-visible { color: #fff; border-color: #fff; outline: none; }
+
+/* Development (round 5): the player picker as a tidy legend (a swatch in the line's colour, the name), no pills;
+   darker projection bands. */
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window .dev-picks { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 2px 12px; padding: 4px 2px; }
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window .dev-pick { position: relative; display: flex !important; align-items: center; gap: 7px; padding: 2px 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important; color: var(--g-soft) !important; font-weight: 500 !important; font-size: 11.5px !important; cursor: pointer; }
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window .dev-pick input { position: absolute; opacity: 0; width: 1px !important; height: 1px !important; pointer-events: none; }
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window .dev-pick::before { content: ""; flex: none; width: 11px; height: 11px; border-radius: 3px; border: 1.5px solid rgba(255, 255, 255, .45); box-sizing: border-box; }
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window .dev-pick.is-on { color: #fff !important; font-weight: 700 !important; }
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window .dev-pick.is-on::before { background: var(--dev-color); border-color: var(--dev-color); }
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window .dev-pick:hover { color: #fff !important; }
+html[data-glass="clear"] .dev-plot .dev-band { opacity: .45 !important; }
+
+/* Team Identity courts (round 5): the colours are computed for the dark court now, so the earlier filter and
+   transparency on the region fills go; tiny two-line region labels, white with a dark edge so they read on any zone. */
+html[data-glass="clear"] body .spatial-region-fills { filter: none !important; }
+html[data-glass="clear"] body .spatial-region-fill { fill-opacity: 1 !important; stroke: rgba(255, 255, 255, .14) !important; }
+html[data-glass="clear"] body .spatial-court-floor { fill: #18222e !important; }
+.spatial-region-label { font: 700 14px var(--ui-font, Arial), Arial, sans-serif; fill: #fff; paint-order: stroke; stroke: rgba(8, 14, 22, .85); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+.spatial-region-label .is-share { font-weight: 500; font-size: 12.5px; fill: #d3dde6; }
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window .dev-pick.is-on { background: transparent !important; border: 0 !important; box-shadow: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot) .season-development-metric :is(.positive) { color: #86e0a2 !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot) .season-development-metric :is(.negative) { color: #ff9a9a !important; }
+
+/* Trade lists: cells never paint their own ground (the selected row's light-blue cells); the row carries it. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room table.tr-table tbody tr > :is(td, th) { background-color: transparent !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room table.tr-table tbody tr.is-selected { background-color: rgba(120, 180, 255, .16) !important; box-shadow: inset 3px 0 #8fc4ff !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room :is(.tr-filter, .tr-tabs, .tr-lower-tabs) button:not(.active):not([aria-pressed="true"]) { background: transparent !important; color: var(--g-text) !important; border: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room :is(.tr-filter, .tr-tabs, .tr-lower-tabs) button:not(.active):not([aria-pressed="true"]):hover { background: rgba(255, 255, 255, .12) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room :is(.tr-filter, .tr-tabs, .tr-lower-tabs) button:is(.active, [aria-pressed="true"]) { background: rgba(255, 255, 255, .24) !important; color: #fff !important; border: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room :is(.tr-filter, .tr-tabs, .tr-lower-tabs) { border: 0 !important; border-radius: 8px !important; overflow: visible; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell .tr-strip-side { border-radius: 999px !important; padding: 0 12px !important; }
