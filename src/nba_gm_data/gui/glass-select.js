@@ -170,7 +170,7 @@
 // was, and once the group is drawn again with the new choice, a temporary pill slides from there to the new tab.
 (() => {
   "use strict";
-  const GROUP = '.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, [role="tablist"]';
+  const GROUP = '.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .settings-pill, [role="tablist"]';
   const ACTIVE = '.active, .is-active, [aria-pressed="true"], [aria-selected="true"]';
   const keyOf = (group) => [...group.children].map((child) => child.textContent.trim()).join("|");
   const activeOf = (group) => [...group.children].find((child) => child.matches(ACTIVE));

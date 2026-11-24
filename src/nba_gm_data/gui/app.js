@@ -12266,6 +12266,13 @@ function renderSocial() {
 }
 
 function renderSettings() {
+  // The old settings page: everything now lives in the organised Settings pop-up over the board.
+  if (typeof openSettingsModal === "function" && state.currentSave) {
+    state.view = "dashboard";
+    render();
+    openSettingsModal();
+    return;
+  }
   const gameSettings = state.home?.game_settings || {};
   const narrative = state.data.settings || {};
   els.content.innerHTML = `
@@ -12641,26 +12648,36 @@ function closeModal() {
 }
 
 function openSettingsModal() {
+  // Organised in sections (user, 2026-11-24: "completely disorganized"): Game, Look, Slideshows, Help, Credits, each a
+  // row with its label on the left and its control on the right; every choice is the standard long pill.
+  const game = state.home?.game_settings || {};
+  const onOff = (attr, on) => settingsPill("", [["off", "Off"], ["on", "On"]].map(([key, label]) => `<button type="button" ${attr}="${key}" aria-pressed="${(key === "on") === Boolean(on)}">${label}</button>`).join(""));
+  const slideshows = seasonSlideshowMenuMarkup();
   state.modal = {
     kind: "dashboardSettings",
     title: "Settings",
     subtitle: "",
     body: `
-      ${state.currentSave ? `<section class="settings-modal-section settings-game-section">
-        ${coachRestToggleMarkup("settings-coach-rest", "Coach rests my players automatically")}
-        <p>Off (default): you set the minutes and nobody is rested automatically; the blue zZ shows when your coach would rest a player. On: your coach rests players by the same rules as the AI coaches.</p>
+      ${state.currentSave ? `<section class="settings-group">
+        <h4>Game</h4>
+        ${settingsRow("Coach rests my players", onOff("data-coach-rest-choice", typeof coachRestsPlayers === "function" && coachRestsPlayers()), "Off (default): you set the minutes and nobody is rested automatically; the blue zZ shows when your coach would rest a player. On: your coach rests players by the same rules as the AI coaches.")}
+        ${settingsRow("Press conferences", onOff("data-press-choice", game.press_conferences_enabled), "Whether press conferences can interrupt the season.")}
       </section>` : ""}
-      <section class="settings-modal-section settings-save-section">
-        <button type="button" data-interface-shortcuts>Keyboard shortcuts</button>
-        <button type="button" data-replay-tutorial>Replay Tutorial</button>
-        ${seasonSlideshowMenuMarkup()}
+      <section class="settings-group">
+        <h4>Look</h4>
         ${boardThemeMenuMarkup()}
         ${typeof uiLookMenuMarkup === "function" ? uiLookMenuMarkup("font") + uiLookMenuMarkup("buttons") : ""}
-        <button type="button" class="ui-command" data-report-issue>Report an Issue</button>
-        <a class="artwork-credits-link" href="/assets/game-art/CREDITS.md" target="_blank" rel="noopener">Artwork credits</a>
-        <button type="button" data-photo-credits>Photo credits</button>
-        <button class="settings-return-button" data-return-save-selection>Back to Save Selection</button>
-      </section>`,
+      </section>
+      ${slideshows ? `<section class="settings-group"><h4>Season slideshows</h4>${slideshows}</section>` : ""}
+      <section class="settings-group">
+        <h4>Help</h4>
+        <div class="settings-actions"><button type="button" data-replay-tutorial>Replay Tutorial</button><button type="button" data-interface-shortcuts>Keyboard shortcuts</button><button type="button" class="ui-command" data-report-issue>Report an Issue</button></div>
+      </section>
+      <section class="settings-group">
+        <h4>Credits</h4>
+        <div class="settings-actions"><a class="artwork-credits-link" href="/assets/game-art/CREDITS.md" target="_blank" rel="noopener">Artwork credits</a><button type="button" data-photo-credits>Photo credits</button></div>
+      </section>
+      <footer class="settings-foot"><button class="settings-return-button" data-return-save-selection>Back to Save Selection</button></footer>`,
   };
   renderModal();
 }
@@ -12736,16 +12753,26 @@ function sortPhotoCredits(root, key) {
   table.querySelectorAll("[data-credit-col]").forEach(cell => cell.classList.toggle("is-sorted", cell.dataset.creditCol === key));
 }
 
+// Settings rows: the label (with an optional "i" for the explanation) on the left, the control on the right.
+function settingsRow(label, control, info = "") {
+  const tip = String(info).replace(/"/g, "&quot;");
+  return `<div class="settings-row"><span class="settings-label">${label}${info ? `<i class="g-info" tabindex="0" title="${tip}" aria-label="${tip}">i</i>` : ""}</span><div class="settings-control">${control}</div></div>`;
+}
+
+function settingsPill(label, buttons) {
+  return `<div class="settings-pill" role="group"${label ? ` aria-label="${label}"` : ""}>${buttons}</div>`;
+}
+
 function boardThemeMenuMarkup() {
   const current = boardTheme();
   const buttons = BOARD_THEMES.map(([key, label]) => `<button type="button" data-board-theme-choice="${key}" aria-pressed="${key === current}">${label}</button>`);
-  return `<div class="settings-board-theme" role="group" aria-label="Board background"><span>Board background</span>${buttons.join("")}</div>`;
+  return settingsRow("Board background", settingsPill("Board background", buttons.join("")));
 }
 
 function uiLookMenuMarkup(name) {
   const setting = UI_LOOK_SETTINGS[name], current = uiLook(name);
   const buttons = setting.options.map(([key, label]) => `<button type="button" data-ui-look="${name}" data-ui-look-choice="${key}" aria-pressed="${key === current}"${name === "font" ? ` class="ui-font-sample is-${key}"` : ""}${name === "buttons" ? ` class="ui-button-sample is-${key}"` : ""}>${label}</button>`);
-  return `<div class="settings-board-theme settings-ui-look" role="group" aria-label="${setting.label}"><span>${setting.label}</span>${buttons.join("")}</div>`;
+  return settingsRow(setting.label, settingsPill(setting.label, buttons.join("")));
 }
 
 function seasonSlideshowMenuMarkup() {
@@ -12753,7 +12780,7 @@ function seasonSlideshowMenuMarkup() {
   const rows = seasonSlideshowsAvailable();
   if (!rows.length) return "";
   const buttons = rows.map(row => `<button type="button" data-season-slideshow="${escapeAttr(row.kind)}" data-season="${escapeAttr(row.season)}">${escapeHtml(row.label)}</button>`);
-  return `<div class="settings-slideshows" role="group" aria-label="Season slideshows"><span>Season slideshows</span>${buttons.join("")}</div>`;
+  return `<div class="settings-actions" role="group" aria-label="Season slideshows">${buttons.join("")}</div>`;
 }
 
 async function openIssueReport() {
@@ -13528,6 +13555,22 @@ function renderModal() {
   }
   if (state.modal.kind === "dashboardSettings") {
     wireCoachRestToggles(els.modalRoot);
+    els.modalRoot.querySelectorAll("[data-coach-rest-choice]").forEach(button => button.addEventListener("click", () => {
+      const on = button.dataset.coachRestChoice === "on";
+      button.parentElement.querySelectorAll("[data-coach-rest-choice]").forEach(other => other.setAttribute("aria-pressed", String(other === button)));
+      setCoachRestsPlayers(on);
+    }));
+    els.modalRoot.querySelectorAll("[data-press-choice]").forEach(button => button.addEventListener("click", async () => {
+      const on = button.dataset.pressChoice === "on";
+      button.parentElement.querySelectorAll("[data-press-choice]").forEach(other => other.setAttribute("aria-pressed", String(other === button)));
+      try {
+        const result = await action("update_game_settings", { ...savePayload(), settings: { press_conferences_enabled: on } });
+        if (state.home) state.home.game_settings = result.game_settings || { ...(state.home.game_settings || {}), press_conferences_enabled: on };
+        showToast(on ? "Press conferences on" : "Press conferences off");
+      } catch (error) {
+        showToast(`Setting not saved. ${error.message || String(error)}`, true);
+      }
+    }));
     els.modalRoot.querySelector("[data-report-issue]")?.addEventListener("click", openIssueReport);
     els.modalRoot.querySelector("[data-photo-credits]")?.addEventListener("click", openPhotoCreditsModal);
     els.modalRoot.querySelector("[data-return-save-selection]")?.addEventListener("click", returnToSaveSelection);

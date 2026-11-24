@@ -116,6 +116,9 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **Phases, not days, in the offseason:** outside the regular season, a phase's one button moves to the next phase. Simulating day by day only matters in the season.
 - **One obvious next step.** When a phase's work is done (the roster is set), show one clear button to move on and hide the sim buttons that don't apply.
 
+### Settings
+- **One Settings window (user, 2026-11-24: "completely disorganized"):** labelled sections (Game, Look, Season slideshows, Help, Credits), each a row with the label on the left and its control on the right. Choices are the standard long pill; explanations sit behind an "i"; actions are a row of pills; Back to Save Selection sits alone at the bottom. The old separate settings page opens this window.
+
 ### Windows and cards
 - **No icon in a window's title bar.** Icons are only for the window switcher.
 - Every card has a full border. Pop-ups open centred.
