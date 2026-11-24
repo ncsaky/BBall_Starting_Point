@@ -503,7 +503,7 @@
         <header class="game-tutorial-titlebar ss-titlebar"><span>${esc(KIND_LABEL[data.kind] || "SEASON")} · ${esc(data.season)}</span><span aria-label="Slide ${index + 1} of ${slides.length}">${counter}</span></header>
         <div class="ss-content" aria-live="polite">
           <h2 id="ssTitle"${slide.logo ? ` class="ss-title-team" aria-label="${attr(slide.title || "")}"` : ""}>${slide.logo ? titleTeam(slide) : esc(slide.title || "")}</h2>
-          ${slide.note ? `<p class="ss-subtitle">${esc(slide.note)}</p>` : ""}
+          ${slide.note ? `<details class="ss-note-details"><summary>Details</summary><p>${esc(slide.note)}</p></details>` : ""}
           <div class="ss-body">${slideBody(slide)}</div>
         </div>
         <footer class="game-tutorial-actions ss-actions">

@@ -60,3 +60,4 @@ Slides: Power rankings table restyle (keep fields and animation); slide tables c
     `gui/assets/body/` with SOURCE.txt; the outlines are inlined in `gui/body-outlines.js`; app.js `injuryBodyFigureReal`
     clips each part's risk glow to the body shape (`INJURY_BODY_SPOTS_REAL` places the parts); without the outlines
     (e.g. the node tests) the old drawn figure is used.
+- Round 14 deck published 2026-11-24 (version 18, 15 questions `q14-…`; slides captured on the PHI copy, whose outlook was rebuilt with the new slide data).

@@ -1,0 +1,42 @@
+# Taste deck round 14 pass
+
+Progress: 8/8 - done (round 14 pass committed; an athletic body figure waits for the user's OK)
+
+Objective: the user's round 14 answers (`q14-...`). GUI plus small slide-data additions.
+
+## What the user said (2026-11-24)
+- Tables: no shading on sorted columns' cells (only the header shows the sort) - Stats, Contracts, everywhere; the
+  header's clickable box the full size of its cell (Contracts, Prospects).
+- Contracts: a key for the colours (what pink means).
+- Morale / Signals (-2): the bars are far too short; widen them.
+- Awards (-2): bring back the gold ring; the trophy image needs a transparent background (its white box shows).
+- League Block: the top-targets arrows too big for the bar; "Top league targets" indented to line up with the X.
+- Set The Roster: no table header row on the Deadlines section.
+- Upcoming Prospects (-1): make it look exactly like the Prospect watch slide (+1); the name still sits in a pill;
+  bigger headshots; name / logo centred; League rank and Ours as separate full-cell sort headers; no box on League rank.
+- Prospect watch slide: its subtext into a Details drop-down or the footer.
+- Storylines / Stars on the sidelines: more items to fill the card.
+- Three teams (0): the To drop-down overlaps the value; logo + abbreviation in it; only one team has the drop-down
+  and arrows; the "Choose from OKC's list" box; "Back to results" as text.
+- Value (+1): the Add button as text; the team drop-down's look (background colour) improved, uniform for all.
+- Card overview (+1): the pills slightly off (offense on the left side, defense on the right).
+- Health (-1): text above and below the table too small; the figure looks unisex / medical / non-athletic.
+
+## Resume state
+- Done 2026-11-24 (JS 344/344; slides 25 OK; checked on the OKC and PHI copies):
+  - Sorted columns: only the header shows the sort. Whole header cells are the sort target (the button's hit area
+    covers the cell) and light up on hover. Contracts: a colour key (new contract, extension eligible, expiring).
+  - Morale / Signals: windows 360px, fixed label / value columns so every bar is the same length (176px).
+  - Awards: the gold ring back; trophies are cut-out PNGs (assets/trophies/*.png, white background removed from the
+    edges inward).
+  - League Block: caption aligned with the title and the close X; small round page arrows.
+  - Set The Roster: no header row on Deadlines.
+  - Upcoming Prospects: the Prospect watch slide's columns and look (#, photo + name / position / age, school, league
+    boards, your scouts with the difference, scouted bar); one sort per column; no name pill.
+  - Trade room: Add / Back to results / Choose-from-list as text; the partner picker unboxed; no step arrows in
+    three-team deals; the To column wider (no overlap with the value).
+  - Card overview: each pill, key and caption shifted to its own court's centre (measured; edges now match).
+  - Slides: notes in a Details drop-down; Storylines up to 6 (title favourite, biggest climber, rookie to watch, still
+    going strong); Stars on the sidelines up to 6 (absences over 10 games fill in); 3-column cards.
+  - Health: summary and key text 15px. The figure itself: the user finds it unisex / medical; an athletic figure needs
+    a new download (asked).

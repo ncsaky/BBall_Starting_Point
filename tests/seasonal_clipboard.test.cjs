@@ -584,7 +584,7 @@ test('prospects and staff expand inside their existing cards, with wider prospec
   }
   assert.match(desktop,/setProspectsCardExpanded\(expanded,card\)/);
   assert.match(desktop,/setStaffCardExpanded\(expanded,card\)/);
-  assert.match(appSource,/SEASON_PROSPECT_COLUMNS = \[[\s\S]*?\["age", \[\["age", "Age"\]\]\],\s*\["height", \[\["height", "Height"\]\]\]/);
+  assert.match(appSource,/SEASON_PROSPECT_COLUMNS = \[[\s\S]*?\["from", \[\["from", "From"/);
   assert.match(appSource,/season-prospects-expanded-body[\s\S]*?seasonProspectsCard\(\{rows, expanded:true\}\)/);
   assert.doesNotMatch(desktop,/clipboardWindowCards\(\)|loadClipboardWindow/);
   assert.doesNotMatch(board,/data-dashboard-view="draft"|data-dashboard-view="staff"/);

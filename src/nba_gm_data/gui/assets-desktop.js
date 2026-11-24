@@ -524,7 +524,8 @@ function assetsDesktopCards() {
   const groups=assetsRosterGroups(seasons);
   const roster=assetsRosterMarkup(rows,groups[0],assetsRosterSort('roster'));
   const stats=assetsRosterMarkup(rows,groups[1],assetsRosterSort('stats'));
-  const contracts=assetsRosterMarkup(rows,groups[2],assetsRosterSort('contracts',seasons));
+  // Round 14: a key for the contract colours under the table.
+  const contracts=assetsRosterMarkup(rows,groups[2],assetsRosterSort('contracts',seasons))+'<div class="asset-contract-key" aria-label="Contract colours"><span><i class="is-new"></i>New contract starts</span><span><i class="is-extension"></i>Extension eligible: click to negotiate</span><span><i class="is-expiring"></i>Expires after this season</span></div>';
   const picks=payload?.draft_assets || [...(payload?.picks||[]),...(payload?.pick_swaps||[])];
   return {rows,seasons,markup:`<div class="assets-grid">
       ${panel('',roster,'roster')}

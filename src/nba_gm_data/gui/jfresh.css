@@ -357,8 +357,9 @@ html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .s
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-legend .is-median { width: 2px; height: 12px; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-legend .season-prospect-ours-key { width: 8px; height: 8px; border-radius: 50%; border: 1px solid; box-sizing: border-box; }
 /* Award windows: the trophy bare (no gold box around it); wider (340px) so names are not cut. */
-html[data-glass="clear"] body .has-card-board .season-award-trophy { border: 0 !important; background: transparent !important; box-shadow: none !important; }
-html[data-glass="clear"] body .has-card-board .season-award-trophy img { filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .35)); }
+/* Round 14: the gold ring is back; the trophy itself is a cut-out (transparent PNG), so no white box shows in it. */
+html[data-glass="clear"] body .has-card-board .season-award-trophy { background: rgba(255, 255, 255, .06) !important; }
+html[data-glass="clear"] body .has-card-board .season-award-trophy img { background: transparent !important; filter: drop-shadow(0 3px 8px rgba(0, 0, 0, .35)); }
 /* Team Signals and Morale: JFresh attribute rows: the label in white, a thin rounded bar on a faint track, the value
    bold at the right; more room between rows. */
 html[data-glass="clear"] body .has-card-board .season-identity-signals { display: grid !important; gap: 7px !important; padding: 8px 12px !important; }
@@ -474,3 +475,96 @@ html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .injury
 .injury-body-figure.is-real .injury-body-outline { fill: none; stroke: #33424f; stroke-width: .9; }
 .injury-body-figure.is-real .injury-body-detail { fill: #33424f; }
 .injury-body-figure.is-real .injury-body-view-label { font-size: 11px; font-weight: 700; text-anchor: middle; }
+
+/* ---------- Round 14. Sorted columns: only the header shows the sort (no shading down the column's cells). */
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) :is(td, th).is-sorted-value,
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) tbody :is(td, th).is-sorted,
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) [data-house-row] > .is-sorted { background-color: transparent !important; }
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table tbody td.is-sorted-value:is(:first-child, :last-child) { box-shadow: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table tbody tr:is(:hover, :focus-within) > :is(td, th).is-sorted-value:first-child { box-shadow: calc(-1 * var(--jf-edge-l)) 0 0 0 var(--g-hover) !important; }
+/* Morale and Team Signals: the bars take the room (shorter label column, value just wide enough). */
+html[data-glass="clear"] body .has-card-board .season-signal-row { grid-template-columns: 86px minmax(0, 1fr) 46px !important; gap: 10px !important; }
+html[data-glass="clear"] body .has-card-board .season-identity-signals { padding: 8px 10px !important; }
+/* Set The Roster: the Deadlines list has no column header (its columns belong to the options table above). */
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .offseason-deadlines .offseason-table thead { display: none !important; }
+/* League Block caption: "Top league targets" starts where the window title starts and the page count ends where the
+   close X ends; the page arrows are small round text buttons sized to the bar. */
+html[data-glass="clear"] body .has-card-board .assets-block-caption { padding: 0 3px 0 6px !important; box-sizing: border-box; align-items: center !important; }
+html[data-glass="clear"] body .has-card-board .assets-block-caption .league-block-group-label { color: #fff !important; font-weight: 700 !important; font-size: 12px !important; }
+html[data-glass="clear"] body .has-card-board .assets-block-nav { display: inline-flex !important; gap: 2px !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .assets-block-caption .assets-block-nav > button[data-assets-block-nav] { width: 18px !important; height: 18px !important; min-height: 0 !important; min-width: 0 !important; padding: 0 !important; border-radius: 50% !important; background: transparent !important; border: 0 !important; color: #fff !important; font-size: 14px !important; line-height: 18px !important; opacity: .75; }
+html[data-glass="clear"] body .has-card-board .assets-block-nav button:hover { opacity: 1; background: rgba(255, 255, 255, .14) !important; }
+html[data-glass="clear"] body .has-card-board .assets-block-caption > b { color: #d5e1ea !important; font-weight: 600 !important; }
+/* Contracts: the colour key under the table. */
+html[data-glass="clear"] body .has-card-board .asset-contract-key { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; padding: 8px 10px 6px; font-size: 11px; color: #d5e1ea; }
+html[data-glass="clear"] body .has-card-board .asset-contract-key span { display: inline-flex; align-items: center; gap: 6px; }
+html[data-glass="clear"] body .has-card-board .asset-contract-key i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+html[data-glass="clear"] body .has-card-board .asset-contract-key .is-new { background: #d7b0ff; }
+html[data-glass="clear"] body .has-card-board .asset-contract-key .is-extension { background: #fff0a5; }
+html[data-glass="clear"] body .has-card-board .asset-contract-key .is-expiring { background: #f2c46d; }
+/* Sorting: the whole header cell is the click target (the button's hit area covers its cell), and the cell lights
+   up as one box on hover. */
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) thead th:has(> button) { cursor: pointer; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) thead th:not(:first-child):not(:last-child):has(> button) { position: relative; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) thead th > button::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) thead th:has(> button):hover { background-color: rgba(255, 255, 255, .09) !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) thead th > button:hover { background: transparent !important; }
+
+/* ---------- Upcoming Prospects (round 14): the Prospect watch slide's look. Bigger photos with the name over position
+   and age, school logo + name, the league-board range (its number hidden: the # column has it), your scouts' rank with
+   the difference arrow, a slim scouted bar; everything centred in the row. */
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] tbody td { vertical-align: middle !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-face { width: 38px !important; height: 38px !important; border-radius: 50% !important; overflow: hidden; flex: none; background: rgba(255, 255, 255, .08); }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-face img { width: 100% !important; height: 100% !important; object-fit: cover; object-position: top; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] :is(.season-prospect-name, .season-prospect-list-expanded .season-prospect-name) { height: auto !important; min-height: 42px; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-id { display: grid; gap: 1px; min-width: 0; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-id > b { color: #fff; font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: transparent !important; border: 0 !important; padding: 0 !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-id > small { color: #c9d5e0; font-size: 11px; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-school { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-school img { width: 20px; height: 20px; object-fit: contain; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-your-rank { display: inline-flex; align-items: baseline; gap: 5px; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-your-rank b { color: #fff; font-weight: 700; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-rank-diff { font-size: 11px; font-weight: 700; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-rank-diff.is-up { color: #86e0a2; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-rank-diff.is-down { color: #ffb3b3; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-scouted { display: grid; grid-template-columns: 80px auto; align-items: center; gap: 8px; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-scouted > i { display: block; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .14); overflow: hidden; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-scouted > i > b { display: block; height: 100%; background: #7cc0ff; border-radius: 3px; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-scouted strong { color: #fff; font-size: 12px; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-range { grid-template-columns: minmax(120px, 1fr) !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-range-number { display: none !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] thead th { border: 0 !important; outline: 0 !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] thead th > button { background: transparent !important; border: 0 !important; box-shadow: none !important; color: #fff !important; font-weight: 700 !important; padding: 0 !important; }
+
+/* ---------- Trade room (round 14). "Add" (beside Add a team), "Back to results" and "Choose from …'s list" are plain
+   text links, no boxes. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room :is([data-trade-add-team], [data-back-finder]) {
+  background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 6px !important; color: #d8eaff !important; font-weight: 700 !important; min-height: 0 !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room :is([data-trade-add-team], [data-back-finder]):hover:not(:disabled) { text-decoration: underline; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-tiles-empty { border: 0 !important; background: transparent !important; box-shadow: none !important; outline: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-tiles-empty > button { background: transparent !important; border: 0 !important; box-shadow: none !important; color: #d8eaff !important; font-weight: 600 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-tiles-empty > button:hover { text-decoration: underline; }
+/* The partner picker: the same plain bold header as the other teams (no tinted box), with only a small chevron; in a
+   three-team deal no step arrows, so every team header matches. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-side-head .trade-partner-field button.glass-select { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 4px !important; font-size: 15px !important; font-weight: 700 !important; color: #fff !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-side-head .trade-partner-field button.glass-select:hover { background: rgba(255, 255, 255, .10) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-builder.is-multi .tr-side-head .tr-step { display: none !important; }
+/* Three teams: a wider To column so its logo + abbreviation never touch the value. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-builder.is-deal.is-multi :is(.tr-tile, .tr-tiles-head) { grid-template-columns: 50px minmax(0, 1fr) 92px 78px 24px 18px !important; column-gap: 8px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-to { overflow: hidden; }
+/* Slides (round 14): each slide's explanation sits in a small Details drop-down at the top right, not as a line of
+   text under the title; story and injury cards in three columns so six fill the card. */
+html[data-glass="clear"] .season-slideshow .ss-content { position: relative; }
+html[data-glass="clear"] .season-slideshow .ss-note-details { position: absolute; top: 6px; right: 0; z-index: 3; max-width: 420px; text-align: right; }
+html[data-glass="clear"] .season-slideshow .ss-note-details > summary { cursor: pointer; color: #d8eaff; font-size: 12px; font-weight: 700; list-style: none; }
+html[data-glass="clear"] .season-slideshow .ss-note-details > summary::-webkit-details-marker { display: none; }
+html[data-glass="clear"] .season-slideshow .ss-note-details > summary::after { content: " ▾"; }
+html[data-glass="clear"] .season-slideshow .ss-note-details[open] > p { margin: 6px 0 0; padding: 10px 12px; text-align: left; font-size: 12px; line-height: 1.45; color: #eef3f7; background: rgba(12, 22, 34, .82); border: 1px solid rgba(255, 255, 255, .16); border-radius: 10px; box-shadow: 0 12px 30px rgba(0, 0, 0, .4); }
+html[data-glass="clear"] .season-slideshow .ss-stories-rich { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+html[data-glass="clear"] .season-slideshow .ss-story-rich { grid-template-columns: 44px minmax(0, 1fr) auto !important; padding: 12px 14px !important; }
+html[data-glass="clear"] .season-slideshow .ss-story-rich .ss-story-logo { width: 42px; height: 42px; }
+/* Player card health page: the summary line above the table and the key below it at a readable size. */
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card :is(.injury-body-summary, .injury-body-note, .injury-body-key, .injury-body-key *) { font-size: 15px !important; line-height: 1.45 !important; color: #e6eef5 !important; }
+html[data-glass="clear"] body .has-card-board :is([data-board-window="morale"], [data-board-window="signals"]) .season-signal-card { width: 100% !important; box-sizing: border-box; }
+html[data-glass="clear"] body .has-card-board .season-signal-row { grid-template-columns: 80px minmax(0, 1fr) 46px !important; }

@@ -4355,13 +4355,13 @@ function prospectOriginMarkup(origin) {
 
 // Upcoming Prospects table. Columns: [column, [[sort key, header label, header tip], ...]]. The draft-range column holds two sorts
 // (league consensus, your scouts). Numbers start high-to-low on the first click; ranks, names and ages low-to-high.
+// Round 14: the same columns and look as the preseason Prospect watch slide; each column its own sortable header.
 const SEASON_PROSPECT_COLUMNS = [
+  ["rank", [["rank", "#", "League consensus rank: the middle of all 30 teams' boards"]]],
   ["name", [["name", "Prospect"]]],
-  ["position", [["position", "Pos", "Position"]]],
-  ["age", [["age", "Age"]]],
-  ["height", [["height", "Height"]]],
-  ["now", [["now", "Now", "Your scouts' estimate of his level today"]]],
-  ["range", [["rank", "League rank", "League consensus rank: the middle of all 30 teams' boards"], ["yours", "Ours", "Your scouts' board rank (talent only)"]]],
+  ["from", [["from", "From", "School or club"]]],
+  ["range", [["range", "League boards", "Where the 30 teams' boards put him: box the middle half, whiskers every team, white tick the consensus, gold dot your scouts"]]],
+  ["yours", [["yours", "Your scouts", "Your scouts' board rank (talent only); the arrow is how far they differ from the league"]]],
   ["scouted", [["scouted", "Scouted", "How much of him your scouts have seen"]]],
 ];
 const SEASON_PROSPECT_DESC_FIRST = new Set(["now", "potential", "scouted"]);
@@ -4372,6 +4372,8 @@ function seasonProspectSortValue(row, key) {
   if (key === "position") return typeof housePositionRank === "function" ? number(housePositionRank(row.position)) : String(row.position || "") || null;
   if (key === "height") { const inches = heightToInches(row.height); return Number.isFinite(inches) ? inches : null; }
   if (key === "rank") return number(row.consensusRank);
+  if (key === "from") return String(row.sourceTeam || "") || null;
+  if (key === "range") return number(row.draftRangeLow ?? row.consensusRank);
   if (key === "yours") return number(row.rank);
   if (key === "scouted") return number(row.scoutedPct ?? (row.confidence == null ? null : Number(row.confidence) * 100));
   return number(row[key]);
@@ -4456,13 +4458,17 @@ function seasonProspectsCard(options = {}) {
         <tbody>${rows.map((row) => {
           const confidence = clampNumber(Number(row.scoutedPct ?? Number(row.confidence || 0) * 100), 0, 100);
           return `<tr data-draft-prospect-card="${escapeAttr(row.id)}" title="Open scouting report for ${escapeAttr(row.name)}">
-            ${cell("name", `<span class="season-prospect-name">${seasonProspectFace(row)}${prospectOriginMarkup(row.sourceTeam)}<button type="button" class="season-prospect-open">${escapeHtml(row.name || "Unknown")}</button>${prospectInjuryMarkup(row.injuryReport, { compact: true })}</span>`)}
-            ${cell("position", escapeHtml(row.position || "—"))}
-            ${cell("age", escapeHtml(row.age === "" || row.age == null ? "—" : row.age))}
-            ${cell("height", escapeHtml(row.height || "—"))}
-            ${cell("now", seasonProspectRating(row.now))}
-            ${cell("range", seasonProspectRankRange(row, maxRank, sort.key))}
-            ${cell("scouted", `<span class="season-scouted" aria-label="Scouted ${confidence.toFixed(0)} percent"><i><b style="${performanceBarStyle(confidence)}"></b></i><strong>${confidence.toFixed(0)}%</strong></span>`)}
+            ${cell("rank", escapeHtml(row.consensusRank ?? "—"))}
+            ${cell("name", `<span class="season-prospect-name">${seasonProspectFace(row)}<span class="season-prospect-id"><b class="season-prospect-open">${escapeHtml(row.name || "Unknown")}</b><small>${escapeHtml([row.position, row.age === "" || row.age == null ? "" : row.age].filter(Boolean).join(" · "))}</small></span>${prospectInjuryMarkup(row.injuryReport, { compact: true })}</span>`)}
+            ${cell("from", `<span class="ss-school">${prospectOriginMarkup(row.sourceTeam)}<span>${escapeHtml(row.sourceTeam || "—")}</span></span>`)}
+            ${cell("range", seasonProspectRankRange(row, maxRank, "rank"))}
+            ${cell("yours", (() => {
+              if (row.rank == null || row.rank === "") return "—";
+              const diff = Number(row.consensusRank) - Number(row.rank);
+              const tag = Number.isFinite(diff) && diff ? `<small class="ss-rank-diff ${diff > 0 ? "is-up" : "is-down"}">${diff > 0 ? "▲" : "▼"}${Math.abs(diff)}</small>` : "";
+              return `<span class="ss-your-rank"><b>#${escapeHtml(row.rank)}</b>${tag}</span>`;
+            })())}
+            ${cell("scouted", `<span class="ss-scouted" aria-label="Scouted ${confidence.toFixed(0)} percent"><i><b style="width:${confidence.toFixed(0)}%"></b></i><strong>${confidence.toFixed(0)}%</strong></span>`)}
           </tr>`;
         }).join("") || `<tr><td colspan="${SEASON_PROSPECT_COLUMNS.length}" class="empty">Prospect board unavailable.</td></tr>`}</tbody>
       </table>
@@ -4514,7 +4520,7 @@ const SEASON_AWARD_STATS = Object.freeze({
 // mvp: "assets/trophies/mvp.png"; an award with no file listed shows no picture.
 // The real trophies (NBA.com's 2022 trophy photos; see assets/trophies/CREDITS.md): Michael Jordan Trophy (MVP),
 // Hakeem Olajuwon Trophy (DPOY), Wilt Chamberlain Trophy (Rookie of the Year).
-const SEASON_AWARD_TROPHIES = Object.freeze({mvp: "/assets/trophies/mvp.jpg", dpoy: "/assets/trophies/dpoy.jpg", roty: "/assets/trophies/roty.jpg"});
+const SEASON_AWARD_TROPHIES = Object.freeze({mvp: "/assets/trophies/mvp.png", dpoy: "/assets/trophies/dpoy.png", roty: "/assets/trophies/roty.png"});
 
 function seasonAwardStatCells(row, stats, firstColumn) {
   const values = row.stats || {};
@@ -11503,6 +11509,23 @@ function wirePlayerCardPages(card, entry) {
     const box = court?.viewBox?.baseVal;
     if (!court || !box?.height) return;
     map.style.setProperty('--court-draw-w', `${Math.round(Math.min(court.clientWidth, court.clientHeight * box.width / box.height))}px`);
+    // Round 14: then line each pill, key and caption up with its own court's centre (the court columns and the pill
+    // columns are separate grids, so they drifted a few pixels apart: left on offense, right on defense).
+    const courts = [...map.querySelectorAll('svg.spatial-court')].filter(svg => svg.clientHeight > 0);
+    const rows = ['.spatial-court-tab-group', '.spatial-legend', '.spatial-court-caption'].map(selector => [...map.querySelectorAll(selector)]);
+    const scale = map.getBoundingClientRect().width / Math.max(1, map.offsetWidth) || 1;
+    courts.forEach((svg, index) => {
+      const target = svg.getBoundingClientRect();
+      const centre = target.left + target.width / 2;
+      rows.forEach(list => {
+        const node = list[index];
+        if (!node) return;
+        node.style.transform = '';
+        const own = node.getBoundingClientRect();
+        const shift = (centre - (own.left + own.width / 2)) / scale;
+        if (Math.abs(shift) >= 0.5) node.style.transform = `translateX(${shift.toFixed(1)}px)`;
+      });
+    });
   });
   if (typeof ResizeObserver === 'function') {
     const observer = new ResizeObserver(() => fitCourts());

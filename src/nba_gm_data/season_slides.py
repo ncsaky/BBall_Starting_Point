@@ -1334,18 +1334,46 @@ def outlook_storylines_slide(ctx: dict[str, Any]) -> dict[str, Any]:
         if coach and value < 50:
             items.append({"title": "Coach on the hot seat", "text": f"{coach.get('name')} ({_team_ref(teams, row['team_id'])['name']}) after a {row['wins']}-{row['losses']} season, with owner confidence at {value:.0f}.",
                           "team": _team_ref(teams, row["team_id"]), "players": [], "stat": {"value": round(value), "label": "owner confidence", "tone": "bad"}})
-    return {"key": "storylines", "title": "Storylines", "kicker": "What to watch", "items": items[:4]}
+    # Round 14: more stories so the slide fills its card: the title favourite, the biggest climber in the power
+    # rankings, the rookie to watch and the veteran still going strong.
+    power = ctx.get("power_rows") or []
+    if power:
+        top = power[0]
+        items.append({"title": "Title favourite", "text": f"{top['team']['name']} open the season first in the power rankings.",
+                      "team": top["team"], "players": [], "stat": {"value": "#1", "label": "power ranking"}})
+        climbers = [row for row in power if row.get("change")]
+        if climbers:
+            climb = max(climbers, key=lambda row: (row["change"], -row["rank"]))
+            if climb["change"] >= 3 and climb is not top:
+                items.append({"title": "Biggest climber", "text": f"{climb['team']['name']} move up {climb['change']} places from last season's finish to No. {climb['rank']}.",
+                              "team": climb["team"], "players": [], "stat": {"value": f"+{climb['change']}", "label": "places"}})
+    season_start = _season_years(ctx["season"])[0] if ctx.get("season") else None
+    rookies = [p for p in active.get("players", []) if p.get("team_id") and season_start and str(p.get("draft_year") or "") == str(season_start)]
+    if rookies:
+        best = max((_player_ref(active, p["id"]) for p in rookies), key=lambda ref: (float(ref.get("overall") or 0), ref["id"]))
+        items.append({"title": "Rookie to watch", "text": f"{best['name']} is the highest-rated player in this year's rookie class.",
+                      "team": _team_ref(teams, best.get("team_id")), "players": [best], "stat": {"value": best.get("overall"), "label": "rating"}})
+    veterans = [p for p in active.get("players", []) if p.get("team_id") and float(p.get("age") or 0) >= 34]
+    if veterans:
+        vet = max((_player_ref(active, p["id"]) for p in veterans), key=lambda ref: (float(ref.get("overall") or 0), ref["id"]))
+        items.append({"title": "Still going strong", "text": f"{vet['name']} is the league's best player aged 34 or older.",
+                      "team": _team_ref(teams, vet.get("team_id")), "players": [vet], "stat": {"value": vet.get("age"), "label": "years old"}})
+    return {"key": "storylines", "title": "Storylines", "kicker": "What to watch", "items": items[:6]}
 
 
 def outlook_injuries_slide(ctx: dict[str, Any]) -> dict[str, Any]:
     active, teams, injured = ctx["active"], ctx["teams"], ctx["injured"]
+    # Round 14: up to six players so the slide fills its card; when fewer than six are out more than 20 games, the
+    # next-longest absences (more than 10 games) fill in.
+    if len(injured) < 6:
+        injured = {**long_injuries(active, ctx["save"], 10), **injured}
     rows = []
     for pid, info in injured.items():
         ref = _player_ref(active, pid)
         rows.append({**ref, "team": _team_ref(teams, ref.get("team_id")), **info})
     rows.sort(key=lambda row: (-float(row.get("overall") or 0), row["id"]))
-    return {"key": "injuries", "title": "Stars starting on the sidelines", "kicker": f"Expected to miss more than {INJURY_SLIDE_MIN_GAMES} games",
-            "players": rows[:3], "note": "Injured on opening day with an expected return after more than 20 of his team's games, ranked by player rating."}
+    return {"key": "injuries", "title": "Stars starting on the sidelines", "kicker": "Expected to miss more than 10 games",
+            "players": rows[:6], "note": "Injured on opening day with an expected return after more than 10 of his team's games, ranked by player rating."}
 
 
 # --------------------------------------------------------------------------------------------- hooks
