@@ -102,7 +102,7 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 
 ### Buttons, tabs and checkboxes
 - **Button style is a Settings choice (round 6):** glass pill (default), solid pill with a team-blue chosen state, rounded-square glass, or a segmented tray. The user couldn't pick one.
-- **Choice rows (Keep / Release / Buy out):** one long pill with the chosen option as a filled pill inside it that slides to a new choice when clicked.
+- **Choice rows (Keep / Release / Buy out):** one long pill with the chosen option as a filled pill inside it that slides to a new choice when clicked. The user's reference (an iOS segmented pill, 2026-11-24): a solid grey tray with no border, equal-width options with light-grey labels, and the chosen option a solid blue pill the full height of the tray, touching its edge, white label (red when the choice is a release).
 - **Trade room Builder / Finder / Market** is not a Team Identity-style segmented control: use a different tab style (underlined tabs).
 - **Drop-down menus** are custom glass menus, not the browser's grey select boxes.
 - **Pill-shaped glass buttons** (round 5), like iOS glass buttons: fully rounded ends, a translucent light fill, a thin light edge, vertically centred in their bar. Everywhere: tool bars, row actions (Keep / Waive / Buy out), slideshow navigation, trade room.

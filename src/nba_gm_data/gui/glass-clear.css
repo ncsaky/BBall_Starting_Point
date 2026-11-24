@@ -477,6 +477,17 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-body .cutdow
 html[data-glass="clear"] body.unified-terminal-ui .card-board-body .cutdown-choice.is-slider > button:hover:not(.is-active) { color: #fff !important; background: rgba(255, 255, 255, .08) !important; }
 html[data-glass="clear"] body.unified-terminal-ui .card-board-body .cutdown-choice.is-slider > button.is-active { color: #fff !important; font-weight: 700 !important; background: transparent !important; }
 @media (prefers-reduced-motion: reduce) { .cutdown-choice.is-slider > .cutdown-choice-thumb { transition: none !important; } }
+/* Round 6 follow-up (the user's reference, an iOS-style segmented pill): a solid grey tray with no border, equal
+   options, and the chosen one a solid filled pill the full height of the tray, touching its edge. Blue for Keep and
+   Two-way, red for a release. */
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot) .cutdown-choice.is-slider { padding: 0 !important; border: 0 !important; background: rgba(255, 255, 255, .12) !important; width: calc(var(--n) * 58px) !important; height: 26px; align-items: stretch; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot) .cutdown-choice.is-slider > .cutdown-choice-thumb { top: 0; bottom: 0; left: 0; width: calc(100% / var(--n)); background: #2f6bbf; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot) .cutdown-choice.is-slider > .cutdown-choice-thumb:is(.is-waive, .is-buyout) { background: #c2414d; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot) .cutdown-choice.is-slider > .cutdown-choice-thumb.is-twoway { background: #2f6bbf; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot) .cutdown-choice.is-slider > button { min-height: 26px !important; font-size: 12px !important; font-weight: 500 !important; color: #d4dbe2 !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot) .cutdown-choice.is-slider > button.is-active { color: #fff !important; font-weight: 600 !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot) .cutdown-choice.is-slider.is-slider.is-slider > button:is(*, :hover, .is-active, [aria-checked="true"]) { background: transparent !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot) .cutdown-choice.is-slider > button:not(.is-active):hover { color: #fff !important; }
 
 /* Button style (round 6, Settings > Buttons): glass pill (default, above), solid pill with team blue when chosen,
    rounded-square glass, or segmented trays. */

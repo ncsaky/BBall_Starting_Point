@@ -54,3 +54,7 @@ Owner: Claude. GUI only. UI-light testing (game check on the gui-preview copy, c
   in the cut-down phase); its "Apply moves" handler (`confirmCutdownReleases`) was lost in the round 2 rewrite,
   which also broke the wiring after it (two-way buttons, Submit roster). Restored from the commit before.
 - Not verified by eye: the pane was in the background, so screenshots were stale; checks were by measurement.
+- Round 7 deck published 2026-11-24 (version 9, 15 questions `q7-…`): the indent rule, sliding pill, button-style
+  default, trade room picking list / deal / pick Details / three-team deal / Value tab, definite ratings, Next
+  Opponent spacing, Identity key, Team Profile room, red names, plus "where else do you scroll?" and "which card
+  next?". Captured on the gui-preview copies (OKC Dec 25, PHI preseason).
