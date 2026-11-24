@@ -164,3 +164,56 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
   else start();
 })();
+
+// The standard tab picker's slide (user, 2026-11-24: the long pill is the tab picker everywhere). Tab groups are
+// re-rendered when a tab is picked, so the blue pill can't simply move: on the click we remember where the chosen pill
+// was, and once the group is drawn again with the new choice, a temporary pill slides from there to the new tab.
+(() => {
+  "use strict";
+  const GROUP = '.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, [role="tablist"]';
+  const ACTIVE = '.active, .is-active, [aria-pressed="true"], [aria-selected="true"]';
+  const keyOf = (group) => [...group.children].map((child) => child.textContent.trim()).join("|");
+  const activeOf = (group) => [...group.children].find((child) => child.matches(ACTIVE));
+  let pending = null;
+
+  function slide(group, target) {
+    const box = group.getBoundingClientRect(), to = target.getBoundingClientRect();
+    if (getComputedStyle(group).position === "static") group.style.position = "relative";
+    const pill = document.createElement("i");
+    pill.className = "tab-slide-pill";
+    pill.setAttribute("aria-hidden", "true");
+    pill.style.left = `${pending.x}px`;
+    pill.style.width = `${pending.w}px`;
+    group.classList.add("is-sliding");
+    group.prepend(pill);
+    void pill.offsetWidth;
+    pill.style.left = `${to.left - box.left}px`;
+    pill.style.width = `${to.width}px`;
+    const done = () => { pill.remove(); group.classList.remove("is-sliding"); };
+    pill.addEventListener("transitionend", done, { once: true });
+    setTimeout(done, 400);
+  }
+
+  function look() {
+    if (!pending) return;
+    const group = [...document.querySelectorAll(GROUP)].find((node) => node.offsetWidth && keyOf(node) === pending.key);
+    const active = group && activeOf(group);
+    if (group && active && active.textContent.trim() === pending.target) {
+      slide(group, active);
+      pending = null;
+    } else if (Date.now() - pending.at < 2000) setTimeout(look, 40);
+    else pending = null;
+  }
+
+  document.addEventListener("click", (event) => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const button = event.target.closest?.("button, [role='tab']");
+    const group = button?.parentElement;
+    if (!group || !group.matches(GROUP) || button.matches(ACTIVE)) return;
+    const from = activeOf(group);
+    if (!from) return;
+    const box = group.getBoundingClientRect(), was = from.getBoundingClientRect();
+    pending = { key: keyOf(group), x: was.left - box.left, w: was.width, target: button.textContent.trim(), at: Date.now() };
+    setTimeout(look, 0);
+  }, true);
+})();

@@ -545,15 +545,6 @@ body.unified-terminal-ui .glass-select-list > .glass-select-option[aria-selected
 body.unified-terminal-ui .glass-select-list > .glass-select-option:disabled { color: #8d9aa8; cursor: default; background: transparent; }
 .glass-select-group { padding: 6px 12px 2px; color: #c9d5e0; font: italic 700 10.5px/1 var(--ui-font, inherit); font-variant: small-caps; letter-spacing: .02em; }
 
-/* Trade room Builder / Finder / Market (round 6: not the segmented style): plain underlined tabs. */
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room .tr-tabs.tr-tabs { background: transparent !important; padding: 0 !important; gap: 18px !important; border-radius: 0 !important; }
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room .tr-tabs.tr-tabs > button {
-  background: transparent !important; border: 0 !important; border-bottom: 2px solid transparent !important; border-radius: 0 !important;
-  padding: 4px 2px 3px !important; color: var(--g-soft) !important; font-weight: 600 !important; font-size: 13px !important;
-}
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room .tr-tabs.tr-tabs > button:hover:not(:disabled) { color: #fff !important; background: transparent !important; border-bottom-color: rgba(255, 255, 255, .35) !important; }
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room .tr-tabs.tr-tabs > button:is([aria-pressed="true"], [aria-selected="true"], .active) { color: #fff !important; background: transparent !important; border-bottom-color: #fff !important; font-weight: 700 !important; }
-
 /* Pop-up title bars (round 6: "white borders around the top of the window bar"): the trade room's old bar drew a
    1px blue-grey frame and a white inner highlight. One hairline under the bar only. */
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell > :is(.modal-head, .card-board-titlebar) {
@@ -647,7 +638,7 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-sh
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell .modal-body button:disabled { opacity: 1 !important; color: #aab6c2 !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .tr-pager > button:disabled { opacity: .55; }
 /* Payroll increases: a lighter red that reads on the glass. */
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.tr-payroll-frame figcaption b, .tr-payroll-table td).is-up { color: #ffb0b0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.tr-payroll-frame figcaption b, .tr-payroll-table td).is-up { color: #ffc2c2 !important; }
 
 /* Table headers (user, 2026-11-24): the "Player" header text starts where the headshots start, and the header row's
    fill runs to the card's edges while the first and last labels stay indented. Headshots that sat flush against the
@@ -669,3 +660,29 @@ html[data-glass="clear"] body.unified-terminal-ui .has-card-board [data-board-wi
 /* Stats and Contracts: the name column 20px wider for the indented headshot (their windows are 20px wider too). */
 html[data-glass="clear"] body.unified-terminal-ui :is(.assets-stats, .assets-contracts) .linked-roster-group col:first-child,
 html[data-glass="clear"] body.unified-terminal-ui :is(.assets-stats, .assets-contracts) .linked-roster-group :is(th, td):first-child { width: 182px !important; }
+
+/* The standard tab picker (user, 2026-11-24): the long pill from Keep / Waive / Buy out. A solid grey tray with no
+   border, equal-width options with light-grey labels, the chosen one a solid blue pill the full height of the tray.
+   Every tab group: trade room Builder / Finder / Market, All / Players / Picks / Swaps, Payroll / Value / Team identity,
+   Development's views, Team Identity's and the player card's court views. */
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, [role="tablist"]) {
+  display: inline-grid !important; grid-auto-flow: column; grid-auto-columns: minmax(max-content, 1fr); align-items: stretch;
+  gap: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 999px !important; box-shadow: none !important;
+  background: rgba(255, 255, 255, .12) !important; width: auto; overflow: hidden;
+}
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, [role="tablist"]) > :is(button, [role="tab"]) {
+  display: inline-flex !important; align-items: center; justify-content: center; min-height: 26px !important; height: auto !important; padding: 0 16px !important;
+  border: 0 !important; border-radius: 999px !important; background: transparent !important; box-shadow: none !important; text-decoration: none !important;
+  color: #d4dbe2 !important; font: 500 12px/1 var(--ui-font, inherit) !important; white-space: nowrap; min-width: 0 !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, [role="tablist"]) > :is(button, [role="tab"]):hover:not(:disabled):not(.active):not([aria-pressed="true"]):not([aria-selected="true"]) { color: #fff !important; background: rgba(255, 255, 255, .06) !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, [role="tablist"]) > :is(button, [role="tab"]):is(.active, .is-active, [aria-pressed="true"], [aria-selected="true"]) { background: #2f6bbf !important; color: #fff !important; font-weight: 600 !important; box-shadow: 0 1px 3px rgba(0, 0, 0, .25) !important; }
+.tab-slide-pill { position: absolute; z-index: 0; top: 0; bottom: 0; border-radius: 999px; background: #2f6bbf; pointer-events: none;
+  transition: left .22s cubic-bezier(.3, .7, .2, 1), width .22s cubic-bezier(.3, .7, .2, 1); }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) .is-sliding > :is(button, [role="tab"]) { position: relative; z-index: 1; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) .is-sliding > :is(button, [role="tab"]):is(.active, .is-active, [aria-pressed="true"], [aria-selected="true"]) { background: transparent !important; box-shadow: none !important; }
+html[data-ui-buttons="square"] .tab-slide-pill, html[data-ui-buttons="segmented"] .tab-slide-pill { border-radius: 6px; }
+html[data-glass="clear"][data-ui-buttons="square"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, [role="tablist"]),
+html[data-glass="clear"][data-ui-buttons="segmented"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, [role="tablist"]) { border-radius: 8px !important; }
+html[data-glass="clear"][data-ui-buttons="square"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, [role="tablist"]) > :is(button, [role="tab"]),
+html[data-glass="clear"][data-ui-buttons="segmented"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, [role="tablist"]) > :is(button, [role="tab"]) { border-radius: 6px !important; }
