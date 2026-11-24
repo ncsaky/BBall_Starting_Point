@@ -184,3 +184,89 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-tr
   background: var(--jf-chip) !important; color: #fff !important; border: 1px solid var(--jf-chip-edge) !important; box-shadow: none !important;
 }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room :is(.tr-add-change, #evaluateTrade.tr-button.is-primary, [data-trade-view].tr-button.is-primary):hover:not(:disabled) { background: var(--jf-chip-hover) !important; }
+
+/* ---------- Round 12. Window controls (pin, minimise, close): plain white glyphs like JFresh's ×, no boxes; a faint
+   round lift on hover; a pinned window's pin stays bright. */
+html[data-glass="clear"] body .has-card-board .card-board-window .card-board-control.card-board-control {
+  width: 22px !important; height: 22px !important; min-width: 0 !important; padding: 0 !important;
+  background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 50% !important;
+  display: inline-grid !important; place-items: center; opacity: .62; transition: opacity .15s ease, background-color .15s ease;
+}
+html[data-glass="clear"] body .has-card-board .card-board-window .card-board-control.card-board-control img { width: 11px !important; height: 11px !important; filter: brightness(0) invert(1) !important; }
+html[data-glass="clear"] body .has-card-board .card-board-window .card-board-control.card-board-control:is(:hover, :focus-visible) { opacity: 1; background: rgba(255, 255, 255, .14) !important; }
+html[data-glass="clear"] body .has-card-board .card-board-window .card-board-control.card-board-control[aria-pressed="true"] { opacity: 1; }
+html[data-glass="clear"] body .has-card-board .card-board-window .card-board-window-controls { gap: 2px !important; }
+
+/* ---------- Player card (round 12). Header: the headshot and name together; the rating bars centred in the space
+   between the name and the contract / role rows, so the two gaps match. */
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-pages .player-page-identity {
+  grid-template-columns: auto auto minmax(0, 1fr) max-content !important; justify-content: normal !important; column-gap: 22px !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-pages .approved-player-profile-head > .player-summary-ratings { width: min(540px, 100%) !important; justify-self: center !important; }
+/* The season line as a JFresh stat row: no vertical lines between cells and no lines around it; one hairline under the
+   bold labels, values below in regular weight. */
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-season-line,
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-season-line > div,
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-season-line > div > span { border: 0 !important; box-shadow: none !important; outline: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-season-line > div > span > small { display: block; padding-bottom: 5px !important; margin-bottom: 5px !important; border-bottom: 1px solid var(--jf-head-line) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-season-line > div { column-gap: 0 !important; }
+/* Heat-map captions centred under their courts. */
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .spatial-court-caption { text-align: center !important; }
+
+/* ---------- Pick marks (round 12): the condition * and the small owner logo stay, without white bubbles: the * a bold
+   amber glyph, the owner logo bare with a soft shadow. */
+html[data-glass="clear"] body.unified-terminal-ui .draft-asset-glyph .draft-asset-condition {
+  background: transparent !important; border: 0 !important; box-shadow: none !important; color: #ffd27a !important;
+  width: 12px !important; height: 12px !important; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .6));
+}
+html[data-glass="clear"] body.unified-terminal-ui .draft-asset-glyph .draft-asset-condition svg { width: 10px !important; height: 10px !important; }
+html[data-glass="clear"] body.unified-terminal-ui .draft-asset-glyph .draft-asset-condition svg * { fill: currentColor !important; stroke: currentColor !important; }
+html[data-glass="clear"] body.unified-terminal-ui .draft-asset-glyph .draft-asset-owner { background: transparent !important; border: 0 !important; box-shadow: none !important; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .65)); }
+/* Value tab: "OKC sends" as a real heading. */
+html[data-glass="clear"] body.unified-terminal-ui .approved-trade-values .trade-value-team > strong { font-size: 16px !important; font-weight: 700 !important; color: #fff !important; padding: 2px 0 8px !important; margin-bottom: 4px; border-bottom: 1px solid var(--jf-head-line); display: flex !important; align-items: center; }
+html[data-glass="clear"] body.unified-terminal-ui .approved-trade-values .trade-value-team > strong .tr-team-mark img { width: 26px !important; height: 26px !important; }
+/* The verdict dial: the price marker and needle dark, so they read on the pale waiting arc. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-dial .tr-dial-price { stroke: #0b1520 !important; stroke-width: 3 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-dial-needle line { stroke: #0b1520 !important; }
+/* The pick mark's box fits its logos (it was 31px wide with two 22px logos spilling to the right), so it centres. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot#modalRoot :is(.tr-tile-face, .trade-ledger-portrait, .tr-value-face) .draft-asset-glyph.draft-asset-glyph { width: max-content !important; min-width: 0 !important; max-width: none !important; margin-inline: auto !important; }
+
+/* ---------- Trade Finder payroll (round 12): title centred with the team logo; the chart centred with its table under
+   it; only the shopped (or targeted) players keep their colour, outlined and hatched, the rest of the payroll quiet. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-finder-cap > header { display: flex !important; justify-content: center; align-items: center; gap: 8px; font-size: 15px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-finder-cap > header img { width: 24px; height: 24px; object-fit: contain; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-finder-payroll { grid-template-columns: minmax(0, 1fr) !important; justify-items: center; gap: 10px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-finder-payroll > table { width: min(420px, 100%) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-finder-payroll.is-shopping .salary-segment:not(.is-leaving):not(.is-arriving) { background: rgba(255, 255, 255, .13) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-finder-payroll .salary-segment:is(.is-leaving, .is-arriving) {
+  outline: 2px solid #ff6b6b !important; outline-offset: -2px; position: relative; z-index: 1;
+  background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, .45) 0 2px, transparent 2px 6px) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-finder-payroll .salary-segment.is-arriving { outline-color: #7ee0a0 !important; }
+
+/* ---------- Menus and drop-down lists (round 12): one frosted panel with plain rows (no boxed items), the shortcut as a
+   faint hint at the right, a soft lift on hover; they drop down with a short ease instead of appearing at once.
+   Drop-down buttons match the other frosted chips. */
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-menu, .glass-select-list) {
+  background: color-mix(in srgb, var(--jf-team) 55%, rgba(10, 18, 28, .78)) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(150%) !important; backdrop-filter: blur(26px) saturate(150%) !important;
+  border: 1px solid rgba(255, 255, 255, .16) !important; border-radius: 14px !important; padding: 6px !important;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .40) !important;
+  transform-origin: top center; animation: jf-drop .18s cubic-bezier(.2, .8, .2, 1) both;
+}
+@keyframes jf-drop { from { opacity: 0; transform: translateY(-6px) scale(.97); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-menu, .glass-select-list) { animation: none; } }
+html[data-glass="clear"] body.unified-terminal-ui .card-board-menu :is(button, a)[role="menuitem"],
+html[data-glass="clear"] body.unified-terminal-ui .card-board-menu > :is(button, a) {
+  background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 8px !important;
+  min-height: 30px !important; padding: 0 10px !important; color: #fff !important; font-weight: 500 !important;
+  display: flex !important; align-items: center; justify-content: space-between; gap: 18px;
+}
+html[data-glass="clear"] body.unified-terminal-ui .card-board-menu :is(button, a):is(:hover, :focus-visible) { background: rgba(255, 255, 255, .13) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .card-board-menu .shortcut-hint { background: transparent !important; border: 0 !important; color: rgba(255, 255, 255, .55) !important; font-weight: 600 !important; box-shadow: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui .glass-select-list > .glass-select-option { min-height: 30px !important; border-radius: 8px !important; padding: 6px 12px !important; }
+html[data-glass="clear"] body.unified-terminal-ui .glass-select-list > .glass-select-option[aria-selected="true"] { background: rgba(255, 255, 255, .16) !important; }
+html[data-glass="clear"] body.unified-terminal-ui button.glass-select.glass-select,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot button.glass-select {
+  min-height: 25px !important; background: rgba(255, 255, 255, .12) !important; border: 1px solid rgba(255, 255, 255, .24) !important; font-weight: 600 !important;
+}

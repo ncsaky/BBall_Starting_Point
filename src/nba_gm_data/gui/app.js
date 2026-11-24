@@ -9527,7 +9527,7 @@ function tradeFinderPayrollChart(targetMode, selection) {
     rows: targetMode ? [...players, ...arriving] : players,
     payrollByYear: Object.fromEntries(seasons.map((season, index) => [season, targetMode ? after[index].payroll : payload.cap_by_year?.[season]?.salary_total_millions])),
     markIds: Object.fromEntries(marked.map(id => [id, targetMode ? "is-arriving" : "is-leaving"]))});
-  return `<div class="tr-finder-payroll">${chart}${tradePayrollTable(payload, after, seasons)}</div>`;
+  return `<div class="tr-finder-payroll${marked.length ? " is-shopping" : ""}">${chart}${tradePayrollTable(payload, after, seasons)}</div>`;
 }
 
 // Under each payroll chart (round 4): the four seasons as a small table, payroll now, after the trade, and the change.
@@ -9660,7 +9660,7 @@ function renderTradeFinder(root) {
         <section class="trade-finder-brief tr-finder-brief" ${teamBrandStyle(userTeam())}>
           <header class="tr-side-head"><span class="tr-side-team">${teamLogoSrc(finderTeam) ? `<img src="${escapeAttr(teamLogoSrc(finderTeam))}" alt="" />` : ""}<strong>${targetMode ? `Get from ${escapeHtml(finderTeam)}` : `Shop to ${escapeHtml(scopeName)}`}</strong></span><span class="trade-selection-count">${selection.length} of 2</span></header>
           <ul class="tr-tiles" data-trade-scroll="selected-${escapeAttr(side)}">${selection.length ? selection.map(asset => tradeDealTile(asset, {removeSide: side, fresh: fresh === `${side}:${asset.kind}:${asset.id}`})).join("") : `<li class="tr-tiles-empty"><span>Choose up to two assets from the list</span></li>`}</ul>
-          <div class="trade-finder-cap"><header>${escapeHtml(userTeam())} payroll, next four seasons</header>${tradeFinderPayrollChart(targetMode, selection) || tradeCapDeltaChart(capRows)}</div>
+          <div class="trade-finder-cap"><header>${teamLogoSrc(userTeam()) ? `<img src="${escapeAttr(teamLogoSrc(userTeam()))}" alt="" />` : ""}<span>${escapeHtml(userTeam())} payroll, next four seasons</span></header>${tradeFinderPayrollChart(targetMode, selection) || tradeCapDeltaChart(capRows)}</div>
           ${selection.some(asset => asset.kind !== "player") || (state.tradePickRules || []).length ? tradePickTermsMarkup() : ""}
           <div class="trade-finder-actions"><button id="clearTradeMarket" type="button" class="tr-text-button" ${selection.length || state.tradeResults.length ? "" : "disabled"}>Clear</button><button id="runTrade" type="button" class="tr-button is-primary" ${selection.length && !tradePickRuleErrors().length ? "" : "disabled"}>Find trades</button></div>
         </section>
@@ -10900,8 +10900,8 @@ function playerHeaderFacts(detail) {
     : row("Contract", detail.is_prospect ? "Prospect" : "None");
   const role = (key, side) => {
     if (!key) return "";
-    const [label] = (typeof PLAYER_ROLE_CHIPS === "object" && PLAYER_ROLE_CHIPS[key]) || [rowLabel(key)];
-    return row(side, escapeHtml(label));
+    const [label, tone] = (typeof PLAYER_ROLE_CHIPS === "object" && PLAYER_ROLE_CHIPS[key]) || [rowLabel(key), "unknown"];
+    return row(side, `<span class="role-text role-${escapeAttr(tone)}">${escapeHtml(label)}</span>`);
   };
   return `<div class="player-header-facts">${contract}${role(coach.primary_off_role, "Offensive role")}${role(coach.primary_def_role, "Defensive role")}</div>`;
 }
@@ -16618,7 +16618,7 @@ function tradeIdentityContext() {
 function tradeIdentityPage() {
   const context = tradeIdentityContext();
   const preview = state.tradeIdentityPreview;
-  const toolbar = `<div class="trade-identity-toolbar"><div>${tradeWorkspaceParticipants().map(({side,team}) => `<button type="button" class="trade-identity-logo" data-trade-identity-team="${escapeAttr(side)}" aria-pressed="${context.side === side}" aria-label="${escapeAttr(team)}" title="${escapeAttr(team)}">${teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : ""}<span>${escapeHtml(team)}</span></button>`).join("")}</div><span>Rotation-weighted projection · 240 minutes</span></div>`;
+  const toolbar = `<div class="trade-identity-toolbar"><div>${tradeWorkspaceParticipants().map(({side,team}) => `<button type="button" class="trade-identity-logo" data-trade-identity-team="${escapeAttr(side)}" aria-pressed="${context.side === side}" aria-label="${escapeAttr(team)}" title="${escapeAttr(team)}">${teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : ""}<span>${escapeHtml(team)}</span></button>`).join("")}</div><span title="Illustrative minutes, not a saved rotation. Current injuries excluded; coaching, chemistry and lineups are not re-simulated.">Rotation-weighted projection · 240 minutes</span></div>`;
   if (preview?.key !== context.key || preview.status === "loading") return `${toolbar}<div class="trade-identity-empty" role="status">Loading player spatial profiles${preview?.loaded != null ? ` · ${preview.loaded}/${preview.total}` : ""}</div>`;
   if (preview.error) return `${toolbar}<div class="trade-identity-empty" role="status">${escapeHtml(preview.error)} <button type="button" class="ui-command" data-trade-identity-retry>Retry</button></div>`;
   const before = window.TradeProjection.rotation(context.players);
@@ -16628,7 +16628,7 @@ function tradeIdentityPage() {
   const b = window.TradeProjection.combine(after, preview.profiles, `trade-${context.team}-after`);
   if (!a || !b) return `${toolbar}<div class="trade-identity-empty">Complete spatial reference data is unavailable for this rotation.</div>`;
   const beforeById = new Map(before.map(row => [row.id,row.minutes]));
-  return `${toolbar}<div class="trade-identity-comparison"><section><h4>Before trade</h4>${spatialHeatmapMarkup(a,{compact:true})}</section><section><h4>After trade</h4>${spatialHeatmapMarkup(b,{compact:true})}</section></div><details class="trade-inferred-minutes"><summary>Inferred minutes</summary><table><thead><tr><th>Player</th><th>Before</th><th>After</th><th>Change</th></tr></thead><tbody>${[...new Map([...before,...after].map(row => [row.id,row])).values()].map(row => { const old = beforeById.get(row.id) || 0; const next = after.find(item => item.id === row.id)?.minutes || 0; return `<tr><th>${escapeHtml(row.name || row.label)}</th><td>${old}</td><td>${next}</td><td>${next-old > 0 ? "+" : ""}${next-old}</td></tr>`; }).join("")}</tbody></table></details><p class="trade-projection-note">Illustrative minutes, not a saved rotation. Current injuries excluded. Coaching, chemistry and lineup interactions are not re-simulated.</p>`;
+  return `${toolbar}<div class="trade-identity-comparison"><section><h4>Before trade</h4>${spatialHeatmapMarkup(a,{compact:true})}</section><section><h4>After trade</h4>${spatialHeatmapMarkup(b,{compact:true})}</section></div><details class="trade-inferred-minutes"><summary>Inferred minutes</summary><table><thead><tr><th>Player</th><th>Before</th><th>After</th><th>Change</th></tr></thead><tbody>${[...new Map([...before,...after].map(row => [row.id,row])).values()].map(row => { const old = beforeById.get(row.id) || 0; const next = after.find(item => item.id === row.id)?.minutes || 0; return `<tr><th>${escapeHtml(row.name || row.label)}</th><td>${old}</td><td>${next}</td><td>${next-old > 0 ? "+" : ""}${next-old}</td></tr>`; }).join("")}</tbody></table></details>`;
 }
 
 async function loadTradeIdentity(force = false) {

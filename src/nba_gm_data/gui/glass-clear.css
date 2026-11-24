@@ -720,7 +720,7 @@ body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal .tr-st
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal .tr-stage > .tr-side { grid-row: span 3; display: grid !important; grid-template-rows: subgrid !important; grid-template-columns: minmax(0, 1fr) !important; min-width: 0; }
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal .tr-stage > .tr-side > .tr-salary { align-self: end; }
 /* Three or more teams: narrower asset rows (no contract column), so nothing spills into the next side. */
-body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi :is(.tr-tile, .tr-tiles-head) { grid-template-columns: 50px minmax(0, 1.25fr) minmax(0, 1fr) 78px 24px 18px !important; column-gap: 6px !important; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi :is(.tr-tile, .tr-tiles-head) { grid-template-columns: 66px minmax(0, 1.25fr) minmax(0, 1fr) 78px 24px 18px !important; column-gap: 6px !important; }
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi :is(.tr-tile > .tr-tile-contract, .tr-tiles-head > span:nth-child(6)) { display: none !important; }
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi .tr-tile .tr-tile-roles { display: flex !important; flex-direction: column; align-items: center; gap: 1px; line-height: 1.15; }
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi .tr-tile .tr-tile-roles .role-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
