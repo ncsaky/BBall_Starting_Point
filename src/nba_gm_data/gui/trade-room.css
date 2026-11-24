@@ -674,12 +674,12 @@ body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledge
 /* Deal tiles: the full name gets the room (position and age live in the picking list), no small text beside it. */
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-side .tr-tile-meta { display: none; }
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-side .tr-tile-name { font-size: 13px !important; font-weight: 700 !important; }
-body.unified-terminal-ui #modalRoot .tr-tile { grid-template-columns: 40px minmax(96px, 1fr) minmax(88px, 112px) 104px 28px 78px 22px !important; }
-body.unified-terminal-ui #modalRoot .tr-tile:not(:has(.tr-tile-remove)) { grid-template-columns: 40px minmax(96px, 1fr) minmax(88px, 112px) 104px 28px 78px !important; }
+body.unified-terminal-ui #modalRoot .tr-tile { grid-template-columns: 54px minmax(96px, 1fr) minmax(88px, 112px) 104px 28px 78px 22px !important; }
+body.unified-terminal-ui #modalRoot .tr-tile:not(:has(.tr-tile-remove)) { grid-template-columns: 54px minmax(96px, 1fr) minmax(88px, 112px) 104px 28px 78px !important; }
 
 /* Round 5: headers over each side's list (so a new player knows "78" is OVR), the same grid as the tiles; this
    season's outgoing salary in the side's footer, left of the status; pick rows with their notes across the row. */
-body.unified-terminal-ui #modalRoot .tr-tiles-head { display: grid; grid-template-columns: 40px minmax(96px, 1fr) minmax(88px, 112px) 104px 28px 78px 22px; align-items: end; column-gap: 6px; padding: 0 4px 3px 6px; font-size: 10px; font-weight: 700; color: var(--tr-ink); border-bottom: 1px solid var(--tr-line); list-style: none; }
+body.unified-terminal-ui #modalRoot .tr-tiles-head { display: grid; grid-template-columns: 54px minmax(96px, 1fr) minmax(88px, 112px) 104px 28px 78px 22px; align-items: end; column-gap: 6px; padding: 0 4px 3px 6px; font-size: 10px; font-weight: 700; color: var(--tr-ink); border-bottom: 1px solid var(--tr-line); list-style: none; }
 body.unified-terminal-ui #modalRoot .tr-tiles-head > span { text-align: center; white-space: nowrap; }
 body.unified-terminal-ui #modalRoot .tr-tiles-head > span:nth-child(2) { text-align: left; }
 body.unified-terminal-ui #modalRoot .tr-salary-out { margin-left: auto; color: var(--tr-muted); }

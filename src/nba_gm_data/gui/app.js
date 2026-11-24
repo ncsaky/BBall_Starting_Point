@@ -7938,9 +7938,18 @@ function rosterCutdownDashboardWorkspace() {
       : summary.extra > 0
         ? `Ready. You are releasing ${summary.extra} more than required.`
         : "Ready to release.";
-  const costText = summary.releasing
-    ? `${money(summary.costMillions)}${summary.unknownCost ? " + unknown" : ""} in salary owed to released players`
-    : "No one marked yet";
+  // Round 10: what each released player is still owed, in contract form ("$9.0M × 4"), not one lump total.
+  const owedText = (row, choice) => {
+    const kind = choice === "buyout" ? "buyout" : "waive";
+    const quote = kind === "buyout" ? row.buyout : row.waiver;
+    if (!quote || quote.unquantified) return "unknown";
+    const perSeason = (quote.seasons || []).map((season) => Math.max(0, Number(season.salary || 0) - (kind === "buyout" ? Number(quote.concessions?.[season.season] || 0) : 0) - Number(season.earned_salary || 0)) / 1e6).filter((value) => value >= 0.005);
+    return perSeason.length ? `${money(perSeason[0])} × ${perSeason.length}` : money(kind === "buyout" ? quote.payout_millions : quote.remaining_cost_millions);
+  };
+  const releasedLines = players.filter((row) => ["waive", "buyout"].includes(choices[String(row.player_id)]))
+    .map((row) => `${row.name || "Player"} ${owedText(row, choices[String(row.player_id)])}`);
+  const movedLines = players.filter((row) => choices[String(row.player_id)] === "twoway").map((row) => `${row.name || "Player"} (to two-way)`);
+  const costText = summary.releasing ? "owed to released players" : "No one marked yet";
   const dashRows = new Map(rosterRows(state.data.dashboard || {}).map((row) => [String(row.id), row]));
   const roleText = (row) => {
     const dashRow = row.primary_off_role || row.primary_def_role ? row : dashRows.get(String(row.player_id)) || {};
@@ -8006,7 +8015,7 @@ function rosterCutdownDashboardWorkspace() {
       ${cutdownTwoWayRows(room, roleText)}</tbody>
     </table></div>
     <footer class="cutdown-foot">
-      <div class="cutdown-foot-status"><strong>${escapeHtml(status)}</strong>${summary.names.length ? `<span>${escapeHtml(summary.names.join(", "))} · ${escapeHtml(costText)}</span>` : ""}</div>
+      <div class="cutdown-foot-status"><strong>${escapeHtml(status)}</strong>${summary.names.length ? `<span>${escapeHtml([...releasedLines, ...movedLines].join(", "))}${summary.releasing ? ` · ${escapeHtml(costText)}` : ""}</span>` : ""}</div>
       <div class="cutdown-foot-count${(summary.ready || summary.required === 0) && !short ? " is-ready" : ""}" role="status" aria-live="polite"><b>${escapeHtml(summary.after)}</b>/${escapeHtml(summary.target)} standard<i aria-hidden="true">·</i><b>${escapeHtml(view.two_way_count ?? 0)}</b>/${escapeHtml(view.two_way_limit || 3)} two-way</div>
       <details class="cutdown-details is-foot"><summary>Rules</summary><p>${escapeHtml(rules)}</p></details>
       ${short ? `<button type="button" class="ui-command cutdown-confirm" data-roster-fill>Fill with minimum contracts</button>` : ""}
@@ -9128,13 +9137,13 @@ function renderTradeBuilder(root) {
     <div class="trade-builder-layout tr-builder is-picking${multi ? " is-multi" : ""}">
       <div class="tr-pick-bar"><div class="tr-strip">${strip}</div>${viewSwitch("deal", "Review deal ›", true)}</div>
       <div class="tr-pick-body">${assetColumn(`${current.team} gives`, current.payload, current.side, current.team)}</div>
+      ${tradePickTermsPopover()}
     </div>` : `
     <div class="trade-builder-layout tr-builder is-deal${multi ? " is-multi" : ""}">
       <div class="tr-deal-main">
         <section class="tr-stage" style="--tr-sides:${participants.length}">
           ${participants.map(row => tradeDealSide(row, participants, fresh)).join("")}
         </section>
-        ${hasPicks ? `<div class="tr-terms">${tradePickTermsMarkup()}</div>` : ""}
         <section class="tr-lower">
           <nav class="tr-lower-tabs" aria-label="Trade details">${[[0, "Payroll"], [1, "Value"], [3, "Team identity"]].map(([index, label]) => `<button type="button" data-trade-page="${index}" aria-pressed="${lowerPage === index}" class="${lowerPage === index ? "active" : ""}">${label}</button>`).join("")}</nav>
           <div class="tr-lower-body" data-trade-page-body="${lowerPage}">${lowerBody}</div>
@@ -9147,7 +9156,9 @@ function renderTradeBuilder(root) {
           <button type="button" id="evaluateTrade" class="${canApply || counterOpen ? "tr-text-button" : "tr-button is-primary"}" ${tradePickRuleErrors().length || empty ? "disabled" : ""}>${escapeHtml(ask)}</button>
         </div>
       </aside>
+      ${tradePickTermsPopover()}
     </div>`;
+  wireTradePickTermsPopover(body);
   body.querySelectorAll("[data-trade-view]").forEach(button => button.addEventListener("click", () => { state.tradeView = button.dataset.tradeView; if (state.tradeView === "deal") state.tradePayrollPlayed = false; renderTradeRoom(); }));
   body.querySelector("[data-trade-payroll-replay]")?.addEventListener("click", () => {
     const section = body.querySelector(".tr-payroll");
@@ -9183,6 +9194,54 @@ function tradePickParticipants() {
   const otherPayload=target?state.data.tradeUser:state.data.tradeRuleCounterparty?.team===other?state.data.tradeRuleCounterparty?.payload:other===state.tradePartner?state.data.tradePartner:{};
   return [{team:owner,payload,selected:target?state.selectedTo:state.selectedFrom,recipient:other},
     ...(other?[{team:other,payload:otherPayload || {},selected:[],recipient:owner}]:[])];
+}
+
+// Round 10: a pick's conditions (protection or swap right) are set in a pop-up that opens when the pick is added from
+// the asset list, or from the pick's "Conditions" link in the deal, instead of a Draft Terms bar under the deal.
+function tradePickRulePrefix(pickId) { return `pick-${String(pickId).replace(/[^A-Za-z0-9_]/g, "_")}-`; }
+function tradePickRuleSummary(pickId) {
+  const rule = (state.tradePickRules || []).find(row => row.pick_id === pickId && row.enabled !== false);
+  if (!rule) return "";
+  return rule.type === "protected_pick" ? `Protected #${rule.from}–${rule.through}` : rule.type === "pick_swap" ? "Swap right" : "";
+}
+function tradePickTermsPopover() {
+  const pickId = state.tradePickTermsFor;
+  if (!pickId || state.tradeTab === "finder" || !globalThis.TradePickTerms) return "";
+  const rows = tradePickParticipants();
+  const owner = rows.find(row => (row.selected || []).some(asset => asset.kind === "pick" && asset.id === pickId));
+  const pick = owner?.selected.find(asset => asset.id === pickId);
+  if (!pick || !TradePickTerms.eligible(pick)) { state.tradePickTermsFor = ""; return ""; }
+  const only = rows.map(row => ({...row, selected: (row.selected || []).filter(asset => asset.kind === "pick" && asset.id === pickId)}));
+  const rules = (state.tradePickRules || []).filter(rule => rule.pick_id === pickId);
+  const title = typeof tradePickText === "function" ? tradePickText(pick).short : pick.label || pickId;
+  const editor = rules.length ? TradePickTerms.markup(only, rules) : "";
+  return `<div class="tr-terms-pop" role="dialog" aria-label="Conditions for ${escapeAttr(title)}"><div class="tr-terms-card">
+    <header><strong>Conditions for ${escapeHtml(title)}</strong><span>${escapeHtml(owner.team)} gives this pick</span></header>
+    ${editor || `<p class="tr-terms-none">No conditions: the pick conveys as it is.</p>`}
+    <footer>${rules.length ? "" : `<button type="button" class="tr-text-button" data-pick-terms-add="protected_pick">Add protection</button><button type="button" class="tr-text-button" data-pick-terms-add="pick_swap">Add a swap right</button>`}<button type="button" class="tr-button is-primary" data-pick-terms-close>Done</button></footer>
+  </div></div>`;
+}
+function wireTradePickTermsPopover(body) {
+  const pickId = state.tradePickTermsFor;
+  body.querySelectorAll("[data-pick-terms-open]").forEach(button => button.addEventListener("click", event => {
+    event.stopPropagation();
+    state.tradePickTermsFor = button.dataset.pickTermsOpen;
+    renderTradeRoom();
+  }));
+  body.querySelector("[data-pick-terms-close]")?.addEventListener("click", () => { state.tradePickTermsFor = ""; renderTradeRoom(); });
+  body.querySelector(".tr-terms-pop")?.addEventListener("click", event => { if (event.target.classList.contains("tr-terms-pop")) { state.tradePickTermsFor = ""; renderTradeRoom(); } });
+  body.querySelectorAll("[data-pick-terms-add]").forEach(button => button.addEventListener("click", () => {
+    const owner = tradePickParticipants().find(row => (row.selected || []).some(asset => asset.id === pickId));
+    const pick = owner?.selected.find(asset => asset.id === pickId);
+    if (!pick) return;
+    const low = Number(pick.round) === 1 ? 1 : 31;
+    const type = button.dataset.pickTermsAdd;
+    state.tradePickRules = [...(state.tradePickRules || []).filter(rule => rule.pick_id !== pickId), type === "pick_swap"
+      ? {key: `${tradePickRulePrefix(pickId)}1`, pick_id: pickId, type, other_pick_id: "", benefit: "better", enabled: true}
+      : {key: `${tradePickRulePrefix(pickId)}1`, pick_id: pickId, type, from: low, through: low + 3, fallback_pick_ids: [], enabled: true}];
+    state.tradeCandidate = null;
+    renderTradeRoom();
+  }));
 }
 
 function tradePickTermsMarkup() { return globalThis.TradePickTerms?.markup(tradePickParticipants(),state.tradePickRules || []) || ''; }
@@ -9295,6 +9354,20 @@ function tradeTeamHeading(team, payload) {
   return `<button type="button" class="approved-trade-team" data-trade-team-roster="${escapeAttr(team)}">${teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="${escapeAttr(team)} logo" />` : ""}<span><strong>${escapeHtml(team)}</strong><small>${wins}-${losses} · ${record.conference_rank ? `#${escapeHtml(record.conference_rank)} conference` : "season record"}</small></span></button>`;
 }
 
+// Round 10: a team is always its logo with its abbreviation; a pick is its logo mark with its short name.
+function tradeValueTeamMark(team) {
+  const logo = teamLogoSrc(team);
+  return `<span class="tr-team-mark">${logo ? `<img src="${escapeAttr(logo)}" alt="" />` : ""}<b>${escapeHtml(team)}</b></span>`;
+}
+function tradeValueAssetLabel(detail, source) {
+  const full = detail.label || detail.id || "";
+  if (source && source.kind !== "player" && typeof tradePickText === "function") {
+    const glyph = typeof draftAssetGlyph === "function" ? draftAssetGlyph(source, true, true) : "";
+    return `<span class="tr-value-asset is-pick" title="${escapeAttr(full)}"><span class="tr-value-face">${glyph}</span><span>${escapeHtml(tradePickText(source).short)}</span></span>`;
+  }
+  return `<span class="tr-value-asset" title="${escapeAttr(full)}">${escapeHtml(full)}</span>`;
+}
+
 function tradeSegmentedValueBoard(candidate, outgoing, incoming, outgoingTeam, incomingTeam) {
   const breakdown = candidate?.value_breakdown || {};
   const archived = Object.keys(breakdown).length && breakdown.version !== 2;
@@ -9315,22 +9388,30 @@ function tradeSegmentedValueBoard(candidate, outgoing, incoming, outgoingTeam, i
     Object.values(asset.components || {}).filter((value) => Number(value) > 0).reduce((sum, value) => sum + Number(value), 0),
     Object.values(asset.components || {}).filter((value) => Number(value) < 0).reduce((sum, value) => sum + Math.abs(Number(value)), 0),
   )), ...rows.map(([, details]) => Math.abs(details.reduce((sum, asset) => sum + Number(asset.adjusted_value || 0), 0))));
+  // Round 10: single assets are drawn against the largest single asset (not the team total), so their bars spread
+  // out; the team totals have their own scale. With no negative parts anywhere, the bars use the full width.
+  const partSum = (asset, sign) => Object.values(asset.components || {}).filter((value) => sign * Number(value) > 0).reduce((sum, value) => sum + Math.abs(Number(value)), 0);
+  const assetMaximum = Math.max(1, ...all.map((asset) => Math.max(partSum(asset, 1), partSum(asset, -1))));
+  const totalMaximum = Math.max(1, ...rows.map(([, details, , pack]) => Math.abs(pack?.total == null ? details.reduce((sum, asset) => sum + Number(asset.adjusted_value || 0), 0) : Number(pack.total))));
+  const sourceAssets = new Map([...(outgoing || []), ...(incoming || [])].map((asset) => [asset.id, asset]));
+  const positiveOnly = all.every((asset) => partSum(asset, -1) < 0.005);
+  void maximum;
   const labels = { quality: "Quality", age_upside: "Age and growth value", contract: "Contract", scarcity: "Scarcity", playoffs: "Playoffs", health: "Health", fit: "Fit", role: "Projected role", retention: "Recent acquisition", draft_capital: "Draft capital", swap_value: "Swap value", asset_value: "Asset value" };
   const explanations = {quality:"Current on-court contribution.",age_upside:"Age curve and remaining development; older players can have a negative age adjustment even with no upside remaining.",contract:"Salary value relative to contribution, not salary in dollars.",scarcity:"How difficult this skill set is to replace.",playoffs:"Contribution expected to translate to playoff basketball.",health:"Injury risk reduces value.",fit:"Fit with this team's needs.",role:"Change from the listed value for the projected role after outgoing players leave. Fewer usable minutes can mean a large reduction; this is not a ratings penalty.",retention:"Extra cost of moving a recently acquired player.",draft_capital:"Pick value including year, projected position and protections.",swap_value:"Value of the swap right, not ownership of an extra pick."};
   // Round 7: a listed value (before the other team answers) is drawn in the asset's own colour, the one beside it in
   // the deal, never grey.
-  const bar = (components, tint = "") => {
+  const bar = (components, tint = "", scale = assetMaximum) => {
     const entries = Object.entries(components || {}).filter(([, value]) => Math.abs(Number(value)) >= 0.005);
     const positive = entries.filter(([, value]) => Number(value) > 0);
     const negative = entries.filter(([, value]) => Number(value) < 0).reverse();
-    return `<div class="trade-value-diverging"><span class="negative-side">${negative.map(([key, value]) => `<i class="value-${escapeAttr(key)}" style="width:${clampNumber(Math.abs(Number(value)) / maximum * 100, 0, 100)}%" title="${escapeAttr(`${labels[key] || rowLabel(key)} ${Number(value).toFixed(1)}`)}"></i>`).join("")}</span><b></b><span class="positive-side">${positive.map(([key, value]) => `<i class="value-${escapeAttr(key)}" style="width:${clampNumber(Number(value) / maximum * 100, 0, 100)}%${tint && key === "asset_value" ? `;background:${tint}` : ""}" title="${escapeAttr(`${labels[key] || rowLabel(key)} +${Number(value).toFixed(1)}`)}"></i>`).join("")}</span></div>`;
+    return `<div class="trade-value-diverging"><span class="negative-side">${negative.map(([key, value]) => `<i class="value-${escapeAttr(key)}" style="width:${clampNumber(Math.abs(Number(value)) / scale * 100, 0, 100)}%" title="${escapeAttr(`${labels[key] || rowLabel(key)} ${Number(value).toFixed(1)}`)}"></i>`).join("")}</span><b></b><span class="positive-side">${positive.map(([key, value]) => `<i class="value-${escapeAttr(key)}" style="width:${clampNumber(Number(value) / scale * 100, 0, 100)}%${tint && key === "asset_value" ? `;background:${tint}` : ""}" title="${escapeAttr(`${labels[key] || rowLabel(key)} +${Number(value).toFixed(1)}`)}"></i>`).join("")}</span></div>`;
   };
   const componentKeys = [...new Set(all.flatMap((asset) => Object.keys(asset.components || {})))];
-  return `<section class="approved-trade-values"><header>${archived ? 'Archived asset estimates' : 'Receiving-team asset values'}</header>${archived ? '<p class="trade-value-help">This saved offer uses the older chart calculation. Review it in the builder and evaluate again for corrected totals; these archived bars are not the decision ledger.</p>' : ''}<details class="trade-value-help"><summary>What changes the listed value?</summary><p>Listed value is a market reference, not OVR or dollars. These bars show value to the receiving team: right adds value, left subtracts it. Age, upside, contract and health are already included in the reference value; the colored segments explain that value, not extra bonuses. Projected role and fit depend on the destination roster. Package adjustment discounts a bundle of depth relative to a concentrated return. Strategy is separate, so this total is not an acceptance score.</p></details>${rows.map(([team, details, destination, pack]) => {
+  return `<section class="approved-trade-values${positiveOnly ? " is-positive-only" : ""}"><header>${archived ? 'Archived asset estimates' : 'Receiving-team asset values'}</header>${archived ? '<p class="trade-value-help">This saved offer uses the older chart calculation. Review it in the builder and evaluate again for corrected totals; these archived bars are not the decision ledger.</p>' : ''}<details class="trade-value-help"><summary>What changes the listed value?</summary><p>Listed value is a market reference, not OVR or dollars. These bars show value to the receiving team: right adds value, left subtracts it. Age, upside, contract and health are already included in the reference value; the colored segments explain that value, not extra bonuses. Projected role and fit depend on the destination roster. Package adjustment discounts a bundle of depth relative to a concentrated return. Strategy is separate, so this total is not an acceptance score.</p></details>${rows.map(([team, details, destination, pack]) => {
     const subtotal = details.reduce((sum, asset) => sum + Number(asset.adjusted_value || 0), 0);
     const net = pack?.total == null ? subtotal : Number(pack.total);
     const adjustment = net-subtotal;
-    return `<div class="trade-value-team"><strong>${escapeHtml(team)} sends · valued by ${escapeHtml(destination)}</strong>${details.length ? details.map((asset, index) => `<div class="approved-value-row" title="${escapeAttr(`${asset.listed_value == null ? '' : `Listed ${Number(asset.listed_value).toFixed(1)} · `}${asset.expected_role || ''}`)}"><span>${escapeHtml(asset.label || asset.id)}</span>${bar(asset.components, typeof TRADE_ASSET_COLORS === "object" ? TRADE_ASSET_COLORS[index % TRADE_ASSET_COLORS.length] : "")}<em>${Number(asset.adjusted_value || 0).toFixed(1)}</em></div>`).join("") : `<div class="trade-value-empty">No assets selected</div>`}${Math.abs(adjustment)>.05 ? `<div class="approved-value-row"><span>Package adjustment</span>${bar({asset_value:adjustment})}<em>${adjustment.toFixed(1)}</em></div>` : ''}<div class="approved-value-row net"><span>Roster value</span>${bar({ asset_value: net }, "#9ec9ff")}<em>${net.toFixed(1)}</em></div></div>`;
+    return `<div class="trade-value-team"><strong>${tradeValueTeamMark(team)} sends · valued by ${tradeValueTeamMark(destination)}</strong>${details.length ? details.map((asset, index) => `<div class="approved-value-row" title="${escapeAttr(`${asset.listed_value == null ? '' : `Listed ${Number(asset.listed_value).toFixed(1)} · `}${asset.expected_role || ''}`)}">${tradeValueAssetLabel(asset, sourceAssets.get(asset.id))}${bar(asset.components, typeof TRADE_ASSET_COLORS === "object" ? TRADE_ASSET_COLORS[index % TRADE_ASSET_COLORS.length] : "")}<em>${Number(asset.adjusted_value || 0).toFixed(1)}</em></div>`).join("") : `<div class="trade-value-empty">No assets selected</div>`}${Math.abs(adjustment)>.05 ? `<div class="approved-value-row"><span>Package adjustment</span>${bar({asset_value:adjustment}, "", totalMaximum)}<em>${adjustment.toFixed(1)}</em></div>` : ''}<div class="approved-value-row net"><span>Roster value</span>${bar({ asset_value: net }, "#9ec9ff", totalMaximum)}<em>${net.toFixed(1)}</em></div></div>`;
   }).join("")}<footer>${componentKeys.map((key) => `<span class="value-${escapeAttr(key)}" title="${escapeAttr(explanations[key] || labels[key] || rowLabel(key))}">${escapeHtml(labels[key] || rowLabel(key))}</span>`).join("")}</footer><details class="trade-value-help"><summary>Value components</summary><dl>${componentKeys.filter(key=>explanations[key]).map(key=>`<div><dt>${escapeHtml(labels[key])}</dt><dd>${escapeHtml(explanations[key])}</dd></div>`).join('')}</dl></details></section>`;
 }
 
@@ -10785,20 +10866,20 @@ function prospectLockIcon() {
 // Round 8: the card header shows plain facts (team, contract, roles, size) instead of injury risk, decline watch and
 // trade value (those stay on their own pages and in the trade room).
 function playerHeaderFacts(detail) {
-  // Round 9: contract and roles only (the team is a logo badge on the headshot; size is in the subtext), laid out
-  // as two clear blocks: the contract as salary, length and the season it runs through; the roles by side.
+  // Round 10: contract and roles as three label / value rows set exactly like the OVR / OFF / DEF rows beside them
+  // (same font, size, colours and row spacing), so the header reads as one piece.
   const coach = detail.inputs_profile?.coach || {};
   const seasons = (detail.salary_seasons || []).filter(row => row.salary_millions !== null && Number.isFinite(Number(row.salary_millions)));
+  const row = (label, value, extra = "") => `<div class="player-header-fact"><small>${label}</small><span>${value}${extra}</span></div>`;
   const contract = seasons.length
-    ? `<div class="player-header-fact is-contract"><small>Contract</small><b>${escapeHtml(money(Number(seasons[0].salary_millions)))}<span>this season</span></b><em>${seasons.length} season${seasons.length === 1 ? "" : "s"} · through ${escapeHtml(seasons[seasons.length - 1].season)}</em></div>`
-    : `<div class="player-header-fact is-contract"><small>Contract</small><b>${detail.is_prospect ? "Prospect" : "None"}</b></div>`;
+    ? row("Contract", escapeHtml(money(Number(seasons[0].salary_millions))), `<em>${seasons.length} season${seasons.length === 1 ? "" : "s"} · through ${escapeHtml(seasons[seasons.length - 1].season)}</em>`)
+    : row("Contract", detail.is_prospect ? "Prospect" : "None");
   const role = (key, side) => {
     if (!key) return "";
-    const [label, tone] = (typeof PLAYER_ROLE_CHIPS === "object" && PLAYER_ROLE_CHIPS[key]) || [rowLabel(key), "unknown"];
-    return `<div class="player-header-role"><small>${side}</small><span class="role-text role-${escapeAttr(tone)}">${escapeHtml(label)}</span></div>`;
+    const [label] = (typeof PLAYER_ROLE_CHIPS === "object" && PLAYER_ROLE_CHIPS[key]) || [rowLabel(key)];
+    return row(side, escapeHtml(label));
   };
-  const roles = role(coach.primary_off_role, "Offense") + role(coach.primary_def_role, "Defense");
-  return `<div class="player-header-facts">${contract}${roles ? `<div class="player-header-fact is-roles"><small>Roles</small><div class="player-header-roles">${roles}</div></div>` : ""}</div>`;
+  return `<div class="player-header-facts">${contract}${role(coach.primary_off_role, "Offense")}${role(coach.primary_def_role, "Defense")}</div>`;
 }
 
 function playerCardEvidence(detail) {
@@ -11301,29 +11382,15 @@ function approvedPlayerCardBody(detail, options = {}) {
     if (detail.is_prospect && axes.some(([,value]) => value == null)) return `<div class="player-rating-radar prospect-radar-placeholder" role="img" aria-label="${escapeAttr(title)} locked until its ratings are scouted">${prospectLockIcon()}<span>Profile locked</span><small>Scout all profile ratings to unlock</small></div>`;
     return axes.length >= 3 ? fantasyPlayerRadar(title, axes, `${tone} player-rating-radar`, false) : `<div class="player-page-empty">${escapeHtml(title)} profile unavailable.</div>`;
   };
-  const recentGames = [...(detail.recent_game_table || detail.recent_games || [])].slice(-5).reverse();
-  while (recentGames.length < 5) recentGames.push(null);
-  const gameFields = [["Date", "date"], ["Opponent", "opponent_abbrev"], ["MIN", "minutes"], ["PTS", "points"], ["REB", "rebounds"], ["AST", "assists"], ["STL", "steals"], ["BLK", "blocks"], ["TO", "turnovers"], ["GS", "game_score"]];
-  const gameRows = recentGames.map(row => `<tr>${gameFields.map(([, key]) => {
-    if (!row) return '<td>—</td>';
-    if (key === "date") return `<td>${escapeHtml(String(row.date || "").slice(5) || "—")}</td>`;
-    if (key === "opponent_abbrev") {
-      if (row.college_opponent) return `<td><span class="player-page-college-opponent" title="${escapeAttr(row.college_opponent)}">${prospectOriginMarkup(row.college_opponent)}</span></td>`;
-      const opponent = row.opponent_abbrev || "";
-      const logo = teamLogoSrc(opponent);
-      return `<td><span class="player-page-opponent" title="${escapeAttr(opponent || "Opponent unavailable")}">${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(opponent)} logo" decoding="async">` : escapeHtml(opponent || "—")}</span></td>`;
-    }
-    return `<td>${["minutes", "game_score"].includes(key) ? draftMetric(row[key]) : escapeHtml(row[key] ?? "—")}</td>`;
-  }).join("")}</tr>`).join("");
   return `<div class="approved-player-card approved-player-pages${detail.is_prospect ? " approved-prospect-pages" : ""}" data-player-pages>
     <div class="player-page-bar"><span data-player-page-title>${extension ? "Contract Extension" : detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}</span><div class="player-page-nav"><button type="button" class="ui-command" data-player-page-step="-1" aria-label="Previous player card page" title="Previous page">‹</button><button type="button" class="ui-command" data-player-page-step="1" aria-label="Next player card page" title="Next page">›</button><span data-player-page-count aria-live="polite" aria-atomic="true">1/${(extension ? 1 : 0) + 2 + (detail.is_prospect ? 0 : 1)}</span></div></div>
     <section class="approved-player-identity player-page-identity"><div class="approved-player-profile-head"><span class="profile-headshot-wrap">${playerHeadshotMarkup(detail, "approved-profile-headshot")}${detail.team?.abbrev && typeof teamLogoSrc === "function" && teamLogoSrc(detail.team.abbrev) ? `<img class="profile-team-badge" src="${escapeAttr(teamLogoSrc(detail.team.abbrev))}" alt="${escapeAttr(detail.team.name || detail.team.abbrev)}" title="${escapeAttr(detail.team.name || detail.team.abbrev)}" />` : ""}</span><div class="approved-profile-name"><h3>${escapeHtml(detail.name || options.name || "Player")}</h3><p>${escapeHtml([detail.position, detail.age != null ? `${detail.age} years` : "", detail.height].filter(Boolean).join(" · "))}</p><p class="player-draft-details">${escapeHtml(detail.is_prospect ? [detail.college_profile ? detail.source_team : (detail.scouting_profile?.where || detail.source_team), detail.college_profile?.coach ? `Coach ${detail.college_profile.coach}` : "", `${detail.draft_year} draft class`].filter(Boolean).join(" · ") : detail.draft_position ? `${detail.draft_year || 'Draft'} · Pick #${detail.draft_position}` : detail.draft_status==='undrafted' ? `Undrafted${detail.draft_year?` · ${detail.draft_year}`:''}` : detail.draft_year ? `Draft year ${detail.draft_year}` : 'Draft details unavailable')}</p></div>${playerSummaryRatings(detail)}</div>${typeof playerHeaderFacts === "function" ? playerHeaderFacts(detail) : playerCardEvidence(detail)}${options.actions || ""}</section>
     ${extension ? extensionNegotiationPage(extension.room, extension.selectedPlayerId, extension.response, detail, extension.draft) : ""}
     <section class="player-card-page player-card-page--overview" data-player-page="${pageOffset}" data-page-title="${detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}" aria-label="Season statistics, recent games, game score and contract">
       ${detail.scouting_profile && !detail.college_profile ? scoutingProfileStrip(detail.scouting_profile) : playerSeasonStrip(season, detail.career_seasons || [])}
-      ${detail.college_profile ? collegeProfileStrip(detail.college_profile, detail.scouting_profile) : detail.scouting_profile ? "" : `<section class="approved-card-panel player-page-game-log"><header>Recent Games · Last 5</header><div class="player-page-table-scroll"><table><thead><tr>${gameFields.map(([label]) => `<th scope="col">${label}</th>`).join("")}</tr></thead><tbody>${gameRows || `<tr><td class="player-page-empty" colspan="${gameFields.length}">No recent games yet.</td></tr>`}</tbody></table></div></section>
-      <section class="approved-card-panel player-page-score-panel"><header>Game Score · Last 15 Games</header>${approvedGameScoreChart(detail)}</section>`}
-      ${detail.is_prospect ? "" : `<div class="player-page-contract"><section class="approved-card-panel approved-cap-panel"><header>${gameArtworkTitle("Four-Year Payroll Share", "payroll")}</header>${approvedCapShareChart(detail)}</section></div>`}
+      ${detail.college_profile ? collegeProfileStrip(detail.college_profile, detail.scouting_profile) : ""}
+      ${/* Round 10: the heat maps are this page's main display (recent games, the game-score chart and the payroll
+          share left the page; the contract is in the header). */ ""}
       <section class="approved-card-panel approved-player-spatial player-overview-court"><header>Court Influence</header>${spatialHeatmapMarkup(detail.spatial_profile, { compact: true })}</section>
     </section>
     <section class="player-card-page player-card-page--details${detail.inputs_profile ? " player-card-page--layers" : ""}" data-player-page="${pageOffset + 1}" data-page-title="Ratings & Profiles" aria-label="Complete ratings and radar profiles" hidden>
@@ -16317,6 +16384,7 @@ function toggleAsset(side, kind, id) {
   else {
     if (state.tradeTab === "finder" && list.length >= 2) return showToast("Trade Finder can search up to two assets at once.", true);
     state.tradeFreshAsset = `${side}:${asset.kind}:${asset.id}`;
+    if (state.tradeTab !== "finder" && asset.kind === "pick" && globalThis.TradePickTerms?.eligible(asset)) state.tradePickTermsFor = asset.id;
     list.push({
       ...asset,
       kind: asset.kind,
@@ -16526,7 +16594,7 @@ function tradeIdentityContext() {
 function tradeIdentityPage() {
   const context = tradeIdentityContext();
   const preview = state.tradeIdentityPreview;
-  const toolbar = `<div class="trade-identity-toolbar"><div>${tradeWorkspaceParticipants().map(({side,team}) => `<button type="button" class="ui-command" data-trade-identity-team="${escapeAttr(side)}" aria-pressed="${context.side === side}">${escapeHtml(team)}</button>`).join("")}</div><span>Rotation-weighted projection · 240 minutes</span></div>`;
+  const toolbar = `<div class="trade-identity-toolbar"><div>${tradeWorkspaceParticipants().map(({side,team}) => `<button type="button" class="trade-identity-logo" data-trade-identity-team="${escapeAttr(side)}" aria-pressed="${context.side === side}" aria-label="${escapeAttr(team)}" title="${escapeAttr(team)}">${teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : ""}<span>${escapeHtml(team)}</span></button>`).join("")}</div><span>Rotation-weighted projection · 240 minutes</span></div>`;
   if (preview?.key !== context.key || preview.status === "loading") return `${toolbar}<div class="trade-identity-empty" role="status">Loading player spatial profiles${preview?.loaded != null ? ` · ${preview.loaded}/${preview.total}` : ""}</div>`;
   if (preview.error) return `${toolbar}<div class="trade-identity-empty" role="status">${escapeHtml(preview.error)} <button type="button" class="ui-command" data-trade-identity-retry>Retry</button></div>`;
   const before = window.TradeProjection.rotation(context.players);
@@ -16686,7 +16754,7 @@ function tradeDealTile(asset, {removeSide = "", routeFrom = "", fresh = false, c
     // Round 6: the pick's terms in its own field, with the full wording behind a Details drop-down (not a hover).
     const terms = [asset.kind === "pick_swap" ? "Swap right" : "", pick.note || ""].filter(Boolean).join(" · ");
     const details = pick.full ? `<details class="tr-tile-details"><summary>Details</summary><p>${escapeHtml(pick.full)}</p></details>` : "";
-    return `<li class="tr-tile is-pick${fresh ? " is-new" : ""}"><span class="tr-tile-face">${typeof draftAssetGlyph === "function" ? draftAssetGlyph(asset, true, true) : ""}</span><span class="tr-tile-main"><strong class="tr-tile-name">${escapeHtml(pick.short)}</strong>${route ? `<span class="tr-tile-sub">${route}</span>` : ""}</span><span class="tr-tile-roles tr-tile-terms">${terms ? `<span class="tr-tile-note">${escapeHtml(terms)}</span>` : ""}</span>${valueCell}<span class="tr-tile-ovr"></span><span class="tr-tile-contract tr-tile-terms">${details}</span>${remove}</li>`;
+    return `<li class="tr-tile is-pick${fresh ? " is-new" : ""}"><span class="tr-tile-face">${typeof draftAssetGlyph === "function" ? draftAssetGlyph(asset, true, true) : ""}</span><span class="tr-tile-main"><strong class="tr-tile-name">${escapeHtml(pick.short)}</strong>${route ? `<span class="tr-tile-sub">${route}</span>` : ""}</span><span class="tr-tile-roles tr-tile-terms">${terms ? `<span class="tr-tile-note">${escapeHtml(terms)}</span>` : ""}${removeSide && asset.kind === "pick" && globalThis.TradePickTerms?.eligible(asset) && typeof tradePickRuleSummary === "function" ? `<button type="button" class="tr-text-button tr-tile-conditions" data-pick-terms-open="${escapeAttr(id)}">${escapeHtml(tradePickRuleSummary(id) || "Add conditions")}</button>` : ""}</span>${valueCell}<span class="tr-tile-ovr"></span><span class="tr-tile-contract tr-tile-terms">${details}</span>${remove}</li>`;
   }
   const overall = tradeKnownNumber(asset.overall ?? asset.ratings?.overall);
   const roles = typeof playerRoleChip === "function" && (asset.primary_off_role || asset.primary_def_role) ? `<span class="tr-role-pair">${playerRoleChip(asset.primary_off_role)}${playerRoleChip(asset.primary_def_role)}</span>` : "";

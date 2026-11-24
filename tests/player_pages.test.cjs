@@ -54,20 +54,14 @@ test('three player pages show season stats, recent games, payroll, ratings, and 
   }
   // Round 8: the header shows team, contract, roles and size instead of injury risk, growth runway and trade value.
   for (const text of ['Injury risk 2.2','Trade Value']) assert.ok(!html.slice(0, html.indexOf('approved-season-line')).includes(text), text);
-  for (const field of ['player-header-facts','Contract','Offensive shape','Defense / physical','own-court','Select player career season','Recent Games · Last 5','Game Score · Last 15 Games','Four-Year Payroll Share','Health & Injury Outlook']) assert.ok(html.includes(field), field);
-  const season = html.slice(html.indexOf('approved-season-line'), html.indexOf('player-page-game-log'));
+  for (const field of ['player-header-facts','Contract','Offensive shape','Defense / physical','own-court','Select player career season','Health & Injury Outlook']) assert.ok(html.includes(field), field);
+  // Round 10: the heat maps are the overview's main display; recent games, game score and payroll share left the page.
+  for (const gone of ['Recent Games · Last 5','Game Score · Last 15 Games','Four-Year Payroll Share']) assert.ok(!html.includes(gone), gone);
+  const season = html.slice(html.indexOf('approved-season-line'), html.indexOf('player-overview-court'));
   assert.match(season, /<small>GP\/All<\/small><strong>30\//);
   for (const [key,value] of Object.entries(detail.season)) {
     if (key !== 'games') assert.ok(season.includes(`>${value.toFixed(1)}<`), `Season ${key}`);
   }
-  assert.equal((html.match(/<span class="player-page-opponent"/g) || []).length,5);
-  const log = html.slice(html.indexOf('player-page-game-log'), html.indexOf('player-page-score-panel'));
-  assert.deepEqual([...log.matchAll(/<td>(01-\d{2})<\/td>/g)].map(match => match[1]),
-    ['01-30','01-29','01-28','01-27','01-26']);
-  const points = JSON.parse(html.match(/data-game-score-points="([^"]+)"/)[1].replaceAll('&quot;', '"'));
-  assert.deepEqual(points, detail.recent_games.slice(-15).map(row => ({label:row.date.slice(5), value:row.game_score})));
-  const payroll = html.match(/class="salary-horizon-chart">([^<]+)/)[1];
-  assert.equal(payroll, detail.salary_seasons.slice(0,4).map(row => `${row.season}:${row.salary_millions}`).join('|'));
   // Round 8: the mini body figure left the header (the full map stays on the Health page).
   assert.doesNotMatch(html.slice(0, html.indexOf("approved-season-line")), /injury-body-figure mini/);
   // ("Watch: Knee" was the header figure's tooltip; the Health page below still maps the knee.)
@@ -77,9 +71,7 @@ test('three player pages show season stats, recent games, payroll, ratings, and 
 
 test('empty history and incomplete ratings have explicit empty states and never invent radar values', () => {
   const html = runtime().approvedPlayerCardBody({name:'New Player',ratings:{overall:60,shooting:55,defense:52},season:{games:0}});
-  assert.equal((html.match(/<tr>(?:<td>—<\/td>){10}<\/tr>/g) || []).length, 5);
   assert.match(html, /Body map unavailable for this player/);
-  assert.match(html, /points=""><title>No game-score history yet<\/title>/);
   assert.doesNotMatch(html, /class="chart-node/);
   assert.ok(html.includes('Offensive shape profile unavailable.'));
   assert.ok(html.includes('Defense / physical profile unavailable.'));

@@ -22,6 +22,10 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **Anti-reference: Basketball GM.** Clicking between plain tables, a player page that is a scroll of tables, no players or game feel. Never ship anything that looks like it.
 
 ## The look: glass (round 3)
+- **Round 10:** a team is always its logo with its abbreviation (never the abbreviation alone). Header facts are set
+  exactly like the rows beside them (same font, size, colour, row spacing). Settings' long pills are the model for
+  every long pill. Optional extras (pick conditions) open in a pop-up when they become relevant, not as a standing bar.
+  Bars compare like with like: single assets against the largest single asset, totals on their own scale.
 - **Round 9: the board is a flat colour** (no team-colour glow anywhere; it read as "AI"). JFresh puts cards on a plain background.
 - **Round 8: much more see-through** (back to the JFresh reference): windows about 20% tint, title bars about 12%, pop-ups and slides about 30%. The board's colour shows through; text stays readable through the blur.
 - **JFresh-style glass, game-wide** (`gui/glass.css`): windows and pop-ups are frosted, slightly see-through panels with rounded corners and depth; title bars and the top bar are dark glass tinted with the user's team colour, with white text; the board behind is lit by soft team-colour light. Content stays light frosted with near-black text so dense tables read easily.

@@ -720,7 +720,7 @@ body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal .tr-st
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal .tr-stage > .tr-side { grid-row: span 3; display: grid !important; grid-template-rows: subgrid !important; grid-template-columns: minmax(0, 1fr) !important; min-width: 0; }
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal .tr-stage > .tr-side > .tr-salary { align-self: end; }
 /* Three or more teams: narrower asset rows (no contract column), so nothing spills into the next side. */
-body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi :is(.tr-tile, .tr-tiles-head) { grid-template-columns: 32px minmax(0, 1.25fr) minmax(0, 1fr) 78px 24px 18px !important; column-gap: 6px !important; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi :is(.tr-tile, .tr-tiles-head) { grid-template-columns: 50px minmax(0, 1.25fr) minmax(0, 1fr) 78px 24px 18px !important; column-gap: 6px !important; }
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi :is(.tr-tile > .tr-tile-contract, .tr-tiles-head > span:nth-child(6)) { display: none !important; }
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi .tr-tile .tr-tile-roles { display: flex !important; flex-direction: column; align-items: center; gap: 1px; line-height: 1.15; }
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-multi .tr-tile .tr-tile-roles .role-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
@@ -941,3 +941,99 @@ html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRo
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot#modalRoot) .cutdown-tw-row :is([data-two-way-release], [data-two-way-convert], [data-two-way-sign])[type="button"]:hover:not(:disabled) { background: transparent !important; text-decoration: underline !important; text-underline-offset: 3px; }
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot#modalRoot) .cutdown-tw-row :is([data-two-way-release], [data-two-way-convert], [data-two-way-sign])[type="button"]:disabled { color: #9fb0c0 !important; }
 html[data-glass="clear"] body.unified-terminal-ui .cutdown-tw-row .cutdown-choice:not(.is-slider) { gap: 16px !important; background: transparent !important; padding: 0 !important; }
+
+/* ---------- Round 10. Player card header: contract and roles as label / value rows set like the OVR / OFF / DEF rows
+   (same font, colours and row spacing), sitting in the header's empty right half. */
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-pages .player-page-identity { grid-template-columns: minmax(0, 1fr) max-content !important; column-gap: 96px !important; padding-right: 36px !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .player-header-facts { display: grid !important; grid-template-columns: max-content minmax(0, 1fr) !important; gap: 4px 18px !important; align-content: center; align-self: center; margin: 0 !important; padding: 0 !important; justify-self: start; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .player-header-fact { display: contents !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .player-header-fact > small { font: 16px/24px Tahoma, Arial, sans-serif !important; color: #c9d5e0 !important; font-style: normal !important; font-variant: normal !important; letter-spacing: normal !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .player-header-fact > span { font: 16px/24px Tahoma, Arial, sans-serif !important; color: #f3f7fb !important; white-space: nowrap; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .player-header-fact > span > em { font-style: normal; color: #c9d5e0; margin-left: 10px; }
+/* Overview page: the heat maps are the main display, under the season line. */
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-pages .player-card-page--overview { grid-template-columns: minmax(0, 1fr) !important; grid-template-rows: auto minmax(0, 1fr) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-pages .player-card-page--overview:has(> .college-profile-line) { grid-template-rows: auto auto minmax(0, 1fr) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-pages .player-card-page--overview > :is(.approved-season-line, .college-profile-line) { grid-column: 1 !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-pages .player-card-page--overview > .player-overview-court { grid-column: 1 !important; grid-row: -2 / -1 !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-pages .player-page-identity > .approved-player-profile-head { grid-template-columns: 220px 340px minmax(0, 1fr) !important; width: 100% !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-pages .approved-player-profile-head > .player-summary-ratings { width: 100% !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-pages .approved-player-profile-head > .player-summary-ratings { max-width: 760px !important; justify-self: start; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-pages .approved-player-profile-head .player-summary-rating { grid-template-columns: 38px minmax(0, 1fr) 48px !important; }
+/* Round 10: the header's under-line runs to the card edges too (the edge pieces lost the line, so the header still
+   looked cut off at the table). */
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table > thead > tr > th:first-child::before,
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table > thead > tr > th:last-child::after { box-shadow: rgba(255, 255, 255, .55) 0 -1px 0 0 inset !important; }
+/* Opening roster (round 10): the header scrolls away with the rows instead of staying pinned; the two-way divider is a
+   centred, bold band with a line above it. */
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .cutdown-scroll table > thead > tr > th { position: relative !important; top: auto !important; }
+html[data-glass="clear"] body.unified-terminal-ui table tr.cutdown-section-row > th.is-name-col,
+html[data-glass="clear"] body.unified-terminal-ui table tr.cutdown-section-row > th:first-child { text-align: center !important; padding: 12px 10px 8px !important; font-size: 14px !important; font-weight: 700 !important; color: #f3f7fb !important; background: transparent !important; border-top: 0 !important; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35) !important; }
+html[data-glass="clear"] body.unified-terminal-ui table tr.cutdown-section-row > th > span { margin-right: 0 !important; letter-spacing: .02em; }
+html[data-glass="clear"] body.unified-terminal-ui table tr.cutdown-section-row .cutdown-details { font-weight: 400; font-size: 12px; }
+
+/* Trade room (round 10): a pick's conditions in a pop-up over the room (no Draft Terms bar under the deal). */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder { position: relative; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-pop { position: absolute; inset: 0; z-index: 40; display: grid; place-items: center; background: rgba(8, 14, 22, .38); border-radius: 10px; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card { width: min(780px, 92%); background: rgba(22, 34, 48, .94) !important; -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); border: 1px solid rgba(255, 255, 255, .16); border-radius: 12px; padding: 16px 18px 14px; box-shadow: 0 18px 44px rgba(0, 0, 0, .5); color: #eef3f7; display: grid; gap: 12px; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card > header { display: flex; align-items: baseline; gap: 14px; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card > header strong { font-size: 16px; font-weight: 700; color: #fff; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card > header span { font-size: 13px; color: #c9d5e0; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card .trade-pick-terms { background: transparent !important; border: 0 !important; margin: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card .trade-pick-terms > header { display: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card label:has(> select[data-pick-field="pick_id"]) { display: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card .tr-terms-none { margin: 0; color: #c9d5e0; font-size: 13px; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card > footer { display: flex; justify-content: flex-end; align-items: center; gap: 18px; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-tile-conditions { font-size: 12px !important; padding: 0 !important; justify-self: start; }
+/* Replay is a plain text link, like the other text buttons. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room :is([data-trade-payroll-replay], .tr-text-button) { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; min-height: 0 !important; color: #d8eaff !important; font-weight: 600; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room :is([data-trade-payroll-replay], .tr-text-button):hover:not(:disabled) { text-decoration: underline; background: transparent !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot#modalRoot .modal-trade-room .tr-builder > .tr-terms-pop { background: rgba(8, 14, 22, .42) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card .glass-select { min-width: 72px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card .trade-pick-rule-error { color: #ffc6c6 !important; margin: 6px 0 0 !important; }
+/* The Builder / Finder / Market band sits at the same inset from the card's edge as the deal and verdict below it. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-room-toolbar { margin: 8px 0 8px !important; }
+
+/* Team identity (round 10): the team choice is a row of clickable logos (the chosen one bright and underlined); before
+   and after stacked, so each court sits right over its after-trade version; the room's lower card fills the height. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-toolbar > div { display: flex !important; gap: 14px !important; background: none !important; padding: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-logo { display: grid !important; justify-items: center; gap: 3px; background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 2px 4px 4px !important; min-height: 0 !important; cursor: pointer; opacity: .5; border-bottom: 2px solid transparent !important; border-radius: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-logo img { width: 34px; height: 34px; object-fit: contain; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-logo span { font-size: 11px; font-weight: 700; color: #eef3f7; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-logo:hover { opacity: .85; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-logo[aria-pressed="true"] { opacity: 1; border-bottom-color: #4f8fe0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-comparison { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: 6px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-comparison > section { display: grid !important; grid-template-columns: 120px auto; justify-content: center; align-items: center; column-gap: 18px; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-comparison > section > h4 { margin: 0 !important; font-size: 15px !important; text-align: right; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-comparison .spatial-half-courts { height: auto !important; display: grid !important; grid-template-columns: repeat(2, 214px) !important; gap: 24px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-comparison .spatial-heatmap { width: auto !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-comparison .spatial-court-head { display: grid !important; grid-template-columns: repeat(2, 214px) !important; gap: 24px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-comparison .spatial-court { width: 214px !important; height: 200px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-comparison > section:first-child .spatial-legends { display: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-comparison .spatial-legends { display: grid !important; grid-template-columns: repeat(2, 214px) !important; gap: 24px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-comparison .spatial-heatmap { display: grid !important; grid-template-rows: auto !important; grid-auto-rows: auto !important; gap: 4px !important; height: auto !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-comparison > section + section .spatial-court-head { visibility: hidden; height: 0 !important; overflow: hidden; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-toolbar { margin-bottom: 4px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-identity-page { display: grid !important; grid-template-columns: 220px minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); column-gap: 20px; row-gap: 10px; height: 100%; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-identity-page > .trade-identity-toolbar { grid-column: 1; grid-row: 1; display: grid !important; gap: 8px; justify-items: start; margin: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-identity-page > .trade-identity-toolbar > span { font-size: 12px; color: #c9d5e0; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-identity-page > .trade-identity-comparison { grid-column: 2; grid-row: 1 / 4; align-self: center; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-identity-page > .trade-inferred-minutes { grid-column: 1; grid-row: 2; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-identity-page > .trade-projection-note { grid-column: 1; grid-row: 3; align-self: end; margin: 0 !important; font-size: 11px !important; color: #c9d5e0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-identity-page > .trade-identity-empty { grid-column: 2; grid-row: 1 / 4; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-comparison .spatial-legends { grid-template-columns: repeat(2, 214px) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-comparison .spatial-legend { justify-items: center; }
+
+/* Value tab (round 10): logo + abbreviation for every team, pick logos beside pick names, bars on the full width when
+   nothing subtracts value. */
+html[data-glass="clear"] body.unified-terminal-ui .tr-team-mark { display: inline-flex; align-items: center; gap: 5px; vertical-align: middle; }
+html[data-glass="clear"] body.unified-terminal-ui .tr-team-mark img { width: 20px; height: 20px; object-fit: contain; }
+html[data-glass="clear"] body.unified-terminal-ui .tr-value-asset { display: inline-flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html[data-glass="clear"] body.unified-terminal-ui .tr-value-asset .tr-value-face { display: inline-flex; align-items: center; flex: none; }
+html[data-glass="clear"] body.unified-terminal-ui .tr-value-asset .draft-team-mark { width: 22px !important; height: 22px !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui .approved-trade-values .approved-value-row { align-items: center !important; }
+html[data-glass="clear"] body.unified-terminal-ui .approved-trade-values.is-positive-only .trade-value-diverging { grid-template-columns: minmax(0, 1fr) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .approved-trade-values.is-positive-only .trade-value-diverging > :is(.negative-side, b) { display: none !important; }
+/* Swap and connected picks (round 10): a wider face cell so both logos show, the swap arrow on top of the logos, and the
+   whole mark centred in its row. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.tr-tile-face, .trade-ledger-portrait, .tr-value-face) .draft-asset-glyph.is-swap { flex-direction: column-reverse !important; justify-content: center !important; align-items: center !important; gap: 1px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-face { display: flex !important; align-items: center !important; justify-content: center !important; align-self: stretch !important; }

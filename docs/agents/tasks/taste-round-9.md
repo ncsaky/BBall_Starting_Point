@@ -36,3 +36,4 @@ Owner: Claude. GUI only. UI-light testing (gui-preview copy, real screenshots, c
     no Clear; one button: Apply N moves, Set roster, or a greyed Roster set.
   - Bug fixed: a player back from injury with no rust left but a minutes limit (Hartenstein, Topić) made his player
     card fail ("rust_penalty"), which also broke the trade room's Team identity tab.
+- Round 10 deck published 2026-11-24 (version 13, 10 questions `q10-…`): flat board, card overview, ratings, even pills, deal band, picking list, Value, Team identity, opening roster, which card next.
