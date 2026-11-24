@@ -202,7 +202,7 @@ html[data-glass="clear"] body.unified-terminal-ui .rating-drop { color: #ff8f8f 
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) svg text:not([style*="fill"]) { fill: var(--g-soft); }
 
 /* ---------- Accents: colours that mean something, in light tints that read on the glass (each 5:1 or better). */
-html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) :is(.season-injury-status, .season-injury-status > span, .ss-injury, .injury-mark, [class*="injury-count"], [class*="injury-cross"], .season-opponent-injuries > span:first-child) { color: #ffb0b0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) :is(.season-injury-status, .season-injury-status > span, .ss-injury, .injury-mark, [class*="injury-count"], [class*="injury-cross"], .season-opponent-injuries > span:first-child) { color: #ffc6c6 !important; }
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) .status-mark.is-good > i { color: #86e0a2 !important; }
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) .status-mark.is-bad > i { color: #ff9a9a !important; }
 
@@ -288,7 +288,7 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell :is(.t
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell .tr-strip-side { background: rgba(255, 255, 255, .07) !important; border: 1px solid var(--g-divider) !important; color: var(--g-text) !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell .tr-strip-side.is-current { background: rgba(255, 255, 255, .20) !important; border-color: rgba(255, 255, 255, .5) !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell .tr-strip-side:hover { background: rgba(255, 255, 255, .15) !important; }
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot .trade-ledger .is-injured :is(.trade-player-link, .player-name-text) { color: #ffb0b0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .trade-ledger .is-injured :is(.trade-player-link, .player-name-text) { color: #ffc6c6 !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-salary-status.is-good :is(b, i) { color: #86e0a2 !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-salary-status.is-bad :is(b, i) { color: #ff9a9a !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-payroll-frame figcaption b.is-down { color: #86e0a2 !important; }
@@ -379,7 +379,7 @@ html[data-glass="clear"] body.unified-terminal-ui input[type="checkbox"]:checked
 
 /* Injured players: the name is red everywhere, beside the red cross. */
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) .player-name-with-injury:has(.season-injury-status) > .player-name-text,
-html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) .ss-tile-name:has(.ss-injury) :is(button, a, .ss-player-link) { color: #ffb0b0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) .ss-tile-name:has(.ss-injury) :is(button, a, .ss-player-link) { color: #ffc6c6 !important; }
 
 /* Table headers are never buttons (Roster, Stats, Contracts sort buttons): plain bold labels like Minutes'. */
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot, .season-slideshow) :is(thead, [data-house-head]) button {
@@ -623,7 +623,7 @@ html[data-glass="clear"] .season-slideshow .game-tutorial-arrow > svg { display:
    name line and the slides' depth chart included. */
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) :is([class*="name"], [class*="player-link"]):has(~ :is(.season-injury-status, .ss-injury)),
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) :is([class*="name"], [class*="player-link"]):has(~ :is(.season-injury-status, .ss-injury)) *,
-html[data-glass="clear"] body.unified-terminal-ui .season-minute-name-line:has(.season-injury-status) > .season-minute-player-name { color: #ffb0b0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui .season-minute-name-line:has(.season-injury-status) > .season-minute-player-name { color: #ffc6c6 !important; }
 /* Player names bold in every table (round 6: Roster's weren't). */
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) :is(tbody, [data-house-row]) :is(.player-name-text, .season-minute-player-name, .cutdown-player-name, .trade-player-link, [data-dashboard-player-card]:not(:has(*)), [data-dashboard-player-card] > span:not([class*="injury"]):not([class*="rust"])) { font-weight: 700 !important; }
 /* Section rows inside a table ("Two-way places"): a level above the rows, so the rows' text sits further in. */
@@ -775,3 +775,98 @@ html[data-glass="clear"] body .has-card-board .season-command-header { position:
 body.unified-terminal-ui .trade-ledger .trade-ledger-meter i.injury-risk-meter, body.unified-terminal-ui i.injury-risk-meter { display: inline-grid !important; grid-template-columns: repeat(5, 6px) !important; gap: 2px; width: auto !important; height: 10px !important; background: transparent !important; }
 body.unified-terminal-ui .trade-ledger .trade-ledger-meter i.injury-risk-meter > b:not([style]), body.unified-terminal-ui i.injury-risk-meter > b:not([style]) { background: rgba(255, 255, 255, .14) !important; }
 body.unified-terminal-ui .trade-ledger .trade-ledger-meter i.injury-risk-meter > b { display: block !important; width: 6px !important; height: 10px !important; border-radius: 2px; }
+
+/* ---------- Round 8: much more see-through, back to the JFresh reference (user, 2026-11-24: "not giving enough of the
+   glass look"). The board's colour shows through every window, pop-up and slide; the blur keeps text readable. */
+html[data-glass="clear"] { --g-glass: rgba(18, 29, 43, .20); --g-head: rgba(16, 27, 40, .26); --g-blur: blur(18px) saturate(165%); }
+html[data-glass="clear"] body .has-card-board .card-board-window { background: var(--g-glass) !important; }
+html[data-glass="clear"] body .has-card-board .card-board-titlebar,
+html[data-glass="clear"] body.unified-terminal-ui .modal-shell > :is(.card-board-titlebar, .modal-head) { background: rgba(8, 15, 24, .12) !important; }
+html[data-glass="clear"] body .has-card-board .is-active > .card-board-titlebar { background: color-mix(in srgb, var(--team-a) 16%, rgba(8, 15, 24, .14)) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-shell.modal-shell { background-color: rgba(13, 22, 34, .30) !important; }
+html[data-glass="clear"] .season-slideshow .ss-card { background-color: rgba(13, 22, 34, .30) !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-body, .season-slideshow) thead th:is(.ss-sorted, .is-sorted, [aria-sort="ascending"], [aria-sort="descending"]) { background-color: rgba(44, 60, 80, .45) !important; }
+html[data-glass="clear"] body .has-card-board .season-command-header { background: rgba(12, 21, 32, .42) !important; }
+
+/* Card gallery (round 8: "feels like I'm getting flashbanged"): dark glass like everything else; the light preview
+   drawings are dimmed into the glass. */
+html[data-glass="clear"] body .has-card-board .card-board-gallery { background: rgba(13, 22, 34, .42) !important; -webkit-backdrop-filter: var(--g-blur); backdrop-filter: var(--g-blur); border: 1px solid rgba(255, 255, 255, .10) !important; color: var(--g-text) !important; }
+html[data-glass="clear"] body .has-card-board .card-board-gallery :is(.card-board-gallery-group-toggle, .card-board-gallery-entry, .card-board-gallery-state, .card-board-control) { background: rgba(255, 255, 255, .06) !important; border-color: rgba(255, 255, 255, .14) !important; color: var(--g-text) !important; box-shadow: none !important; }
+html[data-glass="clear"] body .has-card-board .card-board-gallery .card-board-gallery-group-toggle:hover, html[data-glass="clear"] body .has-card-board .card-board-gallery .card-board-gallery-entry:hover { background: rgba(255, 255, 255, .12) !important; }
+html[data-glass="clear"] body .has-card-board .card-board-gallery .card-board-thumbnail { background: rgba(0, 0, 0, .18) !important; filter: invert(.9) hue-rotate(180deg) saturate(1.3) brightness(1.05); opacity: .85; }
+html[data-glass="clear"] body .has-card-board .card-board-gallery :is(h2, h3, h4, strong, span, small, p, button) { color: var(--g-text) !important; }
+html[data-glass="clear"] body .has-card-board .card-board-gallery .card-board-control img { filter: invert(1) brightness(2); }
+/* Long pill (round 8): the unchosen options are plain labels on the tray. They had inherited the glass buttons' own
+   blur, which drew an edge around each one. */
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .settings-pill, [role="tablist"]) > :is(button, [role="tab"]) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; outline: 0; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot .modal-body) .cutdown-choice.is-slider > button { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+
+/* Trade picking list (round 8). Pick logos: no white discs, larger, in a wider column, centred in the row. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room table.tr-table.trade-ledger :is(th, td).trade-ledger-portrait { width: 64px !important; text-align: center; vertical-align: middle !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.trade-ledger-portrait, .tr-tile-face) .draft-asset-glyph { display: inline-flex !important; align-items: center; justify-content: center; width: auto !important; height: auto !important; vertical-align: middle; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.trade-ledger-portrait, .tr-tile-face) .draft-asset-logos { display: inline-flex !important; align-items: center; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.trade-ledger-portrait, .tr-tile-face) .draft-team-mark { width: 28px !important; height: 28px !important; background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important; display: inline-grid !important; place-items: center; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.trade-ledger-portrait, .tr-tile-face) .draft-team-mark + .draft-team-mark { margin-left: -6px; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.trade-ledger-portrait, .tr-tile-face) .draft-team-logo-crop { width: 26px !important; height: 26px !important; overflow: visible !important; display: grid !important; place-items: center; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.trade-ledger-portrait, .tr-tile-face) .draft-team-logo-crop img { width: 26px !important; height: 26px !important; object-fit: contain !important; }
+/* "Player / asset" starts over the headshots and pick logos (left-aligned). */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room table.tr-table.trade-ledger thead th.tr-col-name { text-align: left !important; text-indent: -71px; overflow: visible; }
+/* Scrolling is fine for the asset list (round 8): the whole list, no pages. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-picker .trade-asset-list.is-paged { overflow-y: auto !important; overflow-x: hidden !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-pager { display: none !important; }
+/* Pick logos in the list: up to two plain logos side by side, centred; the small owner and condition badges go (the
+   terms are in the Roles column). */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.trade-ledger-portrait, .tr-tile-face) .draft-asset-glyph { height: 28px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.trade-ledger-portrait, .tr-tile-face) .draft-asset-logos { height: 28px !important; gap: 2px; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.trade-ledger-portrait, .tr-tile-face) .draft-team-mark:nth-child(n+3) { display: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.trade-ledger-portrait, .tr-tile-face) .draft-team-mark + .draft-team-mark { margin-left: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.trade-ledger-portrait, .tr-tile-face) .draft-team-logo-crop img { position: static !important; top: auto !important; left: auto !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .trade-ledger-portrait :is(.draft-asset-owner, .draft-asset-condition) { display: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.trade-ledger-portrait, .tr-tile-face) .draft-asset-glyph.is-swap .draft-team-mark { width: 24px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.trade-ledger-portrait, .tr-tile-face) .draft-asset-glyph.is-swap .draft-team-logo-crop, html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.trade-ledger-portrait, .tr-tile-face) .draft-asset-glyph.is-swap .draft-team-logo-crop img { width: 22px !important; height: 22px !important; }
+
+/* Trade deal (round 8). The answer dial's needle in black (it was white over the light arc). */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-dial-needle line { stroke: #0b131c !important; filter: drop-shadow(0 0 1px rgba(255, 255, 255, .55)); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-dial-needle circle { fill: #0b131c !important; stroke: rgba(255, 255, 255, .55); stroke-width: 1; }
+/* Payroll captions on one line, the same height, so both charts start on the same line. */
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-payroll-frame > figcaption { white-space: nowrap !important; flex-wrap: nowrap !important; height: 24px; min-height: 24px; overflow: hidden; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-payroll-frame > figcaption .tr-payroll-phase { margin-left: auto; }
+/* Details drop-down: placed by glass-select.js over everything (the tiles clip their own overflow). */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-details[open] > p.is-floating { position: fixed !important; z-index: 50 !important; }
+/* The trade room uses the whole screen (round 8: "make this whole card larger"). */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room { width: calc(100vw - 16px) !important; max-width: none !important; height: calc(100vh - 16px) !important; max-height: none !important; }
+
+/* Deal tiles: pick logos fit their 40px face (two logos at most, 18px each); the partner logo button fits its logo, so
+   the arrows and the team picker never overlap it. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-face { overflow: hidden; display: grid !important; place-items: center; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-face .draft-asset-glyph { transform: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-face .draft-team-mark { width: 19px !important; height: 26px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-face .draft-team-mark:only-child { width: 28px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-face .draft-team-logo-crop, html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-face .draft-team-logo-crop img { width: 18px !important; height: 18px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-face .draft-team-mark:only-child .draft-team-logo-crop, html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-face .draft-team-mark:only-child .draft-team-logo-crop img { width: 26px !important; height: 26px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .tr-side-head .tr-partner-picker { display: flex !important; align-items: center; gap: 6px; min-width: 0; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .tr-side-head .tr-partner-picker > .tr-side-team { flex: none; width: 30px !important; min-width: 30px !important; padding: 0 !important; display: grid !important; place-items: center; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .tr-side-head .tr-partner-picker > .tr-side-team img { width: 24px !important; height: 24px !important; object-fit: contain; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .tr-side-head .tr-partner-picker > .tr-step { flex: none; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-details > p { text-align: left !important; }
+/* "Add a team…" and "Add" on the same centre line as the Builder / Finder / Market pill. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room :is(.tr-toolbar, .trade-room-toolbar, .tr-toolbar-controls) { align-items: center !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-room-mode { align-items: center !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-room-mode > .tr-tabs { margin-bottom: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-room-toolbar > .tr-toolbar-controls { padding-block: 0 !important; }
+
+/* Player card header facts (round 8: instead of injury risk, decline watch and trade value). */
+.player-header-facts { display: grid; grid-template-columns: repeat(4, minmax(0, auto)); gap: 6px 34px; align-items: start; align-content: center; margin-left: auto; padding: 0 18px; }
+.player-header-fact { display: grid; gap: 5px; min-width: 0; }
+.player-header-fact > small { color: #c9d5e0; font: italic 700 12px/1 var(--ui-font, inherit); font-variant: small-caps; letter-spacing: .03em; }
+.player-header-fact > b { display: inline-flex; align-items: center; gap: 7px; color: #f3f7fb; font-size: 17px; font-weight: 700; white-space: nowrap; }
+.player-header-fact > b img { width: 26px; height: 26px; object-fit: contain; }
+.player-header-fact.is-roles > b { flex-direction: column; align-items: flex-start; gap: 2px; font-size: 15px; }
+/* Opening roster (round 8): a waived or bought-out player's name is not struck through. */
+html[data-glass="clear"] body.unified-terminal-ui .cutdown-table tbody tr.is-releasing .cutdown-player-name { text-decoration: none !important; }
+/* Unchosen long-pill labels a little brighter for the more see-through glass (contrast). */
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .settings-pill, [role="tablist"]) > :is(button, [role="tab"]):not(.active):not([aria-pressed="true"]):not([aria-selected="true"]) { color: #eef3f7 !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot) .cutdown-choice.is-slider > button:not(.is-active) { color: #eef3f7 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell .tr-strip-side.is-current { background: rgba(255, 255, 255, .12) !important; border-color: rgba(255, 255, 255, .6) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-shell.modal-shell.modal-trade-room { background-color: rgba(13, 22, 34, .44) !important; }
+html[data-glass="clear"] :is(.card-board-window, #modalRoot .modal-shell, .season-slideshow .ss-card) { --tr-bad: #ffb8b8; --tr-hard: #ffb8b8; }

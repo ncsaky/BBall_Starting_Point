@@ -217,3 +217,31 @@
     setTimeout(look, 0);
   }, true);
 })();
+
+// Details drop-downs inside trade tiles (round 8: "I don't see the details popping up"): the tiles and panels clip their
+// overflow, so an open drop-down is lifted out (fixed to the pop-up window) and placed under its summary.
+(() => {
+  "use strict";
+  document.addEventListener("toggle", (event) => {
+    const details = event.target;
+    if (!(details instanceof HTMLDetailsElement) || !details.matches(".tr-tile-details")) return;
+    const panel = details.querySelector(":scope > p");
+    if (!panel) return;
+    if (!details.open) { panel.classList.remove("is-floating"); panel.removeAttribute("style"); return; }
+    document.querySelectorAll(".tr-tile-details[open]").forEach((other) => { if (other !== details) other.open = false; });
+    const summary = details.querySelector("summary").getBoundingClientRect();
+    const frame = details.closest(".modal-shell")?.getBoundingClientRect() || { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
+    panel.classList.add("is-floating");
+    const width = panel.offsetWidth || 240, height = panel.offsetHeight || 120;
+    const left = Math.max(frame.left + 8, Math.min(summary.right - width, frame.right - width - 8));
+    const below = summary.bottom + 4 + height <= frame.bottom - 8;
+    const top = below ? summary.bottom + 4 : summary.top - 4 - height;
+    panel.style.left = `${left - frame.left}px`;
+    panel.style.top = `${top - frame.top}px`;
+    panel.style.right = "auto";
+  }, true);
+  document.addEventListener("pointerdown", (event) => {
+    if (event.target.closest?.(".tr-tile-details")) return;
+    document.querySelectorAll(".tr-tile-details[open]").forEach((details) => { details.open = false; });
+  }, true);
+})();

@@ -691,7 +691,7 @@ body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledge
   body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger.trade-ledger :is(th, td).tr-col-roles { width: 150px !important; min-width: 0 !important; white-space: normal !important; }
   body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger td.tr-col-roles .tr-role-pair { display: inline-flex !important; flex-direction: column !important; align-items: center; gap: 1px; }
   body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger td.tr-col-roles .role-text { display: block; white-space: nowrap; line-height: 1.2; }
-  body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger.trade-ledger :is(th, td).tr-col-name { width: 160px !important; }
+  body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger.trade-ledger :is(th, td).tr-col-name { width: 143px !important; }
   body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger.trade-ledger :is(th, td).tr-col-rating { width: 50px !important; }
   body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger.trade-ledger :is(th, td).tr-col-contract { width: 96px !important; }
   body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger.trade-ledger :is(th, td).tr-col-value { width: 130px !important; }

@@ -52,7 +52,9 @@ test('three player pages show season stats, recent games, payroll, ratings, and 
       assert.ok(html.includes(value.toFixed(1)), label);
     }
   }
-  for (const field of ['Injury risk 2.2','Growth runway','Trade Value','3.4','66.7','Offensive shape','Defense / physical','own-court','Select player career season','Recent Games · Last 5','Game Score · Last 15 Games','Four-Year Payroll Share','Health & Injury Outlook']) assert.ok(html.includes(field), field);
+  // Round 8: the header shows team, contract, roles and size instead of injury risk, growth runway and trade value.
+  for (const text of ['Injury risk 2.2','Trade Value']) assert.ok(!html.slice(0, html.indexOf('approved-season-line')).includes(text), text);
+  for (const field of ['player-header-facts','Contract','Offensive shape','Defense / physical','own-court','Select player career season','Recent Games · Last 5','Game Score · Last 15 Games','Four-Year Payroll Share','Health & Injury Outlook']) assert.ok(html.includes(field), field);
   const season = html.slice(html.indexOf('approved-season-line'), html.indexOf('player-page-game-log'));
   assert.match(season, /<small>GP\/All<\/small><strong>30\//);
   for (const [key,value] of Object.entries(detail.season)) {
@@ -66,8 +68,9 @@ test('three player pages show season stats, recent games, payroll, ratings, and 
   assert.deepEqual(points, detail.recent_games.slice(-15).map(row => ({label:row.date.slice(5), value:row.game_score})));
   const payroll = html.match(/class="salary-horizon-chart">([^<]+)/)[1];
   assert.equal(payroll, detail.salary_seasons.slice(0,4).map(row => `${row.season}:${row.salary_millions}`).join('|'));
-  assert.match(html, /injury-body-figure mini/);
-  assert.match(html, /Watch: Knee/);
+  // Round 8: the mini body figure left the header (the full map stays on the Health page).
+  assert.doesNotMatch(html.slice(0, html.indexOf("approved-season-line")), /injury-body-figure mini/);
+  // ("Watch: Knee" was the header figure's tooltip; the Health page below still maps the knee.)
   for (const view of ['Front','Back']) assert.ok(html.includes(`${view} body map of injury risk`));
   assert.match(html, /data-injury-part="knee"/);
 });

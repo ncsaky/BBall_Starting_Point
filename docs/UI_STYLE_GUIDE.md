@@ -22,6 +22,7 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **Anti-reference: Basketball GM.** Clicking between plain tables, a player page that is a scroll of tables, no players or game feel. Never ship anything that looks like it.
 
 ## The look: glass (round 3)
+- **Round 8: much more see-through** (back to the JFresh reference): windows about 20% tint, title bars about 12%, pop-ups and slides about 30%. The board's colour shows through; text stays readable through the blur.
 - **JFresh-style glass, game-wide** (`gui/glass.css`): windows and pop-ups are frosted, slightly see-through panels with rounded corners and depth; title bars and the top bar are dark glass tinted with the user's team colour, with white text; the board behind is lit by soft team-colour light. Content stays light frosted with near-black text so dense tables read easily.
 - **Pop-ups are glass too:** dark tinted glass frames with team-colour light; every chart, table and tile inside sits on a light frosted card. Text turns white only where it sits directly on the frame.
 - **Content is glass too (round 4, said on six cards):** a white table or chart sitting on the glass is not the look. Tables, charts and tiles are themselves translucent, tinted surfaces with the team light showing through. The frame is the lighter one (more colour through). Contrast still rules: every colour is re-checked on the real glass.
@@ -106,6 +107,7 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **Choice rows (Keep / Release / Buy out):** one long pill with the chosen option as a filled pill inside it that slides to a new choice when clicked. The user's reference (an iOS segmented pill, 2026-11-24): a solid grey tray with no border, equal-width options with light-grey labels, and the chosen option a solid blue pill the full height of the tray, touching its edge, white label (red when the choice is a release).
 - **Drop-down menus** are custom glass menus, not the browser's grey select boxes.
 - **Pill-shaped glass buttons** (round 5), like iOS glass buttons: fully rounded ends, a translucent light fill, a thin light edge, vertically centred in their bar. Everywhere: tool bars, row actions (Keep / Waive / Buy out), slideshow navigation, trade room.
+- **Long pill: only the chosen option has a shape** (round 8); the others are plain labels on the tray.
 - **The standard tab picker is the long pill (user, 2026-11-24):** the same control as Keep / Waive / Buy out. A solid grey tray, equal-width options, the chosen one a solid blue pill that slides over when you pick another. Every tab group uses it (trade room Builder / Finder / Market, All / Players / Picks / Swaps, Payroll / Value / Team identity, Development's views, the court views). Labels for a group of tabs sit above it, centred.
 - **Checkboxes: transparent fill** with a light edge, never a white box.
 - **Table headers are never buttons:** sortable headers look like Minutes' headers (plain bold text, the line under).
@@ -184,7 +186,7 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - White text on hover. Anything filled black (tabs, checkboxes, clicked rows).
 - Coloured pill chips for status.
 - Gaps between a header and its table. Double borders. Text at the same indent as the level above it.
-- Scrolling inside a card or pop-up (round 6: "I never like scrolling"). Use pages or tabs, or make the card larger.
+- Scrolling inside a card or pop-up (round 6: "I never like scrolling"). Use pages or tabs, or make the card larger. Exception (round 8): the trade room's asset list may scroll.
 - Estimated or partial data shown as such on the front end: no hollow dots, no "44 of 64 from player data" counts. Ratings look definite.
 - White fills on hover (header cells), white checkbox boxes, white rims on window title bars.
 - Headers not centred over their values.

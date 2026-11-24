@@ -7875,8 +7875,8 @@ function cutdownTwoWayRows(room, roleCell) {
     return `<tr class="cutdown-tw-row">
       <th scope="row">${face(row)}</th><td>${escapeHtml(compactPos(row.position) || "—")}</td><td>${age(row)}</td><td>${ovr(row)}</td><td>${roleCell(row)}</td>
       <td>${pay ? `${money(pay.salary_millions)} × ${(row.seasons || []).length}` : "—"}</td>
-      <td><span class="cutdown-guarantee is-twoway">Two-way</span></td>
       <td><span class="cutdown-twoway-games" title="NBA games he has been active for this season, of the ${escapeAttr(row.active_limit)} a two-way allows"><i aria-hidden="true"><b style="width:${pct}%"></b></i><em>${escapeHtml(row.active_games)} / ${escapeHtml(row.active_limit)} games</em></span></td>
+      <td><span class="cutdown-quote" title="Two-way pay sits outside the cap: releasing him leaves nothing on your books and opens the place.">${money(0)}</span></td>
       <td>${editable ? buttons([`<button type="button" data-two-way-convert="${escapeAttr(row.player_id)}" ${convert.ok ? "" : "disabled"} title="${escapeAttr(convert.ok ? `Convert to a standard minimum contract (${money(convert.salary_millions)} this season): he can play every game and in the playoffs.` : (convert.reason || ""))}">Make standard</button>`, `<button type="button" data-two-way-release="${escapeAttr(row.player_id)}">Release</button>`]) : ""}</td>
     </tr>`;
   });
@@ -7979,7 +7979,7 @@ function rosterCutdownDashboardWorkspace() {
   return `<div class="cutdown-workspace is-compact" data-cutdown-workspace>
     <div class="cutdown-scroll"><table class="cutdown-table" aria-label="Opening roster choices">
       <colgroup><col style="width:190px"><col style="width:40px"><col style="width:34px"><col style="width:46px"><col style="width:214px"><col style="width:96px"><col style="width:76px"><col style="width:110px"><col style="width:214px"></colgroup>
-      <thead><tr><th scope="col">Player</th><th scope="col">Pos</th><th scope="col">Age</th><th scope="col">OVR</th><th scope="col">Roles</th><th scope="col" title="This season's salary × seasons left; hover for every season">Contract</th><th scope="col" title="This season's guarantee: what you owe if you release him">Guaranteed</th><th scope="col" title="Waiving: salary that stays on your books. Buying out: the payout. Two-way players: NBA games used.">Cost to release</th><th scope="col">Keep or release</th></tr></thead>
+      <thead><tr><th scope="col">Player</th><th scope="col">Pos</th><th scope="col">Age</th><th scope="col">OVR</th><th scope="col">Roles</th><th scope="col" title="This season's salary × seasons left; hover for every season">Contract</th><th scope="col" title="This season's guarantee: what you owe if you release him">Guaranteed</th><th scope="col" title="Waiving: salary that stays on your books. Buying out: the payout. Two-way players: nothing (their pay is outside the cap).">Cost to release</th><th scope="col">Keep or release</th></tr></thead>
       <tbody>${players.map((row) => {
         const choice = choices[String(row.player_id)] || "keep";
         const overall = Number(row.overall);
@@ -10772,6 +10772,26 @@ function prospectLockIcon() {
   return `<svg class="prospect-lock-icon" viewBox="0 0 48 56" aria-hidden="true"><path d="M12 24v-9a12 12 0 0 1 24 0v9" fill="none" stroke="currentColor" stroke-width="5"/><rect x="4" y="22" width="40" height="31" rx="5" fill="currentColor"/><circle cx="24" cy="35" r="4" fill="var(--ui-panel)"/><path d="M24 35v8" stroke="var(--ui-panel)" stroke-width="4"/></svg>`;
 }
 
+// Round 8: the card header shows plain facts (team, contract, roles, size) instead of injury risk, decline watch and
+// trade value (those stay on their own pages and in the trade room).
+function playerHeaderFacts(detail) {
+  const coach = detail.inputs_profile?.coach || {};
+  const team = detail.team?.abbrev || "";
+  const logo = team && typeof teamLogoSrc === "function" && teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : "";
+  const seasons = (detail.salary_seasons || []).filter(row => Number.isFinite(Number(row.salary_millions)) && row.salary_millions !== null);
+  const contract = seasons.length ? `${money(Number(seasons[0].salary_millions))} × ${seasons.length}` : detail.is_prospect ? "Prospect" : "—";
+  const role = (key) => {
+    if (!key) return "";
+    const [label, tone] = (typeof PLAYER_ROLE_CHIPS === "object" && PLAYER_ROLE_CHIPS[key]) || [rowLabel(key), "unknown"];
+    return `<span class="role-text role-${escapeAttr(tone)}">${escapeHtml(label)}</span>`;
+  };
+  const roles = [role(coach.primary_off_role), role(coach.primary_def_role)].filter(Boolean).join("");
+  const inches = Number(coach.height_inches);
+  const size = [detail.height || (Number.isFinite(inches) && inches ? `${Math.floor(inches / 12)}'${Math.round(inches % 12)}"` : ""), coach.weight_lbs ? `${Math.round(coach.weight_lbs)} lb` : ""].filter(Boolean).join(" · ");
+  const fact = (label, value, cls = "") => `<div class="player-header-fact${cls}"><small>${label}</small><b>${value}</b></div>`;
+  return `<div class="player-header-facts">${fact("Team", `${logo}${escapeHtml(detail.team?.name || team || "Free agent")}`, " is-team")}${fact("Contract", escapeHtml(contract))}${roles ? fact("Roles", roles, " is-roles") : ""}${size ? fact("Size", escapeHtml(size)) : ""}</div>`;
+}
+
 function playerCardEvidence(detail) {
   if (detail.is_prospect) {
     const low = detail.rank_range?.low ?? detail.board_rank;
@@ -11202,7 +11222,7 @@ function pc4Group(group, coach) {
   const count = group.pairs ? "9 types, read and delivery" : group.entries.length;
   const rows = group.pairs ? pc4PassingRows(group.pairs) : group.entries.map(row => pc4Entry(row, coach)).join("");
   void count; // Round 6: no counts or captions ("how often", "each bar adds to 100%") beside group headers.
-  return `<h4>${escapeHtml(group.name)}</h4>${rows}`;
+  return `<div class="pc4-group"><h4>${escapeHtml(group.name)}</h4>${rows}</div>`;
 }
 
 function pc4LayerHeader(index, layer) {
@@ -11237,8 +11257,15 @@ function pc4CoachLayer(profile) {
 function inputsProfilePage(profile) {
   const coach = profile.coach || {};
   const [technique, physical, tendencies] = profile.layers;
-  const left = technique.groups.filter(group => group.column === 0).map(group => pc4Group(group, coach)).join("");
-  const right = technique.groups.filter(group => group.column === 1).map(group => pc4Group(group, coach)).join("");
+  // Round 8: whole groups stay in one column; the passing pairs get their own full-width band so their read and
+  // delivery bars are as long as every other bar.
+  const left = technique.groups.filter(group => group.column === 0 && !group.pairs).map(group => pc4Group(group, coach)).join("");
+  const right = technique.groups.filter(group => group.column === 1 && !group.pairs).map(group => pc4Group(group, coach)).join("");
+  const passing = technique.groups.filter(group => group.pairs).map(group => {
+    const per = Math.ceil(group.pairs.length / 3);
+    const chunks = [0, 1, 2].map(index => group.pairs.slice(index * per, index * per + per)).filter(chunk => chunk.length);
+    return `<div class="pc4-group is-pairs"><h4>${escapeHtml(group.name)}</h4><div class="pc4-pass-cols">${chunks.map(chunk => `<div>${pc4PassingRows(chunk)}</div>`).join("")}</div></div>`;
+  }).join("");
   return `<div class="pc4" data-inputs-profile>
     <div class="pc4-legend pc4-legend-range">
       <span><i class="pc4-key whisker"></i>League range</span>
@@ -11248,8 +11275,8 @@ function inputsProfilePage(profile) {
       <span><i class="pc4-key dot"></i>Him</span>
     </div>
     <div class="pc4-layers">
-      <section class="pc4-layer">${pc4LayerHeader(1, technique)}<div class="pc4-body"><div class="pc4-cols"><div>${left}</div><div>${right}</div></div></div></section>
-      <div class="pc4-stack"><section class="pc4-layer">${pc4LayerHeader(2, physical)}<div class="pc4-body">${physical.groups.map(group => pc4Group({ ...group, note: "" }, coach).replace(/^<h4>.*?<\/h4>/, "")).join("")}</div></section>${pc4CoachLayer(profile)}</div>
+      <section class="pc4-layer">${pc4LayerHeader(1, technique)}<div class="pc4-body"><div class="pc4-cols"><div>${left}</div><div>${right}</div></div>${passing ? `<div class="pc4-pass-band">${passing}</div>` : ""}</div></section>
+      <div class="pc4-stack"><section class="pc4-layer">${pc4LayerHeader(2, physical)}<div class="pc4-body">${physical.groups.map(group => pc4Group({ ...group, note: "" }, coach).replace(/<h4>.*?<\/h4>/, "")).join("")}</div></section>${pc4CoachLayer(profile)}</div>
       <section class="pc4-layer">${pc4LayerHeader(3, tendencies)}<div class="pc4-body">${tendencies.groups.map(group => pc4Group(group, coach)).join("")}</div></section>
     </div></div>`;
 }
@@ -11281,7 +11308,7 @@ function approvedPlayerCardBody(detail, options = {}) {
   }).join("")}</tr>`).join("");
   return `<div class="approved-player-card approved-player-pages${detail.is_prospect ? " approved-prospect-pages" : ""}" data-player-pages>
     <div class="player-page-bar"><span data-player-page-title>${extension ? "Contract Extension" : detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}</span><div class="player-page-nav"><button type="button" class="ui-command" data-player-page-step="-1" aria-label="Previous player card page" title="Previous page">‹</button><button type="button" class="ui-command" data-player-page-step="1" aria-label="Next player card page" title="Next page">›</button><span data-player-page-count aria-live="polite" aria-atomic="true">1/${(extension ? 1 : 0) + 2 + (detail.is_prospect ? 0 : 1)}</span></div></div>
-    <section class="approved-player-identity player-page-identity"><div class="approved-player-profile-head">${playerHeadshotMarkup(detail, "approved-profile-headshot")}<div class="approved-profile-name"><h3>${escapeHtml(detail.name || options.name || "Player")}</h3><p>${escapeHtml([detail.position, detail.age != null ? `${detail.age} years` : "", detail.height].filter(Boolean).join(" · "))}</p><p class="player-draft-details">${escapeHtml(detail.is_prospect ? [detail.college_profile ? detail.source_team : (detail.scouting_profile?.where || detail.source_team), detail.college_profile?.coach ? `Coach ${detail.college_profile.coach}` : "", `${detail.draft_year} draft class`].filter(Boolean).join(" · ") : detail.draft_position ? `${detail.draft_year || 'Draft'} · Pick #${detail.draft_position}` : detail.draft_status==='undrafted' ? `Undrafted${detail.draft_year?` · ${detail.draft_year}`:''}` : detail.draft_year ? `Draft year ${detail.draft_year}` : 'Draft details unavailable')}</p></div>${playerSummaryRatings(detail)}</div>${playerCardEvidence(detail)}${options.actions || ""}</section>
+    <section class="approved-player-identity player-page-identity"><div class="approved-player-profile-head">${playerHeadshotMarkup(detail, "approved-profile-headshot")}<div class="approved-profile-name"><h3>${escapeHtml(detail.name || options.name || "Player")}</h3><p>${escapeHtml([detail.position, detail.age != null ? `${detail.age} years` : "", detail.height].filter(Boolean).join(" · "))}</p><p class="player-draft-details">${escapeHtml(detail.is_prospect ? [detail.college_profile ? detail.source_team : (detail.scouting_profile?.where || detail.source_team), detail.college_profile?.coach ? `Coach ${detail.college_profile.coach}` : "", `${detail.draft_year} draft class`].filter(Boolean).join(" · ") : detail.draft_position ? `${detail.draft_year || 'Draft'} · Pick #${detail.draft_position}` : detail.draft_status==='undrafted' ? `Undrafted${detail.draft_year?` · ${detail.draft_year}`:''}` : detail.draft_year ? `Draft year ${detail.draft_year}` : 'Draft details unavailable')}</p></div>${playerSummaryRatings(detail)}</div>${typeof playerHeaderFacts === "function" ? playerHeaderFacts(detail) : playerCardEvidence(detail)}${options.actions || ""}</section>
     ${extension ? extensionNegotiationPage(extension.room, extension.selectedPlayerId, extension.response, detail, extension.draft) : ""}
     <section class="player-card-page player-card-page--overview" data-player-page="${pageOffset}" data-page-title="${detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}" aria-label="Season statistics, recent games, game score and contract">
       ${detail.scouting_profile && !detail.college_profile ? scoutingProfileStrip(detail.scouting_profile) : playerSeasonStrip(season, detail.career_seasons || [])}
@@ -11404,12 +11431,12 @@ function clipboardPlayerCardWindows(cardId = null) {
       id:entry.id,
       title:entry.title,
       card,
-      // Round 7 ("make it wholesale larger", no scrolling): player cards are 1700 x 1080 and shown at 76%, not 70%.
-      width:isExtensionCard ? (sizeRevision >= 8 && entry.width ? entry.width : 1530) : sizeRevision >= 5 && entry.width ? entry.width : isFantasyCard ? 1120 : entry.kind === "coach" ? 900 : 1700,
-      height:sizeRevision >= 5 && entry.height ? entry.height : isFantasyCard ? 700 : entry.kind === "coach" ? 252 : 1080,
-      initialScale:isExtensionCard ? .626166 : isFantasyCard || entry.kind === "coach" ? 1 : .76,
+      // Round 7 ("make it wholesale larger", no scrolling): player cards are 2100 x 1270 (round 8: larger again, ratings on one line) and shown at 65%, not 70%.
+      width:isExtensionCard ? (sizeRevision >= 8 && entry.width ? entry.width : 1530) : sizeRevision >= 6 && entry.width ? entry.width : isFantasyCard ? 1120 : entry.kind === "coach" ? 900 : 2100,
+      height:sizeRevision >= 6 && entry.height ? entry.height : isFantasyCard ? 700 : entry.kind === "coach" ? 252 : 1270,
+      initialScale:isExtensionCard ? .626166 : isFantasyCard || entry.kind === "coach" ? 1 : .65,
       minScale:isExtensionCard ? .5 : undefined,
-      sizeRevision:isExtensionCard ? 9 : 5,
+      sizeRevision:isExtensionCard ? 9 : 6,
       galleryVisible:false,
       iconKind:entry.kind,
     };
@@ -11440,7 +11467,7 @@ async function openPlayerCardOnClipboard({key, title, body, kind = "player", con
   if (!entry && kind === "extension") entry = state.clipboardPlayerCards.find(item => item.saveId === saveId && item.key === `dashboard:${context?.selectedPlayerId}`);
   if (!entry) {
     state.clipboardPlayerCardSequence += 1;
-    entry = {id:`player-card-${state.clipboardPlayerCardSequence}`, saveId, key, title, body, kind, width:kind === "coach" ? 900 : kind === "fantasy" ? 1120 : kind === "extension" ? 1530 : 1700, height:kind === "coach" ? 252 : kind === "fantasy" ? 700 : kind === "extension" ? 900 : 1080, sizeRevision:kind === "extension" ? 9 : 5};
+    entry = {id:`player-card-${state.clipboardPlayerCardSequence}`, saveId, key, title, body, kind, width:kind === "coach" ? 900 : kind === "fantasy" ? 1120 : kind === "extension" ? 1530 : 2100, height:kind === "coach" ? 252 : kind === "fantasy" ? 700 : kind === "extension" ? 900 : 1270, sizeRevision:kind === "extension" ? 9 : 6};
     state.clipboardPlayerCards.push(entry);
   } else {
     const extensionSizeUpdate = kind === "extension" && (Number(entry.sizeRevision) || 0) < 9
@@ -16195,9 +16222,7 @@ function wireTradeAssetControls(root) {
   root.querySelectorAll("[data-remove-side]").forEach((button) => {
     button.addEventListener("click", () => removeAsset(button.dataset.removeSide, button.dataset.assetId));
   });
-  const fitPages = () => fitTradeAssetPages(root.isConnected ? root : (els.modalRoot || document));
-  if (root.isConnected) fitPages();
-  setTimeout(fitPages, 0);
+  // Round 8: the asset list scrolls again (the user allows it here), so no pages.
   root.querySelectorAll("[data-asset-filter-side]").forEach((control) => {
     const apply = value => { state.tradeAssetFilters ||= {}; state.tradeAssetFilters[control.dataset.assetFilterSide] = value || "all"; if (state.tradeAssetPages) state.tradeAssetPages[control.dataset.assetFilterSide] = 0; renderTradeRoom(); };
     if (control.tagName === "SELECT") control.addEventListener("change", () => apply(control.value));

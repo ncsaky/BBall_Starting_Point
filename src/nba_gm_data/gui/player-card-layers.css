@@ -115,3 +115,12 @@ html[data-glass="clear"] .pc4-legend-range .pc4-key.dot.is-prior::before { box-s
 .pc4-layers > .pc4-layer:last-child > .pc4-body { column-count: 3; column-gap: 18px; }
 .pc4 :is(.pc4-r, .pc4-dist, .pc4-pass-head) { break-inside: avoid; }
 .pc4 h4 { break-after: avoid; break-inside: avoid; }
+
+/* Round 8: groups never split across columns; Technique's columns set by width (no squeezed two-line names); the
+   passing pairs in their own band, three columns, so their bars are as long as the rest. */
+.pc4-group { break-inside: avoid; }
+.pc4-layers > .pc4-layer:first-child .pc4-cols { column-count: 4 !important; column-width: auto; column-gap: 16px !important; }
+.pc4-layers > .pc4-layer:last-child > .pc4-body { column-count: 3 !important; column-width: auto; column-gap: 16px !important; }
+.pc4-pass-band { margin-top: 6px; }
+.pc4-pass-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 18px; }
+.pc4-pass-cols .pc4-r.pass, .pc4-pass-cols .pc4-pass-head { grid-template-columns: minmax(110px, .9fr) minmax(70px, 1fr) 28px minmax(70px, 1fr) 28px; }
