@@ -461,3 +461,16 @@ html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .injury
 html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .injury-body-figures { display: flex !important; justify-content: center !important; gap: 48px !important; width: auto !important; height: auto !important; }
 html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .injury-body-figures > svg.injury-body-figure { width: 240px !important; height: 560px !important; }
 html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .injury-body-detail { width: min(1500px, 100%) !important; justify-self: center !important; }
+
+/* Injury body map (round 13): the real figure, softly filled in the player's overall risk tone, with a light outline;
+   each part's risk glows inside the body. */
+html[data-glass="clear"] body.unified-terminal-ui .injury-body-figure.is-real .injury-body-fill { fill: color-mix(in srgb, var(--injury-body-tone) 18%, rgba(255, 255, 255, .08)); stroke: none; }
+html[data-glass="clear"] body.unified-terminal-ui .injury-body-figure.is-real .injury-body-outline { fill: none !important; stroke: rgba(255, 255, 255, .85) !important; stroke-width: .9 !important; }
+html[data-glass="clear"] body.unified-terminal-ui .injury-body-figure.is-real .injury-body-detail { fill: rgba(255, 255, 255, .7) !important; stroke: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui .injury-body-figure.is-real .injury-body-view-label { fill: #fff; font-size: 11px; font-weight: 700; text-anchor: middle; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .injury-body-figures > svg.injury-body-figure.is-real { width: 250px !important; height: 570px !important; }
+/* The same figure in the light (frosted) look. */
+.injury-body-figure.is-real .injury-body-fill { fill: color-mix(in srgb, var(--injury-body-tone, #dedccc) 22%, #eef2f5); }
+.injury-body-figure.is-real .injury-body-outline { fill: none; stroke: #33424f; stroke-width: .9; }
+.injury-body-figure.is-real .injury-body-detail { fill: #33424f; }
+.injury-body-figure.is-real .injury-body-view-label { font-size: 11px; font-weight: 700; text-anchor: middle; }

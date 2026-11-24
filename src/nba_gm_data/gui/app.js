@@ -10961,7 +10961,53 @@ function injuryPartTitle(part, map) {
   return `${part.label}: about ${Number(part.expected_games).toFixed(1)} games a season expected to be missed${relative}${history}${current}`;
 }
 
+// Round 13: the body is a real figure (public-domain outlines, body-outlines.js, a 148 x 318 frame) and each part's
+// risk glows inside its outline, so the colours follow the body's shape. These are the parts' places on that figure.
+const INJURY_BODY_SPOTS_REAL = {
+  front: {
+    head: [[74, 25]], shoulder: [[33, 58], [115, 58]], wrist: [[13, 150], [135, 150]], hand: [[10, 170], [138, 170]],
+    thumb: [[21, 160], [127, 160]], hip: [[42, 158], [106, 158]], groin: [[74, 164]], quadriceps: [[55, 196], [93, 196]],
+    knee: [[55, 231], [93, 231]], ankle: [[52, 290], [96, 290]], foot: [[50, 306], [98, 306]], toe: [[46, 314], [102, 314]],
+  },
+  back: {
+    shoulder: [[33, 58], [115, 58]], back: [[74, 112]], hamstring: [[55, 205], [93, 205]], calf: [[53, 256], [95, 256]],
+    achilles: [[52, 288], [96, 288]],
+  },
+};
+
+function injuryBodyFigureReal(map, view, options = {}) {
+  const outline = (globalThis.INJURY_BODY_OUTLINES || {})[view];
+  if (!outline) return "";
+  const parts = Object.fromEntries((map?.parts || []).map(part => [part.part, part]));
+  const overall = map && map.typical_games_total ? map.expected_games_total / map.typical_games_total : 1;
+  const tone = injuryRiskColor(overall);
+  const clip = `injury-clip-${view}`;
+  const path = (row, extra = "") => `<path d="${escapeAttr(row.d)}"${row.transform ? ` transform="${escapeAttr(row.transform)}"` : ""}${extra}/>`;
+  const shapes = outline.filter(row => row.kind === "shape");
+  const spots = Object.entries(INJURY_BODY_SPOTS_REAL[view]).flatMap(([key, points]) => {
+    const part = parts[key];
+    if (!part) return [];
+    const games = Math.max(0, Number(part.expected_games || 0));
+    const relative = Number(part.relative ?? 1);
+    const radius = Math.max(6, Math.min(22, 6 + 5 * Math.sqrt(games)));
+    const color = part.current ? "rgb(155,16,48)" : injuryRiskColor(relative);
+    const strength = part.current ? 0.95 : Math.min(0.92, 0.35 + 0.55 * Math.min(1, Math.abs(relative - 1) / 0.8));
+    const title = escapeHtml(injuryPartTitle(part, map));
+    return points.map(([x, y]) => `<g class="injury-spot${part.current ? " is-current" : ""}" data-injury-part="${escapeAttr(key)}"><title>${title}</title>
+      <g style="opacity:${strength.toFixed(2)}">${[[1, 0.25], [0.66, 0.5], [0.36, 0.95]].map(([scale, alpha]) => `<circle cx="${x}" cy="${y}" r="${(radius * scale).toFixed(1)}" fill="${color}" fill-opacity="${alpha}"/>`).join("")}</g>
+      ${part.current ? `<circle class="injury-current-ring" cx="${x}" cy="${y}" r="${(radius * 0.7).toFixed(1)}"/>` : ""}</g>`);
+  }).join("");
+  const label = options.mini ? "" : `<text class="injury-body-view-label" x="74" y="333">${view === "front" ? "Front" : "Back"}</text>`;
+  return `<svg class="injury-body-figure is-real${options.mini ? " mini" : ""}" viewBox="0 0 148 ${options.mini ? 320 : 338}" role="img" aria-label="${escapeAttr(`${view === "front" ? "Front" : "Back"} body map of injury risk`)}">
+    <defs><clipPath id="${clip}">${shapes.map(row => path(row)).join("")}</clipPath></defs>
+    <g class="injury-body-real" style="--injury-body-tone:${tone}">${shapes.map(row => path(row, ' class="injury-body-fill"')).join("")}</g>
+    <g class="injury-spots" clip-path="url(#${clip})">${spots}</g>
+    <g class="injury-body-lines">${shapes.map(row => path(row, ' class="injury-body-outline"')).join("")}${outline.filter(row => row.kind === "line").map(row => path(row, ' class="injury-body-outline"')).join("")}${outline.filter(row => row.kind === "detail").map(row => path(row, ' class="injury-body-detail"')).join("")}</g>
+    ${label}</svg>`;
+}
+
 function injuryBodyFigure(map, view, options = {}) {
+  if (globalThis.INJURY_BODY_OUTLINES?.[view]) return injuryBodyFigureReal(map, view, options);
   const parts = Object.fromEntries((map?.parts || []).map(part => [part.part, part]));
   const overall = map && map.typical_games_total ? map.expected_games_total / map.typical_games_total : 1;
   const tone = injuryRiskColor(overall);

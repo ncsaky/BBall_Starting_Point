@@ -1,0 +1,8 @@
+Body figures for the player card's Health page (injury body map).
+
+Human_silhouette_gender_neutral_front.svg and Human_silhouette_gender_neutral_back.svg
+by Sebastian Wallroth, Wikimedia Commons:
+  https://commons.wikimedia.org/wiki/File:Human_silhouette_gender_neutral_front.svg
+  https://commons.wikimedia.org/wiki/File:Human_silhouette_gender_neutral_back.svg
+License: CC0 1.0 Universal (public domain dedication). Downloaded 2026-11-24 with the user's approval.
+The game inlines their outline paths (app.js INJURY_BODY_OUTLINES) and colours body parts inside them.

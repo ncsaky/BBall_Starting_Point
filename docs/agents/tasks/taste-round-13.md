@@ -1,6 +1,6 @@
 # Taste deck round 13 pass
 
-Progress: 8/8 - done (round 13 pass committed; body-map image waits for the user)
+Progress: 8/8 - done (round 13 pass and the real body figure committed)
 
 Objective: the user's round 13 answers: 9 questions (`q13-...`) and about 40 notes on today's captures (`v13-...`).
 First deck in the JFresh look; the user says we're "pretty much to the point of all good" on the asked cards.
@@ -55,4 +55,8 @@ Slides: Power rankings table restyle (keep fields and animation); slide tables c
     from `season_slides.consensus_top`); Storylines with team logo, player photos and a headline number (new data);
     Stars on the sidelines with logo and games-out number; slideshow backdrop lets the team colour through; contract
     bars softer. Slides are stored per save, so existing saves keep their old outlook until the next preseason.
-  - Health page: figures centred and larger, table underneath. A real body image needs the user's OK to download.
+  - Health page: figures centred and larger, table underneath. Real body figures (user approved the download
+    2026-11-24): CC0 "Human silhouette gender neutral" front / back by Sebastian Wallroth (Wikimedia Commons), kept in
+    `gui/assets/body/` with SOURCE.txt; the outlines are inlined in `gui/body-outlines.js`; app.js `injuryBodyFigureReal`
+    clips each part's risk glow to the body shape (`INJURY_BODY_SPOTS_REAL` places the parts); without the outlines
+    (e.g. the node tests) the old drawn figure is used.
