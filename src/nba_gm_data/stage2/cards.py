@@ -20,7 +20,7 @@ import math
 from dataclasses import replace
 from typing import Any, Mapping
 
-from ..box_rates import ASSISTS_INPUTS, STEALS_INPUTS, flatten_inputs
+from ..box_rates import ASSISTS_INPUTS, SCREEN_ASSISTS_INPUTS, STEALS_INPUTS, flatten_inputs
 from ..offense_response import OffenseCoefficients, OffensiveProfile, finishing_response, shooting_response
 from . import fouls as F
 from . import rebounding as R
@@ -138,6 +138,11 @@ ROTATION_D = ("S38", "S39")                   # help: rotation recognition, off-
 POST_D = ("S34", "P08")                       # post defense: contact leverage, strength (+ height below)
 LANES_D = ("S43", "S41")                      # passing lanes: interception technique, anticipation
 BURST = ("P05", "S16", "S19")                 # getting past his man: burst, dribble manipulation, separation
+# Pick-and-roll (S2-COACH; stage2.screens): screen quality (screen execution, strength, balance; body mass below) and
+# screen navigation (navigation technique, lateral quickness, anticipation, attention) - the inputs the screen-navigation
+# physics piece reads.
+SCREEN_Q = ("S27", "P08", "P09")
+NAVIGATION = ("S35", "P07", "S41", "S44")
 
 _CARD_CACHE: dict[tuple, "Card"] = {}
 _LEAGUE: dict[str, Any] = {}
@@ -303,7 +308,8 @@ def transition_menu(flat: Mapping[str, float]) -> list[float]:
 
 def league_means(flats: Mapping[str, Mapping[str, float]]) -> dict[str, float]:
     keys = (set(PERIMETER_D) | set(RIM_D) | set(PRESSURE_D) | set(CREATION) | {"P01", "P02", "P03"} | set(CONTAIN_D)
-            | set(CLOSEOUT_D) | set(ONBALL_D) | set(ROTATION_D) | set(POST_D) | set(LANES_D) | set(BURST) | {"S45"})
+            | set(CLOSEOUT_D) | set(ONBALL_D) | set(ROTATION_D) | set(POST_D) | set(LANES_D) | set(BURST) | {"S45"}
+            | set(SCREEN_Q) | set(NAVIGATION) | {"P04", "S02"})
     out = {}
     for k in keys:
         vals = [float(f[k]) for f in flats.values() if k in f]
@@ -321,7 +327,7 @@ class Card:
                  "ft", "ast_w", "foul", "foul_s", "and1", "ns_draw", "off_foul_w", "d_foul", "ns_mult", "stl_w",
                  "blk_w", "perim_d", "rim_d", "press_d", "reb", "pace", "trans_pref", "penalty", "flat", "create",
                  "space", "contain_d", "closeout_d", "onball_d", "rot_d", "post_d", "lanes_d", "burst", "length",
-                 "foul_ctrl", "craft")
+                 "foul_ctrl", "craft", "scr_w", "roll_share", "screen_q", "nav", "pull_threat")
 
     def actions(self) -> dict[str, float]:
         out = {a: 0.0 for a in ACTIONS}
@@ -386,6 +392,18 @@ def build_card(pid: str, name: str, flat: Mapping[str, float], means: Mapping[st
     c.burst = _index(flat, BURST, means)
     c.foul_ctrl = _index(flat, ("S45",), means)
     c.craft = (prof.craft - 50.0) / 25.0          # foul-drawing craft (S24), for the loop's action-specific foul terms
+    # Pick-and-roll (stage2.screens): how often and how well he screens (the fitted screen-assist rate per 36), the share
+    # of his finishes off a pass that are rolls or slips (the shot menu's own split against cuts), screen quality with
+    # body mass (per 15 kg), screen navigation, and the pull-up threat a defense weighs before dropping.
+    c.scr_w = math.exp(log_linear(SCREEN_ASSISTS_INPUTS, flat))
+    roll = float(flat.get("T11.roll", .2)) + float(flat.get("T11.slip", .1))
+    cut = float(flat.get("T09", .3))
+    c.roll_share = MENU["rim_roll"] * roll / max(1e-6, MENU["rim_roll"] * roll + MENU["rim_cut"] * cut)
+    c.screen_q = _index(flat, SCREEN_Q, means) + .5 * (float(flat.get("P04", means.get("P04", 100.0)))
+                                                      - means.get("P04", 100.0)) / 15.0
+    c.nav = _index(flat, NAVIGATION, means)
+    c.pull_threat = (float(flat.get("S02", 50.0)) - means.get("S02", 50.0)) / 25.0 \
+        + 1.5 * (float(flat.get("T03.pull_up", .3)) - .3)
     return c
 
 

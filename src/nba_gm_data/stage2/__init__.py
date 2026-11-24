@@ -14,4 +14,15 @@ S2-POSSESSION-LOOP (2026-11-21):
   per-family conversion, hook and dunk rules, defense indices, rebound and foul profiles).
 - game.py: the whole-game loop (clock, quarters, possessions, team fouls and bonus, live substitutions, box score).
 - engine.py now plays Stage 2 games through game.py; loop_fit.py holds the rule fits and spot-check helpers.
+
+S2-TOTALS-MATCHUPS (2026-11-21):
+- matchups.py: who guards whom; game.py: the defender's terms on each shot, foul and turnover; both fives' pace.
+
+S2-COACH (2026-11-24):
+- coach.py: the in-game coach (who plays at every stoppage: tonight's plan, rhythm and fatigue, foul trouble, blowouts
+  and garbage time, close finishes, hot and cold hands, injuries and rust), its decisions taken from the real 2023-26
+  rotation study (data/research/rotation_evidence.json).
+- screens.py: pick-and-roll coverages and switching (switch, drop, show, trap) on self-created shots and rolls.
+- game.py: substitutions at every dead ball and timeout, players in foul trouble foul less, the real end-of-game
+  fouling rates, screen assists in the box score.
 """
