@@ -22,6 +22,11 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **Anti-reference: Basketball GM.** Clicking between plain tables, a player page that is a scroll of tables, no players or game feel. Never ship anything that looks like it.
 
 ## The look: glass (round 3)
+- **JFresh look (merged 2026-11-24, `gui/jfresh.css`, loaded last; styling only):** the board is the team colour muted
+  the way JFresh's teal / red are, with soft same-colour depth and dark edges; cards and pop-ups a faint frosted lift with
+  one hairline edge and 16px corners; tables with no fills or stripes (bold white headers over one hairline, hairlines
+  between rows; this replaces the alternating-shading rule); SF system font, bold labels with regular values; primary
+  buttons and the chosen long-pill option are frosted light pills with bold white text (not solid blue).
 - **Round 11: the board is the team's main colour** (toned down) with a dark vignette at the edges (still never a
   two-colour gradient). Swap picks show only their team logos, no arrow. Verify visual claims on screen (a marker
   colour), not only in computed styles: the header-edge fix was "applied" for two rounds but clipped.

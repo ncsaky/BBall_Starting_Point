@@ -32,3 +32,5 @@ Objective: build the user's round 11 answers (cards `q11-...`). GUI only; test o
     glass .14. Small red rating drops lightened for contrast on the blue.
   - Trade Finder: the strip of flat bars replaced by the deal's four-season payroll chart (same proportions and scale)
     beside its now / after table; "Found trades" no longer squeezed into a 34px box.
+- Round 12 deck published 2026-11-24 (version 15, 8 questions `q12-…`, adds a Trade Finder frame).
+- JFresh restyle experiment: branch `jfresh-style` (commit a69cb573), merged into the main line the same day; worktree removed, preview config `jfresh-preview` on port 8767. Styling only (`gui/jfresh.css` loaded last).
