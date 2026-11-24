@@ -270,3 +270,194 @@ html[data-glass="clear"] body.unified-terminal-ui button.glass-select.glass-sele
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot button.glass-select {
   min-height: 25px !important; background: rgba(255, 255, 255, .12) !important; border: 1px solid rgba(255, 255, 255, .24) !important; font-weight: 600 !important;
 }
+
+/* ---------- Round 13 quick fixes. */
+/* Scroll bars hidden across the game (scrolling still works with the wheel, trackpad and keys). */
+html[data-glass="clear"], html[data-glass="clear"] * { scrollbar-width: none !important; }
+html[data-glass="clear"] *::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
+/* Pop-up close: a plain, slightly heavier white X, no bubble. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot :is(.modal-close-icon, [data-close-modal]) {
+  background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 50% !important;
+  color: #fff !important; opacity: .8; font-size: 20px !important; font-weight: 700 !important; -webkit-text-stroke: .4px currentColor;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot :is(.modal-close-icon, [data-close-modal]):hover { opacity: 1; background: rgba(255, 255, 255, .12) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot :is(.modal-close-icon, [data-close-modal]) img { filter: brightness(0) invert(1) !important; width: 13px !important; height: 13px !important; }
+/* Player card heat maps: no "Court Influence" row; the pills, keys and captions as wide as the drawn court. */
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-pages .player-card-page--overview > .player-overview-court { grid-template-rows: minmax(0, 1fr) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .player-overview-court .spatial-heatmap[style*="--court-draw-w"] :is(.spatial-court-tab-group, .spatial-legend, .spatial-court-caption) {
+  width: var(--court-draw-w) !important; max-width: 100%; justify-self: center !important; margin-inline: auto !important; box-sizing: border-box;
+}
+/* Value tab headings: centred, abbreviation and "sends" both bold with a space between. */
+html[data-glass="clear"] body.unified-terminal-ui .approved-trade-values .trade-value-team > strong { justify-content: center !important; gap: 6px !important; }
+html[data-glass="clear"] body.unified-terminal-ui .approved-trade-values .trade-value-team > strong .tr-team-mark { gap: 8px !important; }
+html[data-glass="clear"] body.unified-terminal-ui .approved-trade-values .trade-value-team > strong .tr-team-mark b { font-weight: 700 !important; }
+/* Team Wants: the add button's + white. */
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window[data-board-window="team-wants"] button img { filter: brightness(0) invert(1) !important; }
+/* Four-Year Payroll Share: softer colours on the glass. */
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window[data-board-window="payroll"] .salary-segment { opacity: .78; }
+
+/* ---------- Round 13: one table treatment for every board window (the Opening Roster is the model). Header fill,
+   sorted-column fill and row hover reach both card edges (the table itself stays 10px in, so text keeps its place);
+   no gap between the title bar's line and the header. */
+html[data-glass="clear"] body.unified-terminal-ui { --jf-edge-l: 10px; --jf-edge-r: 8px; --jf-sorted: rgba(255, 255, 255, .07); }
+/* Header: the edge pieces carry the header cell's own fill (sorted / hover) as well as its line. */
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table > thead > tr > th:first-child::before,
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table > thead > tr > th:last-child::after { background: inherit !important; }
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table > thead > tr > th:last-child::after { width: var(--jf-edge-r) !important; }
+/* Sorted column: a faint fill (not the old dark block) on the header and the cells. */
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table thead th[aria-sort]:not([aria-sort="none"]) { background: var(--jf-sorted) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table tbody td.is-sorted-value { background-color: var(--jf-sorted) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table tbody td.is-sorted-value:first-child { box-shadow: calc(-1 * var(--jf-edge-l)) 0 0 0 var(--jf-sorted) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table tbody td.is-sorted-value:last-child { box-shadow: var(--jf-edge-r) 0 0 0 var(--jf-sorted) !important; }
+/* Row hover reaches both edges (painted beside the first and last cells), never over the row lines. */
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table tbody tr:is(:hover, :focus-within) > :is(td, th):first-child { box-shadow: calc(-1 * var(--jf-edge-l)) 0 0 0 var(--g-hover) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table tbody tr:is(:hover, :focus-within) > :is(td, th):last-child { box-shadow: var(--jf-edge-r) 0 0 0 var(--g-hover) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table tbody tr > :is(td, th) { background-clip: padding-box; }
+/* Grid tables (Standings, Minutes, Next Opponent, Development, Staff): the same, and no padding above the header. */
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body [data-house-table] { padding-top: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body [data-house-table] > [data-house-head] { margin-left: calc(-1 * var(--jf-edge-l)) !important; margin-right: calc(-1 * var(--jf-edge-r)) !important; width: calc(100% + var(--jf-edge-l) + var(--jf-edge-r)) !important; padding-left: calc(12px + var(--jf-edge-l)) !important; padding-right: calc(12px + var(--jf-edge-r)) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body [data-house-table] > [data-house-row]:is(:hover, :focus-within) {
+  box-shadow: calc(-1 * var(--jf-edge-l)) 0 0 0 var(--g-hover), var(--jf-edge-r) 0 0 0 var(--g-hover), inset 0 -1px 0 var(--g-row-line) !important;
+}
+/* Window content area: card-board.js sizes it to the window's outer width (border included) but placed it inside the
+   left border, so it ran 2px past the right edge: every table sat 11px from the left edge and 9px from the right. One
+   pixel to the left centres it, so both sides match. */
+html[data-glass="clear"] body .has-card-board .card-board-window > .card-board-body { left: -1px !important; }
+html[data-glass="clear"] body.unified-terminal-ui { --jf-edge-r: 10px; }
+
+/* ---------- Window fixes (round 13). Contracts: Risk and Runway as plain numbers (no ring meters); the window is wider
+   (600px) so no amount is cut off. */
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window[data-board-window="contracts"] .player-evidence-ring svg,
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window[data-board-window="contracts"] .player-evidence-ring > div { display: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window[data-board-window="contracts"] .player-evidence-ring,
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window[data-board-window="contracts"] .player-evidence-ring > span { display: block !important; width: auto !important; height: auto !important; position: static !important; text-align: center; }
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window[data-board-window="contracts"] .player-evidence-ring strong { position: static !important; font-size: 12px !important; font-weight: 600 !important; color: #fff !important; }
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window[data-board-window="contracts"] td { white-space: nowrap; }
+/* Upcoming Prospects: names as plain bold text (no pill); headshot, school logo and name centred in the row; a longer
+   scouted bar; the League rank range drawn in light, high-contrast marks with a key under the table. */
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-name { display: flex !important; align-items: center !important; gap: 8px; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-name > * { align-self: center !important; margin-block: 0 !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-open { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; color: #fff !important; font-weight: 700 !important; border-radius: 0 !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-open:hover { text-decoration: underline; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] td.season-prospect-col-scouted { width: 150px; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-scouted { grid-template-columns: minmax(0, 1fr) 34px !important; width: 140px; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-scouted > i { height: 6px !important; border-radius: 3px; background: rgba(255, 255, 255, .14) !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-scouted strong { color: #fff !important; font-size: 12px !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-range-guide { background: rgba(255, 255, 255, .16) !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] :is(.season-prospect-range-whisker, .season-prospect-legend .is-whisker) { border-color: #dfe8f0 !important; background: linear-gradient(#dfe8f0, #dfe8f0) center / 100% 1px no-repeat !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] :is(.season-prospect-range-box, .season-prospect-legend .is-box) { background: rgba(124, 192, 255, .55) !important; border: 1px solid #a9d6ff !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] :is(.season-prospect-range-median, .season-prospect-legend .is-median) { background: #fff !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] :is(.season-prospect-range-ours, .season-prospect-ours-key) { background: #ffd27a !important; border-color: #0b1520 !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-range-number { color: #fff !important; font-weight: 600 !important; font-size: 12px !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; padding: 8px 10px 4px; font-size: 11px; color: #d5e1ea; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-legend i { display: inline-block; position: relative; flex: none; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-legend .is-box { width: 16px; height: 9px; box-sizing: border-box; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-legend .is-whisker { width: 18px; height: 8px; border-left: 1px solid; border-right: 1px solid; box-sizing: border-box; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-legend .is-median { width: 2px; height: 12px; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-legend .season-prospect-ours-key { width: 8px; height: 8px; border-radius: 50%; border: 1px solid; box-sizing: border-box; }
+/* Award windows: the trophy bare (no gold box around it); wider (340px) so names are not cut. */
+html[data-glass="clear"] body .has-card-board .season-award-trophy { border: 0 !important; background: transparent !important; box-shadow: none !important; }
+html[data-glass="clear"] body .has-card-board .season-award-trophy img { filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .35)); }
+/* Team Signals and Morale: JFresh attribute rows: the label in white, a thin rounded bar on a faint track, the value
+   bold at the right; more room between rows. */
+html[data-glass="clear"] body .has-card-board .season-identity-signals { display: grid !important; gap: 7px !important; padding: 8px 12px !important; }
+html[data-glass="clear"] body .has-card-board .season-signal-row { display: grid !important; grid-template-columns: 92px minmax(0, 1fr) 44px !important; align-items: center !important; gap: 10px !important; }
+html[data-glass="clear"] body .has-card-board .season-signal-row > span { color: #fff !important; font-size: 13px !important; font-weight: 500 !important; }
+html[data-glass="clear"] body .has-card-board .season-signal-row > i { height: 5px !important; border-radius: 3px !important; background: rgba(255, 255, 255, .13) !important; overflow: hidden; border: 0 !important; }
+html[data-glass="clear"] body .has-card-board .season-signal-row > i > b { border-radius: 3px !important; height: 100% !important; opacity: .9; }
+html[data-glass="clear"] body .has-card-board .season-signal-row > strong { color: #fff !important; font-size: 13px !important; font-weight: 700 !important; text-align: right; }
+/* League Block / Team Block: the contract column only as wide as its text, so the value sits right after it; the value
+   as a number beside a thin rounded bar (like the trade room), not a number stacked over a block. */
+html[data-glass="clear"] body.unified-terminal-ui :is(.assets-block-table, .team-block-table) :is(.assets-block-head, .assets-block-row) {
+  grid-template-columns: 30px minmax(140px, 1.4fr) 26px 28px repeat(3, 56px) minmax(var(--block-contract-width, 100px), 118px) minmax(110px, 1fr) 40px !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui .team-block-table :is(.assets-block-head, .assets-block-row) {
+  grid-template-columns: 48px minmax(140px, 1.4fr) 26px 28px repeat(3, 56px) minmax(var(--block-contract-width, 100px), 118px) minmax(110px, 1fr) 40px !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui .block-value-meter { display: grid !important; grid-template-columns: 34px minmax(0, 1fr) !important; align-items: center !important; gap: 8px !important; width: 100% !important; }
+html[data-glass="clear"] body.unified-terminal-ui .block-value-meter > b { color: #fff !important; font-weight: 700 !important; font-size: 12px !important; text-align: right; }
+html[data-glass="clear"] body.unified-terminal-ui .block-value-bar { display: block !important; height: 5px !important; border-radius: 3px !important; background: rgba(255, 255, 255, .13) !important; overflow: hidden; border: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui .block-value-bar > i { display: block !important; height: 100% !important; border-radius: 3px; opacity: .9; }
+html[data-glass="clear"] body.unified-terminal-ui .assets-block-row .block-find-trade { border-radius: 999px !important; background: rgba(255, 255, 255, .10) !important; border: 1px solid rgba(255, 255, 255, .22) !important; color: #fff !important; width: 38px !important; height: 20px !important; }
+/* Picking list: every pick mark (one, two or three logos) centred on the same line as the 38px headshots above it. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot#modalRoot#modalRoot .trade-ledger-portrait .draft-asset-glyph.draft-asset-glyph {
+  width: 38px !important; min-width: 38px !important; margin: 0 !important; display: flex !important; justify-content: center !important; align-items: center !important;
+}
+
+/* ---------- Three-team trades (round 13): roles step aside so names have room; each asset's destination is its own
+   "To" column (team logo + abbreviation drop-down), not a line under the name; the partner picker reads like the
+   other team headers (bold abbreviation, no pill box). */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-builder.is-deal.is-multi :is(.tr-tile, .tr-tiles-head) {
+  grid-template-columns: 50px minmax(0, 1fr) 76px 78px 24px 18px !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-builder.is-multi :is(.tr-tile-roles, .tr-tiles-head > span:nth-child(4)) { display: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-to { display: flex; align-items: center; min-width: 0; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-to .tr-tile-route { display: inline-flex !important; align-items: center; gap: 5px; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-to .tr-route-logo { width: 20px; height: 20px; object-fit: contain; flex: none; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-to button.glass-select { min-height: 22px !important; padding: 0 7px 0 9px !important; font-weight: 700 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .tr-side-head .trade-partner-field button.glass-select {
+  background: transparent !important; border: 0 !important; padding: 0 4px !important; font-size: 15px !important; font-weight: 700 !important; min-height: 0 !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .tr-side-head .trade-partner-field button.glass-select:hover { background: rgba(255, 255, 255, .10) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-builder.is-multi .tr-tiles-head > span:nth-child(6) { display: block !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-builder.is-multi .tr-tiles-head > span:nth-child(7) { display: none !important; }
+
+/* Set The Roster (and every offseason table): header labels sit 5px above their line like the other tables; a row's
+   hover stays inside its lines. */
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .offseason-table thead th { vertical-align: bottom !important; padding-bottom: 5px !important; height: auto !important; }
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .offseason-table tbody tr > :is(td, th) { background-clip: padding-box !important; }
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body tbody tr:has(:is([data-fa-player-card], [data-dashboard-player-card])) { cursor: pointer; }
+
+/* ---------- Season slides (round 13). Story cards: team logo, text, the players' photos, one headline number; text
+   wraps inside the card. */
+html[data-glass="clear"] .season-slideshow .ss-stories-rich { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 14px !important; }
+html[data-glass="clear"] .season-slideshow .ss-story-rich { display: grid !important; grid-template-columns: 56px minmax(0, 1fr) auto !important; align-items: center !important; gap: 14px !important; padding: 14px 16px !important; background: rgba(255, 255, 255, .05) !important; border: 1px solid rgba(255, 255, 255, .12) !important; border-radius: 14px !important; min-width: 0; }
+html[data-glass="clear"] .season-slideshow .ss-story-rich .ss-story-logo { width: 52px; height: 52px; object-fit: contain; filter: drop-shadow(0 3px 8px rgba(0, 0, 0, .35)); }
+html[data-glass="clear"] .season-slideshow .ss-story-body { min-width: 0; display: grid; gap: 6px; }
+html[data-glass="clear"] .season-slideshow .ss-story-body :is(h4, p) { margin: 0 !important; overflow-wrap: anywhere; }
+html[data-glass="clear"] .season-slideshow .ss-story-body h4 { font-size: 16px !important; font-weight: 700 !important; color: #fff !important; }
+html[data-glass="clear"] .season-slideshow .ss-story-body p { font-size: 13px !important; color: #e3ebf2 !important; line-height: 1.4; }
+html[data-glass="clear"] .season-slideshow .ss-story-faces { display: flex; gap: 6px; }
+html[data-glass="clear"] .season-slideshow .ss-story-face img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; object-position: top; background: rgba(255, 255, 255, .08); }
+html[data-glass="clear"] .season-slideshow .ss-story-stat { display: grid; justify-items: end; text-align: right; min-width: 70px; }
+html[data-glass="clear"] .season-slideshow .ss-story-stat b { font-size: 30px; font-weight: 800; line-height: 1; color: #fff; letter-spacing: -.02em; }
+html[data-glass="clear"] .season-slideshow .ss-story-stat small { font-size: 11px; color: #c9d5e0; max-width: 90px; }
+html[data-glass="clear"] .season-slideshow .ss-story-stat.is-bad b { color: #ffb3b3 !important; }
+html[data-glass="clear"] .season-slideshow .ss-injury-name { color: #ffc6c6; }
+/* Prospect watch: photos and school logos centred in their rows, the league-board range in light marks, your scouts'
+   difference as a small green / red arrow, a slim scouted bar. */
+html[data-glass="clear"] .season-slideshow .ss-prospects .ss-school { display: inline-flex; align-items: center; gap: 8px; }
+html[data-glass="clear"] .season-slideshow .ss-prospects .ss-school img { width: 22px; height: 22px; object-fit: contain; }
+html[data-glass="clear"] .season-slideshow .ss-your-rank { display: inline-flex; align-items: baseline; gap: 6px; }
+html[data-glass="clear"] .season-slideshow .ss-rank-diff { font-size: 11px; font-weight: 700; }
+html[data-glass="clear"] .season-slideshow .ss-rank-diff.is-up { color: #86e0a2; }
+html[data-glass="clear"] .season-slideshow .ss-rank-diff.is-down { color: #ffb3b3; }
+html[data-glass="clear"] .season-slideshow .ss-scouted { display: grid; grid-template-columns: 90px auto; align-items: center; gap: 8px; }
+html[data-glass="clear"] .season-slideshow .ss-scouted > i { display: block; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .14); overflow: hidden; }
+html[data-glass="clear"] .season-slideshow .ss-scouted > i > b { display: block; height: 100%; background: #7cc0ff; border-radius: 3px; }
+html[data-glass="clear"] .season-slideshow .ss-range-col { min-width: 190px; }
+html[data-glass="clear"] .season-slideshow .season-prospect-range { display: grid; grid-template-columns: 22px minmax(150px, 1fr); align-items: center; gap: 8px; }
+html[data-glass="clear"] .season-slideshow .season-prospect-range-number { color: #fff; font-weight: 700; text-align: right; }
+html[data-glass="clear"] .season-slideshow .season-prospect-range-plot { position: relative; height: 14px; display: block; }
+html[data-glass="clear"] .season-slideshow .season-prospect-range-plot > i { display: block; position: absolute; }
+html[data-glass="clear"] .season-slideshow .season-prospect-range-guide { background: rgba(255, 255, 255, .16); top: 0; bottom: 0; width: 1px; }
+html[data-glass="clear"] .season-slideshow :is(.season-prospect-range-whisker, .ss-range-legend .is-whisker) { border-left: 1px solid #dfe8f0; border-right: 1px solid #dfe8f0; box-sizing: border-box; height: 8px; top: 3px; background: linear-gradient(#dfe8f0, #dfe8f0) center / 100% 1px no-repeat; }
+html[data-glass="clear"] .season-slideshow :is(.season-prospect-range-box, .ss-range-legend .is-box) { background: rgba(124, 192, 255, .55); border: 1px solid #a9d6ff; box-sizing: border-box; height: 10px; top: 2px; min-width: 3px; }
+html[data-glass="clear"] .season-slideshow :is(.season-prospect-range-median, .ss-range-legend .is-median) { background: #fff; height: 14px; width: 2px; top: 0; margin-left: -1px; }
+html[data-glass="clear"] .season-slideshow :is(.season-prospect-range-ours, .season-prospect-ours-key) { background: #ffd27a; border: 1px solid #0b1520; border-radius: 50%; width: 8px; height: 8px; box-sizing: border-box; top: 3px; margin-left: -4px; z-index: 1; }
+html[data-glass="clear"] .season-slideshow .ss-range-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; padding: 10px 0 0; font-size: 12px; color: #d5e1ea; }
+html[data-glass="clear"] .season-slideshow .ss-range-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+html[data-glass="clear"] .season-slideshow .ss-range-legend i { display: inline-block; position: relative !important; top: auto !important; margin: 0 !important; flex: none; }
+html[data-glass="clear"] .season-slideshow .ss-range-legend .is-box { width: 16px; }
+html[data-glass="clear"] .season-slideshow .ss-range-legend .is-whisker { width: 18px; }
+/* Contracts slide: softer bars on the glass. */
+html[data-glass="clear"] .season-slideshow .ss-bar-list :is(i, b) { opacity: .82; border-radius: 3px; }
+/* The slideshow sits on the team-coloured board like every other pop-up (its near-black backdrop hid the colour). */
+html[data-glass="clear"] body.unified-terminal-ui .season-slideshow .ss-backdrop { background: rgba(3, 8, 14, .22) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .season-slideshow.season-slideshow { background: rgba(3, 8, 14, .12) !important; }
+/* Player card health page: the front and back figures centred and larger, the injury table underneath. */
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .injury-body-layout { grid-template-columns: minmax(0, 1fr) !important; grid-template-rows: auto auto !important; justify-items: center !important; row-gap: 18px !important; align-content: start; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .injury-body-figures { display: flex !important; justify-content: center !important; gap: 48px !important; width: auto !important; height: auto !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .injury-body-figures > svg.injury-body-figure { width: 240px !important; height: 560px !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .injury-body-detail { width: min(1500px, 100%) !important; justify-self: center !important; }

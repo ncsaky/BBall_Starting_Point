@@ -1014,9 +1014,10 @@ test('league wire width migration halves existing cards once and preserves heigh
 test('prospect card widens for the side portrait without changing its height', () => {
   const layout = {prospects:{width:539,height:219,sizeRevision:2}};
   migrateCardSizes(layout,{cards:{prospects:{sizeRevision:2}}});
-  assert.deepEqual([layout.prospects.width,layout.prospects.height,layout.prospects.sizeRevision],[714,219,3]);
+  // Round 13: never narrower than 760 (the wider scouted bar and the range key).
+  assert.deepEqual([layout.prospects.width,layout.prospects.height,layout.prospects.sizeRevision],[760,219,3]);
   migrateCardSizes(layout,{cards:{prospects:{sizeRevision:3}}});
-  assert.deepEqual([layout.prospects.width,layout.prospects.height],[714,219]);
+  assert.deepEqual([layout.prospects.width,layout.prospects.height],[760,219]);
 });
 
 test('minutes card migration narrows older windows once, making room for the current columns', () => {

@@ -681,6 +681,7 @@ def own_pick_owner(active: dict[str, Any], year: str, team_id: str) -> dict[str,
 
 def consensus_top(active: dict[str, Any], year: str, team_id: str, limit: int) -> list[dict[str, Any]]:
     from .draft_scouting import class_scouting
+    from .faces import prospect_headshot_url
 
     scouting = class_scouting(active, year)
     order = sorted(scouting["consensus"], key=lambda pid: scouting["consensus"][pid]["rank"])[:limit]
@@ -692,7 +693,12 @@ def consensus_top(active: dict[str, Any], year: str, team_id: str, limit: int) -
         rows.append({"id": pid, "name": prospect.get("name"), "position": prospect.get("position"), "age": prospect.get("age"),
                      "school": prospect.get("source_team") or prospect.get("league"),
                      "consensus_rank": scouting["consensus"][pid]["rank"], "your_rank": report.get("scout_rank"),
-                     "scouted_pct": report.get("coverage")})
+                     "scouted_pct": report.get("coverage"),
+                     # Round 13 (Prospect watch): the photo and how the league's 30 boards spread on him.
+                     "headshot_url": prospect_headshot_url(prospect) if prospect else None,
+                     "consensus_best": scouting["consensus"][pid].get("best"),
+                     "consensus_worst": scouting["consensus"][pid].get("worst"),
+                     "consensus_middle": list(scouting["consensus"][pid].get("middle") or ())})
     return rows
 
 
@@ -1290,7 +1296,10 @@ def outlook_storylines_slide(ctx: dict[str, Any]) -> dict[str, Any]:
                     key=lambda item: -item[1]["minutes_last_season"])
     if movers:
         team, arrival = movers[0]
-        items.append({"title": "Biggest offseason move", "text": f"{arrival['name']} joins {team['name']} after {arrival['minutes_last_season']} minutes elsewhere last season."})
+        mover_id = next((p["id"] for p in active.get("players", []) if p.get("name") == arrival["name"] and p.get("team_id") == team.get("id")), None)
+        items.append({"title": "Biggest offseason move", "text": f"{arrival['name']} joins {team['name']} after {arrival['minutes_last_season']} minutes elsewhere last season.",
+                      "team": _team_ref(teams, team.get("id")), "players": [_player_ref(active, mover_id)] if mover_id else [],
+                      "stat": {"value": arrival["minutes_last_season"], "label": "minutes last season"}})
     stars = []
     for row in continuity:
         for arrival in row["arrivals"]:
@@ -1300,14 +1309,18 @@ def outlook_storylines_slide(ctx: dict[str, Any]) -> dict[str, Any]:
     stars.sort(key=lambda item: -float(item[0].get("overall") or 0))
     if stars and (not movers or stars[0][0]["name"] != movers[0][1]["name"]):
         ref, team = stars[0]
-        items.append({"title": "A star in a new uniform", "text": f"{ref['name']} ({ref.get('overall')} rating) starts the season with {team['name']}."})
-    young: dict[str, list[float]] = {}
+        items.append({"title": "A star in a new uniform", "text": f"{ref['name']} ({ref.get('overall')} rating) starts the season with {team['name']}.",
+                      "team": _team_ref(teams, team.get("id")), "players": [ref], "stat": {"value": ref.get("overall"), "label": "rating"}})
+    young: dict[str, list[tuple[float, str]]] = {}
     for player in active.get("players", []):
         if player.get("team_id") and float(player.get("age") or 99) <= 23:
-            young.setdefault(player["team_id"], []).append(float(_player_ref(active, player["id"]).get("overall") or 0))
+            young.setdefault(player["team_id"], []).append((float(_player_ref(active, player["id"]).get("overall") or 0), player["id"]))
     if young:
-        team_id = max(young, key=lambda tid: (sum(sorted(young[tid], reverse=True)[:4]), tid))
-        items.append({"title": "Youth movement", "text": f"{_team_ref(teams, team_id)['name']} has the league's best group of players 23 and under."})
+        team_id = max(young, key=lambda tid: (sum(sorted((value for value, _pid in young[tid]), reverse=True)[:4]), tid))
+        best = sorted(young[team_id], reverse=True)[:3]
+        items.append({"title": "Youth movement", "text": f"{_team_ref(teams, team_id)['name']} has the league's best group of players 23 and under.",
+                      "team": _team_ref(teams, team_id), "players": [_player_ref(active, pid) for _value, pid in best],
+                      "stat": {"value": len(young[team_id]), "label": "players 23 and under"}})
     last_rows = _rank_by_record(_record_rows(active, ctx["last"]["records"]), teams)
     hot = []
     for row in last_rows[::-1][:10]:
@@ -1319,7 +1332,8 @@ def outlook_storylines_slide(ctx: dict[str, Any]) -> dict[str, Any]:
         value, row = min(hot, key=lambda item: (item[0], item[1]["team_id"]))
         coach = next((slot for slot in save.get("staff_slots") or [] if slot.get("team_id") == row["team_id"] and slot.get("slot") == "head_coach"), None)
         if coach and value < 50:
-            items.append({"title": "Coach on the hot seat", "text": f"{coach.get('name')} ({_team_ref(teams, row['team_id'])['name']}) after a {row['wins']}-{row['losses']} season, with owner confidence at {value:.0f}."})
+            items.append({"title": "Coach on the hot seat", "text": f"{coach.get('name')} ({_team_ref(teams, row['team_id'])['name']}) after a {row['wins']}-{row['losses']} season, with owner confidence at {value:.0f}.",
+                          "team": _team_ref(teams, row["team_id"]), "players": [], "stat": {"value": round(value), "label": "owner confidence", "tone": "bad"}})
     return {"key": "storylines", "title": "Storylines", "kicker": "What to watch", "items": items[:4]}
 
 

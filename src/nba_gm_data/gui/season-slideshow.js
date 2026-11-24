@@ -437,23 +437,49 @@
       return `<div class="ss-contracts${rowsIn()}"><div class="ss-contracts-left">${left}${expiringPanel}</div>${right}</div>`;
     },
     prospects(slide) {
-      return table([
-        {label: "Cons.", render: (p) => p.consensus_rank, cls: "ss-num"},
-        {label: "Prospect", render: (p) => `<b>${esc(p.name)}</b>`, cls: "ss-left"},
-        {label: "Pos", render: (p) => esc(p.position)},
-        {label: "Age", render: (p) => num(p.age, 0), cls: "ss-num"},
-        {label: "From", render: (p) => esc(p.school || "—")},
-        {label: "Your scouts", render: (p) => (p.your_rank ? `#${p.your_rank}` : "—"), cls: "ss-num"},
-        {label: "Scouted", render: (p) => (p.scouted_pct === null || p.scouted_pct === undefined ? "—" : `${num(p.scouted_pct, 0)}%`), cls: "ss-num"},
-      ], slide.prospects || [], {sorted: 0}) + (slide.projected_pick ? `<p class="ss-lead">Your pick projects around No. ${esc(slide.projected_pick)} on current strength.</p>` : "");
+      // Round 13: photos, school logos, the spread of the league's 30 boards (box: middle half, whiskers: every team,
+      // tick: consensus, gold dot: your scouts) and how far your scouts differ from the league.
+      const rows = slide.prospects || [];
+      const ranks = rows.flatMap((p) => [p.consensus_worst, p.consensus_rank, p.your_rank]).map(Number).filter(Number.isFinite);
+      const maxRank = Math.max(10, Math.ceil(Math.max(1, ...ranks) / 5) * 5);
+      const range = (p) => typeof seasonProspectRankRange === "function" ? seasonProspectRankRange({consensusRank: p.consensus_rank, rank: p.your_rank,
+        draftRangeLow: (p.consensus_middle || [])[0], draftRangeHigh: (p.consensus_middle || [])[1], consensusBest: p.consensus_best, consensusWorst: p.consensus_worst}, maxRank, "rank") : esc(p.consensus_rank);
+      const yours = (p) => {
+        if (!p.your_rank) return "—";
+        const diff = Number(p.consensus_rank) - Number(p.your_rank);
+        const tag = Number.isFinite(diff) && diff ? `<small class="ss-rank-diff ${diff > 0 ? "is-up" : "is-down"}" title="${attr(diff > 0 ? `Your scouts rank him ${diff} higher than the league` : `Your scouts rank him ${-diff} lower than the league`)}">${diff > 0 ? "▲" : "▼"}${Math.abs(diff)}</small>` : "";
+        return `<span class="ss-your-rank"><b>#${esc(p.your_rank)}</b>${tag}</span>`;
+      };
+      const school = (p) => `<span class="ss-school">${typeof prospectOriginMarkup === "function" ? prospectOriginMarkup(p.school) : ""}<span>${esc(p.school || "—")}</span></span>`;
+      const scouted = (p) => {
+        if (p.scouted_pct === null || p.scouted_pct === undefined) return "—";
+        const pct = Math.max(0, Math.min(100, Number(p.scouted_pct)));
+        return `<span class="ss-scouted"><i><b style="width:${pct.toFixed(0)}%"></b></i><strong>${num(pct, 0)}%</strong></span>`;
+      };
+      return `<div class="ss-prospects">${table([
+        {label: "#", render: (p) => p.consensus_rank, cls: "ss-num"},
+        {label: "Prospect", render: (p) => playerCell(p, esc([p.position, p.age ? `${num(p.age, 0)}` : ""].filter(Boolean).join(" · "))), cls: "ss-left"},
+        {label: "From", render: school, cls: "ss-left"},
+        {label: "League boards", render: range, cls: "ss-left ss-range-col"},
+        {label: "Your scouts", render: yours, cls: "ss-num"},
+        {label: "Scouted", render: scouted, cls: "ss-left"},
+      ], rows, {sorted: 0})}<div class="season-prospect-legend ss-range-legend"><span><i class="is-box"></i>Middle half of teams</span><span><i class="is-whisker"></i>Every team</span><span><i class="is-median"></i>League consensus</span><span><i class="season-prospect-ours-key"></i>Your scouts</span></div></div>` + (slide.projected_pick ? `<p class="ss-lead">Your pick projects around No. ${esc(slide.projected_pick)} on current strength.</p>` : "");
     },
     storylines(slide) {
-      return `<div class="ss-stories">${(slide.items || []).map((item) => `<section class="ss-story"><h4>${esc(item.title)}</h4><p>${esc(item.text)}</p></section>`).join("") || `<p class="ss-empty">A quiet summer.</p>`}</div>`;
+      // Round 13: each story with its team's logo, the players in it and one headline number.
+      const story = (item) => {
+        const faces = (item.players || []).filter((p) => p && p.name).map((p) => `<span class="ss-story-face" title="${attr(p.name)}">${headshot(p)}</span>`).join("");
+        const stat = item.stat && item.stat.value !== null && item.stat.value !== undefined ? `<div class="ss-story-stat${item.stat.tone === "bad" ? " is-bad" : ""}"><b>${esc(item.stat.value)}</b><small>${esc(item.stat.label || "")}</small></div>` : "";
+        return `<section class="ss-story ss-story-rich">${item.team?.abbrev ? logo(item.team.abbrev, "ss-story-logo") : ""}<div class="ss-story-body"><h4>${esc(item.title)}</h4><p>${esc(item.text)}</p>${faces ? `<div class="ss-story-faces">${faces}</div>` : ""}</div>${stat}</section>`;
+      };
+      return `<div class="ss-stories ss-stories-rich">${(slide.items || []).map(story).join("") || `<p class="ss-empty">A quiet summer.</p>`}</div>`;
     },
     injuries(slide) {
       if (!(slide.players || []).length) return `<p class="ss-empty">No rated player starts the season with an absence of more than 20 games.</p>`;
-      return `<div class="ss-stories">${slide.players.map((p) => `<section class="ss-story ss-injury">${playerCell(p, esc(`${p.team?.abbrev || ""} · ${num(p.overall)} rating`))}
-        <p><b>${esc(capitalize(p.injury || "injury"))}</b>${p.part ? ` (${esc(p.part)})` : ""}</p><p>${p.whole_season ? "Expected to miss the whole season" : `Expected to miss about ${esc(p.games)} games`}${p.return_date ? `, back around ${esc(p.return_date)}` : ""}.</p></section>`).join("")}</div>`;
+      // Round 13: a team logo, the injury in the team-coloured accent and the games missed as the headline number; text
+      // wraps inside its card.
+      return `<div class="ss-stories ss-stories-rich ss-injuries">${slide.players.map((p) => `<section class="ss-story ss-story-rich ss-injury">${p.team?.abbrev ? logo(p.team.abbrev, "ss-story-logo") : ""}<div class="ss-story-body">${playerCell(p, esc(`${p.team?.abbrev || ""} · ${num(p.overall)} rating`))}
+        <p><b class="ss-injury-name">${esc(capitalize(p.injury || "injury"))}</b>${p.part ? ` (${esc(p.part)})` : ""}</p><p>${p.return_date ? `Back around ${esc(p.return_date)}.` : ""}</p></div><div class="ss-story-stat is-bad"><b>${p.whole_season ? "Season" : esc(p.games)}</b><small>${p.whole_season ? "out" : "games out"}</small></div></section>`).join("")}</div>`;
     },
   };
 

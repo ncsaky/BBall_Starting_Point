@@ -4361,7 +4361,6 @@ const SEASON_PROSPECT_COLUMNS = [
   ["age", [["age", "Age"]]],
   ["height", [["height", "Height"]]],
   ["now", [["now", "Now", "Your scouts' estimate of his level today"]]],
-  ["potential", [["potential", "Potential", "Your scouts' estimate of his realistic peak"]]],
   ["range", [["rank", "League rank", "League consensus rank: the middle of all 30 teams' boards"], ["yours", "Ours", "Your scouts' board rank (talent only)"]]],
   ["scouted", [["scouted", "Scouted", "How much of him your scouts have seen"]]],
 ];
@@ -4462,12 +4461,12 @@ function seasonProspectsCard(options = {}) {
             ${cell("age", escapeHtml(row.age === "" || row.age == null ? "—" : row.age))}
             ${cell("height", escapeHtml(row.height || "—"))}
             ${cell("now", seasonProspectRating(row.now))}
-            ${cell("potential", seasonProspectRating(row.potential))}
             ${cell("range", seasonProspectRankRange(row, maxRank, sort.key))}
             ${cell("scouted", `<span class="season-scouted" aria-label="Scouted ${confidence.toFixed(0)} percent"><i><b style="${performanceBarStyle(confidence)}"></b></i><strong>${confidence.toFixed(0)}%</strong></span>`)}
           </tr>`;
         }).join("") || `<tr><td colspan="${SEASON_PROSPECT_COLUMNS.length}" class="empty">Prospect board unavailable.</td></tr>`}</tbody>
       </table>
+      <div class="season-prospect-legend" aria-label="How to read League rank"><span><i class="is-box"></i>Middle half of teams</span><span><i class="is-whisker"></i>Every team</span><span><i class="is-median"></i>League consensus</span><span><i class="season-prospect-ours-key"></i>Your scouts</span></div>
     </div>`;
 }
 
@@ -8726,7 +8725,7 @@ function tradeDealSide(row, participants, fresh = "") {
   const partnerPicker = side === "to" ? `<div class="trade-partner-navigation tr-partner-picker">
       <button type="button" class="tr-step" data-trade-team-step="-1" aria-label="Previous trade partner">‹</button>
       <button type="button" class="tr-side-team" data-trade-team-roster="${escapeAttr(team)}" title="${escapeAttr(`${team} roster · ${recordText}`)}">${logo}</button>
-      <label class="trade-partner-field" for="tradePartner"><span class="sr-only">Trade partner</span><select id="tradePartner">${state.teams.filter(item => item.abbrev !== userTeam() && !(state.tradeAdditionalTeams || []).includes(item.abbrev)).map(item => `<option value="${escapeAttr(item.abbrev)}" ${item.abbrev === state.tradePartner ? "selected" : ""}>${escapeHtml(item.abbrev)} ${escapeHtml(item.name || "")}</option>`).join("")}</select></label>
+      <label class="trade-partner-field" for="tradePartner"><span class="sr-only">Trade partner</span><select id="tradePartner">${state.teams.filter(item => item.abbrev !== userTeam() && !(state.tradeAdditionalTeams || []).includes(item.abbrev)).map(item => `<option value="${escapeAttr(item.abbrev)}" ${item.abbrev === state.tradePartner ? "selected" : ""}>${escapeHtml(item.abbrev)}</option>`).join("")}</select></label>
       <button type="button" class="tr-step" data-trade-team-step="1" aria-label="Next trade partner">›</button>
     </div>` : `<button type="button" class="tr-side-team" data-trade-team-roster="${escapeAttr(team)}" title="${escapeAttr(`${team} roster · ${recordText}`)}">${logo}<strong>${escapeHtml(team)}</strong></button>`;
   const remove = side.startsWith("extra:") ? `<button type="button" class="tr-text-button tr-side-remove" data-trade-remove-team="${escapeAttr(team)}" aria-label="Remove ${escapeAttr(team)} from trade" title="Remove ${escapeAttr(team)}">×</button>` : "";
@@ -8737,7 +8736,7 @@ function tradeDealSide(row, participants, fresh = "") {
     : `<li class="tr-tiles-empty"><button type="button" class="tr-text-button" data-trade-roster-side="${escapeAttr(side)}" data-trade-view="pick">Choose from ${escapeHtml(team)}'s list</button></li>`;
   return `<section class="tr-side${state.tradeRosterSide === side ? " is-picking" : ""}" data-tr-side="${escapeAttr(side)}" ${teamBrandStyle(team)}>
     <header class="tr-side-head">${partnerPicker}<span class="tr-side-verb">gives</span>${selected.length ? tradeSideTotalBar(selected, total, participants, colorOf, team) : ""}${remove}</header>
-    <ul class="tr-tiles" data-trade-scroll="selected-${escapeAttr(side)}" aria-label="${escapeAttr(team)} gives">${selected.length ? `<li class="tr-tiles-head" aria-hidden="true"><span></span><span>Player</span><span>Roles</span><span>Value</span><span>OVR</span><span>Contract</span>${remove || side ? "<span></span>" : ""}</li>` : ""}${tiles}</ul>
+    <ul class="tr-tiles" data-trade-scroll="selected-${escapeAttr(side)}" aria-label="${escapeAttr(team)} gives">${selected.length ? `<li class="tr-tiles-head" aria-hidden="true"><span></span><span>Player</span>${participants.length > 2 ? "<span>To</span>" : ""}<span>Roles</span><span>Value</span><span>OVR</span><span>Contract</span>${remove || side ? "<span></span>" : ""}</li>` : ""}${tiles}</ul>
     ${tradeSalaryGauge(flow, {bars: false})}
   </section>`;
 }
@@ -11415,7 +11414,7 @@ function approvedPlayerCardBody(detail, options = {}) {
       ${detail.college_profile ? collegeProfileStrip(detail.college_profile, detail.scouting_profile) : ""}
       ${/* Round 10: the heat maps are this page's main display (recent games, the game-score chart and the payroll
           share left the page; the contract is in the header). */ ""}
-      <section class="approved-card-panel approved-player-spatial player-overview-court"><header>Court Influence</header>${spatialHeatmapMarkup(detail.spatial_profile, { compact: true })}</section>
+      <section class="approved-card-panel approved-player-spatial player-overview-court">${spatialHeatmapMarkup(detail.spatial_profile, { compact: true })}</section>
     </section>
     <section class="player-card-page player-card-page--details${detail.inputs_profile ? " player-card-page--layers" : ""}" data-player-page="${pageOffset + 1}" data-page-title="Ratings & Profiles" aria-label="Complete ratings and radar profiles" hidden>
       ${detail.inputs_profile ? inputsProfilePage(detail.inputs_profile) : `<div class="approved-player-identity-ratings" aria-label="Complete ratings">${playerCardGroupedRatings(ratings, detail, {
@@ -11425,6 +11424,16 @@ function approvedPlayerCardBody(detail, options = {}) {
     </section>
     ${detail.is_prospect ? "" : `<section class="player-card-page player-card-page--health" data-player-page="${pageOffset + 2}" data-page-title="Health & Injury Outlook" aria-label="Injury body map and outlook" hidden>${injuryBodyMapPanel(detail)}</section>`}
   </div>`;
+}
+
+// Round 13: a click anywhere on a player's row in a board table opens his card (not only on his name).
+if (typeof document !== "undefined" && !globalThis.__rowCardClickWired) {
+  globalThis.__rowCardClickWired = true;
+  document.addEventListener("click", event => {
+    const row = event.target.closest?.(".card-board-body tbody tr");
+    if (!row || event.target.closest("button, a, input, select, textarea, summary, details, label, [role='button']")) return;
+    row.querySelector("[data-fa-player-card], [data-dashboard-player-card]")?.click();
+  });
 }
 
 function wirePlayerCardPages(card, entry) {
@@ -11441,6 +11450,19 @@ function wirePlayerCardPages(card, entry) {
   };
   card._showPlayerCardPage = showPage;
   card._playerCardPageRoot = root;
+  // Round 13: the view pills, keys and captions above and below each heat map are exactly as wide as the court drawn
+  // (the court keeps its shape inside a wider box), so nothing overhangs the maps.
+  const fitCourts = () => root.querySelectorAll('.player-overview-court .spatial-heatmap').forEach(map => {
+    const court = [...map.querySelectorAll('svg.spatial-court')].find(svg => svg.clientHeight > 0);
+    const box = court?.viewBox?.baseVal;
+    if (!court || !box?.height) return;
+    map.style.setProperty('--court-draw-w', `${Math.round(Math.min(court.clientWidth, court.clientHeight * box.width / box.height))}px`);
+  });
+  if (typeof ResizeObserver === 'function') {
+    const observer = new ResizeObserver(() => fitCourts());
+    root.querySelectorAll('.player-overview-court').forEach(node => observer.observe(node));
+  }
+  if (typeof setTimeout === 'function') setTimeout(fitCourts, 0);
   showPage(Number.isInteger(entry.page) ? entry.page : 0);
   const updateSeason = (strip, selected) => {
     const career = JSON.parse(strip.dataset.playerCareerOptions || '[]');
@@ -11615,7 +11637,8 @@ async function dashboardPlayerCard(playerId) {
 async function freeAgentPlayerCard(playerId) {
   if (await focusOpenExtensionCard(playerId)) return;
   const player = freeAgencyCandidate(playerId);
-  if (!player) return;
+  // Round 13: offseason tables use this button for the user's own players too; they get their regular card.
+  if (!player) return dashboardPlayerCard(playerId);
   const detail = await loadPlayerCardDetail(playerId);
   if (!detail) return;
   await openPlayerCardOnClipboard({
@@ -16770,7 +16793,7 @@ function tradeDealTile(asset, {removeSide = "", routeFrom = "", fresh = false, c
   const id = asset.id || asset.value || "";
   const name = asset.name || asset.label || id || "Asset";
   const remove = removeSide ? `<button type="button" class="tr-tile-remove" data-remove-side="${escapeAttr(removeSide)}" data-asset-id="${escapeAttr(id)}" aria-label="Remove ${escapeAttr(name)}" title="Remove ${escapeAttr(name)}">×</button>` : "";
-  const route = routeFrom && typeof tradeWorkspaceParticipants === "function" ? `<label class="tr-tile-route"><span>to</span><select data-trade-destination="${escapeAttr(tradeRouteKey(routeFrom, asset))}" aria-label="Destination for ${escapeAttr(name)}">${tradeWorkspaceParticipants().filter(row => row.team !== routeFrom).map(row => `<option value="${escapeAttr(row.team)}" ${tradeAssetDestination(routeFrom, asset) === row.team ? "selected" : ""}>${escapeHtml(row.team)}</option>`).join("")}</select></label>` : "";
+  const route = routeFrom && typeof tradeWorkspaceParticipants === "function" ? `<label class="tr-tile-route">${teamLogoSrc(tradeAssetDestination(routeFrom, asset)) ? `<img class="tr-route-logo" src="${escapeAttr(teamLogoSrc(tradeAssetDestination(routeFrom, asset)))}" alt="" />` : ""}<span class="sr-only">to</span><select data-trade-destination="${escapeAttr(tradeRouteKey(routeFrom, asset))}" aria-label="Destination for ${escapeAttr(name)}">${tradeWorkspaceParticipants().filter(row => row.team !== routeFrom).map(row => `<option value="${escapeAttr(row.team)}" ${tradeAssetDestination(routeFrom, asset) === row.team ? "selected" : ""}>${escapeHtml(row.team)}</option>`).join("")}</select></label>` : "";
   const value = tradeKnownNumber(asset.trade_value);
   const valueCell = tradeValueBar(value, color);
   if (asset.kind !== "player") {
@@ -16778,7 +16801,7 @@ function tradeDealTile(asset, {removeSide = "", routeFrom = "", fresh = false, c
     // Round 6: the pick's terms in its own field, with the full wording behind a Details drop-down (not a hover).
     const terms = [asset.kind === "pick_swap" ? "Swap right" : "", pick.note || ""].filter(Boolean).join(" · ");
     const details = pick.full ? `<details class="tr-tile-details"><summary>Details</summary><p>${escapeHtml(pick.full)}</p></details>` : "";
-    return `<li class="tr-tile is-pick${fresh ? " is-new" : ""}"><span class="tr-tile-face">${typeof draftAssetGlyph === "function" ? draftAssetGlyph(asset, true, true) : ""}</span><span class="tr-tile-main"><strong class="tr-tile-name">${escapeHtml(pick.short)}</strong>${route ? `<span class="tr-tile-sub">${route}</span>` : ""}</span><span class="tr-tile-roles tr-tile-terms">${terms ? `<span class="tr-tile-note">${escapeHtml(terms)}</span>` : ""}${removeSide && state.tradeTab !== "finder" && asset.kind === "pick" && globalThis.TradePickTerms?.eligible(asset) && typeof tradePickRuleSummary === "function" ? `<button type="button" class="tr-text-button tr-tile-conditions" data-pick-terms-open="${escapeAttr(id)}">${escapeHtml(tradePickRuleSummary(id) || "Add conditions")}</button>` : ""}</span>${valueCell}<span class="tr-tile-ovr"></span><span class="tr-tile-contract tr-tile-terms">${details}</span>${remove}</li>`;
+    return `<li class="tr-tile is-pick${fresh ? " is-new" : ""}"><span class="tr-tile-face">${typeof draftAssetGlyph === "function" ? draftAssetGlyph(asset, true, true) : ""}</span><span class="tr-tile-main"><strong class="tr-tile-name">${escapeHtml(pick.short)}</strong></span>${route ? `<span class="tr-tile-to">${route}</span>` : ""}<span class="tr-tile-roles tr-tile-terms">${terms ? `<span class="tr-tile-note">${escapeHtml(terms)}</span>` : ""}${removeSide && state.tradeTab !== "finder" && asset.kind === "pick" && globalThis.TradePickTerms?.eligible(asset) && typeof tradePickRuleSummary === "function" ? `<button type="button" class="tr-text-button tr-tile-conditions" data-pick-terms-open="${escapeAttr(id)}">${escapeHtml(tradePickRuleSummary(id) || "Add conditions")}</button>` : ""}</span>${valueCell}<span class="tr-tile-ovr"></span><span class="tr-tile-contract tr-tile-terms">${details}</span>${remove}</li>`;
   }
   const overall = tradeKnownNumber(asset.overall ?? asset.ratings?.overall);
   const roles = typeof playerRoleChip === "function" && (asset.primary_off_role || asset.primary_def_role) ? `<span class="tr-role-pair">${playerRoleChip(asset.primary_off_role)}${playerRoleChip(asset.primary_def_role)}</span>` : "";
@@ -16786,7 +16809,7 @@ function tradeDealTile(asset, {removeSide = "", routeFrom = "", fresh = false, c
   const contract = Object.keys(asset.salary_by_year || {}).length || asset.contract_terms?.length || asset.contract ? tradeAssetContract(asset) : "—";
   void roles;
   const roleField = `<span class="tr-tile-roles">${[asset.primary_off_role, asset.primary_def_role].filter(Boolean).map(role => { const [label, tone] = (typeof PLAYER_ROLE_CHIPS === "object" && PLAYER_ROLE_CHIPS[role]) || [role, "unknown"]; return `<span class="role-text role-${escapeAttr(tone)}">${escapeHtml(label)}</span>`; }).join("") || "—"}</span>`;
-  return `<li class="tr-tile${fresh ? " is-new" : ""}"><span class="tr-tile-face">${playerHeadshotMarkup(asset, "trade-player-headshot") || ""}</span><span class="tr-tile-main"><span class="tr-tile-top"><button type="button" class="trade-player-link tr-tile-name" data-dashboard-player-card="${escapeAttr(id)}">${playerNameWithInjuryMarkup(asset, name)}</button>${sub ? `<span class="tr-tile-meta">${sub}</span>` : ""}</span>${route ? `<span class="tr-tile-sub">${route}</span>` : ""}</span>${roleField}${valueCell}<span class="tr-tile-ovr" title="Overall rating">${overall === null ? "—" : `<b style="color:${tradeRatingColor(overall)}">${overall.toFixed(0)}</b>`}</span><span class="tr-tile-contract">${contract}</span>${remove}</li>`;
+  return `<li class="tr-tile${fresh ? " is-new" : ""}"><span class="tr-tile-face">${playerHeadshotMarkup(asset, "trade-player-headshot") || ""}</span><span class="tr-tile-main"><span class="tr-tile-top"><button type="button" class="trade-player-link tr-tile-name" data-dashboard-player-card="${escapeAttr(id)}">${playerNameWithInjuryMarkup(asset, name)}</button>${sub ? `<span class="tr-tile-meta">${sub}</span>` : ""}</span></span>${route ? `<span class="tr-tile-to">${route}</span>` : ""}${roleField}${valueCell}<span class="tr-tile-ovr" title="Overall rating">${overall === null ? "—" : `<b style="color:${tradeRatingColor(overall)}">${overall.toFixed(0)}</b>`}</span><span class="tr-tile-contract">${contract}</span>${remove}</li>`;
 }
 
 function incomingOfferAsset(asset) {

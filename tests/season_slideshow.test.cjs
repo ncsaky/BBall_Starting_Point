@@ -55,7 +55,7 @@ test('every recap and outlook slide renders its data', () => {
   const expected = {champion: 'Finals MVP', standings: 'Won the title', awards: 'Off the bench in 60 games', leaders: 'Screener', your_season: '13th in the West',
                     trades: 'After the trade: 29 G', coaching: 'Rides his stars', free_agents: '$23.9M', look_ahead: 'belongs to Utah Jazz', power: '▲2',
                     continuity: 'Newcomer (1500)', leaders_revisited: 'aria-label="moved to"', your_team: 'Rim Protector', team_profile: '$9.8M', contracts: 'Extend Me',
-                    prospects: 'No. 4', storylines: 'Youth movement', injuries: 'about 35 games'};
+                    prospects: 'No. 4', storylines: 'Youth movement', injuries: 'games out'};
   for (const [key, slide] of Object.entries(slides)) {
     const markup = RENDER[key]({key, ...slide});
     assert.ok(markup.includes(expected[key]), `${key} is missing ${expected[key]}`);

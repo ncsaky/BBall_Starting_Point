@@ -34,3 +34,4 @@ Objective: build the user's round 12 answers (`q12-...`; the deck frames were ta
     with a red outline and hatching (green for targets); the rest grey.
   - Menus and drop-down lists: one frosted panel, plain rows, faint shortcut hints, an .18s drop-in animation;
     drop-down buttons match the frosted chips.
+- Round 13 deck published 2026-11-24 (version 16, 9 questions `q13-…`): first deck in the JFresh look; adds a Sim menu frame (`menu_sim`).
