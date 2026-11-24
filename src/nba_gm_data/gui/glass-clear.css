@@ -648,3 +648,24 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-sh
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .tr-pager > button:disabled { opacity: .55; }
 /* Payroll increases: a lighter red that reads on the glass. */
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot :is(.tr-payroll-frame figcaption b, .tr-payroll-table td).is-up { color: #ffb0b0 !important; }
+
+/* Table headers (user, 2026-11-24): the "Player" header text starts where the headshots start, and the header row's
+   fill runs to the card's edges while the first and last labels stay indented. Headshots that sat flush against the
+   table's left edge (Roster, Stats, Contracts) move in to the first column's padding, so they line up with the header. */
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table tbody tr > :is(td, th):first-child .player-headshot-frame { left: 12px !important; }
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table tbody tr > :is(td, th):first-child:has(.player-headshot-frame) :is(.summary-player-card-button, .roster-player-card-button) { padding-left: 26px !important; }
+/* The header fill reaches the card edges: the first and last header cells paint the 10px between the table and the
+   card (the table itself stays inset, so the rows keep their margin). */
+:where(html[data-glass="clear"] .has-card-board .card-board-body table > thead > tr > th:is(:first-child, :last-child)) { position: relative; } /* zero weight: sticky headers keep sticky */
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table > thead > tr > th:first-child::before,
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table > thead > tr > th:last-child::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 10px; background: inherit; box-shadow: inherit; border-bottom: inherit; pointer-events: none;
+}
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table > thead > tr > th:first-child::before { right: 100%; }
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table > thead > tr > th:last-child::after { left: 100%; }
+/* Grid tables (Minutes, Next Opponent, Development…): the header row reaches the card edges, its labels stay put. */
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body [data-house-table] > [data-house-head] { margin-inline: -10px !important; padding-inline: 22px !important; width: calc(100% + 20px) !important; max-width: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board [data-board-window="opponent"] .season-opponent-player-link { padding-left: 0 !important; }
+/* Stats and Contracts: the name column 20px wider for the indented headshot (their windows are 20px wider too). */
+html[data-glass="clear"] body.unified-terminal-ui :is(.assets-stats, .assets-contracts) .linked-roster-group col:first-child,
+html[data-glass="clear"] body.unified-terminal-ui :is(.assets-stats, .assets-contracts) .linked-roster-group :is(th, td):first-child { width: 182px !important; }
