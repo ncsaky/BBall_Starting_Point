@@ -1,6 +1,6 @@
 # Sidebar pages layout (branch `sidebar-pages`)
 
-Progress: 1/7 - building the page shell
+Progress: 6/7 - testing every page, phase and pop-up; report next
 
 Asked 2026-11-24 night: on a branch, replace the free-floating card board with a sidebar of pages. Each sidebar item
 opens a page that fills the screen; the cards are "dissolved" onto the pages (no window frames), several per page or one
@@ -24,4 +24,14 @@ pop-ups. Don't break anything inside the cards.
 - Footer of every page: league wire ticker on the left, the next step on the right (Sim / phase buttons).
 
 ## Resume state
-- (update as work proceeds)
+- Built and committed on `sidebar-pages`: `gui/card-pages.js` (page list, layout engine, sidebar, next-step dock),
+  `gui/card-pages.css`, hooks in `card-board.js` (pages own their cards; the board keeps pop-ups), Settings > Layout
+  (Pages / Board), a pages version of the first-run tour, `tests/sidebar_pages.test.cjs`.
+- Tested on the pages-preview copy (port 8767): every regular page, preseason (Opening Roster, Set The Roster,
+  Preseason Outlook as a page), a full season cycle (playoffs bracket and stats, champion, year-end recap, offseason
+  checklist, draft night and summary, free agency, late summer, next preseason), pop-ups (player card, box score,
+  trade room, Player Finder, Settings), viewing another team, the tour, the layout switch, 1280-1728 wide screens.
+- Browser tests all pass except startup_video (its 188 MB movie is git-ignored, so the worktree lacks it).
+- Screenshots: scratchpad `pages/shots/` (headless Chrome script `pages/shots.mjs`).
+- Test-save lesson: copying a save's files by hand shares its history database (the JSON names it); use the app's
+  export / restore instead.

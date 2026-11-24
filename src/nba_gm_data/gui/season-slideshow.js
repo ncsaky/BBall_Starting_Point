@@ -263,7 +263,8 @@
     power(slide) {
       const change = (r) => r.change === null || r.change === undefined ? "—" : r.change > 0 ? `<span class="ss-up">▲${r.change}</span>` : r.change < 0 ? `<span class="ss-down">▼${-r.change}</span>` : "=";
       const columns = [
-        {label: "#", render: (r) => r.rank, cls: "ss-num", width: "30px"},
+        // 38px: two-digit ranks were cut to "1…" at 30px.
+        {label: "#", render: (r) => r.rank, cls: "ss-num", width: "38px"},
         {label: "Team", render: (r) => teamCell(r.team), cls: "ss-left", width: "72px"},
         {label: "Overall", render: (r) => num(r.overall), cls: "ss-num", width: "58px"},
         {label: "Last finish", render: (r) => r.last_finish ?? "—", cls: "ss-num", width: "72px"},

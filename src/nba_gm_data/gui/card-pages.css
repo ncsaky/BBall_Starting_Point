@@ -361,3 +361,17 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-sidebar .season-c
 html[data-layout="pages"] body.unified-terminal-ui #app :is(.pages-nav .pages-nav-item, .pages-sidebar .season-command-actions > button, .pages-slot-head > .pages-slot-link) {
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
 }
+
+/* The offseason steps chip takes the sidebar's full width under the team (it wrapped onto three lines beside the logo). */
+html[data-layout="pages"] body .pages-sidebar .season-command-club > .season-command-date { display: contents !important; }
+html[data-layout="pages"] body .pages-sidebar .season-command-date > time,
+html[data-layout="pages"] body .pages-sidebar .season-command-date > span { grid-column: 2; }
+html[data-layout="pages"] body .pages-sidebar .season-command-date > details { grid-column: 1 / -1; margin-top: 10px; }
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary.season-steps-summary,
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary { max-width: none !important; width: 100%; box-sizing: border-box; }
+
+/* Phase rooms (Set The Roster, free agency, the bracket, the draft) drew their window's grey outline inside the page:
+   the panel a page card carries keeps its size but loses that outline, like every other card on a page. */
+html[data-layout="pages"] body .season-command-dashboard.is-pages .is-page-card [data-seasonal-context] > :not([data-seasonal-context]) {
+  border-color: transparent !important; box-shadow: none !important;
+}
