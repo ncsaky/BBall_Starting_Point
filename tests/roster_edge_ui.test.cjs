@@ -52,7 +52,8 @@ test('the opening-roster window shows the two-way places, their games and open p
      seasons: [{season: '2027-28', salary_millions: 0.7}], convert: {ok: false, reason: 'No standard roster spot'}}]}}, roles);
   // Taste deck round 3: rows of the opening-roster table under a section row, with a Details drop-down.
   assert.match(html, /Two-way places · 1 \/ 3 · 2 open/);
-  assert.match(html, /12 \/ 50 games/);
+  // Round 9: games used moved to the row's hover (the Guaranteed cell stays empty for two-way places).
+  assert.match(html, /active for 12 of the 50 NBA games/);
   assert.match(html, /outside your 15 standard spots and the salary cap/);
   assert.match(html, /No free agent is eligible/);
   assert.match(html, /data-two-way-convert="p" disabled/);

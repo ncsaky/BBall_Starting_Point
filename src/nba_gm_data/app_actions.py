@@ -2224,9 +2224,16 @@ def player_card_payload(canonical: dict[str, Any], save_path: Path, player_id: s
                 from .sim import rust_display
                 state_row = next((row for row in save.get("health_states", []) if str(row.get("player_id")) == player_id), None)
                 rust = rust_display(state_row)
-                if rust:
+                # A player can be back with his rust gone but his minutes still limited: rust_display then has no
+                # rust fields (this read them unconditionally and the whole player card failed).
+                if rust.get("rust_penalty"):
                     inputs_profile["coach"]["availability_note"] = (
                         f"Rusty after injury · in-game ratings −{rust['rust_penalty']} · fades in about {rust['rust_days']} days")
+                elif rust.get("minutes_limit_pct"):
+                    games = int(rust.get("minutes_limit_games") or 0)
+                    inputs_profile["coach"]["availability_note"] = (
+                        f"Back from injury · minutes limited to about {rust['minutes_limit_pct']}% "
+                        f"for {games} more game{'s' if games != 1 else ''}")
             result["inputs_profile"] = inputs_profile
     context["player_cards"][player_id] = result
     return result

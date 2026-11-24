@@ -124,3 +124,9 @@ html[data-glass="clear"] .pc4-legend-range .pc4-key.dot.is-prior::before { box-s
 .pc4-pass-band { margin-top: 6px; }
 .pc4-pass-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 18px; }
 .pc4-pass-cols .pc4-r.pass, .pc4-pass-cols .pc4-pass-head { grid-template-columns: minmax(110px, .9fr) minmax(70px, 1fr) 28px minmax(70px, 1fr) 28px; }
+
+/* Round 9: Tendencies as two blocks: Choices and style, then Mixes across the rest of the width with its bars in two
+   wide columns (no blank third column). */
+.pc4-layers > .pc4-layer:last-child > .pc4-body { column-count: auto !important; display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 0 22px; align-items: start; }
+.pc4-layers > .pc4-layer:last-child > .pc4-body > .pc4-group:has(.pc4-dist) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 22px; align-content: start; }
+.pc4-layers > .pc4-layer:last-child > .pc4-body > .pc4-group:has(.pc4-dist) > h4 { grid-column: 1 / -1; }

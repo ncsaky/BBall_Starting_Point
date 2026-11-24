@@ -76,9 +76,9 @@ test('team maps add an overall offense view; defense tabs read Overall, On-ball,
   assert.match(markup,/FG vs league, with playmaking: \+1\.3 pts/);
   assert.match(markup,/<em>Worse<\/em>[\s\S]*<em>Better<\/em>/);
   assert.doesNotMatch(markup,/Help<|On his man|On the ball/);
-  // A player's two offense layers sit on different shots, so a player gets no overall offense view.
   delete p.entity_type;
-  assert.doesNotMatch(s.spatialHeatmapMarkup(p,{compact:true}),/data-court-tab="offense_total"/);
+  // Round 9: players get the Overall offense view too (his shooting plus his lift on teammates).
+  assert.match(s.spatialHeatmapMarkup(p,{compact:true}),/data-court-tab="offense_total"/);
 });
 test('missing references are not displayed as average performance',()=>{
   const s=fixture(),p=profile();p.shot_chart.basis='unavailable';

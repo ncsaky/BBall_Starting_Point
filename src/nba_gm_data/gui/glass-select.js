@@ -196,7 +196,9 @@
 
   function look() {
     if (!pending) return;
-    const group = [...document.querySelectorAll(GROUP)].find((node) => node.offsetWidth && keyOf(node) === pending.key);
+    // The clicked group itself when it is still on the page (two pills can share labels, e.g. Off / On); otherwise the
+    // re-drawn group with the same options.
+    const group = pending.group?.isConnected ? pending.group : [...document.querySelectorAll(GROUP)].find((node) => node.offsetWidth && keyOf(node) === pending.key);
     const active = group && activeOf(group);
     if (group && active && active.textContent.trim() === pending.target) {
       slide(group, active);
@@ -213,7 +215,7 @@
     const from = activeOf(group);
     if (!from) return;
     const box = group.getBoundingClientRect(), was = from.getBoundingClientRect();
-    pending = { key: keyOf(group), x: was.left - box.left, w: was.width, target: button.textContent.trim(), at: Date.now() };
+    pending = { key: keyOf(group), group, x: was.left - box.left, w: was.width, target: button.textContent.trim(), at: Date.now() };
     setTimeout(look, 0);
   }, true);
 })();

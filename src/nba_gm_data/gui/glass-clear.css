@@ -870,3 +870,74 @@ html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRo
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell .tr-strip-side.is-current { background: rgba(255, 255, 255, .12) !important; border-color: rgba(255, 255, 255, .6) !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-shell.modal-shell.modal-trade-room { background-color: rgba(13, 22, 34, .44) !important; }
 html[data-glass="clear"] :is(.card-board-window, #modalRoot .modal-shell, .season-slideshow .ss-card) { --tr-bad: #ffb8b8; --tr-hard: #ffb8b8; }
+
+/* ---------- The board is a flat colour, like the JFresh reference (user, 2026-11-24: the team-colour glow behind
+   everything "looks so dead giveaway AI"). Only the faint grid stays; pop-ups and slides have no glow either. */
+html[data-glass="clear"] body .season-command-dashboard.has-card-board {
+  background-image: linear-gradient(to right, var(--board-grid) 1px, transparent 1px), linear-gradient(to bottom, var(--board-grid) 1px, transparent 1px) !important;
+  background-size: 24px 24px, 24px 24px !important;
+  background-attachment: local, local !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell.modal-shell.modal-shell,
+html[data-glass="clear"] .season-slideshow .ss-card { background-image: none !important; }
+
+/* Player card header (round 9). The team as a logo badge at the headshot's lower corner, about 60% of its size. */
+.approved-player-profile-head .profile-headshot-wrap { position: relative; display: inline-block; flex: none; line-height: 0; }
+.approved-player-profile-head .profile-headshot-wrap > .player-headshot-frame { display: block; }
+.approved-player-profile-head .profile-team-badge { position: absolute; right: -14%; bottom: -6%; width: 60%; height: auto; aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .45)); pointer-events: auto; }
+/* Contract and roles as two clear blocks. */
+.player-header-facts { grid-template-columns: auto auto !important; gap: 0 56px !important; }
+.player-header-fact.is-contract > b { font-size: 26px !important; display: flex !important; align-items: baseline; gap: 8px; }
+.player-header-fact.is-contract > b > span { font-size: 13px; font-weight: 600; color: #c9d5e0; }
+.player-header-fact.is-contract > em { font-style: normal; color: #c9d5e0; font-size: 14px; font-weight: 600; }
+.player-header-roles { display: grid; grid-template-columns: auto auto; gap: 4px 14px; align-items: baseline; }
+.player-header-role { display: contents; }
+.player-header-role > small { color: #c9d5e0; font: italic 700 12px/1.2 var(--ui-font, inherit); font-variant: small-caps; letter-spacing: .03em; }
+.player-header-role > .role-text { font-size: 17px; font-weight: 700; white-space: nowrap; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-profile-head > .profile-headshot-wrap { display: inline-block !important; width: max-content !important; flex: none !important; justify-self: start; align-self: end; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-profile-head .profile-team-badge { right: -18% !important; bottom: -4% !important; width: 60% !important; }
+/* Player card overview (round 9): Recent Games ends at its last row (its row fits its content; the game-score and
+   payroll panels take the rest); Offense / Defense labels and the heat-map key larger. */
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .player-card-page--overview { grid-template-rows: auto auto minmax(0, 1fr) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .player-card-page--overview > .player-page-game-log { height: auto !important; align-self: start; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .spatial-court-group-label { font-size: 22px !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .spatial-legend { font-size: 15px !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .spatial-legend :is(span, em) { font-size: 15px !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .spatial-legend i.spatial-relative-key > b { width: 17px !important; height: 17px !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .spatial-legend i.spatial-relative-key { gap: 2px !important; }
+/* Long pills: every option the same width, its label centred. */
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .settings-pill, [role="tablist"]) { grid-auto-columns: 1fr !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .settings-pill, [role="tablist"]) > :is(button, [role="tab"]) { justify-content: center !important; text-align: center !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .settings-pill, [role="tablist"]) > :is(button, [role="tab"]) { width: 100% !important; max-width: none !important; justify-self: stretch !important; min-width: 0 !important; flex: initial !important; }
+/* Value tab (round 9): the team blocks share the full width and their rows flex, so nothing overlaps. */
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .approved-trade-values { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; column-gap: 28px !important; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .approved-trade-values .approved-value-row { grid-template-columns: minmax(0, 1fr) minmax(140px, 1.3fr) 56px !important; column-gap: 12px; }
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .approved-trade-values .approved-value-row > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Trade room top band (round 9): indented like the sections below it, controls centred in it; "Add or change
+   players" a solid blue pill on the right beside Add a team. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-room-toolbar { margin: 8px 9px 8px !important; padding: 6px 10px !important; border-radius: 10px !important; align-items: center !important; min-height: 40px; box-sizing: border-box; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-toolbar-controls { display: flex !important; align-items: center !important; gap: 12px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-toolbar-controls > .tr-add-change { min-height: 28px !important; height: 28px; padding: 0 16px !important; border: 0 !important; border-radius: 999px !important; background: #2f6bbf !important; color: #fff !important; font: 600 12.5px/1 var(--ui-font, inherit) !important; display: inline-flex !important; align-items: center; gap: 7px; box-shadow: 0 1px 3px rgba(0, 0, 0, .25) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-toolbar-controls > .tr-add-change:hover { background: #3a7ad4 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-toolbar-controls > .tr-add-change img { width: 12px !important; height: 12px !important; filter: invert(1) brightness(2) !important; }
+/* The tab pill sits inside its card with an even margin (it poked past the card's rounded top corners). */
+body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal .tr-lower { padding: 8px 8px 0 !important; border-radius: 10px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-lower > .tr-lower-tabs { width: 100% !important; margin: 0 0 6px !important; box-sizing: border-box; }
+/* Pick logos start where the headshots start. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room table.tr-table.trade-ledger td.trade-ledger-portrait { text-align: left !important; }
+/* The trade room much more see-through (round 9). */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-shell.modal-shell.modal-trade-room { background-color: rgba(13, 22, 34, .26) !important; }
+/* Contrast on the lighter trade room: brighter unchosen tab labels, text buttons and the disabled Review deal. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, [role="tablist"]) > :is(button, [role="tab"]):not(.active):not([aria-pressed="true"]):not([aria-selected="true"]) { color: #fff !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-text-button { color: #d8eaff !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-pick-bar button.tr-button.is-primary:disabled { color: #e2e9f0 !important; background: rgba(255, 255, 255, .10) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-room-toolbar { background: rgba(255, 255, 255, .03) !important; }
+/* Opening roster two-way places (round 9): Make standard / Release / Sign two-way are plain text actions, underlined
+   on hover, no button box. */
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot#modalRoot) .cutdown-tw-row :is([data-two-way-release], [data-two-way-convert], [data-two-way-sign])[type="button"] {
+  background: transparent !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  padding: 0 !important; min-height: 0 !important; border-radius: 0 !important; color: #cfe4ff !important; font-weight: 600 !important; text-decoration: none !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot#modalRoot) .cutdown-tw-row :is([data-two-way-release], [data-two-way-convert], [data-two-way-sign])[type="button"]:hover:not(:disabled) { background: transparent !important; text-decoration: underline !important; text-underline-offset: 3px; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot#modalRoot) .cutdown-tw-row :is([data-two-way-release], [data-two-way-convert], [data-two-way-sign])[type="button"]:disabled { color: #9fb0c0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui .cutdown-tw-row .cutdown-choice:not(.is-slider) { gap: 16px !important; background: transparent !important; padding: 0 !important; }

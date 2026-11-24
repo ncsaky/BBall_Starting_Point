@@ -3366,6 +3366,12 @@ const SPATIAL_LEAGUE_REFERENCE = {
     help: { spread: 3.81, mid: [-0.43, 0.1, -0.43, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.06, 0.06, 0.06, 0.06, 0.06, 0.06] },
   },
 };
+// Round 9: players get the Overall offense view too (his own shooting plus the lift he gives teammates, per zone);
+// its league reference is the two layers' references added together.
+{
+  const offense = SPATIAL_LEAGUE_REFERENCE.player.offense, playmaking = SPATIAL_LEAGUE_REFERENCE.player.playmaking;
+  SPATIAL_LEAGUE_REFERENCE.player.offense_total ||= { spread: Math.hypot(offense.spread, playmaking.spread), mid: offense.mid.map((value, index) => value + (playmaking.mid[index] || 0)) };
+}
 const SPATIAL_COURT_FLOOR = [237, 240, 242];
 
 // Relative score in [-1, 1] (null when the comparison is unknown): 0 is the league's typical value in this region.
@@ -3420,7 +3426,7 @@ function spatialCoarseCells(cells, densityIndex) {
 }
 
 const SPATIAL_COURT_VIEWS = {
-  offense_total: { density: 3, delta: "delta_pp", plus: "playmaking_delta_pp", tab: "Overall", legend: "Shooting with playmaking", measure: "FG vs league, with playmaking", shots: "shots" },
+  offense_total: { density: 3, delta: "delta_pp", plus: "playmaking_delta_pp", tab: "Overall", legend: "Shooting with playmaking", measure: "FG vs league, with playmaking", shots: "shots", caption: "His whole offensive impact by zone: his own shooting against league average plus how much his passing, driving and gravity lift his teammates' shooting there." },
   offense: { density: 3, delta: "delta_pp", tab: "Scoring", legend: "Shooting vs league", measure: "FG vs league", shots: "shots", caption: "His own shots: where he shoots, and his projected FG% against league average." },
   playmaking: { density: 6, delta: "playmaking_delta_pp", tab: "Playmaking", legend: "Playmaking lift", measure: "Teammates' FG change", shots: "teammates' shots", caption: "His teammates' shots while he plays (his own shots left out): where they shoot, and how much better or worse they shoot because of his passing, driving and gravity." },
   defense: { density: 4, delta: "suppression_delta_pp", tab: "Overall", legend: "Overall defense", measure: "Opponent FG held down", shots: "opponent shots", caption: "All of his defense: how much he lowers opponents' FG% by zone. Blue is better defense." },
@@ -3597,9 +3603,9 @@ function spatialHeatmapMarkup(profile, options = {}) {
   const team = profile.entity_type === "team";
   const extended = (profile.shot_chart.views || []).includes("playmaking") && (profile.shot_chart.cells[0] || []).length >= 9;
   // Teams get an overall offense view (own shot-making plus the playmaking lift, both on the team's shots). A player's
-  // two offense layers sit on different shots (his own; his teammates'), so they are not added together.
+  // Round 9: players get the Overall view too (the user asked for overall offensive impact).
   const groups = extended
-    ? { offense: team ? ["offense_total", "offense", "playmaking"] : ["offense", "playmaking"], defense: ["defense", "onball", "help"] }
+    ? { offense: ["offense_total", "offense", "playmaking"], defense: ["defense", "onball", "help"] }
     : { offense: ["offense"], defense: ["defense"] };
   const entity = team ? "team" : "player";
   const legends = `<div class="spatial-legends">${spatialHeatmapLegend(SPATIAL_COURT_VIEWS[groups.offense[0]].legend, "offense", entity)}${spatialHeatmapLegend(SPATIAL_COURT_VIEWS[groups.defense[0]].legend, "defense", entity)}</div>`;
@@ -7872,10 +7878,11 @@ function cutdownTwoWayRows(room, roleCell) {
     const convert = row.convert || {};
     const pct = Math.min(100, Math.round(100 * Number(row.active_games || 0) / Math.max(1, Number(row.active_limit || 50))));
     const pay = (row.seasons || [])[0];
-    return `<tr class="cutdown-tw-row">
+    void pct;
+    return `<tr class="cutdown-tw-row" title="${escapeAttr(`Two-way: active for ${row.active_games} of the ${row.active_limit} NBA games a two-way allows this season`)}">
       <th scope="row">${face(row)}</th><td>${escapeHtml(compactPos(row.position) || "—")}</td><td>${age(row)}</td><td>${ovr(row)}</td><td>${roleCell(row)}</td>
       <td>${pay ? `${money(pay.salary_millions)} × ${(row.seasons || []).length}` : "—"}</td>
-      <td><span class="cutdown-twoway-games" title="NBA games he has been active for this season, of the ${escapeAttr(row.active_limit)} a two-way allows"><i aria-hidden="true"><b style="width:${pct}%"></b></i><em>${escapeHtml(row.active_games)} / ${escapeHtml(row.active_limit)} games</em></span></td>
+      <td></td>
       <td><span class="cutdown-quote" title="Two-way pay sits outside the cap: releasing him leaves nothing on your books and opens the place.">${money(0)}</span></td>
       <td>${editable ? buttons([`<button type="button" data-two-way-convert="${escapeAttr(row.player_id)}" ${convert.ok ? "" : "disabled"} title="${escapeAttr(convert.ok ? `Convert to a standard minimum contract (${money(convert.salary_millions)} this season): he can play every game and in the playoffs.` : (convert.reason || ""))}">Make standard</button>`, `<button type="button" data-two-way-release="${escapeAttr(row.player_id)}">Release</button>`]) : ""}</td>
     </tr>`;
@@ -7884,7 +7891,7 @@ function cutdownTwoWayRows(room, roleCell) {
   const candidates = open ? room.two_way_candidates || [] : [];
   const candidateRows = candidates.map((row) => `<tr class="cutdown-tw-row is-candidate">
       <th scope="row">${face(row)}</th><td>${escapeHtml(compactPos(row.position) || "—")}</td><td>${age(row)}</td><td>${ovr(row)}</td><td>${roleCell(row)}</td>
-      <td>${money(row.pay_millions)} × 1</td><td><span class="cutdown-guarantee is-twoway">Free agent</span></td><td>—</td>
+      <td>${money(row.pay_millions)} × 1</td><td></td><td>—</td>
       <td>${editable ? buttons([`<button type="button" class="is-sign" data-two-way-sign="${escapeAttr(row.player_id)}" title="Sign ${escapeAttr(row.name || "him")} to a one-season two-way contract: outside the cap and your 15 spots, up to 50 NBA games">Sign two-way</button>`]) : ""}</td>
     </tr>`);
   const section = `<tr class="cutdown-section-row"><th scope="rowgroup" colspan="9"><span>Two-way places · ${escapeHtml(rows.length)} / ${escapeHtml(limit)}${open ? ` · ${open} open` : ""}</span><details class="cutdown-details"><summary>Details</summary><p>Two-way players sit outside your 15 standard spots and the salary cap. Each can be active for up to 50 NBA games a season; convert one to a standard contract before the last regular-season game to keep him for the playoffs.${open && candidates.length ? " The free agents listed can be signed into an open place now." : open ? " No free agent is eligible for a two-way right now." : ""}</p></details></th></tr>`;
@@ -8003,9 +8010,10 @@ function rosterCutdownDashboardWorkspace() {
       <div class="cutdown-foot-count${(summary.ready || summary.required === 0) && !short ? " is-ready" : ""}" role="status" aria-live="polite"><b>${escapeHtml(summary.after)}</b>/${escapeHtml(summary.target)} standard<i aria-hidden="true">·</i><b>${escapeHtml(view.two_way_count ?? 0)}</b>/${escapeHtml(view.two_way_limit || 3)} two-way</div>
       <details class="cutdown-details is-foot"><summary>Rules</summary><p>${escapeHtml(rules)}</p></details>
       ${short ? `<button type="button" class="ui-command cutdown-confirm" data-roster-fill>Fill with minimum contracts</button>` : ""}
-      ${moves ? `<button type="button" class="ui-command" data-cutdown-clear>Clear</button>` : ""}
       ${moves || summary.required ? `<button type="button" class="ui-command cutdown-confirm" data-cutdown-confirm ${summary.ready ? "" : "disabled"}>${moves ? `Apply ${moves} move${moves === 1 ? "" : "s"}` : "Release players"}</button>` : ""}
-      ${!short && view.in_season_limits === false && room.phase === "preseason" ? `<button type="button" class="ui-command" data-roster-submit ${summary.required === 0 && !moves ? "" : "disabled"} title="Submit your opening roster now (a legal roster is also submitted for you on the deadline)">${view.submitted ? "Submitted" : "Submit roster"}</button>` : ""}
+      ${!moves && !summary.required && !short ? (view.in_season_limits === false && room.phase === "preseason" && !view.submitted
+        ? `<button type="button" class="ui-command cutdown-confirm" data-roster-submit title="Set your opening roster now (a legal roster is also submitted for you on the deadline)">Set roster</button>`
+        : `<button type="button" class="ui-command cutdown-confirm" disabled title="Your roster is set: no changes to apply">Roster set</button>`) : ""}
     </footer>
   </div>`;
 }
@@ -8636,6 +8644,7 @@ function tradeRoomModalBody() {
           </div>
         </div>` : `
         <div class="tr-toolbar-controls">
+          ${state.tradeView === "deal" && typeof tradeWorkspaceParticipants === "function" && tradeWorkspaceParticipants().some(row => row.selected.length) ? `<button type="button" class="tr-button is-primary tr-add-change" data-trade-view-switch="pick"><img src="/assets/window-icons/plus.svg" alt="">Add or change players</button>` : ""}
           <div class="trade-add-participant"><select id="tradeAddTeam" aria-label="Additional trade team"><option value="">Add a team…</option>${extraTeams.map(team => `<option value="${escapeAttr(team.abbrev)}">${escapeHtml(team.abbrev)} ${escapeHtml(team.name || "")}</option>`).join("")}</select><button type="button" class="tr-text-button" data-trade-add-team aria-label="Add team to trade" ${(state.tradeAdditionalTeams || []).length >= 4 ? "disabled" : ""}>Add</button></div>
         </div>`}
     </div>
@@ -8954,6 +8963,8 @@ function renderTradeRoom() {
 
 function wireTradeRoom() {
   const root = els.modalRoot;
+  // Round 9: "Add or change players" lives in the top bar, beside Add a team.
+  root.querySelector("[data-trade-view-switch]")?.addEventListener("click", (event) => { state.tradeView = event.currentTarget.dataset.tradeViewSwitch; renderTradeRoom(); });
   const partner = root.querySelector("#tradePartner");
   const handle = task => Promise.resolve(task).catch(error => showToast(error.message || String(error), true));
   root.querySelector("[data-trade-add-team]")?.addEventListener("click", () => handle(addTradeParticipant(root.querySelector("#tradeAddTeam")?.value)));
@@ -9119,7 +9130,6 @@ function renderTradeBuilder(root) {
       <div class="tr-pick-body">${assetColumn(`${current.team} gives`, current.payload, current.side, current.team)}</div>
     </div>` : `
     <div class="trade-builder-layout tr-builder is-deal${multi ? " is-multi" : ""}">
-      <div class="tr-deal-bar"><button type="button" class="ui-command tr-add-change" data-trade-view="pick"><img src="/assets/window-icons/plus.svg" alt="">Add or change players</button></div>
       <div class="tr-deal-main">
         <section class="tr-stage" style="--tr-sides:${participants.length}">
           ${participants.map(row => tradeDealSide(row, participants, fresh)).join("")}
@@ -10775,21 +10785,20 @@ function prospectLockIcon() {
 // Round 8: the card header shows plain facts (team, contract, roles, size) instead of injury risk, decline watch and
 // trade value (those stay on their own pages and in the trade room).
 function playerHeaderFacts(detail) {
+  // Round 9: contract and roles only (the team is a logo badge on the headshot; size is in the subtext), laid out
+  // as two clear blocks: the contract as salary, length and the season it runs through; the roles by side.
   const coach = detail.inputs_profile?.coach || {};
-  const team = detail.team?.abbrev || "";
-  const logo = team && typeof teamLogoSrc === "function" && teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : "";
-  const seasons = (detail.salary_seasons || []).filter(row => Number.isFinite(Number(row.salary_millions)) && row.salary_millions !== null);
-  const contract = seasons.length ? `${money(Number(seasons[0].salary_millions))} × ${seasons.length}` : detail.is_prospect ? "Prospect" : "—";
-  const role = (key) => {
+  const seasons = (detail.salary_seasons || []).filter(row => row.salary_millions !== null && Number.isFinite(Number(row.salary_millions)));
+  const contract = seasons.length
+    ? `<div class="player-header-fact is-contract"><small>Contract</small><b>${escapeHtml(money(Number(seasons[0].salary_millions)))}<span>this season</span></b><em>${seasons.length} season${seasons.length === 1 ? "" : "s"} · through ${escapeHtml(seasons[seasons.length - 1].season)}</em></div>`
+    : `<div class="player-header-fact is-contract"><small>Contract</small><b>${detail.is_prospect ? "Prospect" : "None"}</b></div>`;
+  const role = (key, side) => {
     if (!key) return "";
     const [label, tone] = (typeof PLAYER_ROLE_CHIPS === "object" && PLAYER_ROLE_CHIPS[key]) || [rowLabel(key), "unknown"];
-    return `<span class="role-text role-${escapeAttr(tone)}">${escapeHtml(label)}</span>`;
+    return `<div class="player-header-role"><small>${side}</small><span class="role-text role-${escapeAttr(tone)}">${escapeHtml(label)}</span></div>`;
   };
-  const roles = [role(coach.primary_off_role), role(coach.primary_def_role)].filter(Boolean).join("");
-  const inches = Number(coach.height_inches);
-  const size = [detail.height || (Number.isFinite(inches) && inches ? `${Math.floor(inches / 12)}'${Math.round(inches % 12)}"` : ""), coach.weight_lbs ? `${Math.round(coach.weight_lbs)} lb` : ""].filter(Boolean).join(" · ");
-  const fact = (label, value, cls = "") => `<div class="player-header-fact${cls}"><small>${label}</small><b>${value}</b></div>`;
-  return `<div class="player-header-facts">${fact("Team", `${logo}${escapeHtml(detail.team?.name || team || "Free agent")}`, " is-team")}${fact("Contract", escapeHtml(contract))}${roles ? fact("Roles", roles, " is-roles") : ""}${size ? fact("Size", escapeHtml(size)) : ""}</div>`;
+  const roles = role(coach.primary_off_role, "Offense") + role(coach.primary_def_role, "Defense");
+  return `<div class="player-header-facts">${contract}${roles ? `<div class="player-header-fact is-roles"><small>Roles</small><div class="player-header-roles">${roles}</div></div>` : ""}</div>`;
 }
 
 function playerCardEvidence(detail) {
@@ -11308,7 +11317,7 @@ function approvedPlayerCardBody(detail, options = {}) {
   }).join("")}</tr>`).join("");
   return `<div class="approved-player-card approved-player-pages${detail.is_prospect ? " approved-prospect-pages" : ""}" data-player-pages>
     <div class="player-page-bar"><span data-player-page-title>${extension ? "Contract Extension" : detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}</span><div class="player-page-nav"><button type="button" class="ui-command" data-player-page-step="-1" aria-label="Previous player card page" title="Previous page">‹</button><button type="button" class="ui-command" data-player-page-step="1" aria-label="Next player card page" title="Next page">›</button><span data-player-page-count aria-live="polite" aria-atomic="true">1/${(extension ? 1 : 0) + 2 + (detail.is_prospect ? 0 : 1)}</span></div></div>
-    <section class="approved-player-identity player-page-identity"><div class="approved-player-profile-head">${playerHeadshotMarkup(detail, "approved-profile-headshot")}<div class="approved-profile-name"><h3>${escapeHtml(detail.name || options.name || "Player")}</h3><p>${escapeHtml([detail.position, detail.age != null ? `${detail.age} years` : "", detail.height].filter(Boolean).join(" · "))}</p><p class="player-draft-details">${escapeHtml(detail.is_prospect ? [detail.college_profile ? detail.source_team : (detail.scouting_profile?.where || detail.source_team), detail.college_profile?.coach ? `Coach ${detail.college_profile.coach}` : "", `${detail.draft_year} draft class`].filter(Boolean).join(" · ") : detail.draft_position ? `${detail.draft_year || 'Draft'} · Pick #${detail.draft_position}` : detail.draft_status==='undrafted' ? `Undrafted${detail.draft_year?` · ${detail.draft_year}`:''}` : detail.draft_year ? `Draft year ${detail.draft_year}` : 'Draft details unavailable')}</p></div>${playerSummaryRatings(detail)}</div>${typeof playerHeaderFacts === "function" ? playerHeaderFacts(detail) : playerCardEvidence(detail)}${options.actions || ""}</section>
+    <section class="approved-player-identity player-page-identity"><div class="approved-player-profile-head"><span class="profile-headshot-wrap">${playerHeadshotMarkup(detail, "approved-profile-headshot")}${detail.team?.abbrev && typeof teamLogoSrc === "function" && teamLogoSrc(detail.team.abbrev) ? `<img class="profile-team-badge" src="${escapeAttr(teamLogoSrc(detail.team.abbrev))}" alt="${escapeAttr(detail.team.name || detail.team.abbrev)}" title="${escapeAttr(detail.team.name || detail.team.abbrev)}" />` : ""}</span><div class="approved-profile-name"><h3>${escapeHtml(detail.name || options.name || "Player")}</h3><p>${escapeHtml([detail.position, detail.age != null ? `${detail.age} years` : "", detail.height].filter(Boolean).join(" · "))}</p><p class="player-draft-details">${escapeHtml(detail.is_prospect ? [detail.college_profile ? detail.source_team : (detail.scouting_profile?.where || detail.source_team), detail.college_profile?.coach ? `Coach ${detail.college_profile.coach}` : "", `${detail.draft_year} draft class`].filter(Boolean).join(" · ") : detail.draft_position ? `${detail.draft_year || 'Draft'} · Pick #${detail.draft_position}` : detail.draft_status==='undrafted' ? `Undrafted${detail.draft_year?` · ${detail.draft_year}`:''}` : detail.draft_year ? `Draft year ${detail.draft_year}` : 'Draft details unavailable')}</p></div>${playerSummaryRatings(detail)}</div>${typeof playerHeaderFacts === "function" ? playerHeaderFacts(detail) : playerCardEvidence(detail)}${options.actions || ""}</section>
     ${extension ? extensionNegotiationPage(extension.room, extension.selectedPlayerId, extension.response, detail, extension.draft) : ""}
     <section class="player-card-page player-card-page--overview" data-player-page="${pageOffset}" data-page-title="${detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}" aria-label="Season statistics, recent games, game score and contract">
       ${detail.scouting_profile && !detail.college_profile ? scoutingProfileStrip(detail.scouting_profile) : playerSeasonStrip(season, detail.career_seasons || [])}

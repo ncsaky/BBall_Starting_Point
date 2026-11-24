@@ -37,3 +37,4 @@ captions, three teams, room size, header controls, needle). 7. Player card. 8. O
     (bars as long as the rest); no page scrolls.
   - Opening roster: no strike-through on a waived name; two-way places show $0 to release (the engine leaves nothing
     on the books; games used moved to the Guaranteed column).
+- Round 9 deck published 2026-11-24 (version 11, 12 questions `q9-…`): glass amount, gallery, clean pills, card header and ratings, trade list, Details, deal, three teams, Value, opening roster, which card next.
