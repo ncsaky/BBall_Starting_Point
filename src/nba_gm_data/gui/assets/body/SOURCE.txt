@@ -6,3 +6,7 @@ by Sebastian Wallroth, Wikimedia Commons:
   https://commons.wikimedia.org/wiki/File:Human_silhouette_gender_neutral_back.svg
 License: CC0 1.0 Universal (public domain dedication). Downloaded 2026-11-24 with the user's approval.
 The game inlines their outline paths (app.js INJURY_BODY_OUTLINES) and colours body parts inside them.
+
+Round 14 (2026-11-24): the user found the figure too unisex / medical. The outlines in body-outlines.js are now the
+same CC0 figures reshaped toward a basketball build (broader shoulders, V-shaped torso, slimmer hips and thighs, longer
+legs, smaller head, no buttocks line); the SVG files here are the unmodified originals.

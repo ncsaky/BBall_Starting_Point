@@ -10971,13 +10971,25 @@ function injuryPartTitle(part, map) {
 // risk glows inside its outline, so the colours follow the body's shape. These are the parts' places on that figure.
 const INJURY_BODY_SPOTS_REAL = {
   front: {
-    head: [[74, 25]], shoulder: [[33, 58], [115, 58]], wrist: [[13, 150], [135, 150]], hand: [[10, 170], [138, 170]],
-    thumb: [[21, 160], [127, 160]], hip: [[42, 158], [106, 158]], groin: [[74, 164]], quadriceps: [[55, 196], [93, 196]],
-    knee: [[55, 231], [93, 231]], ankle: [[52, 290], [96, 290]], foot: [[50, 306], [98, 306]], toe: [[46, 314], [102, 314]],
+    head: [[74,25]],
+    shoulder: [[27,58],[121,58]],
+    wrist: [[8,150],[140,150]],
+    hand: [[6,171],[143,171]],
+    thumb: [[16,160],[132,160]],
+    hip: [[45,158],[103,158]],
+    groin: [[74,164]],
+    quadriceps: [[57,198],[91,198]],
+    knee: [[57,235],[91,235]],
+    ankle: [[53,298],[95,298]],
+    foot: [[51,315],[97,315]],
+    toe: [[48,323],[100,323]],
   },
   back: {
-    shoulder: [[33, 58], [115, 58]], back: [[74, 112]], hamstring: [[55, 205], [93, 205]], calf: [[53, 256], [95, 256]],
-    achilles: [[52, 288], [96, 288]],
+    shoulder: [[27,58],[121,58]],
+    back: [[74,112]],
+    hamstring: [[57,208],[91,208]],
+    calf: [[55,262],[93,262]],
+    achilles: [[53,296],[95,296]],
   },
 };
 
@@ -11003,8 +11015,8 @@ function injuryBodyFigureReal(map, view, options = {}) {
       <g style="opacity:${strength.toFixed(2)}">${[[1, 0.25], [0.66, 0.5], [0.36, 0.95]].map(([scale, alpha]) => `<circle cx="${x}" cy="${y}" r="${(radius * scale).toFixed(1)}" fill="${color}" fill-opacity="${alpha}"/>`).join("")}</g>
       ${part.current ? `<circle class="injury-current-ring" cx="${x}" cy="${y}" r="${(radius * 0.7).toFixed(1)}"/>` : ""}</g>`);
   }).join("");
-  const label = options.mini ? "" : `<text class="injury-body-view-label" x="74" y="333">${view === "front" ? "Front" : "Back"}</text>`;
-  return `<svg class="injury-body-figure is-real${options.mini ? " mini" : ""}" viewBox="0 0 148 ${options.mini ? 320 : 338}" role="img" aria-label="${escapeAttr(`${view === "front" ? "Front" : "Back"} body map of injury risk`)}">
+  const label = options.mini ? "" : `<text class="injury-body-view-label" x="74" y="342">${view === "front" ? "Front" : "Back"}</text>`;
+  return `<svg class="injury-body-figure is-real${options.mini ? " mini" : ""}" viewBox="0 0 148 ${options.mini ? 332 : 348}" role="img" aria-label="${escapeAttr(`${view === "front" ? "Front" : "Back"} body map of injury risk`)}">
     <defs><clipPath id="${clip}">${shapes.map(row => path(row)).join("")}</clipPath></defs>
     <g class="injury-body-real" style="--injury-body-tone:${tone}">${shapes.map(row => path(row, ' class="injury-body-fill"')).join("")}</g>
     <g class="injury-spots" clip-path="url(#${clip})">${spots}</g>
