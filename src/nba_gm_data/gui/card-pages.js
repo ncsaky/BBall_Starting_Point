@@ -67,7 +67,8 @@
     {id: "recap", group: "now", label: "Year-End Recap", slideshow: "recap"},
     // The bracket gets a page of its own (it is as wide as the screen); the playoff stats and injuries sit together.
     {id: "playoffs", group: "now", label: "Playoffs", layout: () => row(card("phase-playoffs-bracket", {bare: true, width: 1100}))},
-    {id: "playoff-stats", group: "now", label: "Playoff Stats", layout: () => row("phase-playoffs-leaders", "phase-playoffs-injuries")},
+    // Both tables are wider than their board windows were (the windows scrolled sideways): the page gives them their width.
+    {id: "playoff-stats", group: "now", label: "Playoff Stats", layout: () => row(card("phase-playoffs-leaders", {width: 680}), card("phase-playoffs-injuries", {width: 604}))},
     {id: "draft-room", group: "now", label: "Draft", layout: draftRoomLayout},
     {id: "free-agency-checklist", group: "now", label: "Offseason Checklist", layout: () => row(card("phase-free_agency-checklist", {grow: "h"}), card("phase-free_agency-selected", {grow: "h"}))},
     {id: "free-agency", group: "now", label: "Free Agency", layout: () => row(card("phase-free_agency-market", {grow: "h"}), card("phase-free_agency-selected", {grow: "h"}), card("phase-free_agency-wire", {grow: "h"}))},

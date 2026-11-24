@@ -1,6 +1,6 @@
 # Sidebar pages layout (branch `sidebar-pages`)
 
-Progress: 6/7 - testing every page, phase and pop-up; report next
+Progress: 7/7 - done, in review on the branch (not merged)
 
 Asked 2026-11-24 night: on a branch, replace the free-floating card board with a sidebar of pages. Each sidebar item
 opens a page that fills the screen; the cards are "dissolved" onto the pages (no window frames), several per page or one
@@ -35,3 +35,26 @@ pop-ups. Don't break anything inside the cards.
 - Screenshots: scratchpad `pages/shots/` (headless Chrome script `pages/shots.mjs`).
 - Test-save lesson: copying a save's files by hand shares its history database (the JSON names it); use the app's
   export / restore instead.
+
+## Report (2026-11-24, morning)
+
+**TL;DR.** The board is now an app: a sidebar of pages, each page filling the screen with the board's cards laid onto
+it (no window frames, same contents, one scale per page so nothing stretches). Pop-ups stay pop-ups. The next step is
+always the big button at the bottom right. Settings > Layout switches back to the board. Report with screenshots:
+https://claude.ai/artifact/H888JggK8SswRrGQnSk2Hg (private).
+
+Pages: Team (Home, Roster, Development, Team Identity, Schedule), Front Office (Contracts, Trades, Scouting), League
+(Standings, Awards), plus a top group that follows the calendar (Opening Roster, Set The Roster, Preseason Outlook,
+Two-Way Places, Playoffs, Playoff Stats, Year-End Recap, Offseason Checklist, Draft, Free Agency, required decisions).
+
+Rules: page = rows and columns of cards at their default board sizes, scaled 70-122% as one piece; lists grow to show
+more rows; a page's own buttons sit right of its title; sidebar holds team, date, steps chip, Find a player, pages,
+Settings; footer holds the league wire ticker and the next step; pop-ups (player and extension cards) float over the
+page area; modals blur the page behind; slideshows fill the page area with the sidebar still live; each save remembers
+its page; [ and ] step through pages; Cmd+K lists pages; a pages version of the first-run tour.
+
+Also fixed while here: power-ranking ranks 10+ were cut to "1..." (rank column 30 -> 38px).
+
+Known: fantasy draft and staff retention pages not seen in a real save; at 1280 wide pages shrink to ~75-85%; the
+Offer Builder still scrolls inside (as on the board); test_gui_concept74 prospect-bar assertion fails on main too
+(stale since round 14).
