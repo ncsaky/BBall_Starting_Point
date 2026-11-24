@@ -99,3 +99,7 @@ html[data-glass="clear"] .pc4-legend-range .pc4-key.dot.is-prior::before { box-s
 .pc4-info:hover, .pc4-info:focus-visible { color: var(--pc4-text); border-color: var(--pc4-text); outline: none; }
 .pc4-layer:has(.pc4-r.measure) .pc4-r:not(.pass) { grid-template-columns: minmax(96px, 1.15fr) minmax(50px, 1fr) 96px; }
 .pc4-layer:has(.pc4-r.measure) .pc4-r:not(.pass) > strong { white-space: nowrap; }
+
+/* Round 6: bars without a league range still carry his dot, centred on the bar. */
+.pc4-track.has-dot { overflow: visible; }
+.pc4-track.has-dot > .pc4-rg-dot { position: absolute; top: 50%; margin-top: -5px; }

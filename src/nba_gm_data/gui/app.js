@@ -131,7 +131,10 @@ applyBoardTheme();
 const UI_LOOK_SETTINGS = {
   glass: { key: "nbaGmGlass", label: "Glass", fallback: "clear", options: [["clear", "Clear"]] },
   font: { key: "nbaGmFont", label: "Font", fallback: "helvetica", options: [["helvetica", "Helvetica Neue"], ["modern", "SF Pro"], ["rounded", "Rounded"], ["avenir", "Avenir Next"], ["classic", "Classic (Tahoma)"]] },
+  // Round 6: the user couldn't pick one button style, so all four are offered.
+  buttons: { key: "nbaGmButtons", label: "Buttons", fallback: "pill", options: [["pill", "Glass pill"], ["solid", "Solid pill"], ["square", "Rounded square"], ["segmented", "Segmented"]] },
 };
+const UI_LOOK_DATASET = { glass: "glass", font: "uiFont", buttons: "uiButtons" };
 function uiLook(name) {
   const setting = UI_LOOK_SETTINGS[name];
   let saved = "";
@@ -139,7 +142,7 @@ function uiLook(name) {
   return setting.options.some(([key]) => key === saved) ? saved : setting.fallback;
 }
 function applyUiLooks() {
-  for (const name of Object.keys(UI_LOOK_SETTINGS)) document.documentElement.dataset[name === "glass" ? "glass" : "uiFont"] = uiLook(name);
+  for (const name of Object.keys(UI_LOOK_SETTINGS)) document.documentElement.dataset[UI_LOOK_DATASET[name]] = uiLook(name);
 }
 function clearGlass() { return document.documentElement.dataset.glass === "clear"; }
 applyUiLooks();
@@ -3058,6 +3061,9 @@ function renderDashboardTab(rows) {
     if (phaseKind) {
       wireDashboardPhaseWorkspace(phaseKind, target);
     }
+    // The opening-roster window is open all preseason, outside the cut-down phase: its Keep / Waive / Buy out
+    // choices and two-way buttons need wiring then too (round 6 testing: they did nothing in preseason).
+    if (phaseKind !== "cutdown" && typeof preseasonRosterViewOpen === "function" && preseasonRosterViewOpen()) wireCutdownWorkspace(target);
     if (!phaseKind && state.data.freeagency) wireFreeAgencyMarket(target);
     if (!phaseKind && state.data.setRoster) {
       target.querySelectorAll("[data-set-roster-checklist]").forEach(wireOffseasonChecklist);
@@ -3552,7 +3558,8 @@ function spatialRegionGeometry(regionId) {
 
 function spatialHeatmapLegend(label, side, entity = "player") {
   const detail = `Each region is coloured against the league's typical ${entity === "team" ? "team" : "player"} in that same region: blue is better, red is worse, grey is ordinary, and the strongest few reach full colour. ${side === "offense" ? "" : "On defense, blue means opponents shoot worse. "}Hexes mark where the volume is: only spots with at least the league's average volume are drawn, and bigger means more. In each region, the top number is how many points of FG% better (+) or worse (−) than the league, the bottom one the share of the shots taken there.`;
-  const stops = [-1, -0.5, 0, 0.5, 1].map(score => `<b style="background:${spatialEfficiencyColor(score)}"></b>`).join("");
+  // Round 6: thirteen steps in the key (six a side and the middle), not five.
+  const stops = Array.from({length: 13}, (_, index) => (index - 6) / 6).map(score => `<b style="background:${spatialEfficiencyColor(score)}"></b>`).join("");
   return `<div class="spatial-legend" title="${escapeAttr(detail)}"><span>${escapeHtml(label)}</span><i class="spatial-discrete-key spatial-relative-key" role="img" aria-label="${escapeAttr(detail)}"><em>Worse</em>${stops}<em>Better</em></i></div>`;
 }
 
@@ -7906,7 +7913,9 @@ function rosterCutdownDashboardWorkspace() {
     const value = choices[id] || "keep";
     if (row.can_waive === false) return `<span class="muted">Protected</span>`;
     const options = [["keep", "Keep"], ["waive", "Waive"], ...(row.contract_kind === "camp" ? [] : [["buyout", "Buy out"]]), ...(row.two_way_convertible ? [["twoway", "Two-way"]] : [])];
-    return `<div class="cutdown-choice" role="radiogroup" aria-label="${escapeAttr(`Keep or release ${row.name || "player"}`)}">${options.map(([option, label]) => `<button type="button" role="radio" aria-checked="${value === option}" class="cutdown-choice-${option}${value === option ? " is-active" : ""}" data-cutdown-choice="${escapeAttr(id)}" data-cutdown-option="${option}" tabindex="${value === option ? 0 : -1}"${option === "twoway" ? ` title="Move him to an open two-way place (outside the 15 and the cap)"` : ""}>${label}</button>`).join("")}</div>`;
+    // Round 6: one long pill; the chosen option is a filled pill inside it that slides to a new choice.
+    const chosenIndex = Math.max(0, options.findIndex(([option]) => option === value));
+    return `<div class="cutdown-choice is-slider" role="radiogroup" data-cutdown-slider="${escapeAttr(id)}" style="--n:${options.length};--i:${chosenIndex}" aria-label="${escapeAttr(`Keep or release ${row.name || "player"}`)}"><span class="cutdown-choice-thumb is-${escapeAttr(value)}" aria-hidden="true"></span>${options.map(([option, label]) => `<button type="button" role="radio" aria-checked="${value === option}" class="cutdown-choice-${option}${value === option ? " is-active" : ""}" data-cutdown-choice="${escapeAttr(id)}" data-cutdown-option="${option}" tabindex="${value === option ? 0 : -1}"${option === "twoway" ? ` title="Move him to an open two-way place (outside the 15 and the cap)"` : ""}>${label}</button>`).join("")}</div>`;
   };
   const view = room.roster || {};
   const short = room.status === "short" ? room.short || {} : null;
@@ -7999,10 +8008,49 @@ function rosterCutdownDashboardWorkspace() {
   </div>`;
 }
 
+// Restored round 6: lost in the round 2 rewrite, which left "Apply moves" (and the wiring after it) broken.
+async function confirmCutdownReleases() {
+  const room = state.data.cutdown || {};
+  const choices = cutdownChoicesFor(room);
+  const summary = cutdownSelectionSummary(room, choices);
+  if (!summary.ready) return;
+  const releases = (room.players || []).filter((row) => ["waive", "buyout"].includes(choices[String(row.player_id)]));
+  const moves = (room.players || []).filter((row) => choices[String(row.player_id)] === "twoway");
+  const lines = [...moves.map((row) => `• Move ${row.name} to a two-way place (outside the 15 and the cap)`), ...releases.map((row) => {
+    const choice = choices[String(row.player_id)];
+    const cost = cutdownReleaseCost(row, choice);
+    const charges = choice === "buyout" && row.buyout?.cap_charges?.length
+      ? ` (cap charges if unclaimed: ${row.buyout.cap_charges.map((r) => `${r.season} ${r.salary == null ? "unknown" : money(r.salary / 1000000)}`).join(", ")})`
+      : "";
+    return `• ${choice === "buyout" ? "Buy out" : "Waive"} ${row.name}: ${cost === null ? "cost unknown" : `${money(cost)} stays on your books`}${charges}${row.clears_waivers ? ` (clears waivers ${row.clears_waivers})` : ""}`;
+  })];
+  if (!await askConfirm(`Apply ${lines.length} roster move${lines.length === 1 ? "" : "s"}? This cannot be undone.\n\n${lines.join("\n")}${releases.length ? "\n\nReleased players go on waivers for two days; a claim moves the contract to the claiming team." : ""}`)) return;
+  let done = 0;
+  try {
+    for (const row of moves) {
+      const result = await action("camp_to_two_way", { ...savePayload(), player_id: row.player_id });
+      if (result.status !== "converted") throw new Error(result.reason || result.status || `Could not move ${row.name}`);
+      done += 1;
+    }
+    for (const row of releases) {
+      const choice = choices[String(row.player_id)];
+      const result = await action(choice === "buyout" ? "buyout_player" : "waive_player", { ...savePayload(), player_id: row.player_id });
+      if (result.status !== "waived") throw new Error(result.reason || result.status || `Could not waive ${row.name}`);
+      done += 1;
+    }
+    showToast(`${done} player${done === 1 ? "" : "s"} released`);
+  } catch (error) {
+    showToast(error.message || String(error), true);
+  } finally {
+    state.cutdownChoices = {};
+    await refreshHome();
+  }
+}
+
 function wireCutdownWorkspace(root) {
   const workspace = root.querySelector("[data-cutdown-workspace]");
   if (!workspace) return;
-  const rerender = (focusSelector) => {
+  const rerender = (focusSelector, slide) => {
     const scroll = workspace.querySelector(".cutdown-scroll")?.scrollTop || 0;
     const template = document.createElement("template");
     template.innerHTML = rosterCutdownDashboardWorkspace().trim();
@@ -8013,14 +8061,29 @@ function wireCutdownWorkspace(root) {
     wireCutdownWorkspace(next.parentElement);
     wireDashboardPlayerCards(next);
     if (focusSelector) next.querySelector(focusSelector)?.focus();
+    // Slide the chosen pill from where it was (the row was re-rendered with it already in place).
+    const slider = slide && next.querySelector(`[data-cutdown-slider="${CSS.escape(slide.id)}"]`);
+    const thumb = slider?.querySelector(".cutdown-choice-thumb");
+    if (thumb && slide.from !== Number(slider.style.getPropertyValue("--i"))) {
+      thumb.style.transition = "none";
+      thumb.style.transform = `translateX(${slide.from * 100}%)`;
+      if (slide.fromKind) thumb.classList.replace(thumb.classList[1], `is-${slide.fromKind}`);
+      void thumb.offsetWidth;
+      thumb.style.transition = "";
+      thumb.style.transform = "";
+      thumb.className = `cutdown-choice-thumb is-${slide.toKind}`;
+    }
   };
   workspace.querySelectorAll("[data-cutdown-choice]").forEach((button) => {
     button.addEventListener("click", () => {
       const id = button.dataset.cutdownChoice;
       const option = button.dataset.cutdownOption;
+      const group = button.closest("[data-cutdown-slider]");
+      const from = group ? Number(group.style.getPropertyValue("--i")) : 0;
+      const fromKind = group?.querySelector(".cutdown-choice-thumb")?.classList[1]?.replace(/^is-/, "") || "";
       if (option === "keep") delete state.cutdownChoices[id];
       else state.cutdownChoices[id] = option;
-      rerender(`[data-cutdown-choice="${CSS.escape(id)}"][data-cutdown-option="${option}"]`);
+      rerender(`[data-cutdown-choice="${CSS.escape(id)}"][data-cutdown-option="${option}"]`, { id, from, fromKind, toKind: option });
     });
     button.addEventListener("keydown", (event) => {
       if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
@@ -9040,8 +9103,12 @@ function renderTradeBuilder(root) {
   const view = empty ? "pick" : state.tradeView;
   const strip = participants.map(row => `<button type="button" class="tr-strip-side${row.side === current.side ? " is-current" : ""}" data-trade-roster-side="${escapeAttr(row.side)}">${teamLogoSrc(row.team) ? `<img src="${escapeAttr(teamLogoSrc(row.team))}" alt="" />` : ""}<strong>${escapeHtml(row.team)}</strong><span>${row.selected.length ? row.selected.map(asset => escapeHtml(asset.kind === "player" ? (asset.name || "").split(" ").slice(-1)[0] : tradePickText(asset).short)).join(", ") : "nothing yet"}</span></button>`).join('<i aria-hidden="true">⇄</i>');
   const viewSwitch = (target, label, primary = false) => `<button type="button" class="${primary ? "tr-button is-primary" : "tr-text-button"}" data-trade-view="${target}" ${target === "deal" && empty ? "disabled" : ""}>${label}</button>`;
-  const lowerPage = page === 3 ? 3 : 1;
-  const lowerBody = lowerPage === 1
+  // Round 6 (no scrolling): the payroll chart is the first of the deal's tabs (Payroll, Value, Team identity) instead
+  // of a section the page had to scroll past.
+  const lowerPage = [0, 1, 3].includes(page) ? page : 0;
+  const lowerBody = lowerPage === 0
+    ? tradePayrollAnimation(participants)
+    : lowerPage === 1
     ? `<div class="tr-value-page">${multi ? tradeMultiValuePreview(participants) : `<div class="trade-team-decisions">${(candidate?.evaluations || []).map(tradeEvaluationPanel).join("")}</div>${tradeSegmentedValueBoard(candidate, state.selectedFrom, state.selectedTo, userTeam(), state.tradePartner)}`}</div>`
     : `<div class="tr-identity-page">${tradeIdentityPage()}</div>`;
   body.innerHTML = view === "pick" ? `
@@ -9056,9 +9123,8 @@ function renderTradeBuilder(root) {
           ${participants.map(row => tradeDealSide(row, participants, fresh)).join("")}
         </section>
         ${hasPicks ? `<div class="tr-terms">${tradePickTermsMarkup()}</div>` : ""}
-        ${tradePayrollAnimation(participants)}
         <section class="tr-lower">
-          <nav class="tr-lower-tabs" aria-label="Trade details">${[[1, "Value"], [3, "Team identity"]].map(([index, label]) => `<button type="button" data-trade-page="${index}" aria-pressed="${lowerPage === index}" class="${lowerPage === index ? "active" : ""}">${label}</button>`).join("")}</nav>
+          <nav class="tr-lower-tabs" aria-label="Trade details">${[[0, "Payroll"], [1, "Value"], [3, "Team identity"]].map(([index, label]) => `<button type="button" data-trade-page="${index}" aria-pressed="${lowerPage === index}" class="${lowerPage === index ? "active" : ""}">${label}</button>`).join("")}</nav>
           <div class="tr-lower-body" data-trade-page-body="${lowerPage}">${lowerBody}</div>
         </section>
       </div>
@@ -9399,17 +9465,54 @@ function assetColumn(title, payload, side, team, options = {}) {
   const sort = state.tradeAssetSorts?.[side] || {key: "value", dir: "desc"};
   const counts = {all: allAssets.length, players: allAssets.filter(a => a.kind === "player").length, picks: allAssets.filter(a => a.kind === "pick").length, swaps: allAssets.filter(a => a.kind === "pick_swap").length};
   const filters = [["all", "All"], ["players", "Players"], ["picks", "Picks"], ["swaps", "Swaps"]].filter(([value]) => value === "all" || counts[value] || filter === value);
+  // Round 6 ("I never like scrolling"): the list shows the rows that fit, with pages, instead of a scrolling list.
+  // All rows are rendered; fitTradeAssetPages() hides the ones off the current page and fills in the pager.
+  const sorted = sortTradeAssets(assets, sort);
   return `
     <section class="trade-asset-column tr-picker" ${teamBrandStyle(team)}>
       <header class="tr-picker-head">
         ${options.tabs || `<div class="trade-team-lockup">${teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : ""}<strong>${escapeHtml(title)}</strong></div>`}
         <div class="tr-filter" role="group" aria-label="${escapeAttr(title)} filter">${filters.map(([value, label]) => `<button type="button" data-asset-filter-side="${escapeAttr(side)}" data-asset-filter="${value}" aria-pressed="${filter === value}" class="${filter === value ? "active" : ""}">${label}</button>`).join("")}</div>
+        <nav class="tr-pager" data-asset-pager="${escapeAttr(side)}" aria-label="${escapeAttr(title)} pages" hidden></nav>
       </header>
       ${typeof tradeWantsStrip === 'function' ? tradeWantsStrip(payload) : ''}
-      <div class="trade-asset-list scroll-list" data-trade-scroll="catalog-${escapeAttr(side)}" tabindex="0" aria-label="${escapeAttr(title)}">
-        ${assets.length ? tradeAssetTable(sortTradeAssets(assets, sort), {side, label: title, sort}) : `<div class="trade-list-empty">No ${filter === "all" ? "tradeable assets" : escapeHtml(filter)} available for ${escapeHtml(team)}.</div>`}
+      <div class="trade-asset-list is-paged" data-trade-scroll="catalog-${escapeAttr(side)}" data-trade-fit-side="${escapeAttr(side)}" aria-label="${escapeAttr(title)}">
+        ${assets.length ? tradeAssetTable(sorted, {side, label: title, sort}) : `<div class="trade-list-empty">No ${filter === "all" ? "tradeable assets" : escapeHtml(filter)} available for ${escapeHtml(team)}.</div>`}
       </div>
     </section>`;
+}
+
+// Pages for the trade asset lists: as many rows as fit in the list's room, the rest on further pages. Works on the
+// rendered rows in place (no re-render, so it never interrupts the trade room while it loads).
+function fitTradeAssetPages(root) {
+  root.querySelectorAll("[data-trade-fit-side]").forEach((list) => {
+    const side = list.dataset.tradeFitSide;
+    const rows = [...list.querySelectorAll("tbody > tr")];
+    const pager = root.querySelector(`[data-asset-pager="${CSS.escape(side)}"]`);
+    if (!rows.length || !pager) return;
+    rows.forEach(row => { row.hidden = false; });
+    const rowHeight = rows[0].offsetHeight || 34;
+    if (!list.clientHeight) return;
+    const room = list.clientHeight - (list.querySelector("thead")?.offsetHeight || 0) - 2;
+    const size = Math.max(4, Math.floor(room / rowHeight));
+    const pages = Math.max(1, Math.ceil(rows.length / size));
+    state.tradeAssetPages ||= {};
+    const page = Math.min(pages - 1, Math.max(0, Number(state.tradeAssetPages[side]) || 0));
+    state.tradeAssetPages[side] = page;
+    rows.forEach((row, index) => { row.hidden = index < page * size || index >= (page + 1) * size; });
+    pager.hidden = pages < 2;
+    if (pages < 2) { pager.innerHTML = ""; return; }
+    const button = (target, label, aria) => `<button type="button" data-asset-page="${target}" aria-label="${escapeAttr(aria)}"${target === page ? ' aria-current="page" class="active"' : ""}${target < 0 || target >= pages ? " disabled" : ""}>${label}</button>`;
+    pager.innerHTML = button(page - 1, "‹", "Previous page") + Array.from({length: pages}, (_, index) => button(index, String(index + 1), `Page ${index + 1}`)).join("") + button(page + 1, "›", "Next page");
+    pager.querySelectorAll("[data-asset-page]").forEach(control => control.addEventListener("click", () => {
+      state.tradeAssetPages[side] = Number(control.dataset.assetPage) || 0;
+      fitTradeAssetPages(root);
+    }));
+  });
+}
+
+if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+  window.addEventListener("resize", () => { if (state.modal?.kind === "tradeRoom" && els.modalRoot) fitTradeAssetPages(els.modalRoot); });
 }
 
 function assetButton(asset, side, maxValue = 100, team = "") {
@@ -9752,7 +9855,8 @@ const CLIPBOARD_FIXED_CARD_SIZES = {
   // Cut-down: tall enough for the whole roster when the window allows (header, table, footer).
   get "cutdown-decision"() {
     const rows = (state.data.cutdown?.players || []).length || 15;
-    return [1000, Math.round(Math.min(Math.max(420, (window.innerHeight || 900) - 150), 92 + 26 + rows * 33 + 54)), "cutdown-v2"];
+    // Round 6: 1040 wide for the tables' side margins and the sliding Keep / Waive / Buy out pill.
+    return [1040, Math.round(Math.min(Math.max(420, (window.innerHeight || 900) - 150), 92 + 26 + rows * 33 + 54)), "cutdown-v3"];
   },
 };
 
@@ -10772,12 +10876,20 @@ function injuryRiskBody(risk, body, label = "Injury risk") {
   const value = risk == null || !Number.isFinite(Number(risk)) ? null : Number(risk);
   const index = value == null ? "" : ` ${draftMetric(value)} model index`;
   if (!map) return value == null ? `<span class="injury-risk-body" title="${escapeAttr(`${label} unavailable`)}">—</span>`
-    : `<span class="injury-risk-body" title="${escapeAttr(`${label}${index}`)}"><b>${draftMetric(value)}</b></span>`;
+    : `<span class="injury-risk-body is-meter" title="${escapeAttr(`${label}${index}`)}">${injuryRiskMeter(value)}<b>${draftMetric(value)}</b></span>`;
   const hottest = map.current_part ? map.parts.find(part => part.current)
     : [...map.parts].sort((a, b) => (b.expected_games - b.typical_games) - (a.expected_games - a.typical_games))[0];
   const note = map.current_part ? `Injured: ${map.current_label}` : hottest && hottest.relative > 1.15 ? `Watch: ${hottest.label}` : "No hotspot";
   const title = `${label}${index} (the front office's injury-risk score; most players 1–4). Body map: about ${map.expected_games_total} games a season expected to be missed to injury (typical rotation player ${map.typical_games_total}). ${note}.`;
-  return `<span class="injury-risk-body" title="${escapeAttr(title)}" aria-label="${escapeAttr(title)}">${injuryBodyFigure(map, "front", { mini: true })}${value == null ? "" : `<b>${draftMetric(value)}</b>`}</span>`;
+  // Round 6: a five-step meter (light yellow to dark red as it fills, like fatigue) instead of the tiny body figure;
+  // the full body map stays on the player card's Health page.
+  return `<span class="injury-risk-body is-meter" title="${escapeAttr(title)}" aria-label="${escapeAttr(title)}">${injuryRiskMeter(value)}${value == null ? "" : `<b>${draftMetric(value)}</b>`}</span>`;
+}
+
+function injuryRiskMeter(value) {
+  const colors = ["#f2dd7a", "#f2c25e", "#ef9a45", "#e06a3e", "#c8423a"];
+  const filled = value == null ? 0 : Math.max(0, Math.min(5, Math.round(Number(value))));
+  return `<i class="injury-risk-meter" aria-hidden="true">${colors.map((color, index) => `<b${index < filled ? ` style="background:${color}"` : ""}></b>`).join("")}</i>`;
 }
 
 function injuryBodyMini(detail) {
@@ -10998,12 +11110,15 @@ function pc4Track(fill, prior, avg, band, tall) {
   const lo = band ? clampNumber(band[0], 0, 100) : 0, hi = band ? clampNumber(band[1], 0, 100) : 0;
   const bandHtml = band ? `<i class="pc4-band" style="left:${lo}%;width:${Math.max(0.5, hi - lo)}%"></i>` : "";
   const avgHtml = avg == null ? "" : `<i class="pc4-avg" style="left:${clampNumber(avg, 0, 100)}%"></i>`;
-  return `<div class="pc4-track${tall ? " tall" : ""}">${bandHtml}<i class="pc4-fill${prior ? " prior" : ""}" style="width:${clampNumber(fill, 0, 100)}%"></i>${avgHtml}</div>`;
+  // Round 6: every bar carries his dot, and nothing is drawn as "estimated".
+  void prior;
+  const dot = `<i class="pc4-rg-dot" style="left:${clampNumber(fill, 0, 100)}%;--dot:${typeof ratingInkColor === "function" ? ratingInkColor(clampNumber(fill, 0, 100)) : "#3f7fc1"}"></i>`;
+  return `<div class="pc4-track has-dot${tall ? " tall" : ""}">${bandHtml}<i class="pc4-fill" style="width:${clampNumber(fill, 0, 100)}%"></i>${avgHtml}${dot}</div>`;
 }
 
 // Round 4: every rating as a range bar, like Four Factors. Each row's axis runs from the league's lowest to its
 // highest (so every row's range is the same width), the whisker is that full range, the box the middle half, the
-// tick the median; the small mark is the position average and the dot is this player (hollow when estimated from
+// tick the median; the small mark is the position average and the dot is this player (round 6: always solid; once hollow when estimated from
 // similar players), coloured by his league percentile. The faint strip around the dot is his likely range.
 function pc4RangeTrack(row, value = row.value, avg = row.pos_avg, band = row.interval) {
   const league = row.league;
@@ -11018,7 +11133,7 @@ function pc4RangeTrack(row, value = row.value, avg = row.pos_avg, band = row.int
   const bandHtml = Array.isArray(band) && band.length === 2 && Number.isFinite(Number(band[0]))
     ? `<i class="pc4-rg-band" style="left:${at(Math.max(lo, band[0]))}%;width:${Math.max(0.6, at(Math.min(hi, band[1])) - at(Math.max(lo, band[0]))).toFixed(2)}%;background:${color}"></i>` : "";
   const avgHtml = avg == null || !Number.isFinite(Number(avg)) ? "" : `<i class="pc4-rg-avg" style="left:${at(avg)}%"></i>`;
-  return `<div class="pc4-rg" role="img" aria-label="${escapeAttr(`${row.name}: league percentile ${Math.round(pct)}`)}"><i class="pc4-rg-whisker" style="left:${at(min)}%;width:${(at(max) - at(min)).toFixed(2)}%"></i><i class="pc4-rg-box" style="left:${at(q1)}%;width:${Math.max(0.6, at(q3) - at(q1)).toFixed(2)}%"></i><i class="pc4-rg-median" style="left:${at(median)}%"></i>${bandHtml}${avgHtml}<i class="pc4-rg-dot${row.evidence === "prior" ? " is-prior" : ""}" style="left:${at(value)}%;--dot:${color}"></i></div>`;
+  return `<div class="pc4-rg" role="img" aria-label="${escapeAttr(`${row.name}: league percentile ${Math.round(pct)}`)}"><i class="pc4-rg-whisker" style="left:${at(min)}%;width:${(at(max) - at(min)).toFixed(2)}%"></i><i class="pc4-rg-box" style="left:${at(q1)}%;width:${Math.max(0.6, at(q3) - at(q1)).toFixed(2)}%"></i><i class="pc4-rg-median" style="left:${at(median)}%"></i>${bandHtml}${avgHtml}<i class="pc4-rg-dot" style="left:${at(value)}%;--dot:${color}"></i></div>`;
 }
 
 function pc4Range(row) {
@@ -11029,7 +11144,7 @@ function pc4Range(row) {
 
 function pc4Tip(row, valueText) {
   const pct = row.pct != null ? ` | league percentile ${Math.round(row.pct)}` : "";
-  return escapeAttr(`${row.id} · ${row.name} · ${valueText}${pc4Range(row)}${pct} | ${pc4Evidence(row)}`);
+  return escapeAttr(`${row.name} · ${valueText}${pc4Range(row)}${pct}`);
 }
 
 function pc4GradeRow(row) {
@@ -11040,7 +11155,7 @@ function pc4GradeRow(row) {
 function pc4PassingRows(pairs) {
   const cell = row => `${pc4RangeTrack(row) || pc4Track(row.value, row.evidence === "prior", row.pos_avg, row.interval)}<strong title="${pc4Tip(row, Math.round(row.value))}"${typeof ratingInkColor === "function" ? ` style="color:${ratingInkColor(Number(row.pct ?? 50))}"` : ""}>${Math.round(row.value)}</strong>`;
   return `<div class="pc4-pass-head"><span></span><b>Read</b><span></span><b>Delivery</b><span></span></div>`
-    + pairs.map(pair => `<div class="pc4-r pass" title="${escapeAttr(`${pair.id} · ${pair.name}`)}"><span class="pc4-l">${escapeHtml(pair.name)}</span>${cell(pair.read)}${cell(pair.delivery)}</div>`).join("");
+    + pairs.map(pair => `<div class="pc4-r pass" title="${escapeAttr(pair.name)}"><span class="pc4-l">${escapeHtml(pair.name)}</span>${cell(pair.read)}${cell(pair.delivery)}</div>`).join("");
 }
 
 function pc4MeasureText(row, coach) {
@@ -11068,7 +11183,8 @@ function pc4DistributionRow(row) {
   }).join("");
   const legend = keys.map((key, index) => `<span><em style="background:var(${PC4_SEG[index % 5]})"></em>${escapeHtml(pc4Pretty(key))} <b>${pc4Pct(row.value[key])}</b></span>`).join("");
   const prior = row.evidence === "prior";
-  return `<div class="pc4-dist" title="${escapeAttr(`${row.id} · ${row.name} | ${pc4Evidence(row)}`)}"><div class="pc4-t">${escapeHtml(row.name)}<span class="pc4-badge">${prior ? "similar players" : "player stats"}</span></div><div class="pc4-stackbar${prior ? " prior" : ""}">${segments}</div><div class="pc4-dleg">${legend}</div></div>`;
+  void prior;
+  return `<div class="pc4-dist" title="${escapeAttr(row.name)}"><div class="pc4-t">${escapeHtml(row.name)}</div><div class="pc4-stackbar">${segments}</div><div class="pc4-dleg">${legend}</div></div>`;
 }
 
 function pc4Entry(row, coach) {
@@ -11081,12 +11197,16 @@ function pc4Entry(row, coach) {
 function pc4Group(group, coach) {
   const count = group.pairs ? "9 types, read and delivery" : group.entries.length;
   const rows = group.pairs ? pc4PassingRows(group.pairs) : group.entries.map(row => pc4Entry(row, coach)).join("");
-  return `<h4>${escapeHtml(group.name)}<small>${escapeHtml(group.note || count)}</small></h4>${rows}`;
+  void count; // Round 6: no counts or captions ("how often", "each bar adds to 100%") beside group headers.
+  return `<h4>${escapeHtml(group.name)}</h4>${rows}`;
 }
 
 function pc4LayerHeader(index, layer) {
   // Round 5: the layer's explanation is hover info (an "i" mark), not a line of text under the header.
-  return `<header><h2>${index} · ${escapeHtml(layer.title)}<i class="pc4-info" tabindex="0" title="${escapeAttr(layer.subtitle || "")}" aria-label="${escapeAttr(layer.subtitle || "")}">i</i></h2><span class="pc4-count">${layer.from_player_data} of ${layer.total} from player data</span></header>`;
+  // Round 6: ratings read as definite: no numbering, no "N of M from player data" count (the engine still knows
+  // which values are estimates; the card doesn't show it).
+  void index;
+  return `<header><h2>${escapeHtml(layer.title)}<i class="pc4-info" tabindex="0" title="${escapeAttr(layer.subtitle || "")}" aria-label="${escapeAttr(layer.subtitle || "")}">i</i></h2></header>`;
 }
 
 function pc4CoachLayer(profile) {
@@ -11099,7 +11219,7 @@ function pc4CoachLayer(profile) {
     : Number.isFinite(minutes)
     ? `<div class="pc4-minbar"><div class="pc4-track tall"><i class="pc4-fill" style="width:${clampNumber(minutes / 40 * 100, 0, 100)}%"></i></div><strong>${minutes.toFixed(1)} per game</strong></div>`
     : "<strong>—</strong>";
-  return `<section class="pc4-layer pc4-coach"><header><h2>4 · Coach Usage &amp; Deployment<i class="pc4-info" tabindex="0" title="Decided by the coach, not player talent. Changes with team, lineup and game. You set rough minutes for your own team; the coach adjusts game by game (foul trouble, fatigue, hot hands, blowouts, matchups)." aria-label="Decided by the coach, not player talent. Changes with team, lineup and game.">i</i></h2><span class="pc4-count">Not player talent</span></header>
+  return `<section class="pc4-layer pc4-coach"><header><h2>Coach Usage &amp; Deployment<i class="pc4-info" tabindex="0" title="Decided by the coach, not player talent. Changes with team, lineup and game. You set rough minutes for your own team; the coach adjusts game by game (foul trouble, fatigue, hot hands, blowouts, matchups)." aria-label="Decided by the coach, not player talent. Changes with team, lineup and game.">i</i></h2></header>
     <div class="pc4-body">
       <div class="pc4-kv"><span>Position</span><strong>${escapeHtml(coach.position || "—")}</strong></div>
       <div class="pc4-kv"><span>Offensive role</span><strong>${tags}</strong></div>
@@ -11122,7 +11242,6 @@ function inputsProfilePage(profile) {
       <span><i class="pc4-key median"></i>Median</span>
       <span><i class="pc4-key avg"></i>${escapeHtml(profile.position || "Position")} average</span>
       <span><i class="pc4-key dot"></i>Him</span>
-      <span><i class="pc4-key dot is-prior"></i>Estimated</span>
     </div>
     <div class="pc4-layers">
       <section class="pc4-layer">${pc4LayerHeader(1, technique)}<div class="pc4-body"><div class="pc4-cols"><div>${left}</div><div>${right}</div></div></div></section>
@@ -12536,7 +12655,7 @@ function openSettingsModal() {
         <button type="button" data-replay-tutorial>Replay Tutorial</button>
         ${seasonSlideshowMenuMarkup()}
         ${boardThemeMenuMarkup()}
-        ${typeof uiLookMenuMarkup === "function" ? uiLookMenuMarkup("font") : ""}
+        ${typeof uiLookMenuMarkup === "function" ? uiLookMenuMarkup("font") + uiLookMenuMarkup("buttons") : ""}
         <button type="button" class="ui-command" data-report-issue>Report an Issue</button>
         <a class="artwork-credits-link" href="/assets/game-art/CREDITS.md" target="_blank" rel="noopener">Artwork credits</a>
         <button type="button" data-photo-credits>Photo credits</button>
@@ -12625,7 +12744,7 @@ function boardThemeMenuMarkup() {
 
 function uiLookMenuMarkup(name) {
   const setting = UI_LOOK_SETTINGS[name], current = uiLook(name);
-  const buttons = setting.options.map(([key, label]) => `<button type="button" data-ui-look="${name}" data-ui-look-choice="${key}" aria-pressed="${key === current}"${name === "font" ? ` class="ui-font-sample is-${key}"` : ""}>${label}</button>`);
+  const buttons = setting.options.map(([key, label]) => `<button type="button" data-ui-look="${name}" data-ui-look-choice="${key}" aria-pressed="${key === current}"${name === "font" ? ` class="ui-font-sample is-${key}"` : ""}${name === "buttons" ? ` class="ui-button-sample is-${key}"` : ""}>${label}</button>`);
   return `<div class="settings-board-theme settings-ui-look" role="group" aria-label="${setting.label}"><span>${setting.label}</span>${buttons.join("")}</div>`;
 }
 
@@ -16028,8 +16147,11 @@ function wireTradeAssetControls(root) {
   root.querySelectorAll("[data-remove-side]").forEach((button) => {
     button.addEventListener("click", () => removeAsset(button.dataset.removeSide, button.dataset.assetId));
   });
+  const fitPages = () => fitTradeAssetPages(root.isConnected ? root : (els.modalRoot || document));
+  if (root.isConnected) fitPages();
+  setTimeout(fitPages, 0);
   root.querySelectorAll("[data-asset-filter-side]").forEach((control) => {
-    const apply = value => { state.tradeAssetFilters ||= {}; state.tradeAssetFilters[control.dataset.assetFilterSide] = value || "all"; renderTradeRoom(); };
+    const apply = value => { state.tradeAssetFilters ||= {}; state.tradeAssetFilters[control.dataset.assetFilterSide] = value || "all"; if (state.tradeAssetPages) state.tradeAssetPages[control.dataset.assetFilterSide] = 0; renderTradeRoom(); };
     if (control.tagName === "SELECT") control.addEventListener("change", () => apply(control.value));
     else control.addEventListener("click", () => apply(control.dataset.assetFilter));
   });
@@ -16039,6 +16161,7 @@ function wireTradeAssetControls(root) {
       state.tradeAssetSorts ||= {};
       const current = state.tradeAssetSorts[side] || {key: "value", dir: "desc"};
       state.tradeAssetSorts[side] = {key, dir: current.key === key ? (current.dir === "asc" ? "desc" : "asc") : TRADE_ASSET_ASCENDING.has(key) ? "asc" : "desc"};
+      if (state.tradeAssetPages) state.tradeAssetPages[side] = 0;
       renderTradeRoom();
     };
     header.addEventListener("click", sort);
@@ -16449,10 +16572,23 @@ const TRADE_VALUE_SCALE = 120;
 // Colours for the assets one side gives (round 4: each asset its own colour, the side's total a segmented bar of them).
 // Mid-light tints that read on both the clear and the frosted glass.
 const TRADE_ASSET_COLORS = ["#5aa2f0", "#e8a04e", "#5dbf83", "#b58ae8", "#e2716f", "#4fc1c0", "#c9b458", "#8f9df0"];
+function tradeValueColor(share) {
+  const TRADE_VALUE_STOPS = [[0, [255, 138, 128]], [0.35, [255, 176, 102]], [0.5, [246, 211, 101]], [0.65, [158, 224, 143]], [0.8, [124, 196, 255]], [1, [169, 184, 255]]];
+  const t = Math.max(0, Math.min(1, Number(share) || 0));
+  const upper = TRADE_VALUE_STOPS.findIndex(([at]) => at >= t);
+  if (upper <= 0) return `rgb(${TRADE_VALUE_STOPS[0][1].join(",")})`;
+  const [a, from] = TRADE_VALUE_STOPS[upper - 1], [b, to] = TRADE_VALUE_STOPS[upper];
+  const k = (t - a) / (b - a);
+  return `rgb(${from.map((v, i) => Math.round(v + (to[i] - v) * k)).join(",")})`;
+}
+
 function tradeValueBar(value, color = "") {
   if (value === null) return `<span class="tr-tile-value is-empty" title="Listed trade value">—</span>`;
   const width = Math.max(2, Math.min(100, value / TRADE_VALUE_SCALE * 100));
-  const fill = color || (typeof performanceBarColor === "function" ? performanceBarColor(Math.min(100, value / 90 * 100)) : "#3978d4");
+  // Round 6: saturated colours from red (low) through yellow and green to blue (high); the old bar palette's middle
+  // was grey.
+  const pct = Math.max(0, Math.min(1, value / 90));
+  const fill = color || tradeValueColor(pct);
   return `<span class="tr-tile-value" title="Listed trade value ${value.toFixed(1)}: what he is worth on the market before the receiving team's fit and role"><strong>${value.toFixed(1)}</strong><i><b style="width:${width.toFixed(1)}%;background:${fill}"></b></i></span>`;
 }
 
@@ -16465,7 +16601,10 @@ function tradeDealTile(asset, {removeSide = "", routeFrom = "", fresh = false, c
   const valueCell = tradeValueBar(value, color);
   if (asset.kind !== "player") {
     const pick = tradePickText(asset);
-    return `<li class="tr-tile is-pick${fresh ? " is-new" : ""}"${pick.full ? ` title="${escapeAttr(pick.full)}"` : ""}><span class="tr-tile-face">${typeof draftAssetGlyph === "function" ? draftAssetGlyph(asset, true, true) : ""}</span><span class="tr-tile-main"><strong class="tr-tile-name">${escapeHtml(pick.short)}</strong><span class="tr-tile-sub">${route}${asset.kind === "pick_swap" ? "Swap right" : "Draft pick"}${pick.note ? ` · ${escapeHtml(pick.note)}` : ""}</span></span><span class="tr-tile-roles"></span>${valueCell}<span class="tr-tile-ovr"></span><span class="tr-tile-contract"></span>${remove}</li>`;
+    // Round 6: the pick's terms in its own field, with the full wording behind a Details drop-down (not a hover).
+    const terms = [asset.kind === "pick_swap" ? "Swap right" : "", pick.note || ""].filter(Boolean).join(" · ");
+    const details = pick.full ? `<details class="tr-tile-details"><summary>Details</summary><p>${escapeHtml(pick.full)}</p></details>` : "";
+    return `<li class="tr-tile is-pick${fresh ? " is-new" : ""}"><span class="tr-tile-face">${typeof draftAssetGlyph === "function" ? draftAssetGlyph(asset, true, true) : ""}</span><span class="tr-tile-main"><strong class="tr-tile-name">${escapeHtml(pick.short)}</strong>${route ? `<span class="tr-tile-sub">${route}</span>` : ""}</span><span class="tr-tile-roles tr-tile-terms">${terms ? `<span class="tr-tile-note">${escapeHtml(terms)}</span>` : ""}</span>${valueCell}<span class="tr-tile-ovr"></span><span class="tr-tile-contract tr-tile-terms">${details}</span>${remove}</li>`;
   }
   const overall = tradeKnownNumber(asset.overall ?? asset.ratings?.overall);
   const roles = typeof playerRoleChip === "function" && (asset.primary_off_role || asset.primary_def_role) ? `<span class="tr-role-pair">${playerRoleChip(asset.primary_off_role)}${playerRoleChip(asset.primary_def_role)}</span>` : "";

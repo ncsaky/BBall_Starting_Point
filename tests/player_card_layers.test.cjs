@@ -39,13 +39,13 @@ const profile = {
   ],
 };
 
-test('layered ratings page shows four layers, evidence styling and plain labels', () => {
+test('layered ratings page shows four layers with plain labels and definite ratings', () => {
   const html = runtime().inputsProfilePage(profile);
-  for (const text of ['1 · Technique &amp; Recognition', '2 · Physical Tools', '3 · Tendencies', '4 · Coach Usage', 'Catch-and-shoot', 'Drive and kick', 'Shot hunting', 'Shot mix', 'Middle half', 'Core rotation', '33.3 per game', 'Not yet revealed']) assert.ok(html.includes(text), text);
-  assert.ok(html.includes('pc4-fill prior'), 'prior estimates are hatched');
+  for (const text of ['Technique &amp; Recognition', 'Physical Tools', 'Tendencies', 'Coach Usage', 'Catch-and-shoot', 'Drive and kick', 'Shot hunting', 'Shot mix', 'Middle half', 'Core rotation', '33.3 per game', 'Not yet revealed']) assert.ok(html.includes(text), text);
   assert.ok(html.includes('pc4-band'), 'likely range band drawn');
-  assert.ok(html.includes('2 of 3 from player data'));
-  assert.ok(html.includes('title="S01 · Catch-and-shoot'), 'internal ids only in tooltips');
+  // Round 6: ratings read as definite: no numbered layers, no "from player data" counts, no estimate marks.
+  for (const text of ['1 · ', 'from player data', 'is-prior', 'similar players', 'pc4-fill prior']) assert.ok(!html.includes(text), text);
+  assert.ok(!html.includes('S01 ·'), 'no internal ids, not even in tooltips');
   assert.ok(!/<span class="pc4-l">S01/.test(html));
 });
 

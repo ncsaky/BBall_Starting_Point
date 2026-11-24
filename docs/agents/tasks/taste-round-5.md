@@ -54,3 +54,5 @@ Owner: Claude. GUI only. UI-light testing (game check, contrast script, JS tests
 - Testing now runs on a separate copy: `gui-preview` (port 8765) with saves copied into the scratchpad `gui_saves/`;
   the user plays the real playtest save in the main tab, so never drive that tab.
 
+- Round 6 deck published 2026-11-24 (16 questions `q6-…`, including a button-style pick). Noticed while checking:
+  Minutes still shows injured names in white (its name markup isn't `.player-name-with-injury`); fix next pass.

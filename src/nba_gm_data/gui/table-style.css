@@ -225,13 +225,14 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player
 /* Window title bars: no icon or decorative mark; icons live only in the window switcher (taste deck 2026-11-23). */
 body.unified-terminal-ui .card-board-titlebar .card-board-window-mark { display: none !important; }
 
-/* Tables run edge to edge in their window: no padding around a window's main table, no gap under the title bar
-   or at the bottom; the first column keeps a little room so names don't touch the edge (taste deck 2026-11-23). */
+/* Tables sit inset in their window (round 6 replaced "edge to edge"): each level indents further than the one above
+   it: window title (13px), section headers, then the table's header and row text (about 23px). No gap under the title
+   bar or at the bottom. The inset itself is set in glass-clear.css (round 6 block). */
 body.unified-terminal-ui .has-card-board .card-board-body > .season-command-panel:has(> [data-house-table]) { padding: 0 !important; }
 body.unified-terminal-ui .has-card-board .card-board-body [data-house-table] { padding-inline: 0 !important; margin-inline: 0 !important; }
-body.unified-terminal-ui [data-house-table] > :is([data-house-head], [data-house-row]) { padding-inline: 8px !important; box-sizing: border-box; }
-body.unified-terminal-ui table :is(thead th, tbody td):first-child { padding-left: 8px !important; }
-body.unified-terminal-ui table :is(thead th, tbody td):last-child { padding-right: 8px !important; }
+body.unified-terminal-ui [data-house-table] > :is([data-house-head], [data-house-row]) { padding-inline: 12px !important; box-sizing: border-box; }
+body.unified-terminal-ui table :is(thead th, tbody td):first-child { padding-left: 12px !important; }
+body.unified-terminal-ui table :is(thead th, tbody td):last-child { padding-right: 10px !important; }
 
 /* House tables (grid tables): headers centred over their values; only the player column is left-aligned. */
 body.unified-terminal-ui [data-house-table] > [data-house-head] > [data-house-header]:not(:first-child) { display: flex !important; justify-content: center !important; text-align: center !important; }

@@ -179,7 +179,7 @@ test('new mandatory windows center in the scrolled viewport and stay put on refr
   const viewport = {scrollLeft:100,scrollTop:200,clientWidth:1200,clientHeight:700};
   centerNewRequiredWindows(layout,cards,{},true,viewport);
   assert.equal(layout.required.x,250);
-  assert.equal(layout.required.y,388);
+  assert.equal(layout.required.y,386); // round 6: 28px title bar
   assert.equal(layout.required.positioned,true);
   assert.deepEqual(layout.ordinary,{x:8,y:20});
   layout.required.x=320;
@@ -275,8 +275,9 @@ test('phase entry opens measured cards below existing windows without moving the
   const layout = structuredClone(initial);
   assert.equal(enterPhase(layout, initial, {}, ['control','board'], '2027:draft'), true);
   assert.deepEqual(layout.regular, initial.regular);
-  assert.equal(layout.control.y, 256);
-  assert.equal(layout.board.y, 352);
+  // Round 6: the title bar is 28px (was 24), so each window below another sits 4px lower.
+  assert.equal(layout.control.y, 260);
+  assert.equal(layout.board.y, 360);
   assert.equal(layout.board.width, 900);
   assert.equal(layout.board.height, 600);
   assert.equal(layout.board.visible, true);
@@ -1022,8 +1023,8 @@ test('minutes card migration narrows older windows once, making room for the cur
   for (const [revision,width,height] of [[1,1680,720],[2,1360,720],[5,577,504]]) {
     const layout = {minutes:{width,height,sizeRevision:revision}};
     migrateCardSizes(layout,{cards:{minutes:{sizeRevision:revision}}});
-    // Round 4: 12% wider again so Fatigue fits in the modern font (749 or 750 after rounding).
-    assert.ok(Math.abs(layout.minutes.width - 749.5) <= 0.5, String(layout.minutes.width));
+    // Round 6: never narrower than 760 (the table's 10px inset on each side).
+    assert.equal(layout.minutes.width, 760);
     assert.deepEqual([layout.minutes.height, layout.minutes.sizeRevision], [504, 7]);
     const saved = {cards:structuredClone(layout)};
     migrateCardSizes(layout,saved);

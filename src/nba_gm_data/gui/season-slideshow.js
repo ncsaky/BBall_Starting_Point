@@ -484,8 +484,8 @@
           <button type="button" class="game-tutorial-skip" data-ss-action="skip">${esc(SKIP_LABEL[data.kind] || "Skip")}</button>
           <div class="ss-dots" aria-hidden="true">${slides.map((_, i) => `<i class="${i === index ? "on" : ""}"></i>`).join("")}</div>
           <div class="game-tutorial-arrows">
-            <button type="button" class="game-tutorial-arrow" data-ss-action="previous" aria-label="Previous slide" title="Previous slide" ${index === 0 ? "disabled" : ""}>←</button>
-            <button type="button" class="game-tutorial-arrow" data-ss-action="next" aria-label="${last ? "Finish" : "Next slide"}" title="${last ? "Finish" : "Next slide"}">${last ? "✓" : "→"}</button>
+            <button type="button" class="game-tutorial-arrow" data-ss-action="previous" aria-label="Previous slide" title="Previous slide" ${index === 0 ? "disabled" : ""}><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M13 8H3M7 4L3 8l4 4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <button type="button" class="game-tutorial-arrow" data-ss-action="next" aria-label="${last ? "Finish" : "Next slide"}" title="${last ? "Finish" : "Next slide"}">${last ? '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 4.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>'}</button>
           </div>
         </footer>
       </article>`;

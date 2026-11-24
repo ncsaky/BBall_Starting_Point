@@ -54,7 +54,7 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **Every header sorts** in data tables (a small fixed list such as an award race's chasers needs no sorting). The sort arrow is never underlined.
 - **One border colour per row rule.** The player cell's rule matches the other cells. Every table in a card reaches both edges, and its fields are labelled like the table above it.
 - **No subheader strip** between a window's title bar and its table. Deadlines and rules go in a Details drop-down or the footer. Pick a useful default sort (contracts: this season's salary, high to low).
-- **Edge to edge:** a table fills its card's width. No inner margin around it, no gap between the card header, any sub-header and the table, and no gap at the bottom border.
+- **Indent inward with each level (round 6, replaces "edge to edge"):** the window title, then section headers ("Two-way places"), then table header text, then row text each start further right than the level above. Tables keep a margin from the card's sides (the Roster spacing is the model). No gap between the card header and the table's top, and no gap at the bottom border.
 - **Hover and click:** whole-row highlight. Every cell, including the player cell and its links, keeps the highlight. Hovering never underlines icons. If a row or box highlights on hover, clicking anywhere in it opens the player. Clicking a row never turns it black.
 - **Controls never sit in a table header.** Window-level controls (reset, "coach rests players") go in the window header or a sub-header bar, and must look like buttons for the content, not like window controls.
 - **Missing values:** an em dash (—). Never blank, never 0.
@@ -76,6 +76,8 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 
 ### Marks and chips
 - **Injury:** red cross plus red games-out number, and the player's name in red too (round 5), everywhere. No chip and no greyed-out row.
+- **No numbered section headers** ("Technique and recognition", not "1. Technique…"), no "each bar adds to 100%" or "how often" captions: implicit things stay unsaid (round 6).
+- **Draft pick details** (protections, swaps) open in a Details drop-down, not a hover.
 - **Explanations are hover info, not visible text** (round 5): subtitles under section headers and notes like "Projected overall: line is…" become an info mark with hover text.
 - **Section headers inside a table or list** (Shooting, Rebounding…) are visibly different from rows (italic small caps or similar).
 - **Status (kept, declined, signed...):** a coloured icon plus plain black text, regular weight. No coloured pill chips.
@@ -99,6 +101,10 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **Trophies** need a treatment (outline, frame or similar). A raw photo pasted on the card looks wrong.
 
 ### Buttons, tabs and checkboxes
+- **Button style is a Settings choice (round 6):** glass pill (default), solid pill with a team-blue chosen state, rounded-square glass, or a segmented tray. The user couldn't pick one.
+- **Choice rows (Keep / Release / Buy out):** one long pill with the chosen option as a filled pill inside it that slides to a new choice when clicked.
+- **Trade room Builder / Finder / Market** is not a Team Identity-style segmented control: use a different tab style (underlined tabs).
+- **Drop-down menus** are custom glass menus, not the browser's grey select boxes.
 - **Pill-shaped glass buttons** (round 5), like iOS glass buttons: fully rounded ends, a translucent light fill, a thin light edge, vertically centred in their bar. Everywhere: tool bars, row actions (Keep / Waive / Buy out), slideshow navigation, trade room.
 - **Tabs are segmented controls** like Team Identity's (round 5: loved): a soft tray, the chosen option raised. Labels for a group of tabs sit above it, centred.
 - **Checkboxes: transparent fill** with a light edge, never a white box.
@@ -132,7 +138,7 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **Radars:** enough categories to describe a team (round 4: more than four or five per side).
 - **Range charts** (Four Factors) use the same width per row, with right always meaning better. Bars in one list all have the same length, whatever the value text beside them.
 - **Bars on one card share one scale** (Development's Season and Month bars).
-- **Heat maps:** enough colour steps that the middle isn't washed out; each region can carry a tiny two-line label (two numbers, about 10 characters).
+- **Heat maps:** many colour steps (round 6: more than five visible; use a near-continuous scale) so the middle isn't washed out; each region can carry a tiny two-line label (two numbers, about 10 characters).
 - **Meters that mean "worse as they fill"** (fatigue) run light yellow to dark red.
 - **Payroll is always the four-year segmented payroll chart.** Anything that changes payroll (a trade) shows the chart, with the change animated (plays once, then a replay button).
 - Each player keeps one colour across all years of the payroll chart.
@@ -169,7 +175,10 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - Title-bar icons, AI-drawn decorative SVGs.
 - White text on hover. Anything filled black (tabs, checkboxes, clicked rows).
 - Coloured pill chips for status.
-- Gaps between a header and its table, or tables that don't reach the card edges. Double borders.
+- Gaps between a header and its table. Double borders. Text at the same indent as the level above it.
+- Scrolling inside a card or pop-up (round 6: "I never like scrolling"). Use pages or tabs, or make the card larger.
+- Estimated or partial data shown as such on the front end: no hollow dots, no "44 of 64 from player data" counts. Ratings look definite.
+- White fills on hover (header cells), white checkbox boxes, white rims on window title bars.
 - Headers not centred over their values.
 - Controls in a table header.
 - A roster table dumped into a showcase screen. Showcase screens need a graphic or a takeaway.

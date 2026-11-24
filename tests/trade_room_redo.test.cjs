@@ -30,7 +30,7 @@ function context(extra = {}) {
     ...extra,
   };
   vm.createContext(ctx);
-  vm.runInContext(['tradeSalaryFlow', 'tradeReadout', 'tradeCounterOffer', 'tradeAssetContract', 'tradePickText', 'tradeRatingColor', 'tradeValueBar', 'tradeDealTile'].map(extract).join('\n'), ctx);
+  vm.runInContext(['tradeSalaryFlow', 'tradeReadout', 'tradeCounterOffer', 'tradeAssetContract', 'tradePickText', 'tradeRatingColor', 'tradeValueColor', 'tradeValueBar', 'tradeDealTile'].map(extract).join('\n'), ctx);
   return ctx;
 }
 
@@ -91,7 +91,8 @@ test('a deal tile shows face, name, position and age, value as a bar, coloured O
   assert.match(html, /class="tr-tile-value"[^>]*><strong>67\.2<\/strong><i><b style="width:56\.0%/);
   const pick = ctx.tradeDealTile({kind: 'pick', id: 'k', season: '2027', round: 1, original_team_abbrev: 'NOP', protection_summary: 'top-4 protected',
     label: '2027 R1 NOP (owned by ATL); top-4 protected; NOP keeps this pick if it lands in the protected range; ATL instead receives 2028 R1 NOP', trade_value: 92});
-  assert.match(pick, />2027 R1 NOP</); assert.match(pick, /Draft pick · top-4 protected/); assert.match(pick, /title="2027 R1 NOP \(owned by ATL\)/);
+  // Round 6: the terms as a field and the full wording behind a Details drop-down (not a hover title).
+  assert.match(pick, />2027 R1 NOP</); assert.match(pick, /class="tr-tile-note">top-4 protected</); assert.match(pick, /<details class="tr-tile-details"><summary>Details<\/summary><p>2027 R1 NOP \(owned by ATL\)/);
 });
 
 test('the builder keeps every tool: partner arrows, add team, final offer, ask, counters, four detail pages', () => {

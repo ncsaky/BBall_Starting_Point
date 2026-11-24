@@ -2,7 +2,7 @@
 (() => {
   "use strict";
 
-  const TITLE_HEIGHT = 24;
+  const TITLE_HEIGHT = 28; // the glass title bar (round 6: was 24, so the 28px bar covered 4px of content)
   const STAFF_ACTION_WIDTH = 96;
   const STAFF_MARKET_HEIGHT = 300;
   const LIMIT = 20000;
@@ -29,7 +29,7 @@
     "league-wire": [.61, 1.05],
   };
   // Round 4: a new layout never opens these narrower than their tables need (the measured grid cell can be narrow).
-  const CARD_MIN_DEFAULT_WIDTHS = {roster: 1140, minutes: 740, factors: 360};
+  const CARD_MIN_DEFAULT_WIDTHS = {roster: 1160, minutes: 760, factors: 360};
   const CARD_SIZE_REVISIONS = {identity:5,signals:2,minutes:7,development:3,staff:7,"league-wire":2,prospects:3,offense:4,defense:4,"award-mvp":4,"award-dpoy":4,"award-roty":4,roster:5,factors:4};
   const CARD_WIDTH_MIGRATIONS = {minutes:{1:1.03/1.68*.8*.7*1.16*1.12,2:1.03/1.36*.8*.7*1.16*1.12,3:.8*.7*1.16*1.12,4:.7*1.16*1.12,5:1.16*1.12,6:1.12},development:{1:1.4/1.15,2:1.12},"league-wire":{1:.5},prospects:{1:1.92/1.2,2:1.92/1.45},offense:{1:1.1,2:1.1/1.4,3:1.4/1.1},defense:{1:1.1,2:1.1/1.4,3:1.4/1.1},"award-mvp":{1:3.05/1.22,2:3.05/2.05,3:3.05/2.7},"award-dpoy":{1:3.05/1.22,2:3.05/2.05,3:3.05/2.7},"award-roty":{1:3.05/1.22,2:3.05/2.05,3:3.05/2.7},roster:{1:1.16*1.6,3:1.6,4:1.6/1.4},factors:{1:1.25*1.3,2:1.3}};
   const CARD_HEIGHT_MIGRATIONS = {identity:{1:1.1/1.3*1.07,2:1.1*1.07,3:1.1/1.25*1.07,4:1.07},signals:{1:.75},minutes:{1:.7,2:.7,3:.7,4:.7},staff:{2:1.12/1.8,3:1.12/1.35,4:1.12/1.12,5:1.12/1.12,6:1.12/1.04},offense:{1:1.55},defense:{1:1.55},factors:{1:1.4*1.12,2:1.12,3:1.12}};
