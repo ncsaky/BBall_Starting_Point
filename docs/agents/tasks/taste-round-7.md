@@ -40,3 +40,6 @@ Owner: Claude. GUI only. UI-light testing (gui-preview copy, contrast script, JS
   - Player card: 1700 x 1080 at 76% (was 1530 x 900 at 70%); ratings page re-laid (Technique across the top in five
     columns; Physical, Coach and Tendencies (three columns) beneath) so no page scrolls; court tabs and Offense /
     Defense labels larger; heat-map captions centred; season drop-down a pill in a taller header.
+- Round 8 deck published 2026-11-24 (version 10, 13 questions `q8-…`): three-team deal, deal alignment, Details,
+  Value colours, picking list, player card (ratings and overview), table header edges, the tab pill, the Keep/Waive
+  pill, Settings, plus "anywhere else you scroll?" and "which card next?".

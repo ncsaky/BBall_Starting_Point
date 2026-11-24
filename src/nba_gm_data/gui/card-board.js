@@ -1501,7 +1501,22 @@
     active = { dispose: () => { scrollPositions.set(key, {x:board.scrollLeft, y:board.scrollTop}); finishWindowSwitcher(false, false); finishResize(true); finishDrag(true); observer.disconnect(); document.removeEventListener("click", dismissToolbarMenusOutside); document.removeEventListener("keydown", handleWindowSwitcherKeydown, true); document.removeEventListener("keyup", handleWindowSwitcherKeyup, true); window.removeEventListener("resize", dismissToolbarMenusOnResize); }, closeActive:closeActiveWindow, toggleActiveMinimize:toggleActiveWindowMinimized, toggleActivePin:toggleActiveWindowPinned, toggleActiveExpansion:toggleActiveWindowExpanded, updateOfferCount };
     active.open = (id) => { if (!layout[id]) return false; add(id); return true; };
     active.isOpen = id => Boolean(layout[id]?.visible);
-    active.fitContent = id => { if(id !== 'team-wants' || !layout[id]) return; paint(id); sizeCanvas(); save(); };
+    // Windows whose height follows their content (user, 2026-11-24: Player Development ends at its table's last row).
+    const FIT_TO_CONTENT = new Set(['team-wants', 'development']);
+    active.fitContent = id => {
+      if (!FIT_TO_CONTENT.has(id) || !layout[id]) return;
+      if (id === 'development') {
+        const panel = frames.get(id)?.querySelector('.card-board-body > *');
+        if (!panel || !panel.offsetHeight) return;
+        const before = panel.style.height;
+        panel.style.height = 'auto';
+        const height = Math.ceil(panel.getBoundingClientRect().height / (layout[id].scale || 1));
+        panel.style.height = before;
+        if (!(height > 60) || Math.abs((layout[id].height || 0) - height) <= 1) return;
+        layout[id].height = height;
+      }
+      paint(id); sizeCanvas(); save();
+    };
     active.addCard = addClipboardCard;
     active.expand = (id) => {
       if (!layout[id] || !EXPANDABLE_CARDS.has(id)) return false;

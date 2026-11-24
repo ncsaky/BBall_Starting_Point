@@ -3053,6 +3053,7 @@ function renderDashboardTab(rows) {
     wireDashboardOverview(editable);
     if ((!phaseKind || isClipboardPhase(phaseKind)) && typeof mountDashboardCardBoard === "function") {
       mountDashboardCardBoard(target);
+      setTimeout(() => window.CardBoard?.fitContent?.("development"), 0);
       wireRotationResetAllControl(target);
     }
     wireSeasonOpponentSorting(target);
@@ -5052,6 +5053,7 @@ async function loadDevelopmentProjection() {
 function rerenderDevelopmentGraph() {
   const node = document.querySelector("[data-dev-graph]");
   if (node && state.devGraphCandidates) node.outerHTML = seasonDevelopmentGraph(state.devGraphCandidates);
+  window.CardBoard?.fitContent?.("development");
 }
 
 function seasonDevelopmentUpside(value) {

@@ -761,3 +761,8 @@ html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .car
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .spatial-legend > * { margin-inline: auto !important; }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .approved-season-line > header { min-height: 34px !important; display: flex !important; align-items: center !important; padding: 4px 10px !important; box-sizing: border-box; }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .player-career-picker > summary { border: 1px solid rgba(255, 255, 255, .24) !important; border-radius: 999px !important; background: rgba(255, 255, 255, .10) !important; padding: 2px 12px !important; box-shadow: none !important; }
+
+/* Player Development: the list has as many rows as it shows (it reserved room for the whole roster, leaving an empty
+   band under the last row), and the window ends at the last row (card-board.js fitContent). */
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board [data-board-window="development"] .season-development-list { grid-template-rows: 18px repeat(var(--development-count, 9), 30px) !important; height: auto !important; }
+html[data-glass="clear"] body.unified-terminal-ui .has-card-board [data-board-window="development"] .card-board-body > .season-command-panel { overflow: hidden !important; padding-bottom: 0 !important; }
