@@ -324,8 +324,9 @@ body.unified-terminal-ui #modalRoot table.tr-table .trade-ledger-contract detail
 body.unified-terminal-ui #modalRoot table.tr-table tbody tr:has(details[open]) > :is(td, th) { vertical-align: top; padding-top: 8px !important; }
 body.unified-terminal-ui #modalRoot table.tr-table tbody tr:has(details[open]) > .trade-ledger-portrait { vertical-align: bottom !important; padding-top: 0 !important; }
 body.unified-terminal-ui #modalRoot table.tr-table .trade-ledger-route select { min-height: 22px !important; font-size: 11px !important; }
-@container (max-width: 980px) { body.unified-terminal-ui #modalRoot table.tr-table :is(.tr-col-roles, .tr-col-ht) { display: none; } }
-@container (max-width: 720px) { body.unified-terminal-ui #modalRoot table.tr-table :is(.tr-col-runway, .tr-col-injury, .tr-col-age) { display: none; } }
+/* Narrow lists drop the least-used columns first; Roles always stays (it carries the picks' terms too). */
+@container (max-width: 980px) { body.unified-terminal-ui #modalRoot table.tr-table :is(.tr-col-runway, .tr-col-ht) { display: none; } }
+@container (max-width: 720px) { body.unified-terminal-ui #modalRoot table.tr-table :is(.tr-col-injury, .tr-col-age) { display: none; } }
 
 /* ---------- Value and payroll pages ---------- */
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .trade-team-decisions { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px; margin-bottom: 8px; }
@@ -685,3 +686,13 @@ body.unified-terminal-ui #modalRoot .tr-salary-out { margin-left: auto; color: v
 body.unified-terminal-ui #modalRoot .tr-salary-out b { color: var(--tr-ink); }
 body.unified-terminal-ui #modalRoot .tr-salary-out + .tr-salary-status { margin-left: 12px !important; }
 body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger td.tr-col-notes { text-align: left !important; padding-left: 12px !important; color: var(--tr-muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Narrow lists: roles stack on two lines in a narrower column, so Contract and Value stay in view (no sideways scroll). */
+@container (max-width: 1180px) {
+  body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger.trade-ledger :is(th, td).tr-col-roles { width: 150px !important; min-width: 0 !important; white-space: normal !important; }
+  body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger td.tr-col-roles .tr-role-pair { display: inline-flex !important; flex-direction: column !important; align-items: center; gap: 1px; }
+  body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger td.tr-col-roles .role-text { display: block; white-space: nowrap; line-height: 1.2; }
+  body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger.trade-ledger :is(th, td).tr-col-name { width: 160px !important; }
+  body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger.trade-ledger :is(th, td).tr-col-rating { width: 50px !important; }
+  body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger.trade-ledger :is(th, td).tr-col-contract { width: 96px !important; }
+  body.unified-terminal-ui #modalRoot .modal-trade-room table.tr-table.trade-ledger.trade-ledger :is(th, td).tr-col-value { width: 130px !important; }
+}

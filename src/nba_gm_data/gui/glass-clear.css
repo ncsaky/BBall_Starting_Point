@@ -766,3 +766,12 @@ html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .car
    band under the last row), and the window ends at the last row (card-board.js fitContent). */
 html[data-glass="clear"] body.unified-terminal-ui .has-card-board [data-board-window="development"] .season-development-list { grid-template-rows: 18px repeat(var(--development-count, 9), 30px) !important; height: auto !important; }
 html[data-glass="clear"] body.unified-terminal-ui .has-card-board [data-board-window="development"] .card-board-body > .season-command-panel { overflow: hidden !important; padding-bottom: 0 !important; }
+
+/* The top bar's blurred glass makes it its own layer; without a stacking order it sat under the board, so its menus
+   (Trades..., Layouts, Sim to...) were drawn but clicks went through to the board (user, 2026-11-24: "the buttons for
+   opening the trades options don't work"). Above the windows, below the gallery and pop-ups. */
+html[data-glass="clear"] body .has-card-board .season-command-header { position: relative !important; z-index: 1100 !important; }
+/* The injury-risk meter: the trade list's old meter rules (block, full width, blue fill) no longer flatten it. */
+body.unified-terminal-ui .trade-ledger .trade-ledger-meter i.injury-risk-meter, body.unified-terminal-ui i.injury-risk-meter { display: inline-grid !important; grid-template-columns: repeat(5, 6px) !important; gap: 2px; width: auto !important; height: 10px !important; background: transparent !important; }
+body.unified-terminal-ui .trade-ledger .trade-ledger-meter i.injury-risk-meter > b:not([style]), body.unified-terminal-ui i.injury-risk-meter > b:not([style]) { background: rgba(255, 255, 255, .14) !important; }
+body.unified-terminal-ui .trade-ledger .trade-ledger-meter i.injury-risk-meter > b { display: block !important; width: 6px !important; height: 10px !important; border-radius: 2px; }
