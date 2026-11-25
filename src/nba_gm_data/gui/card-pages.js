@@ -8,8 +8,11 @@
    height or width: they show more rows, never bigger ones.
 
    Fixed places for controls: the sidebar holds the team, the date and phase, Player Finder, the pages and Settings; a
-   page's own controls sit at the right of its title; the one obvious next step (Sim / the phase's button) is always at the
-   bottom right, beside the league wire ticker.
+   page's own controls sit at the right of its title; the one obvious next step is always at the bottom right of the
+   footer, which is one piece with the sidebar (the league wire ticker beside it).
+
+   Step screens (the opening roster, Set The Roster, the draft, free agency...) are not listed in the sidebar (user,
+   2026-11-24): they follow one another, moved by the bottom-right button, until the phase's own button takes over.
 
    card-board.js still builds every window frame and keeps the pop-ups (player cards, extension cards) as windows; this
    module only takes the frames of the cards that belong on pages. Pop-ups that are modals (box scores, the trade room,
@@ -51,28 +54,25 @@
   const col = (...items) => ({type: "col", items});
   const card = (id, options = {}) => ({type: "card", id, ...options});
 
+  // The "now" group (step screens and slideshows) has no place in the sidebar.
   const GROUPS = [
-    ["now", ""],
     ["team", "Team"],
     ["office", "Front Office"],
     ["league", "League"],
   ];
 
   const PAGES = [
-    // Decisions and phase rooms come first while they are open.
-    {id: "staff-retention", group: "now", label: "Staff Retention", layout: () => row(card("phase-staff_retention-decision", {bare: true}))},
-    {id: "roster-moves", group: "now", label: () => rosterMovesLabel(), layout: () => row(card("phase-cutdown-decision", {bare: true}))},
-    {id: "set-roster", group: "now", label: "Set The Roster", layout: () => row(card("phase-set_roster-checklist", {bare: true}))},
+    // The step screens, in the order they follow one another.
+    {id: "staff-retention", group: "now", step: true, label: "Staff Retention", layout: () => row(card("phase-staff_retention-decision", {bare: true}))},
+    {id: "draft-room", group: "now", step: true, label: "Draft", layout: draftRoomLayout},
+    {id: "free-agency-checklist", group: "now", step: true, label: "Offseason Checklist", layout: () => row(card("phase-free_agency-checklist", {grow: "h"}), card("phase-free_agency-selected", {grow: "h"}))},
+    {id: "free-agency", group: "now", step: true, label: "Free Agency", layout: () => row(card("phase-free_agency-market", {grow: "h"}), card("phase-free_agency-selected", {grow: "h"}), card("phase-free_agency-wire", {grow: "h"}))},
+    {id: "fantasy-draft", group: "now", step: true, label: "Fantasy Draft", layout: () => col("phase-fantasy_draft-control", row(card("phase-fantasy_draft-board", {grow: "h"}), card("phase-fantasy_draft-roster", {grow: "h"}), card("phase-fantasy_draft-ticker", {grow: "h"})))},
+    {id: "roster-moves", group: "now", step: true, label: () => rosterMovesLabel(), layout: () => row(card("phase-cutdown-decision", {bare: true}))},
+    {id: "set-roster", group: "now", step: true, label: "Set The Roster", layout: () => row(card("phase-set_roster-checklist", {bare: true}))},
+    // Slideshows open by themselves when they are due (and from Settings).
     {id: "outlook", group: "now", label: "Preseason Outlook", slideshow: "outlook"},
     {id: "recap", group: "now", label: "Year-End Recap", slideshow: "recap"},
-    // The bracket gets a page of its own (it is as wide as the screen); the playoff stats and injuries sit together.
-    {id: "playoffs", group: "now", label: "Playoffs", layout: () => row(card("phase-playoffs-bracket", {bare: true, width: 1100}))},
-    // Both tables are wider than their board windows were (the windows scrolled sideways): the page gives them their width.
-    {id: "playoff-stats", group: "now", label: "Playoff Stats", layout: () => row(card("phase-playoffs-leaders", {width: 680}), card("phase-playoffs-injuries", {width: 604}))},
-    {id: "draft-room", group: "now", label: "Draft", layout: draftRoomLayout},
-    {id: "free-agency-checklist", group: "now", label: "Offseason Checklist", layout: () => row(card("phase-free_agency-checklist", {grow: "h"}), card("phase-free_agency-selected", {grow: "h"}))},
-    {id: "free-agency", group: "now", label: "Free Agency", layout: () => row(card("phase-free_agency-market", {grow: "h"}), card("phase-free_agency-selected", {grow: "h"}), card("phase-free_agency-wire", {grow: "h"}))},
-    {id: "fantasy-draft", group: "now", label: "Fantasy Draft", layout: () => col("phase-fantasy_draft-control", row(card("phase-fantasy_draft-board", {grow: "h"}), card("phase-fantasy_draft-roster", {grow: "h"}), card("phase-fantasy_draft-ticker", {grow: "h"})))},
 
     // The team.
     {id: "home", group: "team", label: "Home", layout: () => row(
@@ -91,7 +91,11 @@
     {id: "trades", group: "office", label: "Trades", controls: "trades", layout: () => col(row("league-block", "payroll"), row("team-block", "team-wants"))},
     {id: "scouting", group: "office", label: "Scouting", layout: () => col(card("prospects", {expanded: true, grow: "h", minHeight: 400}), "picks")},
 
-    // The league.
+    // The league. The playoff pages are listed while the playoffs are on. The bracket gets a page of its own (it is as
+    // wide as the screen); the playoff stats and injuries sit together. Both tables are wider than their board windows
+    // were (the windows scrolled sideways): the page gives them their width.
+    {id: "playoffs", group: "league", label: "Playoffs", layout: () => row(card("phase-playoffs-bracket", {bare: true, width: 1100}))},
+    {id: "playoff-stats", group: "league", label: "Playoff Stats", layout: () => row(card("phase-playoffs-leaders", {width: 680}), card("phase-playoffs-injuries", {width: 604}))},
     {id: "standings", group: "league", label: "Standings", layout: () => row(card("standings", {expanded: true}), card("league-wire", {expanded: true, height: 600}))},
     {id: "awards", group: "league", label: "Awards", controls: "awards", layout: () => row("award-mvp", "award-dpoy", "award-roty")},
 
@@ -166,6 +170,18 @@
       return ids.some(available);
     };
     const pageLabel = (page) => typeof page.label === "function" ? page.label() : page.label;
+    // During the season the roster-moves screen (two-way places) is a page to visit, not a step.
+    const inSeason = () => String(appState()?.home?.save?.phase || "") === "regular_season";
+    const isStep = (page) => Boolean(page.step) && !(page.id === "roster-moves" && inSeason());
+    const groupOf = (page) => isStep(page) ? null : page.id === "roster-moves" ? "team" : page.group;
+    const stepPages = () => visiblePages().filter(isStep);
+    const STEP_KEY = `${PAGE_KEY}:step:${saveKey}`;
+    // The step screen to come back to: the last one seen, else the first.
+    function resumeStep(steps) {
+      let seen = null;
+      try { seen = localStorage.getItem(STEP_KEY); } catch { /* preference only */ }
+      return steps.find(page => page.id === seen) || steps[0] || null;
+    }
 
     // ---- The sidebar: the old top bar turned on its side (its buttons keep their wiring).
     const header = dashboard.querySelector(".season-command-header");
@@ -195,8 +211,8 @@
     shell.innerHTML = `<div class="pages-sheet">
         <header class="pages-head"><h1 class="pages-title"></h1><div class="pages-controls"></div></header>
         <div class="pages-viewport"></div>
-        <footer class="pages-foot"><div class="pages-ticker"></div></footer>
       </div>
+      <footer class="pages-foot"><div class="pages-ticker"></div></footer>
       <div class="pages-holding" hidden></div>`;
     header.after(shell);
     const titleEl = shell.querySelector(".pages-title");
@@ -233,7 +249,45 @@
     const phaseActions = toolbar.querySelector(".card-board-phase-actions");
     phaseActions?.querySelector("button")?.classList.add("is-primary");
     if (deadline) toolbar.prepend(deadline);
+    // Step screens: Back and Next sit with the phase's own button.
+    const stepBack = document.createElement("button");
+    stepBack.type = "button";
+    stepBack.className = "pages-step-back";
+    const stepNext = document.createElement("button");
+    stepNext.type = "button";
+    stepNext.className = "pages-next pages-step is-primary";
+    stepBack.hidden = stepNext.hidden = true;
+    toolbar.prepend(stepBack);
+    toolbar.append(stepNext);
     foot.append(toolbar);
+
+    // Between step screens the button moves on to the next one; on the last, the phase's own button is back. From any
+    // other page it returns to the step you were on.
+    function renderStep() {
+      const steps = stepPages();
+      const index = steps.findIndex(page => page.id === currentPage);
+      let back = null, next = null, backWord = "", nextWord = "Next";
+      if (index >= 0) {
+        back = steps[index - 1] || null;
+        next = steps[index + 1] || null;
+        backWord = "Back";
+      } else if (steps.length) {
+        const resume = resumeStep(steps);
+        if (resume !== steps.at(-1)) { next = resume; nextWord = "Continue"; }
+        else { back = resume; backWord = "Back to"; }
+      }
+      stepBack.hidden = !back;
+      if (back) {
+        stepBack.dataset.pagesGo = back.id;
+        stepBack.textContent = backWord === "Back" ? "Back" : `${backWord} ${pageLabel(back)}`;
+      }
+      stepNext.hidden = !next;
+      if (next) {
+        stepNext.dataset.pagesGo = next.id;
+        stepNext.textContent = `${nextWord}: ${pageLabel(next)}`;
+      }
+      toolbar.classList.toggle("is-stepping", Boolean(next));
+    }
 
     // ---- Pages.
     const pageEls = new Map();
@@ -436,16 +490,16 @@
     function renderNav() {
       const pages = visiblePages();
       const groups = GROUPS.map(([group, label]) => {
-        const items = pages.filter(page => page.group === group);
+        const items = pages.filter(page => groupOf(page) === group);
         if (!items.length) return "";
-        const heading = group === "now" ? nowHeading() : label;
-        return `<section class="pages-nav-group" data-pages-group="${group}">${heading ? `<h3>${esc(heading)}</h3>` : ""}${items.map(page => {
+        return `<section class="pages-nav-group" data-pages-group="${group}"><h3>${esc(label)}</h3>${items.map(page => {
           const badge = badgeFor(page);
           const current = shownPageId() === page.id;
           return `<button type="button" class="pages-nav-item${current ? " is-current" : ""}" data-pages-go="${page.id}"${current ? ' aria-current="page"' : ""}><span>${esc(pageLabel(page))}</span>${badge}</button>`;
         }).join("")}</section>`;
       }).join("");
       nav.innerHTML = groups;
+      renderStep();
     }
 
     // The page the sidebar marks: an open slideshow counts as its page (it can open by itself at the start of a season).
@@ -459,19 +513,10 @@
       return currentPage;
     }
 
-    function nowHeading() {
-      const phase = String(appState()?.home?.save?.phase || "");
-      return ({preseason: "Preseason", regular_season: "This Season", play_in: "Postseason", playoffs: "Postseason", draft_lottery: "Draft", draft: "Draft", re_signing: "Offseason", free_agency: "Offseason", offseason: "Offseason", training_camp: "Offseason", fantasy_draft: "Fantasy Draft"})[phase] || "Now";
-    }
-
     function badgeFor(page) {
       if (page.id === "trades" && offerCount) return `<em class="pages-nav-badge" title="${offerCount} incoming offer${offerCount === 1 ? "" : "s"}">${offerCount}</em>`;
       const required = layoutIds(pageLayout(page)).some(id => node(id)?.required && available(id));
       if (required) return `<em class="pages-nav-badge is-alert" title="A decision is required">!</em>`;
-      if (page.id === "set-roster") {
-        const waiting = (appState()?.data?.setRoster?.items || []).filter(item => item.status === "pending").length;
-        if (waiting) return `<em class="pages-nav-badge" title="${waiting} decision${waiting === 1 ? "" : "s"} waiting">${waiting}</em>`;
-      }
       return "";
     }
 
@@ -509,6 +554,7 @@
         lastPage.set(saveKey, pageId);
         try { localStorage.setItem(`${PAGE_KEY}:${saveKey}`, pageId); } catch { /* preference only */ }
       }
+      if (isStep(page)) { try { localStorage.setItem(STEP_KEY, pageId); } catch { /* preference only */ } }
       for (const [id, el] of pageEls) el.hidden = id !== pageId;
       titleEl.textContent = page.title || pageLabel(page);
       renderControls(page);
@@ -551,7 +597,13 @@
     function closeSlideshowFor() {
       if (window.SeasonSlideshow?.isOpen?.()) window.SeasonSlideshow.close();
     }
-    const onSlideshowClosed = () => { if (!disposed) renderNav(); };
+    // A finished (or skipped) slideshow leads on to the step screen that is waiting.
+    const onSlideshowClosed = () => {
+      if (disposed) return;
+      const steps = stepPages();
+      if (steps.length && !steps.some(page => page.id === currentPage)) showPage(resumeStep(steps).id);
+      else renderNav();
+    };
     window.addEventListener("season-slideshow-closed", onSlideshowClosed);
 
     function pageFor(id, {expanded = false} = {}) {
@@ -649,21 +701,24 @@
 
     buildPages();
 
-    // ---- Which page opens: a required decision first, then the room of a phase just entered, then the page you were on.
+    // ---- Which page opens: a required decision first, then the first screen of a phase just entered, then the page
+    // you were on.
     function landingPage() {
       const required = [...nodes].find(([id, entry]) => entry.required && owned.has(id) && available(id));
       if (required) return pageFor(required[0]);
+      const steps = stepPages();
       if (ctx.entering && ctx.phaseCards.length) {
+        if (steps.length) return steps[0].id;
         const entryFirst = (options.entryLayout?.rows || []).flat().filter(id => owned.has(id) && available(id));
         const phasePage = [...entryFirst, ...ctx.phaseCards].map(id => owned.has(id) && available(id) ? pageFor(id) : null).find(Boolean);
-        if (phasePage && phasePage !== "roster-moves" && phasePage !== "set-roster") return phasePage;
+        if (phasePage && phasePage !== "roster-moves") return phasePage;
       }
       let remembered = lastPage.get(saveKey);
       if (!remembered) { try { remembered = localStorage.getItem(`${PAGE_KEY}:${saveKey}`); } catch { remembered = null; } }
       const listed = visiblePages().filter(page => !page.slideshow);
       if (remembered && listed.some(page => page.id === remembered)) return remembered;
-      const phaseRoom = listed.find(page => page.group === "now" && !["roster-moves", "set-roster"].includes(page.id));
-      return phaseRoom?.id || "home";
+      const phaseRoom = listed.find(page => ["playoffs", "playoff-stats"].includes(page.id));
+      return steps[0]?.id || phaseRoom?.id || "home";
     }
 
     const api = {

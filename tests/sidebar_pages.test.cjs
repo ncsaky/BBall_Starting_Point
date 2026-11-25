@@ -72,3 +72,13 @@ test('the board keeps its pop-ups inside the page area and hands page cards to t
   assert.match(board, /if \(pages\?\.owns\(id\)\) \{ pages\.show\(id\); return; \}/);
   assert.match(board, /nbaGmCardBoard:v1:\$\{pagesMode \? "pages:" : ""\}/);
 });
+
+test('step screens stay out of the sidebar and the footer sits outside the page', () => {
+  const {pages} = load();
+  const steps = pages.PAGES.filter((page) => page.step).map((page) => page.id);
+  assert.equal(steps.slice(-2).join(), 'roster-moves,set-roster', 'the preseason ends on Set The Roster');
+  for (const id of ['draft-room', 'free-agency', 'free-agency-checklist']) assert.ok(steps.includes(id), id);
+  const source = read('card-pages.js');
+  assert.doesNotMatch(source, /\["now", ""\]/);
+  assert.match(source, /<\/div>\n\s*<footer class="pages-foot">/);
+});

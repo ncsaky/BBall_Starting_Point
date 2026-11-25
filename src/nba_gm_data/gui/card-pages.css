@@ -7,6 +7,8 @@ html[data-layout="pages"] {
   --pages-gap: 10px;
   --pages-radius: 18px;
   --pages-line: rgba(255, 255, 255, .12);
+  --pages-foot-h: 62px;
+  --pages-frame: rgba(3, 8, 13, .20);   /* the sidebar and the footer: one piece around the page */
 }
 
 /* ---------- The frame of the app: sidebar | page. The board (pop-up layer) lies over the page. */
@@ -42,9 +44,8 @@ html[data-layout="pages"] body .season-command-dashboard.is-pages > .season-comm
   min-height: 0;
   margin: 0 !important;
   padding: 20px 10px 12px 12px !important;
-  background: rgba(3, 8, 13, .20) !important;
+  background: var(--pages-frame) !important;
   border: 0 !important;
-  border-right: 1px solid var(--pages-line) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   overflow-y: auto;
@@ -158,10 +159,10 @@ html[data-layout="pages"] .pages-sidebar .season-command-actions > button [data-
 html[data-layout="pages"] .pages-sidebar .season-command-actions > button .shortcut-hint { margin-left: auto; }
 
 /* ---------- The page: one large frosted sheet. */
-html[data-layout="pages"] .pages-shell { min-width: 0; min-height: 0; display: flex; padding: var(--pages-gap); padding-left: var(--pages-gap); box-sizing: border-box; }
+html[data-layout="pages"] .pages-shell { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 html[data-layout="pages"] .pages-sheet {
-  flex: 1 1 auto; min-width: 0; min-height: 0;
-  display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr);
+  flex: 1 1 auto; min-width: 0; min-height: 0; margin: var(--pages-gap);
+  display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-columns: minmax(0, 1fr);
   background: var(--card-surface, rgba(255, 255, 255, .045));  /* Settings > Card transparency */
   border: 1px solid rgba(255, 255, 255, .13);
   border-radius: var(--pages-radius);
@@ -255,14 +256,17 @@ html[data-glass="clear"][data-layout="pages"] body .season-command-dashboard.is-
   position: relative !important; left: 0 !important; top: 0 !important; transform: none !important;
 }
 
-/* ---------- Footer: the league wire ticker on the left, the next step on the right. */
+/* ---------- Footer: joined to the sidebar, outside the page. The league wire ticker on the left, the next step on the
+   right. */
 html[data-layout="pages"] .pages-foot {
-  display: flex; align-items: center; gap: 18px; min-width: 0; overflow: hidden;
-  min-height: 58px; padding: 8px 12px 8px 24px; box-sizing: border-box;
-  border-top: 1px solid var(--pages-line);
+  display: flex; flex: 0 0 auto; align-items: center; gap: 18px; min-width: 0; overflow: hidden;
+  min-height: var(--pages-foot-h); padding: 8px 16px; box-sizing: border-box;
+  background: var(--pages-frame);
 }
 html[data-layout="pages"] .pages-ticker { flex: 1 1 auto; min-width: 0; height: 31px; overflow: hidden; position: relative; }
 html[data-layout="pages"] .pages-foot:not(.has-ticker) .pages-ticker { visibility: hidden; }
+/* The wire is bare text in the footer, not a boxed card. */
+html[data-glass="clear"][data-layout="pages"] body.unified-terminal-ui #app .pages-foot .season-league-wire.season-league-wire { border: 0 !important; background: transparent !important; box-shadow: none !important; }
 html[data-layout="pages"] body .season-command-dashboard.is-pages .pages-foot .card-board-tools.pages-dock {
   display: flex !important; align-items: center !important; justify-content: flex-end !important; gap: 8px !important;
   flex: 0 0 auto; margin: 0 0 0 auto !important; padding: 0 !important;
@@ -299,23 +303,45 @@ html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboar
 html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock button.pages-next-more.is-open { background: rgba(255, 255, 255, .18) !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock :is(.pages-next, .pages-next-more) :is([data-key-hint], .shortcut-hint) { display: none !important; }
 
+/* Step screens: while there is a next screen, its button stands in for the Sim and phase buttons. */
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock.is-stepping > :is(.pages-next:not(.pages-step), [data-sim-menu], .card-board-phase-actions) { display: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock button.pages-step-back {
+  display: inline-flex !important; align-items: center; height: 36px !important; min-height: 36px !important; padding: 0 16px !important;
+  border-radius: 999px !important; background: rgba(255, 255, 255, .08) !important; border: 1px solid rgba(255, 255, 255, .18) !important;
+  box-shadow: none !important; color: #fff !important; font-size: 13px !important; font-weight: 600 !important; white-space: nowrap; cursor: pointer;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock button.pages-step-back:hover { background: rgba(255, 255, 255, .15) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock button:is(.pages-step, .pages-step-back)[hidden] { display: none !important; }
+
 /* ---------- The season slideshow fills the page area; the sidebar stays live. */
 html[data-layout="pages"] body.season-slideshow-open #seasonSlideshow.season-slideshow,
 html[data-layout="pages"] #seasonSlideshow.season-slideshow:not([hidden]) {
   left: var(--pages-side-w) !important;
-  padding: var(--pages-gap) !important;
+  padding: 0 !important;
 }
-html[data-layout="pages"] #seasonSlideshow .ss-backdrop { position: absolute !important; inset: 0 !important; background: rgba(4, 9, 14, .22) !important; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-html[data-layout="pages"] #seasonSlideshow .ss-card {
+html[data-layout="pages"] #seasonSlideshow .ss-backdrop { display: none !important; }
+/* The slide is the page sheet; its buttons are the same footer every page has, joined to the sidebar. */
+html[data-layout="pages"] body #seasonSlideshow#seasonSlideshow .ss-card {
   width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important;
-  border-radius: var(--pages-radius) !important;
+  background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+html[data-layout="pages"] body #seasonSlideshow#seasonSlideshow .ss-card > :is(.ss-titlebar, .ss-content) {
+  margin: 0 var(--pages-gap) !important; background: var(--card-surface, rgba(255, 255, 255, .045)) !important;
+  border: 1px solid rgba(255, 255, 255, .13) !important;
+}
+html[data-layout="pages"] body #seasonSlideshow#seasonSlideshow .ss-card > .ss-titlebar { margin-top: var(--pages-gap) !important; border-width: 1px 1px 1px !important; border-radius: var(--pages-radius) var(--pages-radius) 0 0 !important; }
+html[data-layout="pages"] body #seasonSlideshow#seasonSlideshow .ss-card > .ss-content { margin-bottom: var(--pages-gap) !important; border-top: 0 !important; border-radius: 0 0 var(--pages-radius) var(--pages-radius) !important; }
+html[data-layout="pages"] body #seasonSlideshow#seasonSlideshow .ss-card > .ss-actions {
+  flex: 0 0 auto; margin: 0 !important; height: var(--pages-foot-h); min-height: var(--pages-foot-h); padding: 8px 16px !important; box-sizing: border-box;
+  background: var(--pages-frame) !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
 }
 
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-sidebar .season-command-actions > button > span:not(.shortcut-hint) { background: none !important; color: inherit !important; padding: 0 !important; border-radius: 0 !important; font: inherit !important; }
 
 /* ---------- Messages ("Advanced to …") rise above the next-step button instead of covering it. */
 html[data-layout="pages"] body.unified-terminal-ui #toast.toast {
-  bottom: 82px !important; right: 26px !important;
+  bottom: calc(var(--pages-foot-h) + 14px) !important; right: 26px !important;
   background: color-mix(in srgb, var(--jf-team, #1d3550) 55%, rgba(10, 18, 28, .86)) !important;
   -webkit-backdrop-filter: blur(22px) saturate(150%); backdrop-filter: blur(22px) saturate(150%);
   border: 1px solid rgba(255, 255, 255, .18) !important; border-radius: 12px !important;
@@ -327,7 +353,8 @@ html[data-glass="clear"][data-layout="pages"] body.unified-terminal-ui .card-boa
 @keyframes pages-rise { from { opacity: 0; transform: translateY(6px) scale(.97); } to { opacity: 1; transform: none; } }
 
 /* While a slideshow fills the page area the page behind it steps away (it showed through the glass slide). */
-html[data-layout="pages"] body.season-slideshow-open .is-pages .pages-sheet > *,
+html[data-layout="pages"] body.season-slideshow-open .is-pages .pages-sheet,
+html[data-layout="pages"] body.season-slideshow-open .is-pages .pages-foot,
 html[data-layout="pages"] body.season-slideshow-open .is-pages > .season-command-grid { visibility: hidden; }
 
 html[data-layout="pages"] .pages-slot-head.is-echo > * { visibility: hidden; }

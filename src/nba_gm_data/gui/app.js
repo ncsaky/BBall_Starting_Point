@@ -1151,7 +1151,7 @@ const PAGES_TUTORIAL_STEPS = [
   {
     title: "Welcome to your front office",
     target: [".pages-nav", ".pages-sidebar"],
-    body: "Every part of your franchise has a page in the sidebar: the team, the front office and the league. Rooms for the moment (the opening roster, the playoffs, the draft, free agency) appear at the top while they are open.",
+    body: "Every part of your franchise has a page in the sidebar: the team, the front office and the league. The screens for the moment (the opening roster, the draft, free agency) follow one another: the button at the bottom right moves you on.",
   },
   {
     title: "Pages and pop-ups",
