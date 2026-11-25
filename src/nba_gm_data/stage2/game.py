@@ -16,7 +16,8 @@ The clock runs through every segment; team fouls count per quarter (bonus from t
 minutes). Substitutions: with LOOP["coach"] on (S2-COACH), the in-game coach (stage2.coach) decides who plays at every
 dead ball and timeout from tonight's planned minutes (today's minutes model) and the real rotation study; off, the first
 loop's rotation (owed minutes at three checkpoints a quarter). With LOOP["screens"] on, self-created shots and rolls can
-come off a ball screen and its coverage (stage2.screens).
+come off a ball screen and its coverage (stage2.screens), shaped by the defending coach's scheme (stage2.schemes). With
+the coach on, quarters end with two-for-ones and games with late timeouts that advance the ball (S2-SCHEMES).
 
 No rating is moved here; the loop's own numbers are in LOOP (fitted to league targets where marked).
 """
@@ -47,8 +48,10 @@ JUMPER_KINDS = frozenset(KIND_INDEX[k] for k in ("short_jumper", "mid_catch", "m
 # with the calibration report; the rest are documented stand-ins.
 LOOP = {
     # Possession length (seconds). Half court: a floor plus a gamma tail; scaled by pace habit and coach tempo. FITTED
-    # (league pace 102.0 possessions per 48 minutes).
-    "hc_floor": 5.0, "hc_mean": 15.6, "hc_shape": 2.6, "trans_floor": 2.5, "trans_mean": 6.0, "reset_floor": 2.0,
+    # (league pace 102.0 possessions per 48 minutes). S2-SCHEMES refit hc_mean 15.6 -> 15.75 on every 2025-26 game in
+    # both modes against the same games' real boxes (scripts/research/s2_level_gap.py): replays had drifted to 102.9
+    # (generated 102.2); now 102.3 / 101.7.
+    "hc_floor": 5.0, "hc_mean": 15.75, "hc_shape": 2.6, "trans_floor": 2.5, "trans_mean": 6.0, "reset_floor": 2.0,
     "reset_mean": 8.0, "putback_s": 2.0, "sideout_s": 3.5, "tempo_scale": .01,
     # Pace habit (T05) of the offense's five (k_pace) and, since pace is a game-level thing (both teams play about the
     # same number of possessions), of the defending five (k_pace_def), on the half-court length. The first loop had
@@ -67,7 +70,11 @@ LOOP = {
     # Turnovers: the defense's ball pressure (log-odds per index unit); transition and offensive-foul shares.
     # k_press is FITTED with the other team-strength terms below.
     "k_press": .442, "trans_to": -.15, "off_foul_share": .08, "steal_share": .62, "k_steal_level": 1.0,
-    "to_shift": .11,   # FITTED: league turnovers per 100 (S2-TOTALS-MATCHUPS: .13 -> .11 with the matchups on) (the card fit is per used possession; the loop's are per chance)
+    # FITTED: league turnovers per 100 (the card fit is per used possession; the loop's are per chance). S2-TOTALS-
+    # MATCHUPS .13 -> .11 with the matchups on; S2-SCHEMES .11 -> .17: later pieces (the turnover ratings follow-up,
+    # the coach, screens) had left turnovers at 13.4 per 100 in both replayed and generated games against a real 14.1,
+    # which was most of the 2.5-3 points a game replayed games scored above real (s2_level_gap.py).
+    "to_shift": .17,
     # Non-shooting fouls per possession (league level, then the defenders' own multipliers); technicals etc.
     "ns_per_poss": .064, "other_ft_per_poss": .005, "loose_ball_per_chance": .025,
     # Shooting fouls: action terms on top of the foul kernel's zone base (log-odds). FITTED (S2-TOTALS-MATCHUPS,
@@ -166,6 +173,30 @@ LOOP = {
     # come off a ball screen, with the defense's coverage (switch, drop, show, trap) deciding who guards the shot and
     # what help waits; 0 = every shot meets the assigned defender only (needs the matchups on).
     "screens": 1.0,
+    # ---- Who commits a shooting foul (S2-SCHEMES). The chance of a shooting foul is the shot's defender's (above); the
+    # foul itself is his, or with these shares (rim, short paint, jumpers) a teammate's: the help at the rim, the low
+    # man, a late rotation or closeout, weighted by each teammate's own foul terms (foul control S45, contest habits,
+    # foul trouble). FITTED (scripts/research/s2_foul_help_fit.py: every shooting-foul chance in replayed 2025-26 games,
+    # each player's fouls per 36 against real, fit half of the 311 rotation players, checked on the other half):
+    # held-out error .469 -> .376 fouls per 36, correlation .789 -> .836; players at 4.5+ per 36 29 -> 13 (real 11).
+    # Larger shares fit a little better still but flatten players' foul rates below the real spread (.77 at these
+    # shares, real .80). Giving the share to the rim protector alone did not help (0 fitted). 0 = the shot's defender
+    # always (S2-COACH and before). Shooting fouls and free throws do not change, only who is charged.
+    "foul_team_rim": .6, "foul_team_short": .6, "foul_team_jump": .45,
+    # ---- End of quarters and games (S2-SCHEMES; with the coach on).
+    # Two-for-one: a team gaining the ball with 30-34 / 35-38 / 39-42 seconds left in the 1st-3rd quarter shoots early
+    # (with 25+ seconds left) with these extra chances on top of the possessions that end that early anyway. FITTED to
+    # the rotation study's early-shot share (2025-26: .19 / .53 / .64; the loop already gave .17 / .41 / .61; scripts/
+    # research/s2_endgame_check.py).
+    "two4one_30": .02, "two4one_35": .20, "two4one_39": .10,
+    # Late timeouts (last two minutes of the 4th quarter and of overtime): a team gaining the ball (not off a steal)
+    # within ten points calls one, when it still has one, with this chance per possession by the score (behind, tied,
+    # ahead), times the time factor (full inside 30 s, half inside 60 s, .2 before). Each team has two. FITTED to the
+    # real count (2025-26: behind .63, ahead .32, tied .07 per game in the last two minutes of the 4th; .51 per team).
+    # A trailing or tied team advances the ball to the front court, which saves the back-court seconds of that
+    # possession (to_advance_s, stand-in); the coach may also change the five. A leader's timeout saves no clock (he
+    # runs it down anyway).
+    "to_behind": .77, "to_tied": .42, "to_ahead": .25, "to_advance_s": 4.0,
 }
 CATCH_KINDS = frozenset(KIND_INDEX[k] for k in ("mid_catch", "three_corner", "three_catch", "trans_three"))
 PULL_KINDS = frozenset(KIND_INDEX[k] for k in ("short_jumper", "mid_pull", "three_pull"))
@@ -177,6 +208,8 @@ ASSIST = {"rim_drive": .18, "rim_finish": .93, "floater": .15, "hook": .30, "sho
           "trans_rim": .55, "trans_three": .85, "heave": 0.0}
 ASSIST_BY_KIND = [ASSIST[k[0]] for k in KINDS]
 TRACE: dict | None = None   # research hook (see Game._trace); None in play
+COVERAGE_TRACE: list | None = None   # research hook: every ball screen's personnel coverage log-odds (s2_scheme_fit.py)
+FOUL_TRACE: list | None = None   # research hook: every shooting-foul chance (scripts/research/s2_foul_tail.py); None in play
 TO_TRACE: dict | None = None   # research hook (see Game._to_z; scripts/research/s2_turnover_fit.py); None in play
 
 # End of game with the coach (S2-COACH): chance the trailing team fouls on purpose per possession of the leader, by
@@ -246,6 +279,9 @@ class TeamState:
         self.screens_on = False   # set by Game: the box score carries screen assists only when screens are played
         self._five_cache: dict = {}
         self.reserve = [False] * n   # outside tonight's planned rotation (garbage time only)
+        self.advance = False         # a late timeout moved the ball to the front court (next possession)
+        self.scheme = (0.0, 0.0)     # the coach's ball-screen scheme: (aggression, switching) log-odds (stage2.schemes)
+        self.late_to = 0             # late timeouts left (last two minutes of the 4th / of overtime)
 
     # ---- lineup aggregates (recomputed when the five change) ------------------------------------------------------
     REFRESH_KEYS = ("usage_cum", "ast_w", "reb", "reb_prof", "pace", "trans_pref", "perim", "perim_center", "create",
@@ -361,6 +397,9 @@ class Game:
         self.use_screens = bool(L["screens"]) and bool(L["matchups"])
         self.S = SC.SCREENS
         self.cov_count = [0] * 5          # ball screens by coverage (research: switch share)
+        self.team_foul_share = (L["foul_team_rim"], L["foul_team_short"], L["foul_team_jump"], L["foul_team_jump"])
+        self.two_for_one = self.late_timeouts = self.advances = 0   # research counters
+        home.advance = away.advance = False
         home.screens_on = away.screens_on = self.use_screens
 
     def elapsed(self) -> float:
@@ -520,7 +559,11 @@ class Game:
         jb, js = off.defender_of[handler_slot], off.defender_of[screener_slot]
         dball, dscr = de.cards[de.on[jb]], de.cards[de.on[js]]
         star = max(0.0, (handler.usage - .28) / .06)
-        probs = SC.coverage_probabilities(handler, dscr, dball, off.groups[off.on[screener_slot]] == "big", S, star)
+        big = off.groups[off.on[screener_slot]] == "big"
+        zs = SC.coverage_logits(handler, dscr, dball, big, S, star)
+        if COVERAGE_TRACE is not None:
+            COVERAGE_TRACE.append((de.abbrev, big, zs))
+        probs = SC.probabilities_from_logits(*zs, de.scheme)
         cov = SC.choose(rng.random(), probs)
         self.cov_count[cov] += 1
         play = ScreenPlay()
@@ -625,6 +668,17 @@ class Game:
             de.out.add(i)
             self.pending_sub = True
 
+    def _shooting_fouler(self, de: TeamState, j: int, zone: int) -> int:
+        """Who is charged with a shooting foul on a shot defended by slot j: j, or with the fitted share a teammate
+        (help, rotation, closeout), weighted by his own foul terms and foul trouble."""
+        share = self.team_foul_share[zone]
+        if share <= 0.0 or self.rng.random() >= share:
+            return j
+        cz = self.caution_z
+        w = [0.0 if k == j else math.exp(de.cards[i].d_foul + cz[min(7, de.stats[i][S_PF])])
+             for k, i in enumerate(de.on)]
+        return _pick(_cum(w), self.rng.random())
+
     def _free_throws(self, off: TeamState, de: TeamState, slot: int, n: int) -> bool:
         """n free throws by the offensive player in `slot`; True if the last one is made."""
         card = off.cards[off.on[slot]]
@@ -675,6 +729,8 @@ class Game:
         'made', 'dreb', 'steal', 'dead' or 'end'."""
         L, rng = self.L, self.rng
         off.possessions += 1
+        advance = off.advance      # after a late timeout: inbounded in the front court
+        off.advance = False
         # Technical / flagrant / clear-path free throws (no possession change): the best free-throw shooter on court.
         if rng.random() < L["other_ft_per_poss"]:
             slot = max(range(5), key=lambda s: off.cards[off.on[s]].ft)
@@ -719,8 +775,18 @@ class Game:
                 return self._shot(off, de, slot, kind, final=True)
         p_trans ={"dreb": L["trans_dreb"], "steal": L["trans_steal"], "made": L["trans_made"]}.get(start, L["trans_dead"])
         p_trans *= math.exp(L["k_trans"] * (off.trans_pref - self.lg_trans))
-        trans = rng.random() < p_trans
+        trans = not advance and rng.random() < p_trans
         seg = self._duration("trans" if trans else "half", off, de)
+        if advance:
+            # Inbounded in the front court after a timeout: no back-court seconds.
+            seg = max(1.5, seg - L["to_advance_s"])
+        if self.use_coach and self.period <= 3 and 30.0 <= self.t_left <= 42.0 and not trans:
+            # Two-for-one: shoot early enough (25+ s left) to get the ball back for the quarter's last shot.
+            t = self.t_left
+            p21 = L["two4one_39"] if t >= 39.0 else L["two4one_35"] if t >= 35.0 else L["two4one_30"]
+            if seg > t - 25.0 and rng.random() < p21:
+                seg = max(1.5, t - 25.0 - 2.0 * rng.random())
+                self.two_for_one += 1
         final = False
         if seg >= self.t_left:
             if self.t_left < 3.0:
@@ -899,12 +965,16 @@ class Game:
                           + self.craft_w[kind] * card.craft + self.caution_z[min(7, de.stats[de.on[j]][S_PF])])
             if TRACE is not None:
                 self._trace(card, dcard, off, slot, kind, zone, p_make)
+            if FOUL_TRACE is not None:
+                FOUL_TRACE.append((zone, kind in DRIVE_KINDS, p_foul, j, de.help,
+                                   tuple(de.cards[i].pid for i in de.on), tuple(de.cards[i].d_foul for i in de.on),
+                                   tuple(self.caution_z[min(7, de.stats[i][S_PF])] for i in de.on)))
         else:
             p_foul = 0.0
         if zone == 0:
             st[S_RIM] += 1
         if rng.random() < p_foul:
-            self._foul(de, j)
+            self._foul(de, self._shooting_fouler(de, j, zone))
             self.diag[3 * kind + 2] += 1
             if rng.random() < card.and1[zone] * (p_make / max(.05, _sig(card.make_logit[kind]))):
                 st[S_FGA] += 1          # a made shot through a foul counts as an attempt (and-one)
@@ -1090,8 +1160,14 @@ class Game:
             self._matchups()
             start = "dead"
             checkpoints = [s for s in COACH_TIMEOUTS if s < self.t_left] if period <= 4 else []
+            home.late_to = away.late_to = 2 if period >= 4 else 0
             while self.t_left > 0.0:
                 self.dead = False
+                if period >= 4 and self.t_left <= 120.0 and start != "steal" and off.late_to > 0 \
+                        and self._late_timeout(off, de):
+                    self._coach_decide(period_start=False)
+                    if home.lineup_dirty or away.lineup_dirty:
+                        self._matchups()
                 result = self.possession(off, de, start)
                 self.events += 1
                 if result == "end" or self.t_left <= 0.0:
@@ -1113,6 +1189,25 @@ class Game:
                 break
             if period >= 14:
                 break
+
+    def _late_timeout(self, off: TeamState, de: TeamState) -> bool:
+        """Does the team gaining the ball call a late timeout (last two minutes of the 4th or of overtime)? A trailing
+        or tied team then advances the ball to the front court."""
+        L = self.L
+        lead = off.points - de.points
+        if abs(lead) > 10:
+            return False
+        t = self.t_left
+        base = L["to_behind"] if lead < 0 else L["to_tied"] if lead == 0 else L["to_ahead"]
+        p = base * (1.0 if t <= 30.0 else .5 if t <= 60.0 else .2)
+        if self.rng.random() >= p:
+            return False
+        off.late_to -= 1
+        self.late_timeouts += 1
+        if lead <= 0:
+            off.advance = True
+            self.advances += 1
+        return True
 
     def _trouble(self, team: TeamState) -> bool:
         lim = FOUL_TROUBLE.get(min(4, self.period), 6)
