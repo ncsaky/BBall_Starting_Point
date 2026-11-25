@@ -1,0 +1,378 @@
+/* Pages layout (branch sidebar-pages, card-pages.js). Loaded last. The sidebar sits straight on the team-colour board,
+   the page is one large frosted sheet (JFresh's card, page-sized), and the cards on it have no frames of their own: a
+   bold section title, then the card's contents exactly as they were. */
+
+html[data-layout="pages"] {
+  --pages-side-w: 184px;
+  --pages-gap: 10px;
+  --pages-radius: 18px;
+  --pages-line: rgba(255, 255, 255, .12);
+}
+
+/* ---------- The frame of the app: sidebar | page. The board (pop-up layer) lies over the page. */
+html[data-layout="pages"] body .season-command-dashboard.has-card-board.is-pages {
+  display: grid !important;
+  grid-template-columns: var(--pages-side-w) minmax(0, 1fr) !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+html[data-layout="pages"] body .season-command-dashboard.is-pages > .season-command-header.pages-sidebar { grid-column: 1; grid-row: 1; }
+html[data-layout="pages"] body .season-command-dashboard.is-pages > .pages-shell { grid-column: 2; grid-row: 1; }
+html[data-layout="pages"] body .season-command-dashboard.is-pages > .season-command-grid.card-board-scroll {
+  grid-column: 2; grid-row: 1;
+  position: relative; z-index: 60;
+  pointer-events: none;
+  overflow: hidden !important;
+  background: transparent !important;
+  min-width: 0; min-height: 0;
+}
+html[data-layout="pages"] body .season-command-dashboard.is-pages .card-board-canvas { pointer-events: none; }
+html[data-layout="pages"] body .season-command-dashboard.is-pages .card-board-canvas > .card-board-window { pointer-events: auto; }
+
+/* ---------- Sidebar. */
+html[data-layout="pages"] body .season-command-dashboard.is-pages > .season-command-header.pages-sidebar {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  gap: 0 !important;
+  height: auto !important;
+  min-height: 0;
+  margin: 0 !important;
+  padding: 20px 10px 12px 12px !important;
+  background: rgba(3, 8, 13, .20) !important;
+  border: 0 !important;
+  border-right: 1px solid var(--pages-line) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow-y: auto;
+  overflow-x: visible;
+  position: relative;
+  z-index: 70;
+}
+html[data-layout="pages"] .pages-sidebar .season-command-club {
+  display: grid !important;
+  grid-template-columns: 40px minmax(0, 1fr);
+  column-gap: 11px;
+  row-gap: 3px;
+  align-items: center;
+  padding: 0 4px 0 6px;
+  min-width: 0;
+}
+html[data-layout="pages"] .pages-sidebar .season-command-club > img { width: 40px !important; height: 40px !important; grid-row: 1 / span 2; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .35)); }
+html[data-layout="pages"] .pages-sidebar .season-command-club > span {
+  color: #fff !important; font-size: 15px !important; font-weight: 700 !important; line-height: 1.15 !important;
+  white-space: normal !important; overflow: visible !important; letter-spacing: -.005em;
+}
+html[data-layout="pages"] .pages-sidebar .season-command-date {
+  grid-column: 2;
+  display: flex !important; flex-direction: column !important; align-items: flex-start !important;
+  gap: 4px !important; margin: 0 !important; white-space: normal !important;
+  font-size: 12px !important; line-height: 1.2;
+}
+html[data-layout="pages"] .pages-sidebar .season-command-date time { color: #e6eef5 !important; font-size: 12px !important; font-weight: 500; }
+html[data-layout="pages"] .pages-sidebar .season-command-date > span { color: #d3dde6 !important; font-size: 11.5px !important; }
+html[data-layout="pages"] .pages-sidebar .season-command-club > button {
+  grid-column: 1 / -1; margin-top: 8px; justify-self: start;
+}
+/* The offseason steps chip: a small pill; its list opens beside the sidebar. */
+html[data-layout="pages"] .pages-sidebar .season-steps-chip { position: relative; }
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary.season-steps-summary,
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary {
+  display: inline-flex !important; flex-wrap: wrap; align-items: center; gap: 3px 6px; max-width: 132px; white-space: normal;
+  padding: 4px 8px !important; border-radius: 8px !important; line-height: 1.25;
+  background: rgba(255, 255, 255, .08) !important; border: 1px solid rgba(255, 255, 255, .16) !important;
+  color: rgba(255, 255, 255, .86) !important; font-size: 11px !important; cursor: pointer; box-shadow: none !important;
+}
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary:hover,
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip[open] > summary { background: rgba(255, 255, 255, .15) !important; border-color: rgba(255, 255, 255, .26) !important; }
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary b { color: #a9d6ff !important; font-size: 10.5px !important; }
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary i { color: rgba(255, 255, 255, .6) !important; }
+html[data-layout="pages"] .pages-sidebar .season-steps-chip .season-steps-menu {
+  position: fixed !important;
+  left: calc(var(--pages-side-w) + 8px) !important;
+  top: 64px !important;
+  right: auto !important;
+  z-index: 3000 !important;
+}
+
+/* Player Finder as a search field under the team. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-sidebar .pages-finder.pages-finder {
+  display: flex !important; align-items: center; gap: 8px;
+  width: 100%; height: 34px; margin: 18px 0 4px !important; padding: 0 12px !important;
+  background: rgba(255, 255, 255, .07) !important;
+  border: 1px solid rgba(255, 255, 255, .12) !important;
+  border-radius: 10px !important; box-shadow: none !important;
+  color: #d3dde6 !important; font-size: 13px !important; font-weight: 500 !important;
+  text-align: left; cursor: pointer;
+}
+html[data-layout="pages"] .pages-sidebar .pages-finder svg { width: 14px; height: 14px; flex: 0 0 auto; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-sidebar .pages-finder:hover:not(:disabled) { background: rgba(255, 255, 255, .12) !important; color: #fff !important; }
+html[data-layout="pages"] .pages-sidebar .pages-finder [data-key-hint], html[data-layout="pages"] .pages-sidebar .pages-finder .shortcut-hint { margin-left: auto; }
+
+/* The page list: plain text; the current page bold white on a faint frosted pill. */
+html[data-layout="pages"] .pages-nav { display: flex; flex-direction: column; gap: 16px; margin: 18px 0 14px; }
+html[data-layout="pages"] .pages-nav-group { display: flex; flex-direction: column; gap: 1px; }
+html[data-layout="pages"] .pages-nav-group > h3 {
+  margin: 0 0 5px 10px; color: #d3dde6; opacity: .78;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-nav .pages-nav-item {
+  display: flex !important; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; min-height: 32px; height: auto; padding: 5px 10px !important; margin: 0 !important;
+  background: transparent !important; border: 0 !important; border-radius: 9px !important; box-shadow: none !important;
+  color: #d3dde6 !important; font-size: 14px !important; font-weight: 500 !important;
+  text-align: left; cursor: pointer; line-height: 1.2;
+  transition: background-color .15s ease, color .15s ease;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-nav .pages-nav-item:hover { color: #fff !important; background: rgba(255, 255, 255, .06) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-nav .pages-nav-item.is-current {
+  color: #fff !important; font-weight: 700 !important;
+  background: rgba(255, 255, 255, .14) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .10) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-nav .pages-nav-item:focus-visible { outline: 2px solid rgba(124, 192, 255, .8); outline-offset: 1px; }
+html[data-layout="pages"] .pages-nav-badge {
+  display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box;
+  border-radius: 9px; background: #e5484d; color: #fff;
+  font: 700 11px/1 var(--jf-font, -apple-system, sans-serif); font-style: normal;
+}
+html[data-layout="pages"] .pages-nav-badge.is-alert { background: #e5484d; }
+
+/* Settings at the foot of the sidebar. */
+html[data-layout="pages"] .pages-sidebar .season-command-actions {
+  margin-top: auto !important; display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 4px !important;
+  padding: 0 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-sidebar .season-command-actions > button {
+  display: flex !important; align-items: center; gap: 9px; justify-content: flex-start;
+  width: 100%; height: 34px; padding: 0 10px !important; margin: 0 !important;
+  background: transparent !important; border: 0 !important; border-radius: 9px !important; box-shadow: none !important;
+  color: #d3dde6 !important; font-size: 14px !important; font-weight: 500 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-sidebar .season-command-actions > button:hover { color: #fff !important; background: rgba(255, 255, 255, .06) !important; }
+html[data-layout="pages"] .pages-sidebar .pages-settings svg { width: 16px; height: 16px; flex: 0 0 auto; }
+html[data-layout="pages"] .pages-sidebar .season-command-actions > button [data-key-hint],
+html[data-layout="pages"] .pages-sidebar .season-command-actions > button .shortcut-hint { margin-left: auto; }
+
+/* ---------- The page: one large frosted sheet. */
+html[data-layout="pages"] .pages-shell { min-width: 0; min-height: 0; display: flex; padding: var(--pages-gap); padding-left: var(--pages-gap); box-sizing: border-box; }
+html[data-layout="pages"] .pages-sheet {
+  flex: 1 1 auto; min-width: 0; min-height: 0;
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr);
+  background: var(--card-surface, rgba(255, 255, 255, .045));  /* Settings > Card transparency */
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-radius: var(--pages-radius);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .26), inset 0 1px 0 rgba(255, 255, 255, .06);
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+}
+/* The frost is drawn by a layer behind the sheet: a backdrop filter on the sheet itself would turn it into the frame for
+   every fixed-position menu inside it (the sim menu opened off screen). */
+html[data-layout="pages"] .pages-sheet::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  -webkit-backdrop-filter: blur(28px) saturate(140%); backdrop-filter: blur(28px) saturate(140%);
+}
+html[data-layout="pages"] .pages-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  min-height: 54px; padding: 14px 22px 2px 24px; box-sizing: border-box;
+}
+html[data-layout="pages"] .pages-title {
+  margin: 0; color: #fff; font-size: 26px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1;
+  font-family: var(--jf-font, -apple-system, sans-serif);
+}
+html[data-layout="pages"] .pages-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-controls .pages-control {
+  display: inline-flex !important; align-items: center; gap: 7px; height: 32px; padding: 0 14px !important;
+  border-radius: 999px !important; background: rgba(255, 255, 255, .08) !important; border: 1px solid rgba(255, 255, 255, .16) !important;
+  box-shadow: none !important; color: #fff !important; font-size: 13px !important; font-weight: 600 !important; cursor: pointer;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-controls .pages-control:hover:not(:disabled) { background: rgba(255, 255, 255, .15) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-controls .pages-control:disabled { opacity: .45 !important; cursor: default; }
+
+html[data-layout="pages"] .pages-viewport {
+  position: relative; min-width: 0; min-height: 0;
+  overflow: hidden;
+  padding: 8px 22px 12px 22px;
+  box-sizing: border-box;
+}
+/* Pages line up with their title (left), whatever their width. */
+html[data-layout="pages"] .pages-page { margin: 0; position: relative; }
+html[data-layout="pages"] .pages-page[hidden] { display: none !important; }
+html[data-layout="pages"] .pages-viewport:has(> .pages-page.is-scrolling:not([hidden])) { overflow: auto; }
+html[data-layout="pages"] .pages-page:not([hidden]) { animation: pages-in .2s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes pages-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { html[data-layout="pages"] .pages-page:not([hidden]) { animation: none; } }
+
+/* Rows and columns of cards at their own sizes; the stage scales as one piece. */
+html[data-layout="pages"] .pages-stage { display: flex; width: max-content; transform-origin: top left; }
+html[data-layout="pages"] .pages-row { display: flex; flex-direction: row; align-items: flex-start; gap: var(--pages-card-gap, 32px); }
+html[data-layout="pages"] .pages-col { display: flex; flex-direction: column; align-items: flex-start; gap: var(--pages-card-gap, 26px); }
+html[data-layout="pages"] .pages-page.is-growing .pages-stage > * { flex: 1 1 auto; align-self: stretch; }
+html[data-layout="pages"] .pages-page.is-growing .pages-row > :is([data-grow="w"], [data-grow="both"]) { flex-grow: 1; }
+html[data-layout="pages"] .pages-page.is-growing .pages-row > :is([data-grow="h"], [data-grow="both"]) { align-self: stretch; }
+html[data-layout="pages"] .pages-page.is-growing .pages-col > :is([data-grow="h"], [data-grow="both"]) { flex-grow: 1; }
+html[data-layout="pages"] .pages-page.is-growing .pages-col > :is([data-grow="w"], [data-grow="both"]) { align-self: stretch; }
+
+/* A section: a bold title, then the card as it was. */
+html[data-layout="pages"] .pages-slot { display: flex; flex-direction: column; min-width: 0; position: relative; border-radius: 12px; }
+html[data-layout="pages"] .pages-slot-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  height: 30px; padding: 0 0 0 4px; box-sizing: border-box;
+}
+html[data-layout="pages"] .pages-slot-head > h2,
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-slot-head > .pages-slot-link {
+  margin: 0; padding: 0 !important; color: #fff !important;
+  font-size: 16px !important; font-weight: 700 !important; letter-spacing: -.005em; line-height: 1.2;
+  font-family: var(--jf-font, -apple-system, sans-serif);
+  background: transparent !important; border: 0 !important; box-shadow: none !important; min-height: 0 !important; height: auto !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-slot-head > .pages-slot-link { display: inline-flex !important; align-items: center; gap: 6px; cursor: pointer; border-radius: 6px !important; }
+html[data-layout="pages"] .pages-slot-link svg { width: 11px; height: 11px; opacity: .55; transition: transform .15s ease, opacity .15s ease; }
+html[data-layout="pages"] .pages-slot-link:hover svg { opacity: 1; transform: translateX(2px); }
+html[data-layout="pages"] .pages-slot-body { position: relative; flex: 1 1 auto; min-width: 0; }
+html[data-layout="pages"] .pages-slot.is-locked .pages-slot-body { opacity: .5; }
+html[data-layout="pages"] .pages-slot.is-flash { animation: pages-flash 1.1s ease; }
+@keyframes pages-flash { 0%, 100% { box-shadow: 0 0 0 0 rgba(124, 192, 255, 0); } 25% { box-shadow: 0 0 0 6px rgba(124, 192, 255, .28); } }
+
+/* The card itself: no window left, just its contents. */
+html[data-layout="pages"] body .season-command-dashboard.is-pages .card-board-window.is-page-card,
+html[data-glass="clear"][data-layout="pages"] body .season-command-dashboard.is-pages .card-board-window.is-page-card {
+  position: relative !important; left: auto !important; top: auto !important; z-index: auto !important;
+  margin: 0 !important;
+  background: transparent !important; background-image: none !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+  animation: none !important; transform: none !important; opacity: 1 !important;
+  overflow: visible !important;
+}
+html[data-layout="pages"] body .season-command-dashboard.is-pages .card-board-window.is-page-card > :is(.card-board-titlebar, .card-board-resize-handle) { display: none !important; }
+html[data-layout="pages"] body .season-command-dashboard.is-pages .card-board-window.is-page-card > .card-board-body,
+html[data-glass="clear"][data-layout="pages"] body .season-command-dashboard.is-pages .card-board-window.is-page-card > .card-board-body {
+  position: relative !important; left: 0 !important; top: 0 !important; transform: none !important;
+}
+
+/* ---------- Footer: the league wire ticker on the left, the next step on the right. */
+html[data-layout="pages"] .pages-foot {
+  display: flex; align-items: center; gap: 18px; min-width: 0; overflow: hidden;
+  min-height: 58px; padding: 8px 12px 8px 24px; box-sizing: border-box;
+  border-top: 1px solid var(--pages-line);
+}
+html[data-layout="pages"] .pages-ticker { flex: 1 1 auto; min-width: 0; height: 31px; overflow: hidden; position: relative; }
+html[data-layout="pages"] .pages-foot:not(.has-ticker) .pages-ticker { visibility: hidden; }
+html[data-layout="pages"] body .season-command-dashboard.is-pages .pages-foot .card-board-tools.pages-dock {
+  display: flex !important; align-items: center !important; justify-content: flex-end !important; gap: 8px !important;
+  flex: 0 0 auto; margin: 0 0 0 auto !important; padding: 0 !important;
+  background: transparent !important; border: 0 !important; box-shadow: none !important; position: static !important;
+}
+html[data-layout="pages"] body .season-command-dashboard.is-pages .pages-dock .card-board-sim-control,
+html[data-layout="pages"] body .season-command-dashboard.is-pages .pages-dock .card-board-phase-actions { display: flex !important; align-items: center; gap: 8px; }
+/* The primary next step: a bright frosted pill, the biggest button on the screen. */
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock :is(.pages-next, .card-board-phase-actions > button.is-primary) {
+  display: inline-flex !important; align-items: center; justify-content: center; gap: 8px;
+  height: 42px !important; min-height: 42px !important; padding: 0 22px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, .24) !important;
+  border: 1px solid rgba(255, 255, 255, .36) !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(255, 255, 255, .18) !important;
+  color: #fff !important; font-size: 15px !important; font-weight: 700 !important; letter-spacing: -.005em;
+  cursor: pointer; white-space: nowrap;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock :is(.pages-next, .card-board-phase-actions > button.is-primary):hover:not(:disabled) { background: rgba(255, 255, 255, .32) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock :is(.pages-next, .card-board-phase-actions > button):disabled { opacity: .45; cursor: default; }
+/* Other phase buttons and the more-sims chevron: quieter frosted chips beside it. */
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock :is(.card-board-phase-actions > button:not(.is-primary), [data-trade-deadline-open], .simulation-stop-control) {
+  display: inline-flex !important; align-items: center; height: 36px !important; min-height: 36px !important; padding: 0 16px !important;
+  border-radius: 999px !important; background: rgba(255, 255, 255, .08) !important; border: 1px solid rgba(255, 255, 255, .18) !important;
+  box-shadow: none !important; color: #fff !important; font-size: 13px !important; font-weight: 600 !important; white-space: nowrap;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock button.pages-next-more {
+  display: inline-grid !important; place-items: center; width: 42px !important; min-width: 42px !important; height: 42px !important; min-height: 42px !important;
+  padding: 0 !important; border-radius: 50% !important;
+  background: rgba(255, 255, 255, .10) !important; border: 1px solid rgba(255, 255, 255, .20) !important; box-shadow: none !important; color: #fff !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock button.pages-next-more svg { width: 13px; height: 13px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock button.pages-next-more:hover:not(:disabled),
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock button.pages-next-more.is-open { background: rgba(255, 255, 255, .18) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock :is(.pages-next, .pages-next-more) :is([data-key-hint], .shortcut-hint) { display: none !important; }
+
+/* ---------- The season slideshow fills the page area; the sidebar stays live. */
+html[data-layout="pages"] body.season-slideshow-open #seasonSlideshow.season-slideshow,
+html[data-layout="pages"] #seasonSlideshow.season-slideshow:not([hidden]) {
+  left: var(--pages-side-w) !important;
+  padding: var(--pages-gap) !important;
+}
+html[data-layout="pages"] #seasonSlideshow .ss-backdrop { position: absolute !important; inset: 0 !important; background: rgba(4, 9, 14, .22) !important; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+html[data-layout="pages"] #seasonSlideshow .ss-card {
+  width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important;
+  border-radius: var(--pages-radius) !important;
+}
+
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-sidebar .season-command-actions > button > span:not(.shortcut-hint) { background: none !important; color: inherit !important; padding: 0 !important; border-radius: 0 !important; font: inherit !important; }
+
+/* ---------- Messages ("Advanced to …") rise above the next-step button instead of covering it. */
+html[data-layout="pages"] body.unified-terminal-ui #toast.toast {
+  bottom: 82px !important; right: 26px !important;
+  background: color-mix(in srgb, var(--jf-team, #1d3550) 55%, rgba(10, 18, 28, .86)) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(150%); backdrop-filter: blur(22px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, .18) !important; border-radius: 12px !important;
+  color: #fff !important; font-size: 13px; font-weight: 600; box-shadow: 0 14px 34px rgba(0, 0, 0, .32) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #toast.toast.bad { border-color: rgba(255, 110, 110, .6) !important; color: #ffd9d9 !important; }
+/* The sim menu opens upward from the bottom-right button. */
+html[data-glass="clear"][data-layout="pages"] body.unified-terminal-ui .card-board-menu.opens-up { transform-origin: bottom center; animation-name: pages-rise; }
+@keyframes pages-rise { from { opacity: 0; transform: translateY(6px) scale(.97); } to { opacity: 1; transform: none; } }
+
+/* While a slideshow fills the page area the page behind it steps away (it showed through the glass slide). */
+html[data-layout="pages"] body.season-slideshow-open .is-pages .pages-sheet > *,
+html[data-layout="pages"] body.season-slideshow-open .is-pages > .season-command-grid { visibility: hidden; }
+
+html[data-layout="pages"] .pages-slot-head.is-echo > * { visibility: hidden; }
+
+/* The Assistant GM's phone rises just left of the next-step button, never over it. */
+html[data-layout="pages"] body .assistant-gm-phone { right: calc(var(--pages-dock-w, 240px) + 30px) !important; }
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary > span { flex-basis: 100%; color: #fff !important; font-weight: 600 !important; font-size: 11.5px !important; line-height: 1.2; }
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary > em { font-size: 10px !important; line-height: 15px !important; padding: 0 5px !important; }
+/* A slideshow page hides the Assistant GM's phone (it showed through the glass slide). */
+html[data-layout="pages"] body.season-slideshow-open .assistant-gm-phone { visibility: hidden !important; }
+
+/* Pop-ups (trade room, box scores, Settings) blur the page behind them: a full page of tables showed through the glass
+   and competed with the pop-up's own rows. */
+html[data-glass="clear"][data-layout="pages"] body.unified-terminal-ui #modalRoot#modalRoot#modalRoot.modal-root {
+  background: rgba(3, 8, 14, .28) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(120%) !important; backdrop-filter: blur(14px) saturate(120%) !important;
+}
+
+/* Viewing another team: My Team and the team's front-office read as small frosted chips under its name. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-sidebar .season-command-club > button {
+  grid-column: 1 / -1; justify-self: start; display: inline-flex !important; align-items: center; gap: 6px;
+  height: 26px !important; min-height: 26px !important; margin: 6px 0 0 !important; padding: 0 12px !important;
+  border-radius: 999px !important; background: rgba(255, 255, 255, .10) !important; border: 1px solid rgba(255, 255, 255, .22) !important;
+  box-shadow: none !important; color: #fff !important; font-size: 12px !important; font-weight: 600 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-sidebar .season-command-club > button:hover { background: rgba(255, 255, 255, .18) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-sidebar .season-command-club > button + button { margin-top: 4px !important; }
+
+/* Text-only sidebar items carry no frost of their own (the game's glass buttons blur what is behind them, which drew a
+   faint box behind every page name). */
+html[data-layout="pages"] body.unified-terminal-ui #app :is(.pages-nav .pages-nav-item, .pages-sidebar .season-command-actions > button, .pages-slot-head > .pages-slot-link) {
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+
+/* The offseason steps chip takes the sidebar's full width under the team (it wrapped onto three lines beside the logo). */
+html[data-layout="pages"] body .pages-sidebar .season-command-club > .season-command-date { display: contents !important; }
+html[data-layout="pages"] body .pages-sidebar .season-command-date > time,
+html[data-layout="pages"] body .pages-sidebar .season-command-date > span { grid-column: 2; }
+html[data-layout="pages"] body .pages-sidebar .season-command-date > details { grid-column: 1 / -1; margin-top: 10px; }
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary.season-steps-summary,
+html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary { max-width: none !important; width: 100%; box-sizing: border-box; }
+
+/* Phase rooms (Set The Roster, free agency, the bracket, the draft) drew their window's grey outline inside the page:
+   the panel a page card carries keeps its size but loses that outline, like every other card on a page. */
+html[data-layout="pages"] body .season-command-dashboard.is-pages .is-page-card [data-seasonal-context] > :not([data-seasonal-context]) {
+  border-color: transparent !important; box-shadow: none !important;
+}
+html[data-layout="pages"] .pages-note { color: #d3dde6; font-size: 13px; font-weight: 500; margin-right: 6px; }

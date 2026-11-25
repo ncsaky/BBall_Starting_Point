@@ -12,8 +12,8 @@ test('table style sheet loads after every other style sheet', () => {
   const html = read('index.html');
   const links = [...html.matchAll(/href="\/([^"?]+\.css)/g)].map(m => m[1]);
   // The glass look loads last (round 3): the light glass, then the clear glass (round 4) and the font choice; the
-  // table style sheet just before them.
-  assert.deepEqual(links.slice(-5), ['table-style.css', 'glass.css', 'glass-clear.css', 'fonts.css', 'jfresh.css']);
+  // table style sheet just before them. The pages layout (branch sidebar-pages) loads after everything.
+  assert.deepEqual(links.slice(-6), ['table-style.css', 'glass.css', 'glass-clear.css', 'fonts.css', 'jfresh.css', 'card-pages.css']);
 });
 
 test('rows have no left bar on hover', () => {

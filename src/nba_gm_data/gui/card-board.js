@@ -115,9 +115,11 @@
   const escapeHtml = (value) => String(value ?? "").replace(/[&<>\"']/g, (character) => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#39;"})[character]);
   const bounded = (number, min, max) => Math.min(max, Math.max(min, number));
   const minimumScaleFor = (id) => id.startsWith("player-card-") ? .6 : CARD_MIN_SCALES[id] ?? PHASE_CARD_MIN_SCALES[id] ?? .72;
+  // Pages mode: the board only carries pop-ups, which stay inside the visible page area.
+  const canvasScale = () => (window.CardPages?.enabled?.() ? 1 : CANVAS_SCALE);
   const clipboardExtent = (viewportWidth, viewportHeight) => ({
-    width: Math.max(1, Math.floor(viewportWidth * CANVAS_SCALE)),
-    height: Math.max(1, Math.floor(viewportHeight * CANVAS_SCALE)),
+    width: Math.max(1, Math.floor(viewportWidth * canvasScale())),
+    height: Math.max(1, Math.floor(viewportHeight * canvasScale())),
   });
   function simulationMenuMarkup(postseason, disabled = "") {
     const labels = postseason ? ["One Game Per Series", "One Full Series", "Finish Playoffs"] : ["Next Event", "Next Week", "Next Month"];
@@ -503,7 +505,11 @@
       nodes.set(id, {card, title, locked, required, galleryVisible});
       defaults[id] = {x:16, y:16, width, height, scale:initialScale, minScale:Number.isFinite(minScale) ? minScale : minimumScaleFor(id), visible:false, pinned:false, minimized:false, z:nodes.size, measured:Boolean(measured), positioned:false, sizeRevision:Number(sizeRevision) || 0};
     }
-    const key = `nbaGmCardBoard:v1:${options.save || "preview"}`;
+    // Pages mode (branch sidebar-pages, card-pages.js): the cards live on sidebar pages; this board only carries the
+    // pop-up windows (player cards). It keeps its own stored layout so switching back to the board loses nothing.
+    const pagesMode = Boolean(window.CardPages?.enabled?.());
+    let pages = null;
+    const key = `nbaGmCardBoard:v1:${pagesMode ? "pages:" : ""}${options.save || "preview"}`;
     let raw = memory.get(key);
     try { raw = localStorage.getItem(key) || raw; } catch { /* Private browsing can deny preference storage. */ }
     let layout = restoreLayout(raw, defaults);
@@ -557,7 +563,7 @@
       Object.assign(layout["league-wire"], {width:500, height:650, scale:1, feedSizeRevision:1});
     }
     for (const id of EXPANDABLE_CARDS) {
-      if (nodes.has(id)) options.onExpandedChange?.(id, Boolean(layout[id].expanded), nodes.get(id).card);
+      if (nodes.has(id) && !pagesMode) options.onExpandedChange?.(id, Boolean(layout[id].expanded), nodes.get(id).card);
     }
     const phaseCards = (options.extraCards || []).filter(card => card.phaseActive).map(card => card.id);
     for (const {id, measured, sizingKey} of options.extraCards || []) {
@@ -636,8 +642,9 @@
     ].filter(item=>item.control && item.trigger && item.menu);
     const updateOfferCount = (value, options = {}) => {
       const count = Math.max(0, Math.floor(Number(value) || 0));
+      if (pages) pages.updateOfferCount(count, options);
       const tradeMenu = toolbarMenus.find(menuState => menuState.trigger.matches("[data-trade-menu-trigger]"));
-      if (!tradeMenu) return false;
+      if (!tradeMenu) return Boolean(pages);
       const badge = tradeMenu.trigger.querySelector(".card-board-trade-badge");
       const previousCount = Math.max(0, Math.floor(Number(badge.textContent) || 0));
       badge.textContent = String(count);
@@ -662,7 +669,12 @@
       if (open) {
         const rect = trigger.getBoundingClientRect();
         const left = Math.max(6, Math.min(rect.left, window.innerWidth - menu.offsetWidth - 6));
-        const top = Math.max(6, Math.min(rect.bottom + 3, window.innerHeight - menu.offsetHeight - 6));
+        // A trigger near the bottom of the screen (the pages layout's next-step button) opens its menu upward.
+        const roomBelow = window.innerHeight - rect.bottom - 6;
+        const top = roomBelow < menu.offsetHeight + 3 && rect.top - menu.offsetHeight - 3 > 6
+          ? rect.top - menu.offsetHeight - 3
+          : Math.max(6, Math.min(rect.bottom + 3, window.innerHeight - menu.offsetHeight - 6));
+        menu.classList.toggle("opens-up", top < rect.top);
         menu.style.left = `${left}px`;
         menu.style.top = `${top}px`;
         if (focus === "first") menu.querySelector('[role="menuitem"]:not(:disabled)')?.focus({ preventScroll: true });
@@ -749,6 +761,7 @@
         layout[id].minimized || locked(id) ? Math.max(TITLE_HEIGHT, frames.get(id).offsetHeight) : null,
       ]));
       for (const id of nodes.keys()) {
+        if (pages?.owns(id)) continue;
         const item = layout[id], frame = frames.get(id), card = nodes.get(id).card;
         constrainCardBounds(item, extent.width, extent.height, CANVAS_GUTTER, TITLE_HEIGHT, minimizedHeights.get(id));
         Object.assign(frame.style, { left: `${item.x}px`, top: `${item.y}px`, width: `${item.width * item.scale}px`, height: item.minimized || locked(id) ? "auto" : `${TITLE_HEIGHT + item.height * item.scale}px` });
@@ -785,6 +798,7 @@
       actions.hidden = !(layout[id].minimized || locked(id)) || !actions.childElementCount;
     };
     const paint = (id) => {
+      if (pages?.owns(id)) return pages.paint(id);
       const item = layout[id];
       const frame = frames.get(id);
       frame.hidden = !item.visible;
@@ -833,16 +847,17 @@
       }
     };
     const raise = (id) => {
-      const order = Object.keys(layout).sort((a, b) => layout[a].z - layout[b].z);
+      if (pages?.owns(id)) return;
+      const order = Object.keys(layout).filter(key => frames.has(key) && !pages?.owns(key)).sort((a, b) => layout[a].z - layout[b].z);
       order.filter(key => key !== id).concat(id).forEach((key, index) => {
         layout[key].z = index + 1;
         frames.get(key).style.zIndex = String(index + 1);
         frames.get(key).classList.toggle("is-active", key === id);
       });
     };
-    const reveal = (id) => frames.get(id).scrollIntoView({ block: "nearest", inline: "nearest" });
+    const reveal = (id) => pages?.owns(id) ? pages.show(id) : frames.get(id).scrollIntoView({ block: "nearest", inline: "nearest" });
     const switchableIds = () => switchableWindowOrder(layout, [...nodes]
-      .filter(([_id, node]) => node.galleryVisible !== false)
+      .filter(([_id, node]) => node.galleryVisible !== false && !pages?.owns(_id))
       .map(([id]) => id));
     const switcherItems = windowSwitcher.querySelector(".card-board-window-switcher-items");
     const renderWindowSwitcher = () => {
@@ -1031,11 +1046,12 @@
       else toggle.focus({ preventScroll: true });
     };
     const selectedWindow = () => {
-      const ids = [...nodes.keys()];
+      const ids = [...nodes.keys()].filter(id => !pages?.owns(id));
       const activeId = ids.find(id => frames.get(id).classList.contains("is-active"));
       return selectedWindowId(layout, ids, activeId);
     };
     const closeWindow = (id, focusNext = false) => {
+      if (pages?.owns(id)) return false;
       if (!id || !layout[id]?.visible || nodes.get(id)?.required) return false;
       layout[id].visible = false;
       options.onVisibilityChange?.(id, false);
@@ -1053,6 +1069,7 @@
       return true;
     };
     const toggleWindowMinimized = (id, focusControl = false) => {
+      if (pages?.owns(id)) return false;
       if (!id || !layout[id]?.visible || locked(id) || nodes.get(id)?.required) return false;
       layout[id].minimized = !layout[id].minimized;
       paint(id);
@@ -1064,6 +1081,7 @@
       return true;
     };
     const toggleWindowExpanded = (id, focusControl = false) => {
+      if (pages?.owns(id)) return pages.show(id);
       if (!layout[id] || !EXPANDABLE_CARDS.has(id)) return false;
       toggleWindowExpansion(layout[id], id);
       options.onExpandedChange?.(id, Boolean(layout[id].expanded), nodes.get(id).card);
@@ -1091,8 +1109,11 @@
     };
     const toggleActiveWindowExpanded = () => galleryOpen ? false : toggleWindowExpanded(selectedWindow(), true);
     const add = (id) => {
+      if (pages?.owns(id)) { pages.show(id); return; }
       const item = layout[id];
       if (!item.visible) {
+        // Pages mode: size the pop-up to the page area first, so it opens centred rather than against the sidebar.
+        if (pagesMode) constrainCardBounds(item, canvasLimit("Width"), canvasLimit("Height"));
         const width = item.width * item.scale, height = TITLE_HEIGHT + item.height * item.scale;
         const playerCardOffset = id.startsWith("player-card-")
           ? Math.min([...nodes.keys()].filter(key => key.startsWith("player-card-") && key !== id && layout[key]?.visible).length * 42, 210)
@@ -1465,6 +1486,7 @@
       save();
     });
 
+    if (pagesMode) pages = window.CardPages.attach({dashboard, board, canvas, toolbar, gallery, status, nodes, frames, layout, defaults, options, locked, save, announce, phaseCards, entering, toggleWindowExpansion: (item, id) => toggleWindowExpansion(item, id), EXPANDABLE_CARDS, TITLE_HEIGHT, starterMinWidths: STARTER_CARD_MIN_WIDTHS});
     // Place the startup cards inside the visible board, even though the workspace
     // itself keeps extra canvas area available for arranging cards later.
     initializeStarterLayout(layout, saved, board.clientWidth, board.clientHeight, phaseCards);
@@ -1478,7 +1500,7 @@
     const scroll = scrollPositions.get(key);
     if (scroll) board.scrollTo(scroll.x, scroll.y);
     centerNewRequiredWindows(layout, options.extraCards || [], saved, entering, board);
-    const entryPlaced = options.phaseContext == null || (options.extraCards || []).some(card => card.required) ? [] : applyEntryLayout(layout, options.entryLayout, board, saved, entering);
+    const entryPlaced = pagesMode || options.phaseContext == null || (options.extraCards || []).some(card => card.required) ? [] : applyEntryLayout(layout, options.entryLayout, board, saved, entering);
     if (entryPlaced.length) {
       for (const id of nodes.keys()) paint(id);
       for (const id of [...entryPlaced].reverse()) raise(id);
@@ -1497,13 +1519,14 @@
     for (const {id, required} of options.extraCards || []) if (required) paint(id);
     sizeCanvas();
     save();
-    if (entering && phaseCards.length && !entryPlaced.length && !(options.extraCards || []).some(card => card.required)) reveal(phaseCards[0]);
-    active = { dispose: () => { scrollPositions.set(key, {x:board.scrollLeft, y:board.scrollTop}); finishWindowSwitcher(false, false); finishResize(true); finishDrag(true); observer.disconnect(); document.removeEventListener("click", dismissToolbarMenusOutside); document.removeEventListener("keydown", handleWindowSwitcherKeydown, true); document.removeEventListener("keyup", handleWindowSwitcherKeyup, true); window.removeEventListener("resize", dismissToolbarMenusOnResize); }, closeActive:closeActiveWindow, toggleActiveMinimize:toggleActiveWindowMinimized, toggleActivePin:toggleActiveWindowPinned, toggleActiveExpansion:toggleActiveWindowExpanded, updateOfferCount };
+    if (entering && phaseCards.length && !entryPlaced.length && !(options.extraCards || []).some(card => card.required) && !pagesMode) reveal(phaseCards[0]);
+    active = { dispose: () => { pages?.dispose(); scrollPositions.set(key, {x:board.scrollLeft, y:board.scrollTop}); finishWindowSwitcher(false, false); finishResize(true); finishDrag(true); observer.disconnect(); document.removeEventListener("click", dismissToolbarMenusOutside); document.removeEventListener("keydown", handleWindowSwitcherKeydown, true); document.removeEventListener("keyup", handleWindowSwitcherKeyup, true); window.removeEventListener("resize", dismissToolbarMenusOnResize); }, closeActive:closeActiveWindow, toggleActiveMinimize:toggleActiveWindowMinimized, toggleActivePin:toggleActiveWindowPinned, toggleActiveExpansion:toggleActiveWindowExpanded, updateOfferCount };
     active.open = (id) => { if (!layout[id]) return false; add(id); return true; };
-    active.isOpen = id => Boolean(layout[id]?.visible);
+    active.isOpen = id => pages?.owns(id) ? pages.isShown(id) : Boolean(layout[id]?.visible);
     // Windows whose height follows their content (user, 2026-11-24: Player Development ends at its table's last row).
     const FIT_TO_CONTENT = new Set(['team-wants', 'development']);
     active.fitContent = id => {
+      if (pages?.owns(id)) return pages.fitContent(id);
       if (!FIT_TO_CONTENT.has(id) || !layout[id]) return;
       if (id === 'development') {
         const panel = frames.get(id)?.querySelector('.card-board-body > *');
@@ -1519,6 +1542,7 @@
     };
     active.addCard = addClipboardCard;
     active.expand = (id) => {
+      if (pages?.owns(id)) return pages.show(id, {expanded: true});
       if (!layout[id] || !EXPANDABLE_CARDS.has(id)) return false;
       if (!layout[id].visible) add(id);
       if (!layout[id].expanded) toggleWindowExpanded(id);
@@ -1535,6 +1559,7 @@
       board.scrollTo(tutorialWorkspace.x, tutorialWorkspace.y);
     };
     active.previewTutorialWindow = (id) => {
+      if (pages?.owns(id)) return pages.preview(id);
       if (!tutorialWorkspace && nodes.has(id)) tutorialWorkspace = {layout:structuredClone(layout), x:board.scrollLeft, y:board.scrollTop};
       restoreTutorialWorkspace();
       if (!tutorialWorkspace || !nodes.has(id)) return;
@@ -1549,13 +1574,16 @@
       reveal(id);
     };
     active.endTutorialPreview = () => {
+      pages?.endPreview();
       restoreTutorialWorkspace();
       tutorialWorkspace = null;
     };
     for (const [id, node] of nodes) {
+      if (pages?.owns(id)) continue;
       options.onVisibilityChange?.(id, Boolean(layout[id].visible));
       if (layout[id].visible && !layout[id].minimized && !locked(id)) options.onOpen?.(id, node.card);
     }
+    pages?.ready();
   }
 
   window.CardBoard = Object.freeze({ fitContent: (id) => active?.fitContent?.(id), mount, unmount, open: (id) => active?.open(id), isOpen: (id) => active?.isOpen(id), addCard: (descriptor) => active?.addCard?.(descriptor) || false, expand: (id) => active?.expand?.(id) || false, updateOfferCount: (count, options) => active?.updateOfferCount?.(count, options) || false, previewTutorialWindow: (id) => active?.previewTutorialWindow?.(id), endTutorialPreview: () => active?.endTutorialPreview?.(), closeActive: () => active?.closeActive?.() || false, toggleActiveMinimize: () => active?.toggleActiveMinimize?.() || false, toggleActivePin: () => active?.toggleActivePin?.() || false, toggleActiveExpansion: () => active?.toggleActiveExpansion?.() || false, defaultLayout, initializeStarterLayout, restoreLayout, migrateDefaultCalendar, toggleWindowExpansion, enterPhase, enforceRequiredWindows, centerNewRequiredWindows, constrainCardBounds, snapCardPositions, clipboardExtent, simulationMenuMarkup, entryLayoutDue, arrangeEntryRows, applyEntryLayout, diagonalScaleDelta, migrateCardSizes, galleryCategoryFor, switchableWindowOrder, frontmostVisibleWindow, selectedWindowId, cycleWindowIndex, altWindowSwitcherDirection });
