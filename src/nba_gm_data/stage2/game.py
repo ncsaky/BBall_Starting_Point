@@ -113,6 +113,7 @@ LOOP = {
     "zone_make": (-.19, -.18, 0.0, -.03),
     # League scoring level on every shot (make log-odds; S2-TOTALS-MATCHUPS: set so expected totals match the market on
     # the first half of 2025-26 with pace, recent form and the matchups in: the league scored 0.9 per 100 low).
+    # (S2-USAGE: .003 with the putbacks by reach below switched on, which add 0.5% to league scoring in replays.)
     "make_level": .012,
     # After an offensive rebound: chance of an immediate putback by the rebounder (rim / short misses vs others).
     "putback_close": .50, "putback_far": .20,
@@ -231,6 +232,43 @@ LOOP = {
     # seasons (play-by-play final scores; 1.84 on average; the market's 1.9 on the betting test's games). Stage 2 gave
     # 1.0 at x1, 1.9 at x1.7, 2.1 at x1.9 (scripts/research/s2_spread_check.py, 8 runs of 2025-26).
     "home_scale": 1.65,
+    # ---- Who takes the shots (S2-USAGE; scripts/research/s2_usage_breakdown.py, s2_usage_fit.py). Each is 0 (or 1 for
+    # the powers) in the loop before this piece, which then plays the game exactly as before.
+    # Assists: the assister is drawn among the scorer's four teammates by his assist weight (cards.ast_w) to this power.
+    # 1.35 fitted on today's per-36 rule (held-out assists off 17.9% -> 14.4%); the Stage 2 rule refit through the loop
+    # (cards.ASSISTS) does better at 1 (13.4%) and is what is used.
+    "ast_power": 1.0,
+    # Transition: the finisher is drawn by usage weight (as in the half court) times exp(k_trans_speed x his straight-line
+    # speed P06 per 10 points + k_trans_pace x his pace habit T05 per .05), both against the league's average player.
+    # Real transition chances go to the players who run the floor. Tried (S2-USAGE): speed .3-.8 and pace .3 left
+    # per-player points unchanged within noise (pace worse), and the repo holds no per-player transition frequency to
+    # fit them to, so both stay 0 (the transition habit T17 is a prior only).
+    "k_trans_speed": 0.0, "k_trans_pace": 0.0,
+    # Putbacks: the chance the offensive rebounder goes straight back up (putback_close / putback_far above) moves with
+    # his standing reach (log-odds per 10 cm against the league's average player): bigs under the rim put it back,
+    # guards who chase a long rebound reset. FITTED (S2-USAGE, s2_usage_fit.py): Stage 2 gave .79 putback points per 36
+    # against Basketball Index's 1.05 (rotation players; real bigs score 0.8-1.2 putback points per offensive rebound,
+    # Stage 2 gave everyone about 0.5); at .5 (with make_level .003 to hold league scoring): .98, correlation with real
+    # .872 -> .887. Kept OFF: the extra putbacks go to tall players whose usage is already over real (a ratings
+    # question, docs/agents/tasks/s2-usage.md), so season points per player got a little worse (props: off by 11.4% ->
+    # 11.6%, threes 10.4% -> 10.9%; betting test unchanged within seed noise). Switch on once that is settled.
+    "k_putback_reach": 0.0,
+    # Shot difficulty: a player who takes tougher shots (shot-difficulty habit T04, log against the league's) meets more
+    # contested shots: make log-odds per unit of that on every shot but putbacks and heaves. The skills are shot-making
+    # grades; the habit is the decision layer of which shots he chooses. Tried (S2-USAGE): .5-3 with the league level
+    # held made per-player points and threes worse, so 0 (the shot-making grades seem to carry shot difficulty already).
+    "k_diff": 0.0,
+    # Heaves and must-have threes (down three at the end): the shooter is drawn by usage weight times his three-point
+    # share of shots (T02) to this power, so the ball ends with a shooter rather than whoever the usage draw lands on
+    # (0 = by usage alone, as before; centres took end-of-quarter heaves). S2-USAGE: 1 (2 no different).
+    "three_pick": 1.0,
+    # Rim shots by how they were made: a self-created drive to the rim (rim_drive) is harder than finishing a teammate's
+    # pass (rim_finish: rolls, cuts, lobs, dump-offs). Make log-odds -k_rim_self on drives and +k_rim_self x
+    # rim_fed_ratio on finishes (the ratio keeps the league's rim make rate: the loop takes about half as many drives
+    # to the rim as finishes). 0 = the same conversion for both, as before. Tried (S2-USAGE): .3 and .6 made per-player
+    # points worse (season miss 9.1% -> 9.3% / 9.5%), so 0; the per-player rim make-rate misses are listed as ratings
+    # questions instead (docs/agents/tasks/s2-usage.md).
+    "k_rim_self": 0.0, "rim_fed_ratio": .5,
 }
 CATCH_KINDS = frozenset(KIND_INDEX[k] for k in ("mid_catch", "three_corner", "three_catch", "trans_three"))
 PULL_KINDS = frozenset(KIND_INDEX[k] for k in ("short_jumper", "mid_pull", "three_pull"))
@@ -248,6 +286,9 @@ TRACE: dict | None = None   # research hook (see Game._trace); None in play
 COVERAGE_TRACE: list | None = None   # research hook: every ball screen's personnel coverage log-odds (s2_scheme_fit.py)
 FOUL_TRACE: list | None = None   # research hook: every shooting-foul chance (scripts/research/s2_foul_tail.py); None in play
 TO_TRACE: dict | None = None   # research hook (see Game._to_z; scripts/research/s2_turnover_fit.py); None in play
+# Research hook (scripts/research/s2_usage_breakdown.py): per player, per shot kind: [tries, FGA, makes, shooting-foul
+# trips, free throws from those trips, and-ones]. None in play.
+SHOT_TRACE: dict | None = None
 
 # End of game with the coach (S2-COACH): chance the trailing team fouls on purpose per possession of the leader, by
 # deficit and time left (last 10 s, 10-24 s, 24-60 s). The rotation study (data/research/rotation_evidence.json): for the
@@ -321,7 +362,7 @@ class TeamState:
         self.late_to = 0             # late timeouts left (last two minutes of the 4th / of overtime)
 
     # ---- lineup aggregates (recomputed when the five change) ------------------------------------------------------
-    REFRESH_KEYS = ("usage_cum", "ast_w", "reb", "reb_prof", "pace", "trans_pref", "perim", "perim_center", "create",
+    REFRESH_KEYS = ("usage_cum", "trans_cum", "three_cum", "ast_w", "reb", "reb_prof", "pace", "trans_pref", "perim", "perim_center", "create",
                     "space", "off_shift", "rim", "press", "stl_level", "blk_level", "ns_level", "ns_draw_cum",
                     "off_foul_cum", "help", "rot", "lanes")
 
@@ -343,9 +384,20 @@ class TeamState:
     def _refresh(self) -> None:
         cs = [self.cards[i] for i in self.on]
         lg = self.league
-        gamma = (LOOP if self.loop is None else self.loop)["usage_power"]
-        self.usage_cum = _cum([c.usage ** gamma for c in cs])
-        self.ast_w = [c.ast_w for c in cs]
+        L0 = LOOP if self.loop is None else self.loop
+        gamma = L0["usage_power"]
+        uw = [c.usage ** gamma for c in cs]
+        self.usage_cum = _cum(uw)
+        ks, kp = L0["k_trans_speed"], L0["k_trans_pace"]
+        if ks or kp:
+            pm = lg["pace_mean"]
+            self.trans_cum = _cum([u * math.exp(ks * c.speed + kp * (c.pace - pm) / .05) for u, c in zip(uw, cs)])
+        else:
+            self.trans_cum = self.usage_cum
+        tp = L0["three_pick"]
+        self.three_cum = _cum([u * max(1e-3, c.three) ** tp for u, c in zip(uw, cs)]) if tp else self.usage_cum
+        ap = L0["ast_power"]
+        self.ast_w = [c.ast_w ** ap for c in cs] if ap != 1.0 else [c.ast_w for c in cs]
         self.reb = [c.reb for c in cs]
         self.reb_prof = [c.reb.profile for c in cs]
         self.pace = sum(c.pace for c in cs) / 5.0
@@ -419,6 +471,9 @@ class Game:
                            "roll_cut": L["craft_finish"], "putback": L["craft_finish"]}
         self.craft_w = [craft_by_action.get(a, 0.0) for a in KACTION]
         self.zone_make = [0.0 if KINDS[i][0] == "heave" else L["zone_make"][KZONE[i]] + L["make_level"] for i in range(N_KINDS)]
+        if L["k_rim_self"]:
+            self.zone_make[KIND_INDEX["rim_drive"]] -= L["k_rim_self"]
+            self.zone_make[KIND_INDEX["rim_finish"]] += L["k_rim_self"] * L["rim_fed_ratio"]
         self.blk_base = (L["blk_rim"], L["blk_short"], L["blk_mid"], L["blk_three"])
         self.period = 0
         self.t_left = QUARTER_S
@@ -441,6 +496,8 @@ class Game:
         self.two_for_one = self.late_timeouts = self.advances = 0   # research counters
         self.use_finishes = self.use_coach and bool(L["finishes"])
         self.late = FIN.NEUTRAL      # this possession's late-game terms (len, three, foul, make, make3, tov)
+        self.k_diff = L["k_diff"]
+        self._u_slot = 0.0
         home.advance = away.advance = False
         home.screens_on = away.screens_on = self.use_screens
 
@@ -820,7 +877,7 @@ class Game:
             # to the real overtime rate).
             if -3 <= lead <= 0 and 3.0 < self.t_left <= 24.0 and rng.random() < L["end_last_shot"]:
                 self._run_clock(max(.5, self.t_left - (.5 + 2.5 * rng.random())))
-                slot = _pick(off.usage_cum, rng.random())
+                slot = _pick(off.three_cum if lead == -3 else off.usage_cum, rng.random())
                 card = off.cards[off.on[slot]]
                 if rng.random() < _sig(self._to_z(card, card.to_logit + L["to_shift"] + self.late[5] + self._pressure(off, de, slot))):
                     return self._turnover(off, de, slot)
@@ -849,7 +906,7 @@ class Game:
                 left = self.t_left
                 self._run_clock(left)
                 if rng.random() < L["heave"]:
-                    slot = _pick(off.usage_cum, rng.random())
+                    slot = _pick(off.three_cum, rng.random())
                     return self._shot(off, de, slot, HEAVE, final=True)
                 return "end"
             seg = max(.5, self.t_left - rng.random() * 1.5)
@@ -880,7 +937,8 @@ class Game:
                     final = True
         self._run_clock(seg)
         # Who ends it, and does he turn it over?
-        slot = _pick(off.usage_cum, rng.random())
+        self._u_slot = u = rng.random()
+        slot = _pick(off.usage_cum, u)
         card = off.cards[off.on[slot]]
         if self.use_screens and not trans:
             # What he tries first, so a ball screen and its coverage can shape the turnover chance and the shot.
@@ -891,6 +949,10 @@ class Game:
             if rng.random() < _sig(z):
                 return self._turnover(off, de, slot)
             return self._shot(off, de, slot, kind, final=final, scr=scr)
+        if trans and off.trans_cum is not off.usage_cum:
+            # Transition: the players who run the floor finish more of the chances (same single draw).
+            slot = _pick(off.trans_cum, self._u_slot)
+            card = off.cards[off.on[slot]]
         z = self._to_z(card, card.to_logit + L["to_shift"] + self.late[5] + self._pressure(off, de, slot) + (L["trans_to"] if trans else 0.0))
         if rng.random() < _sig(z):
             return self._turnover(off, de, slot)
@@ -939,7 +1001,7 @@ class Game:
         hold = L["end_last_shot"] if lead == 0 or not self.use_finishes else L["end_last_shot_behind"]
         if -3 <= lead <= 0 and 3.0 < t_left <= 24.0 and rng.random() < hold:
             self._run_clock(max(.5, t_left - (.5 + 2.5 * rng.random())))
-            slot = _pick(off.usage_cum, rng.random())
+            slot = _pick(off.three_cum if lead == -3 else off.usage_cum, rng.random())
             card = off.cards[off.on[slot]]
             if rng.random() < _sig(self._to_z(card, card.to_logit + L["to_shift"] + self.late[5] + self._pressure(off, de, slot))):
                 return self._turnover(off, de, slot)
@@ -1007,6 +1069,7 @@ class Game:
         # Make chance: his conversion for this shot, the defense's contest or rim protection, team terms.
         lead = off.points - de.points
         z = (card.make_logit[kind] + self.zone_make[kind] + off.eff + off.off_shift - de.eff_def
+             - (self.k_diff * card.diff if kind != PUTBACK and kind != HEAVE else 0.0)
              - L["k_lead"] * (25 if lead > 25 else -25 if lead < -25 else lead) + ((self.late[3] + (self.late[4] if kind in THREE_KINDS else 0.0)) if kind != HEAVE else 0.0))
         fz = 0.0
         if L["matchups"] and kind != HEAVE:
@@ -1049,10 +1112,22 @@ class Game:
             p_foul = 0.0
         if zone == 0:
             st[S_RIM] += 1
+        if SHOT_TRACE is not None:
+            rec = SHOT_TRACE.get(card.pid)
+            if rec is None:
+                rec = SHOT_TRACE[card.pid] = [[0] * 6 for _ in range(N_KINDS)]
+            rec = rec[kind]
+            rec[0] += 1
         if rng.random() < p_foul:
             self._foul(de, self._shooting_fouler(de, j, zone))
             self.diag[3 * kind + 2] += 1
             if rng.random() < card.and1[zone] * (p_make / max(.05, _sig(card.make_logit[kind]))):
+                if SHOT_TRACE is not None:
+                    rec[1] += 1
+                    rec[2] += 1
+                    rec[3] += 1
+                    rec[4] += 1
+                    rec[5] += 1
                 st[S_FGA] += 1          # a made shot through a foul counts as an attempt (and-one)
                 self.diag[3 * kind] += 1
                 self.diag[3 * kind + 1] += 1
@@ -1065,13 +1140,20 @@ class Game:
                     off.coach.on_shot(off.on[slot], KPTS[kind], p_make * KPTS[kind])
                 made_ft = self._free_throws(off, de, slot, 1)
                 return "made" if made_ft else self._after_miss(off, de, "ft", slot)
+            if SHOT_TRACE is not None:
+                rec[3] += 1
+                rec[4] += 3 if zone == 3 else 2
             made_ft = self._free_throws(off, de, slot, 3 if zone == 3 else 2)
             return "made" if made_ft else self._after_miss(off, de, "ft", slot)
         st[S_FGA] += 1
+        if SHOT_TRACE is not None:
+            rec[1] += 1
         self.diag[3 * kind] += 1
         if zone == 3:
             st[S_3PA] += 1
         if rng.random() < p_make:
+            if SHOT_TRACE is not None:
+                rec[2] += 1
             self.diag[3 * kind + 1] += 1
             self._record_make(off, de, slot, kind)
             if scr is not None and scr.handler and rng.random() < self.S["p_screen_assist"]:
@@ -1125,7 +1207,10 @@ class Game:
             return "dreb"
         L, rng = self.L, self.rng
         close = miss in ("rim", "short")
-        if rng.random() < (L["putback_close"] if close else L["putback_far"]):
+        p_put = L["putback_close"] if close else L["putback_far"]
+        if L["k_putback_reach"]:
+            p_put = _sig(math.log(p_put / (1.0 - p_put)) + L["k_putback_reach"] * off.cards[off.on[k]].reach)
+        if rng.random() < p_put:
             self._run_clock(min(L["putback_s"] * (.5 + rng.random()), self.t_left))
             if self.t_left <= 0.0:
                 return "end"
