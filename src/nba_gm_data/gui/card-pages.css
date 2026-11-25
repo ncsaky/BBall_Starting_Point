@@ -177,6 +177,9 @@ html[data-layout="pages"] .pages-sheet::before {
   content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
   -webkit-backdrop-filter: blur(28px) saturate(140%); backdrop-filter: blur(28px) saturate(140%);
 }
+/* Over an arena the page blurs much less: the picture is already soft, and it should be made out through the glass. */
+html[data-layout="pages"][data-arena] .pages-sheet::before,
+html[data-layout="pages"][data-arena] body #seasonSlideshow#seasonSlideshow .ss-card > :is(.ss-titlebar, .ss-content) { -webkit-backdrop-filter: blur(7px) saturate(125%) !important; backdrop-filter: blur(7px) saturate(125%) !important; }
 html[data-layout="pages"] .pages-head {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   min-height: 54px; padding: 14px 22px 2px 24px; box-sizing: border-box;

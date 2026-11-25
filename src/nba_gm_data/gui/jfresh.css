@@ -67,6 +67,16 @@ html[data-glass="clear"] body.unified-terminal-ui {
   background-attachment: scroll !important;
 }
 
+/* The team's arena behind the glass (user, 2026-11-24: the flat colour was their top complaint). The pictures in
+   assets/arenas/ are already blurred, tinted and eased down in the bright parts, one treatment for every team. */
+html[data-glass="clear"][data-arena] body .season-command-dashboard.has-card-board.has-card-board,
+html[data-glass="clear"][data-arena] body.unified-terminal-ui.unified-terminal-ui {
+  background-color: var(--jf-team-deep) !important;
+  background-image: var(--arena-image) !important;
+  background-size: cover !important;
+  background-position: center !important;
+}
+
 /* ---------- Windows, pop-ups and slides: barely a layer. A faint frosted lift, one hairline edge, big corners, a soft
    shadow; the title is part of the card (no bar). */
 html[data-glass="clear"] body .has-card-board .card-board-window,

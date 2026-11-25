@@ -1,6 +1,6 @@
 # Arena photo candidates (background mock-ups, 2026-11-24)
 
-Downloaded from Wikimedia Commons with the user's approval (6 first, then 81 on their "Download them"). The files are in `output/ui-workbench/arena/photos/` (not committed). Listed here: the 58 kept for the picking page; the rest (close-ups, outside views, an ice rink, duplicates) are not used. Nothing is in the game. If one ships, add its credit to the game's photo credits and say it was edited (cropped, blurred, recoloured); CC BY-SA photos require the edited picture to be shared under the same licence.
+Downloaded from Wikimedia Commons with the user's approval (6 first, then 81 on their "Download them"). The files are in `output/ui-workbench/arena/photos/` (not committed). Listed here: the 58 kept for the picking page; the rest (close-ups, outside views, an ice rink, duplicates) are not used. The user's picks (29 photos) are in the game; `src/nba_gm_data/gui/assets/arenas/credits.json` holds their credits and says they were edited (CC BY-SA pictures are shared under the same licence).
 
 | Team | Label | File | Author | Licence |
 |---|---|---|---|---|

@@ -3132,6 +3132,15 @@ function applyTeamGlass(team = userTeam()) {
   const b = usable(second) && second !== a ? second : "#c8563a";
   document.documentElement.style.setProperty("--team-a", a);
   document.documentElement.style.setProperty("--team-b", b);
+  // The board behind the glass is the team's arena (the user picked each picture, 2026-11-24).
+  const root = document.documentElement;
+  if (TEAM_BRAND_COLORS[team]) {
+    root.style.setProperty("--arena-image", `url("/assets/arenas/${team}.jpg")`);
+    root.dataset.arena = team;
+  } else {
+    root.style.removeProperty("--arena-image");
+    delete root.dataset.arena;
+  }
 }
 
 function renderDashboardTab(rows) {
@@ -13039,9 +13048,16 @@ async function openPhotoCreditsModal() {
   } catch (error) {
     generated = {};
   }
+  let arenas = {};
+  try {
+    arenas = (await fetch("/assets/arenas/credits.json", {cache: "no-cache"}).then(response => response.json())) || {};
+  } catch (error) {
+    arenas = {};
+  }
   const generatedPeople = Object.keys(generated.faces || {}).length;
   const generatedImages = Object.values(generated.faces || {}).reduce((total, face) => total + (face.stages || []).length, 0);
   const rows = (stock.photos || []).map(photo => ({file: photo.file, use: photo.use, subject: photo.title, author: photo.author, authorUrl: photo.author_url, licence: photo.licence, licenceUrl: photo.licence_url, source: photo.source_url}));
+  for (const photo of arenas.photos || []) rows.push({file: photo.file, use: `Arena background (${photo.team}), ${photo.edited}`, subject: photo.title, author: photo.author, licence: photo.licence, licenceUrl: photo.licence_url, source: photo.source_url});
   const reference = {};
   for (const [kind, entries] of [["Real head coach", real.coaches], ["Real prospect", real.prospects]]) {
     for (const entry of Object.values(entries || {})) {
@@ -13070,6 +13086,7 @@ async function openPhotoCreditsModal() {
     body: `<div class="photo-credits">
       ${generatedPeople ? `<p class="photo-credits-generated">Made-up coaches, staff, draft prospects and the players they become get AI-generated faces of fictional people first: no real person is depicted. They were made with OpenAI's image tool, with older photos of each person for later in their career (${generatedPeople} fictional people, ${generatedImages} portraits).</p>` : ""}
       <p>${generatedPeople ? "When those run out, made-up people get" : "Made-up coaches, staff and draft prospects use"} openly licensed photos of real people (CC0, public domain, CC BY, CC BY-SA), cut out and shown in greyscale; the photographers and licences are listed below. Real coaches and prospects use their own photos: the freely licensed ones are listed below too.</p>
+      ${(arenas.photos || []).length ? `<p class="photo-credits-arenas">${escapeHtml(arenas.note || "")}</p>` : ""}
       ${referenceText ? `<p class="photo-credits-reference">Shown for reference only, like the NBA player headshots: ${referenceText}.</p>` : ""}
       <p class="photo-credits-count">${rows.length} credited photos.</p>
       <div class="photo-credits-scroll"><table class="photo-credits-table" aria-label="Photo credits"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
