@@ -22,6 +22,8 @@
     ? `<span class="ss-headshot"><img src="${attr(player.headshot_url)}" alt="" aria-hidden="true" loading="lazy" decoding="async" referrerpolicy="no-referrer" /></span>`
     : `<span class="ss-headshot ss-headshot-empty" aria-hidden="true"></span>`;
   const statLine = (line) => line ? [["pts", "PTS"], ["reb", "REB"], ["ast", "AST"]].map(([key, label]) => `${num(line[key])} ${label}`).join(" · ") + (line.gp ? ` · ${line.gp} G` : "") : "";
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const shortDate = (iso) => { const parts = /^\d{4}-(\d{2})-(\d{2})/.exec(String(iso || "")); return parts ? `${MONTHS[Number(parts[1]) - 1]} ${Number(parts[2])}` : String(iso || ""); };
   const roundWord = {first_round: "First round", conference_semifinals: "Second round", conference_finals: "Conference finals", finals: "NBA Finals"};
   const ordinal = (n) => { const v = Number(n); if (!Number.isFinite(v)) return String(n ?? "—"); const s = ["th", "st", "nd", "rd"], m = v % 100; return v + (s[(m - 20) % 10] || s[m] || s[0]); };
   const capitalize = (text) => String(text || "").replace(/^./, (c) => c.toUpperCase());
@@ -171,6 +173,9 @@
       <figcaption>${caption}</figcaption></figure>`;
   }
 
+  // The leader, storyline and injury slides get more rows than a small screen holds: show what the height takes.
+  const bySize = (short, medium, tall) => { const h = window.innerHeight || 900; return h >= 1100 ? tall : h >= 950 ? medium : short; };
+
   // A name opens that player's card (players who left the league have no card).
   const name = (r) => (r.player_id && !String(r.player_id).startsWith("real:") && r.now?.status !== "No longer in the league"
     ? `<button type="button" class="ss-player-link" data-ss-player="${attr(r.player_id)}">${esc(r.name)}</button>` : `<b>${esc(r.name)}</b>`);
@@ -317,9 +322,9 @@
       }
       const cats = (slide.categories || []).map((cat) => `<section class="ss-leader-cat">${panelTitle(cat.label, (slide.players || []).length ? `<button type="button" class="ss-view-all" data-ss-view-all="${attr(cat.stat)}">View all</button>` : "")}${table([
         {label: "Player", render: name, cls: "ss-left"},
-        {label: "Team", render: (r) => where(r.team_abbrev, r.now), width: "126px"},
-        {label: /_pct$/.test(cat.stat) ? "Pct" : "Per game", render: (r) => value(r.per_game), cls: "ss-num", width: "84px"},
-      ], cat.rows, {sorted: 2})}</section>`).join("");
+        {label: "Team", render: (r) => where(r.team_abbrev, r.now), width: "120px"},
+        {label: /_pct$/.test(cat.stat) ? "Pct" : "Per game", render: (r) => value(r.per_game), cls: "ss-num", width: "76px"},
+      ], cat.rows.slice(0, bySize(5, 6, 7)), {sorted: 2})}</section>`).join("");
       const winners = (slide.award_winners || []).map((w) => `<li><b>${esc(w.label)}</b>: ${esc(w.name)} ${where(w.then, w.now)}</li>`).join("");
       return `<div class="ss-grid ss-grid-3 ss-leader-grid">${cats}</div>${winners ? `<section class="ss-feature ss-winners">${panelTitle("Award winners")}<ul class="ss-list">${winners}</ul></section>` : ""}`;
     },
@@ -472,14 +477,14 @@
         const stat = item.stat && item.stat.value !== null && item.stat.value !== undefined ? `<div class="ss-story-stat${item.stat.tone === "bad" ? " is-bad" : ""}"><b>${esc(item.stat.value)}</b><small>${esc(item.stat.label || "")}</small></div>` : "";
         return `<section class="ss-story ss-story-rich">${item.team?.abbrev ? logo(item.team.abbrev, "ss-story-logo") : ""}<div class="ss-story-body"><h4>${esc(item.title)}</h4><p>${esc(item.text)}</p>${faces ? `<div class="ss-story-faces">${faces}</div>` : ""}</div>${stat}</section>`;
       };
-      return `<div class="ss-stories ss-stories-rich">${(slide.items || []).map(story).join("") || `<p class="ss-empty">A quiet summer.</p>`}</div>`;
+      return `<div class="ss-stories ss-stories-rich">${(slide.items || []).slice(0, bySize(12, 15, 15)).map(story).join("") || `<p class="ss-empty">A quiet summer.</p>`}</div>`;
     },
     injuries(slide) {
       if (!(slide.players || []).length) return `<p class="ss-empty">No rated player starts the season with an absence of more than 20 games.</p>`;
       // Round 13: a team logo, the injury in the team-coloured accent and the games missed as the headline number; text
       // wraps inside its card.
-      return `<div class="ss-stories ss-stories-rich ss-injuries">${slide.players.map((p) => `<section class="ss-story ss-story-rich ss-injury">${p.team?.abbrev ? logo(p.team.abbrev, "ss-story-logo") : ""}<div class="ss-story-body">${playerCell(p, esc(`${p.team?.abbrev || ""} · ${num(p.overall)} rating`))}
-        <p><b class="ss-injury-name">${esc(capitalize(p.injury || "injury"))}</b>${p.part ? ` (${esc(p.part)})` : ""}</p><p>${p.return_date ? `Back around ${esc(p.return_date)}.` : ""}</p></div><div class="ss-story-stat is-bad"><b>${p.whole_season ? "Season" : esc(p.games)}</b><small>${p.whole_season ? "out" : "games out"}</small></div></section>`).join("")}</div>`;
+      return `<div class="ss-stories ss-stories-rich ss-injuries">${slide.players.slice(0, 15).map((p) => `<section class="ss-story ss-story-rich ss-injury-card">${p.team?.abbrev ? logo(p.team.abbrev, "ss-story-logo") : ""}<div class="ss-story-body">${playerCell(p, esc(`${p.team?.abbrev || ""} · ${num(p.overall)} rating`))}
+        <p><b class="ss-injury-name">${esc(capitalize(p.injury || "injury"))}</b>${p.part ? ` (${esc(p.part)})` : ""}</p><p>${p.return_date ? `Back around ${esc(shortDate(p.return_date))}.` : ""}</p></div><div class="ss-story-stat is-bad"><b>${p.whole_season ? "Season" : esc(p.games)}</b><small>${p.whole_season ? "out" : "games out"}</small></div></section>`).join("")}</div>`;
     },
   };
 

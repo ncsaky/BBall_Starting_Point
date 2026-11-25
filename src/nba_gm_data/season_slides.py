@@ -984,6 +984,10 @@ OUTLOOK_LEADER_STATS = (("points", "Points"), ("rebounds", "Rebounds"), ("assist
 LEADER_MIN_GAMES = 30
 THREE_PCT_MIN_ATTEMPTS = 3.0     # three-point attempts per game
 FT_PCT_MIN_ATTEMPTS = 2.0        # free-throw attempts per game
+# The slides send a few more than a small screen shows; the page shows as many as its height holds.
+OUTLOOK_LEADER_ROWS = 7
+OUTLOOK_STORY_LIMIT = 15
+OUTLOOK_INJURY_LIMIT = 15
 
 
 def _leader_line(totals: dict[str, Any]) -> dict[str, Any]:
@@ -1027,7 +1031,7 @@ def outlook_leaders_slide(ctx: dict[str, Any]) -> dict[str, Any]:
         if ranked and ranked[0][key]:
             categories.append({"stat": key, "label": label,
                                "rows": [{"player_id": row["player_id"], "name": row["name"], "team_abbrev": row["team_abbrev"], "per_game": row[key],
-                                         "now": row["now"]} for row in ranked[:3]]})
+                                         "now": row["now"]} for row in ranked[:OUTLOOK_LEADER_ROWS]]})
     winners = [{"label": AWARD_LABELS.get(row.get("award"), row.get("award")), "name": row.get("player_name"),
                 "then": row.get("team_abbrev"), "now": now(row.get("player_id"))}
                for row in sorted(last["awards"], key=lambda item: AWARD_ORDER.index(item["award"]) if item.get("award") in AWARD_ORDER else 99)
@@ -1318,7 +1322,7 @@ def outlook_storylines_slide(ctx: dict[str, Any]) -> dict[str, Any]:
     if young:
         team_id = max(young, key=lambda tid: (sum(sorted((value for value, _pid in young[tid]), reverse=True)[:4]), tid))
         best = sorted(young[team_id], reverse=True)[:3]
-        items.append({"title": "Youth movement", "text": f"{_team_ref(teams, team_id)['name']} has the league's best group of players 23 and under.",
+        items.append({"title": "Youth movement", "text": f"{_team_ref(teams, team_id)['name']} have the league's best group of players 23 and under.",
                       "team": _team_ref(teams, team_id), "players": [_player_ref(active, pid) for _value, pid in best],
                       "stat": {"value": len(young[team_id]), "label": "players 23 and under"}})
     last_rows = _rank_by_record(_record_rows(active, ctx["last"]["records"]), teams)
@@ -1357,23 +1361,87 @@ def outlook_storylines_slide(ctx: dict[str, Any]) -> dict[str, Any]:
     if veterans:
         vet = max((_player_ref(active, p["id"]) for p in veterans), key=lambda ref: (float(ref.get("overall") or 0), ref["id"]))
         items.append({"title": "Still going strong", "text": f"{vet['name']} is the league's best player aged 34 or older.",
-                      "team": _team_ref(teams, vet.get("team_id")), "players": [vet], "stat": {"value": vet.get("age"), "label": "years old"}})
-    return {"key": "storylines", "title": "Storylines", "kicker": "What to watch", "items": items[:6]}
+                      "team": _team_ref(teams, vet.get("team_id")), "players": [vet], "stat": {"value": int(float(vet.get("age") or 0)), "label": "years old"}})
+    items += _more_storylines(ctx, items, stars, last_rows)
+    return {"key": "storylines", "title": "Storylines", "kicker": "What to watch", "items": items[:OUTLOOK_STORY_LIMIT]}
+
+
+def _more_storylines(ctx: dict[str, Any], told: list[dict[str, Any]], stars: list[tuple[dict[str, Any], dict[str, Any]]],
+                     last_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Further stories that fill the slide (playtest 2026-11-24): other big moves, team turnover, the biggest faller,
+    last season's best record and top scorer, a young player and a star in a contract year. No player twice."""
+    active, teams, continuity = ctx["active"], ctx["teams"], ctx["continuity"]
+    players = {row["id"]: row for row in active.get("players", [])}
+    featured = {ref["id"] for item in told for ref in item.get("players") or []}
+    out: list[dict[str, Any]] = []
+
+    def add(title: str, text: str, team_id: str | None, ref: dict[str, Any] | None, value: Any, label: str, tone: str = "") -> None:
+        if ref:
+            if ref["id"] in featured:
+                return
+            featured.add(ref["id"])
+        stat = {"value": value, "label": label, **({"tone": tone} if tone else {})}
+        out.append({"title": title, "text": text, "team": _team_ref(teams, team_id), "players": [ref] if ref else [], "stat": stat})
+
+    def best_of(pool: list[dict[str, Any]]) -> dict[str, Any] | None:
+        refs = [_player_ref(active, p["id"]) for p in pool if p["id"] not in featured]
+        return max(refs, key=lambda ref: (float(ref.get("overall") or 0), ref["id"])) if refs else None
+
+    rostered = [p for p in active.get("players", []) if p.get("team_id")]
+    scorers = sorted(((pid, totals) for pid, totals in ctx["last"]["totals"].items()
+                      if pid in players and players[pid].get("team_id") and int(totals.get("games") or 0) >= LEADER_MIN_GAMES),
+                     key=lambda item: (-_per_game(item[1], "points"), item[0]))
+    if scorers:
+        pid, totals = scorers[0]
+        ref, points = _player_ref(active, pid), _per_game(totals, "points")
+        add("Scoring champion", f"{ref['name']} led last season at {points} points a game.", ref.get("team_id"), ref, points, "points a game")
+    if last_rows:
+        row = last_rows[0]
+        add("Best record returns", f"{_team_ref(teams, row['team_id'])['name']} went {row['wins']}-{row['losses']} last season.",
+            row["team_id"], None, row["wins"], "wins last season")
+    young = best_of([p for p in rostered if float(p.get("age") or 99) <= 21])
+    if young:
+        add("Young star", f"{young['name']} is the best player aged 21 or younger.", young.get("team_id"), young, young.get("overall"), "rating")
+    expiring = best_of([player for player, _contract in expiring_players(active, ctx["season"])])
+    if expiring:
+        add("Contract year", f"{expiring['name']} is the best player in the last season of a contract.",
+            expiring.get("team_id"), expiring, expiring.get("overall"), "rating")
+    if continuity:
+        steady = max(continuity, key=lambda row: (row["continuity_pct"], row["team"]["abbrev"]))
+        add("Running it back", f"{steady['team']['name']} keep more of last season's minutes than anyone.",
+            steady["team"]["id"], None, f"{steady['continuity_pct']:.0f}%", "minutes back")
+        fresh = min(continuity, key=lambda row: (row["continuity_pct"], row["team"]["abbrev"]))
+        if fresh is not steady:
+            add("New-look roster", f"{fresh['team']['name']} bring back the least of last season's minutes.",
+                fresh["team"]["id"], None, f"{fresh['continuity_pct']:.0f}%", "minutes back")
+    fallers = [row for row in ctx.get("power_rows") or [] if (row.get("change") or 0) <= -3]
+    if fallers:
+        fall = min(fallers, key=lambda row: (row["change"], row["rank"]))
+        add("Biggest slide", f"{fall['team']['name']} drop {-fall['change']} places from last season's finish to No. {fall['rank']}.",
+            fall["team"]["id"], None, fall["change"], "places", "bad")
+    for ref, team in stars[1:]:
+        if len(told) + len(out) >= OUTLOOK_STORY_LIMIT:
+            break
+        add("New address", f"{ref['name']} starts the season with {team['name']}.", team.get("id"), ref, ref.get("overall"), "rating")
+    return out
 
 
 def outlook_injuries_slide(ctx: dict[str, Any]) -> dict[str, Any]:
     active, teams, injured = ctx["active"], ctx["teams"], ctx["injured"]
-    # Round 14: up to six players so the slide fills its card; when fewer than six are out more than 20 games, the
-    # next-longest absences (more than 10 games) fill in.
-    if len(injured) < 6:
-        injured = {**long_injuries(active, ctx["save"], 10), **injured}
+    # The slide fills its card (round 14, then playtest 2026-11-24): when fewer than a full slide are out more than 20
+    # games, shorter absences fill in, longest threshold first.
+    for min_games in (10, 0):
+        if len(injured) < OUTLOOK_INJURY_LIMIT:
+            injured = {**long_injuries(active, ctx["save"], min_games), **injured}
     rows = []
     for pid, info in injured.items():
         ref = _player_ref(active, pid)
         rows.append({**ref, "team": _team_ref(teams, ref.get("team_id")), **info})
-    rows.sort(key=lambda row: (-float(row.get("overall") or 0), row["id"]))
-    return {"key": "injuries", "title": "Stars starting on the sidelines", "kicker": "Expected to miss more than 10 games",
-            "players": rows[:6], "note": "Injured on opening day with an expected return after more than 10 of his team's games, ranked by player rating."}
+    # Long absences keep their places; the best-rated come first within each group.
+    rows.sort(key=lambda row: (row["games"] <= 10, -float(row.get("overall") or 0), row["id"]))
+    return {"key": "injuries", "title": "Stars starting on the sidelines", "kicker": "Expected to miss games",
+            "players": rows[:OUTLOOK_INJURY_LIMIT],
+            "note": "Injured on opening day and expected to miss games: absences over 10 games first, each group ranked by player rating."}
 
 
 # --------------------------------------------------------------------------------------------- hooks
@@ -1392,7 +1460,7 @@ def ensure_year_end_recap(canonical: dict[str, Any], save: dict[str, Any], save_
     return recap
 
 
-OUTLOOK_FORMAT = 4   # bump when the outlook's slides change shape; a preseason outlook in an older format is rebuilt
+OUTLOOK_FORMAT = 5   # bump when the outlook's slides change shape; a preseason outlook in an older format is rebuilt
 
 
 def ensure_preseason_outlook(canonical: dict[str, Any], save: dict[str, Any], save_path: str | Path | None = None) -> dict[str, Any] | None:

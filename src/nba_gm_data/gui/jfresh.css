@@ -552,7 +552,8 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-tr
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-builder.is-deal.is-multi :is(.tr-tile, .tr-tiles-head) { grid-template-columns: 50px minmax(0, 1fr) 92px 78px 24px 18px !important; column-gap: 8px !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-to { overflow: hidden; }
 /* Slides (round 14): story and injury cards in three columns so six fill the card. */
-html[data-glass="clear"] .season-slideshow .ss-stories-rich { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+html[data-glass="clear"] .season-slideshow .ss-stories-rich { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; height: 100%; grid-auto-rows: minmax(min-content, 168px); }
+html[data-glass="clear"] .season-slideshow .ss-injury-card .ss-player { display: flex; align-items: center; gap: 8px; }
 html[data-glass="clear"] .season-slideshow .ss-story-rich { grid-template-columns: 44px minmax(0, 1fr) auto !important; padding: 12px 14px !important; }
 html[data-glass="clear"] .season-slideshow .ss-story-rich .ss-story-logo { width: 42px; height: 42px; }
 /* Player card health page: the summary line above the table and the key below it at a readable size. */
