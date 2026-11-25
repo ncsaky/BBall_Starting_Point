@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Fit Stage 2's late-game table (S2-FINISHES; stage2.finishes) to real play-by-play.
 
+SUPERSEDED by scripts/research/s2_lastposs_fit.py (S2-LAST-POSSESSION: six numbers per situation, deliberate fouls by
+exact lead). Kept for the record; don't run it with --write, its table format is the old one.
+
 Targets: per possession in the last five minutes of the 4th quarter, by time left and the offense's margin, the real
 seconds, threes, free throws and points of the rotation study's fit seasons (2023-24 and 2024-25 regular seasons;
 output/s2finishes/endgame_pbp_real.json from s2_endgame_pbp.py). Stage 2 replays 2025-26 (real availability and
