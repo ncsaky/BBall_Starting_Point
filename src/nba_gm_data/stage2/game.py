@@ -240,9 +240,13 @@ LOOP = {
     "ast_power": 1.0,
     # Transition: the finisher is drawn by usage weight (as in the half court) times exp(k_trans_speed x his straight-line
     # speed P06 per 10 points + k_trans_pace x his pace habit T05 per .05), both against the league's average player.
-    # Real transition chances go to the players who run the floor. Tried (S2-USAGE): speed .3-.8 and pace .3 left
-    # per-player points unchanged within noise (pace worse), and the repo holds no per-player transition frequency to
-    # fit them to, so both stay 0 (the transition habit T17 is a prior only).
+    # Real transition chances go to the players who run the floor. FITTED values .4 / .14 (S2-USAGE, NBA.com 2025-26
+    # play types, data/research/nba_playtypes_2025_26.json; scripts/research/s2_playtype_compare.py): the real-to-Stage-2
+    # ratio of each player's transition possessions follows speed P06 (+.55), burst P05 (+.57) and pace habit T05
+    # (+.57), and at .4 / .14 Stage 2's per-player transition chances match real at .70 (was .51). Kept 0: like the
+    # putback and roll switches it moves possessions without improving season points per player (9.3% -> 9.6%; with
+    # the usage rule refit alongside, about level) and, refit jointly with them, threes got worse. Turn on together with
+    # the putback and roll switches and a usage refit once the ratings questions are settled.
     "k_trans_speed": 0.0, "k_trans_pace": 0.0,
     # Putbacks: the chance the offensive rebounder goes straight back up (putback_close / putback_far above) moves with
     # his standing reach (log-odds per 10 cm against the league's average player): bigs under the rim put it back,
