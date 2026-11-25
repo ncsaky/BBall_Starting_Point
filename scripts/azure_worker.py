@@ -18,10 +18,12 @@ cores per region); each entry has ``name``, ``vm``, ``host`` and optionally ``re
 idle machine (a lock file in ``output/azure_claims/``), starting one that is off if none is idle, so several jobs run
 side by side; with every machine busy it waits. The original machine is the worker named "canada".
 
-``run`` copies the code from ``--dir`` (a worktree or the main checkout; symlinked data is copied as real files, and
-unchanged files are hard-linked from the worker's base copy, so only changes travel), starts the command detached on
-the worker, waits for it (surviving dropped connections), copies ``--fetch`` paths back into ``--dir``, and
-deallocates the machine when no other job is running. One job runs at a time; a second waits its turn. Every minute
+``run`` copies the code from ``--dir`` (a worktree or the main checkout; symlinked data is copied as real files;
+files are compared with the worker's base copy by content, not timestamp, so only changed files travel), starts the
+command detached on the worker, waits for it (surviving dropped connections), copies ``--fetch`` paths back into
+``--dir``, and deallocates the machine unless another job holds it. That also happens when any step fails (starting,
+copying, running, fetching) or the local script is interrupted, even with ``--keep-on``. If a fetch fails, the job's
+folder stays on the worker's disk. Each machine runs one job at a time; with all busy, the next waits. Every minute
 the machine is on is logged to ``output/azure_ledger.json``; ``run``/``start`` refuse to start the machine once the
 month's hours reach the cap (default 300 hours, about US$44 at US$0.147/hour).
 """
@@ -31,6 +33,7 @@ import argparse
 import datetime as dt
 import json
 import shlex
+import signal
 import subprocess
 import sys
 import time
@@ -40,6 +43,9 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "output" / "azure_worker_config.json"
 LEDGER = ROOT / "output" / "azure_ledger.json"
 PRICE_PER_HOUR = 0.147
+# Left out of the code copy (git data, local environments, caches, builds, saves and large outputs).
+COPY_EXCLUDES = ("/output/", "/.git/", "/.claude/", "/.venv/", "/.cache/", "/dist/", "/build/", "/saves/",
+                 "/artifacts/", "/tmp/", "__pycache__/", "*.pyc")
 
 
 def hour_cap() -> float:
@@ -106,6 +112,17 @@ def release(worker: dict) -> None:
     (CLAIMS / f"{worker['name']}.json").unlink(missing_ok=True)
 
 
+def claim_holder(worker: dict) -> str | None:
+    """The job of another live process that has claimed this machine, if any."""
+    import os
+    try:
+        held = json.loads((CLAIMS / f"{worker['name']}.json").read_text())
+        pid = int(held["pid"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    return str(held.get("job", "?")) if pid != os.getpid() and pid_alive(pid) else None
+
+
 def sh(args: list[str], check: bool = True, capture: bool = True) -> str:
     result = subprocess.run(args, text=True, capture_output=capture)
     if check and result.returncode != 0:
@@ -113,10 +130,28 @@ def sh(args: list[str], check: bool = True, capture: bool = True) -> str:
     return (result.stdout or "").strip()
 
 
+def ssh_args(cfg: dict) -> list[str]:
+    return ["ssh", "-i", str(Path(cfg["key"]).expanduser()), "-o", "ConnectTimeout=20", "-o", "ServerAliveInterval=30",
+            "-o", "StrictHostKeyChecking=accept-new"]
+
+
 def ssh(cfg: dict, command: str, check: bool = True) -> str:
     """cfg is a worker (or the config itself, meaning the original machine)."""
-    return sh(["ssh", "-i", str(Path(cfg["key"]).expanduser()), "-o", "ConnectTimeout=20", "-o", "ServerAliveInterval=30",
-               "-o", "StrictHostKeyChecking=accept-new", f"{cfg['user']}@{cfg['host']}", command], check=check)
+    return sh([*ssh_args(cfg), f"{cfg['user']}@{cfg['host']}", command], check=check)
+
+
+def rsync_shell(cfg: dict) -> str:
+    """The ssh command rsync travels over; it gives up on a dead connection instead of hanging. It waits 10 minutes
+    of silence first: with several uploads sharing the laptop's connection, 90 seconds cut off a live copy."""
+    return shlex.join([*ssh_args(cfg), "-o", "ServerAliveCountMax=20"])
+
+
+def copy_command(cfg: dict, local: Path, remote: str) -> list[str]:
+    """Copy the code to the worker. --checksum compares file contents: a fresh worktree has new timestamps on every
+    file, and by timestamp all of it would be uploaded again. Files matching the base copy are taken from it there."""
+    return ["rsync", "-aL", "--checksum", "--delete", "--link-dest=../../base", "-e", rsync_shell(cfg),
+            *(f"--exclude={pattern}" for pattern in COPY_EXCLUDES),
+            f"{local}/", f"{cfg['user']}@{cfg['host']}:{remote}/"]
 
 
 # ---- the ledger: every interval the machine was on -------------------------------------------------------------------
@@ -186,6 +221,10 @@ def start(cfg: dict, force_budget: bool = False) -> None:
 def stop(cfg: dict) -> None:
     print(f"deallocating {cfg.get('name', cfg['vm'])} (billing for the machine stops)...", flush=True)
     sh(["az", "vm", "deallocate", "-g", cfg["resource_group"], "-n", cfg["vm"], "-o", "none"])
+    close_interval(cfg)
+
+
+def close_interval(cfg: dict) -> None:
     data = ledger()
     interval = open_interval(data, cfg["vm"])
     if interval:
@@ -193,14 +232,64 @@ def stop(cfg: dict) -> None:
         save_ledger(data)
 
 
-def active_jobs(cfg: dict) -> list[str]:
-    out = ssh(cfg, "for f in ~/runs/*/RUNNING; do [ -e \"$f\" ] && basename $(dirname $f); done; true", check=False)
+# A RUNNING marker older than the machine's last boot belongs to a job that died with the machine; ignore it.
+RUNNING_JOBS = ("boot=$(date -d \"$(uptime -s)\" +%s); for f in ~/runs/*/RUNNING; do "
+                "[ -e \"$f\" ] && [ $(stat -c %Y \"$f\") -ge $boot ] && basename $(dirname \"$f\"); done; true")
+
+
+def active_jobs(cfg: dict) -> list[str] | None:
+    """Names of the jobs running on the machine, or None when it can't be asked."""
+    try:
+        out = ssh(cfg, RUNNING_JOBS)
+    except RuntimeError:
+        return None
     return [line for line in out.splitlines() if line.strip()]
+
+
+def switch_off(worker: dict, job: str, attempts: int = 3, pause: float = 20) -> None:
+    """`job` is finished with the machine, successfully or not: deallocate it unless another job still holds it."""
+    name = worker["name"]
+    holder = claim_holder(worker)
+    if holder:
+        print(f"leaving '{name}' on: job '{holder}' has claimed it", flush=True)
+        return
+    try:
+        state = power_state(worker)
+    except RuntimeError:
+        state = "unknown"
+    if state == "VM deallocated":
+        close_interval(worker)
+        return
+    if state in ("VM running", "unknown"):
+        for attempt in range(attempts):
+            jobs = active_jobs(worker)
+            if jobs is not None or attempt == attempts - 1:
+                break
+            time.sleep(pause)
+        others = [other for other in jobs or [] if other != job]
+        if others:
+            print(f"leaving '{name}' on: still running {', '.join(others)}", flush=True)
+            return
+        if jobs is None:
+            print(f"'{name}' doesn't answer and no other job has claimed it; switching it off", flush=True)
+        elif job in jobs:                           # our job is cut short: don't leave it marked as running
+            ssh(worker, f"rm -f runs/{shlex.quote(job)}/RUNNING", check=False)
+    for attempt in range(attempts):
+        try:
+            stop(worker)
+            return
+        except (RuntimeError, OSError) as exc:
+            print(f"switching off '{name}' failed: {exc}", flush=True)
+            if attempt < attempts - 1:
+                time.sleep(pause)
+    print(f"WARNING: '{name}' MAY STILL BE ON. Run: .venv/bin/python scripts/azure_worker.py stop --worker {name}",
+          flush=True)
 
 
 # ---- run a job -------------------------------------------------------------------------------------------------------
 def pick_worker(cfg: dict, name: str, force_budget: bool, only: str | None = None) -> dict:
-    """Claim an idle worker: one already running with no job first (warm), then one that is off; else wait."""
+    """Claim an idle worker: one already running with no job first (warm), then one that is off; else wait.
+    The caller starts it, so that a failed start is cleaned up like any other failed step."""
     if month_hours(ledger()) >= hour_cap() and not force_budget:
         sys.exit(f"budget: {month_hours(ledger()):.0f} of {hour_cap()} machine-hours used this month")
     workers = [w for w in pool(cfg) if not only or w["name"] == only]
@@ -216,11 +305,12 @@ def pick_worker(cfg: dict, name: str, force_budget: bool, only: str | None = Non
         for worker in order:
             if states[worker["name"]] == "unknown" or not claim(worker, name):
                 continue
-            if states[worker["name"]] == "VM running" and [job for job in active_jobs(worker) if job != name]:
-                release(worker)                                # busy with a job started by an older script
-                continue
+            if states[worker["name"]] == "VM running":
+                jobs = active_jobs(worker)
+                if jobs is None or [job for job in jobs if job != name]:
+                    release(worker)       # not answering, or busy with a job no live script has claimed
+                    continue
             print(f"using worker '{worker['name']}' ({states[worker['name']]})", flush=True)
-            start(worker, force_budget)
             return worker
         if not announced:
             print("every worker is busy; waiting for one to free up...", flush=True)
@@ -235,27 +325,46 @@ def run(cfg: dict, args) -> int:
     if not command:
         sys.exit("give the command after --")
     worker = pick_worker(cfg, name, args.force_budget, args.worker)
+    exit_on_termination()
+    code = None                                               # stays None if any step raises or is interrupted
     try:
-        return run_on(worker, cfg, args, name, local, command)
+        start(worker, args.force_budget)
+        code = run_on(worker, args, name, local, command)
     finally:
-        release(worker)
+        try:
+            if code != 0 or not args.keep_on:
+                ignore_interrupts()                           # a second Ctrl-C must not cut the switch-off short
+                switch_off(worker, name)
+        finally:
+            release(worker)
+    print(f"exit code {code} on '{worker['name']}'; {month_hours(ledger()):.1f} machine-hours this month across all "
+          f"workers (about US${month_hours(ledger()) * PRICE_PER_HOUR:.2f})")
+    return code
 
 
-def run_on(cfg: dict, top: dict, args, name: str, local: Path, command: str) -> int:
-    """Run one job on the claimed worker `cfg` (a pool entry); `top` is the whole config."""
+def exit_on_termination() -> None:
+    """Being killed or losing the terminal should still run the cleanup (under nohup, hang-ups stay ignored)."""
+    for sig in (signal.SIGTERM, signal.SIGHUP):
+        if signal.getsignal(sig) == signal.SIG_DFL:
+            signal.signal(sig, lambda number, _frame: sys.exit(128 + number))
+
+
+def ignore_interrupts() -> None:
+    for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+        signal.signal(sig, signal.SIG_IGN)
+
+
+def run_on(cfg: dict, args, name: str, local: Path, command: str) -> int:
+    """Run one job on the claimed, started worker `cfg` (a pool entry). The caller switches the machine off."""
     remote = f"runs/{name}"
     ssh(cfg, f"mkdir -p {remote}")
     print(f"copying code from {local} ...", flush=True)
-    sh(["rsync", "-aL", "--delete", "--link-dest=../../base", "-e",
-        f"ssh -i {Path(cfg['key']).expanduser()} -o StrictHostKeyChecking=accept-new",
-        "--exclude=/output/", "--exclude=/.git/", "--exclude=/.claude/", "--exclude=/.venv/", "--exclude=/.cache/",
-        "--exclude=/dist/", "--exclude=/build/", "--exclude=/saves/", "--exclude=/artifacts/", "--exclude=/tmp/",
-        "--exclude=__pycache__/", "--exclude=*.pyc", f"{local}/", f"{cfg['user']}@{cfg['host']}:{remote}/"])
+    sh(copy_command(cfg, local, remote))
     ssh(cfg, f"cd {remote} && ln -sfn ~/venv .venv && mkdir -p output && "
              f"ln -sfn ~/base/output/settlement-materialization-pass output/settlement-materialization-pass && "
              f"rm -f EXIT_CODE run.log && touch RUNNING && "
              f"(nohup bash -c {shlex.quote(f'nice -n 5 {command}; echo $? > EXIT_CODE; rm -f RUNNING')} "
-             f"> run.log 2>&1 &) ; true")
+             f"> run.log 2>&1 &)")                             # a failed set-up step raises instead of waiting
     print(f"running on the worker: {command}", flush=True)
     started = time.time()
     misses = 0
@@ -266,35 +375,38 @@ def run_on(cfg: dict, top: dict, args, name: str, local: Path, command: str) -> 
             break
         misses = 0 if state else misses + 1
         if misses >= 6:   # three minutes without an answer: is the machine still on?
-            power = power_state(cfg)
-            if power != "VM running":
+            try:
+                power = power_state(cfg)
+            except RuntimeError:
+                power = None                                    # Azure didn't answer either; keep waiting
+            if power is not None and power != "VM running":
                 print(f"the worker stopped ({power}) while '{name}' was running; its folder is kept on the disk "
                       f"so the job can be resumed", flush=True)
-                data = ledger()
-                interval = open_interval(data, cfg["vm"])
-                if interval:
-                    interval["stop"] = now()
-                    save_ledger(data)
                 return 1
             misses = 0
         if args.progress and int(time.time() - started) % 300 < 30:
             print(f"  ... {int((time.time() - started) / 60)} min", flush=True)
     code = int(state.splitlines()[-1]) if state.splitlines()[-1].isdigit() else 1
     print(ssh(cfg, f"tail -n {args.tail} {remote}/run.log", check=False))
+    missed = []
     for rel in args.fetch:
         target = local / rel
         target.parent.mkdir(parents=True, exist_ok=True)
-        sh(["rsync", "-a", "-e", f"ssh -i {Path(cfg['key']).expanduser()}",
-            f"{cfg['user']}@{cfg['host']}:{remote}/{rel}", str(target.parent) + "/"], check=False)
-        print(f"fetched {rel}", flush=True)
-    sh(["rsync", "-a", "-e", f"ssh -i {Path(cfg['key']).expanduser()}",
+        try:
+            sh(["rsync", "-a", "-e", rsync_shell(cfg),
+                f"{cfg['user']}@{cfg['host']}:{remote}/{rel}", str(target.parent) + "/"])
+            print(f"fetched {rel}", flush=True)
+        except RuntimeError as exc:
+            missed.append(rel)
+            print(f"could not fetch {rel}: {exc}", flush=True)
+    sh(["rsync", "-a", "-e", rsync_shell(cfg),
         f"{cfg['user']}@{cfg['host']}:{remote}/run.log", str(local / "output" / f"azure-{name}.log")], check=False)
+    if missed:
+        print(f"keeping {remote} on '{cfg['name']}' so nothing is lost (start the machine to copy it by hand)",
+              flush=True)
+        return code or 1
     if not args.keep:
         ssh(cfg, f"rm -rf {remote}", check=False)             # the worker's disk stays small
-    if not args.keep_on and not active_jobs(cfg):
-        stop(cfg)
-    print(f"exit code {code} on '{cfg['name']}'; {month_hours(ledger()):.1f} machine-hours this month across all "
-          f"workers (about US${month_hours(ledger()) * PRICE_PER_HOUR:.2f})")
     return code
 
 
@@ -305,7 +417,10 @@ def status(cfg: dict) -> None:
           f"(about US${hours * PRICE_PER_HOUR:.2f} plus about US$5.28 a month per worker disk)")
     for worker in workers:
         state = power_state(worker)
-        jobs = ", ".join(active_jobs(worker)) if state == "VM running" else ""
+        jobs = ""
+        if state == "VM running":
+            running = active_jobs(worker)
+            jobs = "(not answering)" if running is None else ", ".join(running)
         print(f"  {worker['name']:<8} {state:<16} {('jobs: ' + jobs) if jobs else ''}")
 
 
@@ -338,7 +453,7 @@ def main() -> int:
     elif args.cmd == "stop":
         for worker in pool(cfg):
             if args.worker in (None, worker["name"]) and power_state(worker) == "VM running" and \
-                    (args.worker or not active_jobs(worker)):
+                    (args.worker or active_jobs(worker) == []):
                 stop(worker)
     else:
         if args.command and args.command[0] == "--":
