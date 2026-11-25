@@ -13,8 +13,10 @@ One game = four 12-minute quarters (plus 5-minute overtimes while tied). Each po
 6. a missed shot (or last free throw) goes to the rebound kernel (stage2.rebounding); an offensive rebound continues
    the possession (an immediate putback or a reset).
 The clock runs through every segment; team fouls count per quarter (bonus from the 5th, or the 2nd in the last two
-minutes). Substitutions follow tonight's planned minutes (today's minutes model) with live foul trouble, fatigue
-stints, foul-outs and blowout rest.
+minutes). Substitutions: with LOOP["coach"] on (S2-COACH), the in-game coach (stage2.coach) decides who plays at every
+dead ball and timeout from tonight's planned minutes (today's minutes model) and the real rotation study; off, the first
+loop's rotation (owed minutes at three checkpoints a quarter). With LOOP["screens"] on, self-created shots and rolls can
+come off a ball screen and its coverage (stage2.screens).
 
 No rating is moved here; the loop's own numbers are in LOOP (fitted to league targets where marked).
 """
@@ -27,6 +29,7 @@ from typing import Any
 from . import fouls as F
 from . import matchups as M
 from . import rebounding as R
+from . import screens as SC
 from .cards import KINDS, KIND_INDEX, N_KINDS, Card
 
 VERSION = "stage2_possession_loop_v1_2026_11_21"
@@ -150,6 +153,19 @@ LOOP = {
     # log-odds per 25 grade points. Craft shows most where the scorer creates the contact (drives, pull-ups, post-ups)
     # and least on finishes of a teammate's pass and putbacks. FITTED with the foul-by-action numbers (s2_foul_fit.py).
     "craft_drive": .375, "craft_pull_up": .35, "craft_post": -.175, "craft_finish": -.15,
+    # ---- The coach (S2-COACH; stage2.coach). 1 = the in-game coach decides who plays at every stoppage (foul trouble,
+    # rhythm and fatigue, blowouts, close finishes, hot and cold hands, injuries); 0 = the possession loop's first
+    # rotation (owed minutes at three checkpoints a quarter), kept for before/after comparisons.
+    "coach": 1.0,
+    # Players in foul trouble foul less: odds factor on his shooting fouls and weight on his non-shooting fouls, by fouls
+    # already committed. Today's coach model uses x0.7 with four fouls and x0.4 with five (game_minutes.FOUL_CAUTION);
+    # FITTED here to the real foul-out rate of regulars (1.55% of their games; x0.7 / x0.4 gave 2.1%, x0.55 / x0.3
+    # 1.6%, full AI-coached season, scripts/research/s2_coach_check.py). On with the coach only.
+    "caution_4": .55, "caution_5": .3,
+    # ---- Pick-and-roll coverages and switching (S2-COACH part 2; stage2.screens). 1 = self-created shots and rolls can
+    # come off a ball screen, with the defense's coverage (switch, drop, show, trap) deciding who guards the shot and
+    # what help waits; 0 = every shot meets the assigned defender only (needs the matchups on).
+    "screens": 1.0,
 }
 CATCH_KINDS = frozenset(KIND_INDEX[k] for k in ("mid_catch", "three_corner", "three_catch", "trans_three"))
 PULL_KINDS = frozenset(KIND_INDEX[k] for k in ("short_jumper", "mid_pull", "three_pull"))
@@ -163,15 +179,36 @@ ASSIST_BY_KIND = [ASSIST[k[0]] for k in KINDS]
 TRACE: dict | None = None   # research hook (see Game._trace); None in play
 TO_TRACE: dict | None = None   # research hook (see Game._to_z; scripts/research/s2_turnover_fit.py); None in play
 
+# End of game with the coach (S2-COACH): chance the trailing team fouls on purpose per possession of the leader, by
+# deficit and time left (last 10 s, 10-24 s, 24-60 s). The rotation study (data/research/rotation_evidence.json): for the
+# last 24 seconds the pooled rate counting any non-shooting foul within five seconds of the possession's start (late in
+# a close game those are deliberate), before that the held-out fit of tagged take fouls. The old rule fouled 75% of the
+# time anywhere in the last 45 seconds and let the leader run out the clock first.
+TAKE_FOUL = {"1": (.695, .75, .0499), "2_3": (.59, .734, .0611), "4_6": (.336, .687, .2013), "7_10": (.053, .215, .1566),
+             "11_plus": (.024, .012, .0102)}
+# A team up three fouls rather than allow a tying three (held-out fits: last 10 s, 10-24 s).
+UP_THREE_FOUL = (.1761, .1083)
+
 FOUL_ACTION = {"drive": "foul_drive", "roll_cut": "foul_roll_cut", "post": "foul_post", "putback": "foul_putback",
                "transition": "foul_transition", "jumper": "foul_jumper", "pull_up": "foul_pull_up", "heave": None}
 QUARTER_S, OT_S = 720.0, 300.0
 SUB_TIMES = (540.0, 360.0, 180.0)   # in-quarter checkpoints (seconds left), like the usual stoppages
+# With the coach: the two mandatory timeouts of each quarter (first stoppage under 7:00 and under 3:00); every other
+# dead ball (fouls, free throws, turnovers out of bounds) is a substitution chance too.
+COACH_TIMEOUTS = (420.0, 180.0)
 FOUL_TROUBLE = {1: 2, 2: 3, 3: 4, 4: 5}
 STAT_KEYS = ("points", "fgm", "fga", "fg3m", "fg3a", "ftm", "fta", "orb", "drb", "ast", "tov", "stl", "blk", "pf",
-             "rim_att", "pm", "on_for", "on_against")
+             "rim_att", "pm", "on_for", "on_against", "screen_ast")
 (S_PTS, S_FGM, S_FGA, S_3PM, S_3PA, S_FTM, S_FTA, S_ORB, S_DRB, S_AST, S_TOV, S_STL, S_BLK, S_PF, S_RIM, S_PM, S_ON_FOR,
- S_ON_AGAINST) = range(18)
+ S_ON_AGAINST, S_SCR) = range(19)
+SELF_KINDS = frozenset(KIND_INDEX[k] for k in ("rim_drive", "floater", "short_jumper", "mid_pull", "three_pull"))
+RIM_FINISH = KIND_INDEX["rim_finish"]
+
+
+class ScreenPlay:
+    """One ball screen in a possession (stage2.screens): the coverage, the screener's slot, the defender who plays the
+    shot, and the shot's matchup terms under that coverage."""
+    __slots__ = ("cov", "screener", "def_slot", "pull", "beat", "rim", "fctrl", "dz", "to_dz", "handler")
 
 
 class TeamState:
@@ -205,9 +242,32 @@ class TeamState:
         self.lineup_dirty = True
         self.form_pace = 0.0      # recent-form possessions (engine.py; 0 unless the loop's k_form_pace is on)
         self.rot = self.lanes = 0.0
+        self.coach = None         # stage2.coach.Coach (engine.py); None = the first loop's rotation
+        self.screens_on = False   # set by Game: the box score carries screen assists only when screens are played
+        self._five_cache: dict = {}
+        self.reserve = [False] * n   # outside tonight's planned rotation (garbage time only)
 
     # ---- lineup aggregates (recomputed when the five change) ------------------------------------------------------
+    REFRESH_KEYS = ("usage_cum", "ast_w", "reb", "reb_prof", "pace", "trans_pref", "perim", "perim_center", "create",
+                    "space", "off_shift", "rim", "press", "stl_level", "blk_level", "ns_level", "ns_draw_cum",
+                    "off_foul_cum", "help", "rot", "lanes")
+
     def refresh(self) -> None:
+        """The five's aggregates; cached per five with the coach (the same fives recur through a game)."""
+        if self.coach is not None:
+            key = tuple(self.on)
+            hit = self._five_cache.get(key)
+            if hit is not None:
+                for k, v in zip(self.REFRESH_KEYS, hit):
+                    setattr(self, k, v)
+                self.lineup_dirty = False
+                return
+            self._refresh()
+            self._five_cache[key] = tuple(getattr(self, k) for k in self.REFRESH_KEYS)
+            return
+        self._refresh()
+
+    def _refresh(self) -> None:
         cs = [self.cards[i] for i in self.on]
         lg = self.league
         gamma = (LOOP if self.loop is None else self.loop)["usage_power"]
@@ -290,6 +350,25 @@ class Game:
         self.diag = [0] * (N_KINDS * 3)   # per shot kind: attempts (FGA), makes, shooting fouls
         self.lg_pace = home.league["pace_mean"]
         self.lg_trans = home.league["trans_mean"]
+        self.use_coach = bool(L["coach"]) and home.coach is not None and away.coach is not None
+        # Foul caution by fouls already committed (log-odds on shooting fouls; weight on non-shooting fouls).
+        c4, c5 = (L["caution_4"], L["caution_5"]) if self.use_coach else (1.0, 1.0)
+        self.caution_w = (1.0, 1.0, 1.0, 1.0, c4, c5, c5, c5)
+        self.caution_z = tuple(math.log(w) for w in self.caution_w)
+        self.dead = False
+        self.pending_sub = False
+        self._pair_cache: dict = {}
+        self.use_screens = bool(L["screens"]) and bool(L["matchups"])
+        self.S = SC.SCREENS
+        self.cov_count = [0] * 5          # ball screens by coverage (research: switch share)
+        home.screens_on = away.screens_on = self.use_screens
+
+    def elapsed(self) -> float:
+        """Game time played so far (seconds; overtime after 48 minutes)."""
+        p = self.period
+        if p <= 4:
+            return (p - 1) * QUARTER_S + (QUARTER_S - self.t_left)
+        return 4 * QUARTER_S + (p - 5) * OT_S + (OT_S - self.t_left)
 
     # ---- substitutions -------------------------------------------------------------------------------------------
     def substitutions(self, team: TeamState, opp: TeamState, *, period_start: bool = False) -> None:
@@ -360,6 +439,12 @@ class Game:
             if de.lineup_dirty:
                 de.refresh()
         for off, de in ((self.home, self.away), (self.away, self.home)):
+            key = (tuple(off.on), tuple(de.on)) if self.use_coach else None
+            hit = self._pair_cache.get(key) if key is not None else None
+            if hit is not None:
+                (off.guards_vs, off.defender_of, off.m_catch, off.m_pull, off.m_beat, off.m_post, off.m_press,
+                 off.m_fctrl) = hit
+                continue
             guards = R.matchups(off.reb_prof, de.reb_prof)      # defender slot -> offensive slot
             inv = [0] * 5
             for j, i in enumerate(guards):
@@ -368,6 +453,11 @@ class Game:
             off.defender_of = inv
             if self.L["matchups"]:
                 self._pair_terms(off, de)
+            if key is not None:
+                self._pair_cache[key] = (off.guards_vs, off.defender_of, getattr(off, "m_catch", None),
+                                         getattr(off, "m_pull", None), getattr(off, "m_beat", None),
+                                         getattr(off, "m_post", None), getattr(off, "m_press", None),
+                                         getattr(off, "m_fctrl", None))
 
     def _pair_terms(self, off: TeamState, de: TeamState) -> None:
         """Who guards whom (matchups.assign) and, for each scorer, his defender's terms on each kind of action."""
@@ -391,6 +481,90 @@ class Game:
             off.m_post.append(d.post_d - c_post + .5 * over)
             off.m_press.append(d.press_d - c_press)
             off.m_fctrl.append(d.foul_ctrl - c_fc)
+
+    def _pair_one(self, o, d, lg: dict) -> tuple[float, float, float]:
+        """One scorer against one defender (a switch): his pull-up contest, the chance past him (less the league's)
+        and his foul control, the same terms _pair_terms gives the assigned defender."""
+        L = self.L
+        b0, kb = L["beat0"], L["k_beat"]
+        over = (d.height - o.height) / 10.0
+        pull = L["k_onball"] * (d.onball_d - lg.get("onball_center", 0.0)) + L["k_len"] * (
+            d.length - lg.get("length_center", 0.0) + over)
+        beat = _sig(b0 + kb * ((o.burst - lg.get("burst_center", 0.0)) - (d.contain_d - lg.get("contain_center", 0.0)))) \
+            - _sig(b0)
+        return pull, beat, d.foul_ctrl - lg.get("fctrl_center", 0.0)
+
+    def _screen(self, off: TeamState, de: TeamState, slot: int, kind: int) -> ScreenPlay | None:
+        """Does this half-court shot come off a ball screen, and how does the defense cover it (stage2.screens)?"""
+        S, rng = self.S, self.rng
+        card = off.cards[off.on[slot]]
+        if kind in SELF_KINDS:
+            if rng.random() >= S["p_handler"]:
+                return None
+            handler_slot = slot
+            others = [k for k in range(5) if k != slot]
+            hunt = S["k_hunt"]
+            ws = [off.cards[off.on[k]].scr_w * math.exp(-hunt * de.cards[de.on[off.defender_of[k]]].contain_d)
+                  for k in others]
+            screener_slot = others[_pick(_cum(ws), rng.random())]
+        elif kind == RIM_FINISH:
+            if rng.random() >= card.roll_share:
+                return None
+            screener_slot = slot
+            others = [k for k in range(5) if k != slot]
+            handler_slot = others[_pick(_cum([off.cards[off.on[k]].usage for k in others]), rng.random())]
+        else:
+            return None
+        handler = off.cards[off.on[handler_slot]]
+        screener = off.cards[off.on[screener_slot]]
+        jb, js = off.defender_of[handler_slot], off.defender_of[screener_slot]
+        dball, dscr = de.cards[de.on[jb]], de.cards[de.on[js]]
+        star = max(0.0, (handler.usage - .28) / .06)
+        probs = SC.coverage_probabilities(handler, dscr, dball, off.groups[off.on[screener_slot]] == "big", S, star)
+        cov = SC.choose(rng.random(), probs)
+        self.cov_count[cov] += 1
+        play = ScreenPlay()
+        play.cov, play.screener, play.dz, play.to_dz, play.rim = cov, screener_slot, 0.0, 0.0, None
+        lg = off.league
+        if kind == RIM_FINISH:
+            # The roll: over the smaller switched defender, against his own dropping big, or open behind a show or a
+            # trap unless the five rotates.
+            play.handler = False
+            play.pull = play.beat = play.fctrl = 0.0
+            if cov == SC.SWITCH:
+                play.def_slot = jb
+                play.dz = S["k_mismatch"] * max(0.0, card.height - dball.height) / 10.0
+            else:
+                play.def_slot = js
+                if cov == SC.DROP:
+                    play.dz = -S["k_drop_roll"] * (dscr.rim_d - lg.get("rimd_center", 0.0))
+                else:
+                    play.dz = S["k_open_roll"] * (1.0 - de.rot)
+            return play
+        play.handler = True
+        if cov == SC.SWITCH:
+            play.def_slot = js
+            play.pull, play.beat, play.fctrl = self._pair_one(handler, dscr, lg)
+            return play
+        play.def_slot = jb
+        bmean = _sig(self.L["beat0"])
+        past = off.m_beat[slot] + bmean
+        play.fctrl = off.m_fctrl[slot]
+        if cov == SC.DROP:
+            lost = min(.9, max(0.0, S["drop_nav"] + S["k_edge"] * SC.screen_edge(screener, dball)))
+            play.pull = off.m_pull[slot] * (1.0 - lost) - lost * S["drop_open"]
+            play.beat = past + lost * (1.0 - past) - bmean
+            w = S["drop_help"]
+            play.rim = (1.0 - w) * de.rim + w * (dscr.rim_d - lg.get("rimd_center", 0.0))
+        elif cov == SC.SHOW:
+            play.pull = off.m_pull[slot] + S["show_contest"]
+            play.beat = past * (1.0 - S["show_beat"]) - bmean
+            play.to_dz = S["show_to"]
+        else:
+            play.pull = off.m_pull[slot] + S["blitz_contest"]
+            play.beat = past * (1.0 - S["show_beat"]) - bmean
+            play.to_dz = S["blitz_to"]
+        return play
 
     # ---- clock ---------------------------------------------------------------------------------------------------
     def _run_clock(self, seconds: float) -> None:
@@ -440,6 +614,9 @@ class Game:
             if mates:
                 i = min(mates, key=lambda j: (de.stats[j][S_PF], j))
         de.stats[i][S_PF] += 1
+        self.dead = True
+        if self.use_coach:
+            de.coach.on_foul(i, de.stats[i][S_PF], self.period, self.elapsed())
         if team_foul:
             de.team_fouls += 1
             if self.t_left <= 120.0:
@@ -504,7 +681,11 @@ class Game:
             self._free_throws(off, de, slot, 1)
         # End of the game (4th quarter or overtime): a team ahead by one or two possessions with the shot clock off
         # runs the clock out; a team behind by 1-8 in the last 45 seconds fouls at once to stop the clock.
-        if self.period >= 4:
+        if self.period >= 4 and self.use_coach and self.t_left <= 60.0:
+            ended = self._end_game(off, de)
+            if ended is not None:
+                return ended
+        elif self.period >= 4:
             lead = off.points - de.points
             if 0 < lead and self.t_left <= 24.0 and rng.random() < L["end_hold"]:
                 self._run_clock(self.t_left)
@@ -512,7 +693,13 @@ class Game:
             if 1 <= lead <= 8 and self.t_left <= 45.0 and rng.random() < L["end_foul"]:
                 self._run_clock(min(self.t_left, 1.0 + 3.0 * rng.random()))
                 slot = _pick(off.usage_cum, rng.random())
-                fouler = rng.randrange(5)
+                if self.use_coach:
+                    # The coach fouls with a player who has fouls to give (the fewest on the floor).
+                    low = min(de.stats[i][S_PF] for i in de.on)
+                    pool = [j for j in range(5) if de.stats[de.on[j]][S_PF] == low]
+                    fouler = pool[rng.randrange(len(pool))]
+                else:
+                    fouler = rng.randrange(5)
                 self._foul(de, fouler)
                 made = self._free_throws(off, de, slot, 2)
                 return "made" if made else self._after_miss(off, de, "ft", slot)
@@ -553,7 +740,9 @@ class Game:
                 drawer = _pick(off.ns_draw_cum, rng.random())
                 d_cards = [de.cards[i] for i in de.on]
                 guard = off.defender_of[drawer]
-                w = [c.ns_mult * (3.0 if j == guard else 1.0) for j, c in enumerate(d_cards)]
+                cw = self.caution_w
+                w = [c.ns_mult * (3.0 if j == guard else 1.0) * cw[min(7, de.stats[de.on[j]][S_PF])]
+                     for j, c in enumerate(d_cards)]
                 fouler = _pick(_cum(w), rng.random())
                 self._run_clock(min(seg * .5, self.t_left))
                 bonus = de.in_bonus_against(self.t_left)
@@ -571,11 +760,65 @@ class Game:
         # Who ends it, and does he turn it over?
         slot = _pick(off.usage_cum, rng.random())
         card = off.cards[off.on[slot]]
+        if self.use_screens and not trans:
+            # What he tries first, so a ball screen and its coverage can shape the turnover chance and the shot.
+            kind = _pick(card.menu_cum, rng.random())
+            scr = self._screen(off, de, slot, kind)
+            z = self._to_z(card, card.to_logit + L["to_shift"] + self._pressure(off, de, slot)
+                           + (scr.to_dz if scr is not None else 0.0))
+            if rng.random() < _sig(z):
+                return self._turnover(off, de, slot)
+            return self._shot(off, de, slot, kind, final=final, scr=scr)
         z = self._to_z(card, card.to_logit + L["to_shift"] + self._pressure(off, de, slot) + (L["trans_to"] if trans else 0.0))
         if rng.random() < _sig(z):
             return self._turnover(off, de, slot)
         kind = _pick(card.trans_cum if trans else card.menu_cum, rng.random())
         return self._shot(off, de, slot, kind, final=final)
+
+    def _end_game(self, off: TeamState, de: TeamState) -> str | None:
+        """The coach's end-of-game calls with the coach on (the rotation study's held-out fits, per possession of the
+        team that is ahead): the trailing team fouls to stop the clock with the real chance for its deficit and the
+        time left; otherwise a leader with the shot clock off runs the clock out. A team up three may foul rather than
+        allow a tying three. Tied or behind by one possession: hold for the last shot (a three when down three)."""
+        L, rng, t_left = self.L, self.rng, self.t_left
+        lead = off.points - de.points
+        band = 0 if t_left <= 10.0 else 1 if t_left <= 24.0 else 2
+        if lead > 0:
+            row = TAKE_FOUL["1" if lead == 1 else "2_3" if lead <= 3 else "4_6" if lead <= 6 else "7_10" if lead <= 10
+                            else "11_plus"]
+            if rng.random() < row[band]:
+                self._run_clock(min(t_left, (1.0 + 3.0 * rng.random()) if band < 2 else 1.0 + 6.0 * rng.random()))
+                return self._intentional_foul(off, de)
+            if band < 2 and rng.random() < L["end_hold"]:
+                self._run_clock(t_left)
+                return "end"
+            return None
+        if lead == -3 and band < 2 and rng.random() < UP_THREE_FOUL[band]:
+            self._run_clock(min(t_left, 1.0 + 3.0 * rng.random()))
+            return self._intentional_foul(off, de)
+        if -3 <= lead <= 0 and 3.0 < t_left <= 24.0 and rng.random() < L["end_last_shot"]:
+            self._run_clock(max(.5, t_left - (.5 + 2.5 * rng.random())))
+            slot = _pick(off.usage_cum, rng.random())
+            card = off.cards[off.on[slot]]
+            if rng.random() < _sig(self._to_z(card, card.to_logit + L["to_shift"] + self._pressure(off, de, slot))):
+                return self._turnover(off, de, slot)
+            if lead == -3:
+                kind = THREE_PULL if card.menu[THREE_PULL] >= card.menu[THREE_CATCH] else THREE_CATCH
+            else:
+                kind = _pick(card.menu_cum, rng.random())
+            return self._shot(off, de, slot, kind, final=True)
+        return None
+
+    def _intentional_foul(self, off: TeamState, de: TeamState) -> str:
+        """A deliberate foul: the defense fouls with a player who has fouls to give; the offense's ball handler (drawn by
+        usage) shoots two."""
+        rng = self.rng
+        slot = _pick(off.usage_cum, rng.random())
+        low = min(de.stats[i][S_PF] for i in de.on)
+        pool = [j for j in range(5) if de.stats[de.on[j]][S_PF] == low]
+        self._foul(de, pool[rng.randrange(len(pool))])
+        made = self._free_throws(off, de, slot, 2)
+        return "made" if made else self._after_miss(off, de, "ft", slot)
 
     @staticmethod
     def _to_z(card, z: float) -> float:
@@ -609,15 +852,16 @@ class Game:
             j = _pick(_cum(w), rng.random())
             de.stats[de.on[j]][S_STL] += 1
             return "steal"
+        self.dead = True
         return "dead"
 
     def _shot(self, off: TeamState, de: TeamState, slot: int, kind: int, *, final: bool = False,
-              putback: bool = False) -> str:
+              putback: bool = False, scr: ScreenPlay | None = None) -> str:
         L, rng, fc = self.L, self.rng, self.fc
         card = off.cards[off.on[slot]]
         st = off.stats[off.on[slot]]
         zone = KZONE[kind]
-        j = off.defender_of[slot]
+        j = off.defender_of[slot] if scr is None else scr.def_slot
         dcard = de.cards[de.on[j]]
         # Make chance: his conversion for this shot, the defense's contest or rim protection, team terms.
         lead = off.points - de.points
@@ -628,15 +872,22 @@ class Game:
             if kind in CATCH_KINDS:
                 z -= L["k_perim"] * (1 - L["perim_own"]) * de.perim + L["k_close"] * off.m_catch[slot] + L["k_rot"] * de.rot
             elif kind in PULL_KINDS:
-                z -= L["k_perim"] * (1 - L["perim_own"]) * de.perim + off.m_pull[slot]
+                z -= L["k_perim"] * (1 - L["perim_own"]) * de.perim + (off.m_pull[slot] if scr is None else scr.pull)
             elif kind in DRIVE_KINDS:
-                beat = off.m_beat[slot]
-                z += L["k_beat_make"] * beat - L["k_rim"] * de.rim
-                fz = L["k_beat_foul"] * beat - L["k_fctrl"] * off.m_fctrl[slot]
+                if scr is None:
+                    beat = off.m_beat[slot]
+                    z += L["k_beat_make"] * beat - L["k_rim"] * de.rim
+                    fz = L["k_beat_foul"] * beat - L["k_fctrl"] * off.m_fctrl[slot]
+                else:
+                    beat = scr.beat
+                    z += L["k_beat_make"] * beat - L["k_rim"] * (de.rim if scr.rim is None else scr.rim)
+                    fz = L["k_beat_foul"] * beat - L["k_fctrl"] * scr.fctrl
             elif kind == HOOK:
                 z -= L["k_rim"] * de.rim + L["k_post"] * off.m_post[slot]
             elif zone <= 1:
                 z -= L["k_rim"] * de.rim
+            if scr is not None:
+                z += scr.dz
         elif kind in JUMPER_KINDS:
             z -= L["k_perim"] * (L["perim_own"] * (dcard.perim_d - de.perim_center) + (1 - L["perim_own"]) * de.perim)
         elif zone <= 1:
@@ -645,7 +896,7 @@ class Game:
         # Shooting foul: the foul kernel's zone base, the shooter's and contester's terms, plus the action.
         if kind != HEAVE:
             p_foul = _sig(fc.base[zone] + card.foul_s + dcard.d_foul + self.foul_action[kind] + fz
-                          + self.craft_w[kind] * card.craft)
+                          + self.craft_w[kind] * card.craft + self.caution_z[min(7, de.stats[de.on[j]][S_PF])])
             if TRACE is not None:
                 self._trace(card, dcard, off, slot, kind, zone, p_make)
         else:
@@ -662,6 +913,10 @@ class Game:
                 if zone == 3:
                     st[S_3PA] += 1
                 self._record_make(off, de, slot, kind)
+                if scr is not None and scr.handler and rng.random() < self.S["p_screen_assist"]:
+                    off.stats[off.on[scr.screener]][S_SCR] += 1
+                if self.use_coach:
+                    off.coach.on_shot(off.on[slot], KPTS[kind], p_make * KPTS[kind])
                 made_ft = self._free_throws(off, de, slot, 1)
                 return "made" if made_ft else self._after_miss(off, de, "ft", slot)
             made_ft = self._free_throws(off, de, slot, 3 if zone == 3 else 2)
@@ -673,7 +928,13 @@ class Game:
         if rng.random() < p_make:
             self.diag[3 * kind + 1] += 1
             self._record_make(off, de, slot, kind)
+            if scr is not None and scr.handler and rng.random() < self.S["p_screen_assist"]:
+                off.stats[off.on[scr.screener]][S_SCR] += 1
+            if self.use_coach:
+                off.coach.on_shot(off.on[slot], KPTS[kind], p_make * KPTS[kind])
             return "made"
+        if self.use_coach and kind != HEAVE:
+            off.coach.on_shot(off.on[slot], 0, p_make * KPTS[kind])
         # Block (on the miss)
         if rng.random() < self.blk_base[zone] * de.blk_level:
             w = [de.cards[i].blk_w * (2.0 if jj == j else 1.0) * (1.5 if jj == de.help else 1.0) for jj, i in enumerate(de.on)]
@@ -734,6 +995,13 @@ class Game:
         self._run_clock(seg)
         slot = _pick(off.usage_cum, rng.random())
         card = off.cards[off.on[slot]]
+        if self.use_screens:
+            kind = _pick(card.menu_cum, rng.random())
+            scr = self._screen(off, de, slot, kind)
+            if rng.random() < _sig(self._to_z(card, card.to_logit + L["to_shift"] + self._pressure(off, de, slot)
+                                              + (scr.to_dz if scr is not None else 0.0))):
+                return self._turnover(off, de, slot)
+            return self._shot(off, de, slot, kind, final=final, scr=scr)
         if rng.random() < _sig(self._to_z(card, card.to_logit + L["to_shift"] + self._pressure(off, de, slot))):
             return self._turnover(off, de, slot)
         kind = _pick(card.menu_cum, rng.random())
@@ -741,6 +1009,9 @@ class Game:
 
     # ---- the game ------------------------------------------------------------------------------------------------
     def play(self) -> None:
+        if self.use_coach:
+            self._play_coached()
+            return
         rng = self.rng
         home, away = self.home, self.away
         tip = home if rng.random() < .5 else away
@@ -786,6 +1057,63 @@ class Game:
             if period >= 14:
                 break
 
+    def _coach_decide(self, period_start: bool) -> None:
+        el = self.elapsed()
+        for t, o in ((self.home, self.away), (self.away, self.home)):
+            t.coach.decide(period=self.period, t_left=self.t_left, elapsed=el, margin=t.points - o.points,
+                           period_start=period_start)
+
+    def _play_coached(self) -> None:
+        """The game with the in-game coach (stage2.coach): substitutions at every stoppage."""
+        rng = self.rng
+        home, away = self.home, self.away
+        tip = home if rng.random() < .5 else away
+        other = away if tip is home else home
+        period = 0
+        while True:
+            period += 1
+            self.period = period
+            self.t_left = QUARTER_S if period <= 4 else OT_S
+            home.team_fouls = away.team_fouls = 0
+            home.fouls_late = away.fouls_late = 0
+            off = tip if period in (1, 4) or period > 4 else other
+            if period > 4:
+                off = home if rng.random() < .5 else away
+            de = away if off is home else home
+            if period == 3:
+                home.coach.new_half()
+                away.coach.new_half()
+            elif period > 1:
+                home.coach.quarter_break(60.0 if period <= 4 else 120.0)
+                away.coach.quarter_break(60.0 if period <= 4 else 120.0)
+            self._coach_decide(period_start=True)
+            self._matchups()
+            start = "dead"
+            checkpoints = [s for s in COACH_TIMEOUTS if s < self.t_left] if period <= 4 else []
+            while self.t_left > 0.0:
+                self.dead = False
+                result = self.possession(off, de, start)
+                self.events += 1
+                if result == "end" or self.t_left <= 0.0:
+                    break
+                crossed = False
+                while checkpoints and self.t_left <= checkpoints[0]:
+                    checkpoints.pop(0)
+                    crossed = True
+                late_make = period >= 4 and self.t_left <= 120.0 and result == "made"
+                if (self.dead or crossed or late_make or self.pending_sub or home.coach.pending
+                        or away.coach.pending):
+                    self.pending_sub = False
+                    self._coach_decide(period_start=False)
+                if home.lineup_dirty or away.lineup_dirty:
+                    self._matchups()
+                start = {"made": "made", "dreb": "dreb", "steal": "steal"}.get(result, "dead")
+                off, de = de, off
+            if period >= 4 and home.points != away.points:
+                break
+            if period >= 14:
+                break
+
     def _trouble(self, team: TeamState) -> bool:
         lim = FOUL_TROUBLE.get(min(4, self.period), 6)
         if self.period == 4 and self.t_left < 300:
@@ -797,9 +1125,15 @@ def box_lines(team: TeamState, players: list[dict[str, Any]], items: list[dict[s
               starter_ids: set[str]) -> list[dict[str, Any]]:
     """Today's player-line format from the game's box score."""
     out = []
+    coach = team.coach
     for i, item in enumerate(items):
         st = team.stats[i]
         p = players[i]
+        if team.reserve[i] and team.secs[i] <= 0.0:
+            continue                    # outside the rotation and never needed tonight: not in the box score
+        extra = {}
+        if coach is not None and coach.injured[i]:
+            extra["in_game_injury"] = item.get("health_injury_label") or "injury"
         out.append({
             "player_id": p["id"], "player_name": p["name"], "team_id": team.team_id, "team_abbrev": team_abbrev,
             "minutes": round(team.secs[i] / 60.0, 2),
@@ -812,8 +1146,9 @@ def box_lines(team: TeamState, players: list[dict[str, Any]], items: list[dict[s
             "assists": st[S_AST], "turnovers": st[S_TOV], "steals": st[S_STL], "blocks": st[S_BLK],
             "personal_fouls": st[S_PF], "plus_minus": st[S_PM], "on_court_points_for": st[S_ON_FOR],
             "on_court_points_against": st[S_ON_AGAINST], "starter": p["id"] in starter_ids,
-            # Not produced yet (no screens in the loop; rule 4, so no placeholder number): screen_assists.
-            **({"fouled_out": True} if st[S_PF] >= 6 else {}),
+            # Screen assists only when the loop plays ball screens (stage2.screens); otherwise left out (rule 4).
+            **({"screen_assists": st[S_SCR]} if team.screens_on else {}),
+            **({"fouled_out": True} if st[S_PF] >= 6 else {}), **extra,
         })
     return out
 

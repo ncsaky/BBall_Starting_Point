@@ -19,10 +19,13 @@ import random
 from typing import Any
 
 from .cards import card_for, flat_for_player, generic_flat, means_for
+from .coach import Coach, roles_for
 from .game import LOOP, Game, TeamState, box_lines, team_line
 
-NOTE = "Stage 2 possession engine (S2-POSSESSION-LOOP v1): every possession played; minutes from today's plan."
+NOTE = ("Stage 2 possession engine (S2-COACH v1): every possession played; tonight's plan from today's coach model, "
+        "the in-game coach decides who plays at every stoppage.")
 _LEAGUE_CONSTANTS: dict[str, dict] = {}
+GAME_HOOK = None   # research hook (scripts/research/s2_coach_check.py): called with (game, extra, game_id); None in play
 
 
 def _group(player: dict[str, Any]) -> str:
@@ -81,7 +84,9 @@ def league_constants(root) -> dict[str, float]:
            "length_center": wmean(lambda c: c.length), "burst_center": wmean(lambda c: c.burst),
            "contain_center": wmean(lambda c: c.contain_d), "post_center": wmean(lambda c: c.post_d),
            "rot_center": wmean(lambda c: c.rot_d), "lanes_center": wmean(lambda c: c.lanes_d),
-           "fctrl_center": wmean(lambda c: c.foul_ctrl), "press_center_player": wmean(lambda c: c.press_d)}
+           "fctrl_center": wmean(lambda c: c.foul_ctrl), "press_center_player": wmean(lambda c: c.press_d),
+           # Pick-and-roll (S2-COACH): one defender's rim protection, centred on the league's minutes-weighted player.
+           "rimd_center": wmean(lambda c: c.rim_d)}
     _LEAGUE_CONSTANTS[key] = out
     return out
 
@@ -111,7 +116,8 @@ def _prepare_pools(context, game, home_team, away_team, home_players, away_playe
 
 
 def _team_state(context, team, pool, starters, coach, rest_context, is_home, league, opp_context=None,
-                loop: dict | None = None) -> tuple[TeamState, list, list]:
+                loop: dict | None = None, reserves: list | None = None,
+                coach_rng: random.Random | None = None) -> tuple[TeamState, list, list]:
     from ..sim import AWAY_COURT_RATING, HOME_COURT_RATING, coach_effect, game_environment_effect, rest_effect
     from ..utils import clamp
     root = context["root"]
@@ -121,6 +127,12 @@ def _team_state(context, team, pool, starters, coach, rest_context, is_home, lea
     items = [item for item in pool if float(item.get("minutes") or 0.0) > 0]
     if len(items) < 5:
         items = sorted(pool, key=lambda it: -float(it.get("minutes") or 0.0))[:max(5, len(items))]
+    n_plan = len(items)
+    # Healthy players outside tonight's rotation (generated games): the coach's garbage-time call-ups (today's
+    # game_minutes: at most GARBAGE_EXTRAS_LIMIT, best first).
+    used = {item["player"].get("id") for item in items}
+    items = items + [{**item, "minutes": 0.0, "_reserve": True} for item in (reserves or [])
+                     if item["player"].get("id") not in used]
     cards, players, groups, targets, starter_idx = [], [], [], [], []
     for idx, item in enumerate(items):
         player = item["player"]
@@ -130,8 +142,8 @@ def _team_state(context, team, pool, starters, coach, rest_context, is_home, lea
                               _group(player), penalty))
         players.append(player)
         groups.append(_group(player))
-        targets.append(max(0.5, float(item.get("minutes") or 0.0)))
-        if player.get("id") in starters:
+        targets.append(max(0.5, float(item.get("minutes") or 0.0)) if idx < n_plan else 0.0)
+        if player.get("id") in starters and idx < n_plan:
             starter_idx.append(idx)
     ce = coach_effect(coach)
     home_mod = HOME_COURT_RATING if is_home else AWAY_COURT_RATING
@@ -149,7 +161,26 @@ def _team_state(context, team, pool, starters, coach, rest_context, is_home, lea
     state = TeamState(team["id"], team["abbrev"], cards, targets, starter_idx, groups, eff, tempo, league, eff_def=eff_def,
                       coach_matchup=coach_matchup_scale(coach))
     state.form_pace = L["k_form_pace"] * float(env.get("pace", 0.0))
+    state.reserve = [idx >= n_plan for idx in range(len(items))]
+    if L.get("coach"):
+        state.coach = build_coach(state, items, coach_rng or random.Random(f"{team['id']}:stage2-coach"),
+                                  replay=bool(items) and all(item.get("actual") for item in items[:n_plan]))
     return state, players, items
+
+
+def build_coach(state: TeamState, items: list, rng: random.Random, replay: bool = False) -> Coach:
+    """Tonight's in-game coach for one team: roles from the plan, the inputs he reads (conditioning, recovery), tonight's
+    tired legs and rust, and any in-game injury from the health model (generated games)."""
+    n = len(items)
+    starters = set(state.starters)
+    plans_min = [t / 60.0 for t in state.target_s]
+    roles = roles_for([i in starters for i in range(n)], plans_min, [c.usage for c in state.cards], state.reserve)
+    fatigue = [float(item.get("health_fatigue") or 0.0) for item in items]
+    rust = [float(item.get("health_rust") or 0.0) > 0.0 or float(item.get("return_minutes_factor") or 1.0) < 1.0
+            for item in items]
+    injury = [item.get("health_injury_exit") for item in items]
+    return Coach(state, roles=roles, plan_s=list(state.target_s), flats=[c.flat for c in state.cards], fatigue=fatigue,
+                 rust=rust, injury_exit=injury, rng=rng, replay=replay)
 
 
 def projected_pace_mean(context, league) -> float:
@@ -214,10 +245,20 @@ def play_stage2_game(context: dict[str, Any], game: dict[str, Any], home_team: d
             home_ctx = {**(home_ctx or {}), "team_fatigue": round(h, 3)}
         if a is not None:
             away_ctx = {**(away_ctx or {}), "team_fatigue": round(a, 3)}
+    reserves = {"home": [], "away": []}
+    if mode == "sandbox-sim":
+        from ..sim import available_reserves
+        game_date = game.get("gameDate") or game.get("date")
+        for side, team, pool in (("home", home_team, home_players), ("away", away_team, away_players)):
+            used = {item["player"]["id"] for item in pool}
+            reserves[side] = [item for item in available_reserves(context, team, game_id, game_date)
+                              if item["player"]["id"] not in used]
     home, hp, hi = _team_state(context, home_team, home_players, starters, coach_by_team.get(home_team["id"]), home_ctx, True,
-                               league, away_ctx, loop)
+                               league, away_ctx, loop, reserves["home"],
+                               random.Random(f"{seed}:{game_id}:{mode}:stage2-coach:{home_team['id']}"))
     away, ap, ai = _team_state(context, away_team, away_players, starters, coach_by_team.get(away_team["id"]), away_ctx, False,
-                               league, home_ctx, loop)
+                               league, home_ctx, loop, reserves["away"],
+                               random.Random(f"{seed}:{game_id}:{mode}:stage2-coach:{away_team['id']}"))
     rng = random.Random(f"{seed}:{game_id}:{mode}:stage2")
     g = Game(home, away, rng, loop=loop)
     g.play()
@@ -231,6 +272,8 @@ def simulate_stage2_game(context: dict[str, Any], game: dict[str, Any], home_tea
     from ..utils import stable_id
     g, extra = play_stage2_game(context, game, home_team, away_team, home_players, away_players,
                                 game_id=game_id, mode=mode, seed=seed)
+    if GAME_HOOK is not None:
+        GAME_HOOK(g, extra, game_id)
     starters = extra["starters"]
     home_lines = box_lines(g.home, *extra["home"], home_team["abbrev"], starters)
     away_lines = box_lines(g.away, *extra["away"], away_team["abbrev"], starters)
