@@ -20,7 +20,7 @@ import math
 from dataclasses import replace
 from typing import Any, Mapping
 
-from ..box_rates import ASSISTS_INPUTS, SCREEN_ASSISTS_INPUTS, STEALS_INPUTS, flatten_inputs
+from ..box_rates import SCREEN_ASSISTS_INPUTS, STEALS_INPUTS, flatten_inputs
 from ..offense_response import OffenseCoefficients, OffensiveProfile, finishing_response, shooting_response
 from . import fouls as F
 from . import rebounding as R
@@ -84,7 +84,16 @@ MENU = {"rim_cut": .55, "rim_roll": .65, "rim_post": .9, "short_post": 2.4, "sho
         "rim_halfcourt": .70,
         # ...and its three share holds his transition threes (the loop's transition menu): FITTED to the league
         # three-point attempt rate (.415).
-        "three_halfcourt": .92}
+        "three_halfcourt": .92,
+        # S2-USAGE: T11 is a split of what he does once he is in a ball screen (screen only, roll, pop, slip), not how
+        # often he screens, so a guard's prior-level roll share gave him roll finishes he never gets. The roll part of
+        # the rim split is scaled by his screening frequency (his fitted screen-assist rate, cards.scr_w, relative to the
+        # league's average player) to this power. Evidence (Basketball Index 2025-26, roll-man possessions per 75, 376
+        # rotation players): roll + slip share alone correlates .43 with real roll possessions, times screening .70.
+        # 0 = the first menu. Kept OFF (S2-USAGE): at 1 each player's finishes match real cuts + rolls far better
+        # (correlation .66 -> .77) but per-player points get worse (miss 1.47 -> 1.53 per 36), because the rollers it
+        # feeds are mostly bigs whose usage is already over real (see docs/agents/tasks/s2-usage.md, ratings questions).
+        "roll_screen": 0.0}
 # Transition menu: rim vs three by his rim / three habit (T02).
 TRANS = {"rim_base": .45, "three_scale": .6}
 
@@ -114,6 +123,18 @@ USAGE = {"constant": 0.19605, "log T08": 1.0104, "log T01.shoot": 0.30632, "log 
 TURNOVER = {"constant": -0.64581, "log T07": 0.26955, "log T01.pass": 0.30257, "log T01.drive": -0.22781,
             "log T06": 0.27393, "log T08": -0.13987, "S16": 0.00311, "S17": -0.0099, "F.execution": 0.01939,
             "S20": -0.00516, "S18": -0.00091, "P08": 0.00145, "P09": -0.02747}
+# Assist weight (who assists a teammate's made shot; stage2.game draws the assister among the scorer's four teammates by
+# this weight to LOOP ast_power). The first loop used today's per-36 assist rule (box_rates.ASSISTS_INPUTS) as is; that
+# rule predicts assists per 36 beside average teammates, not a share among the four on the floor, so in the loop the
+# assists spread too evenly: real assists sit with the main playmakers (the per-player miss followed involvement T08,
+# correlation .64). S2-USAGE refit through the loop on the same five terms (scripts/research/s2_usage_fit.py usage
+# --rule ASSISTS: replayed 2025-26 games, fit half of the rotation players, two steps): held-out half's season assists
+# per 36 off by 17.9% -> 13.4% (mean miss .67 -> .51, correlation .919 -> .932). Adding post skill and height overfit
+# (held-out worse). Assists are credit only: the game's flow and random draws are unchanged. The first rule:
+# box_rates.ASSISTS_INPUTS {"constant": 3.05475, "log T01.pass": 0.7642, "log T08": 0.28271, "F.execution": 0.02663,
+# "log T07": 0.5197, "log T01.post": 0.21179}.
+ASSISTS = {"constant": 5.5204, "log T01.pass": 0.87147, "log T08": 0.82794, "F.execution": 0.01605, "log T07": 1.22548,
+           "log T01.post": 0.28272}
 # Blocks: log-linear weight in contest technique, interior positioning, reach, jump-contest habit, vertical and help
 # commitment. FITTED to real 2025-26 blocks per 36 (targets file); held-out corr .88. It shares the team's blocks; the
 # level is the loop's.
@@ -256,7 +277,15 @@ def make_table(pid: str, flat: Mapping[str, float]) -> list[float]:
     return table
 
 
-def shot_menu(flat: Mapping[str, float]) -> list[float]:
+def screen_rel(flat: Mapping[str, float], means: Mapping[str, float] | None) -> float:
+    """His screening frequency relative to the league's average player, to MENU roll_screen (1 when off)."""
+    k = MENU["roll_screen"]
+    if not k or not means or not means.get("scr_w"):
+        return 1.0
+    return (math.exp(log_linear(SCREEN_ASSISTS_INPUTS, flat)) / means["scr_w"]) ** k
+
+
+def shot_menu(flat: Mapping[str, float], means: Mapping[str, float] | None = None) -> list[float]:
     """Probability of each half-court shot kind given he shoots (sums to 1). Reproduces T02 apart from the rim share,
     which leaves room for his putbacks and transition finishes (MENU rim_halfcourt)."""
     regions = [max(0.0, float(flat.get(f"T02.{r}", .25))) for r in ("rim", "short_paint", "midrange", "three")]
@@ -268,7 +297,7 @@ def shot_menu(flat: Mapping[str, float]) -> list[float]:
     post = max(1e-3, float(flat.get("T01.post", .03)))
     shoot = max(1e-3, float(flat.get("T01.shoot", .25)))
     cut = float(flat.get("T09", .3))
-    roll = float(flat.get("T11.roll", .2)) + float(flat.get("T11.slip", .1))
+    roll = (float(flat.get("T11.roll", .2)) + float(flat.get("T11.slip", .1))) * screen_rel(flat, means)
     w_rim = (drive, MENU["rim_cut"] * cut * .5 + MENU["rim_roll"] * roll * .5, MENU["rim_post"] * post)
     s = sum(w_rim)
     w_short = (drive, MENU["short_post"] * post, MENU["short_shoot"] * shoot)
@@ -307,13 +336,18 @@ def transition_menu(flat: Mapping[str, float]) -> list[float]:
 
 
 def league_means(flats: Mapping[str, Mapping[str, float]]) -> dict[str, float]:
-    keys = (set(PERIMETER_D) | set(RIM_D) | set(PRESSURE_D) | set(CREATION) | {"P01", "P02", "P03"} | set(CONTAIN_D)
+    keys = (set(PERIMETER_D) | set(RIM_D) | set(PRESSURE_D) | set(CREATION) | {"P01", "P02", "P03", "P06"} | set(CONTAIN_D)
             | set(CLOSEOUT_D) | set(ONBALL_D) | set(ROTATION_D) | set(POST_D) | set(LANES_D) | set(BURST) | {"S45"}
             | set(SCREEN_Q) | set(NAVIGATION) | {"P04", "S02"})
     out = {}
     for k in keys:
         vals = [float(f[k]) for f in flats.values() if k in f]
         out[k] = sum(vals) / len(vals) if vals else 50.0
+    # S2-USAGE: the average player's screening frequency (fitted screen-assist rate) and shot-difficulty habit (log T04).
+    scr = [math.exp(log_linear(SCREEN_ASSISTS_INPUTS, f)) for f in flats.values() if "T11.screen" in f]
+    out["scr_w"] = sum(scr) / len(scr) if scr else 1.0
+    t04 = [math.log(max(1e-3, float(f["T04"]))) for f in flats.values() if "T04" in f]
+    out["log_T04"] = sum(t04) / len(t04) if t04 else math.log(.276)
     return out
 
 
@@ -327,7 +361,8 @@ class Card:
                  "ft", "ast_w", "foul", "foul_s", "and1", "ns_draw", "off_foul_w", "d_foul", "ns_mult", "stl_w",
                  "blk_w", "perim_d", "rim_d", "press_d", "reb", "pace", "trans_pref", "penalty", "flat", "create",
                  "space", "contain_d", "closeout_d", "onball_d", "rot_d", "post_d", "lanes_d", "burst", "length",
-                 "foul_ctrl", "craft", "scr_w", "roll_share", "screen_q", "nav", "pull_threat")
+                 "foul_ctrl", "craft", "scr_w", "roll_share", "screen_q", "nav", "pull_threat", "speed", "reach",
+                 "diff", "three")
 
     def actions(self) -> dict[str, float]:
         out = {a: 0.0 for a in ACTIONS}
@@ -354,13 +389,13 @@ def build_card(pid: str, name: str, flat: Mapping[str, float], means: Mapping[st
     c.penalty = penalty
     c.usage = math.exp(log_linear(USAGE, flat)) * (1.0 - .01 * penalty)
     c.to_logit = log_linear(TURNOVER, flat) + .01 * penalty
-    c.menu = shot_menu(flat)
+    c.menu = shot_menu(flat, means)
     c.menu_cum = _cum(c.menu)
     c.trans_cum = _cum(transition_menu(flat))
     # Tonight's tired legs or rust (health penalty points, as today's engine computes them) cost a little touch.
     c.make_logit = [_logit(p) - .03 * penalty for p in make_table(pid, flat)]
     c.ft = min(.98, max(.2, float(flat["S07"]) / 100.0))
-    c.ast_w = math.exp(log_linear(ASSISTS_INPUTS, flat))
+    c.ast_w = math.exp(log_linear(ASSISTS, flat))
     prof = F.profile_from_flat(pid, flat)
     c.foul = prof
     fc = F.FITTED
@@ -396,7 +431,7 @@ def build_card(pid: str, name: str, flat: Mapping[str, float], means: Mapping[st
     # of his finishes off a pass that are rolls or slips (the shot menu's own split against cuts), screen quality with
     # body mass (per 15 kg), screen navigation, and the pull-up threat a defense weighs before dropping.
     c.scr_w = math.exp(log_linear(SCREEN_ASSISTS_INPUTS, flat))
-    roll = float(flat.get("T11.roll", .2)) + float(flat.get("T11.slip", .1))
+    roll = (float(flat.get("T11.roll", .2)) + float(flat.get("T11.slip", .1))) * screen_rel(flat, means)
     cut = float(flat.get("T09", .3))
     c.roll_share = MENU["rim_roll"] * roll / max(1e-6, MENU["rim_roll"] * roll + MENU["rim_cut"] * cut)
     c.screen_q = _index(flat, SCREEN_Q, means) + .5 * (float(flat.get("P04", means.get("P04", 100.0)))
@@ -404,6 +439,14 @@ def build_card(pid: str, name: str, flat: Mapping[str, float], means: Mapping[st
     c.nav = _index(flat, NAVIGATION, means)
     c.pull_threat = (float(flat.get("S02", 50.0)) - means.get("S02", 50.0)) / 25.0 \
         + 1.5 * (float(flat.get("T03.pull_up", .3)) - .3)
+    # S2-USAGE: straight-line speed (P06, per 10 points) and standing reach (P03, per 10 cm) against the league's
+    # average player, for who finishes a transition chance and who puts back an offensive rebound; and his
+    # shot-difficulty habit (log T04 against the league's), for how contested his shots are (stage2.game).
+    c.speed = (float(flat.get("P06", means.get("P06", 54.0))) - means.get("P06", 54.0)) / 10.0
+    c.reach = (float(flat.get("P03", means.get("P03", 265.0))) - means.get("P03", 265.0)) / 10.0
+    c.diff = math.log(max(1e-3, float(flat.get("T04", .276)))) - means.get("log_T04", math.log(.276))
+    regions = [max(0.0, float(flat.get(f"T02.{r}", .25))) for r in ("rim", "short_paint", "midrange", "three")]
+    c.three = regions[3] / (sum(regions) or 1.0)   # his three-point share of shots (T02), for heaves and must-have threes
     return c
 
 
@@ -424,7 +467,7 @@ def _settings_key() -> tuple:
     return (tuple(sorted(USAGE.items())), tuple(sorted(TURNOVER.items())), tuple(sorted(HOOK.items())),
             tuple(sorted(DUNK.items())), tuple(sorted(MENU.items())), tuple(sorted(BLOCKS.items())),
             tuple(sorted(DUNK_BY_KIND.items())), TRANSITION_MAKE_LOGIT, tuple(sorted(FOUL_EXTRA.items())),
-            tuple(sorted(TRANS.items())))
+            tuple(sorted(TRANS.items())), tuple(sorted(ASSISTS.items())))
 
 
 def flat_for_player(canonical: Mapping[str, Any], player: Mapping[str, Any]) -> dict[str, float] | None:
