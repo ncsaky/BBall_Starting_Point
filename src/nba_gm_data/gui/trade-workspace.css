@@ -333,7 +333,6 @@ body.unified-terminal-ui .modal-trade-room .trade-room-toolbar .tabs { display:f
 .trade-market-table :is(th,td) { padding:0 6px; height:34px; text-align:left; vertical-align:middle; font:11px Tahoma,Arial,sans-serif; border:0; }
 .trade-market-table th { height:23px; background:#f3f4f5; border-bottom:1px solid #17212a; }
 .trade-market-table th button { display:block; width:100%; border:0 !important; background:transparent !important; box-shadow:none !important; padding:0; min-height:0; height:22px; font:700 10px Tahoma,Arial,sans-serif; text-align:left; color:inherit; }
-.trade-market-table th[aria-sort="ascending"], .trade-market-table th[aria-sort="descending"] { background:#dfe6ec; }
 .trade-market-table tbody tr:first-child td { border-top:1px solid #a6afb9; }
 .trade-market-table tbody tr:nth-child(even) { background:#f4f6f8; }
 .trade-market-table tbody tr:hover { background:#e5edf4; }

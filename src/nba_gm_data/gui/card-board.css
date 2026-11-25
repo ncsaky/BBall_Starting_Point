@@ -2231,12 +2231,6 @@ body.unified-terminal-ui .has-card-board .draft-asset-condition {
   width:auto;
 }
 
-/* Emphasize values in whichever field currently controls a table's sort. */
-body.unified-terminal-ui .is-sorted-value,
-body.unified-terminal-ui .is-sorted-value * {
-  font-weight:700 !important;
-}
-
 /* Portraits and a clear gap between assigned minutes and fatigue. */
 body .has-card-board [data-board-window="minutes"] :is(.season-minutes-head,.season-minute-row) {
   grid-template-columns:minmax(160px,1.6fr) minmax(32px,.4fr) minmax(42px,.55fr) minmax(142px,1.5fr) minmax(90px,1fr);
@@ -5053,9 +5047,6 @@ body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table tbody tr:nth-
 body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table tbody tr:is(:hover,:focus-within) { background-color:#dce8f2; }
 body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table tbody :is(th,td) { background-color:transparent; }
 /* The sorted column is shaded down its full height, including the heading. */
-body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table thead th.is-sorted { background-color:#d1dde8; }
-body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table tbody :is(th,td).is-sorted { background-color:rgba(118,156,190,.28); font-weight:700; }
-body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table tbody .is-sorted * { font-weight:700; }
 body.unified-terminal-ui .playoff-stats-panel .playoff-stats-col-player { position:relative; padding:0 !important; }
 body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table thead .playoff-stats-col-player { padding-left:30px !important; }
 body.unified-terminal-ui .playoff-stats-panel .playoff-stats-player-link {
@@ -5144,8 +5135,6 @@ body.unified-terminal-ui .player-decline-watch strong { color:#c4585f; }
 .draft-prospect-table.draft-two-boards thead th { border-bottom:2px solid var(--season-line, var(--line-soft)); font-size:8px; font-weight:700; }
 .draft-prospect-table.draft-two-boards tbody tr:nth-child(even) td { background-color:#eef1f3; }
 .draft-prospect-table.draft-two-boards tbody tr:is(:hover,:focus-within) td { background-color:#dce8f2; }
-.draft-prospect-table.draft-two-boards thead th.is-sorted { background-color:#d1dde8; }
-.draft-prospect-table.draft-two-boards tbody td.is-sorted { background-color:rgba(118,156,190,.28); font-weight:700; }
 .draft-prospect-table.draft-two-boards tbody tr.is-selected td { background-color:color-mix(in srgb, var(--accent) 16%, transparent); }
 .draft-prospect-scroll { overflow-x:auto; }
 .draft-prospect-table.draft-two-boards { min-width:1040px; }
@@ -5238,9 +5227,6 @@ body.unified-terminal-ui .draft-board-table.draft-prospect-table thead th { font
 .draft-board-table.draft-prospect-table tbody td { background-color:transparent; }
 .draft-board-table.draft-prospect-table.draft-two-boards tbody tr:nth-child(even) td,
 .draft-board-table.draft-prospect-table.draft-two-boards tbody tr:is(:hover,:focus-within) td { background-color:transparent; }
-.draft-board-table thead th.is-sorted { background-color:#d1dde8; }
-.draft-board-table.draft-prospect-table tbody td.is-sorted { background-color:rgba(118,156,190,.28); font-weight:700; }
-.draft-board-table tbody td.is-sorted :is(strong,b,span) { font-weight:700; }
 .draft-board-table .draft-sort-button.is-active { text-decoration:underline; text-underline-offset:2px; }
 .draft-board-table tbody tr.is-selectable { cursor:pointer; }
 .draft-board-table tbody tr.is-selectable:focus-visible { outline:2px solid #3d82c5; outline-offset:-2px; }
@@ -5256,7 +5242,6 @@ body.unified-terminal-ui .draft-board-table.draft-prospect-table thead th { font
 .draft-board-name .season-prospect-origin { flex:0 0 20px; width:20px; height:20px; object-fit:contain; display:inline-grid; place-items:center; font-size:14px; line-height:1; }
 .draft-board-name .season-prospect-source-fallback { border:1px solid #9aaab7; border-radius:50%; font:700 8px Tahoma,Arial,sans-serif; color:#5d6b77; }
 .draft-board-table .draft-prospect-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:400 12px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-text, #1d2a33); text-transform:none; }
-.draft-board-table td.is-sorted .draft-prospect-name { font-weight:700; }
 .draft-board-nowpot { display:inline-flex; align-items:baseline; gap:4px; }
 .draft-board-nowpot strong { color:var(--season-muted, #5d6b77); font-weight:400; font-size:11px; }
 .draft-board-nowpot i { color:var(--season-muted, #5d6b77); font-style:normal; font-size:10px; }
@@ -5401,7 +5386,6 @@ body.unified-terminal-ui .modal-shell.modal-settings.modal-photo-credits { width
 .photo-credits-table tbody tr:nth-child(even) { background:color-mix(in srgb, var(--ui-soft, #dde3e8) 45%, transparent); }
 .photo-credits-table tbody tr:hover { background:color-mix(in srgb, var(--ui-soft, #dde3e8) 95%, transparent); }
 .photo-credits-table td { padding:0 6px; height:34px; vertical-align:middle; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.photo-credits-table .is-sorted { background:color-mix(in srgb, #8fb0cc 16%, transparent); }
 .photo-credits-table a { color:inherit; text-underline-offset:2px; }
 .photo-credits-table td.photo-credit-face, .photo-credits-table th.photo-credit-face-col { width:46px; padding:0 2px; vertical-align:bottom; }
 .photo-credits-table td.photo-credit-face .player-headshot-frame { display:block; width:46px; height:34px; overflow:hidden; }

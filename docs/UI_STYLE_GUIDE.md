@@ -57,14 +57,14 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 ## Game-wide rules
 
 ### Tables
-- **Header line:** one solid dark line under the header row (2px). Not two tones, not a hairline, not a double rule. No gap between it and the first row (not even 1px), no gap between the top of the header and the sorted column's fill, the line never cuts into the header text, and no gap under the last row.
+- **Header line:** one solid dark line under the header row (2px). Not two tones, not a hairline, not a double rule. No gap between it and the first row (not even 1px), the line never cuts into the header text, and no gap under the last row.
 - **Header text:** 10px bold, sentence case, smaller than the row text.
 - **Alignment:** centre everything (numbers and words), with the header centred over its column. Only the first field (player name) is left-aligned. Lists of names (depth charts) are left-aligned so entries line up in both directions; headshots sit vertically centred on the name.
-- **Header and cells share widths exactly:** a header cell and the cells under it are the same width, so the sorted fill lines up on both sides. Values in one column line up vertically.
+- **Header and cells share widths exactly:** a header cell and the cells under it are the same width. Values in one column line up vertically.
 - **No truncation of short fields** like roles ("…"): give the column the room, or wrap.
 - **No subtext under a name or value.** A second fact is a second field (column), never small text underneath.
 - **Rows:** medium height (about 30px) or compact. Never roomy. Alternating stripes.
-- **Sorted column:** shaded and bold, on every row including the striped ones, reaching both edges of its column (no gap at the card's right edge, no double border on top). Columns hug their content.
+- **Sorted field** (user, 2026-11-24, replaces column shading): no shading and no bold on the sorted column, header or cells. Only a small white triangle (▲ or ▼, by direction) just right of the heading text. Columns hug their content.
 - **Every header sorts** in data tables (a small fixed list such as an award race's chasers needs no sorting). The sort arrow is never underlined.
 - **One border colour per row rule.** The player cell's rule matches the other cells. Every table in a card reaches both edges, and its fields are labelled like the table above it.
 - **No subheader strip** between a window's title bar and its table. Deadlines and rules go in a Details drop-down or the footer. Pick a useful default sort (contracts: this season's salary, high to low).
@@ -107,7 +107,7 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **Preseason ranks:** always say "Projected" ("Projected 1st of 30"). A plain "1st in the league" before games are played is misleading.
 - **Teams:** logo plus abbreviation by default. Logo plus full name sometimes. Logo alone only when space is tight. Never the full name alone.
 - **Labels next to coloured numbers** need clear spacing so the number and its label don't blur together (Next Opponent banner).
-- **Extra explanation of game content** (contract terms, option details): a Details toggle that drops down. Hover tips or "i" marks are for game instructions and rules only. Never a small line of text under a value.
+- **Extra explanation of game content** (contract terms, option details): a Details toggle that drops down. Hover tips or "i" marks are for game instructions and rules only, **and slide explanations**: a slideshow note is a small "i" dot right beside the slide title, shown on hover, never a "Details" drop-down (user, 2026-11-24). Never a small line of text under a value.
 - **Short summaries become small tables**, not one cell per fact (the Team Profile payroll notes: a 5 × 2 table).
 
 ### Pictures
@@ -119,6 +119,9 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **Button style is a Settings choice (round 6):** glass pill (default), solid pill with a team-blue chosen state, rounded-square glass, or a segmented tray. The user couldn't pick one.
 - **Choice rows (Keep / Release / Buy out):** one long pill with the chosen option as a filled pill inside it that slides to a new choice when clicked. The user's reference (an iOS segmented pill, 2026-11-24): a solid grey tray with no border, equal-width options with light-grey labels, and the chosen option a solid blue pill the full height of the tray, touching its edge, white label (red when the choice is a release).
 - **Drop-down menus** are custom glass menus, not the browser's grey select boxes.
+- **Card transparency is the player's choice** (user, 2026-11-24: "cards are too transparent"): a Settings > Look slider covers windows, pop-ups and slides. The default is a little more solid than round 8 (60%).
+- **No sharp white borders inside a card** (user, twice on 2026-11-24): no square outline around a table, list or player cell. Separate things with spacing, a hairline between rows, or the soft rounded card edge.
+- **A table's column headings sit directly on the section's title bar line**, with no gap (slideshow Depth chart).
 - **Pill-shaped glass buttons** (round 5), like iOS glass buttons: fully rounded ends, a translucent light fill, a thin light edge, vertically centred in their bar. Everywhere: tool bars, row actions (Keep / Waive / Buy out), slideshow navigation, trade room.
 - **Long pill: only the chosen option has a shape** (round 8); the others are plain labels on the tray.
 - **The standard tab picker is the long pill (user, 2026-11-24):** the same control as Keep / Waive / Buy out. A solid grey tray, equal-width options, the chosen one a solid blue pill that slides over when you pick another. Every tab group uses it (trade room Builder / Finder / Market, All / Players / Picks / Swaps, Payroll / Value / Team identity, Development's views, the court views). Labels for a group of tabs sit above it, centred.

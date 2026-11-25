@@ -82,6 +82,12 @@
 .ss-muted { color: #52616e; }
 /* Each slide's explanation sits right under its title as subtext (playtest 2026-11-22: no kicker line). */
 .ss-content h2:has(+ .ss-subtitle) { margin-bottom: 3px; }
+/* A slide's explanation sits behind an "i" dot beside its title (playtest 2026-11-24). */
+.ss-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.ss-title-row h2 { margin: 0; }
+.ss-info { position: relative; display: inline-flex; }
+.ss-info-tip { position: absolute; top: calc(100% + 8px); left: -12px; z-index: 5; width: max-content; max-width: 380px; padding: 10px 12px; font-size: 12px; font-weight: 400; line-height: 1.45; color: #eef3f7; background: rgba(12, 22, 34, .94); border: 1px solid rgba(255, 255, 255, .18); border-radius: 10px; box-shadow: 0 12px 30px rgba(0, 0, 0, .4); visibility: hidden; opacity: 0; pointer-events: none; }
+.ss-info:hover .ss-info-tip, .ss-info:focus-within .ss-info-tip { visibility: visible; opacity: 1; }
 .ss-subtitle { margin: 0 0 12px; color: #4a5a67; font-size: 12px; line-height: 1.4; }
 .ss-note, .ss-source { margin: 10px 0 0; color: #3e4d59; font-size: 12px; line-height: 1.4; }
 .ss-source { margin: 0 0 8px; font-weight: 650; }
@@ -125,9 +131,6 @@
 .ss-table td { border-bottom: 1px solid var(--house-rule, #d5dde3); padding: 3px 6px; vertical-align: middle; text-align: center; }
 .ss-table tbody tr:nth-child(even) td { background: var(--house-row-alt, #eef1f3); }
 .ss-table tbody tr:hover td { background: var(--house-row-hover, #dce8f2); }
-.ss-table th.ss-sorted { background: var(--house-sorted-head, #d1dde8); }
-.ss-table td.ss-sorted { box-shadow: inset 0 0 0 999px var(--house-sorted-cell, rgba(118, 156, 190, .28)); font-weight: 700; }
-.ss-table td.ss-sorted * { font-weight: 700; }
 .ss-table .ss-num { text-align: center; font-variant-numeric: tabular-nums; }
 .ss-table :is(th, td):is(.ss-left, .ss-player-col) { text-align: left; }
 .ss-table td.ss-player-col { padding-top: 0; padding-bottom: 0; vertical-align: bottom; }
@@ -301,8 +304,7 @@ body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-fam
 .ss-panel { background: #f7f9fa; border: 1px solid #a9b5bf; padding: 10px 12px; min-width: 0; }
 .ss-panel-empty { margin: 6px 0 0; color: #3e4d59; font-size: 13px; }
 
-/* Power rankings and continuity: a full border around each half. */
-.ss-boxed .ss-table, .ss-continuity-cols .ss-continuity { border: 1px solid #8796a3; }
+/* Power rankings and continuity: no square border around a table or list inside its card (user, 2026-11-24). */
 .ss-continuity-cols { gap: 18px; }
 
 /* Rows fall into place when a slide opens: quick (about 0.4 s for a column of 15) and skipped for reduced motion. */
@@ -319,7 +321,7 @@ body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-fam
 .ss-starter-row { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .ss-bench-row { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
 .ss-tile-bench .ss-headshot { width: 54px; height: 46px; }
-.ss-tile { background: #fff; border: 1px solid #a9b5bf; min-width: 0; }
+.ss-tile { background: #fff; min-width: 0; }  /* no border around a player cell (user, 2026-11-24) */
 .ss-tile:hover { background: var(--house-row-hover, #dce8f2); }
 .ss-tile-starter { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 8px 10px; text-align: center; }
 .ss-tile-starter .ss-tile-photo { display: flex; justify-content: center; width: 100%; border-bottom: 1px solid #d5dde3; }
@@ -413,6 +415,7 @@ body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-fam
 .ss-radar-pair .ss-radar svg { max-height: 330px !important; }
 .ss-radar-pair { gap: 0 !important; }
 .ss-depth { margin-top: 10px; }
+.ss-depth .ss-panel-head { margin-bottom: 0; }  /* the group headings sit right on the bar */
 .ss-depth-table { width: 100%; border-collapse: collapse; }
 .ss-depth-table th { width: 40px; padding: 4px 8px; text-align: center; font-size: 12px; font-weight: 800; color: #18212a; border-bottom: 1px solid #d5dde3; }
 .ss-depth-table td { padding: 3px 6px; border-bottom: 1px solid #d5dde3; }

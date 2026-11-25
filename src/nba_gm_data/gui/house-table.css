@@ -109,35 +109,6 @@ body.unified-terminal-ui [data-house-table] > [data-house-row]:is(.active, .is-s
 /* Row-level controls keep their own look (no button skins painting over the row colour). */
 body.unified-terminal-ui [data-house-table] > [data-house-row] > :not(input):not(.season-minute-control):not(.season-staff-action) { background-color: transparent !important; }
 
-/* Sorted column: a translucent fill drawn on the row (full row height, across the column gap), placed by
-   house-table.js from the column's measured position. It layers over stripes, hover and the active row. */
-body.unified-terminal-ui [data-house-table][data-house-col] > [data-house-row] {
-  background-image: linear-gradient(var(--house-sorted-cell), var(--house-sorted-cell)) !important;
-  background-position: var(--house-sort-left, -999px) 0 !important;
-  background-size: var(--house-sort-width, 0px) 100% !important;
-  background-repeat: no-repeat !important;
-}
-body.unified-terminal-ui [data-house-table][data-house-col] > [data-house-head] {
-  background-image: linear-gradient(var(--house-sorted-head), var(--house-sorted-head)) !important;
-  background-position: var(--house-sort-left, -999px) 0 !important;
-  background-size: var(--house-sort-width, 0px) 100% !important;
-  background-repeat: no-repeat !important;
-}
-/* Values in the sorted column are bold. */
-body.unified-terminal-ui [data-house-table][data-house-col="1"] > [data-house-row] > :nth-child(1),
-body.unified-terminal-ui [data-house-table][data-house-col="2"] > [data-house-row] > :nth-child(2),
-body.unified-terminal-ui [data-house-table][data-house-col="3"] > [data-house-row] > :nth-child(3),
-body.unified-terminal-ui [data-house-table][data-house-col="4"] > [data-house-row] > :nth-child(4),
-body.unified-terminal-ui [data-house-table][data-house-col="5"] > [data-house-row] > :nth-child(5),
-body.unified-terminal-ui [data-house-table][data-house-col="6"] > [data-house-row] > :nth-child(6),
-body.unified-terminal-ui [data-house-table][data-house-col="7"] > [data-house-row] > :nth-child(7),
-body.unified-terminal-ui [data-house-table][data-house-col="1"] > [data-house-row] > :nth-child(1) :is(strong,em,output,.season-minute-player-name,.season-development-name,.season-standing-team-name,.player-name-text),
-body.unified-terminal-ui [data-house-table][data-house-col="2"] > [data-house-row] > :nth-child(2) :is(strong,em,output),
-body.unified-terminal-ui [data-house-table][data-house-col="3"] > [data-house-row] > :nth-child(3) :is(strong,em,output),
-body.unified-terminal-ui [data-house-table][data-house-col="4"] > [data-house-row] > :nth-child(4) :is(strong,em,output),
-body.unified-terminal-ui [data-house-table][data-house-col="5"] > [data-house-row] > :nth-child(5) :is(strong,em,output),
-body.unified-terminal-ui [data-house-table][data-house-col="6"] > [data-house-row] > :nth-child(6) :is(strong,em,output),
-body.unified-terminal-ui [data-house-table][data-house-col="7"] > [data-house-row] > :nth-child(7) :is(strong,em,output) { font-weight: 700 !important; }
 /* Rows that are not in the sorted column keep their normal weight (older "always bold" rules). */
 body.unified-terminal-ui [data-house-table="minutes"]:not([data-house-col="4"]) .season-minute-control output { font-weight: 400 !important; }
 

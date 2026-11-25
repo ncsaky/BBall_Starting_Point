@@ -104,6 +104,6 @@ test('table styling follows the shared table preferences', () => {
   assert.match(block, /tbody tr:first-child > :is\(th,td\) \{ border-top:1px solid var\(--season-soft-line\); \}/, 'second rule makes the double header border');
   assert.match(block, /tbody tr:nth-child\(even\) \{ background-color:#eef1f3; \}/, 'alternating rows');
   assert.match(block, /tbody tr:is\(:hover,:focus-within\) \{ background-color:#dce8f2; \}/, 'whole-row hover');
-  assert.match(block, /tbody :is\(th,td\)\.is-sorted \{ background-color:/, 'sorted column shading');
+  assert.doesNotMatch(block, /tbody :is\(th,td\)\.is-sorted \{ background-color:/, 'no sorted column shading');
   assert.match(block, /\.player-headshot-frame \{[^}]*position:absolute; left:2px; bottom:0;[^}]*height:100%;/, 'portrait sits on the row bottom and fills its height');
 });

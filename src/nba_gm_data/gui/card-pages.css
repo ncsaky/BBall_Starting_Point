@@ -162,7 +162,7 @@ html[data-layout="pages"] .pages-shell { min-width: 0; min-height: 0; display: f
 html[data-layout="pages"] .pages-sheet {
   flex: 1 1 auto; min-width: 0; min-height: 0;
   display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr);
-  background: rgba(255, 255, 255, .045);
+  background: var(--card-surface, rgba(255, 255, 255, .045));  /* Settings > Card transparency */
   border: 1px solid rgba(255, 255, 255, .13);
   border-radius: var(--pages-radius);
   box-shadow: 0 24px 60px rgba(0, 0, 0, .26), inset 0 1px 0 rgba(255, 255, 255, .06);

@@ -274,8 +274,6 @@ html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-bo
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-body, .season-slideshow) tbody tr:is(:hover, :focus-within) { background-color: var(--g-hover) !important; }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-body, .season-slideshow) tbody tr:is(.is-selected, .is-picked, [aria-selected="true"]) { background-color: rgba(120, 180, 255, .18) !important; box-shadow: inset 3px 0 #8fc4ff !important; }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-body, .season-slideshow) thead th { background-color: var(--g-head) !important; color: #fff !important; border-color: var(--g-row-line) !important; }
-html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-body, .season-slideshow) thead th:is(.ss-sorted, .is-sorted, [aria-sort="ascending"], [aria-sort="descending"]) { background-color: rgba(44, 60, 80, .92) !important; }
-html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-body, .season-slideshow) tbody :is(td, th):is(.ss-sorted, .is-sorted, .is-sorted-value) { background-image: linear-gradient(var(--g-sorted), var(--g-sorted)) !important; }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-body, .season-slideshow) :is(table, tbody, thead) { background: transparent !important; }
 /* Role chips that older screens still draw: coloured text on the glass, no chip. */
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-body, .season-slideshow) .role-chip { background: transparent !important; border-color: transparent !important; padding-left: 0 !important; padding-right: 0 !important; font-weight: 600 !important; }
@@ -783,9 +781,6 @@ html[data-glass="clear"] body .has-card-board .card-board-window { background: v
 html[data-glass="clear"] body .has-card-board .card-board-titlebar,
 html[data-glass="clear"] body.unified-terminal-ui .modal-shell > :is(.card-board-titlebar, .modal-head) { background: rgba(8, 15, 24, .12) !important; }
 html[data-glass="clear"] body .has-card-board .is-active > .card-board-titlebar { background: color-mix(in srgb, var(--team-a) 16%, rgba(8, 15, 24, .14)) !important; }
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-shell.modal-shell { background-color: rgba(13, 22, 34, .30) !important; }
-html[data-glass="clear"] .season-slideshow .ss-card { background-color: rgba(13, 22, 34, .30) !important; }
-html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-body, .season-slideshow) thead th:is(.ss-sorted, .is-sorted, [aria-sort="ascending"], [aria-sort="descending"]) { background-color: rgba(44, 60, 80, .45) !important; }
 html[data-glass="clear"] body .has-card-board .season-command-header { background: rgba(12, 21, 32, .42) !important; }
 
 /* Card gallery (round 8: "feels like I'm getting flashbanged"): dark glass like everything else; the light preview

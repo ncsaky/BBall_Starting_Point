@@ -37,12 +37,13 @@ test('rotation autosave failures restore the persisted dashboard and report the 
 });
 
 test('the dashboard Settings dialog exposes a working replay control', () => {
-  const scope = {state: {}, renderModal() {}, boardTheme: () => 'slate', BOARD_THEMES: [['slate', 'Slate blue']],
+  const scope = {state: {}, renderModal() {}, boardTheme: () => 'slate', cardTransparency: () => 60, CARD_CLEAR_MIN: 10, BOARD_THEMES: [['slate', 'Slate blue']],
     UI_LOOK_SETTINGS: {glass: {label: 'Glass', options: [['clear', 'Clear']]}, font: {label: 'Font', options: [['modern', 'Modern']]}, buttons: {label: 'Buttons', options: [['pill', 'Glass pill']]}}, uiLook: () => 'clear'};
   vm.createContext(scope);
   vm.runInContext(functionSource('openSettingsModal', 'openExtensionNegotiation'), scope);
   scope.openSettingsModal();
   assert.match(scope.state.modal.body, /data-replay-tutorial>Replay Tutorial/);
+  assert.match(scope.state.modal.body, /type="range" min="10" max="100" step="5" value="60" data-card-transparency/);
   assert.match(app, /querySelector\("\[data-replay-tutorial\]"\)[\s\S]*?state\.modal = null;[\s\S]*?renderModal\(\);[\s\S]*?startGameTutorial\(true\)/);
 });
 
