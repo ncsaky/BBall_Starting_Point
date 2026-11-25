@@ -85,6 +85,7 @@ def collect(engine: str, runs: int, seed: int, limit: int | None, tag: str) -> P
             "home": res.home_team_id, "away": res.away_team_id,
             "home_espn": str(game.get("homeTeamId") or g.get("home_team_id")), "away_espn": str(game.get("awayTeamId") or g.get("away_team_id")),
             "sim_total": statistics.fmean(totals), "sim_total_sd": statistics.pstdev(totals) if runs > 1 else None,
+            "sim_margin_sd": statistics.pstdev([h - a for h, a in zip(homes, aways)]) if runs > 1 else None,
             "sim_home": statistics.fmean(homes), "sim_away": statistics.fmean(aways), "sim_poss": statistics.fmean(poss),
             "sim_fta": statistics.fmean(ftas), "sim_fga": statistics.fmean(fga), "sim_ot": statistics.fmean(ots),
             "market_total": (odds.get("total") or {}).get("line"),
@@ -240,7 +241,15 @@ def main() -> int:
     c.add_argument("--tag", default="")
     r = sub.add_parser("report")
     r.add_argument("files", nargs="*")
-    args = ap.parse_args()
+    args, rest = ap.parse_known_args()
+    for a in rest:
+        # loop.KEY=V: a Stage 2 LOOP override for the run (research variants, e.g. loop.finishes=0).
+        key, value = a.split("=", 1)
+        table, name = key.split(".", 1)
+        if table != "loop":
+            ap.error(f"unknown override {a}")
+        from nba_gm_data.stage2 import game as G
+        G.LOOP[name] = float(value)
     if args.cmd == "collect":
         collect(args.engine, args.runs, args.seed, args.limit, args.tag)
     else:
