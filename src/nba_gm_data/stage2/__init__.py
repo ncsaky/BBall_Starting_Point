@@ -32,4 +32,12 @@ S2-SCHEMES (2026-11-24):
 - game.py: a share of shooting fouls is charged to a teammate of the shot's defender (help, rotations, closeouts;
   fitted to real fouls per 36), two-for-ones and late timeouts that advance the ball (fitted to the rotation study),
   league turnover and pace levels refitted to the real 2025-26 games.
+
+S2-FINISHES (2026-11-24):
+- finishes.py / finishes_table.py: how teams play the last five minutes of the 4th quarter and overtime by time left
+  and score (possession length, threes, shooting fouls, shot quality, deliberate fouls with 24-60 seconds left),
+  fitted to real play-by-play (2023-25 regular seasons; 2025-26 the check season).
+- game.py: blowout run-outs and concessions in the last minute, leaders' turnovers under late pressure, a team
+  strength scale fitted to the real spread of team quality, pace and free-throw levels refitted around the finishes.
+- engine.py: the home-court edge scaled to the real home margin (LOOP home_scale).
 """

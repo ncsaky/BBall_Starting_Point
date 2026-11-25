@@ -147,9 +147,9 @@ def _team_state(context, team, pool, starters, coach, rest_context, is_home, lea
         if player.get("id") in starters and idx < n_plan:
             starter_idx.append(idx)
     ce = coach_effect(coach)
-    home_mod = HOME_COURT_RATING if is_home else AWAY_COURT_RATING
-    rest = rest_effect(rest_context)
     L = dict(LOOP, **(loop or {}))
+    home_mod = (HOME_COURT_RATING if is_home else AWAY_COURT_RATING) * L["home_scale"]
+    rest = rest_effect(rest_context)
     k = L["k_eff"]
     # Recent form (today's engine's game-environment term: both teams' last ten real games' scoring before tonight,
     # in points per 100 and possessions). Scaled by the loop's fitted k_form_off / k_form_pace (0 = off).
