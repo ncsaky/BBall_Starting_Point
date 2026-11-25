@@ -173,9 +173,9 @@ spreads. Totals improved but still trail today's engine for the reason in sectio
    points between fit rounds at 4 replays.
 5. **Infrastructure:** the Azure copy step re-uploads everything from a fresh worktree (about 650 MB per machine),
    because a new worktree's file timestamps don't match the worker's base copy. Three final jobs sat in the copy step
-   for over 30 minutes, so I ran the betting pair and the totals file locally instead. Cancelling those Azure jobs was
-   blocked by the permission check; they were left to finish and switch their machines off themselves. Worth checking
-   `azure_worker.py status` (and a `--checksum` or size-only copy for worktrees).
+   for over 30 minutes, so I ran the betting pair and the totals file locally instead. With the user's OK the three Azure
+   jobs were cancelled and their machines switched off (all four workers deallocated, 2026-11-25). Worth a `--checksum`
+   or size-only copy for worktrees in `azure_worker.py`.
 
 ## Ratings questions (flagged, nothing changed)
 Season points, Stage 2 against real, players with 400+ real points (8 replays of every game):
