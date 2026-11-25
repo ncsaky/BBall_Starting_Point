@@ -27,7 +27,7 @@ Three work tracks exist. Know which one your task belongs to:
 9. **Two scorecards judge any engine change:** the betting-odds probability test (`validate-season-probabilities`; no-vig market odds, Brier score and log loss, player props) and the real-stat targets (`scripts/calibration_report.py`, weighted by sample size, usage and role). Don't regress either one silently.
 10. **Speed budget:** simulating one month in the GUI, including AI front-office activity, should take about 10–20 seconds.
 11. **LeBron James is a deliberate one-of-one exception** (`transactions.py` `goat_exception_player`). He must never be traded in regular sims, and his fixed trade value stays. Don't "fix" it.
-12. **Table style** (all GUI tables): one solid dark line under the header (the user rejected the double rule on 2026-11-23: it read as a white gap), small bold header text, alternating row shading, whole-row hover highlight, sorted-column shading, headshots bottom-aligned filling row height. Match existing tables. The full look and contrast rules are in `docs/UI_STYLE_GUIDE.md`.
+12. **Table style** (all GUI tables): one solid dark line under the header (the user rejected the double rule on 2026-11-23: it read as a white gap), small bold header text, alternating row shading, whole-row hover highlight, a small white triangle beside the sorted heading (no sorted-column shading, user 2026-11-24), headshots bottom-aligned filling row height. Match existing tables. The full look and contrast rules are in `docs/UI_STYLE_GUIDE.md`.
 
 ## 3. Writing for the user
 

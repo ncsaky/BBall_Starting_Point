@@ -146,6 +146,19 @@ function applyUiLooks() {
 }
 function clearGlass() { return document.documentElement.dataset.glass === "clear"; }
 applyUiLooks();
+// Settings > Card transparency (playtest 2026-11-24): how much of the board shows through windows, pop-ups and slides.
+// 100 is the bare glass; lower values lay a darker fill under the content. jfresh.css reads --card-fill (0 to 0.86).
+const CARD_CLEAR_KEY = "nbaGmCardClear", CARD_CLEAR_MIN = 10, CARD_CLEAR_DEFAULT = 60;
+function cardTransparency() {
+  let saved = null;
+  try { saved = localStorage.getItem(CARD_CLEAR_KEY); } catch {}
+  const value = saved === null || saved === "" ? NaN : Number(saved);
+  return Number.isFinite(value) ? Math.max(CARD_CLEAR_MIN, Math.min(100, value)) : CARD_CLEAR_DEFAULT;
+}
+function applyCardTransparency(value = cardTransparency()) {
+  document.documentElement.style?.setProperty("--card-fill", ((100 - value) * 0.0096).toFixed(3));
+}
+applyCardTransparency();
 const MULTIPLAYER_MUTATIONS = new Set([
   "apply_contract",
   "submit_extension_offer",
@@ -311,6 +324,14 @@ function wireEvents() {
     try { localStorage.setItem(BOARD_THEME_KEY, theme); } catch {}
     applyBoardTheme(theme);
     button.parentElement.querySelectorAll("[data-board-theme-choice]").forEach(other => other.setAttribute("aria-pressed", String(other === button)));
+  });
+  // Settings > Card transparency: applies while the slider moves.
+  document.addEventListener("input", (event) => {
+    const slider = event.target.closest?.("[data-card-transparency]");
+    if (!slider) return;
+    try { localStorage.setItem(CARD_CLEAR_KEY, slider.value); } catch {}
+    applyCardTransparency(Number(slider.value));
+    if (slider.nextElementSibling) slider.nextElementSibling.textContent = `${slider.value}%`;
   });
   // Settings > Glass and Font.
   document.addEventListener("click", (event) => {
@@ -5934,7 +5955,7 @@ function playoffStatsTable(rows, sort) {
   const head = PLAYOFF_STATS_COLUMNS.map((column) => {
     const sorted = column.key === active.key;
     const ariaSort = sorted ? (active.direction === "desc" ? "descending" : "ascending") : "none";
-    const mark = sorted ? (active.direction === "desc" ? " ↓" : " ↑") : "";
+    const mark = sorted ? `<i class="sort-tri" aria-hidden="true">${active.direction === "desc" ? "▼" : "▲"}</i>` : "";
     return `<th scope="col" class="playoff-stats-col-${column.key}${sorted ? " is-sorted" : ""}" aria-sort="${ariaSort}"><button type="button" data-playoff-stats-sort="${column.key}" title="Sort by ${escapeHtml(column.title)}">${escapeHtml(column.label)}${mark}</button></th>`;
   }).join("");
   const body = ordered.map((row, index) => {
@@ -6072,7 +6093,7 @@ function playoffInjuriesTable(rows, sort) {
   const active = playoffInjuriesSortState(sort);
   const head = PLAYOFF_INJURIES_COLUMNS.map((column) => {
     const sorted = column.key === active.key;
-    return `<th scope="col" class="playoff-stats-col-${column.key}${sorted ? " is-sorted" : ""}" aria-sort="${sorted ? (active.direction === "desc" ? "descending" : "ascending") : "none"}"><button type="button" data-playoff-injuries-sort="${column.key}" title="Sort by ${escapeAttr(column.title)}">${escapeHtml(column.label)}${sorted ? (active.direction === "desc" ? " ↓" : " ↑") : ""}</button></th>`;
+    return `<th scope="col" class="playoff-stats-col-${column.key}${sorted ? " is-sorted" : ""}" aria-sort="${sorted ? (active.direction === "desc" ? "descending" : "ascending") : "none"}"><button type="button" data-playoff-injuries-sort="${column.key}" title="Sort by ${escapeAttr(column.title)}">${escapeHtml(column.label)}${sorted ? `<i class="sort-tri" aria-hidden="true">${active.direction === "desc" ? "▼" : "▲"}</i>` : ""}</button></th>`;
   }).join("");
   const body = rows.map((row, index) => {
     const id = String(row.player_id || "");
@@ -7187,7 +7208,7 @@ function freeAgencyMarketTable(rows, room = state.data.freeagency || {}) {
     if (column.sortable === false) return `<th scope="col" class="fa-col-${column.key}"><span class="sr-only">${escapeHtml(column.title || column.key)}</span></th>`;
     const active = sort.key === column.key;
     const aria = active ? (sort.direction === "asc" ? "ascending" : "descending") : "none";
-    return `<th scope="col" class="fa-col-${column.key}${sorted(column.key)}" aria-sort="${aria}"><button type="button" data-fa-market-sort="${column.key}"${column.title ? ` title="${escapeAttr(column.title)}"` : ""}>${escapeHtml(column.label)}${active ? `<span aria-hidden="true">${sort.direction === "asc" ? " ↑" : " ↓"}</span>` : ""}</button></th>`;
+    return `<th scope="col" class="fa-col-${column.key}${sorted(column.key)}" aria-sort="${aria}"><button type="button" data-fa-market-sort="${column.key}"${column.title ? ` title="${escapeAttr(column.title)}"` : ""}>${escapeHtml(column.label)}${active ? `<i class="sort-tri" aria-hidden="true">${sort.direction === "asc" ? "▲" : "▼"}</i>` : ""}</button></th>`;
   }).join("");
   const body = rows.map((player) => {
     const ratings = player.ratings || {};
@@ -12666,7 +12687,7 @@ function playerFinderValue(row,key) {
 function playerFinderTable(rows) {
   const finder=state.playerFinder || {};
   const fields=[["player","Player",260],["team","Team",48],["position","Pos",40],["age","Age",36],["height_inches","Height",54],["overall","OVR",104],["offense","OFF",104],["defense","DEF",104],["health_risk","Risk",56],["upside_remaining","Runway",60],["find","Find",58]];
-  const head=fields.map(([key,label])=>`<th scope="col" ${key!=="find"?`aria-sort="${finder.sortField===key?(finder.sortDirection==='asc'?'ascending':'descending'):'none'}"`:""}>${key==='find'?label:`<button type="button" data-finder-sort="${key}">${label}${finder.sortField===key?(finder.sortDirection==='asc'?' ↑':' ↓'):''}</button>`}</th>`).join('');
+  const head=fields.map(([key,label])=>`<th scope="col" ${key!=="find"?`aria-sort="${finder.sortField===key?(finder.sortDirection==='asc'?'ascending':'descending'):'none'}"`:""}>${key==='find'?label:`<button type="button" data-finder-sort="${key}">${label}${finder.sortField===key?`<i class="sort-tri" aria-hidden="true">${finder.sortDirection==='asc'?'▲':'▼'}</i>`:''}</button>`}</th>`).join('');
   const body=rows.map(row=>`<tr data-finder-player="${escapeAttr(row.id)}" tabindex="0" aria-label="Open player card for ${escapeAttr(row.name)}"><td><span class="player-finder-identity">${playerHeadshotMarkup(row,'roster-player-headshot') || playerHeadshotMarkup({is_prospect:true},'roster-player-headshot')}${playerNameWithInjuryMarkup(row)}</span></td><td>${teamLogoSrc(row.team_abbrev)?`<span class="player-finder-team-logo" title="${escapeAttr(row.team_abbrev)}"><img src="${escapeAttr(teamLogoSrc(row.team_abbrev))}" alt="${escapeAttr(row.team_abbrev)} logo" loading="lazy" decoding="async"></span>`:escapeHtml(row.team_abbrev || "FA")}</td><td>${escapeHtml(compactPos(row.position))}</td><td>${escapeHtml(row.age == null ? "—" : Math.floor(row.age))}</td><td>${escapeHtml(heightFromRow(row) || "—")}</td>${['overall','offense','defense'].map(key=>`<td>${compactRatingBar(playerFinderValue(row,key))}</td>`).join('')}<td>${injuryRiskBody(row.health_risk,row.injury_body)}</td><td>${row.upside_remaining==null?'—':playerEvidenceRing('Growth runway',row.upside_remaining,5,playerUpsideColor(row.upside_remaining),' / 5')}</td><td><button type="button" class="ui-command" data-finder-trade="${escapeAttr(row.id)}" aria-label="Find trades for ${escapeAttr(row.name)}" ${!row.team_id || row.team_abbrev==='FA'?'disabled title="Free agents cannot be traded"':'title="Open Trade Finder with this player selected"'}>Find</button></td></tr>`).join('');
   return `<table class="player-finder-table"><colgroup>${fields.map(([, ,width])=>`<col style="width:${width}px">`).join('')}</colgroup><thead><tr>${head}</tr></thead><tbody>${body || '<tr><td colspan="11" class="player-finder-empty">No players match these filters.</td></tr>'}</tbody></table>`;
 }
@@ -12902,6 +12923,7 @@ function openSettingsModal() {
       <section class="settings-group">
         <h4>Look</h4>
         ${boardThemeMenuMarkup()}
+        ${typeof cardTransparencyMenuMarkup === "function" ? cardTransparencyMenuMarkup() : ""}
         ${typeof uiLookMenuMarkup === "function" ? uiLookMenuMarkup("font") + uiLookMenuMarkup("buttons") : ""}
       </section>
       ${slideshows ? `<section class="settings-group"><h4>Season slideshows</h4>${slideshows}</section>` : ""}
@@ -12987,6 +13009,7 @@ function sortPhotoCredits(root, key) {
   if (descending) rows.reverse();
   rows.forEach(row => body.appendChild(row));
   table.querySelectorAll("[data-credit-col]").forEach(cell => cell.classList.toggle("is-sorted", cell.dataset.creditCol === key));
+  table.querySelectorAll("th[data-credit-col]").forEach(th => th.dataset.creditCol === key ? th.setAttribute("aria-sort", descending ? "descending" : "ascending") : th.removeAttribute("aria-sort"));
 }
 
 // Settings rows: the label (with an optional "i" for the explanation) on the left, the control on the right.
@@ -13003,6 +13026,11 @@ function boardThemeMenuMarkup() {
   const current = boardTheme();
   const buttons = BOARD_THEMES.map(([key, label]) => `<button type="button" data-board-theme-choice="${key}" aria-pressed="${key === current}">${label}</button>`);
   return settingsRow("Board background", settingsPill("Board background", buttons.join("")));
+}
+
+function cardTransparencyMenuMarkup() {
+  const value = cardTransparency();
+  return settingsRow("Card transparency", `<div class="settings-slider"><input type="range" min="${CARD_CLEAR_MIN}" max="100" step="5" value="${value}" data-card-transparency aria-label="Card transparency"><output>${value}%</output></div>`);
 }
 
 function uiLookMenuMarkup(name) {
@@ -17152,7 +17180,7 @@ function heightToInches(value) {
 function draftSortMark(key) {
   const sort = state.draftBoardSort || {};
   if (sort.key !== key) return "";
-  return sort.direction === "desc" ? " ↓" : " ↑";
+  return `<i class="sort-tri" aria-hidden="true">${sort.direction === "desc" ? "▼" : "▲"}</i>`;
 }
 
 function rosterRows(dash) {
@@ -17183,7 +17211,7 @@ function table(headers, rows, mapper, tableId = "table") {
   if (sort) {
     mapped.sort((a, b) => compareCell(a.cells[sort.index], b.cells[sort.index], sort.direction));
   }
-  return `<div class="table-wrap"><table class="data-table ${escapeAttr(tableId)}"><thead><tr>${headers.map((header, index) => `<th aria-sort="${sort?.index === index ? (sort.direction === "asc" ? "ascending" : "descending") : "none"}"><button class="sort-head" data-sort-table="${escapeAttr(tableId)}" data-sort-index="${index}">${escapeHtml(header)}${sort?.index === index ? (sort.direction === "asc" ? " ↑" : " ↓") : ""}</button></th>`).join("")}</tr></thead><tbody>${mapped.map(({ cells }) => `<tr>${cells.map((cell) => `<td>${formatCell(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  return `<div class="table-wrap"><table class="data-table ${escapeAttr(tableId)}"><thead><tr>${headers.map((header, index) => `<th aria-sort="${sort?.index === index ? (sort.direction === "asc" ? "ascending" : "descending") : "none"}"><button class="sort-head" data-sort-table="${escapeAttr(tableId)}" data-sort-index="${index}">${escapeHtml(header)}${sort?.index === index ? `<i class="sort-tri" aria-hidden="true">${sort.direction === "asc" ? "▲" : "▼"}</i>` : ""}</button></th>`).join("")}</tr></thead><tbody>${mapped.map(({ cells }) => `<tr>${cells.map((cell) => `<td>${formatCell(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 
 function compareCell(a, b, direction) {

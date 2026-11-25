@@ -37,21 +37,6 @@ body.unified-terminal-ui table thead th :is(button, a, span, abbr, .sort-head, .
 /* Rows flush with the table edges. */
 body.unified-terminal-ui table tbody tr { border-left: 0 !important; }
 
-/* Sorted column: shaded header, shaded and bold cells. */
-body.unified-terminal-ui table thead th:is(.ss-sorted, .is-sorted, [aria-sort="ascending"], [aria-sort="descending"]) {
-  background-color: var(--table-sorted-head) !important;
-}
-body.unified-terminal-ui table tbody :is(td, th):is(.ss-sorted, .is-sorted, .is-sorted-value) {
-  background-image: linear-gradient(var(--table-sorted-cell), var(--table-sorted-cell)) !important;
-  font-weight: 700 !important;
-}
-body.unified-terminal-ui table tbody :is(td, th):is(.ss-sorted, .is-sorted, .is-sorted-value) * { font-weight: 700 !important; }
-/* Row lines stay visible through the sorted fill: a darker line inside the sorted column only. */
-body.unified-terminal-ui table tbody :is(td, th):is(.ss-sorted, .is-sorted, .is-sorted-value) {
-  border-bottom-color: var(--table-sorted-rule) !important;
-  border-top-color: var(--table-sorted-rule) !important;
-}
-
 /* Grid-style "house" tables (Standings, Minutes, Development, Coaching Staff, Next Opponent): same header line. */
 /* One drawn line (a border, not an inset shadow: the shadow sat inside the header and cut into its text), the header
    tall enough for its labels, no 1px gap above the first row, and no lighter line between a card's banner and the

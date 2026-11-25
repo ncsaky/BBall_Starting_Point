@@ -33,6 +33,8 @@ html[data-glass="clear"] {
   --g-text: #ffffff;
   --g-soft: #d5e1ea;
   --g-glass: rgba(255, 255, 255, .045);
+  /* The card surface: the bare glass tint over a dark, team-tinted fill set by Settings > Card transparency. */
+  --card-surface: linear-gradient(var(--g-glass), var(--g-glass)), color-mix(in srgb, color-mix(in srgb, var(--jf-team, #17324d) 35%, #07101a) calc(var(--card-fill, .384) * 100%), transparent);
   --g-glass-dark: rgba(6, 12, 20, .30);
   --g-lift: var(--jf-lift);
   --g-hover: rgba(255, 255, 255, .07);
@@ -70,8 +72,7 @@ html[data-glass="clear"] body.unified-terminal-ui {
 html[data-glass="clear"] body .has-card-board .card-board-window,
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell.modal-shell.modal-shell,
 html[data-glass="clear"] .season-slideshow .ss-card {
-  background: var(--g-glass) !important;
-  background-image: none !important;
+  background: var(--card-surface) !important;
   -webkit-backdrop-filter: var(--g-blur) !important; backdrop-filter: var(--g-blur) !important;
   border: 1px solid var(--jf-edge) !important;
   border-radius: var(--g-radius) !important;
@@ -175,7 +176,10 @@ html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card :is(.pl
 
 /* ---------- Pop-ups let the team colour through (JFresh's Larkin card): the trade room is the same faint lift as every
    card, the backdrop only lightly dimmed; the room's inner sections are hairline-edged, not darker boxes. */
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-shell.modal-shell.modal-trade-room { background-color: rgba(255, 255, 255, .05) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-shell.modal-shell.modal-trade-room { background: var(--card-surface) !important; }
+html[data-glass="clear"] .settings-slider { display: flex; align-items: center; gap: 12px; }
+html[data-glass="clear"] .settings-slider input[type="range"] { flex: 1; min-width: 200px; margin: 0; accent-color: #3d8fe0; cursor: pointer; }
+html[data-glass="clear"] .settings-slider output { min-width: 4ch; color: #fff; font-size: 13px; font-weight: 700; text-align: right; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot#modalRoot.modal-root { background: rgba(3, 8, 14, .16) !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room :is(.tr-toolbar, .tr-pick-bar, .tr-side, .tr-verdict, .tr-lower, .tr-picker, .tr-payroll, .tr-finder-brief, .tr-finder-results, .trade-room-toolbar) {
   background: rgba(255, 255, 255, .035) !important; border: 1px solid var(--jf-line) !important; box-shadow: none !important;
@@ -304,11 +308,6 @@ html[data-glass="clear"] body.unified-terminal-ui { --jf-edge-l: 10px; --jf-edge
 html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table > thead > tr > th:first-child::before,
 html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table > thead > tr > th:last-child::after { background: inherit !important; }
 html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table > thead > tr > th:last-child::after { width: var(--jf-edge-r) !important; }
-/* Sorted column: a faint fill (not the old dark block) on the header and the cells. */
-html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table thead th[aria-sort]:not([aria-sort="none"]) { background: var(--jf-sorted) !important; }
-html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table tbody td.is-sorted-value { background-color: var(--jf-sorted) !important; }
-html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table tbody td.is-sorted-value:first-child { box-shadow: calc(-1 * var(--jf-edge-l)) 0 0 0 var(--jf-sorted) !important; }
-html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table tbody td.is-sorted-value:last-child { box-shadow: var(--jf-edge-r) 0 0 0 var(--jf-sorted) !important; }
 /* Row hover reaches both edges (painted beside the first and last cells), never over the row lines. */
 html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table tbody tr:is(:hover, :focus-within) > :is(td, th):first-child { box-shadow: calc(-1 * var(--jf-edge-l)) 0 0 0 var(--g-hover) !important; }
 html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table tbody tr:is(:hover, :focus-within) > :is(td, th):last-child { box-shadow: var(--jf-edge-r) 0 0 0 var(--g-hover) !important; }
@@ -480,7 +479,6 @@ html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .injury
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) :is(td, th).is-sorted-value,
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) tbody :is(td, th).is-sorted,
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) [data-house-row] > .is-sorted { background-color: transparent !important; }
-html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table tbody td.is-sorted-value:is(:first-child, :last-child) { box-shadow: none !important; }
 html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table tbody tr:is(:hover, :focus-within) > :is(td, th).is-sorted-value:first-child { box-shadow: calc(-1 * var(--jf-edge-l)) 0 0 0 var(--g-hover) !important; }
 /* Morale and Team Signals: the bars take the room (shorter label column, value just wide enough). */
 html[data-glass="clear"] body .has-card-board .season-signal-row { grid-template-columns: 86px minmax(0, 1fr) 46px !important; gap: 10px !important; }
@@ -561,3 +559,12 @@ html[data-glass="clear"] .season-slideshow .ss-story-rich .ss-story-logo { width
 html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card :is(.injury-body-summary, .injury-body-note, .injury-body-key, .injury-body-key *) { font-size: 15px !important; line-height: 1.45 !important; color: #e6eef5 !important; }
 html[data-glass="clear"] body .has-card-board :is([data-board-window="morale"], [data-board-window="signals"]) .season-signal-card { width: 100% !important; box-sizing: border-box; }
 html[data-glass="clear"] body .has-card-board .season-signal-row { grid-template-columns: 80px minmax(0, 1fr) 46px !important; }
+
+/* ---------- The sorted field (playtest 2026-11-24): no shaded or bold column, only a small white triangle beside the
+   heading. Tables that draw their own mark use these classes; plain headings carry a .sort-label span. */
+body.unified-terminal-ui :is(.sort-tri, .house-sort-arrow, .season-prospect-sort-arrow) { display: inline-block; margin-left: 4px; font-size: 7px !important; font-style: normal; font-weight: 700; line-height: 1; vertical-align: middle; color: #fff !important; text-decoration: none; }
+body.unified-terminal-ui .house-sort-arrow:empty { display: none; }
+body.unified-terminal-ui th[aria-sort="ascending"] > .sort-label::after,
+body.unified-terminal-ui .photo-credits-table th[aria-sort="ascending"] > button::after { content: "▲"; margin-left: 4px; font-size: 7px; vertical-align: middle; color: #fff; }
+body.unified-terminal-ui th[aria-sort="descending"] > .sort-label::after,
+body.unified-terminal-ui .photo-credits-table th[aria-sort="descending"] > button::after { content: "▼"; margin-left: 4px; font-size: 7px; vertical-align: middle; color: #fff; }

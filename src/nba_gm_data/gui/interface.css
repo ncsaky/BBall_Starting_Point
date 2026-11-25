@@ -82,8 +82,8 @@ body.unified-terminal-ui :is(.sort-head,.local-sort,.draft-sort-button) {
   background: transparent !important; border: 0 !important; border-radius: 0; color: var(--ui-muted);
   font: inherit; min-height: 0; padding: 4px 0; text-align: inherit; width: 100%;
 }
-th[aria-sort="ascending"] .local-sort::after { content: " ↑"; color: var(--ui-text); }
-th[aria-sort="descending"] .local-sort::after { content: " ↓"; color: var(--ui-text); }
+th[aria-sort="ascending"] .local-sort::after { content: "▲"; margin-left: 4px; font-size: 7px; color: #fff; }
+th[aria-sort="descending"] .local-sort::after { content: "▼"; margin-left: 4px; font-size: 7px; color: #fff; }
 body.unified-terminal-ui :is(tbody tr,.season-minute-row):focus-within { background: #20262b; }
 body.unified-terminal-ui .section-head { align-items: center; gap: 10px; min-height: 36px; padding: 5px 10px; }
 body.unified-terminal-ui .section-head h3 { font-size: 13px; }

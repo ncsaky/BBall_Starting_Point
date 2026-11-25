@@ -281,16 +281,13 @@ body.unified-terminal-ui #modalRoot table.tr-table thead th {
 }
 body.unified-terminal-ui #modalRoot table.tr-table thead th[data-trade-sort] { cursor: pointer; user-select: none; }
 body.unified-terminal-ui #modalRoot table.tr-table thead th[data-trade-sort]:hover { background: #e7eef4 !important; text-decoration: none !important; }
-body.unified-terminal-ui #modalRoot table.tr-table thead th.is-sorted { background: var(--tr-sorted-head) !important; }
-body.unified-terminal-ui #modalRoot table.tr-table thead th[aria-sort]::after { content: " ▾"; font-size: 9px; text-decoration: none; }
-body.unified-terminal-ui #modalRoot table.tr-table thead th[aria-sort="ascending"]::after { content: " ▴"; }
+body.unified-terminal-ui #modalRoot table.tr-table thead th[aria-sort="descending"]::after { content: "▼"; margin-left: 4px; font-size: 7px; color: #fff; text-decoration: none; }
+body.unified-terminal-ui #modalRoot table.tr-table thead th[aria-sort="ascending"]::after { content: "▲"; margin-left: 4px; font-size: 7px; color: #fff; text-decoration: none; }
 body.unified-terminal-ui #modalRoot table.tr-table tbody :is(td, th) {
   height: 32px; padding: 0 6px !important; text-align: center !important; vertical-align: middle; white-space: nowrap;
   border: 0 !important; border-bottom: 1px solid var(--tr-rule) !important; background-color: var(--tr-card) !important; color: var(--tr-ink); font-weight: 400 !important;
 }
 body.unified-terminal-ui #modalRoot table.tr-table tbody tr:nth-child(even) > :is(td, th) { background-color: var(--tr-stripe) !important; }
-body.unified-terminal-ui #modalRoot table.tr-table tbody :is(td, th).is-sorted { background-image: linear-gradient(var(--tr-sorted-cell), var(--tr-sorted-cell)) !important; font-weight: 700 !important; }
-body.unified-terminal-ui #modalRoot table.tr-table tbody :is(td, th).is-sorted :is(b, span, summary, button) { font-weight: 700 !important; }
 body.unified-terminal-ui #modalRoot table.tr-table tbody tr.is-selected > :is(td, th) { background-color: #d3e3f4 !important; }
 body.unified-terminal-ui #modalRoot table.tr-table tbody tr[data-trade-row] { cursor: pointer; }
 body.unified-terminal-ui #modalRoot table.tr-table tbody tr:hover > :is(td, th) { background-color: var(--tr-hover) !important; color: var(--tr-ink) !important; }

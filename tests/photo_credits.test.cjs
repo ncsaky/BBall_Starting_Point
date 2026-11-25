@@ -53,7 +53,7 @@ test('the credits table follows the house table style', () => {
   assert.match(css, /\.photo-credits-table thead th \{[^}]*border-bottom:2px solid/);
   assert.match(css, /\.photo-credits-table tbody tr:nth-child\(even\)/);
   assert.match(css, /\.photo-credits-table tbody tr:hover/);
-  assert.match(css, /\.photo-credits-table \.is-sorted/);
+  assert.doesNotMatch(css, /\.photo-credits-table \.is-sorted/, 'no sorted column shading');
 });
 
 test('the AI-generated faces of fictional people are credited as one group', async () => {

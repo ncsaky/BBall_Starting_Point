@@ -72,14 +72,11 @@ body.unified-terminal-ui .fa-market-table thead th button {
   color:var(--season-text, #1d2a33); font:700 9px Tahoma,Arial,sans-serif; text-align:left; text-transform:none; letter-spacing:0; cursor:pointer; white-space:nowrap;
 }
 body.unified-terminal-ui .fa-market-table thead th button:hover { text-decoration:underline; }
-.fa-market-table thead th.is-sorted { background:#e3ebf1; }
 .fa-market-table tbody tr { background-color:#fff; cursor:pointer; }
 .fa-market-table tbody tr:nth-child(even) { background-color:#eef1f3; }
 .fa-market-table tbody tr:is(:hover,:focus-within) { background-color:#dce8f2; }
 .fa-market-table tbody tr.is-selected { background-color:#cfe0ee; box-shadow:inset 3px 0 #42667a; }
 body.unified-terminal-ui .fa-market-table tbody :is(th,td) { background-color:transparent; }
-body.unified-terminal-ui .fa-market-table tbody td.is-sorted,
-body.unified-terminal-ui .fa-market-table tbody th.is-sorted { background-color:rgba(66,102,122,.08); }
 .fa-market-table tbody tr:focus { outline:2px solid #42667a; outline-offset:-2px; }
 .fa-market-table tbody th { position:relative; padding:0; }
 .fa-player { display:flex; align-items:center; height:32px; padding-left:31px; min-width:0; }

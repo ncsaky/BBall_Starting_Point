@@ -353,6 +353,7 @@ const GameInterface = (() => {
       heads.forEach(th => {
         const name = th.textContent.trim();
         if (!name || /^actions?$/i.test(name) || th.querySelector('.sr-only')) return;
+        const label = document.createElement('span'); label.className = 'sort-label'; label.append(...th.childNodes); th.append(label);
         th.tabIndex = 0; th.classList.add('auto-sort-head'); if (!th.title) th.title = `Sort by ${name}`;
         th.addEventListener('click', () => sortAutoTable(th));
         th.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); sortAutoTable(th); } });

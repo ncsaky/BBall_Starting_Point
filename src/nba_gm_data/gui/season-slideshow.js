@@ -30,7 +30,7 @@
   // Every column is centred, header over its values; only the first field (player or team name) and prose sit left
   // (UI style guide). `--i` is the row's place, used by the rows-falling-in entry animation.
   function table(columns, rows, {sorted = null, caption = "", rowClass = () => ""} = {}) {
-    const head = columns.map((col, index) => `<th scope="col" class="${col.cls || ""}${index === sorted ? " ss-sorted" : ""}" data-ss-sort tabindex="0" title="Sort by ${attr(col.label)}"${index === sorted ? ` aria-sort="${SORT_ASCENDING_FIRST.test(col.label) ? "ascending" : "descending"}"` : ""}>${esc(col.label)}</th>`).join("");
+    const head = columns.map((col, index) => `<th scope="col" class="${col.cls || ""}${index === sorted ? " ss-sorted" : ""}" data-ss-sort tabindex="0" title="Sort by ${attr(col.label)}"${index === sorted ? ` aria-sort="${SORT_ASCENDING_FIRST.test(col.label) ? "ascending" : "descending"}"` : ""}><span class="sort-label">${esc(col.label)}</span></th>`).join("");
     const body = rows.map((row, r) => `<tr class="${rowClass(row, r)}" style="--i:${r}">${columns.map((col, index) => `<td class="${col.cls || ""}${index === sorted ? " ss-sorted" : ""}">${col.render(row, r)}</td>`).join("")}</tr>`).join("");
     // Columns with a set width make a fixed layout: tables shown side by side then line up exactly (same column
     // widths, row heights and alignment), whatever their contents (playtest 2026-11-22).
@@ -193,7 +193,7 @@
     },
     standings(slide) {
       const conf = (name) => table([
-        {label: "#", render: (r) => r.rank, cls: "ss-num", width: "30px"},
+        {label: "#", render: (r) => r.rank, cls: "ss-num", width: "42px"},
         {label: "Team", render: (r) => teamCell(r.team), cls: "ss-left", width: "78px"},
         {label: "W", render: (r) => r.wins, cls: "ss-num", width: "36px"},
         {label: "L", render: (r) => r.losses, cls: "ss-num", width: "36px"},
@@ -212,10 +212,10 @@
     },
     leaders(slide) {
       return `<div class="ss-grid">${(slide.categories || []).map((cat) => table([
-        {label: "#", render: (r, i) => i + 1, cls: "ss-num", width: "28px"},
+        {label: "#", render: (r, i) => i + 1, cls: "ss-num", width: "42px"},
         {label: "Player", render: name, cls: "ss-left"},
         {label: "Team", render: (r) => teamCell({abbrev: r.team_abbrev}), width: "64px"},
-        {label: "Per game", render: (r) => num(r.per_game), cls: "ss-num", width: "66px"},
+        {label: "Per game", render: (r) => num(r.per_game), cls: "ss-num", width: "84px"},
       ], cat.rows, {sorted: 3, caption: cat.label})).join("")}</div>`;
     },
     your_season(slide) {
@@ -263,7 +263,7 @@
     power(slide) {
       const change = (r) => r.change === null || r.change === undefined ? "—" : r.change > 0 ? `<span class="ss-up">▲${r.change}</span>` : r.change < 0 ? `<span class="ss-down">▼${-r.change}</span>` : "=";
       const columns = [
-        {label: "#", render: (r) => r.rank, cls: "ss-num", width: "30px"},
+        {label: "#", render: (r) => r.rank, cls: "ss-num", width: "42px"},
         {label: "Team", render: (r) => teamCell(r.team), cls: "ss-left", width: "72px"},
         {label: "Overall", render: (r) => num(r.overall), cls: "ss-num", width: "58px"},
         {label: "Last finish", render: (r) => r.last_finish ?? "—", cls: "ss-num", width: "72px"},
@@ -318,7 +318,7 @@
       const cats = (slide.categories || []).map((cat) => `<section class="ss-leader-cat">${panelTitle(cat.label, (slide.players || []).length ? `<button type="button" class="ss-view-all" data-ss-view-all="${attr(cat.stat)}">View all</button>` : "")}${table([
         {label: "Player", render: name, cls: "ss-left"},
         {label: "Team", render: (r) => where(r.team_abbrev, r.now), width: "126px"},
-        {label: /_pct$/.test(cat.stat) ? "Pct" : "Per game", render: (r) => value(r.per_game), cls: "ss-num", width: "66px"},
+        {label: /_pct$/.test(cat.stat) ? "Pct" : "Per game", render: (r) => value(r.per_game), cls: "ss-num", width: "84px"},
       ], cat.rows, {sorted: 2})}</section>`).join("");
       const winners = (slide.award_winners || []).map((w) => `<li><b>${esc(w.label)}</b>: ${esc(w.name)} ${where(w.then, w.now)}</li>`).join("");
       return `<div class="ss-grid ss-grid-3 ss-leader-grid">${cats}</div>${winners ? `<section class="ss-feature ss-winners">${panelTitle("Award winners")}<ul class="ss-list">${winners}</ul></section>` : ""}`;
