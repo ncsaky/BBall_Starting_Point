@@ -82,3 +82,13 @@ test('step screens stay out of the sidebar and the footer sits outside the page'
   assert.doesNotMatch(source, /\["now", ""\]/);
   assert.match(source, /<\/div>\n\s*<footer class="pages-foot">/);
 });
+
+test('a player is a page of the app, not a pop-up window', () => {
+  const board = read('card-board.js'), source = read('card-pages.js');
+  assert.match(board, /const isPlayerPage = \(id\) => Boolean\(pages\) && String\(id\)\.startsWith\("player-card-"\)/);
+  assert.match(board, /pages\.showDetail\(id\);/);
+  assert.match(board, /clipboard-player-card--coach/, 'coach cards stay pop-ups');
+  assert.match(source, /data-pages-detail-back/);
+  assert.match(source, /event\.key === "Escape" && currentPage === DETAIL/);
+  assert.match(read('card-pages.css'), /\.pages-shell\.is-detail \.pages-title \{ display: none; \}/);
+});

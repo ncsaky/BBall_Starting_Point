@@ -1050,7 +1050,17 @@
       const activeId = ids.find(id => frames.get(id).classList.contains("is-active"));
       return selectedWindowId(layout, ids, activeId);
     };
+    // Pages mode: a player's card is a page of its own, not a pop-up (user, 2026-11-24). Coach cards stay pop-ups.
+    const isPlayerPage = (id) => Boolean(pages) && String(id).startsWith("player-card-") && !nodes.get(id)?.card?.classList?.contains("clipboard-player-card--coach");
     const closeWindow = (id, focusNext = false) => {
+      if (isPlayerPage(id) && layout[id]?.visible) {
+        layout[id].visible = false;
+        options.onVisibilityChange?.(id, false);
+        save();
+        pages.closeDetail(id);
+        announce(`${nodes.get(id).title} closed`);
+        return true;
+      }
       if (pages?.owns(id)) return false;
       if (!id || !layout[id]?.visible || nodes.get(id)?.required) return false;
       layout[id].visible = false;
@@ -1109,6 +1119,16 @@
     };
     const toggleActiveWindowExpanded = () => galleryOpen ? false : toggleWindowExpanded(selectedWindow(), true);
     const add = (id) => {
+      if (isPlayerPage(id)) {
+        Object.assign(layout[id], {visible: true, minimized: false});
+        save();
+        showGallery(false);
+        pages.showDetail(id);
+        options.onVisibilityChange?.(id, true);
+        announce(`${nodes.get(id).title} opened`);
+        options.onOpen?.(id, nodes.get(id).card);
+        return;
+      }
       if (pages?.owns(id)) { pages.show(id); return; }
       const item = layout[id];
       if (!item.visible) {
@@ -1486,7 +1506,9 @@
       save();
     });
 
-    if (pagesMode) pages = window.CardPages.attach({dashboard, board, canvas, toolbar, gallery, status, nodes, frames, layout, defaults, options, locked, save, announce, phaseCards, entering, toggleWindowExpansion: (item, id) => toggleWindowExpansion(item, id), EXPANDABLE_CARDS, TITLE_HEIGHT, starterMinWidths: STARTER_CARD_MIN_WIDTHS});
+    if (pagesMode) pages = window.CardPages.attach({dashboard, board, canvas, toolbar, gallery, status, nodes, frames, layout, defaults, options, locked, save, announce, phaseCards, entering, toggleWindowExpansion: (item, id) => toggleWindowExpansion(item, id), EXPANDABLE_CARDS, TITLE_HEIGHT, starterMinWidths: STARTER_CARD_MIN_WIDTHS,
+      closeDetail: (id) => closeWindow(id),
+      hideDetail: (id) => { if (!layout[id]?.visible) return; layout[id].visible = false; options.onVisibilityChange?.(id, false); save(); }});
     // Place the startup cards inside the visible board, even though the workspace
     // itself keeps extra canvas area available for arranging cards later.
     initializeStarterLayout(layout, saved, board.clientWidth, board.clientHeight, phaseCards);

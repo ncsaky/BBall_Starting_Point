@@ -26,6 +26,8 @@
   const MAX_SCALE = 1.22;    // a sparse page may grow this much
   const MIN_SCALE = .7;      // below this the page scrolls instead of shrinking further
   const lastPage = new Map();
+  const DETAIL = "@player";          // the page a player's card fills
+  const openDetails = new Map();     // per save: the player pages opened on top of each other
 
   const root = () => (typeof document !== "undefined" ? document.documentElement : null);
   const enabled = () => {
@@ -143,6 +145,8 @@
     let resizeFrame = 0;
     let disposed = false;
 
+    let detailStack = [];
+    let returnPage = null;
     const node = (id) => nodes.get(id);
     const isLocked = (id) => Boolean(ctx.locked(id));
     const rosterViewOpen = () => typeof preseasonRosterViewOpen === "function" && preseasonRosterViewOpen();
@@ -361,6 +365,13 @@
         viewport.append(el);
         pageEls.set(page.id, el);
       }
+      const detail = document.createElement("div");
+      detail.className = "pages-page pages-detail";
+      detail.dataset.pagesPage = DETAIL;
+      detail.hidden = true;
+      detail.innerHTML = `<div class="pages-stage"></div>`;
+      viewport.append(detail);
+      pageEls.set(DETAIL, detail);
       // Every owned frame lives somewhere in the page area (refreshes find cards by their window id); a card not on any
       // listed page waits in a hidden holding area.
       for (const id of owned) {
@@ -434,9 +445,81 @@
       sizeFrame("league-wire", width, 31);
     }
 
+    // ---- Player pages: the player's card fills the page, scaled as one piece; Back returns to where you were.
+    function layoutDetail() {
+      const id = detailStack.at(-1), el = pageEls.get(DETAIL), stage = el?.querySelector(".pages-stage");
+      if (!id || !stage || !frames.get(id)) return;
+      const item = layout[id] || {};
+      const width = item.width || 2100, height = item.height || 1270;
+      sizeFrame(id, width, height);
+      const style = getComputedStyle(viewport);
+      const availableWidth = Math.max(200, viewport.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
+      const availableHeight = Math.max(200, viewport.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom));
+      const scale = Math.min(1, availableWidth / width, availableHeight / height);
+      stage.style.transform = `scale(${scale})`;
+      el.style.width = `${Math.floor(width * scale)}px`;
+      el.style.height = `${Math.floor(height * scale)}px`;
+      el.style.margin = "0 auto";
+      dashboard.style.setProperty("--pages-scale", String(scale));
+    }
+
+    function showDetail(id) {
+      const frame = frames.get(id);
+      if (!frame) return false;
+      // A slideshow that stepped aside for this player (its "Back to" button is up) keeps its place.
+      const suspended = document.getElementById("ssReturn");
+      if (!suspended) closeSlideshowFor();
+      if (currentPage !== DETAIL) returnPage = currentPage;
+      detailStack = [...detailStack.filter(other => other !== id && layout[other]?.visible), id];
+      openDetails.set(saveKey, [...detailStack]);
+      currentPage = DETAIL;
+      owned.add(id);
+      frame.classList.add("is-page-card", "is-detail-card");
+      for (const [pageId, el] of pageEls) el.hidden = pageId !== DETAIL;
+      const stage = pageEls.get(DETAIL).querySelector(".pages-stage");
+      for (const other of [...stage.children]) if (other !== frame) holding.append(other);
+      stage.append(frame);
+      paint(id);
+      shell.classList.add("is-detail");
+      titleEl.textContent = "";
+      controlsEl.innerHTML = `<button type="button" class="pages-control pages-detail-back" data-pages-detail-back><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2.5 4 6l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>${suspended ? esc(suspended.textContent.replace(/^\W+/, "")) : "Back"}</button>`;
+      foot.classList.toggle("has-ticker", owned.has("league-wire"));
+      if (owned.has("league-wire")) placeTicker();
+      layoutDetail();
+      viewport.scrollTo?.(0, 0);
+      renderNav();
+      return true;
+    }
+
+    // Back (or the card's own close): the player under this one, else the page you came from.
+    function closeDetail(id) {
+      const wasShown = currentPage === DETAIL && detailStack.at(-1) === id;
+      detailStack = detailStack.filter(other => other !== id);
+      openDetails.set(saveKey, [...detailStack]);
+      if (frames.get(id)) holding.append(frames.get(id));
+      if (!wasShown) return;
+      if (detailStack.length) { showDetail(detailStack.at(-1)); return; }
+      const slideshow = document.getElementById("ssReturn");
+      if (slideshow) { leaveDetails(); currentPage = null; slideshow.click(); }
+      showPage(PAGES.some(page => page.id === returnPage) ? returnPage : "home", {keepSlideshow: Boolean(slideshow)});
+    }
+
+    // Moving to a sidebar page leaves every player page.
+    function leaveDetails() {
+      const leaving = detailStack;
+      detailStack = [];
+      openDetails.delete(saveKey);
+      shell.classList.remove("is-detail");
+      for (const id of leaving) {
+        if (frames.get(id)) holding.append(frames.get(id));
+        ctx.hideDetail?.(id);
+      }
+    }
+
     // Lay the current page out: natural sizes first, one scale for the whole page, then growing cards fill.
     function layoutPage() {
       if (!currentPage) return;
+      if (currentPage === DETAIL) return layoutDetail();
       const el = pageEls.get(currentPage);
       const stage = el?.querySelector(".pages-stage");
       if (!stage) return;
@@ -539,14 +622,15 @@
       }
     }
 
-    function showPage(pageId, {focus = false, fromNav = false} = {}) {
+    function showPage(pageId, {focus = false, fromNav = false, keepSlideshow = false} = {}) {
       const page = PAGES.find(item => item.id === pageId);
       if (page?.slideshow) {
         openSlideshow(page);
         return true;
       }
       if (!page || !pageEls.has(pageId)) return false;
-      closeSlideshowFor();
+      if (!keepSlideshow) closeSlideshowFor();
+      if (currentPage === DETAIL) leaveDetails();
       const previous = currentPage;
       currentPage = pageId;
       // While a save is still loading only Home exists: don't let that overwrite the page you were on.
@@ -644,6 +728,11 @@
 
     // ---- Wiring.
     const onClick = (event) => {
+      if (event.target.closest("[data-pages-detail-back]")) {
+        event.preventDefault();
+        ctx.closeDetail?.(detailStack.at(-1));
+        return;
+      }
       const go = event.target.closest("[data-pages-go]");
       if (go && dashboard.contains(go)) {
         event.preventDefault();
@@ -678,6 +767,7 @@
       if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
       if (document.querySelector("#modalRoot [role=dialog]") || window.SeasonSlideshow?.isOpen?.()) return;
       if (event.target.closest?.("input, textarea, select, [contenteditable]")) return;
+      if (event.key === "Escape" && currentPage === DETAIL) { event.preventDefault(); ctx.closeDetail?.(detailStack.at(-1)); return; }
       // [ and ] step through the pages in sidebar order.
       if (event.key !== "[" && event.key !== "]") return;
       const pages = visiblePages().filter(page => !page.slideshow);
@@ -723,10 +813,12 @@
 
     const api = {
       owns: (id) => owned.has(id),
+      showDetail,
+      closeDetail,
       paint,
       show,
       showPage,
-      isShown: (id) => Boolean(currentPage && slotOn(currentPage, id)) || (id === "league-wire" && foot.classList.contains("has-ticker")),
+      isShown: (id) => (currentPage === DETAIL && detailStack.at(-1) === id) || Boolean(currentPage && slotOn(currentPage, id)) || (id === "league-wire" && foot.classList.contains("has-ticker")),
       fitContent: (id) => { if (currentPage && slotOn(currentPage, id)) layoutPage(); },
       updateOfferCount(count) {
         offerCount = count;
@@ -742,7 +834,11 @@
         previewReturn = null;
       },
       ready() {
+        // A player page open before a refresh (or restored with the save) opens again over its page.
+        const open = [...nodes.keys()].filter(id => id.startsWith("player-card-") && layout[id]?.visible && !node(id).card.classList.contains("clipboard-player-card--coach"));
+        const remembered = (openDetails.get(saveKey) || []).filter(id => open.includes(id));
         showPage(landingPage());
+        for (const id of [...open.filter(id => !remembered.includes(id)), ...remembered]) showDetail(id);
       },
       dispose() {
         disposed = true;

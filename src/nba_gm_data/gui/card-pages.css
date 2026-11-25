@@ -362,6 +362,20 @@ html[data-layout="pages"] body.season-slideshow-open .is-pages > .season-command
 
 html[data-layout="pages"] .pages-slot-head.is-echo > * { visibility: hidden; }
 
+/* A player's page (user, 2026-11-24: "the player card shouldn't be a card, it should become the actual page"): the card
+   fills the page, scaled as one piece, under a slim row that holds Back. */
+html[data-layout="pages"] .pages-shell.is-detail .pages-head { min-height: 0; padding: 10px 22px 0 16px; justify-content: flex-start; }
+html[data-layout="pages"] .pages-shell.is-detail .pages-title { display: none; }
+html[data-layout="pages"] .pages-shell.is-detail .pages-controls { justify-content: flex-start; }
+html[data-layout="pages"] .pages-detail-back svg { width: 11px; height: 11px; }
+html[data-layout="pages"] .pages-detail > .pages-stage { display: block; }
+html[data-layout="pages"] body:has(.pages-shell.is-detail) .ss-return { display: none !important; }   /* the page's Back does it */
+/* No square outlines on a player's page: the card and its header have none; the ratings groups are soft tiles. */
+html[data-glass="clear"][data-layout="pages"] body.unified-terminal-ui .season-command-dashboard.is-pages .is-detail-card .clipboard-player-card.clipboard-player-card,
+html[data-glass="clear"][data-layout="pages"] body.unified-terminal-ui .season-command-dashboard.is-pages .is-detail-card .clipboard-player-card .approved-player-identity.approved-player-identity { border: 0 !important; box-shadow: none !important; }
+html[data-glass="clear"][data-layout="pages"] body.unified-terminal-ui .season-command-dashboard.is-pages .is-detail-card .clipboard-player-card .pc4-layer.pc4-layer { border: 0 !important; border-radius: 14px !important; background: rgba(255, 255, 255, .05) !important; }
+html[data-glass="clear"][data-layout="pages"] body.unified-terminal-ui .season-command-dashboard.is-pages .is-detail-card .clipboard-player-card :is(.player-page-bar.player-page-bar, [class*="legend"]) { border-left: 0 !important; border-right: 0 !important; border-top: 0 !important; box-shadow: none !important; }
+
 /* The Assistant GM's phone rises just left of the next-step button, never over it. */
 html[data-layout="pages"] body .assistant-gm-phone { right: calc(var(--pages-dock-w, 240px) + 30px) !important; }
 html[data-layout="pages"] body .pages-sidebar .season-steps-chip > summary > span { flex-basis: 100%; color: #fff !important; font-weight: 600 !important; font-size: 11.5px !important; line-height: 1.2; }

@@ -1156,7 +1156,7 @@ const PAGES_TUTORIAL_STEPS = [
   {
     title: "Pages and pop-ups",
     target: [".pages-sheet"],
-    body: "Each page lays its cards out to fill the screen. Player cards, box scores and the trade room open as pop-ups over the page; Esc closes them. A section title with an arrow opens that section's full page. [ and ] step through the pages.",
+    body: "Each page lays its cards out to fill the screen. Clicking a player opens their own page (Back or Esc returns); box scores and the trade room open as pop-ups over the page. A section title with an arrow opens that section's full page. [ and ] step through the pages.",
   },
   {
     title: "Set the rotation",
