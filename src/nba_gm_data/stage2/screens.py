@@ -80,21 +80,39 @@ def _sig(z: float) -> float:
     return 1.0 / (1.0 + math.exp(-z))
 
 
-def coverage_probabilities(handler, screener_def, ball_def, screener_is_big: bool, s: dict | None = None,
-                           star: float = 0.0) -> tuple[float, float, float, float]:
-    """(switch, drop, show, blitz) chances for one ball screen.
-    handler: the ball handler's card; screener_def / ball_def: the cards of the screener's and the ball's defenders."""
+def coverage_logits(handler, screener_def, ball_def, screener_is_big: bool, s: dict | None = None,
+                    star: float = 0.0) -> tuple[float, float, float]:
+    """The personnel part of the coverage call (switch, drop, blitz log-odds), before the team's scheme."""
     s = SCREENS if s is None else s
     sim = -abs(screener_def.height - ball_def.height) / 10.0
     mob = screener_def.contain_d
-    p_switch = _sig(s["switch0"] + s["k_sim"] * sim + s["k_mob"] * mob + (0.0 if screener_is_big else s["k_small"]))
-    threat = handler.pull_threat
-    p_drop = _sig(s["drop0"] + s["k_drop_rim"] * screener_def.rim_d - s["k_drop_mob"] * mob - s["k_drop_threat"] * threat)
-    p_blitz = _sig(s["blitz0"] + s["k_blitz_star"] * star)
+    z_switch = s["switch0"] + s["k_sim"] * sim + s["k_mob"] * mob + (0.0 if screener_is_big else s["k_small"])
+    z_drop = s["drop0"] + s["k_drop_rim"] * screener_def.rim_d - s["k_drop_mob"] * mob - s["k_drop_threat"] * handler.pull_threat
+    z_blitz = s["blitz0"] + s["k_blitz_star"] * star
+    return z_switch, z_drop, z_blitz
+
+
+def probabilities_from_logits(z_switch: float, z_drop: float, z_blitz: float, scheme: tuple[float, float] = (0.0, 0.0)
+                              ) -> tuple[float, float, float, float]:
+    """(switch, drop, show, blitz) from the personnel log-odds and the team's scheme (aggression, switching): an
+    aggressive scheme drops less and traps more, a switching scheme switches more (stage2.schemes)."""
+    agg, swi = scheme
+    p_switch = _sig(z_switch + swi)
+    p_drop = _sig(z_drop - agg)
+    p_blitz = _sig(z_blitz + agg)
     rest = 1.0 - p_switch
     drop = rest * p_drop
     blitz = rest * (1.0 - p_drop) * p_blitz
     return p_switch, drop, rest - drop - blitz, blitz
+
+
+def coverage_probabilities(handler, screener_def, ball_def, screener_is_big: bool, s: dict | None = None,
+                           star: float = 0.0, scheme: tuple[float, float] = (0.0, 0.0)
+                           ) -> tuple[float, float, float, float]:
+    """(switch, drop, show, blitz) chances for one ball screen.
+    handler: the ball handler's card; screener_def / ball_def: the cards of the screener's and the ball's defenders;
+    scheme: the defense's (aggression, switching) tilts in log-odds (stage2.schemes; (0, 0) = personnel only)."""
+    return probabilities_from_logits(*coverage_logits(handler, screener_def, ball_def, screener_is_big, s, star), scheme)
 
 
 def choose(u: float, probs: tuple[float, float, float, float]) -> int:

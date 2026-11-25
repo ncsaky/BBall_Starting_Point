@@ -25,4 +25,11 @@ S2-COACH (2026-11-24):
 - screens.py: pick-and-roll coverages and switching (switch, drop, show, trap) on self-created shots and rolls.
 - game.py: substitutions at every dead ball and timeout, players in foul trouble foul less, the real end-of-game
   fouling rates, screen assists in the box score.
+
+S2-SCHEMES (2026-11-24):
+- schemes.py / scheme_table.py: each head coach's ball-screen scheme (aggression: drop less and trap more; switching)
+  on top of his personnel, fitted to the scheme study's 2025-26 team measures.
+- game.py: a share of shooting fouls is charged to a teammate of the shot's defender (help, rotations, closeouts;
+  fitted to real fouls per 36), two-for-ones and late timeouts that advance the ball (fitted to the rotation study),
+  league turnover and pace levels refitted to the real 2025-26 games.
 """

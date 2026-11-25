@@ -21,6 +21,7 @@ from typing import Any
 from .cards import card_for, flat_for_player, generic_flat, means_for
 from .coach import Coach, roles_for
 from .game import LOOP, Game, TeamState, box_lines, team_line
+from .schemes import scheme_for
 
 NOTE = ("Stage 2 possession engine (S2-COACH v1): every possession played; tonight's plan from today's coach model, "
         "the in-game coach decides who plays at every stoppage.")
@@ -161,6 +162,7 @@ def _team_state(context, team, pool, starters, coach, rest_context, is_home, lea
     state = TeamState(team["id"], team["abbrev"], cards, targets, starter_idx, groups, eff, tempo, league, eff_def=eff_def,
                       coach_matchup=coach_matchup_scale(coach))
     state.form_pace = L["k_form_pace"] * float(env.get("pace", 0.0))
+    state.scheme = scheme_for(coach, team.get("abbrev", ""))
     state.reserve = [idx >= n_plan for idx in range(len(items))]
     if L.get("coach"):
         state.coach = build_coach(state, items, coach_rng or random.Random(f"{team['id']}:stage2-coach"),
