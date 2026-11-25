@@ -212,8 +212,9 @@ LOOP = {
     "end_last_shot_behind": 0.0,
     # Blowouts in the last minute (with the finishes on): a team up 11+ with 24-60 seconds left lets the shot clock run
     # out with this chance (real: 0.32 turnovers a possession there, mostly shot-clock violations, and 0.55 points); a
-    # team down 11+ in the last 24 seconds stops trying (real 0.34 points a possession). FITTED (s2_finishes_fit.py).
-    "late_runout": .377, "late_concede": .444,
+    # team down 11+ in the last 24 seconds stops trying (real 0.34 points a possession). FITTED (s2_finishes_fit.py;
+    # S2-LAST-POSSESSION refit .377 -> .398 and .444 -> .431 with s2_lastposs_fit.py).
+    "late_runout": .398, "late_concede": .431,
     # A leader's possession in the last 24 seconds against a defense that pressures before fouling (traps, the
     # inbound, five-second and back-court calls) ends in a turnover with this chance (with the finishes on). Real:
     # 0.065 turnovers a possession for a leader up 1-6 there; the loop's ordinary turnovers gave .01, so .055 is added.
@@ -439,7 +440,7 @@ class Game:
         self.team_foul_share = (L["foul_team_rim"], L["foul_team_short"], L["foul_team_jump"], L["foul_team_jump"])
         self.two_for_one = self.late_timeouts = self.advances = 0   # research counters
         self.use_finishes = self.use_coach and bool(L["finishes"])
-        self.late = FIN.NEUTRAL      # this possession's late-game terms (len, three, foul, make)
+        self.late = FIN.NEUTRAL      # this possession's late-game terms (len, three, foul, make, make3, tov)
         home.advance = away.advance = False
         home.screens_on = away.screens_on = self.use_screens
 
@@ -821,7 +822,7 @@ class Game:
                 self._run_clock(max(.5, self.t_left - (.5 + 2.5 * rng.random())))
                 slot = _pick(off.usage_cum, rng.random())
                 card = off.cards[off.on[slot]]
-                if rng.random() < _sig(self._to_z(card, card.to_logit + L["to_shift"] + self._pressure(off, de, slot))):
+                if rng.random() < _sig(self._to_z(card, card.to_logit + L["to_shift"] + self.late[5] + self._pressure(off, de, slot))):
                     return self._turnover(off, de, slot)
                 if lead == -3:
                     kind = THREE_PULL if card.menu[THREE_PULL] >= card.menu[THREE_CATCH] else THREE_CATCH
@@ -885,12 +886,12 @@ class Game:
             # What he tries first, so a ball screen and its coverage can shape the turnover chance and the shot.
             kind = self._menu_kind(card, card.menu_cum)
             scr = self._screen(off, de, slot, kind)
-            z = self._to_z(card, card.to_logit + L["to_shift"] + self._pressure(off, de, slot)
+            z = self._to_z(card, card.to_logit + L["to_shift"] + self.late[5] + self._pressure(off, de, slot)
                            + (scr.to_dz if scr is not None else 0.0))
             if rng.random() < _sig(z):
                 return self._turnover(off, de, slot)
             return self._shot(off, de, slot, kind, final=final, scr=scr)
-        z = self._to_z(card, card.to_logit + L["to_shift"] + self._pressure(off, de, slot) + (L["trans_to"] if trans else 0.0))
+        z = self._to_z(card, card.to_logit + L["to_shift"] + self.late[5] + self._pressure(off, de, slot) + (L["trans_to"] if trans else 0.0))
         if rng.random() < _sig(z):
             return self._turnover(off, de, slot)
         kind = self._menu_kind(card, card.trans_cum if trans else card.menu_cum)
@@ -921,9 +922,10 @@ class Game:
                 self._run_clock(min(t_left, 1.0 + 3.0 * rng.random()))
                 return self._turnover(off, de, _pick(off.usage_cum, rng.random()))
             key = "1" if lead == 1 else "2_3" if lead <= 3 else "4_6" if lead <= 6 else "7_10" if lead <= 10 else "11_plus"
-            p = TAKE_FOUL[key][band]
-            if band == 2 and self.use_finishes and FIN.TAKE_24_60 is not None:
-                p = FIN.TAKE_24_60[key]
+            if self.use_finishes and FIN.TAKE_LATE is not None:
+                p = FIN.TAKE_LATE[str(band)][FIN.take_key(lead)]
+            else:
+                p = TAKE_FOUL[key][band]
             if rng.random() < p:
                 self._run_clock(min(t_left, (1.0 + 3.0 * rng.random()) if band < 2 else 1.0 + 6.0 * rng.random()))
                 return self._intentional_foul(off, de)
@@ -931,7 +933,7 @@ class Game:
                 self._run_clock(t_left)
                 return "end"
             return None
-        if lead == -3 and band < 2 and rng.random() < UP_THREE_FOUL[band]:
+        if lead == -3 and band < 2 and rng.random() < (FIN.UP_THREE if self.use_finishes else UP_THREE_FOUL)[band]:
             self._run_clock(min(t_left, 1.0 + 3.0 * rng.random()))
             return self._intentional_foul(off, de)
         hold = L["end_last_shot"] if lead == 0 or not self.use_finishes else L["end_last_shot_behind"]
@@ -939,7 +941,7 @@ class Game:
             self._run_clock(max(.5, t_left - (.5 + 2.5 * rng.random())))
             slot = _pick(off.usage_cum, rng.random())
             card = off.cards[off.on[slot]]
-            if rng.random() < _sig(self._to_z(card, card.to_logit + L["to_shift"] + self._pressure(off, de, slot))):
+            if rng.random() < _sig(self._to_z(card, card.to_logit + L["to_shift"] + self.late[5] + self._pressure(off, de, slot))):
                 return self._turnover(off, de, slot)
             if lead == -3:
                 kind = THREE_PULL if card.menu[THREE_PULL] >= card.menu[THREE_CATCH] else THREE_CATCH
@@ -1005,7 +1007,7 @@ class Game:
         # Make chance: his conversion for this shot, the defense's contest or rim protection, team terms.
         lead = off.points - de.points
         z = (card.make_logit[kind] + self.zone_make[kind] + off.eff + off.off_shift - de.eff_def
-             - L["k_lead"] * (25 if lead > 25 else -25 if lead < -25 else lead) + (self.late[3] if kind != HEAVE else 0.0))
+             - L["k_lead"] * (25 if lead > 25 else -25 if lead < -25 else lead) + ((self.late[3] + (self.late[4] if kind in THREE_KINDS else 0.0)) if kind != HEAVE else 0.0))
         fz = 0.0
         if L["matchups"] and kind != HEAVE:
             if kind in CATCH_KINDS:
@@ -1142,11 +1144,11 @@ class Game:
         if self.use_screens:
             kind = self._menu_kind(card, card.menu_cum)
             scr = self._screen(off, de, slot, kind)
-            if rng.random() < _sig(self._to_z(card, card.to_logit + L["to_shift"] + self._pressure(off, de, slot)
+            if rng.random() < _sig(self._to_z(card, card.to_logit + L["to_shift"] + self.late[5] + self._pressure(off, de, slot)
                                               + (scr.to_dz if scr is not None else 0.0))):
                 return self._turnover(off, de, slot)
             return self._shot(off, de, slot, kind, final=final, scr=scr)
-        if rng.random() < _sig(self._to_z(card, card.to_logit + L["to_shift"] + self._pressure(off, de, slot))):
+        if rng.random() < _sig(self._to_z(card, card.to_logit + L["to_shift"] + self.late[5] + self._pressure(off, de, slot))):
             return self._turnover(off, de, slot)
         kind = self._menu_kind(card, card.menu_cum)
         return self._shot(off, de, slot, kind, final=final)

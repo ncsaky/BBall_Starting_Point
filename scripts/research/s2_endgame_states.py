@@ -156,7 +156,8 @@ def install_table(table: dict) -> None:
     """A candidate late-game table (s2_finishes_fit.py): cells, the 24-60 s take-foul rates, the hold chance."""
     from nba_gm_data.stage2 import finishes as FIN, game as G
     FIN.install({k: tuple(v) for k, v in table["cells"].items()}, table.get("exact", {}))
-    FIN.TAKE_24_60 = table.get("take_24_60")
+    # S2-LAST-POSSESSION replaced the 24-60 s take-foul list with stage2.finishes.TAKE_LATE (by exact lead); old
+    # tables' "take_24_60" is no longer read. New tables: scripts/research/s2_lastposs_fit.py.
     for key in ("end_last_shot_behind", "late_runout", "late_concede"):
         if key in table:
             G.LOOP[key] = table[key]
