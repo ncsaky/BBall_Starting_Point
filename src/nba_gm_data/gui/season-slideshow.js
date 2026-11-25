@@ -502,8 +502,8 @@
       <article class="ss-card${reducedMotion() || !direction ? "" : direction > 0 ? " ss-enter-next" : " ss-enter-prev"}" role="dialog" aria-modal="true" aria-labelledby="ssTitle" tabindex="-1" data-slide="${attr(slide.key)}">
         <header class="game-tutorial-titlebar ss-titlebar"><span>${esc(KIND_LABEL[data.kind] || "SEASON")} · ${esc(data.season)}</span><span aria-label="Slide ${index + 1} of ${slides.length}">${counter}</span></header>
         <div class="ss-content" aria-live="polite">
-          <h2 id="ssTitle"${slide.logo ? ` class="ss-title-team" aria-label="${attr(slide.title || "")}"` : ""}>${slide.logo ? titleTeam(slide) : esc(slide.title || "")}</h2>
-          ${slide.note ? `<details class="ss-note-details"><summary>Details</summary><p>${esc(slide.note)}</p></details>` : ""}
+          <div class="ss-title-row"><h2 id="ssTitle"${slide.logo ? ` class="ss-title-team" aria-label="${attr(slide.title || "")}"` : ""}>${slide.logo ? titleTeam(slide) : esc(slide.title || "")}</h2>
+            ${slide.note ? `<span class="ss-info"><i class="g-info" tabindex="0" aria-label="${attr(slide.note)}">i</i><span class="ss-info-tip" aria-hidden="true">${esc(slide.note)}</span></span>` : ""}</div>
           <div class="ss-body">${slideBody(slide)}</div>
         </div>
         <footer class="game-tutorial-actions ss-actions">

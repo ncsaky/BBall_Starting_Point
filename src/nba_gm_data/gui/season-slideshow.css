@@ -82,6 +82,12 @@
 .ss-muted { color: #52616e; }
 /* Each slide's explanation sits right under its title as subtext (playtest 2026-11-22: no kicker line). */
 .ss-content h2:has(+ .ss-subtitle) { margin-bottom: 3px; }
+/* A slide's explanation sits behind an "i" dot beside its title (playtest 2026-11-24). */
+.ss-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.ss-title-row h2 { margin: 0; }
+.ss-info { position: relative; display: inline-flex; }
+.ss-info-tip { position: absolute; top: calc(100% + 8px); left: -12px; z-index: 5; width: max-content; max-width: 380px; padding: 10px 12px; font-size: 12px; font-weight: 400; line-height: 1.45; color: #eef3f7; background: rgba(12, 22, 34, .94); border: 1px solid rgba(255, 255, 255, .18); border-radius: 10px; box-shadow: 0 12px 30px rgba(0, 0, 0, .4); visibility: hidden; opacity: 0; pointer-events: none; }
+.ss-info:hover .ss-info-tip, .ss-info:focus-within .ss-info-tip { visibility: visible; opacity: 1; }
 .ss-subtitle { margin: 0 0 12px; color: #4a5a67; font-size: 12px; line-height: 1.4; }
 .ss-note, .ss-source { margin: 10px 0 0; color: #3e4d59; font-size: 12px; line-height: 1.4; }
 .ss-source { margin: 0 0 8px; font-weight: 650; }

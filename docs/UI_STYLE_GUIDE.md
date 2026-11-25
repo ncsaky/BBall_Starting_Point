@@ -107,7 +107,7 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **Preseason ranks:** always say "Projected" ("Projected 1st of 30"). A plain "1st in the league" before games are played is misleading.
 - **Teams:** logo plus abbreviation by default. Logo plus full name sometimes. Logo alone only when space is tight. Never the full name alone.
 - **Labels next to coloured numbers** need clear spacing so the number and its label don't blur together (Next Opponent banner).
-- **Extra explanation of game content** (contract terms, option details): a Details toggle that drops down. Hover tips or "i" marks are for game instructions and rules only. Never a small line of text under a value.
+- **Extra explanation of game content** (contract terms, option details): a Details toggle that drops down. Hover tips or "i" marks are for game instructions and rules only, **and slide explanations**: a slideshow note is a small "i" dot right beside the slide title, shown on hover, never a "Details" drop-down (user, 2026-11-24). Never a small line of text under a value.
 - **Short summaries become small tables**, not one cell per fact (the Team Profile payroll notes: a 5 × 2 table).
 
 ### Pictures

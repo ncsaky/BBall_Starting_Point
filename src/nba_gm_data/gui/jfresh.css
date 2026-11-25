@@ -553,14 +553,7 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-tr
 /* Three teams: a wider To column so its logo + abbreviation never touch the value. */
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-builder.is-deal.is-multi :is(.tr-tile, .tr-tiles-head) { grid-template-columns: 50px minmax(0, 1fr) 92px 78px 24px 18px !important; column-gap: 8px !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-to { overflow: hidden; }
-/* Slides (round 14): each slide's explanation sits in a small Details drop-down at the top right, not as a line of
-   text under the title; story and injury cards in three columns so six fill the card. */
-html[data-glass="clear"] .season-slideshow .ss-content { position: relative; }
-html[data-glass="clear"] .season-slideshow .ss-note-details { position: absolute; top: 6px; right: 0; z-index: 3; max-width: 420px; text-align: right; }
-html[data-glass="clear"] .season-slideshow .ss-note-details > summary { cursor: pointer; color: #d8eaff; font-size: 12px; font-weight: 700; list-style: none; }
-html[data-glass="clear"] .season-slideshow .ss-note-details > summary::-webkit-details-marker { display: none; }
-html[data-glass="clear"] .season-slideshow .ss-note-details > summary::after { content: " ▾"; }
-html[data-glass="clear"] .season-slideshow .ss-note-details[open] > p { margin: 6px 0 0; padding: 10px 12px; text-align: left; font-size: 12px; line-height: 1.45; color: #eef3f7; background: rgba(12, 22, 34, .82); border: 1px solid rgba(255, 255, 255, .16); border-radius: 10px; box-shadow: 0 12px 30px rgba(0, 0, 0, .4); }
+/* Slides (round 14): story and injury cards in three columns so six fill the card. */
 html[data-glass="clear"] .season-slideshow .ss-stories-rich { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
 html[data-glass="clear"] .season-slideshow .ss-story-rich { grid-template-columns: 44px minmax(0, 1fr) auto !important; padding: 12px 14px !important; }
 html[data-glass="clear"] .season-slideshow .ss-story-rich .ss-story-logo { width: 42px; height: 42px; }
