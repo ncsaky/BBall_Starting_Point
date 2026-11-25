@@ -80,11 +80,40 @@ def real_table(root: Path, min_minutes: float) -> dict[str, dict]:
     return out
 
 
+PLAYTYPES: dict | None = None
+PT_GROUPS = {"transition": (("trans_rim", "trans_three"), ("transition",)), "cut_roll": (("rim_finish",), ("cut", "roll_man")),
+             "post": (("hook",), ("post_up",)), "putback": (("putback",), ("putbacks",)),
+             "self": (("rim_drive", "floater", "short_jumper", "mid_pull", "three_pull"), ("isolation", "ball_handler", "handoff"))}
+
+
+def playtype_match(eng: dict, shots: dict) -> dict:
+    """Stage 2 action tries per 36 against real play-type possessions per 36 (NBA.com, 2025-26): level and correlation."""
+    global PLAYTYPES
+    from nba_gm_data.stage2.cards import KIND_INDEX
+    if PLAYTYPES is None:
+        PLAYTYPES = json.loads((ROOT / "data/research/nba_playtypes_2025_26.json").read_text())["players"]
+    out = {}
+    for g, (kinds, types) in PT_GROUPS.items():
+        xs, ys = [], []
+        for pid, rows in shots.items():
+            e, p = eng.get(pid), PLAYTYPES.get(pid)
+            if not e or not p or e["minutes"] < 500 or not any(t in p["playtypes"] for t in types):
+                continue
+            f = 36.0 / e["minutes"]
+            xs.append(sum(rows[KIND_INDEX[k]][0] for k in kinds) * f)
+            ys.append(sum((p["playtypes"].get(t) or {}).get("poss") or 0.0 for t in types) * f)
+        me, mr = statistics.fmean(xs), statistics.fmean(ys)
+        cv = sum((a - me) * (b - mr) for a, b in zip(xs, ys))
+        out[g] = {"eng": round(me, 3), "real": round(mr, 3),
+                  "corr": round(cv / math.sqrt(sum((a - me) ** 2 for a in xs) * sum((b - mr) ** 2 for b in ys)), 3)}
+    return out
+
+
 def score(eng: dict, shots: dict, real: dict) -> dict:
     from nba_gm_data.stage2.cards import KIND_INDEX
     from nba_gm_data.stage2.game_contexts import split_half
     put = KIND_INDEX["putback"]
-    out = {}
+    out = {"playtypes": playtype_match(eng, shots)}
     for half in (0, 1, None):
         rows = []
         for pid, r in real.items():
@@ -268,6 +297,8 @@ def main() -> int:
               a["rebounds"]["rel"], "use", a["usage"]["mae"], "put", a["putpts"]["eng"], "/", a["putpts"]["real"],
               "lvl pts", a["points"]["eng"], "/", a["points"]["real"], "ast", a["assists"]["eng"], "fta", a["fta"]["eng"],
               "/", a["fta"]["real"], f"({rec['seconds']}s)", flush=True)
+        print("   play types (Stage 2 / real per 36, corr):", " ".join(f"{g} {v['eng']}/{v['real']} {v['corr']}"
+                                                                   for g, v in sc["playtypes"].items()), flush=True)
         log.append(rec)
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.out).write_text(json.dumps(log, indent=1))

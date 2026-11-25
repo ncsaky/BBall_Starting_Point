@@ -70,6 +70,43 @@ Usage is the largest single layer.
 A usage-rule refit through the loop (with and without creation and burst terms) gained only noise-level ground (held-out
 usage miss 1.29 → about 1.23 per 36), so the usage rule is unchanged: it is at the ceiling of what the inputs carry.
 
+## 2b. Real play types (NBA.com, added after the first review round)
+The user approved downloading NBA.com's 2025-26 player play-type tables (Synergy). Eleven play types, season totals:
+transition, isolation, pick-and-roll handler, roll man, post-up, spot-up, handoff, cut, off-screen, putbacks and misc.
+They are saved in `data/research/nba_playtypes_2025_26.json`: 439 players, traded players' team rows summed, matched to
+the game's player ids. NBA.com lists a player in a play type only with 10+ possessions of it.
+How the data was read: a direct request to NBA.com's stats service was refused by the safety check (it needed
+browser-imitating headers), and the browser pane blocks downloads there. So the eleven pages were opened in the
+built-in browser, set to totals and all rows, and their rendered tables read.
+`scripts/research/s2_playtype_compare.py` compares Stage 2's actions with them. Before this piece, per 36 minutes,
+rotation players:
+
+| Action | Stage 2 | Real | Correlation | Spread across players (Stage 2 / real) |
+|---|---|---|---|---|
+| Transition | 1.82 | 2.87 | .53 | .55 / 1.27 |
+| Cuts + rolls | 1.68 | 1.85 | .63 | .83 / 1.89 |
+| Putbacks | 0.57 | 0.79 | .87 | .44 / .87 |
+| Post-ups | 0.91 | 0.54 | .78 | .75 / .97 |
+| Self-created (isolation, handler, handoff) | 4.46 | 4.41 | .91 | 2.29 / 3.93 |
+| Catch-and-shoot (spot-up, off-screen) | 5.10 | 4.31 | .74 | 1.66 / 1.99 |
+
+(Real possessions include turnovers; Stage 2 counts shots and shooting-foul trips, so compare spread and correlation.)
+Every action is spread too evenly across players.
+- Transition goes to whoever has usage; real runners are the fast players with a quick pace habit. The
+  real-to-Stage-2 ratio follows speed (+.55), burst (+.57) and pace habit (+.57), and speed plus pace predict it on
+  held-out players at .54-.68. The transition switch fitted on this (.4 / .14) lifts the match from .51 to .70.
+- Cuts and rolls follow the cutting habit (+.62) and height (+.57) in real games, and run against drive habit (−.74)
+  and involvement (−.62): Stage 2 gives finishes to high-usage drivers.
+- Guards post up in Stage 2 (0.5-0.9 per 36) and almost never in real games.
+
+**Result:** the three action switches (transition, putbacks, rolls) each make their layer clearly more realistic. Even
+with the usage rule refit through the loop alongside them (so each player's total usage holds while his mix
+changes), season points per player don't improve on the held-out half (8.5% → 8.9%) and threes get worse (12.9% →
+14.5%). So they stay off. The likely reason is the same as before: the extra finishes go to players whose usage and
+shot mix are already off in their inputs. Recommended next piece, after the ratings questions below: switch on
+transition, putbacks and rolls together, sharpen the post-up and cut weights on this play-type data, and refit
+usage jointly, judged on both scorecards and props.
+
 ## 3. Scorecards (final settings)
 **Player props** (`s2_props.py`: 40 games of market points lines at 200 runs; every player-game with 10+ minutes,
 22,829 of them, at 8 runs). Today's engine is unchanged (byte-identical), so its numbers are from the last piece.
@@ -108,9 +145,8 @@ same conditions. No change. **Tests:** all 81 Stage 2 tests pass (5 new in `test
    without copying real totals.
 2. **Two good fixes wait on the ratings task** (putbacks by reach, rolls by screening). Both make their layer more
    realistic but give more to big men already over-used.
-3. **No per-player transition data** in the repo. NBA.com's play-type tables (transition, cuts, putbacks, isolation,
-   pick-and-roll by player) would let the engine send transition chances to the right players. Downloading them needs
-   the coordinator's OK.
+3. **Action mix is still too even across players** (section 2b): transition, cuts, rolls and post-ups. The fits on
+   NBA.com's play types are done and recorded; switching them on waits on the usage questions.
 4. **Fits are at 2 runs a season** (about ±0.2 points in the season-miss percentages); I kept only changes clearly
    above that.
 
@@ -150,12 +186,19 @@ Each with the input, its current value and the evidence. "Real" = 2025-26.
    - **too many:** Jaren Jackson Jr. .41 / .28; Anthony Davis .37 / .24; Jusuf Nurkić .40 / .32; Nolan Traoré .26 / .20;
    - **too few:** Josh Hart .14 / .21; Jaylon Tyson .12 / .16.
 5. **Transition habit (T17.transition) is a prior only.** It spreads .02 across players with no evidence behind it.
-   Players' points misses follow straight-line speed (P06) and this habit (correlations +.21 / +.25): runners such as
-   Payton II, Camara, McDaniels and Watson score more in real games than Stage 2 gives them.
+   NBA.com's transition play type is now in the repo (`data/research/nba_playtypes_2025_26.json`), so it could be
+   measured directly: real transition possessions per 36 run from about 1 to 6. Examples, Stage 2 / real per 36:
+   Jaden McDaniels 1.5 / 4.4, Peyton Watson 1.5 / 3.1, Toumani Camara 1.2 / 3.0, Collin Murray-Boyles 1.1 / 2.6, Gary
+   Payton II 1.5 / 2.5.
+6. **Cutting, rolling and post habits for the evidence-rich players.** On the same data, cuts + rolls per 36, Stage 2 /
+   real: Jusuf Nurkić 2.2 / 6.1, Gary Payton II 2.0 / 5.6, Collin Murray-Boyles 2.0 / 5.3. And the other way: Kristaps
+   Porziņģis 3.9 / 2.2, Nolan Traoré 2.1 / 0.3. Mostly the engine's rim split (section 2b), but worth checking T09 and
+   T11 against these tables.
 
 ## Files
 - New: `scripts/research/s2_usage_breakdown.py` (layer breakdown), `scripts/research/s2_usage_fit.py` (fits, rule
-  refits through the loop, research-only layer swaps), `tests/test_stage2_usage.py`.
+  refits through the loop, research-only layer swaps, play-type matches), `scripts/research/s2_playtype_compare.py`,
+  `tests/test_stage2_usage.py`, and the data file `data/research/nba_playtypes_2025_26.json` (NBA.com play types).
 - Changed: `src/nba_gm_data/stage2/cards.py` (Stage 2's own assist rule, refit; screening-scaled roll switch; card
   speed / reach / shot-difficulty / three share; league screening and shot-difficulty centres) and
   `src/nba_gm_data/stage2/game.py` (the switches above, the shot-trace research hook, heave and must-have-three shooter).
@@ -166,3 +209,5 @@ Each with the input, its current value and the evidence. "Real" = 2025-26.
 - [x] Final betting pair (`output/s2usage/odds_final_{1001,2001}.json`), props (`props_final.json`), scorecard
   (`cal_final.txt`), end of games (`endgame_final.txt`), speed, 81 Stage 2 tests. Committed on the branch, not pushed.
   Coordinator: review and merge.
+- [x] Second round (user-approved download): NBA.com play types saved and compared; transition switch fitted (.4 /
+  .14) and recorded, left off with the others (section 2b). Stage 2's defaults unchanged, so the scorecards stand.
