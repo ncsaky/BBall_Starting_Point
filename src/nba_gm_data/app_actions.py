@@ -1148,6 +1148,8 @@ def league_activity_copy(event: dict[str, Any]) -> tuple[str, list[str]]:
             total = float(details["annual_salary"]) * years / 1_000_000
             deal = "extension" if kind == "extension" else "deal"
             headline = f"{person['name']} {'is staying with' if kind == 'extension' else 'is joining'} the {team} on a {years}-year, ${total:.1f} million {deal}."
+            if details.get("departure_text"):   # COACHES-FREE-AGENTS: why he left his old team
+                headline = f"{headline[:-1]}, {details['departure_text']}."
             comments.append(f"The agreement pays {person['name']} ${float(details['annual_salary']) / 1_000_000:.1f} million per year across {years} season{'s' if years != 1 else ''}.")
         elif person.get("kind") == "staff":
             role = person.get("role", "staff member").lower()
@@ -4191,6 +4193,7 @@ def free_agency_room_payload(
             "date": source_event.get("date"),
             "kind": kind,
             "headline": source_event.get("headline"),
+            "departure_text": details.get("departure_text"),   # why he left his old team (franchise_ties)
             "team_ids": list(source_event.get("team_ids") or []),
             "player_id": player_id or None,
             "player_name": (players_by_id.get(player_id) or {}).get("name") or details.get("player_name"),

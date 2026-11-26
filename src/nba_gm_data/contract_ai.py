@@ -9,6 +9,7 @@ from pathlib import Path
 from statistics import median
 from typing import Any
 
+from .franchise_ties import departure_clause
 from .schema import (
     CANONICAL_SEASON,
     CANONICAL_START_DATE,
@@ -630,6 +631,10 @@ def apply_contract_to_save_state(
         accepted_offer.setdefault("start_season", extension_start_season_from_date(date))
         accepted_offer.setdefault("team_id", negotiation_payload.get("team_id"))
         accepted_offer = merge_extension_offer_with_existing_contract(accepted_offer, negotiation_payload)
+    # COACHES-FREE-AGENTS: a player who leaves his team says why, in the news and on the transaction.
+    departed = (negotiation_payload.get("departure")
+                if negotiation_payload.get("negotiation_type") != "extension" else None)
+    departed_text = departure_clause(departed) if departed else None
     log = TransactionLog(
         id=stable_id("transaction_log", "contract", negotiation_id, date),
         date=date,
@@ -637,10 +642,12 @@ def apply_contract_to_save_state(
         proposal_id=negotiation_id,
         status="applied_to_save_ledger",
         teams=[negotiation_payload.get("team_id")],
-        assets={"player_id": negotiation_payload.get("player_id"), "contract": accepted_offer},
+        assets={"player_id": negotiation_payload.get("player_id"), "contract": accepted_offer,
+                **({"departure": departed} if departed else {})},
         evaluations=[decision] if decision else [],
         source_ids=["src_contract_market_config_v1"],
-        notes="Contract applied to save ledger only. Canonical preseason data remains immutable.",
+        notes=(f"{negotiation_payload.get('player_name') or 'He'} signed, {departed_text}." if departed else
+               "Contract applied to save ledger only. Canonical preseason data remains immutable."),
     )
     if save.get("version") == "league_save_v1":
         player_id = negotiation_payload.get("player_id")
@@ -684,6 +691,8 @@ def apply_contract_to_save_state(
             from .save import extension_headline_with_terms
 
             headline = extension_headline_with_terms(team_label, player_label, accepted_offer)
+        elif departed:
+            headline = f"{team_label} signs {player_label}, {departed_text}."
         else:
             headline = f"{team_label} signs {player_label}."
         from .save import add_league_event, add_news
@@ -697,8 +706,9 @@ def apply_contract_to_save_state(
             date_value=date,
             team_ids=[team_id],
             player_ids=[player_id],
-            importance=0.74 if annual_salary > 25_000_000 else None,
+            importance=0.74 if annual_salary > 25_000_000 or (departed or {}).get("icon") else None,
             details={
+                **({"departure": departed, "departure_text": departed_text} if departed else {}),
                 "player_id": player_id,
                 "team_id": team_id,
                 "contract": accepted_offer or {},

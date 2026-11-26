@@ -47,6 +47,9 @@ from .schema import CANONICAL_SEASON, CANONICAL_START_DATE, CoachRating, Develop
 from .sim import (DEFAULT_ENGINE, build_sim_indices, espn_team_id_map, invalidate_sim_cache, load_sim_context, load_sim_reference,
                   save_game_engine, sim_game_with_context)
 from .spatial import invalidate_spatial_cache, team_spatial_profile
+from .coach_review import set_season_expectations
+from .franchise_ties import (ICON_KEEP_MAX_AGE, ICON_KEEP_MINUTES, LOYAL_KEEP_BONUS, departure, departure_clause,
+                             franchise_tie, record_season, remember_origin, tests_market_before_returning)
 from .staff import (
     COACHING_SLOTS, COORDINATOR_SLOTS, ROLE_LABELS, STAFF_SLOTS, apply_head_coach_reputation,
     coordinator_meets_keep_bar, current_staff_slot, fire_staff_from_save, hire_staff_from_save,
@@ -6407,6 +6410,7 @@ def queue_ai_recommendations(
     # Trade reviews can return early even on a staff checkpoint. Process staff independently.
     if phase == "regular_season":
         remember_opening_coaching_staff(save)
+        set_season_expectations(canonical, save)   # COACHES-FREE-AGENTS: coaches are judged against these
     staff_review_due = (
         from_date[:7] != through_date[:7]
         or phase in {"training_camp", "offseason", "draft_lottery", "draft", "re_signing", "free_agency"}
@@ -9966,6 +9970,7 @@ def own_first_round_slots(save: dict[str, Any]) -> dict[str, dict[str, int]]:
 
 
 def apply_offseason_roster_transitions(canonical: dict[str, Any], save: dict[str, Any], current_season: str, next_season: str, seed: int) -> dict[str, Any]:
+    record_season(save)   # COACHES-FREE-AGENTS: who played where and who won, before this season's stats reset
     active = canonical_with_save(canonical, save)
     players = {player["id"]: player for player in active.get("players", [])}
     contracts = {contract.get("player_id"): contract for contract in active.get("contracts", [])}
@@ -10366,6 +10371,7 @@ def prepare_free_agency_pool(canonical: dict[str, Any], save: dict[str, Any]) ->
         return {"status": "already_prepared", "free_agent_pool_count": len(save.get("free_agent_player_ids", []))}
     seed = int(save.get("meta", {}).get("seed") or 1)
     next_season = season_label_from_start(season_start_year(current_season) + 1)
+    record_season(save)   # COACHES-FREE-AGENTS: who played where and who won, before any re-signing decision
     retirement_count = prepare_offseason_retirements(canonical, save, current_season, next_season, seed)
     # FA-REAL slice 2: options for next season are decided first (players decide theirs, AI teams theirs; the user's
     # wait for the user), so a player who opts out is a free agent like any expiring contract.
@@ -10601,6 +10607,7 @@ def archive_excess_free_agents(
 def add_re_signing_right(save: dict[str, Any], season: str, player_id: str, team_id: str | None) -> None:
     if not player_id or not team_id:
         return
+    remember_origin(save, season, player_id, team_id)   # COACHES-FREE-AGENTS: whom he is a free agent from
     record = {
         "id": stable_id("re_signing_right", season, team_id, player_id),
         "season": season,
@@ -10681,6 +10688,10 @@ def annotate_star_asks(active: dict[str, Any], contracts: dict[str, dict[str, An
         for player in expiring_all:
             player["_bird"] = bird_rights(save, player, player.get("team_id"), current, contracts.get(player.get("id")))
     expiring = [p for p in expiring_all if display_minutes_projection(p) >= 24.0]
+    if save is not None:
+        for player in expiring_all:
+            if display_minutes_projection(player) < 24.0 and franchise_tie(save, player, player.get("team_id"))["icon"]:
+                player["_franchise_icon"] = True
     if not expiring:
         return
     priced = with_transaction_context(active)
@@ -10699,6 +10710,8 @@ def annotate_star_asks(active: dict[str, Any], contracts: dict[str, dict[str, An
         except (KeyError, ValueError, TypeError):
             ask = None
         service = years_of_service(player, next_season)
+        if save is not None and franchise_tie(save, player, player.get("team_id"))["icon"]:
+            player["_franchise_icon"] = True   # COACHES-FREE-AGENTS: kept like a franchise star
         # FA-REAL slice 2: a restricted free agent is one his team sent a qualifying offer (offseason_decisions), not an
         # age/minutes/service proxy. A tendered regular is kept like a franchise player (KEEP-STARS budget).
         restricted = restricted_regular(save, player, next_season)
@@ -10761,6 +10774,12 @@ def should_ai_retain_expiring_player(save: dict[str, Any], player: dict[str, Any
     if not team_id or team_id in human_controlled_team_ids(save):
         return False
     age = float(player.get("display_age", player.get("age")) or 27.0)
+    # COACHES-FREE-AGENTS: a team keeps its franchise icon while he still plays, unless he is a ringless veteran on a
+    # non-contender who wants to look for a title first (he then reaches the open market, where his team can still win
+    # him back).
+    tie = franchise_tie(save, player, team_id)
+    if tie["icon"] and age <= ICON_KEEP_MAX_AGE and display_minutes_projection(player) >= ICON_KEEP_MINUTES:
+        return not tests_market_before_returning(save, player, team_id, seed, season)
     # KEEP-STARS: a team keeps a top-15 player at any age unless it is rebuilding and he is 31 or older. Real
     # franchise stars almost never leave in free agency: Bird rights let their team pay them over the cap and offer a
     # fifth year (cap_rules), and contenders pay the tax to keep them.
@@ -10786,6 +10805,8 @@ def should_ai_retain_expiring_player(save: dict[str, Any], player: dict[str, Any
     if minutes < 10:
         threshold -= 0.08
     roll = int(hashlib.sha256(f"{seed}:{season}:{player['id']}:ai_retain_expiring".encode("utf-8")).hexdigest()[:8], 16) / 0xFFFFFFFF
+    if tie["loyal"]:   # COACHES-FREE-AGENTS: a player with roots here usually stays
+        return roll < clamp(threshold + LOYAL_KEEP_BONUS, 0.02, 0.84)
     return roll < clamp(threshold, 0.02, 0.72)
 
 
@@ -10905,7 +10926,7 @@ def ai_re_signing_fits_payroll_plan(
         minutes=display_minutes_projection(player), kind="re_signing", age=player.get("display_age", player.get("age")),
         committed=float(commitments.get((str(team_id), str(next_season)), 0.0)),
         committed_players=int(commitments.get((str(team_id), RE_SIGNING_PLAYER_COUNT_KEY), 0)),
-        franchise_star=is_franchise_star(player),
+        franchise_star=is_franchise_star(player) or bool(player.get("_franchise_icon")),
     )
     return bool(check["ok"])
 
@@ -11184,6 +11205,7 @@ def strategic_free_agent_signings(canonical: dict[str, Any], save: dict[str, Any
             }
             cap_ledger.commit(save, team["id"], player["id"], paid["payment"])
             signed.add(player["id"])
+            departed = departure(active, save, player, team["id"], aav_millions=salary / 1_000_000, years=1)
             save.setdefault("transaction_logs", []).append(
                 {
                     "id": stable_id("transaction_log", "ai_signing", next_season, team["id"], player["id"]),
@@ -11192,20 +11214,23 @@ def strategic_free_agent_signings(canonical: dict[str, Any], save: dict[str, Any
                     "proposal_id": stable_id("ai_signing", next_season, team["id"], player["id"]),
                     "status": "applied_to_save_ledger",
                     "teams": [team["id"]],
-                    "assets": {"player_id": player["id"], "name": player["name"], "salary": salary},
+                    "assets": {"player_id": player["id"], "name": player["name"], "salary": salary,
+                               **({"departure": departed} if departed else {})},
                     "evaluations": [{"score": round(score, 2), "needs": needs}],
                     "source_ids": ["src_contract_market_config_v1"],
-                    "notes": "AI offseason signing from roster need, player role, salary scale, and deterministic fit noise.",
+                    "notes": (f"{player['name']} signed, {departure_clause(departed)}." if departed else
+                              "AI offseason signing from roster need, player role, salary scale, and deterministic fit noise."),
                 }
             )
             cap_room["tax"] -= salary
             cap_room["hard"] -= salary
             roster.append({**player, "team_id": team["id"], "team_abbrev": team.get("abbrev")})
-            maybe_add_major_free_agent_news(save, team, player, salary, next_season)
+            maybe_add_major_free_agent_news(save, team, player, salary, next_season, departed=departed)
     return signed
 
 
-def maybe_add_major_free_agent_news(save: dict[str, Any], team: dict[str, Any], player: dict[str, Any], salary: int, next_season: str) -> None:
+def maybe_add_major_free_agent_news(save: dict[str, Any], team: dict[str, Any], player: dict[str, Any], salary: int,
+                                    next_season: str, *, departed: dict[str, Any] | None = None) -> None:
     marker = f"{next_season}:{player['id']}:{team['id']}"
     posted = set(save.setdefault("major_free_agent_news_ids", []))
     if marker in posted:
@@ -11216,6 +11241,8 @@ def maybe_add_major_free_agent_news(save: dict[str, Any], team: dict[str, Any], 
     if len(season_posted) >= 5:
         return
     headline = f"{player['name']} signs with {team['abbrev']} for ${salary / 1_000_000:.1f}M."
+    if departed:
+        headline = f"{headline[:-1]}, {departure_clause(departed)}."
     add_news(save, "free_agent_signing", headline, date_value=f"{season_start_year(next_season)}-07-03")
     add_league_event(
         save,
@@ -11230,6 +11257,7 @@ def maybe_add_major_free_agent_news(save: dict[str, Any], team: dict[str, Any], 
             "team_id": team.get("id"),
             "annual_salary": salary,
             "aav_millions": round(salary / 1_000_000, 2),
+            **({"departure": departed, "departure_text": departure_clause(departed)} if departed else {}),
         },
     )
     posted.add(marker)
@@ -11655,6 +11683,13 @@ def auto_fill_rosters(canonical: dict[str, Any], save: dict[str, Any], free_agen
             commit(save, team["id"], candidate["id"], payment)
             signed.add(candidate["id"])
             roster.append(candidate)
+            # COACHES-FREE-AGENTS: a late minimum deal elsewhere also says whom he left; an icon's move makes news.
+            departed = departure(active, save, candidate, team["id"],
+                                 aav_millions=float(payment["salary"]) / 1_000_000, years=1)
+            if departed and departed["icon"]:
+                add_news(save, "free_agent_signing",
+                         f"{team['abbrev']} signs {candidate['name']}, {departure_clause(departed)}.",
+                         date_value=f"{season_start_year(next_season)}-09-01")
             save.setdefault("transaction_logs", []).append(
                 {
                     "id": stable_id("transaction_log", "auto_depth", next_season, team["id"], candidate["id"]),
@@ -11663,10 +11698,12 @@ def auto_fill_rosters(canonical: dict[str, Any], save: dict[str, Any], free_agen
                     "proposal_id": stable_id("auto_depth", next_season, team["id"], candidate["id"]),
                     "status": "applied_to_save_ledger",
                     "teams": [team["id"]],
-                    "assets": {"player_id": candidate["id"], "name": candidate["name"]},
+                    "assets": {"player_id": candidate["id"], "name": candidate["name"],
+                               **({"departure": departed} if departed else {})},
                     "evaluations": [],
                     "source_ids": ["src_contract_market_config_v1"],
-                    "notes": "Automatic minimum roster repair so a season cannot start with fewer than 14 players.",
+                    "notes": (f"{candidate['name']} signed, {departure_clause(departed)}." if departed else
+                              "Automatic minimum roster repair so a season cannot start with fewer than 14 players."),
                 }
             )
     return signed
