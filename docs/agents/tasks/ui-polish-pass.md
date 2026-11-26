@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C, checkpoint 4 published (new backgrounds with phase photos and movement; Staff, Identity, Profile rebuilt; music list to approve); stopped, waiting for four decisions
+Progress: 8/9 - Stage C: music added (four approved public-domain tracks, off by default); waiting for three checkpoint 4 decisions (staff list, background darkness, what next)
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -386,3 +386,22 @@ installed for converting the FLACs.
 - Some arenas are close to black (Cleveland, a few offseason photos). Asked.
 - Still old cards: Draft, News, Awards, the playoff tabs, Two-Way Places, the step screens.
 - Not replayed end to end since the restructure.
+
+## Music added (2026-11-26, after checkpoint 4)
+
+The user approved downloading the four public-domain tracks in the chat ("Yes, those four"). The four checkpoint 4
+decisions on the page were still unanswered at that point (`staff-list`, `bg-dark`, `next`; `music-tracks` is
+settled by the chat answer).
+
+- Downloaded from OpenGameArt after re-reading each track's page (each states CC0): `chilllofir-loop.ogg`,
+  `lofihiphop.ogg`, `sleepy_head_0.flac`, `a_day_in_night_out_loop.flac` (48 MB; originals kept, git-ignored, in
+  `output/ui-polish/music/raw/`, with the saved pages in `music/pages/`).
+- Converted with ffmpeg to 128 kbps MP3, loudness levelled to -18 LUFS: `gui/assets/music/*.mp3` (8.9 MB in all)
+  and `tracks.json` (title, artist, licence, source, what was changed).
+- `gui/music.js`: off by default; shuffled order; each track fades in and out; a track under two minutes plays twice;
+  waits for a click; pauses while the tab is hidden. Settings > Sound: Music (with the track playing and Next
+  track), Music volume. The tracks are listed in Settings > Credits > Photo and music credits.
+- Checked in the preview: off by default, switching on fetches and plays a track, Next track changes it, switching
+  off pauses. Nobody has listened to the tracks in the game: the level and the fades are untested by ear.
+- Tests: `tests/music.test.cjs` (3), `tests/photo_credits.test.cjs` updated for the renamed list. Browser tests 50
+  of 51 (the 51st needs the absent start-screen video).

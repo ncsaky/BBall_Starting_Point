@@ -134,7 +134,7 @@ const UI_LOOK_SETTINGS = {
   // Round 6: the user couldn't pick one button style, so all four are offered.
   buttons: { key: "nbaGmButtons", label: "Buttons", fallback: "pill", options: [["pill", "Glass pill"], ["solid", "Solid pill"], ["square", "Rounded square"], ["segmented", "Segmented"]] },
   // The arena picture behind the glass drifts slowly and leans with the page (arena.js; user, 2026-11-26).
-  motion: { key: "nbaGmBackgroundMotion", label: "Background movement", fallback: "on", options: [["on", "On"], ["off", "Off"]] },
+  motion: { key: "nbaGmBackgroundMotion", label: "Background movement", fallback: "on", options: [["off", "Off"], ["on", "On"]] },
 };
 const UI_LOOK_DATASET = { glass: "glass", font: "uiFont", buttons: "uiButtons", motion: "uiMotion" };
 function uiLook(name) {
@@ -355,6 +355,26 @@ function wireEvents() {
   });
   document.addEventListener("change", (event) => {
     if (event.target.closest?.("[data-sound-volume]")) globalThis.GameSound?.play("win", {force: true});
+  });
+  // Settings > Sound > Music: its switch, its volume, and the skip button; the track's name follows the player.
+  document.addEventListener("click", (event) => {
+    const music = globalThis.GameMusic;
+    if (!music) return;
+    const button = event.target.closest?.("[data-music-choice]");
+    if (button) {
+      music.set({on: button.dataset.musicChoice === "on"});
+      button.parentElement.querySelectorAll("[data-music-choice]").forEach(other => other.setAttribute("aria-pressed", String(other === button)));
+      if (!music.settings().on) document.querySelectorAll("[data-music-track]").forEach(label => { label.textContent = ""; });
+    } else if (event.target.closest?.("[data-music-skip]")) music.skip();
+  });
+  document.addEventListener("input", (event) => {
+    const slider = event.target.closest?.("[data-music-volume]");
+    if (!slider || !globalThis.GameMusic) return;
+    globalThis.GameMusic.set({volume: Number(slider.value)});
+    if (slider.nextElementSibling) slider.nextElementSibling.textContent = `${slider.value}%`;
+  });
+  globalThis.GameMusic?.onChange?.((track) => {
+    document.querySelectorAll("[data-music-track]").forEach(label => { label.textContent = track ? track.title : ""; });
   });
   // Settings > Card transparency: applies while the slider moves.
   document.addEventListener("input", (event) => {
@@ -13119,7 +13139,7 @@ function openSettingsModal() {
       </section>
       <section class="settings-group">
         <h4>Credits</h4>
-        <div class="settings-actions"><a class="artwork-credits-link" href="/assets/game-art/CREDITS.md" target="_blank" rel="noopener">Artwork credits</a><button type="button" data-photo-credits>Photo credits</button></div>
+        <div class="settings-actions"><a class="artwork-credits-link" href="/assets/game-art/CREDITS.md" target="_blank" rel="noopener">Artwork credits</a><button type="button" data-photo-credits>Photo and music credits</button></div>
       </section>
       <footer class="settings-foot"><button class="settings-return-button" data-return-save-selection>Back to Save Selection</button></footer>`,
   };
@@ -13155,6 +13175,10 @@ async function openPhotoCreditsModal() {
   const generatedImages = Object.values(generated.faces || {}).reduce((total, face) => total + (face.stages || []).length, 0);
   const rows = (stock.photos || []).map(photo => ({file: photo.file, use: photo.use, subject: photo.title, author: photo.author, authorUrl: photo.author_url, licence: photo.licence, licenceUrl: photo.licence_url, source: photo.source_url}));
   for (const photo of arenas.photos || []) rows.push({file: photo.file, use: `Arena background (${photo.team}), ${photo.edited}`, subject: photo.title, author: photo.author, licence: photo.licence, licenceUrl: photo.licence_url, source: photo.source_url});
+  // Background music (assets/music/tracks.json): public domain, credited as a courtesy.
+  let music = {};
+  try { music = (await fetch("/assets/music/tracks.json", {cache: "no-cache"}).then(response => response.json())) || {}; } catch (error) { music = {}; }
+  for (const track of music.tracks || []) rows.push({file: `assets/music/${track.file}`, use: `Background music, ${track.edited}`, subject: track.title, author: track.artist, licence: track.licence, licenceUrl: track.licence_url, source: track.source_url});
   const reference = {};
   for (const [kind, entries] of [["Real head coach", real.coaches], ["Real prospect", real.prospects]]) {
     for (const entry of Object.values(entries || {})) {
@@ -13178,7 +13202,7 @@ async function openPhotoCreditsModal() {
   const referenceText = Object.entries(reference).sort((a, b) => b[1] - a[1]).map(([site, count]) => `${escapeHtml(site)} (${count})`).join(", ");
   state.modal = {
     kind: "photoCredits",
-    title: "Photo credits",
+    title: "Photo and music credits",
     subtitle: "",
     body: `<div class="photo-credits">
       ${generatedPeople ? `<p class="photo-credits-generated">Made-up coaches, staff, draft prospects and the players they become get AI-generated faces of fictional people first: no real person is depicted. They were made with OpenAI's image tool, with older photos of each person for later in their career (${generatedPeople} fictional people, ${generatedImages} portraits).</p>` : ""}
@@ -13213,10 +13237,21 @@ function soundMenuMarkup(onOff) {
   if (!sound) return "";
   return `<section class="settings-group">
         <h4>Sound</h4>
-        ${settingsRow("Sound", onOff("data-sound-choice", sound.on), "Results, news, deals and jobs that need you. Made in the game itself: no music.")}
+        ${settingsRow("Sound", onOff("data-sound-choice", sound.on), "Results, news, deals and jobs that need you. Made in the game itself.")}
         ${settingsRow("Volume", `<div class="settings-slider"><input type="range" min="0" max="100" step="5" value="${sound.volume}" data-sound-volume aria-label="Sound volume"><output>${sound.volume}%</output></div>`)}
         ${settingsRow("Button clicks", onOff("data-sound-clicks", sound.clicks), "A soft click on every button.")}
+        ${musicMenuRows(onOff)}
       </section>`;
+}
+
+// Settings > Sound: background music (music.js). Its own switch and volume; the track playing, with a skip button.
+function musicMenuRows(onOff) {
+  const music = globalThis.GameMusic?.settings();
+  if (!music) return "";
+  const track = globalThis.GameMusic.current();
+  // The track playing and its skip button sit beside the switch (the Settings window has no room for another row).
+  return `${settingsRow("Music", `<div class="settings-music">${onOff("data-music-choice", music.on)}<span class="settings-track" data-music-track>${track ? escapeHtml(track.title) : ""}</span><button type="button" class="settings-skip" data-music-skip>Next track</button></div>`, "Four free tracks. They are listed under Photo and music credits.")}
+        ${settingsRow("Music volume", `<div class="settings-slider"><input type="range" min="0" max="100" step="5" value="${music.volume}" data-music-volume aria-label="Music volume"><output>${music.volume}%</output></div>`)}`;
 }
 
 function settingsRow(label, control, info = "") {

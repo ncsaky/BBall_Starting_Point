@@ -244,6 +244,11 @@ Settings > Sound has the switch, the volume and the clicks switch. Continue (the
 through), pick (a draft selection), reveal (a lottery envelope), blocked (the game refuses an action), news (a trade
 offer or draft-night trade arrives), champion (once a year), click (every button, own switch).
 
+**Music** (`gui/music.js`, `gui/assets/music/`, 2026-11-26): four public-domain tracks the user approved, off until
+switched on in Settings > Sound, with its own volume. Tracks fade in and out and play in a shuffled order. A new track
+is a download: list it for the user (title, artist, licence, size, source) and get a yes first; add it to
+`tracks.json` so it shows in the credits.
+
 **What has moved onto these values so far** (Stage B): every stylesheet's text weights (12 different, now 3), italic
 (16 uses, now none) and transition timings and easing (17 timings and 7 curves, now 4 and 1); the page title, the
 sidebar frame's new parts, Home's progress parts, the footer button, the welcome. Still literal in the old

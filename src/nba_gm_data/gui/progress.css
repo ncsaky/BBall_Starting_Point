@@ -165,3 +165,14 @@ body.unified-terminal-ui #gameTutorial .first-run-back:disabled { opacity: .4; c
 body.unified-terminal-ui #gameTutorial .first-run-next { flex-direction: row; min-width: 190px; cursor: pointer; transition: background-color var(--gm-motion-quick) var(--gm-ease); }
 body.unified-terminal-ui #gameTutorial .first-run-next:hover { background: var(--gm-glass-button-hover) !important; }
 body.unified-terminal-ui #gameTutorial .first-run :is(button):focus-visible { outline: 2px solid var(--gm-focus); outline-offset: 2px; }
+
+/* ---------- Settings > Sound > Music: the track playing and the button that skips it. */
+.settings-music { display: flex; align-items: center; gap: var(--gm-space-3); min-width: 0; }
+.settings-track { color: var(--gm-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font); }
+.settings-track:empty + .settings-skip { display: none; }
+body.unified-terminal-ui #modalRoot .settings-skip {
+  height: 26px !important; min-height: 0 !important; padding: 0 var(--gm-space-3) !important; border-radius: var(--gm-radius-pill) !important;
+  background: var(--gm-glass-tile) !important; border: 1px solid rgba(255, 255, 255, .22) !important; box-shadow: none !important;
+  color: var(--gm-ink) !important; font: var(--gm-weight-semibold) var(--gm-size-small)/1 var(--gm-font) !important; cursor: pointer;
+}
+body.unified-terminal-ui #modalRoot .settings-skip:hover { background: var(--gm-glass-tile-hover) !important; }
