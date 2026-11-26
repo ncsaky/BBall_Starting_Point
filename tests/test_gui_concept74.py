@@ -1,10 +1,12 @@
 from pathlib import Path
+import re
 import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = (ROOT / "src/nba_gm_data/gui/app.js").read_text(encoding="utf-8")
 CSS = (ROOT / "src/nba_gm_data/gui/styles.css").read_text(encoding="utf-8")
+SLIDE_CSS = (ROOT / "src/nba_gm_data/gui/jfresh.css").read_text(encoding="utf-8")
 
 
 class Concept74GuiTests(unittest.TestCase):
@@ -39,7 +41,15 @@ class Concept74GuiTests(unittest.TestCase):
             APP.index("function regularSeasonProgressSlot")
         ]
         self.assertIn("performanceBarStyle(score)", mini_rating)
-        self.assertIn("performanceBarStyle(confidence)", prospects)
+        # Upcoming Prospects takes the Prospect watch slide's look since taste deck round 14 (362ae622): the scouted
+        # bar is one fixed solid colour instead of a sampled one. It must still be a single flat fill.
+        self.assertIn('<span class="ss-scouted"', prospects)
+        self.assertIn('<b style="width:${confidence.toFixed(0)}%"></b>', prospects)
+        fills = re.findall(r"\.ss-scouted > i > b \{([^}]*)\}", SLIDE_CSS)
+        self.assertTrue(fills)
+        for fill in fills:
+            self.assertRegex(fill, r"background: #[0-9a-f]{6};")
+            self.assertNotIn("gradient", fill)
         self.assertIn("grid-template-columns: 18px minmax(0, 1fr)", CSS)
         self.assertIn("background: var(--bar-color", CSS)
         self.assertNotIn("linear-gradient", mini_rating)

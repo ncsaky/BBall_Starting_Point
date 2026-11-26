@@ -16,6 +16,7 @@ from collections import Counter
 from unittest.mock import patch
 from urllib import request as urlrequest
 
+import nba_gm_data.injury_model as injury_model
 import nba_gm_data.transactions as transactions_module
 import nba_gm_data.utils as utils_module
 import nba_gm_data.save as save_module
@@ -222,6 +223,7 @@ from nba_gm_data.storage import write_outputs
 from nba_gm_data.staff import fire_staff_from_save, generate_staff_market, hire_staff_from_save, initialize_save_staff_slots, negotiate_staff_hire, simulate_ai_staff_changes, staff_budget_for_team, staff_budget_snapshot, staff_grade, staff_market_report, staff_team_report
 from nba_gm_data.transactions import annotate_pick_obligation_context, apply_trade_to_save, buyer_offer_package_options, canonical_with_pending_pick_terms, current_salary, drafted_rookie_value_floor, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, gm_report, market_trade_target_value, package_value_for_team, pick_asset_value, pick_label, pick_season_start, pick_swap_asset_value, pick_swap_display_label, player_health_risk, protected_pick_fallback_is_distinct, simulate_ai_trades, stepien_guardrail_issues, trade_apply_authorized, trade_block_report, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_pick_swaps_for_team, tradeable_picks_for_team, validate_pick_obligation_term, with_transaction_context
 from nba_gm_data.traits import LEAGUE_TRAIT_RATING_COLUMNS, LEAGUE_TRAIT_RATINGS_SOURCE_ID, load_league_trait_ratings, match_league_trait_ratings
+from tests.local_fixtures import needs_any_local
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -5101,14 +5103,21 @@ class DataFoundationTests(unittest.TestCase):
         jaren = values[players["jaren jackson jr"].id]
         self.assertGreater(caruso.portability, giddey.portability + 25)
         self.assertLess(davis.contract_surplus, 0)
-        # Injury risk is ranked by the v2 body-part model blended with Basketball Index's forecasts and placed on the
-        # old 0-34 scale by league rank (2026-11-18), so check rank rather than a fixed score: Davis is a top-15% risk.
-        risks = sorted(v.health_risk for v in values.values())
-        self.assertGreater(davis.health_risk, risks[int(len(risks) * 0.85)])
         self.assertGreater(kon.development_upside, 8)
         self.assertGreater(kon.contract_surplus, 20)
         self.assertGreater(jaren.player_value, 58)
         self.assertGreater(jaren.portability, 70)
+
+    @needs_any_local(injury_model.EVIDENCE_FILE, *injury_model.FALLBACK_EVIDENCE_FILES)
+    def test_player_asset_valuation_ranks_a_known_injury_history_as_high_risk(self):
+        # Injury risk is ranked by the v2 body-part model blended with Basketball Index's forecasts and placed on the
+        # old 0-34 scale by league rank (2026-11-18), so check rank rather than a fixed score: Davis is a top-15% risk.
+        # Those forecasts and the injury histories are in the local-only evidence file; without it Davis has no history.
+        players = {player.normalized_name: player for player in self.universe.players}
+        values = {valuation.player_id: valuation for valuation in self.universe.player_asset_valuations}
+        davis = values[players["anthony davis"].id]
+        risks = sorted(v.health_risk for v in values.values())
+        self.assertGreater(davis.health_risk, risks[int(len(risks) * 0.85)])
 
     def test_trade_block_and_find_trade_are_explainable(self):
         block = trade_block_report(self.plain, "PHX")
