@@ -93,6 +93,138 @@
     return `<header class="front-hero">${lastBlock}${nextBlock}${formBlock}${meterBlock}${hurtBlock}</header>`;
   }
 
+  // ---------- Storylines (user, 2026-11-26: "it is fun to follow a narrative and see its conclusion ... we have those
+  // events happening and panning out, but nothing really watching them"). A storyline is a thread of things the game
+  // already recorded about one person or one job, in date order: a player whose extension talks stalled, who asked
+  // out, who is being shopped, who was traded or signed; a coach fired and the hire that followed; an award race
+  // changing hands; a player of yours who is unhappy right now. Nothing is predicted and no step is invented: every
+  // step is a stored league event, a row of the trade market, the award race's weekly ranks or today's morale.
+  function storylines(st, mine) {
+    const events = [...(st?.home?.league_events?.events || [])].filter((event) => event && event.date).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    const people = new Map();
+    for (const event of events) for (const group of event.activity_groups || []) for (const subject of group.subjects || []) {
+      if (subject?.id && !people.has(subject.id)) people.set(subject.id, subject);
+    }
+    const threads = new Map();
+    const thread = (key, seed) => { if (!threads.has(key)) threads.set(key, {key, steps: [], ...seed}); return threads.get(key); };
+    const team = (id) => abbrevOf(id);
+    // 1. Players: talks stall or he asks out (the start), the market (the middle), a trade or a signature (the end).
+    for (const event of events) {
+      const details = event.details || {};
+      const id = details.player_id || (event.player_ids || [])[0];
+      if (event.kind === "trade_demand" && id) {
+        thread(`player:${id}`, {kind: "player", id, team: team(details.team_id || (event.team_ids || [])[0])}).steps.push({type: "demand", date: event.date, text: `Asked out of ${team(details.team_id || (event.team_ids || [])[0])}`});
+      } else if (event.kind === "extension" && id && !details.annual_salary && !details.contract) {
+        const club = team(details.team_id || (event.team_ids || [])[0]);
+        thread(`player:${id}`, {kind: "player", id, team: club}).steps.push({type: "stalled", date: event.date, text: details.team_passed_on_extension ? `${club} passed on an extension` : `Extension talks with ${club} stalled`});
+      }
+    }
+    for (const row of st?.data?.tradeMarket?.shopped || []) {
+      const id = row.player_id;
+      if (!id) continue;
+      const entry = thread(`player:${id}`, {kind: "player", id, team: abbrevOf(row.team)});
+      entry.name ||= row.player_name; entry.face ||= row.headshot_url; entry.team = abbrevOf(row.team) || entry.team;
+      const count = Number(row.interested_count || 0);
+      entry.steps.push({type: row.stage === "bidding war" ? "bidding" : "market", date: row.started || "", text: row.stage === "bidding war" ? `Bidding war, ${count} team${count === 1 ? "" : "s"}` : `On the market, ${count} team${count === 1 ? "" : "s"} interested`, until: row.decide_by || ""});
+      if (row.stage === "sold") entry.steps.push({type: "traded", date: "", text: `Sold to ${abbrevOf(row.sold_to) || "another team"}`});
+    }
+    for (const event of events) {
+      const details = event.details || {};
+      if (event.kind === "trade") {
+        const legs = details.transfers || [{from_team_id: details.from_team_id, to_team_id: details.to_team_id, assets: details.from_assets}, {from_team_id: details.to_team_id, to_team_id: details.from_team_id, assets: details.to_assets}];
+        for (const leg of legs) for (const asset of leg.assets || []) {
+          const entry = asset?.kind === "player" ? threads.get(`player:${asset.id}`) : null;
+          if (entry && !entry.steps.some((step) => step.type === "traded" && step.date)) {
+            entry.steps = entry.steps.filter((step) => !(step.type === "traded" && !step.date));
+            entry.steps.push({type: "traded", date: event.date, text: `Traded to ${team(leg.to_team_id)}`});
+          }
+        }
+      } else if (event.kind === "extension" && (details.annual_salary || details.contract)) {
+        const entry = threads.get(`player:${details.player_id || (event.player_ids || [])[0]}`);
+        const years = Number(details.years || details.contract?.years || 0);
+        if (entry) entry.steps.push({type: "signed", date: event.date, text: `Extended${Number(details.aav_millions) ? ` for $${Number(details.aav_millions).toFixed(1)}M${years ? ` × ${years}` : ""}` : ""}`});
+      } else if (event.kind === "free_agent_signing" || event.kind === "free_agency_signing") {
+        const entry = threads.get(`player:${details.player_id || (event.player_ids || [])[0]}`);
+        if (entry) entry.steps.push({type: "signed", date: event.date, text: `Signed with ${team(details.team_id || (event.team_ids || [])[0])}`});
+      }
+    }
+    // 2. Coaches: a firing, then the hire for the same job.
+    for (const event of events) {
+      const details = event.details || {};
+      const club = team((event.team_ids || [])[0]);
+      const job = String(details.slot || "").replace(/_/g, " ");
+      if (!club || !job) continue;
+      if (event.kind === "staff_fire") {
+        const entry = thread(`staff:${club}:${details.slot}`, {kind: "staff", team: club, name: `${club} ${job}`, face: people.get(details.staff_id)?.headshot_url || ""});
+        entry.steps.push({type: "fired", date: event.date, text: `Fired ${details.staff_name || "the coach"}${details.reason ? ` (${String(details.reason).replace(/\.$/, "")})` : ""}`});
+      } else if (event.kind === "staff_hire" && details.action !== "retain") {
+        const entry = threads.get(`staff:${club}:${details.slot}`);
+        if (entry && entry.steps.some((step) => step.type === "fired" && step.date <= event.date)) entry.steps.push({type: "hired", date: event.date, text: `Hired ${details.staff_name || "a replacement"}`});
+      }
+    }
+    // 3. An award race that changed hands this week.
+    for (const [award, race] of Object.entries(st?.data?.dashboardSummaryLeaders?.award_races || {})) {
+      const lead = (race || []).find((row) => Number(row.rank) === 1);
+      const passed = (race || []).find((row) => Number(row.previous_week_rank) === 1 && Number(row.rank) > 1);
+      if (!lead || !passed || !(Number(lead.previous_week_rank) > 1)) continue;
+      threads.set(`award:${award}`, {key: `award:${award}`, kind: "award", id: lead.player_id, name: `${award} race`, face: lead.headshot_url || "", team: abbrevOf(lead.team_abbrev),
+        steps: [{type: "lead", date: "", text: `${lead.player_name} took the lead from ${passed.player_name} this week`}]});
+    }
+    // 4. Your own room: who is unhappy today, and with what (the game keeps no history of morale, so no dates).
+    const names = new Map((st?.data?.statusDashboard?.rotation || []).map((row) => [row.id, row]));
+    for (const item of st?.data?.dashboardMorale?.players || []) {
+      const morale = item.morale || {};
+      const player = item.player || {};
+      const parts = [["role_satisfaction", "his role"], ["contract_satisfaction", "his contract"], ["team_confidence", "the team's direction"]]
+        .map(([key, label]) => [Number(morale[key]), label]).filter(([value]) => Number.isFinite(value)).sort((a, b) => a[0] - b[0]);
+      const overall = Number(morale.overall);
+      if (!player.id || !parts.length || !(overall < 45 || parts[0][0] < 38)) continue;
+      const entry = thread(`player:${player.id}`, {kind: "player", id: player.id, team: mine});
+      entry.name ||= player.name; entry.face ||= names.get(player.id)?.headshot_url || player.headshot_url || "";
+      entry.steps.push({type: "unhappy", date: "", text: `Unhappy with ${parts[0][1]} right now (${Math.round(parts[0][0])} of 100)`});
+    }
+    // Who it is, where it stands, and how much it matters.
+    const weight = {demand: 100, bidding: 85, unhappy: 70, fired: 60, lead: 55, market: 50, hired: 40, traded: 40, signed: 30, stalled: 15};
+    const closing = new Set(["traded", "signed", "hired"]);
+    const status = {demand: "Wants out", bidding: "Bidding war", market: "On the market", stalled: "Talks stalled", unhappy: "Unhappy", fired: "Job open", lead: "New leader", traded: "Traded", signed: "Signed", hired: "Filled"};
+    const out = [];
+    for (const entry of threads.values()) {
+      entry.steps.sort((a, b) => (a.date || "9999").localeCompare(b.date || "9999") || (closing.has(a.type) ? 1 : 0) - (closing.has(b.type) ? 1 : 0));
+      const last = entry.steps.at(-1);
+      if (!last) continue;
+      const person = people.get(entry.id) || {};
+      entry.name ||= person.name || "";
+      entry.face ||= person.headshot_url || "";
+      if (!entry.name) continue;
+      entry.closed = closing.has(last.type);
+      entry.status = status[last.type] || "";
+      entry.mine = Boolean(mine) && entry.team === mine;
+      entry.latest = entry.steps.map((step) => step.date).filter(Boolean).sort().at(-1) || "";
+      const top = Math.max(...entry.steps.map((step) => weight[step.type] || 0));
+      // A lone "talks stalled" or "on the market" is routine (the market has its own list on this page); it is a
+      // storyline once something else happened to him too.
+      if (top <= weight.market && entry.steps.length < 2) continue;
+      entry.score = top + (entry.mine ? 40 : 0) + Math.min(20, entry.steps.length * 5) - (entry.closed ? 25 : 0);
+      out.push(entry);
+    }
+    return out.sort((a, b) => b.score - a.score || b.latest.localeCompare(a.latest) || a.name.localeCompare(b.name));
+  }
+
+  function stories(st, mine) {
+    const list = storylines(st, mine).slice(0, 4);
+    const today = String(st?.home?.save?.current_date || "");
+    if (!list.length) return "";
+    return `<section class="front-block front-stories"><h2>Storylines</h2>
+      <div class="front-storylist">${list.map((entry) => {
+        const steps = entry.steps.slice(-3).map((step, index, shown) => `<span class="${index === shown.length - 1 ? "is-latest" : ""}"><time>${step.date ? esc(shortDate(step.date)) : "Now"}</time><span>${esc(step.text)}${step.until && step.until >= today && index === shown.length - 1 ? `, decision by ${esc(shortDate(step.until))}` : ""}</span></span>`).join("");
+        const action = entry.kind === "staff" ? `data-front-go="news"` : `data-front-player="${esc(entry.id)}"`;
+        return `<button type="button" class="front-story${entry.mine ? " is-mine" : ""}${entry.closed ? " is-closed" : ""}" ${action}>
+          <span class="front-face">${entry.face ? `<img src="${esc(entry.face)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : logoImg(entry.team)}</span>
+          <span class="front-story-head"><b>${esc(entry.name)}</b>${entry.kind !== "staff" && entry.team ? `<span>${logoImg(entry.team)}${esc(entry.team)}</span>` : ""}<em>${esc(entry.status)}</em></span>
+          <span class="front-story-steps">${steps}</span></button>`;
+      }).join("")}</div></section>`;
+  }
+
   // ---------- The league: headlines, then the latest day's scores.
   function headlines(st, mine) {
     const events = (st?.home?.league_events?.events || []).slice(0, 12).map((event) => {
@@ -200,7 +332,7 @@
     // Before the season and in the playoffs the game loads no standings, scores or leaders for this page: the
     // middle column then lists the games ahead, or is left out.
     const middle = standings(league, mine) + expectation(surprises(st, league)) || comingUp(st, league);
-    const cols = [headlines(st, mine) + scores(st, mine), middle, market(st) + leaders(st)].filter(Boolean);
+    const cols = [stories(st, mine) + headlines(st, mine), middle, market(st) + scores(st, mine) + leaders(st)].filter(Boolean);
     return `<div class="front">
       ${hero(st, league, mine)}
       <div class="front-cols" data-front-cols="${cols.length}">${cols.map((col) => `<div class="front-col">${col}</div>`).join("")}</div>
@@ -218,6 +350,9 @@
     Promise.resolve(call("loadTradeMarket", true)).then(() => {
       const target = document.querySelector("[data-front-shops]");
       if (target && app()?.data?.tradeMarket) target.innerHTML = marketRows(app()) || `<p class="front-none">Nobody is being shopped right now.</p>`;
+      // The market's rows are steps of the storylines too.
+      const front = document.querySelector(".season-front-panel");
+      if (front && app()?.data?.tradeMarket) front.innerHTML = markup();
     }).catch(() => { marketDay = ""; });
   }
 
@@ -239,5 +374,5 @@
     if (document.body) start(); else document.addEventListener("DOMContentLoaded", start);
   }
 
-  if (typeof window !== "undefined") window.HomeFront = Object.freeze({markup, table, surprises});
+  if (typeof window !== "undefined") window.HomeFront = Object.freeze({markup, table, surprises, storylines});
 })();

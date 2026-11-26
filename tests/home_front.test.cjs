@@ -116,3 +116,75 @@ test('the front page sheet touches only full-size pages and reads the shared val
   }
   assert.doesNotMatch(css.replace(/rgba?\([^)]*\)/g, ''), /font-size\s*:\s*\d|font:\s*[^;]*\b\d+px|font-style\s*:\s*italic|font-weight\s*:\s*\d|#[0-9a-f]{3,8}\b/i);
 });
+
+// ---------- Storylines: threads of things the game already recorded, in date order.
+const storyState = () => {
+  const state = season();
+  const subject = (id, name) => ({subjects: [{id, kind: 'player', name, headshot_url: `/faces/${id}.png`}]});
+  state.home.league_events.events = [
+    {id: 'a', date: '2026-08-01', kind: 'trade_demand', team_ids: ['team_phi'], player_ids: ['p_brown'], details: {player_id: 'p_brown', team_id: 'team_phi', is_trade_demand: true}, activity_groups: [subject('p_brown', 'Jaylen <b>Brown</b>')]},
+    {id: 'b', date: '2026-12-20', kind: 'trade', team_ids: ['team_phi', 'team_bos'], player_ids: ['p_brown', 'p_x'], details: {from_team_id: 'team_phi', to_team_id: 'team_bos', from_assets: [{id: 'p_brown', kind: 'player'}], to_assets: [{id: 'p_x', kind: 'player'}]}},
+    {id: 'c', date: '2026-10-20', kind: 'extension', team_ids: ['team_sac'], player_ids: ['p_lavine'], details: {player_id: 'p_lavine', team_id: 'team_sac', reason: 'unresolved'}, activity_groups: [subject('p_lavine', 'Zach LaVine')]},
+    {id: 'd', date: '2026-10-21', kind: 'extension', team_ids: ['team_orl'], player_ids: ['p_bane'], details: {player_id: 'p_bane', team_id: 'team_orl', reason: 'unresolved'}, activity_groups: [subject('p_bane', 'Desmond Bane')]},
+    {id: 'e', date: '2026-12-01', kind: 'staff_fire', team_ids: ['team_dal'], player_ids: [], details: {slot: 'head_coach', staff_id: 's1', staff_name: 'Dusty May', reason: 'tracking 14 wins below expectations.'}},
+    {id: 'f', date: '2026-12-12', kind: 'staff_hire', team_ids: ['team_dal'], player_ids: [], details: {slot: 'head_coach', staff_id: 's2', staff_name: 'New Coach'}},
+    {id: 'g', date: '2026-11-01', kind: 'staff_hire', team_ids: ['team_min'], player_ids: [], details: {slot: 'head_coach', staff_name: 'Kept Coach', action: 'retain'}},
+  ];
+  state.data.tradeMarket = {shopped: [
+    {player_id: 'p_lavine', player_name: 'Zach LaVine', team: 'SAC', interested_count: 4, stage: 'bidding war', started: '2026-12-10', decide_by: '2026-12-30'},
+    {player_id: 'p_young', player_name: 'Trae Young', team: 'WAS', interested_count: 5, stage: 'taking offers', started: '2026-12-15'},
+  ]};
+  state.data.dashboardSummaryLeaders.award_races = {MVP: [
+    {rank: 1, previous_week_rank: 2, player_id: 'p_g', player_name: 'Giannis', team_abbrev: 'MIA'},
+    {rank: 2, previous_week_rank: 1, player_id: 'p_w', player_name: 'Wembanyama', team_abbrev: 'SAS'},
+  ]};
+  state.data.dashboardMorale.players = [
+    {player: {id: 'p1', name: 'Ajay Mitchell'}, morale: {overall: 41, role_satisfaction: 30, contract_satisfaction: 60, team_confidence: 70}},
+    {player: {id: 'p2', name: 'Chet Holmgren'}, morale: {overall: 80, role_satisfaction: 85, contract_satisfaction: 60, team_confidence: 70}},
+  ];
+  return state;
+};
+
+test('storylines: a thread follows one person or job from its start to its end, in date order', () => {
+  const state = storyState();
+  const threads = Array.from(load(state).storylines(state, 'OKC'));
+  const by = Object.fromEntries(threads.map((thread) => [thread.key, thread]));
+  const steps = (key) => Array.from(by[key].steps, (step) => `${step.date} ${step.text}`);
+  assert.deepEqual(steps('player:p_brown'), ['2026-08-01 Asked out of PHI', '2026-12-20 Traded to BOS'], 'the demand, then where he went');
+  assert.equal(by['player:p_brown'].closed, true);
+  assert.equal(by['player:p_brown'].status, 'Traded');
+  assert.deepEqual(steps('player:p_lavine'), ['2026-10-20 Extension talks with SAC stalled', '2026-12-10 Bidding war, 4 teams']);
+  assert.equal(by['player:p_lavine'].status, 'Bidding war');
+  assert.deepEqual(steps('staff:DAL:head_coach'), ['2026-12-01 Fired Dusty May (tracking 14 wins below expectations)', '2026-12-12 Hired New Coach']);
+  assert.equal(by['staff:DAL:head_coach'].status, 'Filled');
+  assert.equal(by['staff:MIN:head_coach'], undefined, 'a coach kept is not a story, and a hire with no firing starts none');
+  assert.match(steps('award:MVP')[0], /Giannis took the lead from Wembanyama this week/);
+});
+
+test('storylines: routine things alone are not stories; your own players come first', () => {
+  const state = storyState();
+  const threads = Array.from(load(state).storylines(state, 'OKC'));
+  const keys = threads.map((thread) => thread.key);
+  assert.ok(!keys.includes('player:p_bane'), 'talks that stalled and nothing since');
+  assert.ok(!keys.includes('player:p_young'), 'on the market and nothing else: the market list already shows him');
+  assert.ok(!keys.includes('player:p2'), 'a content player');
+  assert.equal(threads[0].key, 'player:p1', 'the unhappy player on your team leads');
+  assert.match(threads[0].steps[0].text, /Unhappy with his role right now \(30 of 100\)/);
+  assert.equal(threads[0].steps[0].date, '', 'the game keeps no history of morale, so the step has no date');
+  assert.equal(threads[0].mine, true);
+});
+
+test('storylines on the page: dated steps, escaped names, a decision date only while it is ahead', () => {
+  const state = storyState();
+  const html = load(state).markup();
+  assert.match(html, /<h2>Storylines<\/h2>/);
+  assert.match(html, /Jaylen &lt;b&gt;Brown&lt;\/b&gt;/);
+  assert.match(html, /<time>Now<\/time><span>Unhappy with his role/);
+  assert.match(html, /Bidding war, 4 teams, decision by 2026-12-30/);
+  state.home.save.current_date = '2027-01-05';
+  assert.doesNotMatch(load(state).markup(), /decision by/);
+  const empty = season();
+  empty.data.tradeMarket = {shopped: []};
+  assert.doesNotMatch(load(empty).markup(), /<h2>Storylines<\/h2>/, 'no block when there is no story');
+});
+

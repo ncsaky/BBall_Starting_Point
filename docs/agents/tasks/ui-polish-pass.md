@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C, checkpoint 9 published (the Trade Builder in two pages); stopped, waiting for three decisions; the Finder and Market, the rest of Home and the final sweep remain
+Progress: 8/9 - Stage C, checkpoint 10 published (Builder in three steps, the Market, storylines on Home); stopped, waiting for five decisions; more storylines, the Finder and the final sweep remain
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -639,5 +639,76 @@ heat maps are still built in the browser from `trade-projection.js` minutes, not
 (`spatial.team_spatial_profile` could replace them); at 1280 by 760 the dock's contract column is cut and page 2's
 left and middle columns scroll; `trade_team_impact_payload` has no Python unit test; speed not measured on a slow
 machine. Still open from before: Home before the season and in the playoffs, the offseason Home, the extension
+window and player card, the start screen, more arena photos, the coordinator's lottery and playoff-line items, the
+final sweep.
+
+## Stage C, checkpoint 10 report (2026-11-26)
+
+**The user's answers to checkpoint 9** (their words where quoted): next = finish the trade room.
+- Deal page good, but: "each team's box that shows their selected assets for the trade [should be] large enough to
+  accommodate the average number of assets in a trade, and then some, so avoid scrolling so much. This is why I
+  think the checkbox list of assets and the page showing the assets that have been selected should be separate,
+  and then the what-it-does section is still separate from that."
+- Effect page good broadly: "it could be okay to segment some of the stuff in here to be on pages like What it
+  does: Spatially, What it does: Financially ... We would just need to make sure we fill each of those pages up
+  enough yet not too much."
+- Anything else: "see if you can show league narratives somewhere on the home page ... about your own team or about
+  the league ... unhappy players/fans/coaches, those demanding changes, those under/overperforming, those waiting on
+  specific things. I'm not asking for really any new infrastructure, but just like real life it is fun to follow a
+  narrative and see its conclusion ... we have those events happening and panning out, but nothing really watching
+  them to evolve the narratives. Like a player can refuse to re-sign and then get traded, but I don't think we
+  dramatize those things enough over the entire saga."
+
+**What changed**
+- **The Builder is three steps** (`renderTradeBuilder`; `state.tradeView` is "pick", "deal" or "effect"): 1 Pick
+  assets (`.tr-page-pick`: only the lists), 2 The deal (`.tr-page-deal`: each side's `tradeDealSide` box takes the
+  height, about 16 assets before it scrolls; names in full; the answer and Ask beside them), 3 What it does
+  (`.tr-page-effect`). The step bar carries one "way on" button.
+- **What it does is in sections** (`state.tradeEffectTab`: team, court, money): `tradeEffectTeam` (the four
+  headline ratings large, every other rating, who plays; data from `tradeEffectData`), the heat maps with the
+  minutes behind them open at the side (`tradeIdentityPage({openMinutes: true})`; the maps are enlarged to the
+  width and height they are given), `tradeEffectMoney` (one team's payroll, each team's salary check, the values).
+- **The Market** (Sonnet subagent from a written brief, reviewed): `gui/trade-market.js` (`TradeMarketView.markup`)
+  and `gui/trade-market.css` (classes `tm-`), hooked from `renderTradeMarket`. A tall row a player with the
+  interested teams' logos, the stage, the decision date and "Make an offer" (`data-market-build` /
+  `data-market-player`, wired in `app.js` to `openTradeRoomModal("builder", {targetTeam, targetPlayerId})`); bidding
+  wars first, sold last; the assistant GM's read at the side. `tests/trade_market.test.cjs`.
+- **Storylines on Home** (`storylines()` and `stories()` in `gui/home-front.js`): threads keyed by player or by
+  team and job, built from `state.home.league_events.events` (trade_demand; extension with no salary = talks
+  stalled or team passed; trade; signed extension; free_agent_signing; staff_fire then staff_hire), the trade
+  market's rows (`started`, `stage`, `interested_count`, `decide_by`), the award races' `previous_week_rank`, and
+  the user's players' current morale parts. Steps are dated and sorted; a thread is closed when its last step is a
+  trade, a signing or a hire; a lone "talks stalled" or "on the market" is not a thread. Up to four are shown, the
+  last three steps each, the user's team first. Scores moved to the right column.
+- Tests: `tests/trade_builder_steps.test.cjs` (replaces `trade_two_pages`), storyline tests in
+  `tests/home_front.test.cjs`. Browser tests: 56 of 57 files.
+
+**What the save reading found for storylines** (for whoever extends them)
+- In the browser today: the eight "transaction" kinds of league event (last 60, with `player_ids`, `team_ids`,
+  `details`, `activity_groups` carrying names and faces), the trade market's last ten days, award races with a
+  one-week comparison, the user's morale parts (current only), every team's record and roster rank.
+- In the save, needing a display-only payload addition: `injury_events` (start and return dates, league-wide),
+  `team_game_logs` (streaks), `staff_firing_history` and `job_security` (hot seat), `re_signing_rights`,
+  `offseason_decisions`, the market's raw `shopping` entries (`reasons`, `bids`), full transaction logs with
+  `trade_reasons`, injury / major_stat_line / award league events (the `league_events` action takes a `kind`).
+- Does not exist (engine work): links between events; morale, confidence or roster-rating history; a
+  `contract_satisfaction` that changes; what an unhappy player wants; trade demands by the user's players or for
+  any reason other than stalled talks; a refusal-to-re-sign event; stored rejections of the user's extension offers.
+
+**From the coordinator (main 644d139b, to fold in after merging main)**: free-agent departures carry a reason
+(`departure_text`, such as "leaving MIN chasing his first championship"); `freeAgencySigningWirePanel` should show
+`move.departure_text` (today only in the hover headline) and `signingDayRecap` should add
+`departed[].departure_text`. Details: `docs/agents/tasks/coaches-free-agents.md` on main, "Follow-ups". The
+coordinator also put the trade forecasts up as a task card for the user ("Trade forecasts: four factors and morale
+for a proposed deal"; planned `project_four_factors` and `project_trade_morale`).
+
+**Waiting on five decisions** (page https://claude.ai/artifact/48vExRmFXi6XWbWJPtPujW, collection `decisions`):
+`builder-steps` (good | change), `effect-sections` (good | change), `storylines` (good | change), `offseason-home`
+(front | keep), `next` (more-stories | trade-rest | rest-popups | sweep).
+
+**Known gaps**: no storylines in the offseason (Today is contracts, payroll and picks there); a saga's first step
+can fall out of the 60-event window; the Finder is unchanged; the heat maps still use `trade-projection.js`
+minutes; the Market's sold / final-offer / own-offer states were not seen in a real save; Ask, Accept and Propose
+were not pressed this round. Still open from before: Home before the season and in the playoffs, the extension
 window and player card, the start screen, more arena photos, the coordinator's lottery and playoff-line items, the
 final sweep.

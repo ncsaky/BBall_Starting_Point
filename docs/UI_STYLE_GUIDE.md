@@ -348,16 +348,27 @@ its sections share the page's width and height. The rules live in `gui/full-page
 - A phase that has its own room (the draft, the offseason checklist, free agency, the playoffs) takes Home's first
   tab while it is on, and Home opens there.
 
-## The trade room's two pages (user, 2026-11-26)
-- A deal is built on one page and judged on the next. Page 1, "The deal": both teams' lists side by side, what each
-  side gives, the salary check, the other team's answer and Ask. Page 2, "What it does": what the trade would mean
-  for a team. Nothing about the effect hides behind tabs.
-- Page 2 shows only what the game computes for the roster as it would be: team ratings before and after with
-  league ranks, the coach's minutes, the heat maps, the payroll, the values. A number the game cannot forecast
-  (four factors, morale, wins) is left out until the engine provides it.
-- Before and after of the same picture share one place and fade between each other, with a switch to hold either;
-  they are not stacked.
+## The trade room's steps (user, 2026-11-26)
+- A deal is three steps, each its own page: 1 Pick assets (only the lists, both teams side by side), 2 The deal
+  (each side's box takes the height: room for a dozen assets and more without scrolling; the salary check; the other
+  team's answer and Ask), 3 What it does. The step bar shows where you are and has one button for the way on.
+- What it does is in sections, one at a time, each "filled enough yet not too much": the team (four headline
+  ratings large, then the rest and who plays), on the court (the heat maps), the money (payroll, salary checks,
+  values).
+- It shows only what the game computes for the roster as it would be. A number the game cannot forecast (four
+  factors, morale, wins) is left out until the engine provides it.
+- Before and after of the same picture share one place and fade between each other, with a switch to hold either.
 - The asset lists scroll (round 8); they are not paged.
+- The Market is a page of tall rows, a player each, with the interested teams as logos and a button straight into
+  an offer; it fills the window.
+
+## Storylines (user, 2026-11-26)
+- "It is fun to follow a narrative and see its conclusion." Home leads with storylines: a thread about one person
+  or one job, its steps dated in order, and one word for where it stands (Wants out, Bidding war, Job open, Traded).
+- Every step is something the game recorded (a league event, a market row, the award race's weekly ranks, today's
+  morale). Nothing is predicted, and a step with no stored date says "Now".
+- A routine event alone (talks stalled, on the market) is not a storyline; it becomes one when something follows.
+- The user's own team comes first; open threads before closed ones.
 
 ## Pop-ups (2026-11-26)
 - Pop-up styling lives in two sheets: `gui/popups.css` (the trade room and incoming offers) and
