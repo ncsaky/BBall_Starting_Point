@@ -2,14 +2,14 @@
 body.unified-terminal-ui .modal-root:has(.modal-trade-room) { z-index:1500; }
 .trade-pick-terms { border-block:1px solid #9cabb8; background:#edf1f4; margin:0; }
 .trade-pick-terms > header { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:32px; padding:3px 8px; background:#dce4eb; border-bottom:1px solid #9cabb8; }
-.trade-pick-terms > header strong { font:600 13px Tahoma,Arial,sans-serif; }
+.trade-pick-terms > header strong { font:var(--gm-weight-semibold) 13px Tahoma,Arial,sans-serif; }
 .trade-pick-terms > header button { display:inline-flex; align-items:center; gap:5px; min-height:26px; }
 .trade-pick-terms > header img { width:14px; height:14px; }
 .trade-pick-rule { padding:5px 8px; border-bottom:1px solid #b4c0ca; }
 .trade-pick-rule:last-child { border-bottom:0; }
 .trade-pick-rule-fields { display:grid; grid-template-columns:22px minmax(180px,1.2fr) minmax(135px,.7fr) minmax(200px,1fr) minmax(190px,1.2fr) 28px; gap:7px; align-items:end; }
 .trade-pick-rule-fields > label { display:grid; gap:3px; min-width:0; margin:0; }
-.trade-pick-rule-fields label > span { font:600 11px Tahoma,Arial,sans-serif; color:#263b4d; }
+.trade-pick-rule-fields label > span { font:var(--gm-weight-semibold) 11px Tahoma,Arial,sans-serif; color:#263b4d; }
 body.unified-terminal-ui .modal-trade-room .trade-pick-rule select { width:100%; max-width:100%; min-width:0; height:29px; margin:0; padding:3px 4px; font:12px Tahoma,Arial,sans-serif; color:#17212a; }
 .trade-pick-rule-fields .trade-pick-enabled { align-self:center; padding-top:12px; }
 .trade-pick-enabled input { width:17px; height:17px; accent-color:#527d9f; margin:0; }
@@ -57,8 +57,8 @@ body.unified-terminal-ui .modal-trade-room .trade-cap-strip > i { display:none; 
 body.unified-terminal-ui .modal-trade-room .trade-asset-list { height:260px; max-height:34vh; min-height:140px; overflow:auto; flex:none; }
 body.unified-terminal-ui .trade-ledger-scroll { overflow:auto; min-width:0; }
 body.unified-terminal-ui .trade-ledger { width:100%; min-width:1050px; table-layout:fixed; border-collapse:collapse; margin:0; color:#17212a; font:13px Tahoma,Arial,sans-serif; }
-body.unified-terminal-ui .trade-ledger :is(th,td) { text-align:left; padding:4px 7px; border:0; border-bottom:1px solid #c0c9d1; font-size:13px; font-weight:400; vertical-align:middle; box-sizing:border-box; }
-body.unified-terminal-ui .trade-ledger thead th { position:sticky; top:0; z-index:2; height:29px; color:#263b4d; background:#dce4eb; border-bottom:2px solid #96a6b4; font-size:12px; font-weight:600; white-space:nowrap; }
+body.unified-terminal-ui .trade-ledger :is(th,td) { text-align:left; padding:4px 7px; border:0; border-bottom:1px solid #c0c9d1; font-size:13px; font-weight:var(--gm-weight-regular); vertical-align:middle; box-sizing:border-box; }
+body.unified-terminal-ui .trade-ledger thead th { position:sticky; top:0; z-index:2; height:29px; color:#263b4d; background:#dce4eb; border-bottom:2px solid #96a6b4; font-size:12px; font-weight:var(--gm-weight-semibold); white-space:nowrap; }
 body.unified-terminal-ui .trade-ledger .trade-ledger-control { width:32px; }
 body.unified-terminal-ui .trade-ledger .trade-ledger-portrait { width:46px; }
 body.unified-terminal-ui .trade-ledger th:nth-last-child(11) { width:195px; }
@@ -87,7 +87,7 @@ body.unified-terminal-ui .trade-ledger :is(.trade-ledger-rating,.trade-ledger-me
 body.unified-terminal-ui .trade-ledger-meter small { color:#596b78; font-size:10px; margin-left:2px; }
 body.unified-terminal-ui .trade-ledger-meter[title^="Injury"] i b { background:#bb747d; }
 body.unified-terminal-ui .trade-ledger-meter[title^="Upside"] i b { background:#6e9a82; }
-body.unified-terminal-ui .trade-ledger .trade-ledger-value { font-variant-numeric:tabular-nums; font-weight:600; }
+body.unified-terminal-ui .trade-ledger .trade-ledger-value { font-variant-numeric:tabular-nums; font-weight:var(--gm-weight-semibold); }
 body.unified-terminal-ui .trade-ledger-contract summary { cursor:pointer; white-space:normal; font-size:12px; }
 body.unified-terminal-ui .trade-ledger-contract details > div { display:grid; gap:5px; padding-top:7px; font-size:12px; }
 body.unified-terminal-ui .trade-ledger-pick :is(strong,.trade-pick-condition,small) { display:inline; font-size:13px; margin-right:10px; }
@@ -112,7 +112,7 @@ body.unified-terminal-ui .modal-trade-room .trade-package-builder-header .approv
 body.unified-terminal-ui .modal-trade-room .approved-trade-team img { width:23px; height:23px; }
 body.unified-terminal-ui .modal-trade-room .approved-trade-team small { display:none; }
 body.unified-terminal-ui .modal-trade-room .trade-package-total { display:flex; gap:10px; align-items:baseline; font-size:12px; }
-body.unified-terminal-ui .modal-trade-room .trade-package-total strong::before { content:"Listed value "; font-size:11px; font-weight:400; color:#526676; }
+body.unified-terminal-ui .modal-trade-room .trade-package-total strong::before { content:"Listed value "; font-size:11px; font-weight:var(--gm-weight-regular); color:#526676; }
 body.unified-terminal-ui .trade-package-empty { padding:12px; color:#576a79; font-size:13px; }
 .trade-package-empty p { margin:0; }
 body.unified-terminal-ui .modal-trade-room .trade-decision-dock { display:flex; gap:12px; align-items:center; position:sticky; bottom:-8px; z-index:4; background:#e2e9ef; border-top:2px solid #8e9eac; padding:8px; min-height:55px; }
@@ -178,7 +178,7 @@ body.unified-terminal-ui .modal-trade-room button:focus-visible, body.unified-te
 .trade-identity-toolbar span { font-size:12px; color:#526675; }
 .trade-identity-comparison { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; padding:8px; }
 .trade-identity-comparison > section { min-width:0; }
-.trade-identity-comparison h4 { margin:0 0 10px; font-size:14px; font-weight:600; }
+.trade-identity-comparison h4 { margin:0 0 10px; font-size:14px; font-weight:var(--gm-weight-semibold); }
 body.unified-terminal-ui .modal-trade-room .trade-identity-comparison .spatial-heatmap { height:auto; min-height:0; padding:0; }
 body.unified-terminal-ui .modal-trade-room .trade-identity-comparison .spatial-court { width:100%; height:auto; aspect-ratio:500/470; }
 body.unified-terminal-ui .modal-trade-room .trade-identity-comparison .spatial-court-head h4 { font-size:12px; }
@@ -218,7 +218,7 @@ body.unified-terminal-ui .modal-shell.modal-trade-room { height:auto !important;
 body.unified-terminal-ui .modal-trade-room > .modal-body { flex:0 1 auto; padding:4px; background:#f3f5f7 !important; }
 body.unified-terminal-ui .modal-shell.modal-trade-room > .modal-head.card-board-titlebar { display:flex; align-items:center; gap:4px; box-sizing:border-box; flex:0 0 24px; height:24px; min-height:24px; max-height:24px; padding:2px 4px; background:#bfd0df !important; border:0; border-bottom:1px solid #6b879e; border-radius:0; }
 body.unified-terminal-ui .modal-shell.modal-trade-room > .card-board-titlebar > div { display:flex; align-items:center; gap:5px; }
-body.unified-terminal-ui .modal-shell.modal-trade-room > .card-board-titlebar h3 { order:0; margin:0; font:600 10px Tahoma,Arial,sans-serif; }
+body.unified-terminal-ui .modal-shell.modal-trade-room > .card-board-titlebar h3 { order:0; margin:0; font:var(--gm-weight-semibold) 10px Tahoma,Arial,sans-serif; }
 body.unified-terminal-ui #modalRoot .modal-trade-room > .card-board-titlebar .card-board-control { flex:0 0 19px; width:19px; height:19px; min-height:19px; padding:2px !important; box-shadow:none !important; }
 body.unified-terminal-ui .modal-trade-room > .card-board-titlebar .modal-close-icon :is(.shortcut-hint,kbd) { display:none; }
 body.unified-terminal-ui .modal-trade-room > .card-board-titlebar .eyebrow { display:none; }
@@ -239,13 +239,13 @@ body.unified-terminal-ui .modal-shell.modal-trade-room .trade-finder-control-gri
 body.unified-terminal-ui .modal-shell.modal-trade-room :is(.trade-results-empty,.trade-offers-empty), body.unified-terminal-ui .modal-trade-offers .trade-offers-empty { min-height:0; padding:10px; }
 body.unified-terminal-ui .trade-payroll-plots { display:flex; gap:6px; overflow:auto; padding:4px 0; }
 body.unified-terminal-ui .trade-payroll-frame { display:grid; grid-template-rows:27px minmax(0,1fr); flex:0 0 var(--payroll-panel-width); width:var(--payroll-panel-width); height:var(--payroll-panel-height); border:1px solid var(--ui-line); box-sizing:border-box; }
-body.unified-terminal-ui .trade-payroll-frame > header { display:flex; align-items:center; padding:4px 7px; border-bottom:1px solid var(--ui-line); background:var(--ui-header); font:600 11px Tahoma,Arial,sans-serif; }
+body.unified-terminal-ui .trade-payroll-frame > header { display:flex; align-items:center; padding:4px 7px; border-bottom:1px solid var(--ui-line); background:var(--ui-header); font:var(--gm-weight-semibold) 11px Tahoma,Arial,sans-serif; }
 body.unified-terminal-ui .modal-trade-room .trade-payroll-frame > .salary-horizon-chart { height:calc(100% - 3px); box-sizing:border-box; padding:12px 10px 7px; }
 body.unified-terminal-ui .trade-payroll-frame .salary-horizon-legend { bottom:2px; font-size:7px; }
 body.unified-terminal-ui .modal-shell.modal-trade-room:has([data-trade-page="2"]) { width:min(calc(var(--payroll-panel-width) * 4 + 40px),calc(100vw - 28px)); }
 body.unified-terminal-ui .trade-payroll-ledgers { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
 .trade-payroll-ledgers > section { min-width:0; }
-.trade-payroll-ledgers h4 { margin:0; padding:5px; border-block:1px solid #9cabb8; background:#dce4eb; font:600 12px Tahoma,Arial,sans-serif; }
+.trade-payroll-ledgers h4 { margin:0; padding:5px; border-block:1px solid #9cabb8; background:#dce4eb; font:var(--gm-weight-semibold) 12px Tahoma,Arial,sans-serif; }
 body.unified-terminal-ui .trade-payroll-ledgers table { width:100%; table-layout:fixed; margin:0; border-collapse:collapse; }
 body.unified-terminal-ui .modal-shell.modal-trade-room .trade-payroll-ledgers :is(th,td) { font:12px Tahoma,Arial,sans-serif; padding:5px; border-bottom:1px solid #c2ccd4; text-transform:none; text-align:right; }
 body.unified-terminal-ui .modal-shell.modal-trade-room .trade-payroll-ledgers thead th { background:#e3e9ef; font-size:11px; }
@@ -310,7 +310,7 @@ body.unified-terminal-ui #modalRoot .modal-shell:is(.modal-trade-room,.modal-tra
 
 /* TRADE-MARKET: the Trade Market board, the front-office read and the final-offer toggle. */
 .trade-market-board { display: grid; gap: 14px; padding: 4px 2px 12px; }
-.trade-market-section h4 { margin: 0 0 4px; font-size: 13px; font-weight: 700; }
+.trade-market-section h4 { margin: 0 0 4px; font-size: 13px; font-weight: var(--gm-weight-bold); }
 .trade-market-note { margin: 0 0 8px; font-size: 12px; opacity: .8; }
 .trade-market-player { display: inline-flex; align-items: flex-end; gap: 8px; }
 .trade-market-player .player-headshot-frame { height: 34px; width: 46px; display: inline-flex; align-items: flex-end; overflow: hidden; }
@@ -322,7 +322,7 @@ body.unified-terminal-ui #modalRoot .modal-shell:is(.modal-trade-room,.modal-tra
 .team-front-office-read { max-width: 560px; }
 .team-front-office-read .front-office-read { font-size: 13px; }
 .team-front-office-note { margin: 0 0 4px; font-size: 13px; line-height: 1.4; }
-.trade-market-competition { margin-top: 6px; font-size: 12px; font-weight: 600; }
+.trade-market-competition { margin-top: 6px; font-size: 12px; font-weight: var(--gm-weight-semibold); }
 .trade-market-competition.is-beaten { color: #a8401c; }
 .trade-final-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; white-space: nowrap; }
 .incoming-offer-final { margin: 4px 0; font-size: 12px; color: #a8401c; }
@@ -332,11 +332,11 @@ body.unified-terminal-ui .modal-trade-room .trade-room-toolbar .tabs { display:f
 .trade-market-table { width:100%; border-collapse:separate; border-spacing:0; background:#fff; }
 .trade-market-table :is(th,td) { padding:0 6px; height:34px; text-align:left; vertical-align:middle; font:11px Tahoma,Arial,sans-serif; border:0; }
 .trade-market-table th { height:23px; background:#f3f4f5; border-bottom:1px solid #17212a; }
-.trade-market-table th button { display:block; width:100%; border:0 !important; background:transparent !important; box-shadow:none !important; padding:0; min-height:0; height:22px; font:700 10px Tahoma,Arial,sans-serif; text-align:left; color:inherit; }
+.trade-market-table th button { display:block; width:100%; border:0 !important; background:transparent !important; box-shadow:none !important; padding:0; min-height:0; height:22px; font:var(--gm-weight-bold) 10px Tahoma,Arial,sans-serif; text-align:left; color:inherit; }
 .trade-market-table tbody tr:first-child td { border-top:1px solid #a6afb9; }
 .trade-market-table tbody tr:nth-child(even) { background:#f4f6f8; }
 .trade-market-table tbody tr:hover { background:#e5edf4; }
 .trade-market-table td:first-child { padding-left:0; vertical-align:bottom; }
 .trade-market-table .trade-market-player { height:34px; }
-body.unified-terminal-ui .modal-trade-room .trade-market-table th button { border:0 !important; background:transparent !important; box-shadow:none !important; font:700 10px Tahoma,Arial,sans-serif !important; padding:0 !important; min-height:0 !important; height:22px; text-align:left; }
-body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room table.trade-market-table th button.sort-head { border:0 !important; background:transparent !important; box-shadow:none !important; font:700 10px Tahoma,Arial,sans-serif !important; font-weight:700 !important; }
+body.unified-terminal-ui .modal-trade-room .trade-market-table th button { border:0 !important; background:transparent !important; box-shadow:none !important; font:var(--gm-weight-bold) 10px Tahoma,Arial,sans-serif !important; padding:0 !important; min-height:0 !important; height:22px; text-align:left; }
+body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room table.trade-market-table th button.sort-head { border:0 !important; background:transparent !important; box-shadow:none !important; font:var(--gm-weight-bold) 10px Tahoma,Arial,sans-serif !important; font-weight:var(--gm-weight-bold) !important; }

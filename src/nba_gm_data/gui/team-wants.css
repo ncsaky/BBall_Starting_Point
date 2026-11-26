@@ -18,7 +18,7 @@ body.unified-terminal-ui .wants-command:disabled { opacity:.45; cursor:default; 
 body.unified-terminal-ui .modal-shell.modal-team-wants { width:min(590px,calc(100vw - 24px)); border:1px solid #8d99a5; border-radius:4px 4px 0 0; overflow:hidden; }
 body.unified-terminal-ui .modal-team-wants .modal-head { box-sizing:border-box; height:24px; min-height:24px; max-height:24px; padding:2px 4px; background:#bfd0df !important; border-bottom:1px solid #6b879e; }
 body.unified-terminal-ui .modal-team-wants .modal-head > div { display:flex; align-items:center; gap:6px; }
-body.unified-terminal-ui .modal-team-wants .modal-head h3 { order:1; margin:0; color:#17212a; font:600 10px Tahoma,Arial,sans-serif; }
+body.unified-terminal-ui .modal-team-wants .modal-head h3 { order:1; margin:0; color:#17212a; font:var(--gm-weight-semibold) 10px Tahoma,Arial,sans-serif; }
 .modal-team-wants .card-board-window-mark { order:0; }
 .modal-team-wants .modal-head .shortcut-hint { display:none !important; }
 body.unified-terminal-ui .modal-team-wants .modal-head .card-board-control { display:inline-flex; align-items:center; justify-content:center; flex:0 0 19px; width:19px !important; height:19px; min-height:19px; padding:2px !important; background:#edf0f3; border:1px solid #8d99a5; border-radius:2px; box-shadow:none !important; }
@@ -30,7 +30,7 @@ body.unified-terminal-ui .modal-team-wants .modal-head .card-board-control:hover
 body.unified-terminal-ui :is(.want-editor,.team-wants-toolbar) :is(select,input[type=number]) { box-sizing:border-box; min-height:26px; min-width:0; max-width:100%; padding:3px 5px; color:#17212a; background:#fff; border:1px solid #8d99a5; border-radius:1px; font:13px Tahoma,Arial,sans-serif; }
 .want-editor > label select { flex:1; width:0; }
 .want-positions { display:flex; flex-wrap:wrap; gap:12px; margin:0; padding:5px 0; border:0; border-bottom:1px solid #8d99a5; }
-.want-positions legend { padding:0; font-size:12px; font-weight:700; }
+.want-positions legend { padding:0; font-size:12px; font-weight:var(--gm-weight-bold); }
 .want-positions label { gap:3px; }
 .want-conditions { display:grid; gap:4px; }
 .want-condition { display:grid; grid-template-columns:minmax(0,1fr) 56px 82px 26px; gap:4px; }

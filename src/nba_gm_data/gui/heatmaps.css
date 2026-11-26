@@ -57,7 +57,7 @@ body .spatial-heatmap .spatial-court-tabs .spatial-court-group-label {
   align-items:center;
   padding:0 8px 0 2px;
   color:#14212b;
-  font:700 11px Tahoma,"Trebuchet MS",Arial,sans-serif;
+  font:var(--gm-weight-bold) 11px Tahoma,"Trebuchet MS",Arial,sans-serif;
   white-space:nowrap;
 }
 body .spatial-heatmap .spatial-court-tabs .spatial-court-tab {
@@ -75,7 +75,7 @@ body .spatial-heatmap .spatial-court-tabs .spatial-court-tab {
   border-radius:3px 3px 0 0;
   box-shadow:none;
   color:#56646f;
-  font:600 11px Tahoma,"Trebuchet MS",Arial,sans-serif;
+  font:var(--gm-weight-semibold) 11px Tahoma,"Trebuchet MS",Arial,sans-serif;
   letter-spacing:0;
   text-overflow:ellipsis;
   text-transform:none;
@@ -86,7 +86,7 @@ body .spatial-heatmap .spatial-court-tabs .spatial-court-tab[aria-pressed="true"
 body .spatial-heatmap .spatial-court-tabs .spatial-court-tab[aria-pressed="true"]:hover {
   background:#e0eaf3;
   color:#14212b;
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
   border-bottom-color:#2f5f86;
 }
 body .spatial-heatmap .spatial-court-tabs .spatial-court-tab:focus-visible { outline:2px solid #668ea7; outline-offset:-2px; }
@@ -115,7 +115,7 @@ body .spatial-heatmap .spatial-relative-key em { padding:0 3px; color:#4a5965; f
 
 /* Round 4: the group label (Offense / Defense) sits above its three options, centred over them. */
 body .spatial-heatmap .spatial-court-head .spatial-court-tab-group { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
-body .spatial-heatmap .spatial-court-head .spatial-court-tab-group > .spatial-court-group-label { display: block; padding: 0; font-weight: 700; font-size: 11.5px; letter-spacing: .2px; color: var(--glass-ink, #14212b); text-align: center; }
+body .spatial-heatmap .spatial-court-head .spatial-court-tab-group > .spatial-court-group-label { display: block; padding: 0; font-weight: var(--gm-weight-bold); font-size: 11.5px; letter-spacing: .2px; color: var(--glass-ink, #14212b); text-align: center; }
 body .spatial-heatmap .spatial-court-head .spatial-court-tab-group > h4.spatial-court-tabs { height: auto; align-self: stretch; }
 html[data-glass="clear"] body .spatial-heatmap .spatial-court-head .spatial-court-tab-group > .spatial-court-group-label { color: #fff !important; }
 body .has-card-board [data-board-window="identity"] .spatial-heatmap.has-court-views,

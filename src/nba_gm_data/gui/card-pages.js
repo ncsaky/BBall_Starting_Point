@@ -11,8 +11,12 @@
    page's own controls sit at the right of its title; the one obvious next step is always at the bottom right of the
    footer, which is one piece with the sidebar (the league wire ticker beside it).
 
+   Home is the progress screen (UI polish pass, Stage B, 2026-11-25; progress.js): the phase and the year strip across
+   the top, the to-do list down the left, and beside it the cards that matter in this phase. The bottom-right button
+   only moves time; when a job blocks it, it names the job and opens it.
+
    Step screens (the opening roster, Set The Roster, the draft, free agency...) are not listed in the sidebar (user,
-   2026-11-24): they follow one another, moved by the bottom-right button, until the phase's own button takes over.
+   2026-11-24): they open from Home's to-do list and lead back to it.
 
    card-board.js still builds every window frame and keeps the pop-ups (player cards, extension cards) as windows; this
    module only takes the frames of the cards that belong on pages. Pop-ups that are modals (box scores, the trade room,
@@ -21,11 +25,14 @@
   "use strict";
 
   const MODE_KEY = "nbaGmLayoutMode";
-  const PAGE_KEY = "nbaGmPage:v1";
   const GAP = 28;            // design pixels between cards
   const MAX_SCALE = 1.22;    // a sparse page may grow this much
+  const HOME_MAX_SCALE = 1.6;
   const MIN_SCALE = .7;      // below this the page scrolls instead of shrinking further
-  const lastPage = new Map();
+  const lastPage = new Map();        // per save, this session only: a save always opens on Home
+  const lastBlocking = new Map();    // per save: the jobs that were blocking the clock at the last render
+  let homeCalled = false;            // the game stopped by itself (deadline day, season end): the next render lands on Home
+  let attached = null;
   const DETAIL = "@player";          // the page a player's card fills
   const openDetails = new Map();     // per save: the player pages opened on top of each other
 
@@ -56,6 +63,9 @@
   const col = (...items) => ({type: "col", items});
   const card = (id, options = {}) => ({type: "card", id, ...options});
 
+  // app.js keeps its state in a top-level binding (not a window property).
+  const appState = () => (typeof state !== "undefined" ? state : null);
+
   // The "now" group (step screens and slideshows) has no place in the sidebar.
   const GROUPS = [
     ["team", "Team"],
@@ -77,9 +87,7 @@
     {id: "recap", group: "now", label: "Year-End Recap", slideshow: "recap"},
 
     // The team.
-    {id: "home", group: "team", label: "Home", layout: () => row(
-      col("minutes", card("week", {link: "schedule"}), row(card("signals", {link: "identity"}), "morale")),
-      col("opponent", card("standings", {link: "standings"})))},
+    {id: "home", group: "team", label: "Home", progress: true, layout: homeLayout},
     {id: "roster", group: "team", label: "Roster", layout: () => col(card("roster", {title: "Ratings"}), "stats")},
     {id: "development", group: "team", label: "Development", layout: () => row(card("development", {expanded: true}), card("staff", {expanded: true}))},
     {id: "identity", group: "team", label: "Team Identity", layout: () => row(
@@ -102,6 +110,23 @@
     {id: "awards", group: "league", label: "Awards", controls: "awards", layout: () => row("award-mvp", "award-dpoy", "award-roty")},
 
   ];
+
+  // Home beside its to-do list, by phase. While games are played: the rotation, the next game, the week, the standings,
+  // signals and morale. In the playoffs the season's week and standings (over by then) give way to the playoff stats.
+  // From the lottery to training camp there are no games: the roster, the payroll and your picks instead of an empty
+  // week and "No upcoming game".
+  function homeLayout() {
+    const phase = String(appState()?.home?.save?.phase || "");
+    if (phase === "play_in" || phase === "playoffs") {
+      return col(row("minutes", col(card("signals", {link: "identity"}), "morale")), row("opponent", card("phase-playoffs-leaders", {link: "playoff-stats", width: 680})));
+    }
+    if (phase && typeof window !== "undefined" && window.GameProgress?.PHASES?.[phase]?.games === false) {
+      return col(card("roster", {link: "roster", title: "Roster"}), row(card("payroll", {link: "contracts"}), card("picks", {link: "scouting"})));
+    }
+    return col(
+      row("minutes", card("standings", {link: "standings"})),
+      row(col("opponent", card("week", {link: "schedule"})), col(card("signals", {link: "identity"}), "morale")));
+  }
 
   function draftRoomLayout(ctx) {
     const has = (id) => ctx.available(id);
@@ -129,8 +154,6 @@
   const PAGE_CARD_IDS = new Set(["league-wire", "picks", "phase-draft-lottery", "phase-draft-summary", "phase-draft-trades", "phase-draft-board", "phase-draft-order"]);
   for (const page of PAGES) if (page.layout) layoutIds(page.layout({available: () => false}), []).forEach(id => PAGE_CARD_IDS.add(id));
 
-  // app.js keeps its state in a top-level binding (not a window property).
-  const appState = () => (typeof state !== "undefined" ? state : null);
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 
   function attach(ctx) {
@@ -179,13 +202,6 @@
     const isStep = (page) => Boolean(page.step) && !(page.id === "roster-moves" && inSeason());
     const groupOf = (page) => isStep(page) ? null : page.id === "roster-moves" ? "team" : page.group;
     const stepPages = () => visiblePages().filter(isStep);
-    const STEP_KEY = `${PAGE_KEY}:step:${saveKey}`;
-    // The step screen to come back to: the last one seen, else the first.
-    function resumeStep(steps) {
-      let seen = null;
-      try { seen = localStorage.getItem(STEP_KEY); } catch { /* preference only */ }
-      return steps.find(page => page.id === seen) || steps[0] || null;
-    }
 
     // ---- The sidebar: the old top bar turned on its side (its buttons keep their wiring).
     const header = dashboard.querySelector(".season-command-header");
@@ -250,48 +266,13 @@
         trigger.innerHTML = `<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 7.5 6 4.5 9 7.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
       }
     }
+    // The one button (progress.js): the main button is the last in the row, so it sits at the far right; the quieter
+    // ones (a week, a month, finish the draft) stand to its left. The deadline-day button is gone: the main button
+    // says "Sim past the deadline" and Home's list carries the warning.
     const phaseActions = toolbar.querySelector(".card-board-phase-actions");
-    phaseActions?.querySelector("button")?.classList.add("is-primary");
-    if (deadline) toolbar.prepend(deadline);
-    // Step screens: Back and Next sit with the phase's own button.
-    const stepBack = document.createElement("button");
-    stepBack.type = "button";
-    stepBack.className = "pages-step-back";
-    const stepNext = document.createElement("button");
-    stepNext.type = "button";
-    stepNext.className = "pages-next pages-step is-primary";
-    stepBack.hidden = stepNext.hidden = true;
-    toolbar.prepend(stepBack);
-    toolbar.append(stepNext);
+    (phaseActions?.querySelector(".progress-go") || phaseActions?.querySelector("button"))?.classList.add("is-primary");
+    if (deadline) (phaseActions?.querySelector(".progress-go") ? deadline.remove() : toolbar.prepend(deadline));
     foot.append(toolbar);
-
-    // Between step screens the button moves on to the next one; on the last, the phase's own button is back. From any
-    // other page it returns to the step you were on.
-    function renderStep() {
-      const steps = stepPages();
-      const index = steps.findIndex(page => page.id === currentPage);
-      let back = null, next = null, backWord = "", nextWord = "Next";
-      if (index >= 0) {
-        back = steps[index - 1] || null;
-        next = steps[index + 1] || null;
-        backWord = "Back";
-      } else if (steps.length) {
-        const resume = resumeStep(steps);
-        if (resume !== steps.at(-1)) { next = resume; nextWord = "Continue"; }
-        else { back = resume; backWord = "Back to"; }
-      }
-      stepBack.hidden = !back;
-      if (back) {
-        stepBack.dataset.pagesGo = back.id;
-        stepBack.textContent = backWord === "Back" ? "Back" : `${backWord} ${pageLabel(back)}`;
-      }
-      stepNext.hidden = !next;
-      if (next) {
-        stepNext.dataset.pagesGo = next.id;
-        stepNext.textContent = `${nextWord}: ${pageLabel(next)}`;
-      }
-      toolbar.classList.toggle("is-stepping", Boolean(next));
-    }
 
     // ---- Pages.
     const pageEls = new Map();
@@ -312,9 +293,12 @@
           const title = esc(item.title || entry.title || item.id);
           // A section named like its page keeps its place (the columns stay level) but not the repeated words.
           if (item.quiet || (item.title || entry.title || "") === (page.title || pageLabel(page))) head.classList.add("is-echo");
-          head.innerHTML = item.link
+          // What the section is for sits behind a small "i" (the tips the first-run tour used to read out).
+          const tip = typeof PAGE_SECTION_TIPS !== "undefined" ? PAGE_SECTION_TIPS[item.id] : "";
+          const info = tip ? `<span class="ss-info pages-slot-info"><i class="g-info" tabindex="0" aria-label="${esc(tip)}">i</i><span class="ss-info-tip" aria-hidden="true">${esc(tip)}</span></span>` : "";
+          head.innerHTML = `<span class="pages-slot-name">${item.link
             ? `<button type="button" class="pages-slot-link" data-pages-go="${esc(item.link)}">${title}<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`
-            : `<h2>${title}</h2>`;
+            : `<h2>${title}</h2>`}${info}</span>`;
           slot.append(head);
         }
         const body = document.createElement("div");
@@ -354,7 +338,12 @@
         if (!page.slideshow) {
           const stage = document.createElement("div");
           stage.className = "pages-stage";
-          el.append(stage);
+          if (page.progress && progress()) {
+            // Home: the phase and the year strip, the to-do list, then the cards in what is left.
+            el.classList.add("is-progress");
+            el.innerHTML = `<header class="progress-top"></header><div class="progress-body"><aside class="progress-rail"></aside><div class="progress-area"><div class="progress-holder"></div></div></div>`;
+            el.querySelector(".progress-holder").append(stage);
+          } else el.append(stage);
           slotsByPage.set(page.id, []);
           const result = buildNode(pageLayout(page), stage, page);
           el.dataset.grow = result?.grow || "";
@@ -381,7 +370,17 @@
         (home ? home.querySelector(".pages-slot-body") : holding).append(frame);
       }
       if (owned.has("league-wire")) placeTicker();
+      renderProgress();
       renderNav();
+    }
+
+    // Home's own parts, drawn by progress.js from the save.
+    const progress = () => (typeof window !== "undefined" ? window.GameProgress : null);
+    function renderProgress() {
+      const el = pageEls.get("home");
+      if (!el?.classList.contains("is-progress")) return;
+      el.querySelector(".progress-top").innerHTML = progress().topMarkup();
+      el.querySelector(".progress-rail").innerHTML = progress().listMarkup((pageId) => pageEls.has(pageId));
     }
 
     const firstSlot = (id) => {
@@ -544,12 +543,16 @@
       }
       const naturalWidth = stage.offsetWidth, naturalHeight = stage.offsetHeight;
       const style = getComputedStyle(viewport);
-      const availableWidth = Math.max(200, viewport.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
-      const availableHeight = Math.max(200, viewport.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom));
+      const area = el.querySelector(".progress-area");
+      const holder = el.querySelector(".progress-holder") || el;
+      if (area) holder.style.width = holder.style.height = "";
+      const availableWidth = Math.max(200, area ? area.clientWidth : viewport.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
+      const availableHeight = Math.max(200, area ? area.clientHeight : viewport.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom));
       const grows = el.dataset.grow || "";
       const fit = Math.min(availableWidth / Math.max(1, naturalWidth), availableHeight / Math.max(1, naturalHeight));
-      // Growing pages never enlarge their text to fill: they show more instead.
-      const scale = Math.max(MIN_SCALE, Math.min(grows ? 1 : MAX_SCALE, fit));
+      // Growing pages never enlarge their text to fill: they show more instead. Home's cards may grow further than
+      // other pages' (its text was the smallest in the game): the list beside them keeps its own size.
+      const scale = Math.max(MIN_SCALE, Math.min(grows ? 1 : area ? HOME_MAX_SCALE : MAX_SCALE, fit));
       if (grows) {
         el.classList.add("is-growing");
         stage.style.width = `${/w|both/.test(grows) ? Math.max(naturalWidth, availableWidth / scale) : naturalWidth}px`;
@@ -563,7 +566,6 @@
       const width = stage.offsetWidth * scale, height = stage.offsetHeight * scale;
       stage.style.transform = `scale(${scale})`;
       el.style.setProperty("--pages-scale", String(scale));
-      const holder = el;
       holder.style.width = `${Math.ceil(width)}px`;
       holder.style.height = `${Math.ceil(height)}px`;
       el.classList.toggle("is-scrolling", height > availableHeight + 2 || width > availableWidth + 2);
@@ -582,7 +584,6 @@
         }).join("")}</section>`;
       }).join("");
       nav.innerHTML = groups;
-      renderStep();
     }
 
     // The page the sidebar marks: an open slideshow counts as its page (it can open by itself at the start of a season).
@@ -616,6 +617,8 @@
         controlsEl.innerHTML = `<button type="button" class="pages-control" data-pages-leaders>League Leaders</button>`;
       }
       if (lockNote && page?.controls !== "trades") controlsEl.insertAdjacentHTML("afterbegin", lockNote);
+      // A step screen opened from Home's list leads back to it.
+      if (page && isStep(page) && pageEls.has("home")) controlsEl.insertAdjacentHTML("afterbegin", `<button type="button" class="pages-control pages-step-home" data-pages-go="home"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2.5 4 6l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Home</button>`);
       if (page?.controls === "trades") {
         const disabled = options.toolbarActions?.tradeDisabled ? " disabled" : "";
         controlsEl.innerHTML = `${lockNote}<button type="button" class="pages-control" data-pages-trade="finder"${disabled}>Trade Finder</button><button type="button" class="pages-control" data-pages-trade="builder"${disabled}>Trade Builder</button><button type="button" class="pages-control" data-pages-trade="offers"${disabled}>Incoming Offers${offerCount ? ` <em class="pages-nav-badge">${offerCount}</em>` : ""}</button><button type="button" class="pages-control" data-pages-trade="market"${disabled}>Trade Market</button>`;
@@ -634,13 +637,10 @@
       const previous = currentPage;
       currentPage = pageId;
       // While a save is still loading only Home exists: don't let that overwrite the page you were on.
-      if (options.phaseContext != null) {
-        lastPage.set(saveKey, pageId);
-        try { localStorage.setItem(`${PAGE_KEY}:${saveKey}`, pageId); } catch { /* preference only */ }
-      }
-      if (isStep(page)) { try { localStorage.setItem(STEP_KEY, pageId); } catch { /* preference only */ } }
+      if (options.phaseContext != null) lastPage.set(saveKey, pageId);
       for (const [id, el] of pageEls) el.hidden = id !== pageId;
       titleEl.textContent = page.title || pageLabel(page);
+      shell.classList.toggle("is-progress", Boolean(pageEls.get(pageId)?.classList.contains("is-progress")));
       renderControls(page);
       // Move the page's cards in (a card can sit on more than one page), in the form this page wants.
       const slots = slotsByPage.get(pageId) || [];
@@ -681,12 +681,10 @@
     function closeSlideshowFor() {
       if (window.SeasonSlideshow?.isOpen?.()) window.SeasonSlideshow.close();
     }
-    // A finished (or skipped) slideshow leads on to the step screen that is waiting.
+    // A finished (or skipped) slideshow leaves you where you were: Home, with its list.
     const onSlideshowClosed = () => {
       if (disposed) return;
-      const steps = stepPages();
-      if (steps.length && !steps.some(page => page.id === currentPage)) showPage(resumeStep(steps).id);
-      else renderNav();
+      renderNav();
     };
     window.addEventListener("season-slideshow-closed", onSlideshowClosed);
 
@@ -791,24 +789,24 @@
 
     buildPages();
 
-    // ---- Which page opens: a required decision first, then the first screen of a phase just entered, then the page
-    // you were on.
+    // ---- Which page opens. Home is where you land: when a save loads, when a new phase begins, and whenever a job
+    // starts to block the clock (Stage A decision 1). Otherwise you stay on the page you were on, so a sim run from
+    // Schedule or a pick made in the draft room does not throw you out of it. A step screen that is still there after a
+    // phase change (the draft room, from the lottery to the board to the results) keeps you too.
     function landingPage() {
-      const required = [...nodes].find(([id, entry]) => entry.required && owned.has(id) && available(id));
-      if (required) return pageFor(required[0]);
-      const steps = stepPages();
-      if (ctx.entering && ctx.phaseCards.length) {
-        if (steps.length) return steps[0].id;
-        const entryFirst = (options.entryLayout?.rows || []).flat().filter(id => owned.has(id) && available(id));
-        const phasePage = [...entryFirst, ...ctx.phaseCards].map(id => owned.has(id) && available(id) ? pageFor(id) : null).find(Boolean);
-        if (phasePage && phasePage !== "roster-moves") return phasePage;
-      }
-      let remembered = lastPage.get(saveKey);
-      if (!remembered) { try { remembered = localStorage.getItem(`${PAGE_KEY}:${saveKey}`); } catch { remembered = null; } }
       const listed = visiblePages().filter(page => !page.slideshow);
-      if (remembered && listed.some(page => page.id === remembered)) return remembered;
-      const phaseRoom = listed.find(page => ["playoffs", "playoff-stats"].includes(page.id));
-      return steps[0]?.id || phaseRoom?.id || "home";
+      const remembered = lastPage.get(saveKey);
+      const stays = remembered && listed.some(page => page.id === remembered);
+      const blocking = progress()?.blockingKey?.() || "";
+      const newlyBlocked = blocking && blocking !== (lastBlocking.get(saveKey) || "");
+      lastBlocking.set(saveKey, blocking);
+      if (newlyBlocked && lastPage.has(saveKey)) window.GameSound?.play("must");
+      const called = homeCalled;
+      homeCalled = false;
+      if (!listed.some(page => page.id === "home")) return stays ? remembered : listed[0]?.id || "home";
+      if (!stays || newlyBlocked || called) return "home";
+      if (ctx.entering && !isStep(listed.find(page => page.id === remembered))) return "home";
+      return remembered;
     }
 
     const api = {
@@ -842,6 +840,7 @@
       },
       dispose() {
         disposed = true;
+        if (attached === api) attached = null;
         observer.disconnect();
         dockObserver.disconnect();
         slideshowWatch?.disconnect();
@@ -853,9 +852,16 @@
       },
       current: () => currentPage,
     };
+    attached = api;
     return api;
   }
 
-  window.CardPages = Object.freeze({enabled, setMode, attach, PAGES, PAGE_CARD_IDS});
+  // The game stopped by itself: show Home now, and keep it through the render that follows.
+  function landHome() {
+    homeCalled = true;
+    try { attached?.showPage("home"); } catch { /* the next render lands there */ }
+  }
+
+  window.CardPages = Object.freeze({enabled, setMode, attach, landHome, PAGES, PAGE_CARD_IDS});
   enabled();
 })();

@@ -92,3 +92,136 @@ test('a player is a page of the app, not a pop-up window', () => {
   assert.match(source, /event\.key === "Escape" && currentPage === DETAIL/);
   assert.match(read('card-pages.css'), /\.pages-shell\.is-detail \.pages-title \{ display: none; \}/);
 });
+
+// ---- UI polish pass, Stage B: Home is the progress screen, one button moves time, a four-screen welcome, sounds.
+function loadProgress(save, extra = {}) {
+  const context = {
+    document: {addEventListener() {}},
+    state: {home: {save}, data: extra.data || {}, hydrating: false, draftPresentationStage: extra.stage || ''},
+    dashboardPhaseKind: () => extra.kind || '', requiredClipboardDecision: () => extra.required || '',
+    offseasonCalendar: () => extra.dates || {}, tradeDeadlineDate: () => '2027-02-05',
+    teamLabel: (team) => String(team?.abbrev || team || ''), userTeam: () => 'PHI', rosterRows: () => [],
+  };
+  context.window = context;
+  vm.createContext(context);
+  vm.runInContext(read('progress.js'), context);
+  return context.window.GameProgress;
+}
+const baseSave = (patch) => ({phase: 'regular_season', current_date: '2026-12-25', pending_counts: {}, legal_actions: ['trades', 'extensions', 'advance'], user_team_record: {wins: 16, losses: 12}, ...patch});
+
+test('every phase of the save has a step on the year strip', () => {
+  const progress = loadProgress(baseSave());
+  assert.equal(progress.YEAR.length, 7);
+  for (const phase of ['fantasy_draft', 'preseason', 'regular_season', 'play_in', 'playoffs', 'draft_lottery', 'draft', 're_signing', 'free_agency', 'offseason', 'training_camp']) {
+    const rule = progress.PHASES[phase];
+    assert.ok(rule && rule.title && rule.step >= 0 && rule.step < 7, phase);
+  }
+});
+
+test('in season the one button sims to the next game, with a week and a month beside it', () => {
+  const progress = loadProgress(baseSave(), {data: {dashboard: {next_games: [{date: '2026-12-28', is_home: false, opponent_team: 'OKC'}], extension_window_open: true}}});
+  const dock = progress.dock(progress.context());
+  assert.equal(dock.main.label, 'Sim to next game');
+  assert.equal(dock.main.sub, 'to Dec 28 · at OKC');
+  assert.match(dock.main.attrs, /data-advance="next-event"/);
+  assert.equal(dock.more.map((button) => button.label).join(), 'Week,Month');
+  assert.equal(dock.main.blocked, false);
+  const markup = progress.dockMarkup();
+  assert.ok(markup.indexOf('progress-more') < markup.indexOf('progress-go'), 'the main button comes last (far right)');
+  assert.equal(progress.heading(progress.context()).sub, '16 – 12');
+});
+
+test('a job that blocks the clock is first in the list and named by the button', () => {
+  const save = baseSave({phase: 'preseason', current_date: '2027-10-20', pending_counts: {roster_minimum: 1}});
+  const progress = loadProgress(save, {required: 'cutdown', kind: 'cutdown', data: {cutdown: {short: {count: 13, minimum: 14}}}});
+  const context = progress.context();
+  const jobs = progress.jobs(context);
+  assert.equal(jobs[0].kind, 'must');
+  assert.equal(jobs[0].label, 'Sign 1 more player');
+  assert.equal(jobs[0].detail, '13 of 14');
+  const dock = progress.dock(context);
+  assert.equal(dock.main.label, 'Sign 1 more player');
+  assert.equal(dock.main.blocked, true);
+  assert.match(dock.main.attrs, /data-pages-go="roster-moves"/);
+  assert.doesNotMatch(dock.main.attrs, /data-advance|data-phase-command/, 'a blocked button never moves time');
+  assert.match(progress.dockMarkup(), /class="ui-command progress-go is-blocked"/);
+  assert.equal(progress.blockingKey(), 'Sign 1 more player');
+});
+
+test('deadline day: the list warns and the button says what it closes', () => {
+  const progress = loadProgress(baseSave({current_date: '2027-02-05'}));
+  const context = progress.context();
+  assert.equal(progress.heading(context).title, 'Trade deadline');
+  assert.equal(progress.jobs(context)[0].kind, 'warn');
+  assert.equal(progress.dock(context).main.label, 'Sim past the deadline');
+  assert.match(read('app.js'), /if \(firstRunLayout\(\)\) return landHomeForStop\("The sim stopped: today is the trade deadline\."\);/);
+});
+
+test('closed actions show as closed rows, from the save\'s own legal actions', () => {
+  const progress = loadProgress(baseSave({phase: 'playoffs', current_date: '2027-04-30', legal_actions: ['extensions', 'advance']}), {kind: 'playoffs'});
+  const jobs = progress.jobs(progress.context());
+  const trades = jobs.find((job) => job.label === 'Trades');
+  assert.equal(trades.kind, 'shut');
+  assert.equal(trades.go, null);
+  assert.equal(jobs.at(-1).kind, 'shut', 'closed rows come last');
+  assert.equal(progress.dock(progress.context()).main.label, 'Sim one game per series');
+});
+
+test('Home is the progress page, lands first, and step screens lead back to it', () => {
+  const {pages} = load();
+  const home = pages.PAGES.find((page) => page.id === 'home');
+  assert.equal(home.progress, true);
+  const source = read('card-pages.js');
+  assert.match(source, /el\.classList\.add\("is-progress"\)/);
+  assert.match(source, /if \(!stays \|\| newlyBlocked \|\| called\) return "home";/);
+  assert.match(source, /class="pages-control pages-step-home" data-pages-go="home"/);
+  assert.doesNotMatch(source, /pages-step-back|Continue: |nbaGmPage:v1/, 'no step-to-step buttons and no remembered page across loads');
+  assert.match(read('assets-desktop.js'), /phaseCommands:\(window\.CardPages\?\.enabled\?\.\(\) && window\.GameProgress\?\.dockMarkup\(\)\) \|\| clipboardPhaseCommands\(\)/);
+});
+
+test('the welcome is four screens, skippable, remembered, and goes before the Preseason Outlook', () => {
+  const app = read('app.js');
+  const steps = app.slice(app.indexOf('const FIRST_RUN_STEPS = ['), app.indexOf('];', app.indexOf('const FIRST_RUN_STEPS = [')));
+  assert.equal((steps.match(/\{title:/g) || []).length, 4);
+  assert.match(app, /const tutorialSteps = \(\) => \(firstRunLayout\(\) \? FIRST_RUN_STEPS : GAME_TUTORIAL_STEPS\);/);
+  assert.match(app, /class="first-run-skip" data-tutorial-action="skip">Skip</);
+  assert.match(app, /if \(firstRunDue\(\)\) return;/);
+  assert.match(app, /els\.gameTutorial\.classList\.remove\("is-first-run"\);[\s\S]*?maybeOpenSeasonSlideshow\(\);/);
+  assert.doesNotMatch(app, /PAGES_TUTORIAL_STEPS/);
+  for (const id of ['minutes', 'signals', 'development', 'staff', 'week', 'efficiency']) assert.match(app.slice(app.indexOf('const PAGE_SECTION_TIPS'), app.indexOf('function firstRunTeamSlide')), new RegExp(`\\b${id}: "`), `the ${id} tip is kept behind its i mark`);
+  assert.match(read('card-pages.js'), /PAGE_SECTION_TIPS\[item\.id\]/);
+});
+
+test('sound is made in the browser, on and quiet by default, clicks off, with switches in Settings', () => {
+  const listeners = {};
+  const context = {document: {hidden: false, addEventListener: (type, fn) => { listeners[type] = fn; }}, localStorage: {getItem: () => null, setItem() {}}, Date, Math, JSON};
+  context.window = context;
+  vm.createContext(context);
+  vm.runInContext(read('sound.js'), context);
+  const sound = context.window.GameSound;
+  assert.deepEqual({...sound.settings()}, {on: true, volume: 40, clicks: false});
+  for (const name of ['continue', 'win', 'loss', 'must', 'deal', 'pick', 'reveal', 'blocked', 'news', 'champion', 'click']) assert.ok(sound.names().includes(name), name);
+  assert.equal(sound.play('win'), false, 'nothing plays before the player has clicked or pressed a key');
+  assert.equal(sound.set({volume: 250}).volume, 100);
+  assert.equal(sound.set({on: false}).on, false);
+  assert.doesNotMatch(read('sound.js'), /new Audio\(|\.mp3|\.wav|\.ogg|fetch\(/, 'no sound files');
+  const app = read('app.js');
+  for (const hook of ['data-sound-choice', 'data-sound-volume', 'data-sound-clicks']) assert.ok(app.includes(hook), hook);
+  assert.match(app, /globalThis\.GameSound\?\.result\(recordBefore, state\.home\?\.save\?\.user_team_record\);/);
+});
+
+test('shared style values: one sheet, loaded first, and no italic or stray weights left in the game\'s stylesheets', () => {
+  const tokens = read('tokens.css');
+  for (const name of ['--gm-size-page', '--gm-size-row', '--gm-size-small', '--gm-weight-regular', '--gm-weight-semibold', '--gm-weight-bold', '--gm-ink', '--gm-must', '--gm-line-strong', '--gm-radius-card', '--gm-space-5', '--gm-glass-page', '--gm-motion-open', '--gm-ease']) assert.ok(tokens.includes(`${name}:`), name);
+  assert.match(tokens, /--gm-size-small: 11px;/, 'the floor is 11px');
+  assert.match(tokens, /prefers-reduced-motion: reduce/);
+  const html = read('index.html');
+  const sheets = [...html.matchAll(/href="\/([^"?]+\.css)/g)].map((match) => match[1]);
+  assert.equal(sheets[0], 'tokens.css');
+  for (const sheet of sheets.filter((name) => name !== 'tokens.css')) {
+    const css = read(sheet);
+    assert.doesNotMatch(css, /font-style\s*:\s*(italic|oblique)|\bfont\s*:\s*italic/, `${sheet}: no italic`);
+    assert.doesNotMatch(css, /font-weight\s*:\s*(\d{3}|bold|bolder|lighter)\b/, `${sheet}: weights come from the shared values`);
+  }
+  for (const sheet of ['progress.css']) assert.doesNotMatch(read(sheet).replace(/rgba?\([^)]*\)|#ffb0b0/g, ''), /font-size\s*:\s*\d|font:\s*[^;]*\b\d+px/, `${sheet}: sizes come from the shared values`);
+});

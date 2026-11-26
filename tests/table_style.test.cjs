@@ -13,7 +13,9 @@ test('table style sheet loads after every other style sheet', () => {
   const links = [...html.matchAll(/href="\/([^"?]+\.css)/g)].map(m => m[1]);
   // The glass look loads last (round 3): the light glass, then the clear glass (round 4) and the font choice; the
   // table style sheet just before them. The pages layout (branch sidebar-pages) loads after everything.
-  assert.deepEqual(links.slice(-6), ['table-style.css', 'glass.css', 'glass-clear.css', 'fonts.css', 'jfresh.css', 'card-pages.css']);
+  // The progress screen's own sheet (UI polish pass) sits just before the pages layout; the shared style values load first.
+  assert.deepEqual(links.slice(-7), ['table-style.css', 'glass.css', 'glass-clear.css', 'fonts.css', 'jfresh.css', 'progress.css', 'card-pages.css']);
+  assert.equal(links[0], 'tokens.css');
 });
 
 test('rows have no left bar on hover', () => {
@@ -26,7 +28,7 @@ test('header line is one thick dark bar, headers are bold, the sorted field gets
   // Taste deck 2026-11-23: one dark 3px line, not two tones.
   assert.match(css, /box-shadow: inset 0 -3px var\(--table-head-bar\) !important/);
   assert.doesNotMatch(css, /inset 0 -1px var\(--table-row-bar\), inset 0 -3px/);
-  assert.match(css, /font-weight: 700 !important/);
+  assert.match(css, /font-weight: var\(--gm-weight-bold\) !important/);
   for (const name of ['table-style.css', 'house-table.css', 'season-slideshow.css', 'glass-clear.css']) {
     assert.doesNotMatch(read(name), /linear-gradient\(var\(--(table-sorted|house-sorted|g-sorted)/, name);
   }

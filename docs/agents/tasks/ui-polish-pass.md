@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 6/9 - Stage A done and published; stopped at the checkpoint, waiting for the user's eight decisions
+Progress: 7/9 - Stage B done and published; stopped at the checkpoint, waiting for the user's four Stage C decisions
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -103,7 +103,10 @@ and first run, and the token sheet. End with a short list of decisions the user 
 - [x] Stage A: done 2026-11-25, published as one page: https://claude.ai/artifact/5BDfbWFKX68gDLMaKUqKLJ ("Polish Pass Stage A").
       **Waiting on the user's eight decisions** (they save into the page's `decisions` collection; read them with the
       artifact data tool before starting Stage B).
-- [ ] Stage B
+- [x] Stage B: done 2026-11-25, published as one page: https://claude.ai/artifact/T1zGSZJcDDJ5js8ATMqzDc ("Polish Pass
+      Stage B"). Built from the user's Stage A answers (all eight as proposed, no notes). **Waiting on four decisions**
+      (the page's `decisions` collection): where Stage C starts, landing after an ordinary sim, undecided rookie options
+      on opening night, the sounds.
 - [ ] Stage C
 
 ## Stage A report (2026-11-25)
@@ -150,3 +153,65 @@ breaks), `shots.mjs` + `scn/*.mjs` (headless screenshots and table scraping), `s
 1. Home becomes the progress screen. 2. What the button does when a job blocks it. 3. First run. 4. Smallest text
 (11px floor proposed). 5. Italic (never, proposed). 6. Two tables with the same rows (one table with a picker,
 proposed). 7. Sound. 8. Things shown twice.
+
+## Stage B report (2026-11-25)
+
+**What changed, in plain words**
+- **Home is the progress screen.** Top: the phase, one line under it, and a seven-step year strip. Left: a to-do list
+  (red rows block the clock, yellow is a deadline today, green is done, dashed grey is closed). Beside it: the cards
+  that matter in that phase (the season cards while games are on; playoff stats in the playoffs; roster, payroll and
+  picks from the lottery to camp). You land on Home when a save loads, when a phase begins and when the game stops by
+  itself; an ordinary sim leaves you on the page you were on.
+- **One button, bottom right, only moves time.** Label says what happens, small line says to which date; a week, a
+  month and the like stand to its left. When a job blocks it the button turns red, carries the job's name and opens the
+  job. The "Step N of 4" chip, the Back / Next / Continue step buttons, the deadline-day button and the two pause
+  windows (trade deadline, season end) are gone in the pages layout. Step screens open from Home's list and have a
+  Home button at their title.
+- **First run.** Four short screens drawn from the save (your team, the year, the one button, your pages), then the
+  Preseason Outlook, then Home. Skippable, remembered (same key as before), replayable from Settings. The old guide's
+  page tips sit behind a small "i" beside those section titles.
+- **Sound.** Made in the browser (`gui/sound.js`), on and quiet (40%), clicks off. Settings > Sound: switch, volume,
+  clicks. Eleven sounds, each tied to one event.
+- **Shared style values.** `gui/tokens.css`, loaded first; the sheet is in `docs/UI_STYLE_GUIDE.md`. Moved onto it in
+  all 23 loaded stylesheets: text weights (12 -> 3; the old "medium", 25 places, became semibold), italic (16 -> 0),
+  transition timings and easing (17 and 7 -> 4 and 1). The page title, Home's new parts, the footer button and the
+  welcome read every value from it. NOT moved: text sizes, colours, corner sizes (cards have fixed layouts; page by
+  page in Stage C). The forced-override count is about unchanged.
+
+**Files**
+New: `gui/tokens.css`, `gui/progress.js`, `gui/progress.css`, `gui/sound.js`. Changed: `gui/card-pages.js` (Home's
+structure and sizing, landing rule, no step buttons, "i" tips), `gui/card-pages.css` (13 dead rules removed, title on
+the shared values, pages cross-fade), `gui/app.js` (welcome, sound hooks and settings, stops on Home, no step chip in
+the sidebar), `gui/assets-desktop.js` (the footer's buttons come from `GameProgress.dockMarkup()`), `gui/index.html`
+(new files, every cache version bumped to `polish-b1`), 23 stylesheets (the weight / italic / transition swap),
+`docs/UI_STYLE_GUIDE.md` (token sheet, progress-screen rules), 8 test files (7 updated for the new values, 9 new
+tests in `tests/sidebar_pages.test.cjs`).
+
+**Checks**
+- Played on copies (port 8775): a brand-new save from the start screen through the welcome, the outlook, a blocking
+  job, the season start, two games and a week; a December save simmed to the trade deadline; a deadline-day save
+  simmed to the end of the regular season and into the play-in; Home captured at nine points of the year. No page
+  errors.
+- Every page re-captured after the stylesheet swap and compared with its Stage A picture: about 1% of each changed
+  (title, sidebar, footer); nothing moved.
+- Browser tests: 48 of 49 files pass. `startup_video.test.cjs` cannot run in this worktree (the start-screen video is
+  git-ignored and absent here); it is unrelated to this work.
+- Not run: the full Python suite (no engine, save or ratings code touched). Of the Python files that read GUI text,
+  `test_gui_concept71` and `test_gui_concept74` each have one old check that fails with and without these changes
+  (the Settings "font" check; a prospects-card check); two more error on the same missing video.
+- Not exercised (no test save reaches them): fantasy draft (keeps its old controls; the footer falls back to them),
+  staff retention, multiplayer, the board layout.
+
+**Known gaps, for Stage C**
+- Home's six cards are still the old cards, drawn at 86% scale (about 91% before): 93% of Home's text is under 11px
+  (was 86%). Rebuilding them at 13px is Home's page conversion, proposed as the first Stage C page.
+- Differences from the Stage A pictures: Standings is beside the minutes (not under the list); the draft board and the
+  free-agent market stay on their own screens (not on Home); Home in summer shows roster, payroll and picks.
+- Duplicates not yet removed (signals and morale on Team Identity; Two-Way Places as its own page in season).
+- The Font row in Settings is a little tight on its last option; white strips and black bars in pop-ups untouched.
+- For the coordinator (unchanged from Stage A): trading after the deadline and simming with a coach decision pending
+  are stopped only in the browser.
+
+**Working files** (git-ignored, `output/ui-polish/`): `codemod.py` (the stylesheet swap; re-running it finds nothing
+left), `scn/home.mjs`, `scn/first.mjs`, `scn/flow.mjs`, `scn/flow2.mjs`, `scn/stops.mjs`, `scn/pages.mjs`,
+`scn/measure.mjs`; `siteb/` (the published page).

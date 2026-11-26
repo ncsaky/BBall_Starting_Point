@@ -98,7 +98,7 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **No numbered section headers** ("Technique and recognition", not "1. Technique…"), no "each bar adds to 100%" or "how often" captions: implicit things stay unsaid (round 6).
 - **Draft pick details** (protections, swaps) open in a Details drop-down, not a hover.
 - **Explanations are hover info, not visible text** (round 5): subtitles under section headers and notes like "Projected overall: line is…" become an info mark with hover text.
-- **Section headers inside a table or list** (Shooting, Rebounding…) are visibly different from rows (italic small caps or similar).
+- **Section headers inside a table or list** (Shooting, Rebounding…) are visibly different from rows: small bold capitals (never italic; user, 2026-11-25).
 - **Status (kept, declined, signed...):** a coloured icon plus plain black text, regular weight. No coloured pill chips.
 - **Roles:** in tables and tiles, roles get their own column(s) as coloured text, not chips, not under the player's name and not hidden in hover text. Offense and defense roles read as a pair.
 - **Small flags** (resting, the "Zz" mark) are a small superscript on the value they qualify (minutes or fatigue), not a column of their own.
@@ -179,6 +179,91 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 
 ### Motion
 - Slides can animate rows in (falling into place) instead of hard cuts. Keep it quick.
+
+## Shared style values (the token sheet, 2026-11-25)
+
+One file holds the values every surface shares: `src/nba_gm_data/gui/tokens.css` (loaded first). They are the values
+the glass look already used most, named once. The user approved them at the Stage A checkpoint of the UI polish pass
+(11px floor, never italic, sound on and quiet). New rules use them; an old rule moves onto them when its page is
+rebuilt. Don't add a literal size, colour, corner or timing to a stylesheet when one of these fits.
+
+**Type** (nothing under 11px; digits always line up)
+
+| Use | Size | Weight | Name |
+|---|---|---|---|
+| A slide's headline (the welcome, season slideshows) | 56px | bold | `--gm-size-display` |
+| Page title | 28px | semibold | `--gm-size-page` |
+| Section title | 18px | bold | `--gm-size-section` |
+| The one number a section leads with | 34px | bold | `--gm-size-lead` |
+| Key figure | 20px | bold | `--gm-size-figure` |
+| The main button | 16px | bold | `--gm-size-button` |
+| Names (semibold), row text and values (regular), controls | 13px | semibold / regular | `--gm-size-row` |
+| Table headings (bold), the one subtext (regular) | 11px | bold / regular | `--gm-size-small` |
+
+Three weights only: regular 400, semibold 600, bold 700 (`--gm-weight-*`). Bold for headings, lead numbers and table
+headings; semibold for names and labels; regular for values. **No italic anywhere**: emphasis is weight or colour, and
+section labels inside a table are small bold capitals. Capitals only for sidebar group labels, section labels inside a
+table and news banners; sentence case elsewhere.
+
+**Colours**
+
+| Use | Value | Name |
+|---|---|---|
+| Text | `#ffffff` | `--gm-ink` |
+| Second text | `#d5e1ea` | `--gm-ink-2` |
+| Dimmest allowed (about 7:1 on the page glass) | `#a8b9c7` | `--gm-ink-3` |
+| Accent, links, "you", the current step | `#7cc0ff` | `--gm-accent` |
+| The chosen option in a picker | `#3b82d6` | `--gm-pick` |
+| Must do, counts | `#ff5d5d` | `--gm-must` |
+| Injury, loss, over the cap | `#ff9a9a` | `--gm-bad` |
+| Deadline, tax line, extension-eligible | `#f2c46d` | `--gm-warn` |
+| Done, win, growth | `#86e0a2` | `--gm-good` |
+
+The rating colour scale (60 to 98, red to blue) is unchanged and stays where it is defined.
+
+**Lines and corners**: one solid line under a table heading (1.5px, `--gm-line-strong`); one hairline between rows and
+around cards (`--gm-line`, `--gm-line-row`); keyboard focus ring `--gm-focus`. Four corner sizes: 0 rows, 8px tiles and
+fields, 16px cards, pop-ups and the page, full pills for buttons, pickers and bars (`--gm-radius-*`).
+
+**Spacing**: 4, 8, 12, 16, 24, 32, 48 (`--gm-space-1` to `-7`). 24 between columns, 32 between sections. Each level
+starts 8px further right than the one above it: page title, section title, table heading, row. Rows are 34px on a page
+(a lone table may stretch its rows to fill, up to 42px) and 30px in a pop-up.
+
+**Glass levels**: the arena picture; the frame (sidebar and footer, `--gm-glass-frame`); the page
+(`--gm-glass-page`, driven by Settings > Card transparency); a tile (`--gm-glass-tile`); a pop-up
+(`--gm-glass-popup`). One hairline each, no gradients, nothing filled white, cream or black.
+
+**Motion**: four timings and one curve. Quick 0.12s (hover, press, a tick); Open 0.17s (pop-ups and menus: the zoom);
+Move 0.24s (a picker's pill sliding, pages cross-fading, rows falling into place); Data 0.45s (bars and charts changing,
+once). Easing `cubic-bezier(.2, .8, .2, 1)` (`--gm-ease`). Never slide-ups, bounces or loops. Everything that reads
+these values stops when the computer asks for reduced motion.
+
+**Sound** (`gui/sound.js`): made in the browser, no files. On and quiet by default (volume 40%), button clicks off;
+Settings > Sound has the switch, the volume and the clicks switch. Continue (the main button moves time), win and loss
+(your result after a sim), must do (a job starts to block the clock), deal (a trade, signing or extension goes
+through), pick (a draft selection), reveal (a lottery envelope), blocked (the game refuses an action), news (a trade
+offer or draft-night trade arrives), champion (once a year), click (every button, own switch).
+
+**What has moved onto these values so far** (Stage B): every stylesheet's text weights (12 different, now 3), italic
+(16 uses, now none) and transition timings and easing (17 timings and 7 curves, now 4 and 1); the page title, the
+sidebar frame's new parts, Home's progress parts, the footer button, the welcome. Still literal in the old
+stylesheets, moving page by page in Stage C: text sizes, colours and corner sizes (the cards have fixed layouts, so
+these cannot be swapped blind).
+
+## The progress screen and the one button (2026-11-25)
+
+- **Home is the progress screen.** Its top shows the phase and one line under it, with the seven-step year strip
+  (Preseason, Season, Playoffs, Who to keep, Free agency, Summer, Camp). Its left column is the to-do list. You land
+  on it when a save loads, when a phase begins, and whenever the game stops by itself.
+- **The to-do list**: red rows block the clock and come first; a yellow row is a deadline today; then what is open;
+  green rows are done; dashed grey rows are closed (from the save's own `legal_actions`, so the list cannot disagree
+  with what the game accepts). A row opens its page or step screen; a step screen has a Home button at its title.
+- **One button, bottom right, only moves time.** Its label says what happens and its small line says to which date.
+  Quieter choices (a week, a month, finish the draft) stand to its left. When a job blocks it, the button turns
+  must-do red, carries the job's name and opens the job; it never fails with a message.
+- No pause windows for the trade deadline or the end of the regular season: the sim stops on Home with one line
+  saying why.
+- The logic lives in `gui/progress.js` (one rule table, `PHASES`); `card-pages.js` places it.
 
 ## Preserve (the user's favourites; don't redesign)
 - Team Identity heat maps at the current hexagon size (round 3: "looks great"). The tab style there still needs a new try.

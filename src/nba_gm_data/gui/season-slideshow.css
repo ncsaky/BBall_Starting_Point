@@ -50,7 +50,7 @@
   margin: 0 0 12px;
   color: #18212a;
   font-size: 26px;
-  font-weight: 720;
+  font-weight: var(--gm-weight-bold);
   line-height: 1.15;
 }
 
@@ -86,20 +86,20 @@
 .ss-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .ss-title-row h2 { margin: 0; }
 .ss-info { position: relative; display: inline-flex; }
-.ss-info-tip { position: absolute; top: calc(100% + 8px); left: -12px; z-index: 5; width: max-content; max-width: 380px; padding: 10px 12px; font-size: 12px; font-weight: 400; line-height: 1.45; color: #eef3f7; background: rgba(12, 22, 34, .94); border: 1px solid rgba(255, 255, 255, .18); border-radius: 10px; box-shadow: 0 12px 30px rgba(0, 0, 0, .4); visibility: hidden; opacity: 0; pointer-events: none; }
+.ss-info-tip { position: absolute; top: calc(100% + 8px); left: -12px; z-index: 5; width: max-content; max-width: 380px; padding: 10px 12px; font-size: 12px; font-weight: var(--gm-weight-regular); line-height: 1.45; color: #eef3f7; background: rgba(12, 22, 34, .94); border: 1px solid rgba(255, 255, 255, .18); border-radius: 10px; box-shadow: 0 12px 30px rgba(0, 0, 0, .4); visibility: hidden; opacity: 0; pointer-events: none; }
 .ss-info:hover .ss-info-tip, .ss-info:focus-within .ss-info-tip { visibility: visible; opacity: 1; }
 .ss-subtitle { margin: 0 0 12px; color: #4a5a67; font-size: 12px; line-height: 1.4; }
 .ss-note, .ss-source { margin: 10px 0 0; color: #3e4d59; font-size: 12px; line-height: 1.4; }
-.ss-source { margin: 0 0 8px; font-weight: 650; }
+.ss-source { margin: 0 0 8px; font-weight: var(--gm-weight-semibold); }
 .ss-empty { color: #3e4d59; font-size: 15px; }
-.ss-lead { font-size: 15px; font-weight: 650; margin: 6px 0 10px; }
+.ss-lead { font-size: 15px; font-weight: var(--gm-weight-semibold); margin: 6px 0 10px; }
 .ss-feature, .ss-award, .ss-trade, .ss-coach, .ss-story {
   background: #f7f9fa;
   border: 1px solid #b7c2cb;
   box-shadow: 1px 1px 0 #fff inset;
   padding: 10px 12px;
 }
-.ss-feature h4, .ss-award h4, .ss-story h4, .ss-coach h4, .ss-two h4, .ss-split h4 { margin: 0 0 8px; font-size: 13px; font-weight: 750; color: #17212a; }
+.ss-feature h4, .ss-award h4, .ss-story h4, .ss-coach h4, .ss-two h4, .ss-split h4 { margin: 0 0 8px; font-size: 13px; font-weight: var(--gm-weight-bold); color: #17212a; }
 .ss-feature p, .ss-story p, .ss-coach p { margin: 6px 0 0; line-height: 1.4; }
 
 .ss-logo { width: 20px; height: 20px; object-fit: contain; vertical-align: middle; }
@@ -116,12 +116,12 @@
 
 /* Tables: house style */
 .ss-table { width: 100%; border-collapse: collapse; background: var(--house-row, #fff); font-size: 12px; }
-.ss-table caption { caption-side: top; text-align: left; font-weight: 800; font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase; padding: 0 0 3px; margin-bottom: 0; border-bottom: 2px solid #18212a; color: #18212a; }
+.ss-table caption { caption-side: top; text-align: left; font-weight: var(--gm-weight-bold); font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase; padding: 0 0 3px; margin-bottom: 0; border-bottom: 2px solid #18212a; color: #18212a; }
 .ss-table th {
   border-bottom: 3px solid #2b3640;
   color: var(--house-head-text, #1d2a33);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: var(--gm-weight-bold);
   padding: 4px 6px;
   text-align: center;
   text-transform: none;
@@ -134,7 +134,7 @@
 .ss-table .ss-num { text-align: center; font-variant-numeric: tabular-nums; }
 .ss-table :is(th, td):is(.ss-left, .ss-player-col) { text-align: left; }
 .ss-table td.ss-player-col { padding-top: 0; padding-bottom: 0; vertical-align: bottom; }
-.ss-table tr.ss-user td { background: var(--house-row-active, #cfe1f1); font-weight: 700; }
+.ss-table tr.ss-user td { background: var(--house-row-active, #cfe1f1); font-weight: var(--gm-weight-bold); }
 .ss-table tr.ss-user td:first-child { box-shadow: inset 3px 0 0 var(--house-active-mark, #3d82c5); }
 .ss-table small { display: block; }
 
@@ -167,23 +167,23 @@
 .ss-big p { margin: 4px 0 0; font-size: 14px; }
 .ss-dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 10px 0 0; }
 .ss-dl dt { color: #3e4d59; }
-.ss-dl dd { margin: 0; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.ss-dl dd { margin: 0; font-weight: var(--gm-weight-bold); text-align: right; font-variant-numeric: tabular-nums; }
 .ss-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0; }
-.ss-chip-head { font-weight: 750; width: 90px; }
+.ss-chip-head { font-weight: var(--gm-weight-bold); width: 90px; }
 .ss-chip { border: 1px solid #8797a6; padding: 2px 8px; background: #fff; font-size: 12px; }
 .ss-chip.ss-good { border-color: #2f7d4b; background: #e3f2e8; }
 .ss-chip.ss-bad { border-color: #a74a51; background: #f6e3e4; }
 .ss-list { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
-.ss-up { color: #237042; font-weight: 700; }
-.ss-down { color: #a3343e; font-weight: 700; }
+.ss-up { color: #237042; font-weight: var(--gm-weight-bold); }
+.ss-down { color: #a3343e; font-weight: var(--gm-weight-bold); }
 
 /* Trades and coaching */
-.ss-trade header { display: flex; justify-content: space-between; gap: 10px; font-weight: 700; margin-bottom: 6px; }
+.ss-trade header { display: flex; justify-content: space-between; gap: 10px; font-weight: var(--gm-weight-bold); margin-bottom: 6px; }
 .ss-trade-sides { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
 .ss-trade-sides ul { margin: 4px 0 0; padding-left: 18px; }
 .ss-side-head { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
 .ss-trade-sides li small { display: block; color: #52616e; }
-.ss-reason { margin: 8px 0 0; font-style: italic; color: #2b3944; }
+.ss-reason { margin: 8px 0 0; font-style: normal; color: #2b3944; }
 .ss-coach { display: flex; gap: 14px; align-items: flex-start; }
 .ss-stories { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
 .ss-story p { font-size: 14px; }
@@ -200,7 +200,7 @@
 .ss-compact .ss-logo { width: 16px; height: 16px; }
 .ss-continuity li:nth-child(even) { background: var(--house-row-alt, #eef1f3); }
 .ss-continuity li:hover { background: var(--house-row-hover, #dce8f2); }
-.ss-continuity li.ss-user { background: var(--house-row-active, #cfe1f1); box-shadow: inset 3px 0 0 var(--house-active-mark, #3d82c5); font-weight: 700; }
+.ss-continuity li.ss-user { background: var(--house-row-active, #cfe1f1); box-shadow: inset 3px 0 0 var(--house-active-mark, #3d82c5); font-weight: var(--gm-weight-bold); }
 .ss-bar { display: flex; height: 12px; background: #172228; }
 .ss-bar i { display: block; height: 100%; }
 .ss-kept { background: #2f9a55; }
@@ -210,7 +210,7 @@
 
 /* Settings menu entry */
 .settings-slideshows { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.settings-slideshows > span { font-weight: 700; margin-right: 4px; }
+.settings-slideshows > span { font-weight: var(--gm-weight-bold); margin-right: 4px; }
 
 @media (max-width: 1100px) {
   .ss-awards { grid-template-columns: repeat(3, 1fr); }
@@ -243,7 +243,7 @@
 body.unified-terminal-ui .ss-leader-cat .ss-view-all {
   min-height: 0 !important; height: auto !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important;
   background: transparent !important; box-shadow: none !important; color: #2c4a63 !important;
-  font-size: 10px !important; font-weight: 400 !important; text-decoration: none !important; cursor: pointer;
+  font-size: 10px !important; font-weight: var(--gm-weight-regular) !important; text-decoration: none !important; cursor: pointer;
 }
 body.unified-terminal-ui .ss-leader-cat .ss-view-all:hover { color: #18212a !important; text-decoration: underline !important; }
 .ss-back { padding: 2px 8px; font-size: 11px; text-decoration: none; cursor: pointer; }
@@ -255,13 +255,13 @@ body.unified-terminal-ui .ss-leader-cat .ss-view-all:hover { color: #18212a !imp
 body.unified-terminal-ui .season-slideshow .ss-player-link {
   min-height: 0 !important; height: auto !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important;
   background: transparent !important; box-shadow: none !important; color: inherit !important;
-  font: inherit !important; font-weight: 700 !important; text-align: left; text-decoration: none !important; cursor: pointer;
+  font: inherit !important; font-weight: var(--gm-weight-bold) !important; text-align: left; text-decoration: none !important; cursor: pointer;
 }
 body.unified-terminal-ui .season-slideshow .ss-player-link:hover { text-decoration: underline !important; }
 body.unified-terminal-ui .ss-return {
   position: fixed; top: 10px; left: 50%; transform: translateX(-50%) !important; z-index: 2147483000;
   padding: 7px 14px !important; border: 1px solid #405363 !important; border-radius: 3px !important;
-  background: #18212a !important; color: #fff !important; font: 600 13px Arial, sans-serif !important; cursor: pointer;
+  background: #18212a !important; color: #fff !important; font: var(--gm-weight-semibold) 13px Arial, sans-serif !important; cursor: pointer;
   box-shadow: 0 4px 14px rgba(0, 0, 0, .35) !important;
 }
 body.unified-terminal-ui .ss-return:hover { background: #2b3a48 !important; }
@@ -273,11 +273,11 @@ body.unified-terminal-ui .ss-return:hover { background: #2b3a48 !important; }
 .ss-compact .ss-table.ss-fixed tbody tr { height: 32px; }
 .ss-table.ss-fixed td small.ss-clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; overflow: hidden; line-height: 1.25; }
 
-.ss-injury { color: #b23b3b; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.ss-injury { color: #b23b3b; font-size: 11px; font-weight: var(--gm-weight-bold); white-space: nowrap; }
 /* Header: logo and the team's league rank. */
 .ss-content h2.ss-title-team { display: flex; align-items: center; gap: 12px; }
 .ss-content h2.ss-title-team .ss-title-logo { width: 40px; height: 40px; }
-.ss-title-stat b { font-size: 24px; font-weight: 750; }
+.ss-title-stat b { font-size: 24px; font-weight: var(--gm-weight-bold); }
 .ss-radar { margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 0; }
 .ss-radar svg { width: 100%; max-height: 330px; overflow: visible; }
 .ss-radar-ring { fill: none; stroke: #c9d2da; stroke-width: 1; }
@@ -285,7 +285,7 @@ body.unified-terminal-ui .ss-return:hover { background: #2b3a48 !important; }
 .ss-radar-offense { fill: rgba(61, 130, 197, .32); stroke: #3d82c5; stroke-width: 1.6; }
 .ss-radar-defense { fill: rgba(196, 122, 44, .30); stroke: #c47a2c; stroke-width: 1.6; }
 .ss-radar-label { font-size: 10px; fill: #2b3a46; }
-.ss-radar-rank { font-weight: 700; fill: #17212a; }
+.ss-radar-rank { font-weight: var(--gm-weight-bold); fill: #17212a; }
 .ss-radar figcaption { display: flex; gap: 14px; font-size: 11px; color: #3e4d59; }
 .ss-key::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: -1px; border-radius: 2px; }
 .ss-key-offense::before { background: rgba(61, 130, 197, .6); border: 1px solid #3d82c5; }
@@ -296,11 +296,11 @@ body.unified-terminal-ui .ss-payroll .salary-horizon-chart { height: 100% !impor
 
 /* ---------------------------------------------------------------- taste pass (2026-11-23) */
 /* Coloured rating numbers (red low to blue high; colour set inline by the script). */
-.ss-rating { font-weight: 800; font-variant-numeric: tabular-nums; }
+.ss-rating { font-weight: var(--gm-weight-bold); font-variant-numeric: tabular-nums; }
 
 /* Panel titles: small capitals with a dark rule under them, clearly apart from row text. */
 .ss-panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0 0 8px; padding: 0 0 3px; border-bottom: 2px solid #18212a; }
-body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-family: inherit; font-size: 11.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #18212a; line-height: 1.3; }
+body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-family: inherit; font-size: 11.5px; font-weight: var(--gm-weight-bold); letter-spacing: .07em; text-transform: uppercase; color: #18212a; line-height: 1.3; }
 .ss-panel { background: #f7f9fa; border: 1px solid #a9b5bf; padding: 10px 12px; min-width: 0; }
 .ss-panel-empty { margin: 6px 0 0; color: #3e4d59; font-size: 13px; }
 
@@ -326,8 +326,8 @@ body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-fam
 .ss-tile-starter { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 8px 10px; text-align: center; }
 .ss-tile-starter .ss-tile-photo { display: flex; justify-content: center; width: 100%; border-bottom: 1px solid #d5dde3; }
 .ss-tile-starter .ss-headshot { width: 196px; height: 144px; }
-.ss-tile-pos { position: absolute; top: 6px; left: 8px; font-size: 10px; font-weight: 700; color: #52616e; }
-.ss-tile-name { display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%; min-width: 0; font-weight: 700; }
+.ss-tile-pos { position: absolute; top: 6px; left: 8px; font-size: 10px; font-weight: var(--gm-weight-bold); color: #52616e; }
+.ss-tile-name { display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%; min-width: 0; font-weight: var(--gm-weight-bold); }
 .ss-tile-name > :first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ss-tile-starter .ss-tile-name { font-size: 15px; }
 .ss-tile-ovr .ss-rating { font-size: 30px; line-height: 1; }
@@ -342,8 +342,8 @@ body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-fam
 .ss-tile-meta { display: inline-flex; align-items: baseline; gap: 6px; font-size: 13px; }
 .ss-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .ss-fact { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 12px 12px 14px; background: #fff; border: 1px solid #a9b5bf; }
-.ss-fact-label { font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #3e4d59; }
-.ss-fact-value { font-size: 28px; font-weight: 800; line-height: 1.15; color: #18212a; font-variant-numeric: tabular-nums; }
+.ss-fact-label { font-size: 10.5px; font-weight: var(--gm-weight-bold); letter-spacing: .07em; text-transform: uppercase; color: #3e4d59; }
+.ss-fact-value { font-size: 28px; font-weight: var(--gm-weight-bold); line-height: 1.15; color: #18212a; font-variant-numeric: tabular-nums; }
 .ss-fact-sub { font-size: 12px; color: #3e4d59; }
 
 /* Team profile: two titled panels, the radar and the payroll chart with its numbers underneath. */
@@ -354,15 +354,15 @@ body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-fam
 .ss-panel-payroll .ss-payroll { flex: 1 1 auto; height: auto; min-height: 300px; max-height: 420px; justify-content: center; }
 .ss-cap-figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 12px; margin: 14px 0 0; }
 .ss-cap-figures div { display: flex; flex-direction: column; align-items: center; text-align: center; }
-.ss-cap-figures dt { font-size: 10.5px; font-weight: 700; color: #3e4d59; }
-.ss-cap-figures dd { margin: 0; font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.ss-cap-figures dt { font-size: 10.5px; font-weight: var(--gm-weight-bold); color: #3e4d59; }
+.ss-cap-figures dd { margin: 0; font-size: 15px; font-weight: var(--gm-weight-bold); font-variant-numeric: tabular-nums; }
 
 /* Contracts to watch: bar charts. Your extension candidates (now against projected) and the league's trade block,
    grouped by the main reason, each bar the salary coloured by the player's rating. */
 .ss-contracts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px; align-items: start; }
 .ss-contracts-left { display: grid; gap: 16px; min-width: 0; }
 .ss-bar-list, .ss-bar-groups { list-style: none; margin: 0; padding: 0; }
-.ss-bar-group h5 { margin: 10px 0 2px; font-size: 11px; font-weight: 700; color: #3e4d59; }
+.ss-bar-group h5 { margin: 10px 0 2px; font-size: 11px; font-weight: var(--gm-weight-bold); color: #3e4d59; }
 .ss-bar-group:first-child h5 { margin-top: 0; }
 .ss-bar-row { display: grid; align-items: center; gap: 8px; min-height: 40px; background: #fff; border-bottom: 1px solid #d5dde3; }
 .ss-bar-row:nth-child(even) { background: var(--house-row-alt, #eef1f3); }
@@ -372,14 +372,14 @@ body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-fam
 .ss-panel-expiring .ss-move-row { grid-template-columns: minmax(0, 1.4fr) 58px 36px minmax(0, 1.1fr); gap: 6px; }
 .ss-bar-row > .ss-rating { text-align: center; }
 .ss-bar-player { min-width: 0; min-height: 40px; }
-.ss-bar-player > span.ss-player-name { display: block; align-self: center; padding: 0 !important; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.ss-bar-player > span.ss-player-name { display: block; align-self: center; padding: 0 !important; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--gm-weight-bold); }
 .ss-hbar { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .ss-hbar i { display: block; flex: none; height: 12px; width: calc((100% - 92px) * var(--share, 0)); background-color: #3d82c5; }
-.ss-hbar em { font-style: normal; font-size: 12px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ss-hbar em { font-style: normal; font-size: 12px; font-weight: var(--gm-weight-bold); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .ss-pair-bars { display: flex; flex-direction: column; gap: 3px; }
 .ss-hbar i.ss-hbar-now, .ss-bar-key i.ss-hbar-now { background-color: #9aa6b1; }
 .ss-hbar i.ss-hbar-next, .ss-bar-key i.ss-hbar-next { background-color: #3d82c5; }
-.ss-bar-key { display: inline-flex; gap: 10px; font-size: 10.5px; color: #3e4d59; font-weight: 400; letter-spacing: 0; text-transform: none; }
+.ss-bar-key { display: inline-flex; gap: 10px; font-size: 10.5px; color: #3e4d59; font-weight: var(--gm-weight-regular); letter-spacing: 0; text-transform: none; }
 .ss-bar-key i { display: inline-block; width: 12px; height: 8px; margin-right: 4px; }
 
 @media (max-width: 1100px) {
@@ -396,11 +396,11 @@ body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-fam
    hover opens the player's card wherever it is clicked. */
 .ss-radar-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; flex: 1; min-height: 0; align-items: center; }
 .ss-radar-pair .ss-radar svg { max-height: 250px; }
-.ss-radar-single figcaption { justify-content: center; font-weight: 700; }
+.ss-radar-single figcaption { justify-content: center; font-weight: var(--gm-weight-bold); }
 .ss-cap-table { width: 100%; max-width: 420px; margin: 8px auto 0; border-collapse: collapse; font-size: 12.5px; border-top: 2px solid #3f4b55; }
 .ss-cap-table td { padding: 4px 12px; border-bottom: 1px solid #d5dde3; background: none; }
-.ss-cap-table td.ss-cap-label { text-align: left; font-weight: 400; color: #3e4d59; text-transform: none; }
-.ss-cap-table td.ss-cap-value { text-align: right; font-weight: 700; color: #17212a; font-variant-numeric: tabular-nums; }
+.ss-cap-table td.ss-cap-label { text-align: left; font-weight: var(--gm-weight-regular); color: #3e4d59; text-transform: none; }
+.ss-cap-table td.ss-cap-value { text-align: right; font-weight: var(--gm-weight-bold); color: #17212a; font-variant-numeric: tabular-nums; }
 .ss-cap-table tr:nth-child(even) { background: #f1f4f7; }
 .ss-cap-table tr:hover { background: #e3ebf2; }
 .ss-tile[data-ss-tile-player] { cursor: pointer; }
@@ -417,7 +417,7 @@ body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-fam
 .ss-depth { margin-top: 10px; }
 .ss-depth .ss-panel-head { margin-bottom: 0; }  /* the group headings sit right on the bar */
 .ss-depth-table { width: 100%; border-collapse: collapse; }
-.ss-depth-table th { width: 40px; padding: 4px 8px; text-align: center; font-size: 12px; font-weight: 800; color: #18212a; border-bottom: 1px solid #d5dde3; }
+.ss-depth-table th { width: 40px; padding: 4px 8px; text-align: center; font-size: 12px; font-weight: var(--gm-weight-bold); color: #18212a; border-bottom: 1px solid #d5dde3; }
 .ss-depth-table td { padding: 3px 6px; border-bottom: 1px solid #d5dde3; }
 .ss-depth-table tr:nth-child(even) td, .ss-depth-table tr:nth-child(even) th { background: rgba(234, 240, 246, .7); }
 .ss-depth-list { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; padding: 0; list-style: none; }
@@ -428,7 +428,7 @@ body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-fam
 .ss-depth-meta { display: inline-flex; align-items: baseline; gap: 5px; font-size: 11px; }
 .ss-depth-meta i { font-style: normal; color: #3b4a57; }
 .ss-depth-empty { color: #3b4a57; font-size: 11px; }
-.ss-tile-starter .ss-role-pair { display: flex; flex-direction: column; align-items: center; gap: 0; font-size: 10.5px; font-weight: 600; line-height: 1.2; }
+.ss-tile-starter .ss-role-pair { display: flex; flex-direction: column; align-items: center; gap: 0; font-size: 10.5px; font-weight: var(--gm-weight-semibold); line-height: 1.2; }
 /* Team profile: the two radars stacked (the panel is tall, not wide), each much larger; the payroll chart fills the
    same width as the table under it. */
 .ss-radar-pair { grid-template-columns: 1fr !important; grid-template-rows: 1fr 1fr; align-items: stretch !important; }
@@ -438,7 +438,7 @@ body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-fam
 .ss-payroll-block > .ss-cap-table { width: 100% !important; min-width: 0; }
 /* Depth chart by group: three columns, a player per row, stripes per row, a whole-cell hover. */
 .ss-depth-table.is-by-group { table-layout: fixed; }
-.ss-depth-table.is-by-group thead th { width: auto; padding: 4px 8px; text-align: left; font-size: 11px; font-weight: 800; color: #18212a; border-bottom: 2px solid #3f4b55 !important; background: transparent !important; }
+.ss-depth-table.is-by-group thead th { width: auto; padding: 4px 8px; text-align: left; font-size: 11px; font-weight: var(--gm-weight-bold); color: #18212a; border-bottom: 2px solid #3f4b55 !important; background: transparent !important; }
 .ss-depth-table.is-by-group td { padding: 3px 8px; border-bottom: 1px solid #d5dde3; vertical-align: middle; }
 .ss-depth-table.is-by-group tbody tr:nth-child(even) td { background: rgba(234, 240, 246, .8); }
 .ss-depth-cell[data-ss-tile-player] { cursor: pointer; }
@@ -454,8 +454,8 @@ body.unified-terminal-ui .season-slideshow .ss-panel-title { margin: 0; font-fam
 .ss-depth-table.is-fields col.ss-depth-col-num { width: 40px; }
 .ss-depth-table.is-fields col.ss-depth-col-ovr { width: 70px; }
 .ss-depth-table.is-fields td.ss-depth-num .rating-drop { margin-left: 3px; }
-.ss-depth-table.is-fields thead tr.ss-depth-groups th { text-align: center !important; font-size: 12px; font-weight: 800; padding: 4px 6px 2px; border-bottom: 0 !important; }
-.ss-depth-table.is-fields thead tr.ss-depth-fields th { text-align: center !important; font-size: 10px; font-weight: 700; padding: 2px 4px 4px; border-bottom: 2px solid #3f4b55 !important; }
+.ss-depth-table.is-fields thead tr.ss-depth-groups th { text-align: center !important; font-size: 12px; font-weight: var(--gm-weight-bold); padding: 4px 6px 2px; border-bottom: 0 !important; }
+.ss-depth-table.is-fields thead tr.ss-depth-fields th { text-align: center !important; font-size: 10px; font-weight: var(--gm-weight-bold); padding: 2px 4px 4px; border-bottom: 2px solid #3f4b55 !important; }
 .ss-depth-table.is-fields thead tr.ss-depth-fields th.ss-depth-name { text-align: left !important; padding-left: 8px; }
 .ss-depth-table.is-fields td { padding: 3px 4px; text-align: center; vertical-align: middle; white-space: nowrap; }
 .ss-depth-table.is-fields td.ss-depth-name { text-align: left; padding-left: 8px; overflow: hidden; }

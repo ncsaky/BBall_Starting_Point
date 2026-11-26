@@ -54,7 +54,7 @@ body.unified-terminal-ui .linked-roster-scroll[data-linked-scope="assets"] { box
 .linked-roster-scroll::-webkit-scrollbar { display:none; }
 .linked-roster-tables { display:grid; grid-template-columns:minmax(0,1.9fr) minmax(0,.8fr) minmax(0,.75fr); gap:16px; min-height:0; }
 .linked-roster-group { min-width:0; }
-.linked-roster-group h4 { background:var(--ui-header); border-bottom:1px solid var(--ui-line); font-size:11px; line-height:26px; height:27px; margin:0; padding:0 6px; font-weight:400; }
+.linked-roster-group h4 { background:var(--ui-header); border-bottom:1px solid var(--ui-line); font-size:11px; line-height:26px; height:27px; margin:0; padding:0 6px; font-weight:var(--gm-weight-regular); }
 body.unified-terminal-ui .linked-roster-group table { table-layout:fixed; width:100%; border-collapse:collapse; height:auto; }
 body.unified-terminal-ui .linked-roster-group :is(th,td) { height:23px; line-height:14px; font-size:9px; padding:3px 2px; white-space:nowrap; text-align:right; border:0; border-bottom:1px solid var(--ui-soft); }
 body.unified-terminal-ui .linked-roster-group :is(th,td):first-child { width:auto; text-align:left; }
@@ -233,7 +233,7 @@ body.unified-terminal-ui .assets-trade-tools > button[data-assets-trade] {
   align-items:stretch; display:flex; flex-direction:column; gap:3px; justify-content:flex-start;
   overflow:hidden; padding:7px 10px; text-align:center;
 }
-.assets-trade-tools .trade-launch-art { align-self:stretch; flex:1 1 0; min-height:0; transition:transform 160ms ease; }
+.assets-trade-tools .trade-launch-art { align-self:stretch; flex:1 1 0; min-height:0; transition:transform var(--gm-motion-open) var(--gm-ease); }
 .assets-trade-tools .trade-launch-art img { margin:auto; max-height:100%; max-width:215px; }
 .assets-trade-tools > button[data-assets-trade] > strong { display:block; flex:none; text-align:center; width:100%; }
 .assets-trade-tools > button[data-assets-trade] > .shortcut-hint { align-self:center; flex:none; margin:0; order:1; }
@@ -294,7 +294,7 @@ body.unified-terminal-ui .assets-block-row .block-find-trade {
 .assets-block-caption .block-countdown { width:16px; height:16px; }
 .block-countdown circle { fill:none; stroke:var(--ui-text); stroke-width:2; }
 .block-countdown .block-countdown-track { stroke:var(--ui-soft); }
-.block-countdown [data-block-countdown] { stroke-dasharray:100; transform:rotate(-90deg); transform-origin:12px 12px; transition:stroke-dashoffset 100ms linear; }
+.block-countdown [data-block-countdown] { stroke-dasharray:100; transform:rotate(-90deg); transform-origin:12px 12px; transition:stroke-dashoffset var(--gm-motion-quick) linear; }
 body.unified-terminal-ui [data-linked-scope="assets"] .linked-roster-group :is(th,td):first-child { padding-left:0; }
 body.unified-terminal-ui [data-linked-scope="assets"] .linked-roster-group :is(th,td):last-child { padding-right:7px; }
 body.unified-terminal-ui [data-linked-scope="assets"] .linked-ratings :is(th,td):nth-child(4) { text-align:center; }
@@ -304,15 +304,15 @@ body.unified-terminal-ui [data-linked-scope="assets"] .linked-roster-group th {
   border-bottom-color:var(--season-line);
   color:var(--season-muted);
   font-size:8px;
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
 }
-body.unified-terminal-ui [data-linked-scope="assets"] .linked-roster-group th button { font-weight:700 !important; }
+body.unified-terminal-ui [data-linked-scope="assets"] .linked-roster-group th button { font-weight:var(--gm-weight-bold) !important; }
 body.unified-terminal-ui .assets-roster .assets-panel-body { box-sizing:border-box; padding-inline:7px; }
 body.unified-terminal-ui .assets-roster .linked-roster-scroll[data-linked-scope="assets"] { height:auto; min-height:0; overflow:visible; padding:0; }
 body.unified-terminal-ui .assets-roster [data-linked-scope="assets"] .linked-ratings table { flex:0 0 auto; height:auto; }
 body.unified-terminal-ui .assets-roster [data-linked-scope="assets"] .linked-ratings thead th {
   color:var(--season-text);
-  font-weight:700 !important;
+  font-weight:var(--gm-weight-bold) !important;
   height:18px;
   padding-block:0;
 }
@@ -426,7 +426,7 @@ body.unified-terminal-ui .season-panel-header button.ui-command,
 body.unified-terminal-ui .season-panel-header button {
   align-self:center; box-sizing:border-box; height:20px; min-height:20px !important; margin-block:0; padding-block:0; transform:none;
 }
-body.unified-terminal-ui .season-rank-change { font-size:8px; font-weight:600; white-space:nowrap; text-align:right; }
+body.unified-terminal-ui .season-rank-change { font-size:8px; font-weight:var(--gm-weight-semibold); white-space:nowrap; text-align:right; }
 body.unified-terminal-ui .season-rank-change.positive { color:#4b9932 !important; }
 body.unified-terminal-ui .season-rank-change.negative { color:#b44f48 !important; }
 body.unified-terminal-ui .season-rank-change.neutral { color:var(--season-muted) !important; }
@@ -468,7 +468,7 @@ body .spatial-discrete-key b { flex:1; min-width:0; border-right:1px solid #edf0
 body.unified-terminal-ui .assets-block-value-heading { text-align:center; }
 body.unified-terminal-ui .assets-block-value { display:flex; align-items:center; justify-content:center; }
 body.unified-terminal-ui .block-value-meter { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; }
-body.unified-terminal-ui .block-value-meter > b { color:#111; font-size:10px; font-weight:700; line-height:10px; }
+body.unified-terminal-ui .block-value-meter > b { color:#111; font-size:10px; font-weight:var(--gm-weight-bold); line-height:10px; }
 body.unified-terminal-ui .block-value-bar { position:relative; display:block; width:56px; height:6px; background:#dce1e5; }
 body.unified-terminal-ui .block-value-bar i { position:absolute; inset:0 auto 0 0; display:block; height:100%; }
 

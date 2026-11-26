@@ -335,6 +335,25 @@ function wireEvents() {
     button.parentElement.querySelectorAll("[data-layout-mode-choice]").forEach(other => other.setAttribute("aria-pressed", String(other === button)));
     const modal = state.modal; render(); state.modal = modal; renderModal();
   });
+  // Settings > Sound: the switches apply at once; the slider plays a sample when let go.
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest?.("[data-sound-choice], [data-sound-clicks]");
+    if (!button || !globalThis.GameSound) return;
+    const clicks = button.hasAttribute("data-sound-clicks");
+    const on = (clicks ? button.dataset.soundClicks : button.dataset.soundChoice) === "on";
+    globalThis.GameSound.set(clicks ? {clicks: on} : {on});
+    button.parentElement.querySelectorAll(clicks ? "[data-sound-clicks]" : "[data-sound-choice]").forEach(other => other.setAttribute("aria-pressed", String(other === button)));
+    if (on) globalThis.GameSound.play(clicks ? "click" : "continue", {force: true});
+  });
+  document.addEventListener("input", (event) => {
+    const slider = event.target.closest?.("[data-sound-volume]");
+    if (!slider || !globalThis.GameSound) return;
+    globalThis.GameSound.set({volume: Number(slider.value)});
+    if (slider.nextElementSibling) slider.nextElementSibling.textContent = `${slider.value}%`;
+  });
+  document.addEventListener("change", (event) => {
+    if (event.target.closest?.("[data-sound-volume]")) globalThis.GameSound?.play("win", {force: true});
+  });
   // Settings > Card transparency: applies while the slider moves.
   document.addEventListener("input", (event) => {
     const slider = event.target.closest?.("[data-card-transparency]");
@@ -470,6 +489,8 @@ function wireEvents() {
     if (!button) return;
 
     const mode = button.dataset.advance;
+    // Pages layout, deadline day: the footer's buttons say they close trading, so pressing one is the confirmation.
+    if (firstRunLayout() && button.closest(".pages-dock") && state.home?.save?.current_date === tradeDeadlineDate()) acknowledgeTradeDeadline(tradeDeadlineDate());
 
     if (dashboardPhaseKind() === "playoffs" && ["next-event", "week", "month"].includes(mode)) {
       return advance({ next_event:true, postseason_sim:{"next-event":"game", week:"series", month:"all"}[mode] });
@@ -547,6 +568,16 @@ async function apiGet(path) {
   return response.json();
 }
 
+// Sounds that follow what the game reports back: a deal that went through, a pick that is in (sound.js).
+function soundForAction(name, result) {
+  const sound = globalThis.GameSound;
+  if (!sound) return;
+  const status = String(result?.status || result?.result?.status || result?.decision || "");
+  if (["draft_apply_current", "draft_sim_current"].includes(name)) sound.play("pick");
+  else if (["apply_trade_candidate", "sign_and_trade_submit"].includes(name)) { if (!/reject|invalid|illegal|block|fail|error/i.test(status)) sound.play("deal"); }
+  else if (["submit_extension_offer", "respond_user_trade_offer", "submit_free_agent_offer", "offer_sheet_decision"].includes(name)) { if (/accept|agree|signed|complet|execut|match/i.test(status)) sound.play("deal"); }
+}
+
 async function action(name, payload = {}, options = {}) {
   if (state.tutorial) throw new Error("Finish the tutorial before using game actions.");
   if (state.draftPlaybackRunning && !["home", "team_dashboard"].includes(name)) throw new Error("Wait for the draft simulation to finish.");
@@ -593,6 +624,7 @@ async function action(name, payload = {}, options = {}) {
     const data = await response.json();
     if (!response.ok || data.ok === false) throw new Error(data.error || `${response.status} ${response.statusText}`);
     feedbackSucceeded = true;
+    globalThis.soundForAction?.(name, data.result);
     return data.result;
   } finally {
     globalThis.GameFeedback?.recordAction(name, Date.now() - feedbackStarted, feedbackSucceeded);
@@ -1145,72 +1177,90 @@ const GAME_TUTORIAL_STEPS = [
   },
 ];
 
-// The same tour for the pages layout (branch sidebar-pages): the sidebar, the pages and the next step instead of
-// windows, the gallery and title bars. Each card step opens the page that holds the card.
-const PAGES_TUTORIAL_STEPS = [
-  {
-    title: "Welcome to your front office",
-    target: [".pages-nav", ".pages-sidebar"],
-    body: "Every part of your franchise has a page in the sidebar: the team, the front office and the league. The screens for the moment (the opening roster, the draft, free agency) follow one another: the button at the bottom right moves you on.",
-  },
-  {
-    title: "Pages and pop-ups",
-    target: [".pages-sheet"],
-    body: "Each page lays its cards out to fill the screen. Clicking a player opens their own page (Back or Esc returns); box scores and the trade room open as pop-ups over the page. A section title with an arrow opens that section's full page. [ and ] step through the pages.",
-  },
-  {
-    title: "Set the rotation",
-    card: "minutes",
-    target: ['[data-pages-slot="minutes"]', ".season-minutes-panel"],
-    body: "Minutes are one of your most direct coaching decisions. Slider changes save immediately and rebalance unlocked players to 240 team minutes. Blue sliders are your fixed targets; actual game minutes can vary with health and overtime. Use player cards for ratings and context.",
-  },
-  {
-    title: "How team performance is made",
-    card: "signals",
-    target: ['[data-pages-slot="signals"]', ".season-identity-panel"],
-    body: "Game results and box scores come from the players on the floor and the minutes they get, shaped by lineup fit, morale, fatigue, injuries and coaching. Overall rating is only one input: role fit and deployment matter too. The box score reflects those interactions rather than simply repeating player ratings.",
-  },
-  {
-    title: "Health and development",
-    card: "development",
-    target: ['[data-pages-slot="development"]', ".season-development-panel"],
-    body: "Fatigue and injuries affect who is ready to play, so balance workload with recovery. Player Development separates season growth/regression from the latest month. Treat those trends as a trajectory to manage, not a guaranteed outcome.",
-  },
-  {
-    title: "Your coaching staff",
-    card: "staff",
-    target: ['[data-pages-slot="staff"]', ".season-staff-panel"],
-    body: "Coaching Staff sits beside Player Development: review coaches, roles, grades and payroll, and hire from the available staff below. Coaching is part of your team context, alongside the players and their deployment.",
-  },
-  {
-    title: "Read the season",
-    card: "week",
-    target: ['[data-pages-slot="week"]', ".season-week-panel"],
-    body: "The calendar keeps played games and upcoming dates together; open a game for its result and box score. Next Opponent adds form, ratings and availability so you can put each matchup in context. Schedule shows the whole month.",
-  },
-  {
-    title: "Compare efficiency",
-    card: "efficiency",
-    target: ['[data-pages-slot="efficiency"]', ".season-efficiency-panel"],
-    body: "Weekly Efficiency compares your offense and defense with the league average, then shows the net difference. Use it to diagnose where the team is gaining or giving up ground beyond the win-loss record.",
-  },
-  {
-    title: "Explore a trade",
-    target: ['[data-pages-go="trades"]', ".pages-nav"],
-    body: "The Trades page holds the league's trading block, your own block and what teams want; its buttons open the trade finder, builder, incoming offers and the market. The finder suggests packages to evaluate; it does not execute them.",
-  },
-  {
-    title: "Advance the league",
-    target: [".pages-dock", "[data-card-board-tools]"],
-    body: "The next step always sits at the bottom right: Sim To Next Event, with a week or a month behind the arrow, or the phase's own button (Start The Season, Go To Draft Night) when there is one. Advancing changes the save: games resolve and league events may occur.",
-  },
-  {
-    title: "Shortcuts when you need them",
-    target: [".pages-finder", ".pages-nav"],
-    body: "Press ? for the shortcut reference or Cmd/Ctrl+K to search commands. [ and ] move between pages; S then E advances to the next event, and S then W/M advances a week or a month. You can replay this tour from Settings.",
-  },
+// The welcome for the pages layout (UI polish pass, Stage B; user decision 3): four short screens in the slideshow
+// style, drawn from the save itself, then the Preseason Outlook, then Home. The page tips the old eleven-card tour
+// carried sit behind the small "i" beside each section title (PAGE_SECTION_TIPS).
+const FIRST_RUN_STEPS = [
+  {title: "Your team", next: "Next", body: firstRunTeamSlide},
+  {title: "The year", next: "Next", body: firstRunYearSlide},
+  {title: "One button", next: "Next", body: firstRunButtonSlide},
+  {title: "Your pages", next: "", body: firstRunPagesSlide},
 ];
-const tutorialSteps = () => (globalThis.CardPages?.enabled?.() ? PAGES_TUTORIAL_STEPS : GAME_TUTORIAL_STEPS);
+const PAGE_SECTION_TIPS = {
+  minutes: "Minutes are one of your most direct coaching decisions. Slider changes save immediately and rebalance unlocked players to 240 team minutes. Blue sliders are your fixed targets; actual game minutes can vary with health and overtime. Use player cards for ratings and context.",
+  signals: "Game results and box scores come from the players on the floor and the minutes they get, shaped by lineup fit, morale, fatigue, injuries and coaching. Overall rating is only one input: role fit and deployment matter too. The box score reflects those interactions rather than simply repeating player ratings.",
+  development: "Fatigue and injuries affect who is ready to play, so balance workload with recovery. Player Development separates season growth/regression from the latest month. Treat those trends as a trajectory to manage, not a guaranteed outcome.",
+  staff: "Coaching Staff sits beside Player Development: review coaches, roles, grades and payroll, and hire from the available staff below. Coaching is part of your team context, alongside the players and their deployment.",
+  week: "The calendar keeps played games and upcoming dates together; open a game for its result and box score. Next Opponent adds form, ratings and availability so you can put each matchup in context. Schedule shows the whole month.",
+  efficiency: "Weekly Efficiency compares your offense and defense with the league average, then shows the net difference. Use it to diagnose where the team is gaining or giving up ground beyond the win-loss record.",
+  "league-block": "The Trades page holds the league's trading block, your own block and what teams want; its buttons open the trade finder, builder, incoming offers and the market. The finder suggests packages to evaluate; it does not execute them.",
+};
+
+function firstRunTeamSlide() {
+  const team = userTeam();
+  const dash = state.data.statusDashboard || state.data.dashboard || {};
+  const identity = dash.team_identity || {};
+  const rank = Number(identity.ranks?.overall || 0);
+  const count = Number(identity.league_team_count || identity.team_count || 30);
+  // The same overall the Minutes table shows (healthy rating; the injury drop is shown there, not here).
+  const overall = (row) => Number(playerOverallToday(row)?.healthy ?? NaN);
+  const stars = [...rosterRows(dash)].filter((row) => Number.isFinite(overall(row))).sort((a, b) => overall(b) - overall(a)).slice(0, 3);
+  const logo = teamLogoSrc(team);
+  return `${logo ? `<img class="first-run-logo" src="${escapeAttr(logo)}" alt="" />` : ""}
+    <h2 id="gameTutorialTitle">You run the ${escapeHtml(String(dashboardTeamName(team) || team).replace(/^.* /, ""))}.</h2>
+    ${rank ? `<p id="gameTutorialCopy">Rated ${rank}${["th", "st", "nd", "rd"][rank % 100 > 10 && rank % 100 < 14 ? 0 : rank % 10] || "th"} of ${count}</p>` : `<p id="gameTutorialCopy"></p>`}
+    <div class="first-run-stars">${stars.map((row) => `<div>${playerHeadshotMarkup(row, "first-run-face")}<b>${escapeHtml(overall(row).toFixed(0))}</b><span>${escapeHtml(row.name || "")}</span></div>`).join("")}</div>`;
+}
+
+function firstRunYearSlide() {
+  const progress = globalThis.GameProgress, c = progress?.context();
+  const head = c ? progress.heading(c) : {step: 0, sub: ""};
+  return `<h2 id="gameTutorialTitle">One year, seven phases.</h2>
+    <ol class="first-run-year" aria-label="The year">${(progress?.YEAR || []).map((name, index) => `<li class="${index === head.step ? "is-now" : index < head.step ? "is-past" : ""}"><i></i><b>${escapeHtml(name)}</b></li>`).join("")}</ol>
+    <p id="gameTutorialCopy">You are here.${head.sub ? ` ${escapeHtml(head.sub)}.` : ""}</p>`;
+}
+
+function firstRunButtonSlide() {
+  const progress = globalThis.GameProgress;
+  return `<h2 id="gameTutorialTitle">One button moves time.</h2>
+    <div class="first-run-demo"><div class="progress-rail" inert>${(progress?.listMarkup(() => false) || "").replace(/<h3>.*?<\/h3>/, "").replace(/<button type="button" class="progress-job([^"]*)"[^>]*>/g, '<div class="progress-job$1">').replaceAll("</button>", "</div>")}</div><div class="first-run-dock pages-dock" inert><div class="card-board-phase-actions">${(progress?.dockMarkup() || "").replace(/ id="[^"]*"/g, "").replace(/ data-(?:phase-command|advance|pages-go)="[^"]*"/g, "")}</div></div></div>
+    <p id="gameTutorialCopy">Red jobs come first. The rest can wait.</p>`;
+}
+
+function firstRunPagesSlide() {
+  const groups = [...document.querySelectorAll(".pages-nav-group")].map((group) => [group.querySelector("h3")?.textContent || "", [...group.querySelectorAll(".pages-nav-item > span:first-child")].map((item) => item.textContent)]);
+  return `<h2 id="gameTutorialTitle">Everything else is a page.</h2>
+    <div class="first-run-pages">${groups.map(([name, items]) => `<div><b>${escapeHtml(name)}</b>${items.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>`).join("")}</div>
+    <p id="gameTutorialCopy">${state.home?.save?.season_slideshow?.pending ? "Next: how the league sees you." : "Home is where you always land."}</p>`;
+}
+
+function renderFirstRun() {
+  const index = state.tutorial.index, steps = FIRST_RUN_STEPS, step = steps[index], last = index === steps.length - 1;
+  const outlook = Boolean(state.home?.save?.season_slideshow?.pending);
+  els.gameTutorial.hidden = false;
+  els.gameTutorial.classList.add("is-first-run");
+  els.gameTutorial.innerHTML = `
+    <article class="first-run" role="dialog" aria-modal="true" aria-labelledby="gameTutorialTitle" aria-describedby="gameTutorialCopy" tabindex="-1">
+      <div class="first-run-sheet">
+        <header class="first-run-head"><span>Welcome</span><span>${String(index + 1).padStart(2, "0")} / ${String(steps.length).padStart(2, "0")}</span></header>
+        <div class="first-run-body" aria-live="polite">${step.body()}</div>
+      </div>
+      <footer class="first-run-foot">
+        <button type="button" class="first-run-skip" data-tutorial-action="skip">Skip</button>
+        <div class="first-run-dots" aria-hidden="true">${steps.map((_, n) => `<i class="${n === index ? "is-now" : ""}"></i>`).join("")}</div>
+        <button type="button" class="first-run-back" data-tutorial-action="previous" ${index === 0 ? "disabled" : ""}>Back</button>
+        <button type="button" class="first-run-next" data-tutorial-action="next">${last ? (outlook ? "See the league" : "Go to Home") : "Next"}</button>
+      </footer>
+    </article>`;
+  requestAnimationFrame(() => state.tutorial && els.gameTutorial.querySelector('[data-tutorial-action="next"]')?.focus({ preventScroll: true }));
+}
+function firstRunLayout() { return Boolean(globalThis.CardPages?.enabled?.() && globalThis.GameProgress); }
+// A save's first run is still to come: the welcome goes first, the Preseason Outlook after it.
+function firstRunDue() {
+  if (!firstRunLayout() || state.tutorial || state.view !== "dashboard" || !state.currentSave || state.home?.save?.postseason_exit_required) return false;
+  try { return !localStorage.getItem(TUTORIAL_COMPLETED_KEY); } catch { return false; }
+}
+const tutorialSteps = () => (firstRunLayout() ? FIRST_RUN_STEPS : GAME_TUTORIAL_STEPS);
 
 function queueFirstRunTutorial() {
   if (state.home?.save?.postseason_exit_required) return;
@@ -1239,6 +1289,12 @@ function finishGameTutorial() {
   document.getElementById("app").inert = false;
   els.gameTutorial.hidden = true;
   els.gameTutorial.innerHTML = "";
+  if (els.gameTutorial.classList.contains("is-first-run")) {
+    // The welcome leads into the Preseason Outlook when one is waiting, then Home.
+    els.gameTutorial.classList.remove("is-first-run");
+    document.querySelector('.pages-nav-item[data-pages-go="home"]')?.click();
+    maybeOpenSeasonSlideshow();
+  }
   const returnFocus = state.tutorialReturnFocus;
   state.tutorialReturnFocus = null;
   if (returnFocus?.isConnected && !returnFocus.disabled) returnFocus.focus({ preventScroll: true });
@@ -1319,6 +1375,7 @@ function resolveGameTutorialTarget(step) {
 
 function renderGameTutorial() {
   if (!state.tutorial) return;
+  if (firstRunLayout()) return renderFirstRun();
   const index = state.tutorial.index;
   const step = tutorialSteps()[index];
   const last = index === tutorialSteps().length - 1;
@@ -1395,7 +1452,7 @@ function positionGameTutorial(target) {
 }
 
 function repositionGameTutorial() {
-  if (!state.tutorial) return;
+  if (!state.tutorial || firstRunLayout()) return;
   const target = resolveGameTutorialTarget(tutorialSteps()[state.tutorial.index]);
   positionGameTutorial(target);
 }
@@ -1616,9 +1673,11 @@ async function advance(payload) {
   state.simulationId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   state.simulationStopRequested = false;
   state.simulationProcessedGames = new Set();
+  const recordBefore = {...(state.home?.save?.user_team_record || {})};
   try {
     return await advanceSave(payload, state.simulationId);
   } finally {
+    globalThis.GameSound?.result(recordBefore, state.home?.save?.user_team_record);
     window.AssistantGMPhone?.setSimulationPlaybackActive(false);
     state.simulationRunning = false;
     state.simulationId = "";
@@ -1959,6 +2018,7 @@ async function processSimulationTradeOffers(event) {
       displayedCount=Math.min(nextCount,displayedCount+1);
       window.CardBoard?.updateOfferCount(displayedCount,{animate:true});
     }
+    globalThis.GameSound?.play("news");
     await window.AssistantGMPhone?.presentSimulationTradeOffer({
       teamAbbrev:simulationOfferTeamAbbrev(offer),
       date:event.date?formatWrittenDate(event.date):'Today',
@@ -2537,6 +2597,7 @@ function maybeOpenSeasonSlideshow() {
   const pending = state.home?.save?.season_slideshow?.pending;
   if (!pending || !state.currentSave || state.slideshowOpening || window.SeasonSlideshow?.isOpen()) return;
   if (state.modal || state.tutorial || state.simulationRunning || state.hydrating || state.multiplayer?.session) return;
+  if (firstRunDue()) return;   // the welcome first; it opens this when it ends
   state.seasonSlideshowAutoKeys ||= new Set();
   const key = `${state.currentSave}:${pending.kind}:${pending.season}`;
   if (state.seasonSlideshowAutoKeys.has(key)) return;
@@ -2564,6 +2625,7 @@ function maybeCelebrateChampion() {
     const spin=(index*53)%500-250;
     return `<i class="champion-confetti-piece" style="--x:${x}%;--delay:${(index%9)*42}ms;--drift:${drift}px;--spin:${spin}deg;--confetti-color:${confettiColors[index%confettiColors.length]}"></i>`;
   }).join('');
+  globalThis.GameSound?.play("champion");
   state.modal = {kind:'champion',title:'NBA Champions',body:`<section class="champion-celebration"><div class="champion-confetti" aria-hidden="true">${confetti}</div><img class="champion-trophy" src="/assets/header-art/exports/trophy-press-ink.png" alt="Championship trophy"/><h2>${escapeHtml(dashboardTeamName(champion) || champion)}</h2><p>${escapeHtml(state.home.save.season)} NBA Champions</p><button type="button" class="ui-command" data-champion-bracket data-close-modal>View Bracket</button></section>`};
   renderModal();
 }
@@ -2605,6 +2667,9 @@ function showTradeDeadlinePrompt(checkpoint = {}, payload = {}) {
   if (!checkpoint.date && state.modal?.kind === "tradeDeadline") return;
   const deadline = checkpoint.date || tradeDeadlineDate();
   if (hasAcknowledgedTradeDeadline(deadline)) return;
+  // Pages layout: no pause window. The sim has stopped on Home, whose list carries the deadline and whose button
+  // reads "Sim past the deadline".
+  if (firstRunLayout()) return landHomeForStop("The sim stopped: today is the trade deadline.");
   const followingDay = new Date(`${deadline}T00:00:00Z`);
   followingDay.setUTCDate(followingDay.getUTCDate() + 1);
   const target = checkpoint.requested_to_date > deadline ? checkpoint.requested_to_date : followingDay.toISOString().slice(0, 10);
@@ -2633,7 +2698,21 @@ function hasReviewedPostseason(date) {
   try { return localStorage.getItem(postseasonReviewKey(date)) === "1"; } catch { return false; }
 }
 
+// A stop the game makes by itself (pages layout): back to Home, one line saying why.
+function landHomeForStop(message) {
+  globalThis.CardPages?.landHome?.();
+  globalThis.GameSound?.play("must");
+  showToast(message);
+}
+
 function showPostseasonPrompt(checkpoint) {
+  if (firstRunLayout()) {
+    // Pages layout: Home shows the postseason and its button; the bracket has its own page.
+    state.postseasonReviewedSave = state.currentSave;
+    state.postseasonReviewedDate = checkpoint.date;
+    try { localStorage.setItem(postseasonReviewKey(checkpoint.date), "1"); } catch {}
+    return landHomeForStop("The regular season is over. The postseason is next.");
+  }
   state.modal = {
     kind:"postseason", title:"Regular Season Complete", subtitle:"", postseasonBoundary:checkpoint.date,
     body:`<section class="trade-deadline-prompt"><strong class="trade-deadline-prompt-date">${escapeHtml(formatWrittenDate(state.home?.save?.current_date || checkpoint.date))}</strong><p>The regular season is over. The sim is paused before postseason games begin.</p><p>Review the bracket, including the play-in, then choose a sim command to continue.</p><div class="trade-deadline-prompt-actions"><button type="button" class="ui-command" data-review-postseason>Review Bracket</button></div></section>`,
@@ -3219,7 +3298,7 @@ function seasonCommandDashboardMarkup(rows, dash, editable, viewedTeam) {
         <span>${escapeHtml(dashboardTeamName(viewedTeam))}</span>
         <div class="season-command-date">
           <time datetime="${escapeAttr(save.current_date || "")}">${escapeHtml(dateLabel)}</time>
-          ${offseasonStepsChip(save.phase) || `<span>${escapeHtml(seasonPhaseLabel(save.phase || "season"))}</span>`}
+          ${globalThis.CardPages?.enabled?.() && globalThis.GameProgress ? "" : offseasonStepsChip(save.phase) || `<span>${escapeHtml(seasonPhaseLabel(save.phase || "season"))}</span>`}
         </div>
         ${viewedTeam !== userTeam() ? `<button type="button" data-dashboard-team-reset>My Team</button>` : ""}
         ${viewedTeam !== userTeam() && dash.front_office_read ? teamFrontOfficeButton(dash.front_office_read) : ""}
@@ -6456,6 +6535,7 @@ async function runLotteryReveal() {
       await GameSimulation.wait(1100);
       if (!state.lotteryRevealRunning || state.currentSave !== save || state.lotteryRunId !== runId) break;
       state.lotteryRevealCount += 1;
+      globalThis.GameSound?.play("reveal");
       try { localStorage.setItem(key,String(state.lotteryRevealCount)); } catch {}
       const panel = document.querySelector('[data-board-window="phase-draft-lottery"] .draft-lottery-card');
       if (panel) panel.outerHTML = draftLotteryRevealWorkspace(draft);
@@ -10243,6 +10323,8 @@ function setRosterClipboardCard() {
 function maybeOpenSetRosterWindow() {
   const list = state.data.setRoster;
   if (!list || !(list.items || []).length || !window.CardBoard) return;
+  // Pages layout: Home's to-do list carries these jobs; nothing opens by itself.
+  if (globalThis.CardPages?.enabled?.() && globalThis.GameProgress) return;
   const key = `nbaGmSetRosterSeen:${state.currentSave}:${list.season}:${list.pending_count ? "pending" : "open"}`;
   try {
     if (localStorage.getItem(key)) return;
@@ -10430,11 +10512,13 @@ async function playDraftSimulation(finalRoom, events, appliedCount) {
       // Skip jumps straight to the final room; the trade alerts still appear once.
       if (state.draftPlaybackSkip) break;
       if (event.type === "trade") {
+        globalThis.GameSound?.play("news");
         await showTradeAlerts();
         continue;
       }
       if (event.type !== "pick") continue;
       revealedPicks += 1;
+      globalThis.GameSound?.play("pick");
       state.draftPlaybackReveal = event;
       state.data.draft = GameSimulation.draftPlaybackFrame(finalRoom, events, revealedPicks);
       updateDraftPlaybackCard();
@@ -13015,6 +13099,7 @@ function openSettingsModal() {
         ${typeof cardTransparencyMenuMarkup === "function" ? cardTransparencyMenuMarkup() : ""}
         ${typeof uiLookMenuMarkup === "function" ? uiLookMenuMarkup("font") + uiLookMenuMarkup("buttons") : ""}
       </section>
+      ${soundMenuMarkup(onOff)}
       ${slideshows ? `<section class="settings-group"><h4>Season slideshows</h4>${slideshows}</section>` : ""}
       <section class="settings-group">
         <h4>Help</h4>
@@ -13110,6 +13195,18 @@ function sortPhotoCredits(root, key) {
 }
 
 // Settings rows: the label (with an optional "i" for the explanation) on the left, the control on the right.
+// Settings > Sound (sound.js): on or off, how loud, and whether every button clicks.
+function soundMenuMarkup(onOff) {
+  const sound = globalThis.GameSound?.settings();
+  if (!sound) return "";
+  return `<section class="settings-group">
+        <h4>Sound</h4>
+        ${settingsRow("Sound", onOff("data-sound-choice", sound.on), "Results, news, deals and jobs that need you. Made in the game itself: no music.")}
+        ${settingsRow("Volume", `<div class="settings-slider"><input type="range" min="0" max="100" step="5" value="${sound.volume}" data-sound-volume aria-label="Sound volume"><output>${sound.volume}%</output></div>`)}
+        ${settingsRow("Button clicks", onOff("data-sound-clicks", sound.clicks), "A soft click on every button.")}
+      </section>`;
+}
+
 function settingsRow(label, control, info = "") {
   const tip = String(info).replace(/"/g, "&quot;");
   return `<div class="settings-row"><span class="settings-label">${label}${info ? `<i class="g-info" tabindex="0" title="${tip}" aria-label="${tip}">i</i>` : ""}</span><div class="settings-control">${control}</div></div>`;
@@ -17782,6 +17879,7 @@ function askConfirm(message, { confirmLabel = "Confirm", cancelLabel = "Cancel",
 }
 
 function showToast(message, isError = false) {
+  if (isError) globalThis.GameSound?.play("blocked");
   els.toast.textContent = message;
   els.toast.classList.toggle("bad", isError);
   els.toast.hidden = false;

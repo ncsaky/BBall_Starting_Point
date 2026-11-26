@@ -55,7 +55,7 @@ test('team signal and opponent cards consume live progress and expose animated s
   assert.match(app, /data-team-signal-key/);
   assert.match(app, /season-simulation-result-banner[\s\S]*?setAttribute\("role", "status"\)[\s\S]*?<strong>\$\{outcome.result\}<\/strong>[\s\S]*?table\.append\(banner\)/);
   const css = fs.readFileSync(path.join(gui, 'card-board.css'), 'utf8');
-  assert.match(css, /transition:width 420ms ease,background-color 420ms ease/);
+  assert.match(css, /transition:width var\(--gm-motion-data\) var\(--gm-ease\),background-color var\(--gm-motion-data\) var\(--gm-ease\)/);
   assert.match(css, /\.season-simulation-result-banner\s*\{[^}]*animation:[^}]+\}/);
 
   const start = app.indexOf('function simulationOpponentResult(');

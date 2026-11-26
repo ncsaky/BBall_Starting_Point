@@ -3,7 +3,7 @@
 .assistant-phone-screen { position:absolute; left:18.45%; top:9.25%; width:44.2%; height:57.05%; display:flex; flex-direction:column; padding:8px 7px; box-sizing:border-box; background:#eff2f0; color:#172126; overflow:hidden; pointer-events:auto; font-family:Arial,sans-serif; }
 .assistant-phone-status { display:flex; justify-content:space-between; flex:none; font-size:7px; letter-spacing:.6px; color:#556365; margin-bottom:12px; }
 .assistant-phone-contact { display:flex; align-items:center; gap:5px; padding-bottom:9px; border-bottom:1px solid #d1dad5; flex:none; }
-.assistant-contact-icon { width:21px; height:21px; display:grid; place-items:center; flex:none; background:#496953; color:#fff; border-radius:50%; font-size:8px; font-weight:700; }
+.assistant-contact-icon { width:21px; height:21px; display:grid; place-items:center; flex:none; background:#496953; color:#fff; border-radius:50%; font-size:8px; font-weight:var(--gm-weight-bold); }
 .assistant-phone-contact strong { font-size:10px; line-height:1.2; }
 .assistant-phone-screen.is-draft-trade { padding:7px 6px; }
 .assistant-phone-screen.is-draft-trade .assistant-phone-status { margin-bottom:5px; font-size:6px; }
@@ -13,15 +13,15 @@
 .assistant-phone-screen.is-draft-trade .assistant-text-date { padding:5px 0; font-size:7px; }
 .assistant-draft-trade-message,
 .assistant-draft-social-post { min-width:0; overflow-wrap:anywhere; }
-.assistant-draft-trade-message { background:#f2e5bf; border:1px solid #c9a64c; color:#25251f; font-size:8px; font-weight:700; line-height:1.25; padding:5px; }
+.assistant-draft-trade-message { background:#f2e5bf; border:1px solid #c9a64c; color:#25251f; font-size:8px; font-weight:var(--gm-weight-bold); line-height:1.25; padding:5px; }
 .assistant-draft-social-post { background:#dce8de; border:1px solid #cbd9cd; border-radius:7px 7px 7px 2px; color:#1b3020; margin-top:5px; padding:5px; }
-.assistant-draft-social-post small { color:#496953; display:block; font-size:6px; font-weight:700; line-height:1.15; }
+.assistant-draft-social-post small { color:#496953; display:block; font-size:6px; font-weight:var(--gm-weight-bold); line-height:1.15; }
 .assistant-draft-social-post p { font-size:7px; line-height:1.3; margin:3px 0 0; }
 body.unified-terminal-ui .assistant-phone-close { margin-left:auto; padding:0 !important; border:0 !important; width:17px; height:20px; background:transparent !important; color:#43534a !important; font-size:17px; line-height:1; box-shadow:none !important; cursor:pointer; flex:none; }
 .assistant-text-date { display:block; font-size:8px; text-align:center; color:#75817b; padding:10px 0 8px; flex:none; }
 body.unified-terminal-ui .assistant-text-message { display:flex; flex-direction:column; gap:8px; padding:10px 9px !important; border:1px solid #cbd9cd !important; border-radius:9px 9px 9px 2px; background:#dce8de !important; color:#1b3020 !important; font-size:11px; line-height:1.45; text-align:left; text-transform:none !important; box-shadow:none !important; cursor:pointer; overflow:auto; min-height:0; }
-.assistant-text-message strong { font-size:11px; font-weight:700; }
-.assistant-text-message small { display:block; font-size:9px; font-weight:700; color:#496953; margin-top:2px; }
+.assistant-text-message strong { font-size:11px; font-weight:var(--gm-weight-bold); }
+.assistant-text-message small { display:block; font-size:9px; font-weight:var(--gm-weight-bold); color:#496953; margin-top:2px; }
 body.unified-terminal-ui .assistant-text-message:hover { background:#cedfd1 !important; }
 body.unified-terminal-ui .assistant-phone-screen button:focus-visible { outline:2px solid #496953; outline-offset:-2px; }
 .assistant-phone-home { height:3px; width:42px; background:#1e2c25; border-radius:3px; margin:auto auto 0; flex:none; }
@@ -59,7 +59,7 @@ body.unified-terminal-ui .assistant-text-message { overflow:hidden; gap:0; }
 .assistant-phone-screen.is-notification-batch .assistant-contact-icon { width:18px; height:18px; font-size:7px; }
 .assistant-phone-screen.is-notification-batch .assistant-phone-contact strong { font-size:9px; }
 .assistant-phone-screen.is-notification-batch .assistant-text-date { padding:5px 0 4px; font-size:6px; }
-.assistant-notification-count { display:grid; place-items:center; width:14px; height:14px; margin-left:auto; border-radius:50%; background:#bd3441; color:#fff; font-size:8px; font-weight:700; line-height:1; }
+.assistant-notification-count { display:grid; place-items:center; width:14px; height:14px; margin-left:auto; border-radius:50%; background:#bd3441; color:#fff; font-size:8px; font-weight:var(--gm-weight-bold); line-height:1; }
 body.unified-terminal-ui .assistant-notification-stack { position:relative; display:block; flex:1; width:100%; min-height:55px; padding:0 !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; color:#172126 !important; text-align:left; cursor:pointer; }
 .assistant-notification-stack-card { position:absolute; top:4px; left:7px; right:7px; height:72%; overflow:hidden; border:1px solid #cbd5d0; border-radius:7px 7px 7px 2px; background:#dce8de; color:transparent; font-size:0; }
 .assistant-notification-stack-card-1 { top:0; transform:rotate(-3deg); background:#d2dfd5; }
@@ -88,7 +88,7 @@ body.unified-terminal-ui .assistant-notification-item:hover { background:#cedfd1
 
 /* Tucked: smaller, partly past the right edge and lowered so only its top (sender, count, date) peeks up while
    the phone would cover an open window; hover or keyboard focus brings it back to full size. */
-.assistant-gm-phone { transition:scale .22s ease, translate .22s ease; }
+.assistant-gm-phone { transition:scale var(--gm-motion-move) var(--gm-ease), translate var(--gm-motion-move) var(--gm-ease); }
 .assistant-gm-phone.is-tucked:not(:hover):not(:focus-within) { scale:.7; translate:24% 44%; }
 @media (max-width:1280px) { .assistant-gm-phone.is-tucked:not(:hover):not(:focus-within) { scale:.55; translate:20% 31%; } }
 @media (prefers-reduced-motion:reduce) { .assistant-gm-phone { transition:none; } }

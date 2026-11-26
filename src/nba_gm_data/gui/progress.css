@@ -1,0 +1,172 @@
+/* The main progress screen, its one button, and the first-run welcome (UI polish pass, Stage B; progress.js,
+   card-pages.js, app.js). Every size, colour, corner and timing here comes from tokens.css. */
+
+/* ---------- Home: the phase and the year strip across the top, the to-do list down the left, the cards beside it. */
+html[data-layout="pages"] .pages-shell.is-progress .pages-head { visibility: hidden; height: 0; min-height: 0; padding: 0; overflow: hidden; }
+html[data-layout="pages"] .pages-shell.is-progress .pages-viewport { padding: var(--gm-space-5) 26px var(--gm-space-4) 30px; }
+html[data-layout="pages"] .pages-page.is-progress {
+  display: grid; grid-template-rows: auto minmax(0, 1fr); gap: var(--gm-space-2);
+  position: absolute; inset: var(--gm-space-4) var(--gm-space-5) var(--gm-space-3) 30px;
+}
+html[data-layout="pages"] .pages-page.is-progress[hidden] { display: none !important; }
+
+html[data-layout="pages"] .progress-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--gm-space-6); min-height: 52px; }
+html[data-layout="pages"] .progress-phase { min-width: 0; }
+html[data-layout="pages"] body.unified-terminal-ui #app .progress-phase h2 {
+  margin: 0; color: var(--gm-ink); font: var(--gm-weight-semibold) var(--gm-size-page)/1.1 var(--gm-font) !important; letter-spacing: -.01em;
+}
+html[data-layout="pages"] .progress-phase p { margin: var(--gm-space-1) 0 0; color: var(--gm-ink-2); font: var(--gm-weight-regular) var(--gm-size-row)/1.3 var(--gm-font); }
+
+html[data-layout="pages"] .progress-year { display: flex; gap: 3px; flex: 0 1 690px; min-width: 0; margin: var(--gm-space-1) 0 0; padding: 0; list-style: none; }
+html[data-layout="pages"] .progress-year li { flex: 1 1 0; min-width: 0; }
+html[data-layout="pages"] .progress-year i { display: block; height: 8px; border-radius: var(--gm-radius-pill); background: rgba(255, 255, 255, .2); }
+html[data-layout="pages"] .progress-year .is-past i { background: color-mix(in srgb, var(--gm-accent) 42%, transparent); }
+html[data-layout="pages"] .progress-year .is-now i { background: var(--gm-accent); }
+html[data-layout="pages"] .progress-year b {
+  display: block; margin-top: 7px; color: var(--gm-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font: var(--gm-weight-semibold) var(--gm-size-small)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] .progress-year .is-now b { color: var(--gm-ink); font-weight: var(--gm-weight-bold) !important; }
+
+html[data-layout="pages"] .progress-body { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: var(--gm-space-5); min-height: 0; }
+html[data-layout="pages"] .progress-rail { min-width: 0; min-height: 0; overflow: hidden; }
+html[data-layout="pages"] body.unified-terminal-ui #app .progress-rail h3 { margin: 0 0 var(--gm-space-2); color: var(--gm-ink); font: var(--gm-weight-bold) var(--gm-size-section)/1.65 var(--gm-font) !important; }
+html[data-layout="pages"] .progress-todo { display: flex; flex-direction: column; border-top: 1.5px solid var(--gm-line-strong); }
+html[data-layout="pages"] body.unified-terminal-ui #app .progress-todo .progress-job {
+  display: grid !important; grid-template-columns: 22px minmax(0, 1fr) auto 12px; gap: var(--gm-space-2); align-items: center;
+  width: 100%; height: 44px !important; min-height: 44px !important; margin: 0 !important; padding: 0 var(--gm-space-1) 0 0 !important; box-sizing: border-box;
+  background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--gm-line-row) !important;
+  border-radius: var(--gm-radius-row) !important; box-shadow: none !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  color: var(--gm-ink) !important; text-align: left; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  transition: background-color var(--gm-motion-quick) var(--gm-ease);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .progress-todo button.progress-job { cursor: pointer; }
+html[data-layout="pages"] body.unified-terminal-ui #app .progress-todo button.progress-job:hover { background: var(--gm-glass-tile) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .progress-todo button.progress-job:focus-visible { outline: 2px solid var(--gm-focus); outline-offset: -2px; }
+html[data-layout="pages"] .progress-job > b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--gm-weight-semibold) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .progress-job > span:not(.progress-sr) {
+  color: var(--gm-ink-2) !important; background: none !important; padding: 0 !important; white-space: nowrap;
+  font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] .progress-job > svg { width: 11px; height: 11px; color: var(--gm-ink-3); }
+html[data-layout="pages"] .progress-job > em { width: 11px; }
+html[data-layout="pages"] .progress-dot { justify-self: center; width: 12px; height: 12px; box-sizing: border-box; border-radius: 50%; border: 2px solid var(--gm-ink-3); }
+html[data-layout="pages"] .progress-job.is-must .progress-dot { background: var(--gm-must); border-color: var(--gm-must); }
+html[data-layout="pages"] .progress-job.is-warn .progress-dot { background: var(--gm-warn); border-color: var(--gm-warn); }
+html[data-layout="pages"] .progress-job.is-done .progress-dot { background: var(--gm-good); border-color: var(--gm-good); }
+html[data-layout="pages"] .progress-job.is-shut .progress-dot { border-style: dashed; }
+html[data-layout="pages"] body.unified-terminal-ui #app .progress-job.is-must > span:not(.progress-sr) { color: #ffb0b0 !important; font-weight: var(--gm-weight-bold) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .progress-job.is-warn > span:not(.progress-sr) { color: var(--gm-warn) !important; font-weight: var(--gm-weight-bold) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .progress-todo .progress-job.is-shut { color: var(--gm-ink-3) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .progress-job.is-shut > span:not(.progress-sr) { color: var(--gm-ink-3) !important; }
+html[data-layout="pages"] .progress-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+html[data-layout="pages"] .progress-area { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+html[data-layout="pages"] .pages-page.is-progress.is-scrolling .progress-area { overflow: auto; }
+html[data-layout="pages"] .progress-holder { position: relative; }
+html[data-layout="pages"] .pages-page.is-progress .pages-col { --pages-card-gap: 16px; }
+
+/* ---------- The one button, bottom right: what happens, and to which date. Quieter choices stand to its left. */
+html[data-layout="pages"] { --pages-foot-h: 66px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock .card-board-phase-actions > button.progress-go {
+  display: inline-flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  min-width: 232px; height: 48px !important; min-height: 48px !important; padding: 0 26px !important;
+  border-radius: var(--gm-radius-pill) !important;
+  background: var(--gm-glass-button) !important; border: 1px solid rgba(255, 255, 255, .36) !important;
+  color: var(--gm-ink) !important; white-space: nowrap; cursor: pointer;
+  transition: background-color var(--gm-motion-quick) var(--gm-ease);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock .card-board-phase-actions > button.progress-go:hover:not(:disabled) { background: var(--gm-glass-button-hover) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-dock .progress-go > b { font: var(--gm-weight-bold) var(--gm-size-button)/1.15 var(--gm-font) !important; letter-spacing: -.005em; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-dock .progress-go > small { color: var(--gm-ink-2); font: var(--gm-weight-regular) var(--gm-size-small)/1.15 var(--gm-font); }
+/* A job blocks the clock: the button carries the job's name in the must-do red and opens it. */
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock .card-board-phase-actions > button.progress-go.is-blocked {
+  background: rgba(255, 93, 93, .24) !important; border-color: rgba(255, 130, 130, .66) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock .card-board-phase-actions > button.progress-go.is-blocked:hover:not(:disabled) { background: rgba(255, 93, 93, .34) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock .card-board-phase-actions > button.progress-more {
+  height: 38px !important; min-height: 38px !important; padding: 0 var(--gm-space-4) !important;
+  border-radius: var(--gm-radius-pill) !important; background: var(--gm-glass-tile) !important; border: 1px solid rgba(255, 255, 255, .22) !important;
+  color: var(--gm-ink) !important; font: var(--gm-weight-semibold) var(--gm-size-row)/1 var(--gm-font) !important;
+  transition: background-color var(--gm-motion-quick) var(--gm-ease);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .season-command-dashboard.is-pages .pages-dock .card-board-phase-actions > button.progress-more:hover:not(:disabled) { background: var(--gm-glass-tile-hover) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-dock :is(.progress-go, .progress-more) :is([data-key-hint], .shortcut-hint) { display: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-controls .pages-step-home svg { width: 11px; height: 11px; }
+
+/* ---------- The welcome: four short screens in the page area before a new save's first decision (app.js,
+   FIRST_RUN_STEPS). The sidebar dims behind it; the page and its footer step away as they do for a slideshow. */
+#gameTutorial.game-tutorial.is-first-run { left: var(--pages-side-w, 184px); pointer-events: auto; }
+html[data-layout="pages"] body:has(#gameTutorial.is-first-run:not([hidden])) .is-pages :is(.pages-sheet, .pages-foot),
+html[data-layout="pages"] body:has(#gameTutorial.is-first-run:not([hidden])) .is-pages > .season-command-grid { visibility: hidden; }
+html[data-layout="pages"] body:has(#gameTutorial.is-first-run:not([hidden])) .pages-sidebar { opacity: .45; }
+html[data-layout="pages"] body:has(#gameTutorial.is-first-run:not([hidden])) .assistant-gm-phone { visibility: hidden !important; }
+.first-run { position: absolute; inset: 0; display: flex; flex-direction: column; color: var(--gm-ink); font: var(--gm-weight-regular) var(--gm-size-row)/1.3 var(--gm-font); outline: none; }
+.first-run-sheet {
+  flex: 1 1 auto; min-height: 0; margin: 10px; padding: 26px 30px; box-sizing: border-box; display: flex; flex-direction: column;
+  background: var(--gm-glass-page); border: 1px solid var(--gm-line); border-radius: var(--gm-radius-card);
+  -webkit-backdrop-filter: blur(7px) saturate(125%); backdrop-filter: blur(7px) saturate(125%);
+}
+.first-run-head { display: flex; justify-content: space-between; color: var(--gm-ink-2); font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font); }
+.first-run-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; text-align: center; animation: first-run-in var(--gm-motion-move) var(--gm-ease) both; }
+@keyframes first-run-in { from { opacity: 0; } to { opacity: 1; } }
+body.unified-terminal-ui #gameTutorial .first-run-body h2 { margin: 0; color: var(--gm-ink); font: var(--gm-weight-bold) var(--gm-size-display)/1.05 var(--gm-font) !important; letter-spacing: -.02em; }
+.first-run-body p { margin: 0; min-height: 1em; color: var(--gm-ink-2); font: var(--gm-weight-regular) var(--gm-size-section)/1.3 var(--gm-font); }
+.first-run-logo { width: 140px; height: 140px; object-fit: contain; filter: drop-shadow(0 4px 14px rgba(0, 0, 0, .35)); }
+.first-run-stars { display: flex; align-items: flex-end; gap: var(--gm-space-6); }
+.first-run-stars > div { display: flex; flex-direction: column; align-items: center; width: 220px; }
+body.unified-terminal-ui #gameTutorial .first-run-stars .player-headshot-frame { display: block !important; width: 206px !important; height: 150px !important; background: none !important; border: 0 !important; border-radius: 0 !important; overflow: visible !important; }
+body.unified-terminal-ui #gameTutorial .first-run-stars .first-run-face { display: block !important; width: 206px !important; height: 150px !important; object-fit: contain !important; object-position: bottom !important; }
+body.unified-terminal-ui #gameTutorial .first-run-stars b { margin-top: var(--gm-space-2); color: var(--gm-accent); font: var(--gm-weight-bold) var(--gm-size-lead)/1 var(--gm-font) !important; font-variant-numeric: tabular-nums; }
+.first-run-stars span:last-child { margin-top: var(--gm-space-1); color: var(--gm-ink); font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font); }
+.first-run .first-run-year { display: flex; gap: 3px; width: min(1000px, 86%); margin: 0; padding: 0; list-style: none; text-align: left; }
+.first-run .first-run-year li { flex: 1 1 0; min-width: 0; }
+.first-run .first-run-year i { display: block; height: 10px; border-radius: var(--gm-radius-pill); background: rgba(255, 255, 255, .2); }
+.first-run .first-run-year .is-past i { background: color-mix(in srgb, var(--gm-accent) 42%, transparent); }
+.first-run .first-run-year .is-now i { background: var(--gm-accent); }
+body.unified-terminal-ui #gameTutorial .first-run-year b { display: block; margin-top: var(--gm-space-2); color: var(--gm-ink-3); font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+body.unified-terminal-ui #gameTutorial .first-run-year .is-now b { color: var(--gm-ink); font-weight: var(--gm-weight-bold) !important; }
+.first-run-demo { display: flex; align-items: center; gap: var(--gm-space-7); text-align: left; }
+.first-run-demo .progress-rail { width: 340px; }
+.first-run-demo .progress-todo { display: flex; flex-direction: column; border-top: 1.5px solid var(--gm-line-strong); }
+.first-run-demo .progress-job { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto 12px; gap: var(--gm-space-2); align-items: center; height: 44px; border-bottom: 1px solid var(--gm-line-row); color: var(--gm-ink); }
+.first-run-demo .progress-job > b { font-weight: var(--gm-weight-semibold) !important; }
+.first-run-demo .progress-job > span:not(.progress-sr) { color: var(--gm-ink-2); font-size: var(--gm-size-small); }
+.first-run-demo .progress-job.is-must > span:not(.progress-sr) { color: #ffb0b0; font-weight: var(--gm-weight-bold); }
+.first-run-demo .progress-job.is-shut { color: var(--gm-ink-3); }
+.first-run-demo .progress-dot { justify-self: center; width: 12px; height: 12px; box-sizing: border-box; border-radius: 50%; border: 2px solid var(--gm-ink-3); }
+.first-run-demo .is-must .progress-dot { background: var(--gm-must); border-color: var(--gm-must); }
+.first-run-demo .is-warn .progress-dot { background: var(--gm-warn); border-color: var(--gm-warn); }
+.first-run-demo .is-done .progress-dot { background: var(--gm-good); border-color: var(--gm-good); }
+.first-run-demo .is-shut .progress-dot { border-style: dashed; }
+.first-run-demo .progress-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.first-run-dock .card-board-phase-actions { display: flex; align-items: center; gap: var(--gm-space-2); }
+body.unified-terminal-ui #gameTutorial .first-run-dock .progress-more { display: none; }
+body.unified-terminal-ui #gameTutorial :is(.first-run-dock .progress-go, .first-run-next) {
+  display: inline-flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  min-width: 232px; height: 48px !important; padding: 0 26px !important; border-radius: var(--gm-radius-pill) !important;
+  background: var(--gm-glass-button) !important; border: 1px solid rgba(255, 255, 255, .36) !important; box-shadow: none !important;
+  color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-button)/1.15 var(--gm-font) !important; white-space: nowrap;
+}
+body.unified-terminal-ui #gameTutorial .first-run-dock .progress-go.is-blocked { background: rgba(255, 93, 93, .24) !important; border-color: rgba(255, 130, 130, .66) !important; }
+body.unified-terminal-ui #gameTutorial .first-run-dock .progress-go > b { font: inherit !important; }
+body.unified-terminal-ui #gameTutorial .first-run-dock .progress-go > small { color: var(--gm-ink-2); font: var(--gm-weight-regular) var(--gm-size-small)/1.15 var(--gm-font); }
+.first-run-pages { display: flex; gap: var(--gm-space-5); text-align: left; }
+.first-run-pages > div { display: flex; flex-direction: column; gap: 6px; width: 220px; padding-top: 10px; border-top: 1.5px solid var(--gm-line-strong); }
+body.unified-terminal-ui #gameTutorial .first-run-pages b { margin-bottom: 2px; color: var(--gm-ink); font: var(--gm-weight-bold) var(--gm-size-section)/1.2 var(--gm-font) !important; text-transform: none; letter-spacing: 0; }
+.first-run-pages span { color: var(--gm-ink-2); font-size: var(--gm-size-row); }
+.first-run-foot { flex: 0 0 auto; display: flex; align-items: center; gap: var(--gm-space-3); height: var(--pages-foot-h, 66px); padding: 0 16px; box-sizing: border-box; background: var(--gm-glass-frame); }
+.first-run-dots { flex: 1 1 auto; display: flex; justify-content: center; gap: 6px; }
+.first-run-dots i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, .28); }
+.first-run-dots i.is-now { background: var(--gm-ink); }
+body.unified-terminal-ui #gameTutorial :is(.first-run-skip, .first-run-back) {
+  height: 38px !important; padding: 0 var(--gm-space-4) !important; border-radius: var(--gm-radius-pill) !important;
+  background: var(--gm-glass-tile) !important; border: 1px solid rgba(255, 255, 255, .22) !important; box-shadow: none !important;
+  color: var(--gm-ink) !important; font: var(--gm-weight-semibold) var(--gm-size-row)/1 var(--gm-font) !important; cursor: pointer;
+}
+body.unified-terminal-ui #gameTutorial :is(.first-run-skip, .first-run-back):hover:not(:disabled) { background: var(--gm-glass-tile-hover) !important; }
+body.unified-terminal-ui #gameTutorial .first-run-back:disabled { opacity: .4; cursor: default; }
+body.unified-terminal-ui #gameTutorial .first-run-next { flex-direction: row; min-width: 190px; cursor: pointer; transition: background-color var(--gm-motion-quick) var(--gm-ease); }
+body.unified-terminal-ui #gameTutorial .first-run-next:hover { background: var(--gm-glass-button-hover) !important; }
+body.unified-terminal-ui #gameTutorial .first-run :is(button):focus-visible { outline: 2px solid var(--gm-focus); outline-offset: 2px; }

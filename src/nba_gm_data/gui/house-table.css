@@ -33,7 +33,7 @@ body.unified-terminal-ui [data-house-table] > [data-house-head]::after { display
 body.unified-terminal-ui [data-house-table] > [data-house-head] > * {
   color: var(--house-head-text) !important;
   font-size: 9px !important;
-  font-weight: 700 !important;
+  font-weight: var(--gm-weight-bold) !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
   -webkit-text-stroke: 0 !important;
@@ -70,7 +70,7 @@ body.unified-terminal-ui [data-house-table] .house-sort {
   cursor: pointer;
   font: inherit;
   font-size: 9px !important;
-  font-weight: 700 !important;
+  font-weight: var(--gm-weight-bold) !important;
   letter-spacing: 0;
   line-height: 1.2;
   text-align: inherit;
@@ -84,7 +84,7 @@ body.unified-terminal-ui [data-house-table] .house-sort.is-active { text-decorat
 body.unified-terminal-ui [data-house-table] .house-sort:focus-visible { outline: 1px solid var(--house-focus); outline-offset: 1px; }
 body.unified-terminal-ui [data-house-table] .house-sort-arrow { font-size: 6px; font-style: normal; line-height: 1; text-decoration: none; }
 body.unified-terminal-ui [data-house-table] .house-sort-arrow:empty { display: none; }
-body.unified-terminal-ui [data-house-table] .house-sort-divider { color: var(--season-muted, #5d6b77); font-style: normal; font-weight: 400; }
+body.unified-terminal-ui [data-house-table] .house-sort-divider { color: var(--season-muted, #5d6b77); font-style: normal; font-weight: var(--gm-weight-regular); }
 /* Center-aligned header labels stay centered (Staff grade / contract, Minutes, Fatigue). */
 body.unified-terminal-ui [data-house-table] .house-th[style*="text-align:center"],
 body.unified-terminal-ui [data-house-table="staff"] > [data-house-head] > .house-th:not(:first-child),
@@ -110,7 +110,7 @@ body.unified-terminal-ui [data-house-table] > [data-house-row]:is(.active, .is-s
 body.unified-terminal-ui [data-house-table] > [data-house-row] > :not(input):not(.season-minute-control):not(.season-staff-action) { background-color: transparent !important; }
 
 /* Rows that are not in the sorted column keep their normal weight (older "always bold" rules). */
-body.unified-terminal-ui [data-house-table="minutes"]:not([data-house-col="4"]) .season-minute-control output { font-weight: 400 !important; }
+body.unified-terminal-ui [data-house-table="minutes"]:not([data-house-col="4"]) .season-minute-control output { font-weight: var(--gm-weight-regular) !important; }
 
 /* Standings: # is always the real seed; the playoff and play-in lines only make sense in seed order. */
 body.unified-terminal-ui [data-house-table="standings"]:not([data-house-key="seed"]) > [data-house-row]:is(.playoff-line, .play-in-line) {

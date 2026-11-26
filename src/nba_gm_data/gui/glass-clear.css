@@ -75,7 +75,7 @@ html[data-glass="clear"] body.unified-terminal-ui .modal-shell > .modal-head {
 html[data-glass="clear"] body .has-card-board .is-active > .card-board-titlebar { background: color-mix(in srgb, var(--team-a) 22%, rgba(8, 15, 24, .28)) !important; }
 html[data-glass="clear"] body .has-card-board .card-board-move,
 html[data-glass="clear"] body .has-card-board .card-board-move span:last-child,
-html[data-glass="clear"] body.unified-terminal-ui .modal-shell > :is(.card-board-titlebar, .modal-head) :is(h2, h3, strong, span) { font-size: 13px !important; font-weight: 700 !important; }
+html[data-glass="clear"] body.unified-terminal-ui .modal-shell > :is(.card-board-titlebar, .modal-head) :is(h2, h3, strong, span) { font-size: 13px !important; font-weight: var(--gm-weight-bold) !important; }
 html[data-glass="clear"] body .has-card-board .card-board-body { background: transparent !important; }
 
 /* ---------- Everything inside sits straight on the glass: no white cards, panels or strips. */
@@ -276,7 +276,7 @@ html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-bo
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-body, .season-slideshow) thead th { background-color: var(--g-head) !important; color: #fff !important; border-color: var(--g-row-line) !important; }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-body, .season-slideshow) :is(table, tbody, thead) { background: transparent !important; }
 /* Role chips that older screens still draw: coloured text on the glass, no chip. */
-html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-body, .season-slideshow) .role-chip { background: transparent !important; border-color: transparent !important; padding-left: 0 !important; padding-right: 0 !important; font-weight: 600 !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-body, .season-slideshow) .role-chip { background: transparent !important; border-color: transparent !important; padding-left: 0 !important; padding-right: 0 !important; font-weight: var(--gm-weight-semibold) !important; }
 
 /* The one filled button per screen keeps its solid blue (white text about 6:1). */
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell :is(.tr-button.is-primary, .is-primary, .ui-command-primary):not(:disabled) { background: #2563b0 !important; border: 1px solid #5d93d6 !important; color: #fff !important; }
@@ -338,7 +338,7 @@ html[data-glass="clear"] body .has-card-board .season-command-header { backgroun
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot .modal-body, .season-slideshow .ss-card, .has-card-board .season-command-header) button:not(:where(.house-sort, [data-house-row], [class*="tab"], .is-primary, .ui-command-primary, .season-opponent-team, [class*="player-link"], [class*="name"], :is([data-house-row], tbody, thead) button:not([class]), thead button, th button, .season-minute-rest, .season-minute-reset, :has(img), :has([class*="player-name"]), .g-plain, :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .ss-dots, .card-board-titlebar, .card-board-menu) button, .card-board-control:not(.ui-command), .tr-tile-remove, .tr-step, .tr-side-team)) {
   border-radius: 999px !important; padding: 0 13px !important; min-height: 24px; display: inline-flex !important; align-items: center; justify-content: center; gap: 6px;
   background: rgba(255, 255, 255, .12) !important; border: 1px solid rgba(255, 255, 255, .24) !important; color: #fff !important;
-  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16) !important; font-weight: 600 !important;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16) !important; font-weight: var(--gm-weight-semibold) !important;
 }
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot .modal-body, .season-slideshow .ss-card, .has-card-board .season-command-header) button:not(:where(.house-sort, [data-house-row], [class*="tab"], .is-primary, .ui-command-primary, [class*="player-link"], [class*="name"], thead button, th button, :has(img), .g-plain, :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .ss-dots, .card-board-titlebar, .card-board-menu) button, .card-board-control:not(.ui-command), .tr-tile-remove, .tr-step, .tr-side-team)):hover:not(:disabled) {
   background: rgba(255, 255, 255, .22) !important; border-color: rgba(255, 255, 255, .40) !important;
@@ -362,10 +362,10 @@ html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-wi
 }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-window, .season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views) > button {
   background: transparent !important; border: 0 !important; border-radius: 6px !important; color: var(--g-text) !important;
-  padding: 3px 12px !important; min-height: 22px !important; font-weight: 600 !important; box-shadow: none !important; text-decoration: none !important;
+  padding: 3px 12px !important; min-height: 22px !important; font-weight: var(--gm-weight-semibold) !important; box-shadow: none !important; text-decoration: none !important;
 }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-window, .season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views) > button:hover:not(:disabled) { background: rgba(255, 255, 255, .12) !important; }
-html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-window, .season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views) > button:is([aria-pressed="true"], [aria-selected="true"], .active) { background: rgba(255, 255, 255, .24) !important; color: #fff !important; font-weight: 700 !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-window, .season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views) > button:is([aria-pressed="true"], [aria-selected="true"], .active) { background: rgba(255, 255, 255, .24) !important; color: #fff !important; font-weight: var(--gm-weight-bold) !important; }
 
 /* Checkboxes: transparent with a light edge; checked shows a white tick on a faint fill. */
 html[data-glass="clear"] body.unified-terminal-ui input[type="checkbox"] { background-color: transparent !important; border: 1.5px solid rgba(255, 255, 255, .55) !important; border-radius: 4px !important; width: 14px !important; height: 14px !important; }
@@ -382,7 +382,7 @@ html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modal
 /* Table headers are never buttons (Roster, Stats, Contracts sort buttons): plain bold labels like Minutes'. */
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot, .season-slideshow) :is(thead, [data-house-head]) button {
   background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 !important; min-height: 0 !important;
-  color: #fff !important; font-weight: 700 !important; -webkit-backdrop-filter: none; backdrop-filter: none; display: inline !important;
+  color: #fff !important; font-weight: var(--gm-weight-bold) !important; -webkit-backdrop-filter: none; backdrop-filter: none; display: inline !important;
 }
 
 /* Four Factors on the glass, matching the player card's range bars: light lines, a glass middle-half box, a white
@@ -398,16 +398,16 @@ html[data-glass="clear"] body.unified-terminal-ui .season-factor-legend i.iqr { 
 html[data-glass="clear"] body.unified-terminal-ui .season-factor-legend i.median { background: #fff !important; }
 
 /* Info marks: explanations live behind an "i" (round 5: no explanatory text lines). */
-.g-info { display: inline-grid; place-items: center; flex: none; width: 15px; height: 15px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .5); color: #c9d5e0; font: italic 700 10px Georgia, serif; cursor: help; font-style: italic; }
+.g-info { display: inline-grid; place-items: center; flex: none; width: 15px; height: 15px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .5); color: #c9d5e0; font: var(--gm-weight-bold) 10px Georgia, serif; cursor: help; font-style: normal; }
 .g-info:hover, .g-info:focus-visible { color: #fff; border-color: #fff; outline: none; }
 
 /* Development (round 5): the player picker as a tidy legend (a swatch in the line's colour, the name), no pills;
    darker projection bands. */
 html[data-glass="clear"] body.unified-terminal-ui .card-board-window .dev-picks { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 2px 12px; padding: 4px 2px; }
-html[data-glass="clear"] body.unified-terminal-ui .card-board-window .dev-pick { position: relative; display: flex !important; align-items: center; gap: 7px; padding: 2px 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important; color: var(--g-soft) !important; font-weight: 500 !important; font-size: 11.5px !important; cursor: pointer; }
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window .dev-pick { position: relative; display: flex !important; align-items: center; gap: 7px; padding: 2px 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important; color: var(--g-soft) !important; font-weight: var(--gm-weight-semibold) !important; font-size: 11.5px !important; cursor: pointer; }
 html[data-glass="clear"] body.unified-terminal-ui .card-board-window .dev-pick input { position: absolute; opacity: 0; width: 1px !important; height: 1px !important; pointer-events: none; }
 html[data-glass="clear"] body.unified-terminal-ui .card-board-window .dev-pick::before { content: ""; flex: none; width: 11px; height: 11px; border-radius: 3px; border: 1.5px solid rgba(255, 255, 255, .45); box-sizing: border-box; }
-html[data-glass="clear"] body.unified-terminal-ui .card-board-window .dev-pick.is-on { color: #fff !important; font-weight: 700 !important; }
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window .dev-pick.is-on { color: #fff !important; font-weight: var(--gm-weight-bold) !important; }
 html[data-glass="clear"] body.unified-terminal-ui .card-board-window .dev-pick.is-on::before { background: var(--dev-color); border-color: var(--dev-color); }
 html[data-glass="clear"] body.unified-terminal-ui .card-board-window .dev-pick:hover { color: #fff !important; }
 html[data-glass="clear"] .dev-plot .dev-band { opacity: .45 !important; }
@@ -417,8 +417,8 @@ html[data-glass="clear"] .dev-plot .dev-band { opacity: .45 !important; }
 html[data-glass="clear"] body .spatial-region-fills { filter: none !important; }
 html[data-glass="clear"] body .spatial-region-fill { fill-opacity: 1 !important; stroke: rgba(255, 255, 255, .14) !important; }
 html[data-glass="clear"] body .spatial-court-floor { fill: #18222e !important; }
-.spatial-region-label { font: 700 14px var(--ui-font, Arial), Arial, sans-serif; fill: #fff; paint-order: stroke; stroke: rgba(8, 14, 22, .85); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
-.spatial-region-label .is-share { font-weight: 500; font-size: 12.5px; fill: #d3dde6; }
+.spatial-region-label { font: var(--gm-weight-bold) 14px var(--ui-font, Arial), Arial, sans-serif; fill: #fff; paint-order: stroke; stroke: rgba(8, 14, 22, .85); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+.spatial-region-label .is-share { font-weight: var(--gm-weight-semibold); font-size: 12.5px; fill: #d3dde6; }
 html[data-glass="clear"] body.unified-terminal-ui .card-board-window .dev-pick.is-on { background: transparent !important; border: 0 !important; box-shadow: none !important; }
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot) .season-development-metric :is(.positive) { color: #86e0a2 !important; }
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot) .season-development-metric :is(.negative) { color: #ff9a9a !important; }
@@ -466,7 +466,7 @@ html[data-glass="clear"] body.unified-terminal-ui .cutdown-choice.is-slider {
 }
 html[data-glass="clear"] body.unified-terminal-ui .cutdown-choice.is-slider > .cutdown-choice-thumb {
   position: absolute; z-index: 0; top: 2px; bottom: 2px; left: 2px; width: calc((100% - 4px) / var(--n)); border-radius: 999px;
-  transform: translateX(calc(var(--i) * 100%)); transition: transform .22s cubic-bezier(.3, .7, .2, 1), background-color .22s ease;
+  transform: translateX(calc(var(--i) * 100%)); transition: transform var(--gm-motion-move) var(--gm-ease), background-color var(--gm-motion-move) var(--gm-ease);
   background: rgba(255, 255, 255, .28); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25);
 }
 html[data-glass="clear"] body.unified-terminal-ui .cutdown-choice.is-slider > .cutdown-choice-thumb:is(.is-waive, .is-buyout) { background: rgba(214, 72, 84, .78); }
@@ -474,10 +474,10 @@ html[data-glass="clear"] body.unified-terminal-ui .cutdown-choice.is-slider > .c
 html[data-glass="clear"] body.unified-terminal-ui .card-board-body .cutdown-choice.is-slider > button,
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-body .cutdown-choice.is-slider > button {
   position: relative; z-index: 1; background: transparent !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none; backdrop-filter: none;
-  border-radius: 999px !important; min-height: 20px !important; padding: 0 4px !important; color: var(--g-soft) !important; font-weight: 600 !important; white-space: nowrap; justify-content: center;
+  border-radius: 999px !important; min-height: 20px !important; padding: 0 4px !important; color: var(--g-soft) !important; font-weight: var(--gm-weight-semibold) !important; white-space: nowrap; justify-content: center;
 }
 html[data-glass="clear"] body.unified-terminal-ui .card-board-body .cutdown-choice.is-slider > button:hover:not(.is-active) { color: #fff !important; background: rgba(255, 255, 255, .08) !important; }
-html[data-glass="clear"] body.unified-terminal-ui .card-board-body .cutdown-choice.is-slider > button.is-active { color: #fff !important; font-weight: 700 !important; background: transparent !important; }
+html[data-glass="clear"] body.unified-terminal-ui .card-board-body .cutdown-choice.is-slider > button.is-active { color: #fff !important; font-weight: var(--gm-weight-bold) !important; background: transparent !important; }
 @media (prefers-reduced-motion: reduce) { .cutdown-choice.is-slider > .cutdown-choice-thumb { transition: none !important; } }
 /* Round 6 follow-up (the user's reference, an iOS-style segmented pill): a solid grey tray with no border, equal
    options, and the chosen one a solid filled pill the full height of the tray, touching its edge. Blue for Keep and
@@ -486,8 +486,8 @@ html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRo
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot) .cutdown-choice.is-slider > .cutdown-choice-thumb { top: 0; bottom: 0; left: 0; width: calc(100% / var(--n)); background: #2f6bbf; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); }
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot) .cutdown-choice.is-slider > .cutdown-choice-thumb:is(.is-waive, .is-buyout) { background: #c2414d; }
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot) .cutdown-choice.is-slider > .cutdown-choice-thumb.is-twoway { background: #2f6bbf; }
-html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot) .cutdown-choice.is-slider > button { min-height: 26px !important; font-size: 12px !important; font-weight: 500 !important; color: #d4dbe2 !important; }
-html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot) .cutdown-choice.is-slider > button.is-active { color: #fff !important; font-weight: 600 !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot) .cutdown-choice.is-slider > button { min-height: 26px !important; font-size: 12px !important; font-weight: var(--gm-weight-semibold) !important; color: #d4dbe2 !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot) .cutdown-choice.is-slider > button.is-active { color: #fff !important; font-weight: var(--gm-weight-semibold) !important; }
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot) .cutdown-choice.is-slider.is-slider.is-slider > button:is(*, :hover, .is-active, [aria-checked="true"]) { background: transparent !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot) .cutdown-choice.is-slider > button:not(.is-active):hover { color: #fff !important; }
 
@@ -526,7 +526,7 @@ select.glass-select-native { position: absolute !important; width: 1px !importan
 html[data-glass="clear"] body.unified-terminal-ui button.glass-select.glass-select, html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot button.glass-select {
   display: inline-flex !important; align-items: center; justify-content: space-between; gap: 8px; min-height: 24px; padding: 0 9px 0 12px !important;
   border-radius: 999px !important; background: rgba(255, 255, 255, .10) !important; border: 1px solid rgba(255, 255, 255, .24) !important; color: #fff !important;
-  font: 600 12px/1 var(--ui-font, inherit) !important; box-shadow: none !important; cursor: pointer; max-width: 100%; text-align: left;
+  font: var(--gm-weight-semibold) 12px/1 var(--ui-font, inherit) !important; box-shadow: none !important; cursor: pointer; max-width: 100%; text-align: left;
 }
 html[data-glass="clear"] body.unified-terminal-ui button.glass-select.glass-select:hover:not(:disabled), html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot button.glass-select:hover:not(:disabled),
 html[data-glass="clear"] body.unified-terminal-ui button.glass-select.glass-select[aria-expanded="true"], html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot button.glass-select[aria-expanded="true"] { background: rgba(255, 255, 255, .18) !important; border-color: rgba(255, 255, 255, .40) !important; }
@@ -538,14 +538,14 @@ html[data-ui-buttons="segmented"] body.unified-terminal-ui button.glass-select.g
 .glass-select-list {
   position: fixed; z-index: 10000; display: grid; grid-auto-flow: column; grid-template-rows: repeat(var(--rows), auto); column-gap: 4px;
   padding: 4px; border-radius: 10px; background: rgba(16, 26, 38, .90); -webkit-backdrop-filter: blur(24px) saturate(170%); backdrop-filter: blur(24px) saturate(170%);
-  border: 1px solid rgba(255, 255, 255, .16); box-shadow: 0 18px 44px rgba(3, 8, 14, .55); color: #f3f7fb; font: 500 12px/1.2 var(--ui-font, Helvetica Neue, Arial, sans-serif);
+  border: 1px solid rgba(255, 255, 255, .16); box-shadow: 0 18px 44px rgba(3, 8, 14, .55); color: #f3f7fb; font: var(--gm-weight-semibold) 12px/1.2 var(--ui-font, Helvetica Neue, Arial, sans-serif);
   max-height: calc(100vh - 16px);
 }
 body.unified-terminal-ui .glass-select-list > .glass-select-option { display: block; width: 100%; min-height: 24px; padding: 4px 12px; border: 0; border-radius: 6px; background: transparent; color: inherit; font: inherit; text-align: left; white-space: nowrap; cursor: pointer; }
 body.unified-terminal-ui .glass-select-list > .glass-select-option:is(:hover, :focus-visible) { background: rgba(255, 255, 255, .14); outline: none; }
-body.unified-terminal-ui .glass-select-list > .glass-select-option[aria-selected="true"] { background: rgba(120, 180, 255, .22); color: #fff; font-weight: 700; }
+body.unified-terminal-ui .glass-select-list > .glass-select-option[aria-selected="true"] { background: rgba(120, 180, 255, .22); color: #fff; font-weight: var(--gm-weight-bold); }
 body.unified-terminal-ui .glass-select-list > .glass-select-option:disabled { color: #8d9aa8; cursor: default; background: transparent; }
-.glass-select-group { padding: 6px 12px 2px; color: #c9d5e0; font: italic 700 10.5px/1 var(--ui-font, inherit); font-variant: small-caps; letter-spacing: .02em; }
+.glass-select-group { padding: 6px 12px 2px; color: #c9d5e0; font: var(--gm-weight-bold) 10.5px/1 var(--ui-font, inherit); font-variant: small-caps; letter-spacing: .02em; }
 
 /* Pop-up title bars (round 6: "white borders around the top of the window bar"): the trade room's old bar drew a
    1px blue-grey frame and a white inner highlight. One hairline under the bar only. */
@@ -566,10 +566,10 @@ body.unified-terminal-ui #modalRoot .modal-trade-room .tr-picker .trade-asset-li
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-pager { display: inline-flex; align-items: center; gap: 2px; margin-left: 10px; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .tr-pager > button {
   min-width: 22px; min-height: 22px !important; padding: 0 6px !important; border-radius: 999px !important; border: 0 !important;
-  background: transparent !important; color: var(--g-soft) !important; font: 600 12px/1 var(--ui-font, inherit) !important; box-shadow: none !important;
+  background: transparent !important; color: var(--g-soft) !important; font: var(--gm-weight-semibold) 12px/1 var(--ui-font, inherit) !important; box-shadow: none !important;
 }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .tr-pager > button:hover:not(:disabled) { background: rgba(255, 255, 255, .12) !important; color: #fff !important; }
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .tr-pager > button.active { background: rgba(255, 255, 255, .24) !important; color: #fff !important; font-weight: 700 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .tr-pager > button.active { background: rgba(255, 255, 255, .24) !important; color: #fff !important; font-weight: var(--gm-weight-bold) !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .tr-pager > button:disabled { opacity: .35; }
 
 /* Trade deal (round 6): no scrolling. The asset tiles grow with the deal; Payroll, Value and Team identity are tabs
@@ -584,7 +584,7 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-tr
 /* Pick terms as a field, the full wording in a Details drop-down that opens over the page (it never pushes the list). */
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-terms { position: relative; display: flex !important; align-items: center; gap: 8px; min-width: 0; color: var(--g-soft); font-size: 11.5px; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-terms .tr-tile-note { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-details > summary { cursor: pointer; color: #b4d7ff; font-weight: 600; list-style: none; white-space: nowrap; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-details > summary { cursor: pointer; color: #b4d7ff; font-weight: var(--gm-weight-semibold); list-style: none; white-space: nowrap; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-details > summary::-webkit-details-marker { display: none; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-details > summary::after { content: ""; display: inline-block; width: 5px; height: 5px; margin: 0 0 2px 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-details[open] > summary::after { transform: rotate(-135deg); margin-bottom: -1px; }
@@ -623,7 +623,7 @@ html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modal
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) :is([class*="name"], [class*="player-link"]):has(~ :is(.season-injury-status, .ss-injury)) *,
 html[data-glass="clear"] body.unified-terminal-ui .season-minute-name-line:has(.season-injury-status) > .season-minute-player-name { color: #ffc6c6 !important; }
 /* Player names bold in every table (round 6: Roster's weren't). */
-html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) :is(tbody, [data-house-row]) :is(.player-name-text, .season-minute-player-name, .cutdown-player-name, .trade-player-link, [data-dashboard-player-card]:not(:has(*)), [data-dashboard-player-card] > span:not([class*="injury"]):not([class*="rust"])) { font-weight: 700 !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) :is(tbody, [data-house-row]) :is(.player-name-text, .season-minute-player-name, .cutdown-player-name, .trade-player-link, [data-dashboard-player-card]:not(:has(*)), [data-dashboard-player-card] > span:not([class*="injury"]):not([class*="rust"])) { font-weight: var(--gm-weight-bold) !important; }
 /* Section rows inside a table ("Two-way places"): a level above the rows, so the rows' text sits further in. */
 html[data-glass="clear"] body.unified-terminal-ui table tr.cutdown-section-row > th:first-child { padding-left: 4px !important; }
 
@@ -633,7 +633,7 @@ body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .approved-t
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .approved-trade-values > :not(.trade-value-team) { grid-column: 1 / -1; }
 /* Buttons the old trade skin still painted white (Team identity's team switch, Retry): glass pills. */
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell:is(.modal-trade-room, .modal-trade-offers) .modal-body button.ui-command:not(.is-primary):not(.ui-command-primary) {
-  background: rgba(255, 255, 255, .12) !important; border: 1px solid rgba(255, 255, 255, .24) !important; color: #fff !important; box-shadow: none !important; border-radius: 999px !important; font: 600 12px/1 var(--ui-font, inherit) !important;
+  background: rgba(255, 255, 255, .12) !important; border: 1px solid rgba(255, 255, 255, .24) !important; color: #fff !important; box-shadow: none !important; border-radius: 999px !important; font: var(--gm-weight-semibold) 12px/1 var(--ui-font, inherit) !important;
 }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell:is(.modal-trade-room, .modal-trade-offers) .modal-body button.ui-command[aria-pressed="true"] { background: rgba(255, 255, 255, .30) !important; border-color: rgba(255, 255, 255, .6) !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell .modal-body button:disabled { opacity: 1 !important; color: #aab6c2 !important; }
@@ -674,12 +674,12 @@ html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .car
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .settings-pill, [role="tablist"]) > :is(button, [role="tab"]) {
   display: inline-flex !important; align-items: center; justify-content: center; min-height: 26px !important; height: auto !important; padding: 0 16px !important;
   border: 0 !important; border-radius: 999px !important; background: transparent !important; box-shadow: none !important; text-decoration: none !important;
-  color: #d4dbe2 !important; font: 500 12px/1 var(--ui-font, inherit) !important; white-space: nowrap; min-width: 0 !important;
+  color: #d4dbe2 !important; font: var(--gm-weight-semibold) 12px/1 var(--ui-font, inherit) !important; white-space: nowrap; min-width: 0 !important;
 }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .settings-pill, [role="tablist"]) > :is(button, [role="tab"]):hover:not(:disabled):not(.active):not([aria-pressed="true"]):not([aria-selected="true"]) { color: #fff !important; background: rgba(255, 255, 255, .06) !important; }
-html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .settings-pill, [role="tablist"]) > :is(button, [role="tab"]):is(.active, .is-active, [aria-pressed="true"], [aria-selected="true"]) { background: #2f6bbf !important; color: #fff !important; font-weight: 600 !important; box-shadow: 0 1px 3px rgba(0, 0, 0, .25) !important; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .settings-pill, [role="tablist"]) > :is(button, [role="tab"]):is(.active, .is-active, [aria-pressed="true"], [aria-selected="true"]) { background: #2f6bbf !important; color: #fff !important; font-weight: var(--gm-weight-semibold) !important; box-shadow: 0 1px 3px rgba(0, 0, 0, .25) !important; }
 .tab-slide-pill { position: absolute; z-index: 0; top: 0; bottom: 0; border-radius: 999px; background: #2f6bbf; pointer-events: none;
-  transition: left .22s cubic-bezier(.3, .7, .2, 1), width .22s cubic-bezier(.3, .7, .2, 1); }
+  transition: left var(--gm-motion-move) var(--gm-ease), width var(--gm-motion-move) var(--gm-ease); }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) .is-sliding > :is(button, [role="tab"]) { position: relative; z-index: 1; }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) .is-sliding > :is(button, [role="tab"]):is(.active, .is-active, [aria-pressed="true"], [aria-selected="true"]) { background: transparent !important; box-shadow: none !important; }
 html[data-ui-buttons="square"] .tab-slide-pill, html[data-ui-buttons="segmented"] .tab-slide-pill { border-radius: 6px; }
@@ -694,13 +694,13 @@ html[data-glass="clear"][data-ui-buttons="segmented"] body.unified-terminal-ui :
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-settings:not(.modal-photo-credits) { width: min(780px, calc(100vw - 32px)) !important; max-width: none !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-settings:not(.modal-photo-credits) > .modal-body { display: block !important; padding: 6px 0 0 !important; }
 #modalRoot .modal-settings .settings-group { margin: 0; padding: 8px 18px 12px; border-bottom: 1px solid var(--g-divider, rgba(255,255,255,.14)); }
-#modalRoot .modal-settings .settings-group > h4 { margin: 0 0 8px; font: italic 700 12px/1.2 var(--ui-font, inherit); font-variant: small-caps; letter-spacing: .03em; color: #c9d5e0; }
+#modalRoot .modal-settings .settings-group > h4 { margin: 0 0 8px; font: var(--gm-weight-bold) 12px/1.2 var(--ui-font, inherit); font-variant: small-caps; letter-spacing: .03em; color: #c9d5e0; }
 #modalRoot .modal-settings .settings-row { display: grid; grid-template-columns: 190px minmax(0, 1fr); align-items: center; gap: 14px; min-height: 34px; padding-left: 8px; }
-#modalRoot .modal-settings .settings-label { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; font-size: 12.5px; color: #f3f7fb; }
+#modalRoot .modal-settings .settings-label { display: inline-flex; align-items: center; gap: 7px; font-weight: var(--gm-weight-semibold); font-size: 12.5px; color: #f3f7fb; }
 #modalRoot .modal-settings .settings-control { min-width: 0; }
 #modalRoot .modal-settings .settings-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-left: 8px; }
 #modalRoot .modal-settings .settings-actions > :is(a, button) { text-decoration: none; }
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-settings .settings-actions > a { display: inline-flex; align-items: center; min-height: 24px; padding: 0 13px; border-radius: 999px; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .24); color: #fff !important; font-weight: 600; font-size: 12px; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-settings .settings-actions > a { display: inline-flex; align-items: center; min-height: 24px; padding: 0 13px; border-radius: 999px; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .24); color: #fff !important; font-weight: var(--gm-weight-semibold); font-size: 12px; }
 #modalRoot .modal-settings .settings-foot { display: flex; justify-content: flex-end; padding: 12px 18px 14px; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-settings .settings-foot > .settings-return-button { width: auto !important; }
 
@@ -708,7 +708,7 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-se
    starts level with the sides. */
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal { grid-template-rows: auto minmax(0, 1fr) !important; row-gap: 8px; }
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal > .tr-deal-bar { grid-column: 1 / -1; }
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room :is(.tr-add-change, .trade-pick-terms > header button) { display: inline-flex !important; align-items: center; gap: 6px; min-height: 24px !important; padding: 0 12px !important; font: 600 12px/1 var(--ui-font, inherit) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room :is(.tr-add-change, .trade-pick-terms > header button) { display: inline-flex !important; align-items: center; gap: 6px; min-height: 24px !important; padding: 0 12px !important; font: var(--gm-weight-semibold) 12px/1 var(--ui-font, inherit) !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room :is(.tr-add-change, .trade-pick-terms > header button) img { width: 12px !important; height: 12px !important; filter: invert(1) brightness(2) !important; }
 /* Draft Terms: "Add condition" right after its label, not pushed to the far edge. */
 body.unified-terminal-ui #modalRoot .modal-trade-room .tr-terms .trade-pick-terms > header { justify-content: flex-start !important; gap: 12px !important; }
@@ -734,7 +734,7 @@ body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder.is-deal.is-mul
 /* Trade controls (round 7). Review deal: the solid blue pill of the tab picker, not the old primary button. */
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-pick-bar button.tr-button.is-primary {
   min-height: 28px !important; height: 28px; padding: 0 18px !important; border: 0 !important; border-radius: 999px !important; background: #2f6bbf !important;
-  color: #fff !important; font: 600 12.5px/1 var(--ui-font, inherit) !important; box-shadow: 0 1px 3px rgba(0, 0, 0, .25) !important;
+  color: #fff !important; font: var(--gm-weight-semibold) 12.5px/1 var(--ui-font, inherit) !important; box-shadow: 0 1px 3px rgba(0, 0, 0, .25) !important;
 }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-pick-bar button.tr-button.is-primary:hover:not(:disabled) { background: #3a7ad4 !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-pick-bar button.tr-button.is-primary:disabled { background: rgba(255, 255, 255, .12) !important; color: #aab6c2 !important; box-shadow: none !important; }
@@ -754,7 +754,7 @@ body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .approved-t
    elsewhere: the court-view tab picker and the Offense / Defense labels larger; each heat map's caption centred under
    it; the season drop-down a glass pill in a taller header, so its edge no longer presses on the panel's lines. */
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .spatial-court-tabs > button { font-size: 15px !important; min-height: 34px !important; padding: 0 20px !important; }
-html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .spatial-court-group-label { font-size: 15px !important; font-weight: 700 !important; letter-spacing: .01em; }
+html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .spatial-court-group-label { font-size: 15px !important; font-weight: var(--gm-weight-bold) !important; letter-spacing: .01em; }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .spatial-legend { display: flex !important; flex-direction: column; align-items: center !important; justify-content: center !important; text-align: center !important; gap: 4px; }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .spatial-legend > * { margin-inline: auto !important; }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .clipboard-player-card .approved-season-line > header { min-height: 34px !important; display: flex !important; align-items: center !important; padding: 4px 10px !important; box-sizing: border-box; }
@@ -853,8 +853,8 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-tr
 /* Player card header facts (round 8: instead of injury risk, decline watch and trade value). */
 .player-header-facts { display: grid; grid-template-columns: repeat(4, minmax(0, auto)); gap: 6px 34px; align-items: start; align-content: center; margin-left: auto; padding: 0 18px; }
 .player-header-fact { display: grid; gap: 5px; min-width: 0; }
-.player-header-fact > small { color: #c9d5e0; font: italic 700 12px/1 var(--ui-font, inherit); font-variant: small-caps; letter-spacing: .03em; }
-.player-header-fact > b { display: inline-flex; align-items: center; gap: 7px; color: #f3f7fb; font-size: 17px; font-weight: 700; white-space: nowrap; }
+.player-header-fact > small { color: #c9d5e0; font: var(--gm-weight-bold) 12px/1 var(--ui-font, inherit); font-variant: small-caps; letter-spacing: .03em; }
+.player-header-fact > b { display: inline-flex; align-items: center; gap: 7px; color: #f3f7fb; font-size: 17px; font-weight: var(--gm-weight-bold); white-space: nowrap; }
 .player-header-fact > b img { width: 26px; height: 26px; object-fit: contain; }
 .player-header-fact.is-roles > b { flex-direction: column; align-items: flex-start; gap: 2px; font-size: 15px; }
 /* Opening roster (round 8): a waived or bought-out player's name is not struck through. */
@@ -883,12 +883,12 @@ html[data-glass="clear"] .season-slideshow .ss-card { background-image: none !im
 /* Contract and roles as two clear blocks. */
 .player-header-facts { grid-template-columns: auto auto !important; gap: 0 56px !important; }
 .player-header-fact.is-contract > b { font-size: 26px !important; display: flex !important; align-items: baseline; gap: 8px; }
-.player-header-fact.is-contract > b > span { font-size: 13px; font-weight: 600; color: #c9d5e0; }
-.player-header-fact.is-contract > em { font-style: normal; color: #c9d5e0; font-size: 14px; font-weight: 600; }
+.player-header-fact.is-contract > b > span { font-size: 13px; font-weight: var(--gm-weight-semibold); color: #c9d5e0; }
+.player-header-fact.is-contract > em { font-style: normal; color: #c9d5e0; font-size: 14px; font-weight: var(--gm-weight-semibold); }
 .player-header-roles { display: grid; grid-template-columns: auto auto; gap: 4px 14px; align-items: baseline; }
 .player-header-role { display: contents; }
-.player-header-role > small { color: #c9d5e0; font: italic 700 12px/1.2 var(--ui-font, inherit); font-variant: small-caps; letter-spacing: .03em; }
-.player-header-role > .role-text { font-size: 17px; font-weight: 700; white-space: nowrap; }
+.player-header-role > small { color: #c9d5e0; font: var(--gm-weight-bold) 12px/1.2 var(--ui-font, inherit); font-variant: small-caps; letter-spacing: .03em; }
+.player-header-role > .role-text { font-size: 17px; font-weight: var(--gm-weight-bold); white-space: nowrap; }
 html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-profile-head > .profile-headshot-wrap { display: inline-block !important; width: max-content !important; flex: none !important; justify-self: start; align-self: end; }
 html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-player-profile-head .profile-team-badge { right: -18% !important; bottom: -4% !important; width: 60% !important; }
 /* Player card overview (round 9): Recent Games ends at its last row (its row fits its content; the game-score and
@@ -912,7 +912,7 @@ body.unified-terminal-ui #modalRoot .modal-trade-room .tr-lower-body .approved-t
    players" a solid blue pill on the right beside Add a team. */
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-room-toolbar { margin: 8px 9px 8px !important; padding: 6px 10px !important; border-radius: 10px !important; align-items: center !important; min-height: 40px; box-sizing: border-box; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-toolbar-controls { display: flex !important; align-items: center !important; gap: 12px !important; }
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-toolbar-controls > .tr-add-change { min-height: 28px !important; height: 28px; padding: 0 16px !important; border: 0 !important; border-radius: 999px !important; background: #2f6bbf !important; color: #fff !important; font: 600 12.5px/1 var(--ui-font, inherit) !important; display: inline-flex !important; align-items: center; gap: 7px; box-shadow: 0 1px 3px rgba(0, 0, 0, .25) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-toolbar-controls > .tr-add-change { min-height: 28px !important; height: 28px; padding: 0 16px !important; border: 0 !important; border-radius: 999px !important; background: #2f6bbf !important; color: #fff !important; font: var(--gm-weight-semibold) 12.5px/1 var(--ui-font, inherit) !important; display: inline-flex !important; align-items: center; gap: 7px; box-shadow: 0 1px 3px rgba(0, 0, 0, .25) !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-toolbar-controls > .tr-add-change:hover { background: #3a7ad4 !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-toolbar-controls > .tr-add-change img { width: 12px !important; height: 12px !important; filter: invert(1) brightness(2) !important; }
 /* The tab pill sits inside its card with an even margin (it poked past the card's rounded top corners). */
@@ -931,7 +931,7 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-tr
    on hover, no button box. */
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot#modalRoot) .cutdown-tw-row :is([data-two-way-release], [data-two-way-convert], [data-two-way-sign])[type="button"] {
   background: transparent !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
-  padding: 0 !important; min-height: 0 !important; border-radius: 0 !important; color: #cfe4ff !important; font-weight: 600 !important; text-decoration: none !important;
+  padding: 0 !important; min-height: 0 !important; border-radius: 0 !important; color: #cfe4ff !important; font-weight: var(--gm-weight-semibold) !important; text-decoration: none !important;
 }
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot#modalRoot) .cutdown-tw-row :is([data-two-way-release], [data-two-way-convert], [data-two-way-sign])[type="button"]:hover:not(:disabled) { background: transparent !important; text-decoration: underline !important; text-underline-offset: 3px; }
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-body, #modalRoot#modalRoot) .cutdown-tw-row :is([data-two-way-release], [data-two-way-convert], [data-two-way-sign])[type="button"]:disabled { color: #9fb0c0 !important; }
@@ -962,16 +962,16 @@ html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-bo
    centred, bold band with a line above it. */
 html[data-glass="clear"] body.unified-terminal-ui .has-card-board .cutdown-scroll table > thead > tr > th { position: relative !important; top: auto !important; }
 html[data-glass="clear"] body.unified-terminal-ui table tr.cutdown-section-row > th.is-name-col,
-html[data-glass="clear"] body.unified-terminal-ui table tr.cutdown-section-row > th:first-child { text-align: center !important; padding: 12px 10px 8px !important; font-size: 14px !important; font-weight: 700 !important; color: #f3f7fb !important; background: transparent !important; border-top: 0 !important; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35) !important; }
+html[data-glass="clear"] body.unified-terminal-ui table tr.cutdown-section-row > th:first-child { text-align: center !important; padding: 12px 10px 8px !important; font-size: 14px !important; font-weight: var(--gm-weight-bold) !important; color: #f3f7fb !important; background: transparent !important; border-top: 0 !important; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35) !important; }
 html[data-glass="clear"] body.unified-terminal-ui table tr.cutdown-section-row > th > span { margin-right: 0 !important; letter-spacing: .02em; }
-html[data-glass="clear"] body.unified-terminal-ui table tr.cutdown-section-row .cutdown-details { font-weight: 400; font-size: 12px; }
+html[data-glass="clear"] body.unified-terminal-ui table tr.cutdown-section-row .cutdown-details { font-weight: var(--gm-weight-regular); font-size: 12px; }
 
 /* Trade room (round 10): a pick's conditions in a pop-up over the room (no Draft Terms bar under the deal). */
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-trade-room .tr-builder { position: relative; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-pop { position: absolute; inset: 0; z-index: 40; display: grid; place-items: center; background: rgba(8, 14, 22, .38); border-radius: 10px; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card { width: min(780px, 92%); background: rgba(22, 34, 48, .94) !important; -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); border: 1px solid rgba(255, 255, 255, .16); border-radius: 12px; padding: 16px 18px 14px; box-shadow: 0 18px 44px rgba(0, 0, 0, .5); color: #eef3f7; display: grid; gap: 12px; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card > header { display: flex; align-items: baseline; gap: 14px; }
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card > header strong { font-size: 16px; font-weight: 700; color: #fff; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card > header strong { font-size: 16px; font-weight: var(--gm-weight-bold); color: #fff; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card > header span { font-size: 13px; color: #c9d5e0; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card .trade-pick-terms { background: transparent !important; border: 0 !important; margin: 0 !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card .trade-pick-terms > header { display: none !important; }
@@ -980,7 +980,7 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-tr
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card > footer { display: flex; justify-content: flex-end; align-items: center; gap: 18px; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-tile-conditions { font-size: 12px !important; padding: 0 !important; justify-self: start; }
 /* Replay is a plain text link, like the other text buttons. */
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room :is([data-trade-payroll-replay], .tr-text-button) { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; min-height: 0 !important; color: #d8eaff !important; font-weight: 600; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room :is([data-trade-payroll-replay], .tr-text-button) { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; min-height: 0 !important; color: #d8eaff !important; font-weight: var(--gm-weight-semibold); }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room :is([data-trade-payroll-replay], .tr-text-button):hover:not(:disabled) { text-decoration: underline; background: transparent !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot#modalRoot .modal-trade-room .tr-builder > .tr-terms-pop { background: rgba(8, 14, 22, .42) !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card .glass-select { min-width: 72px !important; }
@@ -993,7 +993,7 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-tr
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-toolbar > div { display: flex !important; gap: 14px !important; background: none !important; padding: 0 !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-logo { display: grid !important; justify-items: center; gap: 3px; background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 2px 4px 4px !important; min-height: 0 !important; cursor: pointer; opacity: .62; border-bottom: 2px solid transparent !important; border-radius: 0 !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-logo img { width: 34px; height: 34px; object-fit: contain; }
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-logo span { font-size: 11px; font-weight: 700; color: #eef3f7; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-logo span { font-size: 11px; font-weight: var(--gm-weight-bold); color: #eef3f7; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-logo:hover { opacity: .85; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-logo[aria-pressed="true"] { opacity: 1; border-bottom-color: #4f8fe0 !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-identity-comparison { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: 6px !important; }
@@ -1054,7 +1054,7 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-tr
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card > footer > .tr-text-button { line-height: 32px; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card .trade-pick-rule-fields { display: flex !important; flex-wrap: wrap; align-items: end; gap: 10px 16px !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card .trade-pick-rule-fields > label { display: grid !important; gap: 4px; margin: 0 !important; }
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card .trade-pick-rule-fields > label > span { font-size: 11px; font-weight: 700; color: #c9d5e0; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-terms-card .trade-pick-rule-fields > label > span { font-size: 11px; font-weight: var(--gm-weight-bold); color: #c9d5e0; }
 /* Payroll chart box: space under it inside its card, and more see-through. */
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-lower-body > .tr-payroll { margin-bottom: 0 !important; background: rgba(13, 22, 34, .14) !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-lower-body:has(> .tr-payroll) { padding-bottom: 10px !important; box-sizing: border-box !important; }
@@ -1076,7 +1076,7 @@ html[data-glass="clear"] body.unified-terminal-ui .has-card-board .rating-drop {
 
 /* Trade Finder (round 11): the payroll chart beside its now / after table; "Found trades" with no empty box over it. */
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-finder-cap { background: transparent !important; border: 0 !important; padding: 6px 10px 8px !important; }
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-finder-cap > header { color: #eef3f7 !important; font-size: 12px !important; font-weight: 700; padding: 0 0 6px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-finder-cap > header { color: #eef3f7 !important; font-size: 12px !important; font-weight: var(--gm-weight-bold); padding: 0 0 6px !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-finder-payroll { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: center; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-results-head { display: flex !important; align-items: baseline; gap: 10px; padding: 8px 10px !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .trade-results-head > span:empty { display: none !important; }
