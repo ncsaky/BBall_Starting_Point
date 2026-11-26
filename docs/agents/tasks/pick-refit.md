@@ -1,6 +1,6 @@
 # PICK-REFIT: trade side of the 3-2-1 lottery
 
-Progress: 7/8 - full test suite running on the cloud machines
+Progress: 8/8 - done, ready for the coordinator's review
 
 Owner: Claude (side session, worktree `reverent-brattain-6d2232`, branch `claude/reverent-brattain-6d2232`).
 Go-ahead from the coordinator 2026-11-26.
@@ -93,7 +93,8 @@ Two deals a fan might question in the "after" seasons:
 - One older test used "picks 8-14" as its example of a valid condition; it now uses "picks 8-11".
 - Recalculating all pick values takes 2.6 ms instead of 1.9 ms.
 - Computer-team decisions change by design, so seeded seasons differ from before.
-- Full suite: running.
+- Full suite on a cloud machine (`run_tests_parallel.py --all --workers 2`): 2,722 tests, 0 failures, 0 errors,
+  70 skipped.
 
 ### Files
 New `src/nba_gm_data/pick_lottery_value.py`; `pick_rules.py`, `transactions.py`, `play.py`, two lines in `save.py`
