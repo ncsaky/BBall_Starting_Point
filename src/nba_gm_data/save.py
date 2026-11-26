@@ -471,6 +471,9 @@ def write_save(path: str | Path, save: dict[str, Any]) -> None:
         from .trade_ownership import commit_tenure_ledger
         commit_tenure_ledger(working)
         archive_save_history(target, working, committed_revision + 1)
+        # Seasons older than the latest finished one move to their own archive files (SEASON-ARCHIVE).
+        from .season_archive import archive_finished_seasons
+        archive_finished_seasons(target, working)
         temp_path: Path | None = None
         try:
             with tempfile.NamedTemporaryFile(

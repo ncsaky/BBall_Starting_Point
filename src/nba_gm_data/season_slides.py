@@ -56,25 +56,39 @@ def slideshow_store(save: dict[str, Any]) -> dict[str, Any]:
     return store
 
 
-def stored_recap(save: dict[str, Any], season: str) -> dict[str, Any] | None:
+def stored_recap(save: dict[str, Any], season: str, save_path: str | Path | None = None) -> dict[str, Any] | None:
+    """A season's recap: the live store, the season's history entry, or (older seasons) its archive file."""
+    from .season_archive import full_history_entry
+
     recap = ((save.get("season_slideshows") or {}).get("recaps") or {}).get(season)
     if recap:
         return recap
     entry = next((row for row in save.get("season_history") or [] if str(row.get("season")) == season), None)
+    if entry is not None and entry.get("recap") is None and save_path is not None:
+        entry = full_history_entry(save_path, save, entry)
     return (entry or {}).get("recap")
 
 
-def stored_outlook(save: dict[str, Any], season: str) -> dict[str, Any] | None:
-    return ((save.get("season_slideshows") or {}).get("outlooks") or {}).get(season)
+def stored_outlook(save: dict[str, Any], season: str, save_path: str | Path | None = None) -> dict[str, Any] | None:
+    from .season_archive import archived_outlook
+
+    outlook = ((save.get("season_slideshows") or {}).get("outlooks") or {}).get(season)
+    if outlook is None and save_path is not None:
+        outlook = archived_outlook(save_path, save, season)
+    return outlook
 
 
 def available_slideshows(save: dict[str, Any]) -> list[dict[str, str]]:
-    """Every slideshow this save can reopen, newest first."""
+    """Every slideshow this save can reopen, newest first (archived seasons from the archive manifest)."""
+    from .season_archive import archived_outlook_seasons, archived_recap_seasons
+
     seasons_with_recaps = {str(row.get("season")) for row in save.get("season_history") or [] if row.get("recap")}
     store = save.get("season_slideshows") or {}
     seasons_with_recaps |= set((store.get("recaps") or {}).keys())
+    seasons_with_recaps |= set(archived_recap_seasons(save))
+    outlook_seasons = [*(store.get("outlooks") or {}), *[s for s in archived_outlook_seasons(save) if s not in (store.get("outlooks") or {})]]
     rows = [{"kind": "recap", "season": season, "label": f"{season} Year-End Recap"} for season in seasons_with_recaps]
-    rows += [{"kind": "outlook", "season": season, "label": f"{season} Preseason Outlook"} for season in (store.get("outlooks") or {})]
+    rows += [{"kind": "outlook", "season": season, "label": f"{season} Preseason Outlook"} for season in outlook_seasons]
     return sorted(rows, key=lambda row: (row["season"], row["kind"] == "outlook"), reverse=True)
 
 
