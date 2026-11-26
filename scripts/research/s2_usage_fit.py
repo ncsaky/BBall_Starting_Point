@@ -28,7 +28,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts" / "research"))
-STATS = ("points", "fg3m", "assists", "rebounds", "fga", "fta", "turnovers", "offensive_rebounds")
+STATS = ("points", "fg3m", "assists", "rebounds", "fga", "fta", "turnovers", "offensive_rebounds", "steals", "blocks")
 
 
 def apply(setting: dict) -> dict:
@@ -75,13 +75,14 @@ def real_table(root: Path, min_minutes: float) -> dict[str, dict]:
         scale = t["points_per36"] / b["pts75"] if b.get("pts75") else None
         out[pid] = {"minutes": m, "points": t["points_per36"], "fg3m": 36.0 * float(t.get("fg3m") or 0) / m,
                     "assists": t["assists_per36"], "rebounds": t["rebounds_per36"], "fga": t["fga_per36"],
-                    "fta": t["fta_per36"], "turnovers": t["turnovers_per36"],
+                    "fta": t["fta_per36"], "turnovers": t["turnovers_per36"], "steals": t["steals_per36"],
+                    "blocks": t["blocks_per36"],
                     "putpts": b["putpts75"] * scale if scale and "putpts75" in b else None}
     return out
 
 
 PLAYTYPES: dict | None = None
-PT_GROUPS = {"transition": (("trans_rim", "trans_three"), ("transition",)), "cut_roll": (("rim_finish",), ("cut", "roll_man")),
+PT_GROUPS = {"transition": (("trans_rim", "trans_three"), ("transition",)), "cut_roll": (("rim_finish", "short_finish"), ("cut", "roll_man")),
              "post": (("hook",), ("post_up",)), "putback": (("putback",), ("putbacks",)),
              "self": (("rim_drive", "floater", "short_jumper", "mid_pull", "three_pull"), ("isolation", "ball_handler", "handoff"))}
 
@@ -131,7 +132,7 @@ def score(eng: dict, shots: dict, real: dict) -> dict:
             rows.append((pe, re, r["minutes"]))
         w = sum(x[2] for x in rows)
         res = {"players": len(rows)}
-        for k in ("points", "fg3m", "assists", "rebounds", "usage", "fta", "putpts"):
+        for k in ("points", "fg3m", "assists", "rebounds", "usage", "fta", "putpts", "steals", "blocks"):
             pairs = [(x[0].get(k), x[1].get(k), x[2]) for x in rows if x[0].get(k) is not None and x[1].get(k) is not None]
             ww = sum(p[2] for p in pairs)
             mae = sum(abs(a - b) * c for a, b, c in pairs) / ww
@@ -140,6 +141,8 @@ def score(eng: dict, shots: dict, real: dict) -> dict:
             me, mr = statistics.fmean(ea), statistics.fmean(ra)
             cv = sum((a - me) * (b - mr) for a, b in zip(ea, ra))
             corr = cv / math.sqrt(sum((a - me) ** 2 for a in ea) * sum((b - mr) ** 2 for b in ra))
+            top = sorted(pairs, key=lambda p: -p[1])[:20]   # S2-TENTH: the real top 20 (elite passers, stealers, shot-blockers)
+            res[k + "_top20"] = {"eng": round(statistics.fmean(p[0] for p in top), 3), "real": round(statistics.fmean(p[1] for p in top), 3)}
             res[k] = {"mae": round(mae, 4), "rel": round(rel, 4), "corr": round(corr, 4),
                       "eng": round(sum(p[0] * p[2] for p in pairs) / ww, 3), "real": round(sum(p[1] * p[2] for p in pairs) / ww, 3)}
         out["all" if half is None else f"half{half}"] = res
@@ -297,6 +300,10 @@ def main() -> int:
               a["rebounds"]["rel"], "use", a["usage"]["mae"], "put", a["putpts"]["eng"], "/", a["putpts"]["real"],
               "lvl pts", a["points"]["eng"], "/", a["points"]["real"], "ast", a["assists"]["eng"], "fta", a["fta"]["eng"],
               "/", a["fta"]["real"], f"({rec['seconds']}s)", flush=True)
+        print("   stl", a["steals"]["rel"], a["steals"]["corr"], "lvl", a["steals"]["eng"], "/", a["steals"]["real"], "top20",
+              a["steals_top20"]["eng"], "/", a["steals_top20"]["real"], "| blk", a["blocks"]["rel"], a["blocks"]["corr"], "lvl",
+              a["blocks"]["eng"], "/", a["blocks"]["real"], "top20", a["blocks_top20"]["eng"], "/", a["blocks_top20"]["real"],
+              "| ast top20", a["assists_top20"]["eng"], "/", a["assists_top20"]["real"], flush=True)
         print("   play types (Stage 2 / real per 36, corr):", " ".join(f"{g} {v['eng']}/{v['real']} {v['corr']}"
                                                                    for g, v in sc["playtypes"].items()), flush=True)
         log.append(rec)

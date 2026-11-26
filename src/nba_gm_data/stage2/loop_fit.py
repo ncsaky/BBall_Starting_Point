@@ -303,7 +303,7 @@ def fit_fouls(root: str | Path, train: int = 0, loop: dict | None = None) -> dic
         kinds = []
         craft_all = (float(flats[pid]["S24"]) - 50) / 25
         seek = math.log(max(1e-3, float(flats[pid]["T18"])) / max(1e-3, 1 - float(flats[pid]["T18"]))) - math.log(SEEK_REF / (1 - SEEK_REF))
-        for k in range(10):
+        for k in C.HALFCOURT_KINDS:
             if c.menu[k] > 0:
                 zone, action = C.KINDS[k][2], C.KINDS[k][1]
                 craft = craft_all if action in ("drive", "pull_up") else 0.0
