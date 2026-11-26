@@ -196,8 +196,9 @@ class InjuryLengthTests(unittest.TestCase):
 
     def test_expected_games_use_two_days_per_game(self):
         path = str(ROOT / im.MODEL_FILE)
-        quantiles = im.load_model(ROOT)["recovery_summary"]["ankle"]["quantiles"]
-        expected = sum(int(round(im._days_at(quantiles, (k + 0.5) / 200.0))) // 2 for k in range(200)) / 200.0
+        diagnoses = im.load_model(ROOT)["recovery_summary"]["ankle"]["diagnoses"]
+        expected = sum(d["share"] * sum(int(round(im._days_at(d["quantiles"], (k + 0.5) / 200.0))) // 2 for k in range(200))
+                       for d in diagnoses) / sum(d["share"] for d in diagnoses) / 200.0
         self.assertAlmostEqual(im._mean_games_out(path, "ankle"), expected)
 
 

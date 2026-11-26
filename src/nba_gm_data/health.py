@@ -893,6 +893,7 @@ def fatigue_injury_multiplier(fatigue: float) -> float:
 # no game (Basketball Index: 23%, all 0-1 day entries) and heavy-minute players had 30% fewer multi-game absences than
 # in the real 2025-26 box scores.
 DAYS_PER_GAME_MISSED = 2
+LATER_SEASON_DAYS = 174   # a regular season, late October to mid-April (injury_games_missed)
 
 
 _TEAM_DATES_CACHE: dict[tuple, dict[str, list[str]]] = {}
@@ -928,6 +929,24 @@ def injury_return_date(team_days: list[str] | None, game_date: date, days: int) 
         return parse_date(future[games])
     last = parse_date(future[-1]) if future else game_date
     return im.basketball_return_date(last, DAYS_PER_GAME_MISSED * (games - len(future) + 1))
+
+
+def injury_games_missed(team_days: list[str] | None, game_date: date, return_day: date, days: int) -> int:
+    """The team games an absence is reported as: days // 2 (injury_return_date) while he is back before the next season
+    opens. One running into a later season counts the games he can actually miss, not two days per game through the
+    summer: the rest of this schedule plus each later season's games before his return (82 from about October 21 over
+    LATER_SEASON_DAYS days)."""
+    games = max(0, int(days)) // DAYS_PER_GAME_MISSED
+    future = (team_days or [])[bisect.bisect_right(team_days or [], date_to_str(game_date)):]
+    season_end = parse_date(future[-1]) if future else game_date
+    opener = date(season_end.year + (1 if season_end.month >= 7 else 0), 10, 21)
+    if return_day <= opener:
+        return games
+    later = 0
+    while return_day > opener:
+        later += round(82 * min((return_day - opener).days, LATER_SEASON_DAYS) / LATER_SEASON_DAYS)
+        opener = date(opener.year + 1, 10, 21)
+    return min(games, len(future) + later)
 
 
 MIN_AVAILABLE_PLAYERS = 8   # NBA rule: a team must have eight players available for a game
@@ -1038,7 +1057,7 @@ def v2_injury_draw(root, model, canonical, player, traits, state, profile, minut
         id=stable_id("injury", "v2", pid, date_to_str(game_date), part, label, seed),
         player_id=pid, team_id=player["team_id"], start_date=date_to_str(game_date), return_date=date_to_str(return_day),
         body_area=area, severity=severity, expected_days_missed=days,
-        expected_games_missed=days // DAYS_PER_GAME_MISSED,
+        expected_games_missed=injury_games_missed(team_days, game_date, return_day, days),
         recurrence=recurrence, status="generated_injury_v2", source_ids=["src_injury_model_v2"],
         notes=f"{label} ({im.PART_LABELS.get(part, part)}); duration from a real {part} absence.",
     ))
@@ -1159,9 +1178,7 @@ def season_start_injuries(root: str | Path, canonical: dict[str, Any], states: l
         # Days out on the basketball calendar (July-September skipped), as Basketball Index and the injury model count.
         days_out = max(1, sum(1 for k in range((return_day - start_day).days)
                               if not 7 <= (start_day + timedelta(days=k)).month <= 9))
-        summary = (injury.get("recovery_summary") or {}).get(part) or {}
-        labels = next((shares for limit, shares in summary.get("labels_by_days") or [] if days_out <= limit), {}) or {f"{part} injury": 1.0}
-        label = max(labels, key=lambda name: labels[name])
+        label = im.typical_diagnosis(injury, part, days_out)
         event = to_plain(InjuryEvent(
             id=stable_id("injury", "season_start", player["id"], season, seed),
             player_id=player["id"], team_id=player["team_id"], start_date=date_to_str(start_day),

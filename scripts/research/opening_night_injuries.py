@@ -130,11 +130,14 @@ def estimated_total_days(part: str | None, days_so_far: int) -> int | None:
     sys.path.insert(0, str(ROOT / "src"))
     from nba_gm_data import injury_model as im
     model = im.load_model(ROOT) or {}
-    quantiles = ((model.get("recovery_summary") or {}).get(part or "") or {}).get("quantiles") or []
-    longer = [d for d in quantiles if d >= days_so_far]
-    if not longer:
-        return None
-    return int(longer[len(longer) // 2])
+    summary = (model.get("recovery_summary") or {}).get(part or "") or {}
+    longer = sorted((days, weight) for days, weight in im.recovery_days(summary) if days >= days_so_far)
+    half, running = sum(weight for _, weight in longer) / 2.0, 0.0
+    for days, weight in longer:
+        running += weight
+        if running >= half:
+            return int(days)
+    return None
 
 
 def part_of(reason: str | None) -> str | None:

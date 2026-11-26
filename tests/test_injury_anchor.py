@@ -99,12 +99,24 @@ class ModelFileTests(unittest.TestCase):
         for info in model["parts"].values():
             self.assertTrue(0.75 < info["game_share"] <= 1.0)
 
-    def test_recovery_quantiles_are_shorter_than_the_tracker_pool(self):
+    def test_drawn_lengths_match_the_complete_records_mix(self):
+        from scripts.build_injury_model import RECOVERY_GROUPS, band_index
         model = json.loads((ROOT / im.MODEL_FILE).read_text())
         bands = model["rate_fit"]["recovery_length_bands"]
         for group in ("ankle/foot/toe", "knee"):
             self.assertGreater(bands[group]["complete"][0], bands[group]["tracker_pool"][0])
-            self.assertLess(bands[group]["complete"][-1], bands[group]["tracker_pool"][-1])
+        # What the engine draws, diagnosis by diagnosis, still has the complete records' mix of absence lengths.
+        for group, row in bands.items():
+            mix = [0.0] * 5
+            parts = [p for p in model["recovery_summary"] if RECOVERY_GROUPS.get(p) == group]
+            weights = {p: model["parts"][p]["anchor_per_1000_games"] for p in parts}
+            for part in parts:
+                costing = [(days, w) for days, w in im.recovery_days(model["recovery_summary"][part]) if days >= 2]
+                total = sum(w for _, w in costing)
+                for days, w in costing:
+                    mix[band_index(days // 2)] += weights[part] / sum(weights.values()) * w / total
+            for drawn, complete in zip(mix, row["complete"]):
+                self.assertAlmostEqual(drawn, complete, delta=0.025, msg=(group, mix, row["complete"]))
 
 
 if __name__ == "__main__":
