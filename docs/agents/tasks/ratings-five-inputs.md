@@ -11,12 +11,11 @@ Progress: 8/8 - done; ready for the coordinator's review
   stretch bigs lose transition running they never did (Brook Lopez, Myles Turner); LaMelo Ball, Jalen Green and CJ
   McCollum drop in contact seeking (high volume, few free throws per shot).
 - **Scorecards:** Stage 2 gets better on player props and per-player points; its betting pair is about the same.
-  Today's engine: betting test and league stats unchanged, **but its player points and free-throw split get worse**
-  because two of its fitted rules (`box_rates` free throws per point and points) were fitted on the old contact
-  values. A refit fixes free throws, not quite points. That needs a coordinator decision (below). Without the
-  contact-seeking piece, today's engine is as good or slightly better than before.
-- **One test now fails:** Giannis Antetokounmpo's trade value is 84.06 against a pinned floor of 85 (was 85.36; still
-  12th in the market order).
+  Today's engine, after refitting its two scoring rules on the corrected inputs (user-approved option (a)): betting test
+  and 18/18 unchanged, player props slightly better (Brier .2158 → .2150), per-player free throws better (0.58 → 0.52
+  per 36), per-player points level (1.20 → 1.21 per 36), season points miss slightly worse (9.7% → 10.0%).
+- **Trade-market test:** Giannis Antetokounmpo's market value drifted 85.36 → 84.06 (still 12th). The test's floor is
+  now 84 and its Giannis-over-LaMelo gap 13 (was 14; gap now 13.97), each with a dated note.
 
 ## Objective
 Check five inputs against independent 2025-26 evidence (shot-location habit, involvement, rim finishing skills, foul
@@ -100,7 +99,29 @@ Arthur Kaluma, Jordan Clarkson). No skill was set by hand.
 | Rim make rate vs real | .668 | .698 |
 | Free throws per 36: miss / correlation | .572 / .937 | .557 / .931 |
 
-## Decision for the coordinator: today's engine and contact seeking
+## Refit applied (2026-11-25, user approved "Yes, refit and merge")
+Both rules refitted with `scripts/fit_box_stat_rates.py` (weighted by minutes, constant re-centred on the league mean)
+on the rebuilt inputs; comments in `box_rates.py` give the old coefficients and the source:
+- `FTA_PER_POINT_INPUTS` {constant −0.31016, log T18 1.92826, S24 0.00366, log T08 −0.13616}: out-of-fold r .873 (old
+  coefficients on new inputs) → **.916**.
+- `POINTS_INPUTS` {constant 3.89466, log T08 0.95809, log T01.pass −0.29506, log T01.shoot 0.295, S10 0.00355, log T18
+  0.23492, S.three_mode 0.00268, log T09 0.14299}: out-of-fold r .94, mean abs error 1.35 per 36 (as before).
+
+Today's engine, same replayed season and settings:
+
+| | Before this task | Inputs changed, old rules | **Inputs changed, refitted rules** |
+|---|---|---|---|
+| Betting test: Brier / log loss | .2017 / .5906 | .2016 / .5907 | **.2016 / .5906** |
+| Spread / total miss vs market | 4.01 / 5.87 | 4.03 / 5.85 | **4.03 / 5.85** |
+| Real-stat targets | 18/18 | 18/18 | **18/18** |
+| Per-player per-36 miss: points / free throws | 1.204 / 0.577 | 1.250 / 0.725 | **1.210 / 0.516** |
+| Player props (40 market games): Brier / log loss | .2158 / .6173 | .2173 / .6223 | **.2150 / .6167** |
+| Season points / threes / assists off by | 9.7% / 6.7% / 12.5% | 10.2% / 6.5% / 12.5% | **10.0% / 6.6% / 12.4%** |
+
+The betting test doesn't move with the refit because these rules only share a team's points and free throws among its
+players. Results: `output/r5/refit/cal.txt`, `output/r5a3/`.
+
+## Decision for the coordinator: today's engine and contact seeking (resolved: option (a))
 Today's fitted rules in `box_rates.py` were fitted on the old contact-seeking values, which carried shot volume (the free
 throws per point rule even has a −0.53 involvement term to cancel it). On the corrected values (research fit on 377
 real players, nothing changed in code):
@@ -125,7 +146,9 @@ this change: `test_star_market_value` pins Giannis Antetokounmpo's trade-market 
 (was 85.36). The top-12 order is unchanged and he stays 12th (its other check); his game value is up slightly (6.01 →
 6.03), so this is league-relative market drift from the new shot-location and transition values (the variant without
 the contact-seeking change gives 84.03). Left for the coordinator: lower the floor to 84 or look at the market formula.
-The rest are not from this change: two GUI text checks (`test_gui_concept71`, `test_gui_concept74`) fail on main too,
+Resolved with the refit task: the floor is now 84 and the Giannis-over-LaMelo gap check 13 (it read 13.97 against 14;
+LaMelo unchanged), each with a dated note; the test passes. Focused tests after the refit (box rates, trade market,
+inputs, profile, Stage 2 usage; 271 tests): all pass. The rest of the full-suite failures are not from this change: two GUI text checks (`test_gui_concept71`, `test_gui_concept74`) fail on main too,
 and the other errors need git-ignored fixtures that exist only in the main checkout's `output/` (pilot, action-choice and
 interior-interaction references). New tests: `tests/test_five_inputs_evidence.py` (7, one skips without the Basketball
 Index store).
@@ -146,5 +169,6 @@ Index store).
 - [x] Evidence comparison, verdicts, rule fixes, final build.
 - [x] Before (main checkout) and after runs on Azure: `output/r5b/` (main), `output/r5a1/`, `output/r5a2/` (this worktree).
 - [x] Variant without the contact-seeking change (`output/r5/noT18/`): confirms the attribution.
-- [x] Full test suite; one commit on the branch, not pushed. Coordinator: review, decide on the contact-seeking option
-  and the market-test floor, merge.
+- [x] Full test suite; first commit 448a0c50.
+- [x] Refit of today's two scoring rules, market-test floor and gap, re-scored; second commit on the branch, not pushed.
+  Coordinator: review and merge.
