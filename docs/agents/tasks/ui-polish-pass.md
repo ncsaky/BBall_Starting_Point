@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 7/9 - Stage B done and published; stopped at the checkpoint, waiting for the user's four Stage C decisions
+Progress: 8/9 - Stage C, first checkpoint published (Home, Roster, Contracts at full size); stopped, waiting for three decisions before Trades and the next pages
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -107,7 +107,12 @@ and first run, and the token sheet. End with a short list of decisions the user 
       Stage B"). Built from the user's Stage A answers (all eight as proposed, no notes). **Waiting on four decisions**
       (the page's `decisions` collection): where Stage C starts, landing after an ordinary sim, undecided rookie options
       on opening night, the sounds.
-- [ ] Stage C
+- [ ] Stage C. Built from the user's four Stage B answers (home-first, stay, block, keep: all as proposed).
+      - [x] Checkpoint 1 (2026-11-26): Home (in season, preseason, playoffs), Roster, Contracts. Page:
+            https://claude.ai/artifact/5KVWHDqgWp3oe2gy5WhTC1 ("Polish Pass Stage C"). **Waiting on three decisions** (the page's `decisions` collection):
+            `summer-home` (contracts | roster-small | note), `trades-rows` (more | six), `next-pages`
+            (planned | steps | note).
+      - [ ] Next: Trades, Home from the lottery to camp, then the order the user picks.
 
 ## Stage A report (2026-11-25)
 
@@ -215,3 +220,47 @@ tests in `tests/sidebar_pages.test.cjs`).
 **Working files** (git-ignored, `output/ui-polish/`): `codemod.py` (the stylesheet swap; re-running it finds nothing
 left), `scn/home.mjs`, `scn/first.mjs`, `scn/flow.mjs`, `scn/flow2.mjs`, `scn/stops.mjs`, `scn/pages.mjs`,
 `scn/measure.mjs`; `siteb/` (the published page).
+
+## Stage C, checkpoint 1 report (2026-11-26)
+
+**What changed, in plain words**
+- **A page can now be laid out at real sizes** instead of fixed-size cards shrunk as one picture. A layout in
+  `gui/card-pages.js` marked `full: {fits, roomy}` is drawn at scale 1 on any page area between those two sizes (a
+  smaller window shrinks the whole page, a much larger one grows it, at most 1.25). Its rows and columns take
+  `basis` (a fixed share) or `fill` (what is left); a section that is a picture takes `natural: "fit" | "width"` and
+  is enlarged as one piece (CSS zoom) so it keeps its shape; a page with `views` shows one section at a time behind a
+  picker at its title. The to-do list is a section of Home's layout (`TODO`). All styling is in the new
+  `gui/full-pages.css`, every rule under `.pages-stage.is-full`, every value from `tokens.css`. A page that has not
+  been rebuilt takes the old path untouched.
+- **Home** (season, preseason): the list with the standings under it, the rotation with the week under it, then the
+  next game, signals and morale. 13px rows, 11px bold headings, rows sharing the height (34px for 15 players).
+  The next game's header is two lined-up lines; deadline day is a ring and a label, not a cream square; a long job
+  name wraps. **Playoffs:** the same without standings and week; the playoff stats table left Home (too wide).
+  **Lottery to camp:** unchanged, still the scaled cards (decision asked).
+- **Roster**: one table the page's width (42px rows, the same 16 columns), Ratings | Stats behind a picker.
+- **Contracts**: the table at 13px, draft assets under it, the payroll chart enlarged 1.57 times in its own shape.
+
+**Measured** (regular-season test save, 1512 x 900; share of text under 11px, before -> after): Home 93% -> 2% (the
+sort triangles), Roster 23% -> 0%, Contracts 19% -> 7% (the draft-assets grid's labels). Page area used: Roster 52%
+-> 94%, Contracts 57% -> 80%.
+
+**Files**: new `gui/full-pages.css`; `gui/card-pages.js` (full layouts, views, natural sections, re-layout when a
+section's contents arrive); `gui/index.html` (new sheet, cache versions `polish-c1`); `docs/UI_STYLE_GUIDE.md`
+("Full-size pages"); tests: `tests/sidebar_pages.test.cjs` (3 new), `tests/table_style.test.cjs` (sheet order).
+
+**Checks**: on copies (port 8775): sorting, a minutes change, a sim from Home, a player page and back, the picker,
+Home on a new save, on deadline day, in the playoffs, at 1280 x 760 (82%) and 1728 x 1050 (scale 1); every page not
+rebuilt captured again and unchanged. A bug found and fixed on the way: the enlarged payroll chart stayed enlarged
+on Trades. Browser tests 48 of 49 (the 49th needs the absent start-screen video). Full Python suite not run (no
+engine or save code touched).
+
+**Known gaps**
+- Windows under 1512 x 900 shrink the page (1280 x 760: 82%, rows about 10.6px).
+- Long opponent names end in an ellipsis (as before). Draft-assets labels are still about 10px.
+- Two-Way Places is still its own page in season; signals and morale are still also on Team Identity.
+- Between playoff rounds Next Opponent has no game to show (pre-existing; now one plain line).
+- Trades: the league block shows 6 rows a group by design (`leagueBlockGroups` in `assets-desktop.js`); filling the
+  page means showing more, which is a content change: asked.
+
+**Working files** (git-ignored, `output/ui-polish/`): `scn/page.mjs` (one page, optional picker option),
+`scn/tour.mjs` (Contracts first, then every page), `sitec/` (the published page).

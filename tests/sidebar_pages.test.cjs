@@ -223,5 +223,51 @@ test('shared style values: one sheet, loaded first, and no italic or stray weigh
     assert.doesNotMatch(css, /font-style\s*:\s*(italic|oblique)|\bfont\s*:\s*italic/, `${sheet}: no italic`);
     assert.doesNotMatch(css, /font-weight\s*:\s*(\d{3}|bold|bolder|lighter)\b/, `${sheet}: weights come from the shared values`);
   }
-  for (const sheet of ['progress.css']) assert.doesNotMatch(read(sheet).replace(/rgba?\([^)]*\)|#ffb0b0/g, ''), /font-size\s*:\s*\d|font:\s*[^;]*\b\d+px/, `${sheet}: sizes come from the shared values`);
+  for (const sheet of ['progress.css', 'full-pages.css']) assert.doesNotMatch(read(sheet).replace(/rgba?\([^)]*\)|#ffb0b0/g, ''), /font-size\s*:\s*\d|font:\s*[^;]*\b\d+px/, `${sheet}: sizes come from the shared values`);
+});
+
+// ---- Stage C: pages rebuilt at full size.
+const walk = (node, out = []) => { if (!node) return out; out.push(node); for (const item of node.items || []) walk(typeof item === 'string' ? {type: 'card', id: item} : item, out); return out; };
+const cardsOf = (layout) => walk(layout).filter((node) => node.type === 'card');
+
+test('Home in season is a full-size page: the list with the standings, the rotation with the week, the next game with the team bars', () => {
+  const {pages} = load();
+  const layout = pages.PAGES.find((page) => page.id === 'home').layout({available: () => true});
+  assert.ok(layout.full, 'laid out at real sizes, not scaled as one picture');
+  assert.equal(layout.type, 'row');
+  assert.equal(layout.items.length, 3);
+  const [left, middle, right] = layout.items.map((column) => walk(column).filter((node) => node.type !== 'col').map((node) => node.type === 'todo' ? 'todo' : node.id));
+  assert.deepEqual(left, ['todo', 'standings']);
+  assert.deepEqual(middle, ['minutes', 'week']);
+  assert.deepEqual(right, ['opponent', 'signals', 'morale']);
+  assert.ok(layout.full.fits[0] <= 1264 && layout.full.fits[1] <= 728, 'drawn at scale 1 on a 1512 x 900 window');
+});
+
+test('Roster is one table behind a Ratings | Stats picker; Contracts keeps the payroll chart and the draft assets in proportion', () => {
+  const {pages} = load();
+  const roster = pages.PAGES.find((page) => page.id === 'roster');
+  assert.deepEqual(Array.from(roster.views, ([id]) => id), ['ratings', 'stats']);
+  const rosterCards = cardsOf(roster.layout({available: () => true}));
+  assert.deepEqual(rosterCards.map((card) => [card.id, card.view]), [['roster', 'ratings'], ['stats', 'stats']]);
+  assert.ok(roster.layout({available: () => true}).full);
+  const contracts = pages.PAGES.find((page) => page.id === 'contracts').layout({available: () => true});
+  assert.ok(contracts.full);
+  const byId = Object.fromEntries(cardsOf(contracts).map((card) => [card.id, card]));
+  assert.equal(byId.payroll.natural, 'fit', 'the payroll chart is enlarged as one piece, never stretched');
+  assert.equal(byId.picks.natural, 'width');
+  assert.equal(byId.contracts.natural, undefined, 'the table is laid out at real sizes');
+});
+
+test('a full-size page is sized from its area, re-laid when its contents arrive, and its sheet reads the shared values', () => {
+  const source = read('card-pages.js');
+  assert.match(source, /if \(stage\.pagesFull\) return layoutFull\(el, stage, slots\);/);
+  assert.match(source, /small < 1 \? small : large > 1 \? large : 1/, 'scale 1 between the size it fits in and the roomy size');
+  assert.match(source, /new MutationObserver\(/);
+  assert.match(source, /frame\.style\.zoom = String\(/, 'a picture keeps its proportions');
+  const css = read('full-pages.css');
+  assert.match(css, /\.pages-stage\.is-full/);
+  for (const rule of css.split('\n').filter((line) => /\{/.test(line) && !/^\s*(\/\*|@|--|[a-z-]+:)/.test(line) && !line.startsWith(' '))) {
+    assert.match(rule, /\.is-full|\.pages-picker/, `only full-size pages and the picker are touched: ${rule.slice(0, 90)}`);
+  }
+  assert.doesNotMatch(css, /font-style\s*:\s*italic|font-weight\s*:\s*\d/);
 });

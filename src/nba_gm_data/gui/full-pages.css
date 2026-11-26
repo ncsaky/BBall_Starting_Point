@@ -1,0 +1,388 @@
+/* Full-size pages (UI polish pass, Stage C; card-pages.js "full" layouts). A page rebuilt here is laid out at real
+   sizes: 13px rows, 11px table headings, 18px section titles, every value from tokens.css. Its sections share the
+   page's width and height (rows stretch to fill, up to the page row height), instead of fixed-size cards scaled down
+   as one picture. The contents and their wiring are the cards' own; only size and arrangement change.
+
+   Every rule starts from .pages-stage.is-full, so a page that has not been rebuilt yet is untouched. */
+
+/* ---------- The frame of a full-size page: rows and columns that share the page area. */
+html[data-layout="pages"] .pages-page.is-full .progress-body { display: block; position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+html[data-layout="pages"] .pages-page.is-full :is(.progress-holder, .pages-full-holder) { position: relative; overflow: hidden; }
+html[data-layout="pages"] .pages-stage.is-full { display: flex; width: auto; align-items: stretch; transform-origin: top left; }
+html[data-layout="pages"] .pages-stage.is-full > * { flex: 1 1 auto; min-width: 0; min-height: 0; }
+html[data-layout="pages"] .pages-stage.is-full .pages-row { display: flex; flex-direction: row; align-items: stretch; gap: var(--gm-space-5); min-width: 0; min-height: 0; }
+html[data-layout="pages"] .pages-stage.is-full .pages-col { display: flex; flex-direction: column; align-items: stretch; gap: var(--gm-space-4); min-width: 0; min-height: 0; }
+html[data-layout="pages"] .pages-stage.is-full .is-fill { flex: 1 1 0; }
+html[data-layout="pages"] .pages-stage.is-full .progress-rail { flex: 0 0 auto; }
+
+/* A section: its title, then its contents filling what the section was given. */
+html[data-layout="pages"] .pages-stage.is-full .pages-slot { flex: 0 0 auto; min-width: 0; min-height: 0; border-radius: 0; }
+html[data-layout="pages"] .pages-stage.is-full .pages-slot.is-fill { flex: 1 1 0; }
+html[data-layout="pages"] .pages-stage.is-full .pages-slot-head { flex: 0 0 auto; height: 34px; padding: 0; }
+html[data-layout="pages"] .pages-stage.is-full .pages-slot-head h2,
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .pages-slot-head .pages-slot-link {
+  color: var(--gm-ink) !important; letter-spacing: 0;
+  font: var(--gm-weight-bold) var(--gm-size-section)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] .pages-stage.is-full .pages-slot-body { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; min-height: 0; }
+html[data-layout="pages"] body .season-command-dashboard.is-pages .pages-stage.is-full .pages-slot:not(.is-natural) .card-board-window.is-page-card {
+  display: flex !important; flex-direction: column; flex: 1 1 auto; width: auto !important; height: auto !important;
+  min-width: 0 !important; min-height: 0 !important; max-width: none !important; max-height: none !important;
+}
+html[data-layout="pages"] body .season-command-dashboard.is-pages .pages-stage.is-full .pages-slot:not(.is-natural) .card-board-window.is-page-card > .card-board-body {
+  display: flex !important; flex-direction: column; flex: 1 1 auto; width: auto !important; height: auto !important;
+  min-width: 0 !important; min-height: 0 !important; overflow: visible !important; padding: 0 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .pages-slot:not(.is-natural) .card-board-body > .season-command-panel {
+  flex: 1 1 auto; width: auto !important; height: auto !important; min-width: 0 !important; min-height: 0 !important;
+  margin: 0 !important; padding: 0 !important; box-sizing: border-box;
+  color: var(--gm-ink); font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+/* A picture (the payroll chart, the draft-assets grid) keeps its proportions: its card is drawn at its own size and
+   enlarged as one piece (card-pages.js sets the zoom), standing at the top left of its section. */
+html[data-layout="pages"] .pages-stage.is-full .pages-slot.is-natural > .pages-slot-body { position: relative; overflow: hidden; }
+html[data-layout="pages"] body .season-command-dashboard.is-pages .pages-stage.is-full .pages-slot.is-natural .card-board-window.is-page-card { position: absolute !important; left: 0 !important; top: 0 !important; }
+
+/* ---------- Tables on a full-size page: 11px bold headings on one solid line, 13px rows on hairlines. The heading
+   text and the row text start at the same place, 8px in from the section title. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full [data-house-table] {
+  --full-row: var(--gm-row-h); --full-head: 26px; --full-pad: var(--gm-space-2);
+  width: auto !important; height: auto !important; margin: 0 !important; padding: 0 !important;
+  overflow: hidden !important; align-content: start;
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; color: var(--gm-ink);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full [data-house-table] > [data-house-head] {
+  width: auto !important; height: auto !important; min-height: 0 !important; margin: 0 !important;
+  padding: 0 var(--full-pad) !important; box-sizing: border-box; align-items: center !important;
+  background: transparent !important; border: 0 !important; border-bottom: 1.5px solid var(--gm-line-strong) !important;
+  position: static !important; left: auto !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full [data-house-table] .house-th { min-width: 0; padding: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full [data-house-table] :is(.house-th, .house-sort) {
+  color: var(--gm-ink) !important; letter-spacing: 0 !important; text-transform: none !important;
+  font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full [data-house-table] .house-sort-arrow { font-size: calc(var(--gm-size-small) * .72) !important; margin-left: 3px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full [data-house-table] > [data-house-row] {
+  width: auto !important; height: auto !important; min-height: 0 !important; margin: 0 !important;
+  padding: 0 var(--full-pad) !important; box-sizing: border-box; align-items: center !important;
+  border: 0 !important; border-bottom: 1px solid var(--gm-line-row) !important; border-radius: 0 !important;
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; color: var(--gm-ink) !important;
+}
+/* A headshot fills its row's height and stands on the row's line. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full [data-house-table] .player-headshot-frame {
+  position: static !important; flex: 0 0 auto; align-self: flex-end; width: 30px !important; height: calc(100% - 2px) !important; max-height: 32px !important; min-height: 0 !important;
+  margin: 0 !important; background: none !important; border: 0 !important; border-radius: 0 !important; overflow: hidden !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full [data-house-table] .roster-player-headshot {
+  display: block !important; width: 100% !important; height: 100% !important; object-fit: cover !important; object-position: center top !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full [data-house-table] .rating-drop {
+  font: var(--gm-weight-bold) var(--gm-size-small)/1 var(--gm-font) !important;
+}
+
+/* ---------- Minutes + Availability: the rotation, one player a row, rows sharing the height. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minutes-panel { display: flex !important; flex-direction: column; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minutes-tools {
+  flex: 0 0 auto; display: flex !important; align-items: center; justify-content: space-between; gap: var(--gm-space-3);
+  height: 32px !important; min-height: 0 !important; margin: 0 !important; padding: 0 var(--gm-space-2) var(--gm-space-1) !important; box-sizing: border-box;
+  background: transparent !important; border: 0 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .minutes-coach-rest {
+  display: inline-flex !important; align-items: center; gap: var(--gm-space-2); color: var(--gm-ink) !important;
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .minutes-coach-rest > span { font: inherit !important; color: inherit !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .minutes-coach-rest input { width: 16px !important; height: 16px !important; margin: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minutes-reset-all {
+  height: 26px !important; min-height: 26px !important; padding: 0 var(--gm-space-3) !important; border-radius: var(--gm-radius-pill) !important;
+  background: var(--gm-glass-tile) !important; border: 1px solid rgba(255, 255, 255, .22) !important; box-shadow: none !important;
+  color: var(--gm-ink) !important; font: var(--gm-weight-semibold) var(--gm-size-small)/1 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minutes-reset-all:hover:not(:disabled) { background: var(--gm-glass-tile-hover) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minutes-table {
+  flex: 1 1 0; min-height: 0 !important; display: grid !important;
+  grid-template-rows: var(--full-head) repeat(var(--roster-count, 15), minmax(0, var(--full-row))) !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full :is(.season-minutes-head, .season-minute-row) {
+  display: grid !important; column-gap: 4px !important;
+  grid-template-columns: minmax(150px, 1fr) 46px 102px 24px 38px minmax(86px, .42fr) minmax(62px, .3fr) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minutes-head > .house-th { justify-content: center; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minutes-head > .season-minutes-player-head { justify-content: flex-start; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minute-row > button {
+  display: flex !important; align-items: center; gap: 6px; align-self: stretch; min-width: 0; height: auto !important; min-height: 0 !important;
+  padding: 0 !important; margin: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important; text-align: left; cursor: pointer;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minute-identity,
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minute-name-line { display: flex !important; align-items: center; justify-content: flex-start !important; gap: 6px; min-width: 0; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minute-player-name {
+  flex: 0 1 auto !important; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left !important; color: var(--gm-ink);
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minute-identity { flex: 1 1 auto !important; flex-direction: row !important; justify-content: flex-start !important; text-align: left !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minute-name-line { flex: 0 1 auto !important; width: auto !important; max-width: 100%; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minute-rest { color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minute-row.injured .season-minute-player-name { color: var(--gm-bad) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-injury-status,
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-injury-status > span {
+  flex: 0 0 auto; color: var(--gm-must) !important; font: var(--gm-weight-bold) var(--gm-size-row)/1 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minute-ovr-cell { display: flex !important; justify-content: center; align-items: baseline; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minute-ovr { display: inline-flex !important; align-items: baseline; gap: 3px; width: auto !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minute-ovr > em { font: var(--gm-weight-bold) var(--gm-size-row)/1 var(--gm-font) !important; font-variant-numeric: tabular-nums; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minute-role-cell { display: flex !important; justify-content: center; min-width: 0; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minute-roles { display: flex !important; flex-direction: column; align-items: center; gap: 1px; min-width: 0; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minute-roles .role-text {
+  white-space: nowrap; overflow: visible !important; text-overflow: clip !important; font: var(--gm-weight-semibold) var(--gm-size-small)/1.1 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full :is(.season-minute-position, .season-minute-height) {
+  text-align: center; color: var(--gm-ink) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; font-variant-numeric: tabular-nums;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minute-control {
+  display: grid !important; grid-template-columns: minmax(0, 1fr) 34px auto !important; align-items: center; gap: 4px !important; height: auto !important; min-width: 0;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minute-slider { width: auto !important; min-width: 0; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minute-number { display: flex !important; align-items: flex-start; justify-content: flex-start; gap: 1px; height: auto !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-minute-number > output { font: var(--gm-weight-regular) var(--gm-size-row)/1 var(--gm-font) !important; font-variant-numeric: tabular-nums; color: var(--gm-ink) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-fatigue {
+  display: grid !important; grid-template-columns: minmax(0, 1fr) 22px !important; align-items: center; gap: 6px !important; min-width: 0;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-fatigue > i { width: auto !important; min-width: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-fatigue > em { text-align: right; color: var(--gm-ink) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1 var(--gm-font) !important; font-variant-numeric: tabular-nums; }
+
+/* ---------- Standings on Home: your conference, rows sharing the height under the list. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standings-panel { display: flex !important; flex-direction: column; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standings-table {
+  flex: 1 1 0; min-height: 0 !important; display: grid !important;
+  grid-template-rows: var(--full-head) !important; grid-auto-rows: minmax(0, var(--full-row)) !important; grid-template-columns: minmax(0, 1fr) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full :is(.season-standings-head, .season-standing-row) {
+  display: grid !important; column-gap: 3px !important; grid-template-columns: 18px minmax(0, 1fr) 46px 40px 32px !important;
+  background: transparent !important; box-shadow: none !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important; text-align: center; cursor: pointer;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standing-row > span { font: inherit !important; color: var(--gm-ink) !important; font-variant-numeric: tabular-nums; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standing-team-cell { display: flex !important; align-items: center; gap: 6px; justify-content: flex-start; min-width: 0; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standing-team-cell > img { width: 18px !important; height: 18px !important; object-fit: contain; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standing-team-name { font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; color: var(--gm-ink) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standing-row.active { background: color-mix(in srgb, var(--gm-accent) 16%, transparent) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standing-row:hover { background: var(--gm-glass-tile) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standing-row.active:hover { background: color-mix(in srgb, var(--gm-accent) 24%, transparent) !important; }
+
+/* ---------- Next Opponent: who, when and how good on two lines; their rotation under it. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-panel { display: flex !important; flex-direction: column; gap: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-header {
+  flex: 0 0 auto; display: flex !important; align-items: flex-start; justify-content: space-between; gap: var(--gm-space-2);
+  width: auto !important; height: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 var(--gm-space-2) var(--gm-space-2) !important; box-sizing: border-box;
+  background: transparent !important; border: 0 !important; box-shadow: none !important; color: var(--gm-ink) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-header::before, html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-header::after { content: none !important; }
+/* Logo, then two lines that line up: team, record, last ten over the three ranks. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-title {
+  display: grid !important; grid-template-columns: 34px repeat(3, auto); justify-content: start; align-items: baseline;
+  column-gap: var(--gm-space-3); row-gap: var(--gm-space-1); min-width: 0; background: transparent !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-title > img { grid-row: 1 / span 2; align-self: center; width: 34px !important; height: 34px !important; object-fit: contain; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-header :is(.season-opponent-title > span, .season-opponent-date) {
+  color: var(--gm-ink) !important; letter-spacing: 0 !important; text-transform: none !important; white-space: nowrap; text-align: left;
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.3 var(--gm-font) !important; font-variant-numeric: tabular-nums;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-header-rating { display: inline-flex !important; align-items: baseline; gap: var(--gm-space-1); grid-row: 2; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-header-rating > b { font: var(--gm-weight-bold) var(--gm-size-row)/1.3 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-header-rating > small { color: var(--gm-ink-2) !important; font: var(--gm-weight-bold) var(--gm-size-small)/1.3 var(--gm-font) !important; letter-spacing: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-header .season-opponent-date { flex: 0 0 auto; color: var(--gm-ink-2) !important; font-weight: var(--gm-weight-regular) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-table {
+  flex: 0 1 auto; min-height: 0 !important; display: grid !important; --full-row: 42px;
+  grid-template-rows: var(--full-head) !important; grid-auto-rows: minmax(0, var(--full-row)) !important; grid-template-columns: minmax(0, 1fr) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full :is(.season-opponent-head, .season-opponent-row) {
+  display: grid !important; column-gap: 2px !important; grid-template-columns: minmax(0, 1fr) 50px 32px 32px 36px 30px 30px !important; text-align: center;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-head > .house-th { justify-content: center; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-head > .house-th:first-child { justify-content: flex-start; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-row > span { font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; color: var(--gm-ink); font-variant-numeric: tabular-nums; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-player-cell { display: flex !important; align-self: stretch; min-width: 0; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-player-link {
+  display: flex !important; align-items: center; gap: var(--gm-space-2); width: 100%; min-width: 0; height: auto !important; min-height: 0 !important;
+  padding: 0 !important; margin: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important; text-align: left; cursor: pointer;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-row .summary-player-name-label { display: flex !important; align-items: center; gap: 5px; min-width: 0; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-row .player-name-text {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-row .season-mini-rating { display: inline-flex !important; justify-content: center; align-items: baseline; gap: 2px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-row .season-mini-rating > em { font: var(--gm-weight-bold) var(--gm-size-row)/1 var(--gm-font) !important; font-variant-numeric: tabular-nums; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-injuries {
+  flex: 0 0 auto; display: grid !important; grid-template-columns: auto minmax(0, 1fr); gap: var(--gm-space-2); align-items: center;
+  height: 28px !important; margin: 0 !important; padding: 0 var(--gm-space-2) !important; box-sizing: border-box; border: 0 !important; background: transparent !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-injuries :is(span, div) { color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1.3 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-injuries > span { color: var(--gm-ink) !important; font-weight: var(--gm-weight-bold) !important; }
+
+/* No game ahead (the playoffs between rounds, the day after the season): one plain line, no second title, no box. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-panel:has(.season-opponent-table > .empty) > .season-opponent-header { display: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-table > .empty {
+  margin: 0 !important; padding: var(--gm-space-2) !important; background: transparent !important; border: 0 !important; border-top: 1.5px solid var(--gm-line-strong) !important; border-radius: 0 !important;
+  color: var(--gm-ink-2) !important; text-align: left; font: var(--gm-weight-regular) var(--gm-size-row)/1.3 var(--gm-font) !important;
+}
+
+/* ---------- The week: seven days in a row, the game's logo on its day, the result under it. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-week-panel { display: block !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-week-days {
+  display: grid !important; grid-template-columns: repeat(7, minmax(0, 1fr)) !important; gap: 0 !important;
+  width: auto !important; height: auto !important; margin: 0 !important; padding: var(--gm-space-1) 0 0 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-week-day {
+  display: grid !important; grid-template-rows: 16px 36px 16px 14px !important; justify-items: center; align-items: center; row-gap: 2px !important;
+  height: auto !important; min-height: 0 !important; padding: 0 !important; background: transparent !important; border: 0 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-week-day > span { color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-week-day.today > span { color: var(--gm-ink) !important; font-weight: var(--gm-weight-bold) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-week-node { width: 34px !important; height: 34px !important; min-height: 0 !important; padding: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-week-node > img { width: 26px !important; height: 26px !important; object-fit: contain; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-week-day > em { color: var(--gm-ink) !important; white-space: nowrap; font: var(--gm-weight-semibold) var(--gm-size-small)/1.2 var(--gm-font) !important; font-variant-numeric: tabular-nums; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-week-day > small { color: var(--gm-accent) !important; font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important; }
+
+/* Deadline day: no filled square. The day's ring and its label take the deadline colour. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-week-day.trade-deadline-day { background: transparent !important; border: 0 !important; box-shadow: none !important; outline: 0 !important; border-radius: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-week-day.trade-deadline-day::before, html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-week-day.trade-deadline-day::after { content: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-week-day.trade-deadline-day .season-week-node { border-color: var(--gm-warn) !important; box-shadow: 0 0 0 1px var(--gm-warn) !important; background: color-mix(in srgb, var(--gm-warn) 16%, transparent) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-week-day.trade-deadline-day > span { color: var(--gm-warn) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-week-day.trade-deadline-day > small { grid-row: 3 / span 2; align-self: start; justify-self: center; width: 104px; color: var(--gm-warn) !important; white-space: normal; text-align: center; background: transparent !important; }
+
+/* ---------- Team signals and morale: label, bar, value; one row height for both. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-signal-card { display: block !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-identity-signals {
+  display: grid !important; gap: 0 !important; width: auto !important; height: auto !important; margin: 0 !important; padding: 0 !important;
+  border-top: 1.5px solid var(--gm-line-strong);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-signal-row {
+  display: grid !important; grid-template-columns: 96px minmax(0, 1fr) 52px !important; align-items: center; gap: var(--gm-space-3) !important;
+  height: 30px !important; min-height: 0 !important; margin: 0 !important; padding: 0 var(--gm-space-2) !important; box-sizing: border-box;
+  border-bottom: 1px solid var(--gm-line-row);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-signal-row > span { color: var(--gm-ink) !important; white-space: nowrap; font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-signal-row > i { height: 6px !important; border-radius: var(--gm-radius-pill) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-signal-row > i > b { height: 100% !important; border-radius: var(--gm-radius-pill) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-signal-row > strong { text-align: right; color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font) !important; font-variant-numeric: tabular-nums; }
+
+/* ---------- Home's to-do list in a full-size layout: the same list, the first section of the left column. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .progress-rail h3 { height: 34px; margin: 0; display: flex; align-items: center; font: var(--gm-weight-bold) var(--gm-size-section)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .progress-todo .progress-job { height: auto !important; min-height: 40px !important; padding-top: 6px !important; padding-bottom: 6px !important; }
+/* A long job name, or a long note beside it, takes a second line instead of being cut. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .progress-job { grid-template-columns: 22px minmax(72px, 1fr) minmax(0, auto) 12px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .progress-job > b { white-space: normal; overflow: visible; text-overflow: clip; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .progress-job > span:not(.progress-sr) { white-space: normal !important; text-align: right; }
+/* Home in a full-size layout uses a little more of the sheet's width (three columns of 13px rows need it). */
+html[data-layout="pages"] .pages-page.is-progress.is-full { inset: var(--gm-space-4) 20px var(--gm-space-3) var(--gm-space-5); }
+
+/* ---------- The picker at a page's title (Roster: Ratings | Stats): the standard long pill. A faint tray, the chosen
+   option a brighter pill with bold text. */
+html[data-layout="pages"] .pages-controls .pages-picker {
+  display: inline-grid; grid-auto-flow: column; grid-auto-columns: minmax(max-content, 1fr); align-items: stretch;
+  height: 32px; padding: 0; box-sizing: border-box; overflow: hidden;
+  background: var(--gm-glass-tile); border: 1px solid var(--gm-line); border-radius: var(--gm-radius-pill);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-controls .pages-picker > button {
+  display: inline-flex !important; align-items: center; justify-content: center; height: auto !important; min-height: 0 !important; min-width: 96px !important;
+  margin: 0 !important; padding: 0 var(--gm-space-4) !important; border: 0 !important; border-radius: var(--gm-radius-pill) !important;
+  background: transparent !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  color: var(--gm-ink-2) !important; font: var(--gm-weight-semibold) var(--gm-size-row)/1 var(--gm-font) !important; cursor: pointer;
+  transition: background-color var(--gm-motion-quick) var(--gm-ease), color var(--gm-motion-quick) var(--gm-ease);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-controls .pages-picker > button:hover { color: var(--gm-ink) !important; background: var(--gm-glass-tile) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-controls .pages-picker > button[aria-selected="true"] {
+  color: var(--gm-ink) !important; font-weight: var(--gm-weight-bold) !important; background: var(--gm-glass-button) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-controls .pages-picker > button:focus-visible { outline: 2px solid var(--gm-focus); outline-offset: -2px; }
+html[data-layout="pages"] .pages-stage.is-full .pages-slot[hidden] { display: none !important; }
+
+/* ---------- Roster tables (Ratings, Stats): one table the width of the page, rows sharing the height up to the
+   lone-table row height (42px). */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .card-board-body > :is(.assets-roster, .assets-stats, .assets-contracts) { display: flex !important; flex-direction: column; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full :is(.assets-roster, .assets-stats, .assets-contracts) :is(.assets-panel-body, .linked-roster-scroll, .linked-roster-tables) {
+  display: flex !important; flex-direction: column; flex: 1 1 0; min-width: 0; min-height: 0 !important; width: auto !important; height: auto !important;
+  margin: 0 !important; padding: 0 !important; overflow: visible !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group { display: block !important; flex: 1 1 0; min-width: 0; min-height: 0 !important; width: auto !important; height: auto !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group table {
+  --full-head: 26px; width: 100% !important; min-width: 0 !important; max-width: none;
+  height: min(100%, calc(var(--full-head) + var(--full-rows, 15) * 42px)) !important;
+  table-layout: fixed !important; border-collapse: separate !important; border-spacing: 0 !important; margin: 0 !important;
+  color: var(--gm-ink); font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; font-variant-numeric: tabular-nums;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group thead th {
+  height: var(--full-head) !important; padding: 0 var(--gm-space-1) !important; box-sizing: border-box; vertical-align: middle; text-align: center;
+  background: transparent !important; border: 0 !important; border-bottom: 1.5px solid var(--gm-line-strong) !important; box-shadow: none !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group thead th > button {
+  display: inline-flex !important; align-items: center; gap: 3px; width: auto !important; height: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important;
+  background: transparent !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  color: var(--gm-ink) !important; letter-spacing: 0 !important; text-transform: none !important; white-space: nowrap; cursor: pointer;
+  font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group thead th .sort-tri { font-size: calc(var(--gm-size-small) * .72) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group tbody td {
+  height: 24px !important; padding: 0 2px !important; box-sizing: border-box; vertical-align: middle; text-align: center; white-space: nowrap;
+  background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--gm-line-row) !important;
+  color: var(--gm-ink) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group tbody tr:hover > td { background: var(--gm-glass-tile) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group :is(th, td).is-name-col { padding-left: var(--gm-space-2) !important; text-align: left !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group td.is-name-col { padding-top: 0 !important; padding-bottom: 0 !important; vertical-align: bottom; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .roster-player-card-button {
+  display: flex !important; align-items: center; gap: var(--gm-space-2); width: 100% !important; min-width: 0; height: calc(var(--full-row-px, 26px) - 1px) !important; max-height: none !important; min-height: 0 !important;
+  margin: 0 !important; padding: 0 !important; background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important; text-align: left; cursor: pointer;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .player-headshot-frame {
+  position: static !important; flex: 0 0 auto; align-self: flex-end; width: calc(var(--full-row-px, 26px) - 2px) !important; max-width: 36px !important; height: calc(var(--full-row-px, 26px) - 2px) !important; max-height: none !important; min-height: 0 !important;
+  margin: 0 !important; background: none !important; border: 0 !important; border-radius: 0 !important; overflow: hidden !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .roster-player-headshot { display: block !important; width: 100% !important; height: 100% !important; object-fit: cover !important; object-position: center top !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .summary-player-name-label { display: flex !important; align-items: center; align-self: center; gap: 6px; min-width: 0; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .player-name-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gm-ink); font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group tr.injured .player-name-text { color: var(--gm-bad) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .season-injury-status, html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .season-injury-status > span { flex: 0 0 auto; color: var(--gm-must) !important; font: var(--gm-weight-bold) var(--gm-size-row)/1 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .role-text { white-space: nowrap; font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .tr-tile-value { display: grid !important; grid-template-columns: 34px minmax(0, 1fr) !important; align-items: center; gap: 6px !important; width: auto !important; padding: 0 var(--gm-space-1); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .tr-tile-value > strong { text-align: right; color: var(--gm-ink) !important; font: var(--gm-weight-semibold) var(--gm-size-row)/1 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .tr-tile-value > i { display: block; height: 8px !important; background: transparent !important; border-radius: var(--gm-radius-pill); overflow: hidden; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .tr-tile-value > i > b { display: block; height: 100% !important; border-radius: var(--gm-radius-pill); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .assets-rating-cell { display: inline-flex !important; align-items: baseline; justify-content: center; gap: 2px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .linked-rating > span { font: var(--gm-weight-bold) var(--gm-size-row)/1 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .assets-rating-plain { font: var(--gm-weight-regular) var(--gm-size-row)/1 var(--gm-font) !important; color: var(--gm-ink) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .rating-drop { color: var(--gm-bad) !important; font: var(--gm-weight-bold) var(--gm-size-small)/1 var(--gm-font) !important; }
+/* Ratings: player, age, position, the two roles, value, then the ratings (overall with its two halves in bold). */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col { width: 4.82% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(1) { width: 17.4% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(2) { width: 2.4% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(3) { width: 2.5% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(4), html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(5) { width: 9.8% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(6) { width: 7.6% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(7) { width: 6% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(8), html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(9) { width: 5.4% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings td:nth-child(8) .assets-rating-plain, html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings td:nth-child(9) .assets-rating-plain { font-weight: var(--gm-weight-bold) !important; }
+/* Stats: the same players at a width eight numbers can be read across. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-stats table { max-width: 900px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-stats col { width: 9.4% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-stats col:nth-child(1) { width: 24.8% !important; }
+
+/* ---------- Contracts: the table at full size; its key in one line under it. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-contracts col { width: 13.25% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-contracts col:nth-child(1) { width: 30% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-contracts col:nth-child(2) { width: 8% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-contracts col:nth-child(3) { width: 9% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-contracts td > span { font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-contracts .player-evidence-ring strong { font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; color: var(--gm-ink) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .asset-contract-key {
+  flex: 0 0 auto; display: flex !important; flex-wrap: wrap; align-items: center; justify-content: flex-start !important; gap: var(--gm-space-1) var(--gm-space-5);
+  height: auto !important; min-height: 30px; margin: 0 !important; padding: var(--gm-space-1) var(--gm-space-2) 0 !important; box-sizing: border-box;
+  background: transparent !important; border: 0 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .asset-contract-key > span { display: inline-flex !important; align-items: center; gap: 6px; color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font) !important; }

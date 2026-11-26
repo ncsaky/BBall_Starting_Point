@@ -29,6 +29,8 @@
   const MAX_SCALE = 1.22;    // a sparse page may grow this much
   const HOME_MAX_SCALE = 1.6;
   const MIN_SCALE = .7;      // below this the page scrolls instead of shrinking further
+  const FULL_MAX_SCALE = 1.25;   // a full-size page on a large screen grows this much, no further
+  const pageView = new Map();        // per page: the picker option showing (Roster: ratings or stats)
   const lastPage = new Map();        // per save, this session only: a save always opens on Home
   const lastBlocking = new Map();    // per save: the jobs that were blocking the clock at the last render
   let homeCalled = false;            // the game stopped by itself (deadline day, season end): the next render lands on Home
@@ -62,6 +64,19 @@
   const row = (...items) => ({type: "row", items});
   const col = (...items) => ({type: "col", items});
   const card = (id, options = {}) => ({type: "card", id, ...options});
+  // Full-size pages (UI polish pass, Stage C): the page is laid out at real sizes (13px rows, 11px table headings)
+  // and its sections share the page's width and height, instead of fixed-size cards scaled down as one picture. A
+  // layout marked full: {fits, roomy} is drawn at scale 1 on any page area between those two sizes; a smaller area
+  // shrinks the whole page, a larger one grows it a little. Its rows and columns take options:
+  //   basis  fixed width (in a row) or height (in a column), in pixels
+  //   fill   takes what is left
+  // and a section that is a picture (the payroll chart, the draft-assets grid) keeps its proportions:
+  //   natural  "fit": drawn at its own size, enlarged as one piece to fit the room it is given
+  //            "width": enlarged to the section's width; its height follows
+  // The to-do list (Home) is a section of the layout like any other: TODO.
+  const rowOf = (options, ...items) => ({type: "row", items, ...options});
+  const colOf = (options, ...items) => ({type: "col", items, ...options});
+  const TODO = {type: "todo"};
 
   // app.js keeps its state in a top-level binding (not a window property).
   const appState = () => (typeof state !== "undefined" ? state : null);
@@ -88,7 +103,11 @@
 
     // The team.
     {id: "home", group: "team", label: "Home", progress: true, layout: homeLayout},
-    {id: "roster", group: "team", label: "Roster", layout: () => col(card("roster", {title: "Ratings"}), "stats")},
+    // Roster: one table the width of the page. Ratings and Stats are the same players, so they share the page behind
+    // the standard picker (user, Stage A decision 6).
+    {id: "roster", group: "team", label: "Roster", views: [["ratings", "Ratings"], ["stats", "Stats"]],
+      layout: () => ({full: {fits: [1250, 560], roomy: [1500, 900]}, ...row(
+        card("roster", {bare: true, fill: true, view: "ratings"}), card("stats", {bare: true, fill: true, view: "stats"}))})},
     {id: "development", group: "team", label: "Development", layout: () => row(card("development", {expanded: true}), card("staff", {expanded: true}))},
     {id: "identity", group: "team", label: "Team Identity", layout: () => row(
       col(card("identity", {title: "Heat Maps"}), "signals", "morale"),
@@ -97,7 +116,11 @@
     {id: "schedule", group: "team", label: "Schedule", layout: () => row(card("week", {expanded: true, grow: "both", bare: true, minHeight: 480}))},
 
     // The front office.
-    {id: "contracts", group: "office", label: "Contracts", title: "Contracts & Payroll", layout: () => row(col("contracts", "picks"), "payroll")},
+    // Contracts: the table at full size on the left with the draft assets under it; the payroll chart, enlarged in
+    // its own proportions, down the right.
+    {id: "contracts", group: "office", label: "Contracts", title: "Contracts & Payroll", layout: () => ({full: {fits: [1250, 640], roomy: [1500, 900]}, ...row(
+      colOf({fill: true}, card("contracts", {fill: true}), card("picks", {natural: "width"})),
+      colOf({basis: 430}, card("payroll", {fill: true, natural: "fit"})))})},
     {id: "trades", group: "office", label: "Trades", controls: "trades", layout: () => col(row("league-block", "payroll"), row("team-block", "team-wants"))},
     {id: "scouting", group: "office", label: "Scouting", layout: () => col(card("prospects", {expanded: true, grow: "h", minHeight: 400}), "picks")},
 
@@ -111,21 +134,30 @@
 
   ];
 
-  // Home beside its to-do list, by phase. While games are played: the rotation, the next game, the week, the standings,
-  // signals and morale. In the playoffs the season's week and standings (over by then) give way to the playoff stats.
-  // From the lottery to training camp there are no games: the roster, the payroll and your picks instead of an empty
-  // week and "No upcoming game".
+  // Home, by phase. While games are played it is a full-size page of three columns: the to-do list with the standings
+  // under it, the rotation with the week under it, then the next game, signals and morale. From the lottery to
+  // training camp there are no games: the roster, the payroll and your picks stand beside the list instead of an empty
+  // week and "No upcoming game" (still the older scaled cards: the roster table is too wide to sit beside the list at
+  // full size).
   function homeLayout() {
     const phase = String(appState()?.home?.save?.phase || "");
+    const full = {fits: [1260, 700], roomy: [1500, 860]};
+    // The playoffs: the same three columns without the season's standings and week (both are over). The playoff
+    // stats table is too wide to sit beside the list at full size: it has its own page in the sidebar.
     if (phase === "play_in" || phase === "playoffs") {
-      return col(row("minutes", col(card("signals", {link: "identity"}), "morale")), row("opponent", card("phase-playoffs-leaders", {link: "playoff-stats", width: 680})));
+      return {full, ...row(
+        colOf({basis: 244}, TODO),
+        colOf({fill: true}, card("minutes", {fill: true})),
+        colOf({basis: 368}, card("opponent", {fill: true}), card("signals", {link: "identity"}), "morale"))};
     }
     if (phase && typeof window !== "undefined" && window.GameProgress?.PHASES?.[phase]?.games === false) {
       return col(card("roster", {link: "roster", title: "Roster"}), row(card("payroll", {link: "contracts"}), card("picks", {link: "scouting"})));
     }
-    return col(
-      row("minutes", card("standings", {link: "standings"})),
-      row(col("opponent", card("week", {link: "schedule"})), col(card("signals", {link: "identity"}), "morale")));
+    // In season and in the preseason: the list and the standings, the rotation, then the next game and the team.
+    return {full, ...row(
+      colOf({basis: 244}, TODO, card("standings", {link: "standings", fill: true})),
+      colOf({fill: true}, card("minutes", {fill: true}), card("week", {link: "schedule"})),
+      colOf({basis: 368}, card("opponent", {fill: true}), card("signals", {link: "identity"}), "morale"))};
   }
 
   function draftRoomLayout(ctx) {
@@ -182,7 +214,7 @@
     const slideshowRow = (kind) => (typeof seasonSlideshowsAvailable === "function" ? seasonSlideshowsAvailable() : []).find(row => row.kind === kind);
     const pageCtx = {available};
     const pageLayout = (page) => page.layout ? normalize(page.layout(pageCtx)) : null;
-    const normalize = (item) => typeof item === "string" ? card(item) : item.type === "card" ? item : {...item, items: item.items.map(normalize)};
+    const normalize = (item) => typeof item === "string" ? card(item) : item.items ? {...item, items: item.items.map(normalize)} : item;
     // A page is listed when one of its cards is there to show (phase rooms appear and disappear with their phase).
     const SLIDESHOW_PHASES = {
       outlook: ["preseason", "regular_season", "play_in", "playoffs"],
@@ -279,7 +311,20 @@
     const slotsByPage = new Map();
     const visiblePages = () => PAGES.filter(pageAvailable);
 
-    function buildNode(item, parent, page) {
+    // In a full-size page a section or a column takes a fixed share (basis) or what is left (fill).
+    const share = (el, item, full) => {
+      if (!full) return;
+      if (item.basis) el.style.flex = `0 0 ${item.basis}px`;
+      else if (item.fill) el.classList.add("is-fill");
+    };
+
+    function buildNode(item, parent, page, full = false) {
+      if (item.type === "todo") {
+        const rail = document.createElement("aside");
+        rail.className = "progress-rail";
+        parent.append(rail);
+        return {grow: ""};
+      }
       if (item.type === "card") {
         if (!available(item.id)) return null;
         const entry = node(item.id);
@@ -305,7 +350,10 @@
         body.className = "pages-slot-body";
         slot.append(body);
         slot.dataset.grow = item.grow || "";
+        if (item.view) slot.dataset.view = item.view;
+        if (full && item.natural) slot.classList.add("is-natural");
         slot.pagesItem = item;
+        share(slot, item, full);
         parent.append(slot);
         slotsByPage.get(page.id).push(slot);
         return {grow: item.grow || ""};
@@ -314,7 +362,7 @@
       box.className = item.type === "row" ? "pages-row" : "pages-col";
       let growH = false, growW = false;
       for (const child of item.items) {
-        const result = buildNode(child, box, page);
+        const result = buildNode(child, box, page, full);
         if (!result) continue;
         if (/h|both/.test(result.grow)) growH = true;
         if (/w|both/.test(result.grow)) growW = true;
@@ -322,6 +370,7 @@
       if (!box.childElementCount) return null;
       const grow = growH && growW ? "both" : growH ? "h" : growW ? "w" : "";
       box.dataset.grow = grow;
+      share(box, item, full);
       parent.append(box);
       return {grow};
     }
@@ -338,14 +387,27 @@
         if (!page.slideshow) {
           const stage = document.createElement("div");
           stage.className = "pages-stage";
+          const tree = pageLayout(page);
+          const full = tree?.full && (page.progress ? Boolean(progress()) : true) ? tree.full : null;
+          if (full) {
+            stage.pagesFull = full;
+            stage.classList.add("is-full");
+            el.classList.add("is-full");
+          }
           if (page.progress && progress()) {
-            // Home: the phase and the year strip, the to-do list, then the cards in what is left.
+            // Home: the phase and the year strip, then the to-do list and this phase's sections. A full-size layout
+            // places the list itself; the older scaled one keeps it in a column of its own beside the cards.
             el.classList.add("is-progress");
-            el.innerHTML = `<header class="progress-top"></header><div class="progress-body"><aside class="progress-rail"></aside><div class="progress-area"><div class="progress-holder"></div></div></div>`;
+            el.innerHTML = full
+              ? `<header class="progress-top"></header><div class="progress-body"><div class="progress-holder"></div></div>`
+              : `<header class="progress-top"></header><div class="progress-body"><aside class="progress-rail"></aside><div class="progress-area"><div class="progress-holder"></div></div></div>`;
             el.querySelector(".progress-holder").append(stage);
+          } else if (full) {
+            el.innerHTML = `<div class="pages-full-holder"></div>`;
+            el.firstElementChild.append(stage);
           } else el.append(stage);
           slotsByPage.set(page.id, []);
-          const result = buildNode(pageLayout(page), stage, page);
+          const result = buildNode(tree, stage, page, Boolean(full));
           el.dataset.grow = result?.grow || "";
         } else {
           el.classList.add("is-slideshow");
@@ -380,7 +442,8 @@
       const el = pageEls.get("home");
       if (!el?.classList.contains("is-progress")) return;
       el.querySelector(".progress-top").innerHTML = progress().topMarkup();
-      el.querySelector(".progress-rail").innerHTML = progress().listMarkup((pageId) => pageEls.has(pageId));
+      const rail = el.querySelector(".progress-rail");
+      if (rail) rail.innerHTML = progress().listMarkup((pageId) => pageEls.has(pageId));
     }
 
     const firstSlot = (id) => {
@@ -407,7 +470,8 @@
       const frame = frames.get(id), entry = node(id);
       if (!frame || !entry) return;
       const w = Math.round(width), h = Math.round(height);
-      Object.assign(frame.style, {width: `${w}px`, height: `${h}px`, left: "", top: "", zIndex: ""});
+      // zoom: a full-size page may have enlarged this card as a picture; at a set size it is back to its own.
+      Object.assign(frame.style, {width: `${w}px`, height: `${h}px`, left: "", top: "", zIndex: "", zoom: ""});
       const body = frame.querySelector(".card-board-body");
       Object.assign(body.style, {left: "0px", top: "0px", width: `${w}px`, height: `${h}px`, transform: "none"});
       Object.assign(entry.card.style, {width: `${w}px`, height: `${h}px`});
@@ -424,6 +488,80 @@
       const height = panel.offsetHeight;
       panel.style.height = before;
       return height;
+    }
+
+    // A full-size page: its sections share the page area; the frames follow their sections (the stylesheet sizes
+    // them), so no pixel sizes are written. One scale for the page, 1 unless the area is smaller than the layout
+    // fits in or larger than roomy.
+    function clearFrame(id) {
+      const frame = frames.get(id), entry = node(id);
+      if (!frame || !entry) return;
+      Object.assign(frame.style, {width: "", height: "", left: "", top: "", zIndex: "", zoom: ""});
+      Object.assign(frame.querySelector(".card-board-body").style, {left: "", top: "", width: "", height: "", transform: ""});
+      Object.assign(entry.card.style, {width: "", height: ""});
+    }
+    function layoutFull(el, stage, slots) {
+      el.classList.remove("is-growing", "is-scrolling");
+      for (const slot of slots) {
+        const body = slot.querySelector(".pages-slot-body");
+        Object.assign(body.style, {minWidth: "", minHeight: "", height: ""});
+        if (slot.pagesItem.natural) continue;
+        clearFrame(slot.dataset.pagesSlot);
+        // A table stretches its rows to share the height, up to the lone-table row height: it needs its row count.
+        for (const table of slot.querySelectorAll("table")) {
+          table.style.setProperty("--full-rows", String(table.tBodies[0]?.rows.length || 1));
+          table.style.removeProperty("--full-row-px");
+        }
+      }
+      const holder = stage.parentElement, area = holder.parentElement;
+      holder.style.width = holder.style.height = "";
+      let width = area.clientWidth, height = area.clientHeight;
+      if (area === el) {
+        const style = getComputedStyle(viewport);
+        width = viewport.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        height = viewport.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+      }
+      width = Math.max(200, width);
+      height = Math.max(200, height);
+      const {fits, roomy} = stage.pagesFull;
+      const small = Math.min(width / fits[0], height / fits[1]);
+      const large = Math.min(width / roomy[0], height / roomy[1]);
+      const scale = Math.max(MIN_SCALE, Math.min(FULL_MAX_SCALE, small < 1 ? small : large > 1 ? large : 1));
+      stage.style.width = `${Math.floor(width / scale)}px`;
+      stage.style.height = `${Math.floor(height / scale)}px`;
+      stage.style.transform = scale === 1 ? "none" : `scale(${scale})`;
+      holder.style.width = `${width}px`;
+      holder.style.height = `${height}px`;
+      el.style.setProperty("--pages-scale", String(scale));
+      dashboard.style.setProperty("--pages-scale", String(scale));
+      // Pictures keep their proportions: each is drawn at its own size and enlarged as one piece. Those that follow
+      // their width first (their height then moves the sections around them), then those that fit a given room.
+      for (const mode of ["width", "fit"]) for (const slot of slots) {
+        if (slot.pagesItem.natural !== mode || slot.hidden) continue;
+        const id = slot.dataset.pagesSlot, frame = frames.get(id), body = slot.querySelector(".pages-slot-body");
+        const size = naturalSize(id, Boolean(slot.pagesItem.expanded));
+        sizeFrame(id, size.width, size.height);
+        if (FIT_HEIGHT.has(id)) { const fitted = contentHeight(id); if (fitted > 60) { size.height = fitted; sizeFrame(id, size.width, fitted); } }
+        const zoom = Math.min(slot.pagesItem.maxZoom || 2, mode === "width" ? body.clientWidth / size.width : Math.min(body.clientWidth / size.width, body.clientHeight / size.height));
+        if (mode === "width") body.style.height = `${Math.round(size.height * zoom)}px`;
+        frame.style.zoom = String(Math.max(.5, zoom));
+      }
+      // Headshots fill their row: they need the height the rows came out at.
+      for (const slot of slots) for (const table of slot.querySelectorAll("table")) {
+        const rowHeight = table.tBodies[0]?.rows[0]?.offsetHeight;
+        if (rowHeight) table.style.setProperty("--full-row-px", `${rowHeight}px`);
+      }
+    }
+
+    // A page with a picker shows one of its sections at a time.
+    const viewOf = (page) => {
+      if (!page?.views) return "";
+      const chosen = pageView.get(page.id);
+      return page.views.some(([id]) => id === chosen) ? chosen : page.views[0][0];
+    };
+    function applyView(page) {
+      const view = viewOf(page);
+      for (const slot of slotsByPage.get(page.id) || []) if (slot.dataset.view) slot.hidden = slot.dataset.view !== view;
     }
 
     function setExpanded(id, expanded) {
@@ -523,6 +661,7 @@
       const stage = el?.querySelector(".pages-stage");
       if (!stage) return;
       const slots = slotsByPage.get(currentPage) || [];
+      if (stage.pagesFull) return layoutFull(el, stage, slots);
       el.classList.remove("is-growing", "is-scrolling");
       stage.style.transform = "none";
       stage.style.width = stage.style.height = "";
@@ -613,6 +752,11 @@
       const tradingClosed = page?.id === "trades" && legal && !["trades", "draft_trades"].some(action => legal.has(action));
       const lockNote = tradingClosed ? `<span class="pages-note">Trading is closed right now</span>`
         : allLocked ? `<span class="pages-note">Not available right now</span>` : "";
+      if (page?.views) {
+        const view = viewOf(page);
+        controlsEl.innerHTML = `<div class="pages-picker" role="tablist" aria-label="${esc(pageLabel(page))} view">${page.views.map(([id, label]) =>
+          `<button type="button" role="tab" data-pages-view="${esc(id)}" aria-selected="${id === view}">${esc(label)}</button>`).join("")}</div>`;
+      }
       if (page?.controls === "awards" && typeof openLeagueLeadersModal === "function") {
         controlsEl.innerHTML = `<button type="button" class="pages-control" data-pages-leaders>League Leaders</button>`;
       }
@@ -650,6 +794,7 @@
         slot.querySelector(".pages-slot-body").append(frames.get(id));
         paint(id);
       }
+      applyView(page);
       if (owned.has("league-wire") && !slotOn(pageId, "league-wire")) placeTicker();
       foot.classList.toggle("has-ticker", owned.has("league-wire") && !slotOn(pageId, "league-wire"));
       layoutPage();
@@ -731,6 +876,17 @@
         ctx.closeDetail?.(detailStack.at(-1));
         return;
       }
+      const pick = event.target.closest("[data-pages-view]");
+      if (pick && controlsEl.contains(pick)) {
+        event.preventDefault();
+        const page = PAGES.find(item => item.id === currentPage);
+        if (!page?.views) return;
+        pageView.set(page.id, pick.dataset.pagesView);
+        for (const tab of controlsEl.querySelectorAll("[data-pages-view]")) tab.setAttribute("aria-selected", String(tab === pick));
+        applyView(page);
+        layoutPage();
+        return;
+      }
       const go = event.target.closest("[data-pages-go]");
       if (go && dashboard.contains(go)) {
         event.preventDefault();
@@ -786,8 +942,16 @@
       });
     });
     observer.observe(viewport);
+    // A full-size page sizes itself from its contents (how many rows a table has): when a section's contents arrive
+    // or change, lay the page out again.
+    let fullFrame = 0;
+    const fullWatch = new MutationObserver(() => {
+      cancelAnimationFrame(fullFrame);
+      fullFrame = requestAnimationFrame(() => { if (!disposed && pageEls.get(currentPage)?.classList.contains("is-full")) layoutPage(); });
+    });
 
     buildPages();
+    for (const el of pageEls.values()) if (el.classList.contains("is-full")) fullWatch.observe(el.querySelector(".pages-stage"), {childList: true, subtree: true});
 
     // ---- Which page opens. Home is where you land: when a save loads, when a new phase begins, and whenever a job
     // starts to block the clock (Stage A decision 1). Otherwise you stay on the page you were on, so a sim run from
@@ -842,6 +1006,8 @@
         disposed = true;
         if (attached === api) attached = null;
         observer.disconnect();
+        fullWatch.disconnect();
+        cancelAnimationFrame(fullFrame);
         dockObserver.disconnect();
         slideshowWatch?.disconnect();
         cancelAnimationFrame(resizeFrame);

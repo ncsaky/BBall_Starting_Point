@@ -265,6 +265,30 @@ these cannot be swapped blind).
   saying why.
 - The logic lives in `gui/progress.js` (one rule table, `PHASES`); `card-pages.js` places it.
 
+## Full-size pages (2026-11-26)
+
+A page is no longer cards pasted at card size and shrunk as one picture. A rebuilt page is laid out at real sizes and
+its sections share the page's width and height. The rules live in `gui/full-pages.css`; the layouts in
+`gui/card-pages.js` (a layout marked `full`).
+
+- **Sizes are the shared values, drawn at scale 1**: 13px rows and names, 11px bold table headings, 18px bold section
+  titles. A page states the smallest area it fits in and a roomy one; between them nothing is scaled. A smaller window
+  shrinks the whole page as one piece; a larger one grows it a little (at most 1.25).
+- **Rows share the height.** A table's rows stretch to fill what the section is given, up to the page row height
+  (34px), or 42px for a table that is alone on its page. They never scroll and never grow past that: spare room stays
+  at the bottom.
+- **A headshot fills its row** and stands on the row's line.
+- **Heading text and row text start at the same place**, 8px in from the section title; one 1.5px line under the
+  headings, one hairline between rows, no fills.
+- **Pictures keep their proportions** (the payroll chart, the draft-assets grid): the card is drawn at its own size
+  and enlarged as one piece to fit its room. Never restyled, never stretched.
+- **The same rows in two tables share one page behind a picker** (Roster: Ratings | Stats; user, Stage A). The picker
+  is the standard long pill at the right of the page title.
+- **Nothing is cut to make room.** If a name cannot fit it ends in an ellipsis; a role never does (give the column
+  the width). A long to-do job takes a second line.
+- **Rebuilt so far:** Home while games are played (season, preseason, playoffs), Roster, Contracts. Not yet: Home from
+  the lottery to camp, Trades, and the rest of the Stage A list.
+
 ## Preserve (the user's favourites; don't redesign)
 - Team Identity heat maps at the current hexagon size (round 3: "looks great"). The tab style there still needs a new try.
 - Four Factors range charts (round 3: "maybe one of my favourite things").

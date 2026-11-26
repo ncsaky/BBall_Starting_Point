@@ -14,7 +14,8 @@ test('table style sheet loads after every other style sheet', () => {
   // The glass look loads last (round 3): the light glass, then the clear glass (round 4) and the font choice; the
   // table style sheet just before them. The pages layout (branch sidebar-pages) loads after everything.
   // The progress screen's own sheet (UI polish pass) sits just before the pages layout; the shared style values load first.
-  assert.deepEqual(links.slice(-7), ['table-style.css', 'glass.css', 'glass-clear.css', 'fonts.css', 'jfresh.css', 'progress.css', 'card-pages.css']);
+  // The full-size pages' sheet (UI polish pass, Stage C) sits with it.
+  assert.deepEqual(links.slice(-8), ['table-style.css', 'glass.css', 'glass-clear.css', 'fonts.css', 'jfresh.css', 'progress.css', 'full-pages.css', 'card-pages.css']);
   assert.equal(links[0], 'tokens.css');
 });
 
