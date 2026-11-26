@@ -48,6 +48,10 @@ from .utils import clamp, maybe_float, normalize_name, parse_inches, stable_id
 
 
 DRAFT_MODEL_CONFIG_FILE = Path("data/overrides/draft_model_config.json")
+LOTTERY_WEIGHTED = "weighted_14"  # the 14-team, four-drawn-picks lottery (2026)
+LOTTERY_321 = "3-2-1"
+LOTTERY_321_NOTES = ("3-2-1 lottery: 16 teams, all 16 picks drawn. The three worst records pick no lower than 12th. A "
+                     "team's own pick cannot be No. 1 two drafts running or top five three drafts running.")
 DRAFT_TRAITS = [
     "shot_creation",
     "shooting",
@@ -138,6 +142,23 @@ def default_draft_model_config() -> dict[str, Any]:
             "team_count": 14,
             "odds_weights": [140, 140, 140, 125, 105, 90, 75, 60, 45, 30, 20, 15, 10, 5],
             "standings_noise": 1.75,
+        },
+        # The NBA's "3-2-1" lottery (Board of Governors, 2026-05-28), used from the 2027 draft on. Official sheet:
+        # ak-static.cms.nba.com/wp-content/uploads/sites/46/2026/05/NBA-3-2-1-Draft-Lottery.pdf
+        # The league has it for 2027-2029 and has not voted on 2030; the game keeps using it after 2029.
+        "lottery_321": {
+            "first_draft_year": 2027,
+            "balls": {"relegated": 2, "outside_play_in": 3, "play_in_9_10": 2, "seven_eight_loser": 1},
+            "relegated_count": 3,
+            "relegated_pick_floor": 12,
+            # A team's own pick: no No. 1 in two straight drafts, no top five in three straight drafts.
+            "first_pick_bar_years": 1,
+            "top_five_bar_years": 2,
+            # Real results the first limits look back at: each team's own first-round slot, top five only.
+            "real_own_pick_slots": {
+                "2025": {"team_dal": 1, "team_sas": 2, "team_phi": 3, "team_cha": 4, "team_uta": 5},
+                "2026": {"team_was": 1, "team_uta": 2, "team_mem": 3, "team_chi": 4, "team_ind": 5},
+            },
         },
         "rookie_scale": {
             "first_round_years": 4,
@@ -826,15 +847,22 @@ def generate_draft_order(canonical: dict[str, Any] | Any, year: str, seed: int =
         return {"year": year, "seed": seed, "lottery": to_plain(lottery), "pick_count": len(order), "draft_order": to_plain(order)}
 
     teams_by_strength = projected_standings_order(canonical, seed, standings, config)
-    lottery_candidates, playoff_order = split_lottery_field(canonical, teams_by_strength, standings, config)
+    plan = lottery_plan(canonical, year, teams_by_strength, standings, config)
+    lottery_candidates, playoff_order = plan["field"], plan["rest"]
     lottery_count = len(lottery_candidates)
-    drawn = draw_lottery_teams(lottery_candidates, seed, year, config)
-    drawn_ids = {team["id"] for team in drawn}
-    final_lottery = drawn + [team for team in lottery_candidates if team["id"] not in drawn_ids]
+    if plan["format"] == LOTTERY_321:
+        drawn = draw_321_lottery(plan, seed, year, config)
+        final_lottery = drawn
+        # Picks 31-46 run opposite to picks 1-16; the other 14 teams follow in record order.
+        second_round_original_order = final_lottery[::-1] + playoff_order
+    else:
+        drawn = draw_lottery_teams(lottery_candidates, seed, year, config)
+        drawn_ids = {team["id"] for team in drawn}
+        final_lottery = drawn + [team for team in lottery_candidates if team["id"] not in drawn_ids]
+        second_round_original_order = teams_by_strength
     first_round_original_order = final_lottery + playoff_order
-    second_round_original_order = teams_by_strength
     pre_rank = {team["id"]: index for index, team in enumerate(lottery_candidates, start=1)}
-    odds = lottery_odds_by_team(lottery_candidates, config)
+    odds = plan["odds"]
     order: list[DraftOrderPick] = []
     canonical_picks = list(canonical.get("draft_picks", []))
     for round_no, team_order in [(1, first_round_original_order), (2, second_round_original_order)]:
@@ -878,7 +906,9 @@ def generate_draft_order(canonical: dict[str, Any] | Any, year: str, seed: int =
         final_lottery_order=[team["id"] for team in final_lottery],
         odds_by_team=odds,
         source_ids=["src_draft_model_config_v1"],
-        notes="Generated NBA-style lottery scaffold: top picks are weighted draws, then remaining lottery teams stay in projected standings order.",
+        notes=LOTTERY_321_NOTES if plan["format"] == LOTTERY_321 else "Generated NBA-style lottery scaffold: top picks are weighted draws, then remaining lottery teams stay in projected standings order.",
+        format=plan["format"],
+        team_groups=plan["teams"],
     )
     return {"year": year, "seed": seed, "lottery": to_plain(lottery), "pick_count": len(order), "draft_order": to_plain(order)}
 
@@ -2470,6 +2500,151 @@ def split_lottery_field(canonical: dict[str, Any], teams_by_strength: list[dict[
         [team for team in teams_by_strength if team["id"] not in playoff_ids],
         [team for team in teams_by_strength if team["id"] in playoff_ids],
     )
+
+
+def lottery_format(year: str, config: dict[str, Any]) -> str:
+    rules = config.get("lottery_321") or {}
+    first = rules.get("first_draft_year")
+    return LOTTERY_321 if first is not None and int(year) >= int(first) else LOTTERY_WEIGHTED
+
+
+def lottery_plan(canonical: dict[str, Any], year: str, teams_by_strength: list[dict[str, Any]], standings: Any | None,
+                 config: dict[str, Any]) -> dict[str, Any]:
+    """Who is in the year's lottery and each team's chance at the No. 1 pick: the one source for the draw and for
+    every screen that shows odds. ``field`` and ``rest`` are in record order, worst first."""
+    if lottery_format(year, config) != LOTTERY_321:
+        field, rest = split_lottery_field(canonical, teams_by_strength, standings, config)
+        return {"format": LOTTERY_WEIGHTED, "field": field, "rest": rest,
+                "odds": lottery_odds_by_team(field, config), "teams": {}}
+    rules = config["lottery_321"]
+    seeding = lottery_seeding(canonical, teams_by_strength, standings)
+    groups: dict[str, str] = {}
+    outside = 0
+    for team in teams_by_strength:
+        seed_no, lost_seven_eight = seeding[team["id"]]
+        if lost_seven_eight:
+            groups[team["id"]] = "seven_eight_loser"
+        elif seed_no >= 11:
+            groups[team["id"]] = "relegated" if outside < int(rules["relegated_count"]) else "outside_play_in"
+            outside += 1
+        elif seed_no >= 9:
+            groups[team["id"]] = "play_in_9_10"
+    field = [team for team in teams_by_strength if team["id"] in groups]
+    if len(canonical.get("teams") or []) == 30 and len(field) != 16:   # cut-down test leagues have fewer
+        raise ValueError(f"The {year} lottery needs 16 teams from two 15-team conferences; found {len(field)}.")
+    history = own_pick_history(canonical, standings, config)
+    teams: dict[str, dict[str, Any]] = {}
+    for team in field:
+        group = groups[team["id"]]
+        teams[team["id"]] = {"group": group, "balls": int(rules["balls"][group]),
+                             "lowest_pick": int(rules["relegated_pick_floor"]) if group == "relegated" else 16,
+                             "highest_pick": highest_allowed_pick(history, team["id"], int(year), rules)}
+    # A team that may not pick first passes the ball on, so the others' chances at No. 1 grow.
+    eligible = sum(row["balls"] for row in teams.values() if row["highest_pick"] == 1) or 1
+    odds = {team_id: round(row["balls"] / eligible, 4) if row["highest_pick"] == 1 else 0.0 for team_id, row in teams.items()}
+    return {"format": LOTTERY_321, "field": field,
+            "rest": [team for team in teams_by_strength if team["id"] not in groups], "odds": odds, "teams": teams}
+
+
+def lottery_preview(canonical: dict[str, Any], year: str, standings: Any | None, config: dict[str, Any] | None = None,
+                    seed: int = 1) -> dict[str, Any]:
+    """lottery_plan from standings rows, for screens that show the field and odds before the draw."""
+    config = config or default_draft_model_config()
+    teams_by_strength = projected_standings_order(canonical, seed, standings, config)
+    return lottery_plan(canonical, str(year), teams_by_strength, standings, config)
+
+
+def lottery_seeding(canonical: dict[str, Any], teams_by_strength: list[dict[str, Any]],
+                    standings: Any | None) -> dict[str, tuple[int, bool]]:
+    """{team id: (conference seed, lost the 7-vs-8 play-in game)}.
+
+    The save's standings rows carry both. Without them (projections) seeds follow the record order, and until a
+    conference's 7-vs-8 game is played its 8th seed stands in as the loser.
+    """
+    rows = standings.get("teams", standings) if isinstance(standings, dict) else standings
+    seeds: dict[str, int] = {}
+    losers: set[str] = set()
+    for row in rows or []:
+        if not isinstance(row, dict) or not row.get("conference_seed"):
+            continue
+        team_id = resolve_team(canonical, str(standings_team_key(row)))["id"]
+        seeds[team_id] = int(row["conference_seed"])
+        if row.get("lost_seven_eight"):
+            losers.add(team_id)
+    result: dict[str, tuple[int, bool]] = {}
+    conferences: dict[str, list[dict[str, Any]]] = {}
+    for team in reversed(teams_by_strength):
+        conferences.setdefault(str(team.get("conference")), []).append(team)
+    for members in conferences.values():
+        numbered = {team["id"]: seeds.get(team["id"], position) for position, team in enumerate(members, start=1)}
+        decided = any(team_id in losers for team_id in numbered)
+        for team_id, seed_no in numbered.items():
+            result[team_id] = (seed_no, team_id in losers if decided else seed_no == 8)
+    return result
+
+
+def own_pick_history(canonical: dict[str, Any], standings: Any | None, config: dict[str, Any]) -> dict[int, dict[str, int]]:
+    """{draft year: {team id: slot of that team's own first-round pick}}: the real results before the save began,
+    replaced year by year with the save's own draft orders."""
+    real = (config.get("lottery_321") or {}).get("real_own_pick_slots") or {}
+    history = {int(year): dict(slots) for year, slots in real.items()}
+    saved: dict[int, dict[str, int]] = {}
+    rows = standings.get("teams", standings) if isinstance(standings, dict) else standings
+    for row in rows or []:
+        if not isinstance(row, dict) or not row.get("own_pick_history"):
+            continue
+        team_id = resolve_team(canonical, str(standings_team_key(row)))["id"]
+        for year, slot in row["own_pick_history"].items():
+            slots = saved.setdefault(int(year), {})
+            if slot:
+                slots[team_id] = int(slot)
+    history.update(saved)
+    return history
+
+
+def highest_allowed_pick(history: dict[int, dict[str, int]], team_id: str, year: int, rules: dict[str, Any]) -> int:
+    """The best slot the repeat limits let this team's own pick land in: 1, 2 (it picked first last year) or 6
+    (top five in each of the last two drafts)."""
+    def reached(years: int, slot: int) -> bool:
+        return all(history.get(year - back, {}).get(team_id, 99) <= slot for back in range(1, years + 1))
+
+    if reached(int(rules["top_five_bar_years"]), 5):
+        return 6
+    return 2 if reached(int(rules["first_pick_bar_years"]), 1) else 1
+
+
+def draw_321_lottery(plan: dict[str, Any], seed: int, year: str, config: dict[str, Any]) -> list[dict[str, Any]]:
+    """All 16 picks, drawn one at a time (a team leaves the drum once drawn). Returns teams in pick order.
+
+    - Relegated teams: once as many of them are left as there are open picks up to No. 12, only they are drawn.
+      This reproduces the league's published odds table.
+    - A team drawn above the highest pick it may hold moves down to the first pick it may hold, and the pick is
+      drawn again.
+    """
+    rng = random.Random(f"{year}:{seed}:draft_lottery")
+    floor = int(config["lottery_321"]["relegated_pick_floor"])
+    rows = plan["teams"]
+    remaining = list(plan["field"])
+    picks: dict[int, dict[str, Any]] = {}
+    for slot in range(1, len(remaining) + 1):
+        while slot not in picks:
+            relegated = [team for team in remaining if rows[team["id"]]["group"] == "relegated"]
+            open_slots = sum(1 for number in range(slot, floor + 1) if number not in picks)
+            pool = relegated if relegated and len(relegated) >= open_slots else remaining
+            target = rng.random() * sum(rows[team["id"]]["balls"] for team in pool)
+            selected = pool[-1]
+            running = 0.0
+            for team in pool:
+                running += rows[team["id"]]["balls"]
+                if running > target:
+                    selected = team
+                    break
+            remaining.remove(selected)
+            landing = max(slot, rows[selected["id"]]["highest_pick"])
+            while landing in picks:
+                landing += 1
+            picks[landing] = selected
+    return [picks[slot] for slot in sorted(picks)]
 
 
 def draw_lottery_teams(lottery_candidates: list[dict[str, Any]], seed: int, year: str, config: dict[str, Any]) -> list[dict[str, Any]]:

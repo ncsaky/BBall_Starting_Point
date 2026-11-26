@@ -659,7 +659,8 @@ def recap_free_agents_slide(ctx: dict[str, Any]) -> dict[str, Any]:
 
 
 def lottery_view(active: dict[str, Any], save: dict[str, Any], season: str, user: str) -> dict[str, Any]:
-    from .draft import default_draft_model_config, lottery_odds_by_team
+    from .draft import lottery_preview
+    from .save import save_standings_for_draft
 
     _, end = _season_years(season)
     order = (save.get("draft_orders") or {}).get(str(end))
@@ -667,19 +668,15 @@ def lottery_view(active: dict[str, Any], save: dict[str, Any], season: str, user
         pick = next((row for row in order.get("draft_order") or [] if row.get("current_owner_team_id") == user
                      or row.get("team_id") == user), None)
         return {"status": "drawn", "pick": (pick or {}).get("overall_pick") or (pick or {}).get("pick")}
-    teams, _ = _team_maps(active)
-    results = team_postseason_results(save.get("playoff_state") or {})
-    rows = _record_rows(active, save.get("team_records") or {})
-    lottery = sorted([row for row in rows if results.get(row["team_id"], "lottery") in {"lottery", "play_in"}],
-                     key=lambda row: (row["win_pct"], row["point_diff"], teams[row["team_id"]].get("abbrev", "")))
-    odds = lottery_odds_by_team([{"id": row["team_id"]} for row in lottery], default_draft_model_config())
-    position = next((index + 1 for index, row in enumerate(lottery) if row["team_id"] == user), None)
+    plan = lottery_preview(active, str(end), save_standings_for_draft(active, save))
+    field = [team["id"] for team in plan["field"]]
     ownership = own_pick_owner(active, str(end), user)
-    if position is None:
-        playoff = sorted([row for row in rows if row not in lottery], key=lambda row: (row["win_pct"], row["point_diff"]))
-        position = len(lottery) + 1 + next((i for i, row in enumerate(playoff) if row["team_id"] == user), 0)
+    if user not in field:
+        rest = [team["id"] for team in plan["rest"]]
+        position = len(field) + 1 + (rest.index(user) if user in rest else 0)
         return {"status": "playoff_team", "projected_pick": position, **ownership}
-    return {"status": "lottery", "lottery_position": position, "odds_first_pick": round(100 * odds.get(user, 0.0), 1), **ownership}
+    return {"status": "lottery", "lottery_position": field.index(user) + 1, "lottery_teams": len(field),
+            "odds_first_pick": round(100 * plan["odds"].get(user, 0.0), 1), **ownership}
 
 
 def own_pick_owner(active: dict[str, Any], year: str, team_id: str) -> dict[str, Any]:

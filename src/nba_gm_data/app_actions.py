@@ -4938,12 +4938,15 @@ def draft_lottery_view(canonical: dict[str, Any], order: dict[str, Any], year: s
     pre_order = list(lottery.get("pre_lottery_order") or [])
     odds = lottery.get("odds_by_team") or {}
     context = lottery.get("odds_context_by_team") or {}
+    groups = lottery.get("team_groups") or {}
     odds_rows = [
         {
             "seed": index,
             "team": draft_team_ref(teams, team_id),
             "odds": float(odds.get(team_id) or 0.0),
             "context": context.get(team_id) or "",
+            # 3-2-1 lottery only: group, balls, and the highest and lowest pick the team can get.
+            **(groups.get(team_id) or {}),
         }
         for index, team_id in enumerate(pre_order, start=1)
     ]
@@ -4953,7 +4956,7 @@ def draft_lottery_view(canonical: dict[str, Any], order: dict[str, Any], year: s
         lottery_order = sorted(
             (
                 row for row in order.get("draft_order") or []
-                if int(row.get("round") or 0) == 1 and int(row.get("overall_pick") or 99) <= 14
+                if int(row.get("round") or 0) == 1 and int(row.get("overall_pick") or 99) <= len(pre_order)
             ),
             key=lambda row: int(row.get("overall_pick") or 99),
         )
@@ -4977,6 +4980,7 @@ def draft_lottery_view(canonical: dict[str, Any], order: dict[str, Any], year: s
         "year": str(year),
         "seed": lottery.get("seed") if revealed else None,
         "draw_count": int(lottery.get("draw_count") or 0),
+        "format": lottery.get("format") or "weighted_14",
         "odds": odds_rows,
         "reveal": reveal_rows,
         "revealed": bool(revealed),

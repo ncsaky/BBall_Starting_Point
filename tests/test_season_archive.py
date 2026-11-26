@@ -34,7 +34,6 @@ def fixture():
         "state": {"current_date": "2029-10-01", "phase": "preseason"},
         "season_history": [], "season_schedules": {}, "game_result_summaries": [], "injury_events": [],
         "season_slideshows": {"recaps": {}, "outlooks": {}, "seen": {}}, "award_preseason_baselines": {},
-        "playoff_player_stats": {"p1": {"player_id": "p1", "games": 0, "game_ids": [], "points": 0.0}},
         "health_states": [{"player_id": "p2", "current_injury_id": "inj-open"}],
     }
     for label in (*SEASONS, "2029-30"):
@@ -52,12 +51,12 @@ def fixture():
             "season": label, "completed_on": f"{start + 1}-09-30", "team_records": {"team_a": {"wins": 50, "losses": 32}},
             "player_season_stats": {"p1": {"player_id": "p1", "games": 70, "minutes": 2100.0, "points": 1400.0,
                                            "team_id": "team_a", "team_abbrev": "AAA", "game_ids": ["g"] * 3}},
+            "playoff_player_stats": {"p1": {"player_id": "p1", "games": 16, "points": 320.0, "team_id": "team_a"}},
             "playoff_state": {"champion_team_id": "team_a", "games": [{"id": label}]},
             "draft_order": {"draft_order": [{"overall_pick": 1}]}, "draft_result": {"picks": 60},
             "awards": [{"award": "MVP", "player_id": "p1", "season": label}],
             "recap": {"season": label, "slides": ["recap"]}, "transaction_count": 9, "development_months": [],
         })
-        save["playoff_player_stats"]["p1"]["game_ids"].append(f"playoff_game_{start + 1}-east-first-round-g1")
         for n, (month, back) in enumerate((("11", "12-01"), ("02", "03-15"))):
             year = start if month == "11" else start + 1
             save["injury_events"].append({
@@ -104,10 +103,9 @@ class SeasonArchiveSplitTests(unittest.TestCase):
         self.assertEqual(save["season_schedules"]["2026-27"][sa.SCHEDULE_MARKER], 14)
         self.assertEqual(save["season_schedules"]["2026-27"]["game_count"], 14)
         self.assertEqual(save["season_schedules"]["2028-29"], before["season_schedules"]["2028-29"])
-        # Score lines of the current and last season stay; playoff game ids of archived seasons move.
+        # Score lines of the current and last season stay.
         self.assertEqual({sa.season_of_date(r["date"]) or sa.season_of_game_id(r["game_id"])
                           for r in save["game_result_summaries"]}, {"2028-29", "2029-30"})
-        self.assertEqual(save["playoff_player_stats"]["p1"]["game_ids"], ["playoff_game_2029-east-first-round-g1"])
         # Injury history: the engine's weights for every player are unchanged; open and unclosed injuries stay whole.
         for player_id in ("p1", "p2", "p3"):
             self.assertEqual(player_history({}, player_id, save["injury_events"]),

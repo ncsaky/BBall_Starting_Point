@@ -3192,6 +3192,7 @@ def playoff_leaders(canonical: dict[str, Any] | Any, save_path: str | Path, stat
     rows.sort(key=lambda item: (-float(item.get(f"{stat_key}_per_game", 0)), -float(item.get(stat_key, 0)), item["player"].get("name") or ""))
     return {
         "stat": stat_key,
+        "season": save.get("meta", {}).get("season") or CANONICAL_SEASON,
         "leaders": rows[:limit],
         "as_of_date": save.get("state", {}).get("current_date"),
         "finals_mvp": save.get("finals_mvp"),
@@ -4575,7 +4576,6 @@ def update_playoff_player_stats(save: dict[str, Any], result: dict[str, Any], ga
                 "team_abbrev": line.get("team_abbrev"),
                 "games": 0,
                 "game_ids": [],
-                "finals_games": 0,
                 **{field: 0.0 for field in STAT_FIELDS},
             },
         )
@@ -4585,8 +4585,6 @@ def update_playoff_player_stats(save: dict[str, Any], result: dict[str, Any], ga
         totals["games"] = int(totals.get("games") or 0) + 1
         totals["team_id"] = line.get("team_id")
         totals["team_abbrev"] = line.get("team_abbrev")
-        if "finals" in game_id:
-            totals["finals_games"] = int(totals.get("finals_games") or 0) + 1
         for field in STAT_FIELDS:
             totals[field] = round(float(totals.get(field) or 0.0) + float(line.get(field) or 0.0), 3)
         if (save.get("playoff_state") or {}).get("round") == "finals":
@@ -4598,33 +4596,22 @@ def update_playoff_player_stats(save: dict[str, Any], result: dict[str, Any], ga
 
 
 def award_finals_mvp(save: dict[str, Any], canonical: dict[str, Any] | None = None) -> dict[str, Any] | None:
-    """Finals MVP: the champion's player with the highest total Game Score across the NBA Finals games."""
+    """Finals MVP: the champion's player with the highest total Game Score across this season's NBA Finals games."""
     state = save.get("playoff_state") or {}
     champion = state.get("champion_team_id")
     if not champion:
         return None
-    rows = [totals for totals in save.get("playoff_player_stats", {}).values() if totals.get("team_id") == champion]
-    finals_rows = [row for row in rows if int((row.get("nba_finals") or {}).get("games") or 0) > 0]
-    if finals_rows:
-        winner = max(finals_rows, key=lambda row: (finals_game_score(row["nba_finals"]), float(row["nba_finals"].get("points") or 0), str(row.get("player_id"))))
-        finals = winner["nba_finals"]
-        games = max(1, int(finals.get("games") or 1))
-        score = finals_game_score(finals)
-        line = {"pts": round(float(finals.get("points") or 0) / games, 1), "reb": round(float(finals.get("rebounds") or 0) / games, 1),
-                "ast": round(float(finals.get("assists") or 0) / games, 1), "stl": round(float(finals.get("steals") or 0) / games, 1),
-                "blk": round(float(finals.get("blocks") or 0) / games, 1), "gp": int(finals.get("games") or 0)}
-        source = "nba_finals_game_score"
-    else:
-        # Postseasons recorded before the Finals were kept separately: the old whole-playoff rating.
-        if not rows:
-            return None
-
-        def legacy(row: dict[str, Any]) -> float:
-            games = max(1, int(row.get("games") or 1))
-            return (float(row.get("points") or 0) + 1.15 * float(row.get("rebounds") or 0) + 1.35 * float(row.get("assists") or 0)
-                    + 2.6 * float(row.get("steals") or 0) + 2.6 * float(row.get("blocks") or 0) - 1.1 * float(row.get("turnovers") or 0)) / games
-        winner = max(rows, key=legacy)
-        score, line, source = legacy(winner), None, "save_playoff_player_stats"
+    rows = [totals for totals in save.get("playoff_player_stats", {}).values()
+            if totals.get("team_id") == champion and int((totals.get("nba_finals") or {}).get("games") or 0) > 0]
+    if not rows:
+        return None
+    winner = max(rows, key=lambda row: (finals_game_score(row["nba_finals"]), float(row["nba_finals"].get("points") or 0), str(row.get("player_id"))))
+    finals = winner["nba_finals"]
+    games = max(1, int(finals.get("games") or 1))
+    score = finals_game_score(finals)
+    line = {"pts": round(float(finals.get("points") or 0) / games, 1), "reb": round(float(finals.get("rebounds") or 0) / games, 1),
+            "ast": round(float(finals.get("assists") or 0) / games, 1), "stl": round(float(finals.get("steals") or 0) / games, 1),
+            "blk": round(float(finals.get("blocks") or 0) / games, 1), "gp": int(finals.get("games") or 0)}
     award = {
         "player_id": winner.get("player_id"),
         "player_name": winner.get("player_name"),
@@ -4633,7 +4620,7 @@ def award_finals_mvp(save: dict[str, Any], canonical: dict[str, Any] | None = No
         "season": save.get("meta", {}).get("season") or CANONICAL_SEASON,
         "impact_score": round(score, 3),
         "finals_line": line,
-        "source": source,
+        "source": "nba_finals_game_score",
     }
     save["finals_mvp"] = award
     date_value = save.get("state", {}).get("current_date") or None
@@ -4698,6 +4685,13 @@ def ensure_preseason_outlook_safely(canonical: dict[str, Any], save: dict[str, A
         return None
 
 
+def finished_playoff_stats(save: dict[str, Any]) -> dict[str, Any]:
+    """The finished postseason's player totals as the season history keeps them (without the per-game id lists, which
+    only stop a game counting twice while the postseason is being played)."""
+    return {player_id: deepcopy({key: value for key, value in totals.items() if key != "game_ids"})
+            for player_id, totals in (save.get("playoff_player_stats") or {}).items()}
+
+
 def complete_offseason_and_rollover(
     root: str | Path,
     canonical: dict[str, Any] | Any,
@@ -4740,6 +4734,8 @@ def complete_offseason_and_rollover(
         "team_records": deepcopy(save.get("team_records", {})),
         "player_season_stats": deepcopy(save.get("player_season_stats", {})),
         "playoff_state": deepcopy(save.get("playoff_state", {})),
+        "playoff_player_stats": finished_playoff_stats(save),
+        "finals_mvp": deepcopy(save.get("finals_mvp")),
         "draft_order": deepcopy((save.get("draft_orders") or {}).get(str(season_end_year(current_season)), {})),
         "draft_result": deepcopy(draft_result),
         "awards": deepcopy(awards),
@@ -4781,6 +4777,9 @@ def complete_offseason_and_rollover(
     save["player_season_stats"] = {}
     save["game_results"] = []
     save["playoff_state"] = {}
+    # Each postseason is its own: the finished one is on its history entry above.
+    save["playoff_player_stats"] = {}
+    save["finals_mvp"] = None
     save["pending_ai_actions"] = []
     save["pending_trade_proposals"] = []
     save["user_trade_offers"] = []
@@ -9904,16 +9903,66 @@ def playoff_field_team_ids(save: dict[str, Any]) -> set[str]:
 def save_standings_for_draft(canonical: dict[str, Any], save: dict[str, Any]) -> list[dict[str, Any]]:
     teams = {team["id"]: team for team in canonical.get("teams", [])}
     playoff_field = playoff_field_team_ids(save)
+    seeds = conference_seeds(canonical, save)
+    seven_eight = seven_eight_losers(save)
+    history = own_first_round_slots(save)
     rows = []
     for team_id, record in save.get("team_records", {}).items():
         team = teams.get(team_id)
         if not team:
             continue
-        row = {"team_id": team_id, "team_abbrev": team["abbrev"], "wins": record.get("wins", 0), "losses": record.get("losses", 0)}
+        row = {"team_id": team_id, "team_abbrev": team["abbrev"], "wins": record.get("wins", 0), "losses": record.get("losses", 0),
+               "conference_seed": seeds.get(team_id), "lost_seven_eight": team_id in seven_eight}
         if playoff_field:
             row["made_playoffs"] = team_id in playoff_field
+        if history:
+            row["own_pick_history"] = {year: slots.get(team_id) for year, slots in history.items()}
         rows.append(row)
     return rows
+
+
+def conference_seeds(canonical: dict[str, Any], save: dict[str, Any]) -> dict[str, int]:
+    """Each team's conference seed (the draft lottery is set by seeds): the postseason's own seeds for 1-10 once it
+    has them, otherwise the records ranked like the playoff picture."""
+    teams = {team["id"]: team for team in canonical.get("teams", [])}
+    conferences: dict[str, list[tuple[float, float, str, str]]] = {}
+    for team_id, record in save.get("team_records", {}).items():
+        team = teams.get(team_id)
+        if not team:
+            continue
+        games = int(record.get("wins", 0)) + int(record.get("losses", 0))
+        win_pct = round(record.get("wins", 0) / games, 3) if games else 0.0
+        point_diff = round(float(record.get("points_for", 0)) - float(record.get("points_against", 0)), 2)
+        conferences.setdefault(str(team.get("conference")), []).append((-win_pct, -point_diff, team["abbrev"], team_id))
+    seeds = {row[3]: number for rows in conferences.values() for number, row in enumerate(sorted(rows), start=1)}
+    state = save.get("playoff_state") or {}
+    for conference, payload in (state.get("play_in") or {}).items():
+        fixed = {**((state.get("locked_seeds") or {}).get(conference) or {}), **(payload.get("teams") or {})}
+        seeds.update({str(team_id): int(number) for number, team_id in fixed.items()})
+    return seeds
+
+
+def seven_eight_losers(save: dict[str, Any]) -> set[str]:
+    """The losers of this season's 7-vs-8 play-in games played so far."""
+    losers: set[str] = set()
+    for payload in ((save.get("playoff_state") or {}).get("play_in") or {}).values():
+        teams, winner = payload.get("teams") or {}, payload.get("seed_7_team_id")
+        if winner and "7" in teams and "8" in teams:
+            losers.add(teams["8"] if winner == teams["7"] else teams["7"])
+    return losers
+
+
+def own_first_round_slots(save: dict[str, Any]) -> dict[str, dict[str, int]]:
+    """{draft year: {team id: slot of its own first-round pick}} from the save's draft orders (the lottery's limits on
+    repeat top picks look back at these)."""
+    history: dict[str, dict[str, int]] = {}
+    for year, order in (save.get("draft_orders") or {}).items():
+        slots = {str(row.get("original_team_id")): int(row["overall_pick"])
+                 for row in (order or {}).get("draft_order") or []
+                 if int(row.get("round") or 0) == 1 and row.get("overall_pick")}
+        if slots:
+            history[str(year)] = slots
+    return history
 
 
 def apply_offseason_roster_transitions(canonical: dict[str, Any], save: dict[str, Any], current_season: str, next_season: str, seed: int) -> dict[str, Any]:

@@ -34,6 +34,18 @@
     "odds_weights": [140, 140, 140, 125, 105, 90, 75, 60, 45, 30, 20, 15, 10, 5],
     "standings_noise": 1.75
   },
+  "lottery_321": {
+    "first_draft_year": 2027,
+    "balls": {"relegated": 2, "outside_play_in": 3, "play_in_9_10": 2, "seven_eight_loser": 1},
+    "relegated_count": 3,
+    "relegated_pick_floor": 12,
+    "first_pick_bar_years": 1,
+    "top_five_bar_years": 2,
+    "real_own_pick_slots": {
+      "2025": {"team_dal": 1, "team_sas": 2, "team_phi": 3, "team_cha": 4, "team_uta": 5},
+      "2026": {"team_was": 1, "team_uta": 2, "team_mem": 3, "team_chi": 4, "team_ind": 5}
+    }
+  },
   "rookie_scale": {
     "first_round_years": 4,
     "second_round_years": 2,

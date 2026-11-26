@@ -11,15 +11,13 @@ compressed file per season beside the save:
 Files are written once and named by their content, so a retried or interrupted write can never change a file an
 earlier manifest points to. The save keeps a small manifest (``season_archive``) and everything the live game reads:
 
-- ``season_history``: each archived season keeps its standings, awards, draft result and counts; its player season
-  stats, playoff bracket, draft order and recap move.
+- ``season_history``: each archived season keeps its standings, awards, Finals MVP, draft result and counts; its
+  player season and playoff stats, playoff bracket, draft order and recap move.
 - ``season_schedules``: an archived season keeps its schedule's metadata and its first and last regular-season games
   (the season-window and opening-night helpers read only those dates); the other games move.
 - ``season_slideshows.outlooks``, ``award_preseason_baselines``: the archived season's entry moves.
 - ``game_result_summaries``: the archived season's score lines move (lookups are by game id, and only games of the
   current and previous seasons are reachable from the live schedule, playoffs and player game logs).
-- ``playoff_player_stats``: the archived season's per-game id lists move (they only stop a game counting twice, and
-  game ids carry their season). The cumulative totals stay.
 - ``injury_events``: finished injuries of an archived season keep a compact row with every field the engine reads
   (dates, body part, severity, sources, expected games); the full row (diagnosis, notes, context) moves.
 
@@ -48,7 +46,7 @@ ARCHIVE_FORMAT = "nba-gm-season-archive"
 ARCHIVE_VERSION = 1
 # Finished seasons kept whole in the live save; older ones are archived.
 FINISHED_SEASONS_KEPT = 1
-HISTORY_DETAIL_KEYS = ("player_season_stats", "playoff_state", "draft_order", "recap")
+HISTORY_DETAIL_KEYS = ("player_season_stats", "playoff_player_stats", "playoff_state", "draft_order", "recap")
 # Fields of an archived injury event that stay in the save: every field the engine reads for a finished injury
 # (injury-model history: player, date, body part, sources; availability by date; season counts; the AI's games out).
 INJURY_LIVE_FIELDS = (
@@ -178,18 +176,6 @@ def split_finished_seasons(save: dict[str, Any]) -> dict[str, dict[str, Any]]:
         if len(kept_rows) != len(summaries):
             save["game_result_summaries"] = kept_rows
 
-    for player_id, totals in (save.get("playoff_player_stats") or {}).items():
-        ids = totals.get("game_ids") if isinstance(totals, dict) else None
-        if not ids:
-            continue
-        if not any(old_game(game_id) for game_id in ids):
-            continue
-        labels = [season_of_game_id(game_id) for game_id in ids]
-        totals["game_ids"] = [game_id for game_id, label in zip(ids, labels) if not eligible(label)]
-        for game_id, label in zip(ids, labels):
-            if eligible(label):
-                bucket(label).setdefault("playoff_game_ids", {}).setdefault(player_id, []).append(game_id)
-
     events = save.get("injury_events") or []
     candidates = [index for index, event in enumerate(events)
                   if INJURY_MARKER not in event and old_date(event.get("start_date"))]
@@ -301,15 +287,6 @@ def _merge_tables(old: dict[str, Any], new: dict[str, Any]) -> tuple[dict[str, A
                     rows[position] = row
                     changed = True
             merged[key] = rows
-        elif key == "playoff_game_ids":
-            players = {player_id: list(ids) for player_id, ids in merged[key].items()}
-            for player_id, ids in value.items():
-                known = players.setdefault(player_id, [])
-                for game_id in ids:
-                    if game_id not in known:
-                        known.append(game_id)
-                        changed = True
-            merged[key] = players
         elif isinstance(value, dict):
             updated = {**merged[key], **value}
             changed = changed or updated != merged[key]
