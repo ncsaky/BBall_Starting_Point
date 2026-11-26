@@ -28,6 +28,22 @@ def _draft_year(player: Mapping[str, Any]) -> int | None:
     return int(value) if value.isdigit() else None
 
 
+# Every league rebuild (canonical_with_save, several a simulated day) re-runs this on the same baseline ratings; the
+# nearest-veteran search grew to half a second a rebuild by the third season. The result is a pure function of the
+# veterans' ratings, heights, roles and ids and of each draftee's own ratings and height, so it is kept per reference
+# set (keyed on all of that, compared exactly) and per draftee vector. A new draftee, a roster's development or any
+# veteran change makes a new key; nothing is reused across different inputs. SEASON-SPEED-FLOOR, 2026-11-25.
+_REFERENCE_CACHE: dict[tuple[Any, ...], tuple[int, list[float], list[float], list[tuple[list[float], dict[str, Any]]]]] = {}
+_ROLE_CACHE: dict[tuple[Any, ...], tuple[str, str]] = {}
+_CACHE_LIMIT = 4
+_ROLE_CACHE_LIMIT = 20000
+
+
+def _clear_caches() -> None:
+    _REFERENCE_CACHE.clear()
+    _ROLE_CACHE.clear()
+
+
 def assign_estimated_roles(canonical: dict[str, Any], traits: Mapping[str, Mapping[str, float]]) -> int:
     """Set primary_off_role / primary_def_role for every player drafted in 2026 or later. Returns how many."""
     players = canonical.get("players", [])
@@ -44,31 +60,52 @@ def assign_estimated_roles(canonical: dict[str, Any], traits: Mapping[str, Mappi
         return [float(values.get(key, 50.0)) for key in keys] + [float(player.get("height_inches") or 78.0)]
 
     rows = [raw(p) for p in veterans]
-    columns = list(zip(*rows))
-    mean = [sum(column) / len(column) for column in columns]
-    spread = [max(1e-6, math.sqrt(sum((x - m) ** 2 for x in column) / len(column))) for column, m in zip(columns, mean)]
-
-    def scaled(values: list[float]) -> list[float]:
-        # Shape, not level: a draftee's ratings are flatter than a veteran's (thin evidence pulls them toward the
-        # middle), so matching on level made almost every rookie a "Connector". Compare the direction of each
-        # player's relative strengths (trait z-scores minus his own average, scaled to one length) plus height,
-        # which stays absolute and counts double. Same held-out accuracy on veterans, far less collapse.
-        z = [(x - m) / s for x, m, s in zip(values, mean, spread)]
-        body = z[:-1]
-        average = sum(body) / len(body)
-        body = [v - average for v in body]
-        length = math.sqrt(sum(v * v for v in body)) or 1.0
-        return [v / length * math.sqrt(len(body)) for v in body] + [z[-1] * HEIGHT_WEIGHT]
-
-    reference = [(scaled(row), p) for row, p in zip(rows, veterans)]
+    signature = (tuple(keys), tuple((p["id"], p["primary_off_role"], p["primary_def_role"], tuple(row))
+                                    for p, row in zip(veterans, rows)))
+    prepared = _REFERENCE_CACHE.get(signature)
+    if prepared is None:
+        if len(_REFERENCE_CACHE) >= _CACHE_LIMIT:
+            _clear_caches()
+        columns = list(zip(*rows))
+        mean = [sum(column) / len(column) for column in columns]
+        spread = [max(1e-6, math.sqrt(sum((x - m) ** 2 for x in column) / len(column))) for column, m in zip(columns, mean)]
+        reference = [(_scaled(row, mean, spread), {"id": p["id"], "primary_off_role": p["primary_off_role"],
+                                                    "primary_def_role": p["primary_def_role"]})
+                     for row, p in zip(rows, veterans)]
+        prepared = (len(_REFERENCE_CACHE) + 1, mean, spread, reference)
+        _REFERENCE_CACHE[signature] = prepared
+    token, mean, spread, reference = prepared
     for player in targets:
-        point = scaled(raw(player))
-        nearest = sorted(((sum((a - b) ** 2 for a, b in zip(point, vector)), vet["id"], vet) for vector, vet in reference),
-                         key=lambda item: (item[0], item[1]))[:NEIGHBOURS]
-        for field in ("primary_off_role", "primary_def_role"):
-            votes: Counter[str] = Counter()
-            for distance, _vid, vet in nearest:
-                votes[vet[field]] += 1.0 / (1.0 + distance)
-            player[field] = max(votes, key=lambda role: (votes[role], role))
+        vector = tuple(raw(player))
+        roles = _ROLE_CACHE.get((token, vector))
+        if roles is None:
+            point = _scaled(list(vector), mean, spread)
+            nearest = sorted(((sum((a - b) ** 2 for a, b in zip(point, ref_vector)), vet["id"], vet)
+                              for ref_vector, vet in reference),
+                             key=lambda item: (item[0], item[1]))[:NEIGHBOURS]
+            picked = []
+            for field in ("primary_off_role", "primary_def_role"):
+                votes: Counter[str] = Counter()
+                for distance, _vid, vet in nearest:
+                    votes[vet[field]] += 1.0 / (1.0 + distance)
+                picked.append(max(votes, key=lambda role: (votes[role], role)))
+            roles = (picked[0], picked[1])
+            if len(_ROLE_CACHE) >= _ROLE_CACHE_LIMIT:
+                _ROLE_CACHE.clear()
+            _ROLE_CACHE[(token, vector)] = roles
+        player["primary_off_role"], player["primary_def_role"] = roles
         player["role_source"] = ROLE_SOURCE
     return len(targets)
+
+
+def _scaled(values: list[float], mean: list[float], spread: list[float]) -> list[float]:
+    # Shape, not level: a draftee's ratings are flatter than a veteran's (thin evidence pulls them toward the
+    # middle), so matching on level made almost every rookie a "Connector". Compare the direction of each
+    # player's relative strengths (trait z-scores minus his own average, scaled to one length) plus height,
+    # which stays absolute and counts double. Same held-out accuracy on veterans, far less collapse.
+    z = [(x - m) / s for x, m, s in zip(values, mean, spread)]
+    body = z[:-1]
+    average = sum(body) / len(body)
+    body = [v - average for v in body]
+    length = math.sqrt(sum(v * v for v in body)) or 1.0
+    return [v / length * math.sqrt(len(body)) for v in body] + [z[-1] * HEIGHT_WEIGHT]
