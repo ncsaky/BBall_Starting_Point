@@ -27,6 +27,7 @@ from __future__ import annotations
 import hashlib
 from typing import Any
 
+from .franchise_ties import departure_text
 from .offseason_calendar import (
     offseason_dates, rookie_option_deadline, season_label,
 )
@@ -1175,7 +1176,8 @@ def stop_one_checklist(canonical: dict[str, Any], save: dict[str, Any], team_id:
             if players[pid]["team_id"] != team_id:
                 from .save import team_id_to_abbrev
                 departed.append({"player_id": pid, "name": players[pid].get("name"),
-                                 "team_abbrev": team_id_to_abbrev(players[pid]["team_id"])})
+                                 "team_abbrev": team_id_to_abbrev(players[pid]["team_id"]),
+                                 "departure_text": departure_text(save, pid, team_id)})
             continue
         bird = incumbent_bird(active, save, players[pid], team_id)
         hold = holds.get(pid)

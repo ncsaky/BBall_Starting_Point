@@ -23,6 +23,9 @@ from .contract_ai import (
     simulate_free_agency,
 )
 from .draft import apply_draft_selection_to_save, apply_draft_selection_to_save_state, draft_selection_rejection, load_draft_application_save, find_draft_trade, pick_recommendations, simulate_draft
+from .franchise_ties import (ICON_BID_FLOOR_SHARE, ICON_KEEP_MINUTES, ICON_THRESHOLD_DISCOUNT,
+                             LOYAL_THRESHOLD_DISCOUNT, chase_points, departure, franchise_tie, loyalty_points,
+                             origin_team)
 from .save import (
     advance_save,
     add_news,
@@ -5504,11 +5507,19 @@ def process_ai_free_agency_offers_for_day_state(
         suitors = ai_free_agency_suitors(active, save, player, teams, market, seed, day)
         if player["id"] in restricted:
             suitors = [t for t in suitors if t["id"] == restricted[player["id"]]]
+        # COACHES-FREE-AGENTS: the team he is tied to talks to him first, every day, even for a bench veteran.
+        origin = origin_team(save, player["id"])
+        tie = franchise_tie(save, player, origin) if origin else None
         # KEEP-STARS: a team that still holds a regular's rights bids for him first (it knows him and has Bird rights).
-        if display_minutes_projection(player) >= 24.0:
+        if display_minutes_projection(player) >= 24.0 or (tie and tie["loyal"]):
             own = {r.get("team_id") for r in save.get("re_signing_rights", []) or []
                    if r.get("player_id") == player["id"] and r.get("season") == state.get("season")}
+            if tie and tie["loyal"]:
+                own.add(origin)
             suitors = [t for t in suitors if t["id"] in own] + [t for t in suitors if t["id"] not in own]
+        icon_team = origin if tie and tie["icon"] else None
+        if icon_team and display_minutes_projection(player) >= ICON_KEEP_MINUTES:
+            offer_count = max(offer_count, 1)
         existing = sum(offer.get("source") == "ai" for offer in active_offers_for_player(save, player["id"]))
         years = min(
             int(market.get("max_years") or 4), free_agency_preferred_years(player, ask),
@@ -5542,7 +5553,8 @@ def process_ai_free_agency_offers_for_day_state(
                 team_years = max(years, extension_safe_year_limit(player, start_season, bird["max_years"]))
             # FA-REAL: how the team can legally pay (Bird rights, room, the minimum, a mid-level or the bi-annual). A team
             # whose route can't reach the price offers the most that route allows (a "full mid-level offer").
-            paid = ai_bid_payment(active, save, team, player, aav, team_years, lower, bird)
+            floor = {"min_share": ICON_BID_FLOOR_SHARE} if team["id"] == icon_team else {}
+            paid = ai_bid_payment(active, save, team, player, aav, team_years, lower, bird, **floor)
             if paid is not None:
                 aav, team_years = paid["aav"], paid["years"]
                 # CONTRACT-TERMS: the bid's shape (salary path, final-season option) at the real shares.
@@ -5561,6 +5573,8 @@ def process_ai_free_agency_offers_for_day_state(
                 kind="re_signing" if bird else "free_agency", committed=reserved * 1_000_000,
                 age=player.get("display_age", player.get("age")),
                 committed_players=len(pending_players - {player["id"]}),
+                # COACHES-FREE-AGENTS: an owner stretches for the franchise's icon as for its star.
+                franchise_star=team["id"] == icon_team and bool(bird),
             )
             if not tax_plan["ok"]:
                 continue
@@ -5605,12 +5619,14 @@ def ai_renounce_cap_holds(active: dict[str, Any], save: dict[str, Any], teams: l
 
 
 def ai_bid_payment(active: dict[str, Any], save: dict[str, Any], team: dict[str, Any], player: dict[str, Any],
-                   aav: float, years: int, lower: float, bird: dict[str, Any] | None) -> dict[str, Any] | None:
+                   aav: float, years: int, lower: float, bird: dict[str, Any] | None,
+                   min_share: float = 0.8) -> dict[str, Any] | None:
     """The salary, years and legal payment an AI team can offer (FA-REAL), or None.
 
     First the price itself by the first legal route (Bird rights, room, the minimum, the exceptions). If no route
-    reaches it, the most a route allows when that is still at least 80% of the price and above his minimum: real teams
-    make "full mid-level" or "all our room" offers to players asking more. Years are cut to the route's limit."""
+    reaches it, the most a route allows when that is still at least ``min_share`` (80%) of the price and above his
+    minimum: real teams make "full mid-level" or "all our room" offers to players asking more. Years are cut to the
+    route's limit."""
     from . import cap_ledger
     season = contract_start_season_for_signing(save)
     payroll = cap_ledger.team_payroll(active, save, team["id"], season, include_reservations=True,
@@ -5635,7 +5651,7 @@ def ai_bid_payment(active: dict[str, Any], save: dict[str, Any], team: dict[str,
             retry = ask(aav, years, route)
             if retry["ok"]:
                 return {"aav": aav, "years": years, "quote": retry}
-    floor = max(float(lower or 0.0), aav * 0.8)
+    floor = max(float(lower or 0.0), aav * min_share)
     for row in first["routes"]:
         route = row["route"]
         if route == "minimum":
@@ -5830,6 +5846,7 @@ def free_agency_offer_context_score(
     market_score = clamp(48.0 + deterministic_ratio(team.get("id"), player.get("id"), "fa_market") * 22.0, 42.0, 74.0)
     security_score = clamp(34.0 + max(1, years) * 15.0, 30.0, 92.0)
     own_team = (player.get("previous_team_id") == team.get("id") or player.get("team_id") == team.get("id")
+                or origin_team(save, player.get("id")) == team.get("id")
                 or any(r.get("player_id") == player.get("id") and r.get("team_id") == team.get("id")
                        for r in save.get("re_signing_rights", []) or []))
     loyalty = 8.0 if own_team else 0.0
@@ -5837,6 +5854,10 @@ def free_agency_offer_context_score(
         # KEEP-STARS: players value staying somewhat more with the team that drafted them and with a winner.
         loyalty += 3.0 if drafted_by_team(save, player) == team.get("id") else 0.0
         loyalty += 3.0 if games and win_pct >= 0.6 else 0.0
+        # COACHES-FREE-AGENTS: years with the team and franchise-icon standing weigh on top (franchise_ties).
+        loyalty = loyalty_points(canonical, save, player, str(team.get("id")), loyalty)
+    # COACHES-FREE-AGENTS: a veteran chasing a title leans to a team with a better shot at one.
+    chase = 0.0 if own_team else chase_points(canonical, save, player, str(team.get("id")))
     user_bonus = 2.5 if source == "user" and team.get("id") == save.get("meta", {}).get("user_team_id") else 0.0
     context = (
         role_score * 0.28
@@ -5846,6 +5867,7 @@ def free_agency_offer_context_score(
         + security_score * 0.1
         + position_need * 0.08
         + loyalty
+        + chase
         + user_bonus
     )
     return {
@@ -5859,6 +5881,7 @@ def free_agency_offer_context_score(
         "security": round(security_score, 1),
         "position_need": round(position_need, 1),
         "loyalty_bonus": round(loyalty, 1),
+        "title_chase_bonus": round(chase, 1),
     }
 
 
@@ -6705,7 +6728,12 @@ def resolve_free_agency_day_state(canonical: dict[str, Any], save: dict[str, Any
         player = players.get(player_id, {})
         best = max(offers, key=lambda item: (float(item.get("interest_score") or 0), float(item.get("aav_millions") or 0)))
         threshold = free_agency_accept_threshold(player, day)
-        if float(best.get("interest_score") or 0) < threshold:
+        # COACHES-FREE-AGENTS: the team he is tied to (loyal_offer) can win him a little below his usual bar, and
+        # another team takes him from it only for a clear motive.
+        stay = loyal_offer(active, save, player, offers, best, threshold)
+        if stay is not None:
+            best = stay
+        elif float(best.get("interest_score") or 0) < threshold:
             continue
         priority = (
             (25.0 if best.get("source") == "user" else 0.0)
@@ -6719,6 +6747,8 @@ def resolve_free_agency_day_state(canonical: dict[str, Any], save: dict[str, Any
             reverse=True,
         )
         acceptable = [offer for offer in ranked if float(offer.get("interest_score") or 0) >= threshold]
+        if stay is not None:
+            acceptable = [stay] + [offer for offer in acceptable if offer is not stay]
         candidates.append((priority, player_id, acceptable))
     accepted_count = 0
     accepted_offers: list[dict[str, Any]] = []
@@ -6746,6 +6776,41 @@ def resolve_free_agency_day_state(canonical: dict[str, Any], save: dict[str, Any
         "accepted_offers": accepted_offers,
         "_changed": bool(candidates),
     }
+
+
+def loyal_offer(active: dict[str, Any], save: dict[str, Any], player: dict[str, Any], offers: list[dict[str, Any]],
+                best: dict[str, Any], threshold: float) -> dict[str, Any] | None:
+    """The offer of the team a loyal player is tied to, when he takes it today (COACHES-FREE-AGENTS), else None.
+
+    He takes it a little below his usual bar (an icon more so), and over a higher-rated outside bid unless that bid
+    carries a clear motive: a title chase, much more money, a bigger role, a poor fit or leaving a rebuild. This is
+    for computer teams: your own offer is judged exactly as the offer screen shows it, where his loyalty already
+    counts in his interest."""
+    origin = origin_team(save, player.get("id"))
+    if origin in human_controlled_team_ids(save):
+        return None
+    own = max((o for o in offers if o.get("team_id") == origin),
+              key=lambda o: (float(o.get("interest_score") or 0), float(o.get("aav_millions") or 0)), default=None)
+    if own is None:
+        return None
+    tie = franchise_tie(save, player, origin)
+    if not tie["loyal"]:
+        return None
+    bar = threshold - (ICON_THRESHOLD_DISCOUNT if tie["icon"] else LOYAL_THRESHOLD_DISCOUNT)
+    if float(own.get("interest_score") or 0) < bar:
+        return None
+    if best.get("team_id") == origin:
+        return own
+    rival = offer_departure(active, save, player, best, own)
+    return None if rival and rival["clear"] else own
+
+
+def offer_departure(active: dict[str, Any], save: dict[str, Any], player: dict[str, Any], offer: dict[str, Any],
+                    own_offer: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    """Why signing ``offer`` would take him from the team he is a free agent from (franchise_ties.departure)."""
+    return departure(active, save, player, offer.get("team_id"), aav_millions=float(offer.get("aav_millions") or 0),
+                     years=int(offer.get("years") or 1),
+                     new_minutes=(offer.get("interest_context") or {}).get("projected_minutes"), own_offer=own_offer)
 
 
 def free_agency_accept_threshold(player: dict[str, Any], day: int) -> float:
@@ -6825,12 +6890,18 @@ def apply_free_agency_offer_state(
             committed_players=int((committed_count_by_team or {}).get(team_id) or 0),
             # FA-REAL slice 2: a regular his team sent a qualifying offer is kept like a franchise player (KEEP-STARS
             # kept young regulars off rookie deals that way; now only the ones it tendered).
-            franchise_star=bool(offer.get("restricted_re_signing")) and display_minutes_projection(player) >= 24.0,
+            # COACHES-FREE-AGENTS: so is the team's icon.
+            franchise_star=(bool(offer.get("restricted_re_signing")) and display_minutes_projection(player) >= 24.0)
+            or bool(bird and origin_team(save, player.get("id")) == team_id
+                    and franchise_tie(save, player, team_id)["icon"]),
         )
         if not tax_plan['ok']:
             offer['status'] = 'withdrawn_tax_plan'
             return {'status': 'blocked', 'notes': plain_words(tax_plan)}
     negotiation = negotiation_from_free_agency_offer(save, offer, player, team, seed)
+    departed = offer_departure(active, save, player, offer)
+    if departed:
+        negotiation["negotiation"]["departure"] = departed
     save.setdefault("pending_contract_negotiations", []).append(negotiation)
     from .cap_ledger import release
     for item in save.get("free_agent_offers", []):
@@ -7769,6 +7840,12 @@ def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player:
         "decision": decision,
         "accepted": accepted,
     }
+    departed = origin_team(save_for_start, player["id"]) not in (None, team["id"]) and departure(
+        canonical, save_for_start, player, team["id"], aav_millions=float(aav_millions), years=years,
+        new_minutes=free_agency_offer_context_score(canonical, save_for_start, player, team, years,
+                                                    "user")["projected_minutes"])
+    if departed:
+        negotiation["negotiation"]["departure"] = departed
     save = load_save(save_path)
     save.setdefault("pending_contract_negotiations", []).append(negotiation)
     write_save(save_path, save)
