@@ -757,9 +757,8 @@ def generate_draft_order(canonical: dict[str, Any] | Any, year: str, seed: int =
 
     if year == "2026" and standings is not None:
         teams_by_strength = projected_standings_order(canonical, seed, standings, config)
-        lottery_count = int(config["lottery"].get("team_count", 14))
-        lottery_candidates = teams_by_strength[:lottery_count]
-        playoff_order = teams_by_strength[lottery_count:]
+        lottery_candidates, playoff_order = split_lottery_field(canonical, teams_by_strength, standings, config)
+        lottery_count = len(lottery_candidates)
         drawn = draw_lottery_teams(lottery_candidates, seed, year, config)
         drawn_ids = {team["id"] for team in drawn}
         final_lottery = drawn + [team for team in lottery_candidates if team["id"] not in drawn_ids]
@@ -827,9 +826,8 @@ def generate_draft_order(canonical: dict[str, Any] | Any, year: str, seed: int =
         return {"year": year, "seed": seed, "lottery": to_plain(lottery), "pick_count": len(order), "draft_order": to_plain(order)}
 
     teams_by_strength = projected_standings_order(canonical, seed, standings, config)
-    lottery_count = int(config["lottery"].get("team_count", 14))
-    lottery_candidates = teams_by_strength[:lottery_count]
-    playoff_order = teams_by_strength[lottery_count:]
+    lottery_candidates, playoff_order = split_lottery_field(canonical, teams_by_strength, standings, config)
+    lottery_count = len(lottery_candidates)
     drawn = draw_lottery_teams(lottery_candidates, seed, year, config)
     drawn_ids = {team["id"] for team in drawn}
     final_lottery = drawn + [team for team in lottery_candidates if team["id"] not in drawn_ids]
@@ -2426,7 +2424,7 @@ def explicit_standings_order(canonical: dict[str, Any], standings: Any | None) -
     for row in rows:
         if not isinstance(row, dict):
             continue
-        team_key = row.get("team") or row.get("team_abbrev") or row.get("abbrev") or row.get("team_id")
+        team_key = standings_team_key(row)
         if not team_key:
             continue
         team = resolve_team(canonical, str(team_key))
@@ -2445,6 +2443,33 @@ def explicit_standings_order(canonical: dict[str, Any], standings: Any | None) -
     if len(indexed) != len(canonical.get("teams", [])):
         return None
     return [team for _, team in sorted(indexed, key=lambda item: (item[0], item[1]["abbrev"]))]
+
+
+def standings_team_key(row: dict[str, Any]) -> Any:
+    return row.get("team") or row.get("team_abbrev") or row.get("abbrev") or row.get("team_id")
+
+
+def split_lottery_field(canonical: dict[str, Any], teams_by_strength: list[dict[str, Any]], standings: Any | None,
+                        config: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """(lottery teams, playoff teams), each kept in record order.
+
+    When the standings mark who made the playoffs, the lottery is exactly the teams that missed them, so a play-in
+    winner picks after a team the play-in knocked out even with a worse record. Without that mark (projections, or
+    before the play-in ends) the weakest records stand in for the lottery field.
+    """
+    rows = standings.get("teams", standings) if isinstance(standings, dict) else standings
+    playoff_ids = {
+        resolve_team(canonical, str(standings_team_key(row)))["id"]
+        for row in rows or []
+        if isinstance(row, dict) and row.get("made_playoffs")
+    }
+    if not playoff_ids:
+        count = int(config["lottery"].get("team_count", 14))
+        return teams_by_strength[:count], teams_by_strength[count:]
+    return (
+        [team for team in teams_by_strength if team["id"] not in playoff_ids],
+        [team for team in teams_by_strength if team["id"] in playoff_ids],
+    )
 
 
 def draw_lottery_teams(lottery_candidates: list[dict[str, Any]], seed: int, year: str, config: dict[str, Any]) -> list[dict[str, Any]]:

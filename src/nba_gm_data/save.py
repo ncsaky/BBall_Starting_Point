@@ -9883,14 +9883,29 @@ def playoff_series_record(conference: str, round_name: str, team_a: str, team_b:
     }
 
 
+def playoff_field_team_ids(save: dict[str, Any]) -> set[str]:
+    """The 16 teams in the first round, play-in winners included. Empty until that field is settled."""
+    field = {
+        str(team_id)
+        for series in (save.get("playoff_state") or {}).get("series") or []
+        if series.get("round") == "first_round"
+        for team_id in series.get("team_ids") or []
+    }
+    return field if len(field) == 16 else set()
+
+
 def save_standings_for_draft(canonical: dict[str, Any], save: dict[str, Any]) -> list[dict[str, Any]]:
     teams = {team["id"]: team for team in canonical.get("teams", [])}
+    playoff_field = playoff_field_team_ids(save)
     rows = []
     for team_id, record in save.get("team_records", {}).items():
         team = teams.get(team_id)
         if not team:
             continue
-        rows.append({"team_id": team_id, "team_abbrev": team["abbrev"], "wins": record.get("wins", 0), "losses": record.get("losses", 0)})
+        row = {"team_id": team_id, "team_abbrev": team["abbrev"], "wins": record.get("wins", 0), "losses": record.get("losses", 0)}
+        if playoff_field:
+            row["made_playoffs"] = team_id in playoff_field
+        rows.append(row)
     return rows
 
 
