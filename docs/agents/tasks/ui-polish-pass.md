@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C, checkpoint 11 published (rumors that reveal, more storylines, the front page all year); stopped, waiting for five decisions; a Storylines page, the Finder and the final sweep remain
+Progress: 8/9 - Stage C, checkpoint 12 published (the player's page and the contract extension readable; rumors a round slower); stopped, waiting for five decisions; a Storylines page, the Finder, merging main and the final sweep remain
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -771,3 +771,46 @@ rumors are not ranked by how good the player is (no rating in the payload); in t
 are last season's long absences; `home_storylines_payload` has no Python unit test; the court section of What it
 does was not touched. Engine work the user has not been asked to request: refusals to re-sign, demands by the
 user's own players, what an unhappy player wants, morale history.
+
+## Stage C, checkpoint 12 report (2026-11-26)
+
+**The user's answers to checkpoint 11**: rumor pace "slower" (keep the player hidden a round longer, hint at his
+position first); the storyline mix good; the offseason front page good; the sharpened effect sections good; next =
+the extension window and the player card.
+
+**What changed**
+- **Rumors a round slower** (`storylines()` in `gui/home-front.js`): round 1 the two teams, round 2 a hint ("The
+  talks are about a young forward on SAC": guard / forward / center from his position, young at 23 or under,
+  veteran at 31 or over), round 3 "It is NAME", round 4 on the offer. Talks that die before round 3 stay under the
+  two teams' names. Weights: target 82, hint 78, talks 66 (a hint-stage rumor now outranks a second hot seat).
+- **A player's page has a real header** (`renderDetailHead` in `gui/card-pages.js`): the title is his name
+  (`.approved-profile-name h3`), the tabs are his card's own pages (`data-pages-card-page`, labels from each
+  `data-page-title` up to its first comma or ampersand: Season, Ratings, Health, and Contract Extension when he
+  is eligible); a tab calls the card's `_showPlayerCardPage`; a MutationObserver keeps the header in step as the
+  card fills in. `card-pages.css` no longer hides the title on a detail page. Before, the header kept the tabs of
+  the page you came from.
+- **The player's page is readable** (`gui/player-page.css`, Sonnet subagent, reviewed; every rule under
+  `.card-board-window.is-detail-card`): `layoutDetail` draws the card at 2100 by 1270 and shrinks it to about 0.58,
+  which is why its text was 5 to 9px; the sheet sets `zoom: calc(1 / var(--pages-scale, 1))` on
+  `.approved-player-card.approved-player-pages` so sizes inside are real, then lays the three pages out at 11px and
+  13px. The old page bar and the name `h3` are hidden (the header carries them). Changed after review: no striped
+  rows in the health table; the identity strip is hidden on the Ratings tab and each mix title stays on one line,
+  so that tab fits without scrolling at 1512 by 900.
+- **The contract extension page** (`gui/extension-window.css`, second Sonnet subagent, reviewed; every rule under
+  `.is-detail-card .player-card-page--extension`): no boxes; a glass salary field; slider marks that do not
+  overlap; the verdict as a coloured dot and plain words; chosen option pills frosted; the cap table's headings in
+  full; chart labels readable (sized from the plot's width with a container query unit and `calc()` division).
+- Tests: `tests/player_page_style.test.cjs`, `tests/extension_window_style.test.cjs`, the player-page header in
+  `tests/sidebar_pages.test.cjs`, the rumor test rewritten in `tests/home_front.test.cjs`. Browser tests: 58 of 59
+  files.
+
+**Waiting on five decisions** (page https://claude.ai/artifact/MvsXT5Cv8sZgJDqk18puPh, collection `decisions`):
+`player-page` (good | change), `ratings-strip` (fit | strip), `ext-close` (yes | no), `rumor-pace-2`
+(good | change), `next` (story-page | trade-rest | merge-main | sweep).
+
+**Known gaps**: the extension verdict has no "close" state (99% of his price shows red; needs a tone from the
+page's code); the player's page is still drawn large and shrunk, with the zoom rule cancelling it for text (a
+rebuild at real size belongs in the final sweep); at 1280 by 760 the Ratings tab scrolls; not looked at: the season
+picker open, hover states, a prospect's page, coach cards (still pop-ups); the extension chart's label sizing needs
+a browser with `calc()` length division. Still open: a Storylines page, the Finder, engine heat maps, the start
+screen, the coordinator's items after merging main, the final sweep.

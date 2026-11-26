@@ -96,7 +96,14 @@ test('a player is a page of the app, not a pop-up window', () => {
   assert.match(board, /clipboard-player-card--coach/, 'coach cards stay pop-ups');
   assert.match(source, /data-pages-detail-back/);
   assert.match(source, /event\.key === "Escape" && currentPage === DETAIL/);
-  assert.match(read('card-pages.css'), /\.pages-shell\.is-detail \.pages-title \{ display: none; \}/);
+  // A player's page is headed like any other: his name is the title and his card's own pages are the tabs.
+  assert.doesNotMatch(read('card-pages.css'), /\.pages-shell\.is-detail \.pages-title \{ display: none; \}/);
+  assert.match(source, /function renderDetailHead\(frame\) \{/);
+  assert.match(source, /\(frame\?\.querySelector\("\.approved-profile-name h3"\) \|\| frame\?\.querySelector\("\.approved-profile-name"\)\)\?\.textContent\.trim\(\)/, 'only the name, not his bio lines');
+  assert.match(source, /data-pages-card-page="\$\{index\}" aria-selected="\$\{!page\.hidden\}"/);
+  assert.match(source, /const short = \(title\) => String\(title \|\| ""\)\.split\(\/\[,&\]\/\)\[0\]\.trim\(\);/, '"Season, Games & Contract" reads "Season"');
+  assert.match(source, /holder\?\._showPlayerCardPage\(Number\(cardTab\.dataset\.pagesCardPage\)\);/, 'a tab shows that page of his card');
+  assert.match(source, /detailWatch\.observe\(frame, \{childList: true, subtree: true, attributes: true, attributeFilter: \["hidden"\]\}\);/, 'the header follows the card as it fills in');
 });
 
 // ---- UI polish pass, Stage B: Home is the progress screen, one button moves time, a four-screen welcome, sounds.

@@ -1,0 +1,183 @@
+/* A player's page in the pages layout (player-page pass, 2026-11-26).
+   The page draws the card at 2100 x 1270 and shrinks it to fit (card-pages.js layoutDetail), so a size written here
+   would be shrunk with it. The card is therefore drawn with zoom set to the inverse of that shrink (--pages-scale):
+   inside it, 13px is 13px on the screen. Every rule starts from .is-detail-card, so the small floating card is
+   untouched. */
+
+/* ---------- The card: zoomed back to screen size, identity strip on top, the open page filling the rest. */
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .approved-player-card.approved-player-pages {
+  zoom: calc(1 / var(--pages-scale, 1)) !important;
+  display: grid !important; grid-template-columns: minmax(0, 1fr) !important; grid-template-rows: auto minmax(0, 1fr) !important;
+  gap: var(--gm-space-2) !important; align-content: stretch !important;
+  box-sizing: border-box !important; width: 100% !important; height: 100% !important; max-width: none !important; min-height: 0 !important;
+  padding: 0 var(--gm-space-2) var(--gm-space-2) !important; margin: 0 !important; overflow: hidden !important;
+  color: var(--gm-ink) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+/* The page header now carries the title, the arrows and the count. */
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-page-bar,
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .approved-profile-name h3 { display: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-card-page { min-width: 0 !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-card-page[hidden] { display: none !important; }
+
+/* ---------- Identity strip: headshot, bio, the three bars, contract and roles in one calm row. */
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-page-identity {
+  display: grid !important; grid-template-columns: auto minmax(160px, 1fr) minmax(240px, 340px) minmax(220px, auto) !important;
+  grid-template-rows: auto !important; align-items: center !important; gap: var(--gm-space-5) !important;
+  margin: 0 !important; padding: 0 !important; border: 0 !important; background: transparent !important;
+  box-shadow: none !important; min-height: 0 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-page-identity > * { grid-row: 1 !important; margin: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-page-identity .profile-headshot-wrap { grid-column: 1 !important; width: 72px !important; height: 72px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-page-identity .player-headshot-frame { width: 72px !important; height: 72px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-page-identity .profile-team-badge { width: 36px !important; height: 36px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-page-identity .approved-profile-name { grid-column: 2 !important; align-self: center !important; display: grid !important; gap: var(--gm-space-1) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-page-identity .approved-profile-name p {
+  margin: 0 !important; color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.25 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-page-identity .player-summary-ratings { grid-column: 3 !important; grid-row: 1 !important; display: grid !important; grid-auto-rows: auto !important; align-content: center !important; height: auto !important; gap: var(--gm-space-1) !important; width: 100% !important; align-self: center !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-page-identity .player-summary-rating { height: auto !important; grid-template-columns: 34px minmax(0, 1fr) 40px !important; align-items: center !important; gap: var(--gm-space-2) !important; min-height: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-page-identity .player-summary-rating > small {
+  color: var(--gm-ink-2) !important; font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important; letter-spacing: 0 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-page-identity .player-summary-rating .linked-rating > span {
+  color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-page-identity .player-header-facts { grid-column: 4 !important; display: grid !important; grid-template-columns: auto auto !important; gap: var(--gm-space-1) var(--gm-space-3) !important; align-items: baseline !important; justify-content: end !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-page-identity .player-header-fact { display: contents !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-page-identity .player-header-fact > small {
+  color: var(--gm-ink-2) !important; font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important; letter-spacing: 0 !important; text-transform: none !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-page-identity .player-header-fact > span, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-page-identity .player-header-fact .role-text {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; color: var(--gm-ink) !important;
+}
+
+/* ---------- Page 1, Season: the stat strip, then the two court maps as large as the page allows. */
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-card-page--overview { display: grid !important; grid-template-rows: auto minmax(0, 1fr) !important; gap: var(--gm-space-2) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .approved-season-line { display: grid !important; gap: var(--gm-space-1) !important; padding: 0 !important; margin: 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important; min-height: 0 !important; height: auto !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .approved-season-line > header { display: flex !important; align-items: center !important; justify-content: space-between !important; min-height: 0 !important; padding: 0 !important; border: 0 !important; background: transparent !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .approved-season-line > header > span {
+  color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important; letter-spacing: 0 !important; text-transform: none !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-career-picker summary {
+  display: inline-flex !important; align-items: center !important; gap: var(--gm-space-2) !important; padding: var(--gm-space-1) var(--gm-space-3) !important;
+  color: var(--gm-ink) !important; font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-career-picker summary > * { color: var(--gm-ink) !important; font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-career-menu button { color: var(--gm-ink) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .approved-season-line > div {
+  display: grid !important; grid-template-columns: repeat(16, minmax(0, 1fr)) !important; gap: 0 !important; padding: var(--gm-space-1) 0 !important;
+  border-top: 1.5px solid var(--gm-line-strong) !important; border-bottom: 1px solid var(--gm-line-row) !important; min-height: 0 !important; height: auto !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .approved-season-line > div > span { display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: var(--gm-space-1) !important; padding: 0 !important; border: 0 !important; background: transparent !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .approved-season-line > div small { color: var(--gm-ink-2) !important; font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important; letter-spacing: 0 !important; text-transform: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .approved-season-line > div strong { color: var(--gm-ink) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-overview-court { min-height: 0 !important; height: 100% !important; padding: 0 !important; margin: 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-overview-court .spatial-heatmap { height: 100% !important; min-height: 0 !important; gap: var(--gm-space-1) var(--gm-space-5) !important; grid-template-rows: auto minmax(0, 1fr) auto auto !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-overview-court .spatial-half-courts { height: 100% !important; min-height: 0 !important; align-items: stretch !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-overview-court .spatial-half-courts > svg.spatial-court { height: 100% !important; width: 100% !important; max-width: 100% !important; justify-self: center !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .spatial-court-head { min-height: 0 !important; gap: var(--gm-space-5) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .spatial-court-tab-group { display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: var(--gm-space-1) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .spatial-heatmap .spatial-legends { min-height: 0 !important; gap: var(--gm-space-5) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .spatial-heatmap .spatial-legend { gap: var(--gm-space-2) !important; min-height: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .spatial-heatmap .spatial-court-head .spatial-court-group-label { color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font) !important; letter-spacing: 0 !important; text-transform: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .spatial-heatmap .spatial-court-head .spatial-court-tabs, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .spatial-heatmap .spatial-court-head .spatial-court-tabs * { font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .spatial-heatmap .spatial-legends .spatial-legend, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .spatial-heatmap .spatial-legends .spatial-legend * { color: var(--gm-ink-2) !important; font: var(--gm-weight-semibold) var(--gm-size-small)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .spatial-heatmap .spatial-court-caption {
+  margin: 0 !important; width: 100% !important; max-width: none !important; color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1.3 var(--gm-font) !important; text-align: center !important;
+}
+
+/* ---------- Page 2, Ratings: the same range-bar graphics, read at 11px and 13px, spread over the whole page. */
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-card-page--details { overflow-y: auto !important; overflow-x: hidden !important; scrollbar-width: thin; scrollbar-color: var(--gm-line-strong) transparent; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4 {
+  min-width: 0 !important; height: 100% !important; display: grid !important; grid-template-rows: auto minmax(0, 1fr) !important; gap: var(--gm-space-2) !important;
+  font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font) !important; color: var(--gm-ink) !important;
+  --pc4-text: var(--gm-ink); --pc4-muted: var(--gm-ink-2); --pc4-line: var(--gm-line); --pc4-soft: var(--gm-line-row);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-legend { padding: 0 !important; border: 0 !important; background: transparent !important; gap: var(--gm-space-1) var(--gm-space-5) !important; color: var(--gm-ink-2) !important; font-size: var(--gm-size-small) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-legend span { font-size: var(--gm-size-small) !important; gap: var(--gm-space-2) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-layers { height: 100% !important; min-height: 0 !important; padding: 0 !important; gap: var(--gm-space-2) var(--gm-space-5) !important; align-items: stretch !important; grid-template-rows: auto auto !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-layer { border: 0 !important; background: transparent !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-layer > header { padding: 0 0 var(--gm-space-1) !important; border: 0 !important; background: transparent !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-layer > header h2 { color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font) !important; letter-spacing: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-body { padding: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4 h4 {
+  margin: var(--gm-space-2) 0 0 !important; padding: 0 0 var(--gm-space-1) !important; border-bottom: 1.5px solid var(--gm-line-strong) !important;
+  color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important; font-variant: normal !important; letter-spacing: 0 !important; text-transform: none !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4 h4:first-child { margin-top: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4 h4 small { color: var(--gm-ink-2) !important; font-size: var(--gm-size-small) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-info { width: 14px !important; height: 14px !important; font: var(--gm-weight-bold) var(--gm-size-small)/1 var(--gm-font) !important; color: var(--gm-ink-2) !important; border-color: var(--gm-ink-2) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-r {
+  min-height: 15px !important; padding: 0 !important; gap: var(--gm-space-2) !important;
+  grid-template-columns: minmax(0, 2.6fr) minmax(0, 1fr) 22px !important; border-bottom: 1px solid var(--gm-line-row) !important; background: transparent !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-r.pass, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-pass-head { grid-template-columns: minmax(100px, 1.1fr) minmax(48px, 1fr) 26px minmax(48px, 1fr) 26px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-pass-cols .pc4-r.pass, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-pass-cols .pc4-pass-head { grid-template-columns: minmax(0, 1.5fr) minmax(40px, 1fr) 24px minmax(40px, 1fr) 24px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-r.measure, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-layer:has(.pc4-r.measure) .pc4-r:not(.pass) { grid-template-columns: minmax(0, 1.5fr) minmax(40px, .7fr) 90px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-r .pc4-l { color: var(--gm-ink) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1.15 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-r strong { color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-r small, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-pass-head, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-pass-head b { color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-kv { grid-template-columns: 110px 1fr !important; padding: var(--gm-space-1) 0 !important; border-bottom: 1px solid var(--gm-line-row) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-kv > span { color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-kv, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-kv > :not(span:first-child) { color: var(--gm-ink) !important; font-size: var(--gm-size-small) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-tag { border: 0 !important; background: transparent !important; padding: 0 var(--gm-space-2) 0 0 !important; font: var(--gm-weight-semibold) var(--gm-size-small)/1.2 var(--gm-font) !important; color: var(--gm-ink) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-minbar { grid-template-columns: 1fr 90px !important; font-size: var(--gm-size-small) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-dist { padding: 2px 0 !important; border-bottom: 1px solid var(--gm-line-row) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-dist .pc4-t { color: var(--gm-ink) !important; font: var(--gm-weight-semibold) var(--gm-size-small)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-dleg, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-dleg span, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-dleg b { color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-dleg b { color: var(--gm-ink) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-badge, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-count, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-sub, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-foot, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-note { color: var(--gm-ink-2) !important; font-size: var(--gm-size-small) !important; }
+
+/* ---------- Page 3, Health: a large body map beside the risk table. */
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-panel { display: grid !important; grid-template-rows: auto minmax(0, 1fr) !important; gap: var(--gm-space-2) !important; height: 100% !important; min-height: 0 !important; padding: 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-panel > header { padding: 0 !important; border: 0 !important; background: transparent !important; color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important; letter-spacing: 0 !important; text-transform: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-panel .injury-body-layout {
+  display: grid !important; grid-template-columns: auto minmax(0, 1fr) !important; grid-template-rows: minmax(0, 1fr) !important; gap: var(--gm-space-6) !important;
+  align-items: center !important; justify-items: stretch !important; min-height: 0 !important; height: 100% !important; padding: 0 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-panel .injury-body-figures { display: flex !important; gap: var(--gm-space-5) !important; justify-content: center !important; align-items: center !important; height: 100% !important; width: auto !important; min-height: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-panel .injury-body-figures > svg.injury-body-figure.is-real { height: 100% !important; width: auto !important; max-height: 100% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-detail { width: 100% !important; max-width: none !important; justify-self: stretch !important; align-self: center !important; gap: var(--gm-space-3) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-summary, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-current, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-note, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-key, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-key * {
+  color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1.35 var(--gm-font) !important; margin: 0 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-summary { color: var(--gm-ink) !important; font-size: var(--gm-size-row) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-summary b { color: var(--gm-ink) !important; font-size: var(--gm-size-row) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-key { display: flex !important; flex-wrap: wrap !important; gap: var(--gm-space-1) var(--gm-space-3) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-table { width: 100% !important; border-collapse: collapse !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; color: var(--gm-ink) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-table thead th {
+  padding: var(--gm-space-1) var(--gm-space-2) !important; border: 0 !important; border-bottom: 1.5px solid var(--gm-line-strong) !important; background: transparent !important;
+  color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important; text-transform: none !important; letter-spacing: 0 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-table td, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-table tbody th {
+  padding: var(--gm-space-1) var(--gm-space-2) !important; border: 0 !important; border-bottom: 1px solid var(--gm-line-row) !important; height: 24px !important;
+  color: var(--gm-ink) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; text-transform: none !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-table tbody tr:nth-child(even) { background: transparent !important; }   /* hairlines only on glass, no stripes */
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-table tbody tr:hover { background: var(--gm-glass-tile-hover) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-table tbody th b { color: var(--gm-bad) !important; font-size: var(--gm-size-small) !important; }
+
+/* ---------- Page 2 layout: the legend rides on the Technique heading line; the layers spread over the page height. */
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4 { position: relative !important; display: block !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-legend { position: absolute !important; right: 0 !important; top: 0 !important; width: auto !important; z-index: 1 !important; flex-wrap: nowrap !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-layers { display: grid !important; align-content: space-between !important; grid-template-columns: minmax(0, 1.05fr) minmax(0, .85fr) minmax(0, 2.1fr) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-layers > .pc4-layer:last-child > .pc4-body { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) !important; gap: 0 var(--gm-space-5) !important; }
+
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-layers > .pc4-layer:first-child .pc4-cols { column-count: 4 !important; column-gap: var(--gm-space-4) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-kv { grid-template-columns: 90px minmax(0, 1fr) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-page-identity .profile-headshot-wrap img.approved-profile-headshot { width: 100% !important; height: 100% !important; object-fit: contain !important; object-position: center bottom !important; }
+
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-layers > .pc4-layer:last-child .pc4-group:not(:has(.pc4-dist)) .pc4-r { grid-template-columns: minmax(0, 3.4fr) minmax(0, 1fr) 26px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4 h4 { margin-top: var(--gm-space-1) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-dleg { gap: 0 var(--gm-space-3) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-kv > * { min-width: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-layer.pc4-coach > header h2 { white-space: nowrap !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .injury-body-table thead th * { font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important; color: var(--gm-ink) !important; letter-spacing: 0 !important; text-transform: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .spatial-heatmap .spatial-court-head .spatial-court-tabs { white-space: nowrap !important; flex: 0 0 auto !important; }
+
+/* The Ratings tab is the densest page: the strip above it (photo, OVR / OFF / DEF, contract) is left to the Season
+   tab so every rating fits without scrolling. His name stays in the page title. */
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card [data-player-pages]:has(.player-card-page[data-page-title="Ratings & Profiles"]:not([hidden])) .approved-player-identity { display: none !important; }
+/* The mixes: each title on one line (the full name is its tooltip; the key under the bar lists the parts), so all seven fit. */
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pc4-dist .pc4-t { white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis; }

@@ -204,30 +204,40 @@ const lines = (state, key) => {
   return thread ? {status: thread.status, name: thread.name, closed: thread.closed, steps: Array.from(thread.steps, (step) => `${step.date} ${step.text}`)} : null;
 };
 
-test('trade talks reveal a piece at a time: two teams, then the player, then the offer, then the end', () => {
+test('trade talks reveal a piece at a time: two teams, a hint, the player, the offer, then the end', () => {
   const state = quiet();
-  state.data.homeStories = {date: '2026-12-25', talks: [talk([round('2026-11-27', ['Tari Eason'])])]};
+  const eason = ['Tari Eason'];
+  state.data.homeStories = {date: '2026-12-25', talks: [talk([round('2026-11-27', eason)])]};
   const first = lines(state, 'talks:hou|sac|p_murray');
   assert.deepEqual(first.steps, ['2026-11-27 HOU and SAC opened trade talks']);
   assert.equal(first.name, 'HOU and SAC', 'the player is not named yet');
   assert.doesNotMatch(load(state).markup(), /Keegan Murray/, 'and he is nowhere on the page');
 
-  state.data.homeStories.talks = [talk([round('2026-11-27', ['Tari Eason']), round('2026-12-10', ['Tari Eason'])])];
-  const second = lines(state, 'player:p_murray');
-  assert.deepEqual(second.steps, ['2026-11-27 HOU and SAC opened trade talks', '2026-12-10 The talks are about Keegan Murray']);
-  assert.equal(second.name, 'Keegan Murray');
+  // Round two: a hint only (his position, and young or veteran), still under the two teams' names.
+  state.data.homeStories.talks = [talk([round('2026-11-27', eason), round('2026-12-10', eason)], {player: {player_id: 'p_murray', name: 'Keegan Murray', position: 'PF', age: 23, team: 'SAC'}})];
+  const second = lines(state, 'talks:hou|sac|p_murray');
+  assert.deepEqual(second.steps, ['2026-11-27 HOU and SAC opened trade talks', '2026-12-10 The talks are about a young forward on SAC']);
+  assert.doesNotMatch(load(state).markup(), /Keegan Murray/);
 
-  state.data.homeStories.talks = [talk([round('2026-11-27', ['Tari Eason']), round('2026-12-10', ['Tari Eason']), round('2026-12-17', ['Tari Eason', 'Steven Adams', '2027 R1: HOU receives the more favourable of HOU/BKN'])])];
-  assert.equal(lines(state, 'player:p_murray').steps.at(-1), '2026-12-17 HOU has offered Tari Eason and Steven Adams and 1 more');
+  // Round three: the name. The offer waits one more round.
+  state.data.homeStories.talks = [talk([round('2026-11-27', eason), round('2026-12-10', eason), round('2026-12-17', eason)], {player: {player_id: 'p_murray', name: 'Keegan Murray', position: 'C', age: 33, team: 'SAC'}})];
+  const third = lines(state, 'player:p_murray');
+  assert.deepEqual(third.steps, ['2026-11-27 HOU and SAC opened trade talks', '2026-12-10 The talks are about a veteran center on SAC', '2026-12-17 It is Keegan Murray']);
+  assert.equal(third.name, 'Keegan Murray');
+
+  state.data.homeStories.talks = [talk([round('2026-11-27', eason), round('2026-12-10', eason), round('2026-12-17', eason), round('2026-12-20', ['Tari Eason', 'Steven Adams', '2027 R1: HOU receives the more favourable of HOU/BKN'])])];
+  assert.equal(lines(state, 'player:p_murray').steps.at(-1), '2026-12-20 HOU has offered Tari Eason and Steven Adams and 1 more');
   assert.equal(lines(state, 'player:p_murray').status, 'Offer made');
 
-  state.data.homeStories.talks = [talk([round('2026-11-27', ['Tari Eason']), round('2026-12-10', ['Tari Eason'], ['HOU'])], {status: 'dead', ended: {date: '2026-12-10', final_by: ['HOU']}})];
-  const dead = lines(state, 'player:p_murray');
+  // A falling-out before the name ever came out stays anonymous.
+  state.data.homeStories.talks = [talk([round('2026-11-27', eason), round('2026-12-10', eason, ['HOU'])], {status: 'dead', ended: {date: '2026-12-10', final_by: ['HOU']}})];
+  const dead = lines(state, 'talks:hou|sac|p_murray');
   assert.equal(dead.steps.at(-1), "2026-12-10 Talks broke off: HOU's final offer was refused");
   assert.equal(dead.status, 'Fell apart');
   assert.equal(dead.closed, true);
+  assert.doesNotMatch(load(state).markup(), /Keegan Murray/);
 
-  state.data.homeStories.talks = [talk([round('2026-11-27', ['Tari Eason'])], {status: 'closed', outcome: 'traded', closed_date: '2026-11-27'})];
+  state.data.homeStories.talks = [talk([round('2026-11-27', eason)], {status: 'closed', outcome: 'traded', closed_date: '2026-11-27'})];
   assert.equal(lines(state, 'player:p_murray').steps.at(-1), '2026-11-27 Done: Keegan Murray to HOU');
 });
 

@@ -635,7 +635,9 @@
       stage.append(frame);
       paint(id);
       shell.classList.add("is-detail");
-      titleEl.textContent = "";
+      renderDetailHead(frame);
+      detailWatch.disconnect();
+      detailWatch.observe(frame, {childList: true, subtree: true, attributes: true, attributeFilter: ["hidden"]});
       controlsEl.innerHTML = `<button type="button" class="pages-control pages-detail-back" data-pages-detail-back><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2.5 4 6l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>${suspended ? esc(suspended.textContent.replace(/^\W+/, "")) : "Back"}</button>`;
       foot.classList.toggle("has-ticker", owned.has("league-wire"));
       if (owned.has("league-wire")) placeTicker();
@@ -644,6 +646,24 @@
       renderNav();
       return true;
     }
+
+    // A player's page is headed like every other page: his name is the title, and his card's own pages (Season,
+    // Ratings, Health) are the tabs. Before this the header kept the tabs of the page you came from.
+    function renderDetailHead(frame) {
+      const pages = [...(frame?.querySelectorAll("[data-player-pages] [data-player-page]") || [])];
+      titleEl.textContent = (frame?.querySelector(".approved-profile-name h3") || frame?.querySelector(".approved-profile-name"))?.textContent.trim() || "";
+      tabsEl.hidden = pages.length < 2;
+      tabsEl.setAttribute("aria-label", "Player pages");
+      const short = (title) => String(title || "").split(/[,&]/)[0].trim();
+      const markup = pages.length < 2 ? "" : pages.map((page, index) => `<button type="button" role="tab" data-pages-card-page="${index}" aria-selected="${!page.hidden}">${esc(short(page.dataset.pageTitle))}</button>`).join("");
+      if (tabsEl.innerHTML !== markup) tabsEl.innerHTML = markup;
+    }
+    // The card fills in after it opens (its details are fetched) and changes page: keep the header in step.
+    let detailFrame = 0;
+    const detailWatch = new MutationObserver(() => {
+      cancelAnimationFrame(detailFrame);
+      detailFrame = requestAnimationFrame(() => { if (currentPage === DETAIL) renderDetailHead(frames.get(detailStack.at(-1))); });
+    });
 
     // Back (or the card's own close): the player under this one, else the page you came from.
     function closeDetail(id) {
@@ -891,6 +911,14 @@
       if (event.target.closest("[data-pages-detail-back]")) {
         event.preventDefault();
         ctx.closeDetail?.(detailStack.at(-1));
+        return;
+      }
+      const cardTab = event.target.closest("[data-pages-card-page]");
+      if (cardTab && currentPage === DETAIL) {
+        const frame = frames.get(detailStack.at(-1));
+        const holder = frame && [frame, ...frame.querySelectorAll("*")].find(el => typeof el._showPlayerCardPage === "function");
+        holder?._showPlayerCardPage(Number(cardTab.dataset.pagesCardPage));
+        renderDetailHead(frame);
         return;
       }
       const go = event.target.closest("[data-pages-go]");

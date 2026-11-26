@@ -333,9 +333,8 @@ html[data-layout="pages"] .pages-slot-head.is-echo > * { visibility: hidden; }
 
 /* A player's page (user, 2026-11-24: "the player card shouldn't be a card, it should become the actual page"): the card
    fills the page, scaled as one piece, under a slim row that holds Back. */
-html[data-layout="pages"] .pages-shell.is-detail .pages-head { min-height: 0; padding: 10px 22px 0 16px; justify-content: flex-start; }
-html[data-layout="pages"] .pages-shell.is-detail .pages-title { display: none; }
-html[data-layout="pages"] .pages-shell.is-detail .pages-controls { justify-content: flex-start; }
+/* A player's page is headed like any other page: his name as the title, his card's pages as the tabs, Back at the right
+   (card-pages.js, renderDetailHead). */
 html[data-layout="pages"] .pages-detail-back svg { width: 11px; height: 11px; }
 html[data-layout="pages"] .pages-detail > .pages-stage { display: block; }
 html[data-layout="pages"] body:has(.pages-shell.is-detail) .ss-return { display: none !important; }   /* the page's Back does it */

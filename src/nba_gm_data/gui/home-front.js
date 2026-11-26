@@ -244,12 +244,19 @@
       return short.length ? `${short.slice(0, 2).join(" and ")}${short.length > 2 ? ` and ${short.length - 2} more` : ""}` : "a package";
     };
     // Trade talks come out a piece at a time (user, 2026-11-26: "they evolve by getting more and more revealing").
-    // The first round is only that two teams are talking; the second names the player; the third says what is on
-    // the table; then each change of the offer, a final offer, and the end: done, or broken off. A player who is
-    // already publicly in play (he asked out, he is being shopped) is named from the start.
+    // The first round is only that two teams are talking; the second hints at who (his position, young or
+    // veteran); the third names him; the fourth says what is on the table; then each change of the offer, a final
+    // offer, and the end: done, or broken off (user, checkpoint 11: slower, a hint before the name). A player who
+    // is already publicly in play (he asked out, he is being shopped) is named from the start.
+    const hint = (player) => {
+      const spot = String(player?.position || "").toUpperCase();
+      const role = spot.startsWith("C") ? "center" : spot.includes("G") ? "guard" : spot.includes("F") ? "forward" : "player";
+      const age = Number(player?.age);
+      return `a ${age && age <= 23 ? "young " : age >= 31 ? "veteran " : ""}${role}`;
+    };
     const suitors = new Map();
     for (const talk of extra.talks || []) if (talk.player?.player_id && (talk.rounds || []).length) suitors.set(talk.player.player_id, (suitors.get(talk.player.player_id) || 0) + 1);
-    const outed = new Set((extra.talks || []).filter((talk) => (talk.rounds || []).length >= 2 || (talk.status === "closed" && talk.outcome === "traded")).map((talk) => talk.player?.player_id));
+    const outed = new Set((extra.talks || []).filter((talk) => (talk.rounds || []).length >= 3 || (talk.status === "closed" && talk.outcome === "traded")).map((talk) => talk.player?.player_id));
     for (const talk of [...(extra.talks || [])].sort((a, b) => String(a.opened || "").localeCompare(String(b.opened || "")))) {
       const rounds = talk.rounds || [];
       const id = talk.player?.player_id;
@@ -259,13 +266,15 @@
       const known = threads.has(`player:${id}`) || (outed.has(id) && suitors.get(id) > 1);
       const named = known || outed.has(id);
       const steps = [{type: "talks", date: rounds[0].date || talk.opened || "", text: known ? `${talk.buyer} opened talks with ${talk.seller} about him` : `${talk.buyer} and ${talk.seller} opened trade talks`}];
-      if (named && !known && !done && rounds[1]) steps.push({type: "target", date: rounds[1].date, text: `The talks are about ${talk.player.name}`});
+      if (!known && !done && rounds[1]) steps.push({type: "hint", date: rounds[1].date, text: `The talks are about ${hint(talk.player)} on ${talk.seller}`});
+      if (named && !known && !done && rounds[2]) steps.push({type: "target", date: rounds[2].date, text: `It is ${talk.player.name}`});
       else if (known && !done && rounds[1]) steps.push({type: "talks", date: rounds[1].date, text: JSON.stringify(rounds[1].offer?.[talk.buyer] || []) !== JSON.stringify(rounds[0].offer?.[talk.buyer] || []) ? `${talk.buyer} came back with a new offer` : `${talk.buyer} and ${talk.seller} talked again`});
       let shown = "";
+      const offersFrom = known ? 2 : 3;   // the offer comes out a round after the name
       rounds.forEach((round, index) => {
         const offered = JSON.stringify(round.offer?.[talk.buyer] || []);
-        if (index >= 2 && offered !== shown) steps.push({type: "offer", date: round.date, text: `${talk.buyer} ${shown ? "changed its offer:" : "has offered"} ${assets(round.offer?.[talk.buyer])}`});
-        if (index >= 2) shown = offered;
+        if (index >= offersFrom && offered !== shown) steps.push({type: "offer", date: round.date, text: `${talk.buyer} ${shown ? "changed its offer:" : "has offered"} ${assets(round.offer?.[talk.buyer])}`});
+        if (index >= offersFrom) shown = offered;
         for (const club of round.final_by || []) steps.push({type: "final", date: round.date, text: `${club} made a final offer`});
       });
       if (done) steps.push({type: "traded", date: talk.closed_date || "", text: `Done: ${talk.player.name} to ${talk.buyer}`});
@@ -321,11 +330,11 @@
       if (!entry.steps.some((step) => step.type === "fired")) entry.steps.push({type: "hot", date: "", text: `${seat.name}: on pace for ${entry.gap.toFixed(0)} fewer wins than expected, ${seat.games} games in`});
     }
     // Who it is, where it stands, and how much it matters.
-    const weight = {demand: 100, final: 92, offer: 86, bidding: 85, bid: 84, collapsed: 80, target: 76, unhappy: 70, talks: 64, snapped: 62, fired: 60, returned: 56, lead: 55, streak: 54, hot: 52, market: 50, injured: 48, due: 48, hired: 40, traded: 40, signed: 30, stalled: 15};
+    const weight = {demand: 100, final: 92, offer: 86, bidding: 85, bid: 84, target: 82, collapsed: 80, hint: 78, unhappy: 70, talks: 66, snapped: 62, fired: 60, returned: 56, lead: 55, streak: 54, hot: 52, market: 50, injured: 48, due: 48, hired: 40, traded: 40, signed: 30, stalled: 15};
     const closing = new Set(["traded", "signed", "hired", "collapsed", "snapped", "returned"]);
     const status = {demand: "Wants out", bidding: "Bidding war", bid: "Bidding war", market: "On the market", stalled: "Talks stalled", unhappy: "Unhappy", fired: "Job open", lead: "New leader", traded: "Traded", signed: "Signed", hired: "Filled",
-      talks: "In talks", target: "In talks", offer: "Offer made", final: "Final offer", collapsed: "Fell apart", streak: "Streak", snapped: "Streak over", injured: "Out", due: "Out", returned: "Back", hot: "Hot seat"};
-    const family = {demand: "trade", bidding: "trade", bid: "trade", market: "trade", stalled: "trade", traded: "trade", signed: "trade", talks: "trade", target: "trade", offer: "trade", final: "trade", collapsed: "trade",
+      talks: "In talks", hint: "In talks", target: "In talks", offer: "Offer made", final: "Final offer", collapsed: "Fell apart", streak: "Streak", snapped: "Streak over", injured: "Out", due: "Out", returned: "Back", hot: "Hot seat"};
+    const family = {demand: "trade", bidding: "trade", bid: "trade", market: "trade", stalled: "trade", traded: "trade", signed: "trade", talks: "trade", hint: "trade", target: "trade", offer: "trade", final: "trade", collapsed: "trade",
       streak: "streak", snapped: "streak", injured: "injury", due: "injury", returned: "injury", hot: "staff", fired: "staff", hired: "staff", lead: "award", unhappy: "room"};
     const out = [];
     for (const entry of threads.values()) {

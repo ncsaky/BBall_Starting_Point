@@ -372,10 +372,23 @@ its sections share the page's width and height. The rules live in `gui/full-page
 - A storyline evolves (user: "I definitely like to see how the storylines evolve, that's a big thing"). A trade
   rumor comes out a piece at a time: first only that two teams are talking, then who it is about, then what is on
   the table, then the end, a deal or a falling-out. Each step is a real round of the game's own negotiation; the
-  page withholds, it never invents. A player who is already public is named from the start.
+  page withholds, it never invents. A player who is already public is named from the start. Pace (user, checkpoint
+  11: "slower"): the two teams, then a hint (his position; young or veteran), then the name, then the offer.
 - Home shows a mix: five storylines, at most two of one kind unless they are the user's. Recent beats old.
 - The front page is Home's Today tab all year: results lead while games are played, the payroll and the roster in
   the offseason.
+
+## A player's page (2026-11-26)
+- A player is a page like any other: his name is the page title, and Season, Ratings, Health (and Contract
+  Extension when he can sign one) are its tabs in the usual place. No small "1/3" with arrows.
+- Each tab fits without scrolling at the usual window size and has nothing under 11px. The Ratings tab leaves the
+  top strip (photo, OVR / OFF / DEF, contract) to the Season tab to do it.
+- The heat maps, range bars and body map keep their colours and shapes; only their size and the text around them
+  changed.
+- On the extension page: fields are glass, never a white box; the answer is a coloured dot and plain words; the
+  chosen option in a row is a frosted pill and the others plain text on a faint tray.
+- Styles: `gui/player-page.css` and `gui/extension-window.css`, both scoped to the page version of the card
+  (`.card-board-window.is-detail-card`), so the floating version is untouched.
 
 ## Pop-ups (2026-11-26)
 - Pop-up styling lives in two sheets: `gui/popups.css` (the trade room and incoming offers) and
