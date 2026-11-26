@@ -299,3 +299,15 @@ test('Standings, Schedule and Development are full-size tabs, each holding its o
     assert.equal(cardsOf(layout)[0].natural, undefined, `${id} is not scaled as a picture`);
   }
 });
+
+test('Staff, Identity and Profile are full-size tabs; the heat maps and charts keep their proportions', () => {
+  const {pages} = load();
+  for (const [id, cards] of [['staff', ['staff']], ['identity', ['identity', 'signals', 'morale']], ['profile', ['offense', 'defense', 'factors', 'efficiency']]]) {
+    const layout = pages.PAGES.find((page) => page.id === id).layout({available: () => true});
+    assert.ok(layout.full, `${id} is laid out at real sizes`);
+    assert.deepEqual(Array.from(cardsOf(layout), (node) => node.id), cards);
+  }
+  const picture = (id, card) => cardsOf(pages.PAGES.find((page) => page.id === id).layout({available: () => true})).find((node) => node.id === card);
+  assert.equal(picture('identity', 'identity').natural, 'fit');
+  for (const card of ['offense', 'defense', 'factors', 'efficiency']) assert.equal(picture('profile', card).natural, 'fit');
+});

@@ -73,6 +73,7 @@
   // and a section that is a picture (the payroll chart, the draft-assets grid) keeps its proportions:
   //   natural  "fit": drawn at its own size, enlarged as one piece to fit the room it is given
   //            "width": enlarged to the section's width; its height follows
+  //   size     [w, h]: the picture's own size, when the board's default (which moves with the window) would change it
   const rowOf = (options, ...items) => ({type: "row", items, ...options});
   const colOf = (options, ...items) => ({type: "col", items, ...options});
 
@@ -109,9 +110,15 @@
     {id: "roster", group: "team", label: "Roster", layout: () => ({full: {fits: [1220, 560], roomy: [1500, 900]}, ...row(card("roster", {bare: true, fill: true}))})},
     {id: "stats", group: "team", label: "Stats", layout: () => ({full: {fits: [900, 560], roomy: [1500, 900]}, ...row(card("stats", {bare: true, fill: true}))})},
     {id: "development", group: "team", label: "Development", layout: () => ({full: {fits: [1120, 620], roomy: [1500, 900]}, ...row(card("development", {expanded: true, bare: true, fill: true}))})},
-    {id: "staff", group: "team", label: "Staff", layout: () => row(card("staff", {expanded: true, bare: true}))},
-    {id: "identity", group: "team", label: "Identity", layout: () => row(card("identity", {title: "Heat Maps"}), col("signals", "morale"))},
-    {id: "profile", group: "team", label: "Profile", layout: () => col(row("offense", "defense"), row("factors", "efficiency"))},
+    {id: "staff", group: "team", label: "Staff", layout: () => ({full: {fits: [1120, 560], roomy: [1500, 900]}, ...row(card("staff", {expanded: true, bare: true, fill: true}))})},
+    {id: "identity", group: "team", label: "Identity", layout: () => ({full: {fits: [1120, 640], roomy: [1500, 900]}, ...row(
+      colOf({fill: true}, card("identity", {title: "Heat Maps", fill: true, natural: "fit", size: [529, 370]})),
+      colOf({basis: 340}, "signals", "morale"))})},
+    {id: "profile", group: "team", label: "Profile", layout: () => ({full: {fits: [1120, 640], roomy: [1500, 900]}, ...row(
+      colOf({fill: true},
+        rowOf({fill: true}, card("offense", {fill: true, natural: "fit", size: [291, 239]}), card("defense", {fill: true, natural: "fit", size: [291, 239]})),
+        rowOf({fill: true}, card("factors", {fill: true, natural: "fit", size: [360, 158]}))),
+      colOf({basis: 520}, card("efficiency", {fill: true, natural: "fit", size: [279, 312]})))})},
 
     // Front office. Contracts: the table at full size with the draft assets under it; the payroll chart, enlarged in
     // its own proportions, down the right. Trades: the league's targets the height of the page, your block and what
@@ -522,7 +529,7 @@
       for (const mode of ["width", "fit"]) for (const slot of slots) {
         if (slot.pagesItem.natural !== mode || slot.hidden) continue;
         const id = slot.dataset.pagesSlot, frame = frames.get(id), body = slot.querySelector(".pages-slot-body");
-        const size = naturalSize(id, Boolean(slot.pagesItem.expanded));
+        const size = slot.pagesItem.size ? {width: slot.pagesItem.size[0], height: slot.pagesItem.size[1]} : naturalSize(id, Boolean(slot.pagesItem.expanded));
         sizeFrame(id, size.width, size.height);
         if (FIT_HEIGHT.has(id)) { const fitted = contentHeight(id); if (fitted > 60) { size.height = fitted; sizeFrame(id, size.width, fitted); } }
         const zoom = Math.min(slot.pagesItem.maxZoom || 2, mode === "width" ? body.clientWidth / size.width : Math.min(body.clientWidth / size.width, body.clientHeight / size.height));

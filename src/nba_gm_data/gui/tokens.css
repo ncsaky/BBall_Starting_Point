@@ -64,17 +64,21 @@
   --gm-glass-popup: rgba(9, 18, 32, .86);
 
   /* ---- Motion. Quick: hover, press, a tick. Open: pop-ups and menus (the zoom). Move: a picker's pill sliding,
-     pages cross-fading. Data: bars and charts changing, once. One easing curve. Never slide-ups, bounces or loops. */
+     pages cross-fading. Data: bars and charts changing, once. One easing curve. Never slide-ups, bounces or loops:
+     the one thing that moves by itself is the arena picture behind the glass (scene, drift). */
   --gm-motion-quick: .12s;
   --gm-motion-open: .17s;
   --gm-motion-move: .24s;
   --gm-motion-data: .45s;
   --gm-ease: cubic-bezier(.2, .8, .2, 1);
+  /* The arena behind the glass only (user, 2026-11-26): a change of picture or page, and its slow drift. */
+  --gm-motion-scene: 1.2s;
+  --gm-motion-drift: 90s;
 }
 
 /* The computer asks for less motion: every transition that reads these values stops. */
 @media (prefers-reduced-motion: reduce) {
-  :root { --gm-motion-quick: .001s; --gm-motion-open: .001s; --gm-motion-move: .001s; --gm-motion-data: .001s; }
+  :root { --gm-motion-quick: .001s; --gm-motion-open: .001s; --gm-motion-move: .001s; --gm-motion-data: .001s; --gm-motion-scene: .001s; }
 }
 
 /* Never italic (user, Stage A decision 5): emphasis is weight or colour. Low priority on purpose, so a rule that

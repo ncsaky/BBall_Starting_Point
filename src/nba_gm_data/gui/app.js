@@ -133,8 +133,10 @@ const UI_LOOK_SETTINGS = {
   font: { key: "nbaGmFont", label: "Font", fallback: "helvetica", options: [["helvetica", "Helvetica Neue"], ["modern", "SF Pro"], ["rounded", "Rounded"], ["avenir", "Avenir Next"], ["classic", "Classic (Tahoma)"]] },
   // Round 6: the user couldn't pick one button style, so all four are offered.
   buttons: { key: "nbaGmButtons", label: "Buttons", fallback: "pill", options: [["pill", "Glass pill"], ["solid", "Solid pill"], ["square", "Rounded square"], ["segmented", "Segmented"]] },
+  // The arena picture behind the glass drifts slowly and leans with the page (arena.js; user, 2026-11-26).
+  motion: { key: "nbaGmBackgroundMotion", label: "Background movement", fallback: "on", options: [["on", "On"], ["off", "Off"]] },
 };
-const UI_LOOK_DATASET = { glass: "glass", font: "uiFont", buttons: "uiButtons" };
+const UI_LOOK_DATASET = { glass: "glass", font: "uiFont", buttons: "uiButtons", motion: "uiMotion" };
 function uiLook(name) {
   const setting = UI_LOOK_SETTINGS[name];
   let saved = "";
@@ -3216,13 +3218,21 @@ function applyTeamGlass(team = userTeam()) {
   // The board behind the glass is the team's arena (the user picked each picture, 2026-11-24).
   const root = document.documentElement;
   if (TEAM_BRAND_COLORS[team]) {
-    root.style.setProperty("--arena-image", `url("/assets/arenas/${team}.jpg")`);
+    // The picture follows the phase of the year where the team has more than one photo, and lives on one moving
+    // layer behind the game (arena.js). The variable stays as the still picture for anything that reads it.
+    const phase = state.home?.save?.phase || "";
+    root.style.setProperty("--arena-image", `url("${globalThis.ArenaBackdrop?.urlFor?.(team, phase) || `/assets/arenas/${team}.jpg`}")`);
     root.dataset.arena = team;
+    globalThis.ArenaBackdrop?.show?.(team, phase);
   } else {
     root.style.removeProperty("--arena-image");
     delete root.dataset.arena;
+    globalThis.ArenaBackdrop?.hide?.();
   }
 }
+
+// The list of phase pictures arrives a moment after the page: show the right one then.
+globalThis.addEventListener?.("arena-phases-ready", () => { try { if (state.home) applyTeamGlass(); } catch { /* no save open yet */ } });
 
 function renderDashboardTab(rows) {
   applyTeamGlass();
@@ -13099,7 +13109,7 @@ function openSettingsModal() {
         ${layoutModeMenuMarkup()}
         ${boardThemeMenuMarkup()}
         ${typeof cardTransparencyMenuMarkup === "function" ? cardTransparencyMenuMarkup() : ""}
-        ${typeof uiLookMenuMarkup === "function" ? uiLookMenuMarkup("font") + uiLookMenuMarkup("buttons") : ""}
+        ${typeof uiLookMenuMarkup === "function" ? uiLookMenuMarkup("font") + uiLookMenuMarkup("buttons") + uiLookMenuMarkup("motion") : ""}
       </section>
       ${soundMenuMarkup(onOff)}
       ${slideshows ? `<section class="settings-group"><h4>Season slideshows</h4>${slideshows}</section>` : ""}
@@ -13239,7 +13249,9 @@ function cardTransparencyMenuMarkup() {
 }
 
 function uiLookMenuMarkup(name) {
-  const setting = UI_LOOK_SETTINGS[name], current = uiLook(name);
+  const setting = UI_LOOK_SETTINGS[name];
+  if (!setting) return "";
+  const current = uiLook(name);
   const buttons = setting.options.map(([key, label]) => `<button type="button" data-ui-look="${name}" data-ui-look-choice="${key}" aria-pressed="${key === current}"${name === "font" ? ` class="ui-font-sample is-${key}"` : ""}${name === "buttons" ? ` class="ui-button-sample is-${key}"` : ""}>${label}</button>`);
   return settingsRow(setting.label, settingsPill(setting.label, buttons.join("")));
 }

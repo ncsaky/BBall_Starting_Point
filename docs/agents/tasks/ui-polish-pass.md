@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C, checkpoint 3 published (background options to pick from; Standings, Schedule, Development rebuilt; Home has standings, no week strip); stopped, waiting for five decisions
+Progress: 8/9 - Stage C, checkpoint 4 published (new backgrounds with phase photos and movement; Staff, Identity, Profile rebuilt; music list to approve); stopped, waiting for four decisions
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -117,7 +117,10 @@ and first run, and the token sheet. End with a short list of decisions the user 
       - [x] Checkpoint 3 (2026-11-26): background options as pictures; Standings, Schedule, Development rebuilt;
             Home has standings under the next game and no week strip. Page:
             https://claude.ai/artifact/MEuxkg2VnNosDHY8GG5cES. **Waiting on five decisions.**
-      - [ ] Next: build the chosen background treatment for all thirty, then the remaining tabs one at a time
+      - [x] Checkpoint 4 (2026-11-26): backgrounds rebuilt (treatment C, phase photos, a moving layer); Staff,
+            Identity, Profile rebuilt; a music shortlist. Page: https://claude.ai/artifact/J3LFyTZsyd2XSEdJ7dEFXM.
+            **Waiting on four decisions**, and a yes in the chat before any music download.
+      - [ ] Next: the last five tabs (Draft, News, Awards, playoff tabs, Two-Way Places), one at a time
             (pattern work: a cheaper model can do it from `docs/UI_STYLE_GUIDE.md` "Full-size pages"), then the step
             screens.
 
@@ -346,3 +349,40 @@ Schedule tab); next: backgrounds, then the remaining tabs.
 - Movement reverses the style guide's "never anything looping": ask before building (asked).
 - Still old cards: Staff, Identity, Profile, Draft, News, Awards, the playoff tabs, Two-Way Places, the step screens.
 - Not replayed end to end since the restructure (no sim, no step-screen walk).
+
+## Stage C, checkpoint 4 report (2026-11-26)
+
+**The user's checkpoint 3 answers**: background treatment C (neutral and darker; "very hard to see a difference
+between these options"); a different photo by phase; slow drift and cross-fade; bring a list of free music tracks to
+approve; the Draft tab stays under Front Office.
+
+**What changed**
+- **Backgrounds**: all thirty arenas rebuilt in treatment C; 29 playoff and offseason photos for the 19 teams with
+  more than one credited photo (`gui/assets/arenas/*-playoffs.jpg`, `*-offseason.jpg`, `phases.json`, `credits.json`;
+  `output/ui-polish/bg/build_all.py`). Charlotte and Cleveland keep their drawn arenas, muted.
+- **One moving layer** (`gui/arena.js`, `gui/arena.css`): the picture is an `<img>` on a fixed layer behind the game
+  (the look sheets strip background images from every element, and `.dashboard-shell` had a light fill that had to
+  go transparent). Slow drift, a lean per sidebar page, a cross-fade on a change of picture; Settings > Look >
+  Background movement; off under reduced motion. Picture addresses carry a version so browsers fetch rebuilt ones.
+- **Staff, Identity, Profile** rebuilt (Sonnet subagent, reviewed). A card may now pin its own size for `natural`
+  sections (`size: [w, h]`), because the board's default window sizes change with the viewport.
+- New tokens: `--gm-motion-scene` 1.2s, `--gm-motion-drift` 90s (the arena layer only).
+
+**Music (nothing downloaded)**: a subagent read each track's own OpenGameArt page. Shortlist: "Chill lofi inspired
+[loop edit]" (omfgdude / qubodup, CC0, ogg 2.4 MB), "lofi hip hop" (omfgdude, CC0, ogg 1.5 MB), "Sleepy Head"
+(Tsorthan Grove, CC0, flac 32.1 MB), "A Day In, Night Out" loop (Tsorthan Grove, CC0, flac 12.3 MB), "Diminishing
+Returns" (tcarisland, CC BY 4.0, mp3 7.7 MB), "Downtempo" (biggius, CC BY 4.0, mp3 2.5 MB). Licences are the
+uploaders' own statements; nobody listened to them. Downloading needs the user's yes in the chat. `ffmpeg` is
+installed for converting the FLACs.
+
+**Waiting on four decisions** (page https://claude.ai/artifact/J3LFyTZsyd2XSEdJ7dEFXM, collection `decisions`):
+`music-tracks` (cc0 | all | none), `staff-list` (pages | scroll | as-is), `bg-dark` (good | lighter | note), `next`
+(tabs | home-phases | steps).
+
+**Known gaps**
+- The drift was not watched moving (captures emulate reduced motion): the layer, the switch and the phase pictures
+  were checked from the page's state and still pictures.
+- Available staff shows the rows that fit (19 of about 30); the rest need the role picker. Asked.
+- Some arenas are close to black (Cleveland, a few offseason photos). Asked.
+- Still old cards: Draft, News, Awards, the playoff tabs, Two-Way Places, the step screens.
+- Not replayed end to end since the restructure.

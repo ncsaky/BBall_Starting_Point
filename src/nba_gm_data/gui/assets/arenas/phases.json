@@ -1,0 +1,69 @@
+{
+ "BKN": {
+  "offseason": "BKN-offseason.jpg",
+  "playoffs": "BKN-playoffs.jpg"
+ },
+ "BOS": {
+  "offseason": "BOS-offseason.jpg",
+  "playoffs": "BOS-playoffs.jpg"
+ },
+ "CHI": {
+  "offseason": "CHI-offseason.jpg",
+  "playoffs": "CHI-playoffs.jpg"
+ },
+ "CLE": {
+  "offseason": "CLE-offseason.jpg"
+ },
+ "DAL": {
+  "offseason": "DAL-offseason.jpg"
+ },
+ "DEN": {
+  "offseason": "DEN-offseason.jpg",
+  "playoffs": "DEN-playoffs.jpg"
+ },
+ "GSW": {
+  "offseason": "GSW-offseason.jpg"
+ },
+ "LAC": {
+  "offseason": "LAC-offseason.jpg"
+ },
+ "LAL": {
+  "offseason": "LAL-offseason.jpg",
+  "playoffs": "LAL-playoffs.jpg"
+ },
+ "MEM": {
+  "offseason": "MEM-offseason.jpg",
+  "playoffs": "MEM-playoffs.jpg"
+ },
+ "MIA": {
+  "offseason": "MIA-offseason.jpg",
+  "playoffs": "MIA-playoffs.jpg"
+ },
+ "MIL": {
+  "offseason": "MIL-offseason.jpg"
+ },
+ "NYK": {
+  "offseason": "NYK-offseason.jpg"
+ },
+ "ORL": {
+  "offseason": "ORL-offseason.jpg"
+ },
+ "PHI": {
+  "offseason": "PHI-offseason.jpg",
+  "playoffs": "PHI-playoffs.jpg"
+ },
+ "POR": {
+  "offseason": "POR-offseason.jpg"
+ },
+ "SAS": {
+  "offseason": "SAS-offseason.jpg",
+  "playoffs": "SAS-playoffs.jpg"
+ },
+ "TOR": {
+  "offseason": "TOR-offseason.jpg",
+  "playoffs": "TOR-playoffs.jpg"
+ },
+ "WAS": {
+  "offseason": "WAS-offseason.jpg"
+ }
+}

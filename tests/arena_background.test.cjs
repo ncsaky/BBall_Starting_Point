@@ -14,7 +14,9 @@ test('every team has an arena picture and every photo among them is credited', (
   assert.equal(teams.length, 30);
   for (const team of teams) assert.ok(fs.existsSync(path.join(gui, `assets/arenas/${team}.jpg`)), team);
   const credits = JSON.parse(read('assets/arenas/credits.json'));
-  assert.equal(credits.photos.length, 29, 'every team but Charlotte shows a photo');
+  // One season photo for every team but Charlotte, plus the playoff and offseason photos (arena_layer.test.cjs).
+  const season = credits.photos.filter((photo) => /^assets\/arenas\/[A-Z]{3}\.jpg$/.test(photo.file));
+  assert.equal(season.length, 29, 'every team but Charlotte shows a photo');
   for (const photo of credits.photos) {
     assert.ok(photo.author && photo.licence && photo.source_url.startsWith('https://commons.wikimedia.org/'), photo.team);
     assert.ok(photo.edited, 'says it was edited');
@@ -22,7 +24,7 @@ test('every team has an arena picture and every photo among them is credited', (
 });
 
 test('the user\'s team sets the arena, and the board and page glass use it', () => {
-  assert.match(read('app.js'), /setProperty\("--arena-image", `url\("\/assets\/arenas\/\$\{team\}\.jpg"\)`\)/);
+  assert.match(read('app.js'), /setProperty\("--arena-image", `url\("\$\{globalThis\.ArenaBackdrop\?\.urlFor\?\.\(team, phase\) \|\| `\/assets\/arenas\/\$\{team\}\.jpg`\}"\)`\)/);
   assert.match(read('jfresh.css'), /background-image: var\(--arena-image\) !important;/);
   assert.match(read('card-pages.css'), /\[data-arena\] \.pages-sheet::before/);
 });

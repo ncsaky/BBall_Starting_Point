@@ -283,6 +283,23 @@ these cannot be swapped blind).
   come first. The rest can wait."): the user reads them as machine-written. A title is a plain label ("To do",
   "Pages"); a line under it says one concrete thing or is left out.
 
+## The arena behind the glass (2026-11-26)
+
+- **Neutral photos, team colour as accents** (user: the single colour grade over every photo was "kind of
+  overpowering ... slapping a color filter over a photo"). Each arena photo keeps its own colours, muted, a little
+  more contrast, darker toward the edges, bright floors and screens eased down so white text reads (treatment C, the
+  user's pick). Team colour belongs in small places: the year bar, the current page, your row in a table.
+- **A different photo by phase** where the team has more than one credited photo: the season, the playoffs, the
+  offseason (`gui/assets/arenas/<TEAM>.jpg`, `-playoffs.jpg`, `-offseason.jpg`, `phases.json`; built by
+  `output/ui-polish/bg/build_all.py` from the photos in the main checkout's `output/ui-workbench/arena`). Eleven teams
+  have one photo and keep it all year. New photos are downloads: ask the user first.
+- **It moves, a little** (user: "a more alive background so it feels less static"): one fixed layer behind the game
+  (`gui/arena.js`, `gui/arena.css`) drifts slowly (`--gm-motion-drift`, 90s there and back), cross-fades when the
+  picture changes and leans a little toward a different side for each sidebar page (`--gm-motion-scene`, 1.2s). This
+  is the one exception to "nothing loops". Settings > Look > Background movement turns it off; so does the computer's
+  reduced-motion setting. Tables and text never move.
+- Rebuilt pictures need a new `VERSION` in `arena.js`, or browsers keep the old ones.
+
 ## Full-size pages (2026-11-26)
 
 A page is no longer cards pasted at card size and shrunk as one picture. A rebuilt page is laid out at real sizes and
@@ -303,8 +320,8 @@ its sections share the page's width and height. The rules live in `gui/full-page
 - **The same rows in two tables are two tabs of one page** (Team: Roster | Stats).
 - **Nothing is cut to make room.** If a name cannot fit it ends in an ellipsis; a role never does (give the column
   the width). A long to-do job takes a second line.
-- **Rebuilt so far:** Home (every phase), Schedule, Roster, Stats, Development, Contracts, Trades, Standings. Not
-  yet: Staff, Identity, Profile, Draft, News, Awards, the playoff tabs, Two-Way Places and the step screens.
+- **Rebuilt so far:** Home (every phase), Schedule, Roster, Stats, Development, Staff, Identity, Profile, Contracts,
+  Trades, Standings. Not yet: Draft, News, Awards, the playoff tabs, Two-Way Places and the step screens.
 
 ## Preserve (the user's favourites; don't redesign)
 - Team Identity heat maps at the current hexagon size (round 3: "looks great"). The tab style there still needs a new try.
