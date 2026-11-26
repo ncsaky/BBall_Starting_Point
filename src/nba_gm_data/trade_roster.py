@@ -146,6 +146,64 @@ def long_absences(canonical, saved):
 ROTATION_ROLE_PICK_ALLOWANCE = 25.0
 BACKUP_ROLE_MINUTES = 16.0
 
+# AI-TRADES-SENSE: what a first-round pick buys. The season review had first-round picks and first-round swap rights
+# paid for end-of-bench players (Matisse Thybulle, Jalen Slawson, Quinten Post: 7 to 9 minutes a night after the
+# trade) and Washington paying one for Adem Bona, whose option it then declined. Real teams spend a first on a player
+# who takes a real rotation role or a young player with real upside; depth is bought with seconds. So an AI team
+# that sends out a first-round pick or swap right (and gets no first back) needs one of: an incoming player projected
+# for FIRST_ROUND_MINUTES or more on its roster, young upside of at least FIRST_ROUND_UPSIDE (development upside
+# weighted by current value, as young_upside above: about a 22-year-old with 14 points of upside and a value of 30),
+# or a money purpose (the tax saving or salary relief of a salary dump, when the first is the price of the dump).
+FIRST_ROUND_MINUTES = 20.0
+# ... and who is a rotation player now: the buyer's projection alone was too hopeful (the second test season had
+# Philadelphia give a first-round swap right for Luke Kornet, a 12-minute player in San Antonio projected for 20+,
+# who then played 9 minutes a night).
+FIRST_ROUND_CURRENT_MINUTES = 15.0
+FIRST_ROUND_UPSIDE = 8.0
+FIRST_ROUND_TAX_PURPOSE = 10.0       # tax value (points) that makes the first the price of shedding salary
+FIRST_ROUND_RELIEF_MILLIONS = 8.0    # or net salary relief this large
+
+
+def first_round_assets(assets, canonical):
+    from . import transactions as tx
+    found = []
+    for asset in assets:
+        if asset.get('kind') == 'pick':
+            if int((tx.pick_by_id(canonical, asset.get('id')) or asset).get('round') or 0) == 1:
+                found.append(asset)
+        elif asset.get('kind') == 'pick_swap':
+            row = tx.pick_swap_by_id(canonical, asset.get('id')) or asset
+            if int(row.get('round') or asset.get('round') or 0) == 1:
+                found.append(asset)
+    return found
+
+
+def first_round_pick_purpose(canonical, team_id, incoming, draft_in, draft_out, incoming_minutes, growth, tax_saving,
+                             relief):
+    """True when the deal has a purpose worth a first (or no first leaves); see FIRST_ROUND_MINUTES."""
+    if not first_round_assets(draft_out, canonical) or first_round_assets(draft_in, canonical):
+        return True
+    if not any(a.get('kind') == 'player' for a in incoming):
+        return True  # picks for picks
+    from . import transactions as tx
+    values = tx.player_asset_values_by_id(canonical)
+    current = max((tx.trade_value_role_minutes(tx.player_by_id(canonical, a.get('id')),
+                                               tx.valuation_or_fallback(values, a.get('id'), tx.player_by_id(canonical, a.get('id'))))
+                   for a in incoming if a.get('kind') == 'player'), default=0.0)
+    rotation_player = incoming_minutes >= FIRST_ROUND_MINUTES and current >= FIRST_ROUND_CURRENT_MINUTES
+    return (rotation_player or growth >= FIRST_ROUND_UPSIDE
+            or tax_saving >= FIRST_ROUND_TAX_PURPOSE or relief >= FIRST_ROUND_RELIEF_MILLIONS)
+
+
+def pick_investment_overspent(investment):
+    """The draft spending in ``pick_investment_outlook`` isn't justified (the caller rejects the deal)."""
+    if not investment:
+        return False
+    if not investment.get('first_round_purpose', True):
+        return True
+    return ((investment['incoming_rotation_minutes'] < 24 or investment['rotation_gain'] < .25)
+            and investment['net_draft_value_spent'] > investment['capital_limit'])
+
 
 def pick_investment_outlook(canonical, team_id, incoming, outgoing, before, after, waiver_cost=0):
     """Allow price disagreement for an actual purpose, not just a pick sweetener."""
@@ -222,7 +280,10 @@ def pick_investment_outlook(canonical, team_id, incoming, outgoing, before, afte
     from .front_office import pick_allowance
     personality_allowance, personality_reason = pick_allowance(canonical, team_id, incoming, outgoing)
     capital_limit += personality_allowance
+    first_round_purpose = first_round_pick_purpose(canonical, team_id, incoming, draft_in, draft_out,
+                                                   incoming_minutes, growth, tax_saving, relief)
     return {'net_draft_value_spent': round(spend, 4), 'loss_limit': round(limit, 4),
+            'first_round_purpose': first_round_purpose,
             'personality_allowance': personality_allowance, 'personality_reason': personality_reason,
             'rotation_gain': round(strength, 4), 'young_upside_gain': round(growth, 4),
             'injury_cover_gain': round(cover, 4), 'net_salary_relief_millions': round(relief, 4),
@@ -295,6 +356,16 @@ def trade_roster_outlook(canonical, team_id, incoming, outgoing):
     phase = state.get('window_phase')
     competitive = phase in {'peak', 'entering'} or state.get('phase') in {'contending', 'contending_with_future_upside'}
     delta = after['strength']-before['strength']
+    # AI-TRADES-SENSE: an incoming player out for much of the season counts in the projected rotation only for the
+    # part of it he will play (trade_injury.missed_shares).
+    from .trade_injury import missed_shares
+    hurt_in = {pid: missed_shares(canonical, pid)[0] for pid in incoming_ids}
+    hurt_in = {pid: share for pid, share in hurt_in.items() if share > 0}
+    if hurt_in and delta > 0:
+        healthy_after = roster_projection(canonical, team_id, outgoing_ids, incoming_ids - set(hurt_in))
+        missed = max(hurt_in.values())
+        delta = (1 - missed) * delta + missed * min(delta, healthy_after['strength']-before['strength'])
+        after = {**after, 'strength': before['strength'] + delta}
     adjustment = delta*(4 if competitive else 1) - lost_credit - cost*(.16 if competitive else .28)
     system_fit = system_fit_discount(canonical, team_id, incoming, delta, state)
     adjustment -= system_fit
@@ -325,8 +396,10 @@ def trade_roster_outlook(canonical, team_id, incoming, outgoing):
     elif any(d['unquantified'] for d in debts):
         issue = 'Required final-roster cuts have unresolved salary obligations.'
     investment = pick_investment_outlook(canonical, team_id, incoming, outgoing, before, after, cost)
-    if (investment and (investment['incoming_rotation_minutes'] < 24 or investment['rotation_gain'] < .25)
-            and investment['net_draft_value_spent'] > investment['capital_limit']):
+    if investment and not investment.get('first_round_purpose', True):
+        issue = issue or ('A first-round pick buys a rotation player or real young upside, not depth '
+                          'this deal would not play.')
+    if pick_investment_overspent(investment):
         issue = issue or 'Draft spending exceeds the rotation, depth, upside, injury-cover and salary benefits of this marginal acquisition.'
     return {'before_strength': before['strength'], 'after_strength': after['strength'],
             'strength_delta': round(delta, 4), 'adjustment': round(adjustment, 4), 'issue': issue,

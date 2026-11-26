@@ -11584,6 +11584,9 @@ def strategic_signing_salary(player: dict[str, Any], score: float) -> int:
     return int(round(clamp(salary, 1_900_000, 18_000_000)))
 
 
+HARD_CAP_FILL_SCAN = 80  # AI-TRADES-SENSE: free agents looked at for a minimum that fits under a hard cap
+
+
 def auto_fill_rosters(canonical: dict[str, Any], save: dict[str, Any], free_agents: list[str], next_season: str, seed: int,
                       *, only_team_ids: set[str] | None = None, include_humans: bool = False) -> set[str]:
     from .waivers import pending_ids
@@ -11626,8 +11629,16 @@ def auto_fill_rosters(canonical: dict[str, Any], save: dict[str, Any], free_agen
             else:
                 fits = minimum_fits_hard_cap(active, save, team["id"], candidate, next_season)
                 if not fits["ok"]:
-                    note_hard_capped_short_roster(save, team, len(roster), fits["reason"])
-                    break
+                    # AI-TRADES-SENSE: a veteran's minimum may not fit where a young player's smaller minimum does
+                    # (minimums rise with years of service); take the best free agent whose minimum fits.
+                    cheaper = next((player for player in available[:HARD_CAP_FILL_SCAN]
+                                    if player["id"] not in signed and player["id"] != candidate["id"]
+                                    and not reacquisition_blocked(save, team['id'], player['id'], save['state']['current_date'])
+                                    and minimum_fits_hard_cap(active, save, team["id"], player, next_season)["ok"]), None)
+                    if cheaper is None:
+                        note_hard_capped_short_roster(save, team, len(roster), fits["reason"])
+                        break
+                    candidate = cheaper
             save.setdefault("roster_overrides", {})[candidate["id"]] = team["id"]
             # FA-REAL: a one-year minimum by his years of service (a veteran's counts at the two-year minimum), not a
             # flat $2.25M.

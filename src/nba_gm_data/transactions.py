@@ -1442,6 +1442,35 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
     }
 
 
+# AI-TRADES-SENSE: a salary dump costs the team shedding salary something, and a useful player isn't given away. The
+# season review had Orlando send Jonathan Isaac (a 19-minute player it valued at 42) to Memphis for nothing to save
+# $23.7M of tax, accepted only through the bounded-negotiation allowance. In real dumps the team shedding a contract
+# attaches picks when the contract has negative value (trade_tax.absorb_cost prices that), and gets something back
+# (a second-round pick) for a player the other team wants. So a two-team AI deal in which one side receives nothing
+# and sends only players is refused when the player is useful: worth USEFUL_GIVEAWAY_VALUE or more to the team
+# sending him or to the team taking him. A minimum-salary bench player can still be moved for nothing.
+USEFUL_GIVEAWAY_VALUE = 12.0
+
+
+def useful_player_for_nothing(candidate: dict[str, Any]) -> bool:
+    proposal = candidate.get('proposal') or {}
+    if proposal.get('transfers'):
+        return False
+    evaluations = {e.get('perspective_team_id'): e for e in candidate.get('evaluations') or []}
+    for sender, sent, back, receiver in (
+            (proposal.get('from_team_id'), proposal.get('from_assets') or [], proposal.get('to_assets') or [],
+             proposal.get('to_team_id')),
+            (proposal.get('to_team_id'), proposal.get('to_assets') or [], proposal.get('from_assets') or [],
+             proposal.get('from_team_id'))):
+        if back or not sent or any(a.get('kind') != 'player' for a in sent):
+            continue
+        given = float((evaluations.get(sender) or {}).get('outgoing_value') or 0.0)
+        taken = float((evaluations.get(receiver) or {}).get('incoming_asset_value') or 0.0)
+        if max(given, taken) >= USEFUL_GIVEAWAY_VALUE:
+            return True
+    return False
+
+
 def ai_trade_candidate_accepted(canonical: dict[str, Any], candidate: dict[str, Any]) -> bool:
     if candidate.get("legality", {}).get("status") != "legal":
         return False
@@ -1454,6 +1483,8 @@ def ai_trade_candidate_accepted(canonical: dict[str, Any], candidate: dict[str, 
         evaluations = candidate.get('evaluations') or []
         return ({e.get('perspective_team_id') for e in evaluations} == ids
                 and all(e.get('accepted') for e in evaluations))
+    if useful_player_for_nothing(candidate):
+        return False
     if candidate.get("accepted_by_all"):
         return True
     from .team_planning import core_commitment
@@ -2241,8 +2272,7 @@ def re_trade_hold_issues(canonical: dict[str, Any], proposal: Any) -> list[str]:
     if set(trade_team_ids(proposal)) & set(canonical.get("_human_team_ids") or []):
         return []
     held = re_trade_hold(canonical, transaction_reference_date(canonical, proposal))
-    if not held:
-        return []
+    held_picks = None
 
     def salary(asset: dict[str, Any]) -> float:
         return float(current_salary(contract_for_player(canonical, asset.get("id"))) or 0.0)
@@ -2250,7 +2280,7 @@ def re_trade_hold_issues(canonical: dict[str, Any], proposal: Any) -> list[str]:
     issues = []
     for team_id, outgoing, incoming in trade_team_flows(proposal):
         players_out = [a for a in outgoing if a.get("kind") == "player"]
-        for asset in players_out:
+        for asset in players_out if held else []:
             if held.get(asset.get("id")) != team_id:
                 continue
             mine = salary(asset)
@@ -2259,7 +2289,50 @@ def re_trade_hold_issues(canonical: dict[str, Any], proposal: Any) -> list[str]:
             if not (top and back >= RE_TRADE_HOLD_SALARY_BACK * mine):
                 issues.append(f"{asset.get('label', asset.get('id'))} was acquired by trade less than six months ago "
                               "and can only be moved as the centre of a salary-matching deal.")
+        if held_picks is None:
+            held_picks = re_trade_hold_picks(canonical, transaction_reference_date(canonical, proposal))
+        for asset in outgoing:
+            if asset.get("kind") in {"pick", "pick_swap"} and held_picks.get(asset.get("id")) == team_id:
+                issues.append(f"{asset.get('label', asset.get('id'))} was acquired by trade less than "
+                              f"{PICK_RE_TRADE_HOLD_DAYS} days ago.")
     return issues
+
+
+# AI-TRADES-SENSE: a draft pick an AI team just traded for stays put for a while. The season review had one 2028
+# first-round swap right change hands three times in a month (Washington to Philadelphia Jan 7, to the Lakers Jan 20,
+# to Indiana Feb 5). There is no league rule against it, but real front offices acquire picks to keep or to use in a
+# planned deal, not to pass along within weeks. All-AI trades only; the user's team keeps the real rules.
+PICK_RE_TRADE_HOLD_DAYS = 90
+
+
+def re_trade_hold_picks(canonical: dict[str, Any], as_of_date: str | None = None) -> dict[str, str]:
+    """{pick or swap-right id: team_id} for draft assets an AI team acquired by trade in the last 90 days."""
+    current = parse_iso_date(as_of_date or ((canonical.get("meta") or {}).get("current_date")) or CANONICAL_START_DATE)
+    if current is None:
+        return {}
+    key = (current.isoformat(), len(canonical.get("transaction_logs") or []))
+    memo = canonical.get("_re_trade_hold_picks_memo")
+    if memo and memo[0] == key:
+        return memo[1]
+    human = set(canonical.get("_human_team_ids") or [])
+    earliest = (current - timedelta(days=PICK_RE_TRADE_HOLD_DAYS - 1)).isoformat()
+    held: dict[str, str] = {}
+    for log in sorted((canonical.get("transaction_logs") or []), key=lambda row: str(row.get("date") or "")):
+        if (log.get("transaction_type") != "trade" or str(log.get("date") or "") < earliest
+                or str(log.get("date") or "") > current.isoformat()
+                or log.get("status") not in {"applied_to_save_ledger", "applied"}):
+            continue
+        for team_id, outgoing, incoming in transaction_log_flows(log):
+            for asset in outgoing:
+                if asset.get("kind") in {"pick", "pick_swap"} and held.get(asset.get("id")) == team_id:
+                    held.pop(asset.get("id"), None)
+            if team_id in human:
+                continue
+            for asset in incoming:
+                if asset.get("kind") in {"pick", "pick_swap"} and asset.get("id"):
+                    held[asset["id"]] = team_id
+    canonical["_re_trade_hold_picks_memo"] = (key, held)
+    return held
 
 
 def recently_signed_player_ids(canonical_or_save: dict[str, Any], as_of_date: str | None = None) -> set[str]:
@@ -3698,8 +3771,12 @@ def buyer_offer_packages_for_value(
         present = {player['id'] for player in tradable_players}
         tradable_players = tradable_players + [player for player in candidates if player['id'] in filler_ids
                                                and player['id'] not in present and player['id'] not in unavailable]
+    # AI-TRADES-SENSE: an AI team doesn't pass along a pick it just traded for (re_trade_hold_picks).
+    humans = set(canonical.get("_human_team_ids") or [])
+    held_picks = ({pid for pid, tid in re_trade_hold_picks(canonical, as_of_date).items() if tid == buyer["id"]}
+                  if not {buyer["id"], seller["id"]} & humans else set())
     picks = sorted(
-        tradeable_picks_for_team(canonical, buyer["id"]),
+        [pick for pick in tradeable_picks_for_team(canonical, buyer["id"]) if pick["id"] not in held_picks],
         key=lambda pick: pick_offer_preference_score(pick, buyer_state.get("phase", "balanced"), target_value)
             + 8*search_priority(canonical, seller['id'], {'kind': 'pick', 'id': pick['id']}),
         reverse=True,
@@ -3723,7 +3800,7 @@ def buyer_offer_packages_for_value(
     protection_options = {p['id']: ai_pick_protection_options(canonical, buyer, seller, p,
         buyer_state.get('phase', 'neutral')) for p in firsts[:3]} if return_options and direct_player_groups else {}
     swaps = sorted(
-        tradeable_pick_swaps_for_team(canonical, buyer["id"]),
+        [swap for swap in tradeable_pick_swaps_for_team(canonical, buyer["id"]) if swap["id"] not in held_picks],
         key=lambda swap: pick_swap_asset_value(canonical, swap, buyer_state.get("phase", "neutral")),
         reverse=True,
     )[:3]
@@ -4725,8 +4802,8 @@ def evaluate_trade_for_team(
     if outlook and (outlook['issue'] or (outlook['adjustment'] < 0 and net < threshold)):
         decision = 'reject_roster_plan'
     investment = (outlook or {}).get('pick_investment')
-    if investment and (net < -investment['loss_limit'] or ((investment['incoming_rotation_minutes'] < 24 or investment['rotation_gain'] < .25)
-            and investment['net_draft_value_spent'] > investment['capital_limit'])):
+    from .trade_roster import pick_investment_overspent
+    if investment and (net < -investment['loss_limit'] or pick_investment_overspent(investment)):
         accepted = False
         decision = 'reject_pick_investment'
     if premium_issue:
@@ -4743,7 +4820,10 @@ def evaluate_trade_for_team(
     if outlook and outlook['issue']:
         reasons.append(outlook['issue'])
     if decision == 'reject_pick_investment':
-        reasons.append('Too much draft capital for the projected rotation improvement.')
+        reasons.append('Too much draft capital for the projected rotation improvement.'
+                       if investment.get('first_round_purpose', True) else
+                       'A first-round pick buys a rotation player or real young upside, not depth this deal would '
+                       'not play.')
     if net < threshold:
         reasons.append(f'Net value {net:.2f} is below the required {threshold:.2f}.')
     if legality['status'] != 'legal':
@@ -5517,6 +5597,10 @@ def package_value_components(
             if own:
                 adjusted += own_player_premium(canonical, player, perspective_team_id, adjusted, market_value=player_value)["total"]
             else:
+                if adjusted > 0 and not human_view:
+                    # AI-TRADES-SENSE: a buyer pays less for a player who will miss much of the season (trade_injury).
+                    from .trade_injury import injury_discount
+                    adjusted *= 1.0 - injury_discount(canonical, asset["id"], perspective_team_id)
                 adjusted += recently_acquired_player_premium(canonical, player, perspective_team_id, player_value)
             player_adjusted_values.append(adjusted)
             total += adjusted
@@ -5954,6 +6038,20 @@ def salary_matching_issue(canonical: dict[str, Any], proposal: TradeProposal, co
         triggered = (canonical.get("triggered_hard_caps") or {}).get(team_id)
         if triggered and after_total > float(triggered) + 1 and after_total > current_total + 1:
             return f"{team_by_id(canonical, team_id)['abbrev']} is hard-capped at ${float(triggered) / 1e6:.1f}M this season."
+        # AI-TRADES-SENSE: and an AI team keeps room under it to fill a 14-man roster with minimum contracts
+        # (cap_ledger.AI_HARD_CAP_ROSTER_FILL): no trade leaves it short and stuck.
+        if triggered and team_id not in set(canonical.get("_human_team_ids") or []):
+            from .cap_ledger import AI_HARD_CAP_ROSTER_FILL, minimum_salary
+            roster = sum(1 for p in canonical.get("players", []) if p.get("team_id") == team_id
+                         and not p.get("_inactive_player"))
+            moved = (sum(1 for a in incoming if a.get("kind") == "player")
+                     - sum(1 for a in outgoing if a.get("kind") == "player"))
+            fill = float(minimum_salary(active_season, 0))
+            need_before = current_total + max(0, AI_HARD_CAP_ROSTER_FILL - roster) * fill
+            need_after = after_total + max(0, AI_HARD_CAP_ROSTER_FILL - roster - moved) * fill
+            if need_after > float(triggered) + 1 and need_after > need_before + 1:
+                return (f"{team_by_id(canonical, team_id)['abbrev']} would be left without room under its hard cap "
+                        "to fill its roster.")
     active_start = season_start_from_label(active_season)
     for offset in range(1, 4):
         start = active_start + offset
