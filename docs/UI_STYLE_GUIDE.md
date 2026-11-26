@@ -348,6 +348,17 @@ its sections share the page's width and height. The rules live in `gui/full-page
 - A phase that has its own room (the draft, the offseason checklist, free agency, the playoffs) takes Home's first
   tab while it is on, and Home opens there.
 
+## The trade room's two pages (user, 2026-11-26)
+- A deal is built on one page and judged on the next. Page 1, "The deal": both teams' lists side by side, what each
+  side gives, the salary check, the other team's answer and Ask. Page 2, "What it does": what the trade would mean
+  for a team. Nothing about the effect hides behind tabs.
+- Page 2 shows only what the game computes for the roster as it would be: team ratings before and after with
+  league ranks, the coach's minutes, the heat maps, the payroll, the values. A number the game cannot forecast
+  (four factors, morale, wins) is left out until the engine provides it.
+- Before and after of the same picture share one place and fade between each other, with a switch to hold either;
+  they are not stacked.
+- The asset lists scroll (round 8); they are not paged.
+
 ## Pop-ups (2026-11-26)
 - Pop-up styling lives in two sheets: `gui/popups.css` (the trade room and incoming offers) and
   `gui/popups-game.css` (box score, Player Finder, staff talks, League Leaders). Every rule sits under `#modalRoot`

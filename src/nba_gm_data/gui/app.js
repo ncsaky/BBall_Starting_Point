@@ -8890,7 +8890,6 @@ function tradeRoomModalBody() {
           </div>
         </div>` : `
         <div class="tr-toolbar-controls">
-          ${state.tradeView === "deal" && typeof tradeWorkspaceParticipants === "function" && tradeWorkspaceParticipants().some(row => row.selected.length) ? `<button type="button" class="tr-button is-primary tr-add-change" data-trade-view-switch="pick"><img src="/assets/window-icons/plus.svg" alt="">Add or change players</button>` : ""}
           <div class="trade-add-participant"><select id="tradeAddTeam" aria-label="Additional trade team"><option value="">Add a team…</option>${extraTeams.map(team => `<option value="${escapeAttr(team.abbrev)}">${escapeHtml(team.abbrev)} ${escapeHtml(team.name || "")}</option>`).join("")}</select><button type="button" class="tr-text-button" data-trade-add-team aria-label="Add team to trade" ${(state.tradeAdditionalTeams || []).length >= 4 ? "disabled" : ""}>Add</button></div>
         </div>`}
     </div>
@@ -8952,7 +8951,7 @@ function tradeSalaryGauge(flow, {bars = true} = {}) {
 }
 
 // One side of the deal: who gives what, as compact tiles, with that team's salary picture underneath.
-function tradeDealSide(row, participants, fresh = "") {
+function tradeDealSide(row, participants, fresh = "", options = {}) {
   const {team, side, payload = {}, selected = []} = row;
   const multi = participants.length > 2;
   const receives = tradeReceivedAssets(team, participants);
@@ -8966,14 +8965,16 @@ function tradeDealSide(row, participants, fresh = "") {
       <label class="trade-partner-field" for="tradePartner"><span class="sr-only">Trade partner</span><select id="tradePartner">${state.teams.filter(item => item.abbrev !== userTeam() && !(state.tradeAdditionalTeams || []).includes(item.abbrev)).map(item => `<option value="${escapeAttr(item.abbrev)}" ${item.abbrev === state.tradePartner ? "selected" : ""}>${escapeHtml(item.abbrev)}</option>`).join("")}</select></label>
       <button type="button" class="tr-step" data-trade-team-step="1" aria-label="Next trade partner">›</button>
     </div>` : `<button type="button" class="tr-side-team" data-trade-team-roster="${escapeAttr(team)}" title="${escapeAttr(`${team} roster · ${recordText}`)}">${logo}<strong>${escapeHtml(team)}</strong></button>`;
+  const sideHead = options.plain ? `<button type="button" class="tr-side-team" data-trade-team-roster="${escapeAttr(team)}" title="${escapeAttr(`${team} roster · ${recordText}`)}">${logo}<strong>${escapeHtml(team)}</strong></button>` : partnerPicker;
   const remove = side.startsWith("extra:") ? `<button type="button" class="tr-text-button tr-side-remove" data-trade-remove-team="${escapeAttr(team)}" aria-label="Remove ${escapeAttr(team)} from trade" title="Remove ${escapeAttr(team)}">×</button>` : "";
   const total = selectedTradeValue(selected);
   const colorOf = (index) => TRADE_ASSET_COLORS[index % TRADE_ASSET_COLORS.length];
   const tiles = selected.length
     ? selected.map((asset, index) => tradeDealTile(asset, {removeSide: side, routeFrom: multi ? team : "", fresh: fresh === `${side}:${asset.kind}:${asset.id}`, color: colorOf(index)})).join("")
+    : options.plain ? `<li class="tr-tiles-empty"><span>Nothing yet. Tick players or picks in ${escapeHtml(team)}'s list.</span></li>`
     : `<li class="tr-tiles-empty"><button type="button" class="tr-text-button" data-trade-roster-side="${escapeAttr(side)}" data-trade-view="pick">Choose from ${escapeHtml(team)}'s list</button></li>`;
   return `<section class="tr-side${state.tradeRosterSide === side ? " is-picking" : ""}" data-tr-side="${escapeAttr(side)}" ${teamBrandStyle(team)}>
-    <header class="tr-side-head">${partnerPicker}<span class="tr-side-verb">gives</span>${selected.length ? tradeSideTotalBar(selected, total, participants, colorOf, team) : ""}${remove}</header>
+    <header class="tr-side-head">${sideHead}<span class="tr-side-verb">gives</span>${selected.length ? tradeSideTotalBar(selected, total, participants, colorOf, team) : ""}${remove}</header>
     <ul class="tr-tiles" data-trade-scroll="selected-${escapeAttr(side)}" aria-label="${escapeAttr(team)} gives">${selected.length ? `<li class="tr-tiles-head" aria-hidden="true"><span></span><span>Player</span>${participants.length > 2 ? "<span>To</span>" : ""}<span>Roles</span><span>Value</span><span>OVR</span><span>Contract</span>${remove || side ? "<span></span>" : ""}</li>` : ""}${tiles}</ul>
     ${tradeSalaryGauge(flow, {bars: false})}
   </section>`;
@@ -9356,43 +9357,42 @@ function renderTradeBuilder(root) {
   const freshVerdict = Boolean(state.tradeVerdictFresh);
   state.tradeVerdictFresh = false;
   const ask = multi ? "Ask every team" : candidate ? "Ask again" : `Ask ${state.tradePartner}`;
-  // Two views (taste deck round 2: the one-page room felt cramped). Picking shows one team's list at a time and fills
-  // the window; the deal view shows the trade, its four-year payroll change and the other side's answer by Ask.
-  if (!["pick", "deal"].includes(state.tradeView)) state.tradeView = empty ? "pick" : "deal";
+  // Two pages (user, 2026-11-26: "this page is where you pick what assets go and you see legality, and the next page
+  // is what would that trade actually entail for your team"). state.tradeView keeps its two values: "pick" is the
+  // deal page (both teams' lists, the deal with its salary check, the other side's answer), "deal" the effect page
+  // (team ratings before and after, the heat maps, the payroll, the value).
+  if (!["pick", "deal"].includes(state.tradeView)) state.tradeView = "pick";
   const view = empty ? "pick" : state.tradeView;
   const strip = participants.map(row => `<button type="button" class="tr-strip-side${row.side === current.side ? " is-current" : ""}" data-trade-roster-side="${escapeAttr(row.side)}">${teamLogoSrc(row.team) ? `<img src="${escapeAttr(teamLogoSrc(row.team))}" alt="" />` : ""}<strong>${escapeHtml(row.team)}</strong><span>${row.selected.length ? row.selected.map(asset => escapeHtml(asset.kind === "player" ? (asset.name || "").split(" ").slice(-1)[0] : tradePickText(asset).short)).join(", ") : "nothing yet"}</span></button>`).join('<i aria-hidden="true">⇄</i>');
-  const viewSwitch = (target, label, primary = false) => `<button type="button" class="${primary ? "tr-button is-primary" : "tr-text-button"}" data-trade-view="${target}" ${target === "deal" && empty ? "disabled" : ""}>${label}</button>`;
-  // Round 6 (no scrolling): the payroll chart is the first of the deal's tabs (Payroll, Value, Team identity) instead
-  // of a section the page had to scroll past.
-  const lowerPage = [0, 1, 3].includes(page) ? page : 0;
-  const lowerBody = lowerPage === 0
-    ? tradePayrollAnimation(participants)
-    : lowerPage === 1
-    ? `<div class="tr-value-page">${multi ? tradeMultiValuePreview(participants) : `<div class="trade-team-decisions">${(candidate?.evaluations || []).map(tradeEvaluationPanel).join("")}</div>${tradeSegmentedValueBoard(candidate, state.selectedFrom, state.selectedTo, userTeam(), state.tradePartner)}`}</div>`
-    : `<div class="tr-identity-page">${tradeIdentityPage()}</div>`;
+  const steps = `<nav class="tr-steps" aria-label="Trade pages">
+      <button type="button" data-trade-view="pick" ${view === "pick" ? 'aria-current="step"' : ""}><i>1</i>The deal</button>
+      <button type="button" data-trade-view="deal" ${view === "deal" ? 'aria-current="step"' : ""} ${empty ? "disabled" : ""}><i>2</i>What it does</button>
+    </nav>`;
+  // Two teams: both lists side by side. More teams: one list at a time, chosen from the strip.
+  const lists = multi
+    ? `<div class="tr-pick-bar"><div class="tr-strip">${strip}</div></div>${assetColumn(`${current.team} gives`, current.payload, current.side, current.team)}`
+    : participants.map(row => assetColumn(`${row.team} gives`, row.payload, row.side, row.team, row.side === "to" ? {tabs: tradePartnerPicker(row.team, row.payload)} : {})).join("");
   body.innerHTML = view === "pick" ? `
-    <div class="trade-builder-layout tr-builder is-picking${multi ? " is-multi" : ""}">
-      <div class="tr-pick-bar"><div class="tr-strip">${strip}</div>${viewSwitch("deal", "Review deal ›", true)}</div>
-      <div class="tr-pick-body">${assetColumn(`${current.team} gives`, current.payload, current.side, current.team)}</div>
+    <div class="trade-builder-layout tr-builder is-deal tr-page-deal${multi ? " is-multi" : ""}">
+      ${steps}
+      <div class="tr-pick-body" style="--tr-lists:${multi ? 1 : participants.length}">${lists}</div>
+      <section class="tr-dock">
+        <div class="tr-stage" style="--tr-sides:${participants.length}">
+          ${participants.map(row => tradeDealSide(row, participants, fresh, {plain: !multi})).join("")}
+        </div>
+        <aside class="tr-verdict${freshVerdict ? " is-fresh" : ""}" aria-label="The other side's answer">
+          <div id="tradeRead">${tradeReadout(candidate)}</div>
+          <div class="tr-verdict-actions">
+            <label class="trade-final-toggle" title="A final offer gets a yes or no, never a counter-offer."><input type="checkbox" id="tradeFinalOffer" ${state.tradeFinalOffer ? "checked" : ""}> Final offer</label>
+            <button type="button" id="evaluateTrade" class="${canApply || counterOpen ? "tr-text-button" : "tr-button is-primary"}" ${tradePickRuleErrors().length || empty ? "disabled" : ""}>${escapeHtml(ask)}</button>
+          </div>
+        </aside>
+      </section>
       ${tradePickTermsPopover()}
     </div>` : `
-    <div class="trade-builder-layout tr-builder is-deal${multi ? " is-multi" : ""}">
-      <div class="tr-deal-main">
-        <section class="tr-stage" style="--tr-sides:${participants.length}">
-          ${participants.map(row => tradeDealSide(row, participants, fresh)).join("")}
-        </section>
-        <section class="tr-lower">
-          <nav class="tr-lower-tabs" aria-label="Trade details">${[[0, "Payroll"], [1, "Value"], [3, "Team identity"]].map(([index, label]) => `<button type="button" data-trade-page="${index}" aria-pressed="${lowerPage === index}" class="${lowerPage === index ? "active" : ""}">${label}</button>`).join("")}</nav>
-          <div class="tr-lower-body" data-trade-page-body="${lowerPage}">${lowerBody}</div>
-        </section>
-      </div>
-      <aside class="tr-verdict${freshVerdict ? " is-fresh" : ""}" aria-label="The other side's answer">
-        <div id="tradeRead">${tradeReadout(candidate)}</div>
-        <div class="tr-verdict-actions">
-          <label class="trade-final-toggle" title="A final offer gets a yes or no, never a counter-offer."><input type="checkbox" id="tradeFinalOffer" ${state.tradeFinalOffer ? "checked" : ""}> Final offer</label>
-          <button type="button" id="evaluateTrade" class="${canApply || counterOpen ? "tr-text-button" : "tr-button is-primary"}" ${tradePickRuleErrors().length || empty ? "disabled" : ""}>${escapeHtml(ask)}</button>
-        </div>
-      </aside>
+    <div class="trade-builder-layout tr-builder tr-page-effect${multi ? " is-multi" : ""}">
+      ${steps}
+      ${tradeEffectPage(participants, candidate, multi)}
       ${tradePickTermsPopover()}
     </div>`;
   wireTradePickTermsPopover(body);
@@ -9412,7 +9412,24 @@ function renderTradeBuilder(root) {
   body.querySelectorAll("[data-trade-team-step]").forEach(button => button.addEventListener("click", () => handle(stepTradeWorkspaceTeam(Number(button.dataset.tradeTeamStep)))));
   body.querySelectorAll("[data-trade-identity-team]").forEach(button => button.addEventListener("click", () => { state.tradeIdentityTeam = button.dataset.tradeIdentityTeam; renderTradeRoom(); }));
   body.querySelector("[data-trade-identity-retry]")?.addEventListener("click", () => loadTradeIdentity(true));
-  if (view === "deal" && lowerPage === 3) loadTradeIdentity().catch(error => showToast(error.message, true));
+  if (view === "deal") {
+    loadTradeIdentity().catch(error => showToast(error.message, true));
+    loadTradeImpact().catch(error => showToast(error.message, true));
+  }
+  // The pair of maps is drawn at its own size and enlarged as one piece to the width it is given.
+  const maps = body.querySelector(".trade-identity-fade .trade-identity-comparison");
+  if (maps) {
+    maps.style.zoom = "";
+    const room = maps.parentElement.clientWidth, own = maps.offsetWidth;
+    if (room > 0 && own > 0) maps.style.zoom = String(Math.max(.7, Math.min(1.45, room / own * .95)));
+  }
+  body.querySelector("[data-trade-impact-retry]")?.addEventListener("click", () => loadTradeImpact(true).catch(error => showToast(error.message, true)));
+  body.querySelectorAll("[data-trade-fade]").forEach(button => button.addEventListener("click", () => {
+    state.tradeFade = button.dataset.tradeFade;
+    const box = body.querySelector(".trade-identity-fade");
+    if (box) box.dataset.fade = state.tradeFade;
+    body.querySelectorAll("[data-trade-fade]").forEach(item => item.setAttribute("aria-pressed", String(item === button)));
+  }));
   wireTradeAssetControls(body);
   body.querySelector("#tradeFinalOffer")?.addEventListener("change", event => { state.tradeFinalOffer = Boolean(event.target.checked); });
   body.querySelector("#evaluateTrade")?.addEventListener("click", () => evaluateBuiltTrade().catch(error => showToast(error.message || String(error), true)));
@@ -9422,6 +9439,111 @@ function renderTradeBuilder(root) {
   body.querySelector("#declineCounterTrade")?.addEventListener("click", () => { state.tradeCandidate = {...state.tradeCandidate, counter_offer: null}; state.tradeCounterChain = null; showToast("Counter-offer declined"); tradeResponseEffect("declined"); renderTradeRoom(); });
   body.querySelectorAll("[data-trade-team-roster]").forEach((button) => button.addEventListener("click", () => openTeamRosterCard(button.dataset.tradeTeamRoster)));
   wireDashboardPlayerCards(body);
+}
+
+// The trade partner's picker (previous / logo / select / next): in the deal's side header, and at the head of the
+// partner's list on the deal page.
+function tradePartnerPicker(team, payload = {}) {
+  const record = payload.record || {};
+  const recordText = `${Number(record.wins || 0)}-${Number(record.losses || 0)}`;
+  const logo = teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : "";
+  return `<div class="trade-partner-navigation tr-partner-picker">
+      <button type="button" class="tr-step" data-trade-team-step="-1" aria-label="Previous trade partner">‹</button>
+      <button type="button" class="tr-side-team" data-trade-team-roster="${escapeAttr(team)}" title="${escapeAttr(`${team} roster · ${recordText}`)}">${logo}</button>
+      <label class="trade-partner-field" for="tradePartner"><span class="sr-only">Trade partner</span><select id="tradePartner">${state.teams.filter(item => item.abbrev !== userTeam() && !(state.tradeAdditionalTeams || []).includes(item.abbrev)).map(item => `<option value="${escapeAttr(item.abbrev)}" ${item.abbrev === state.tradePartner ? "selected" : ""}>${escapeHtml(item.abbrev)}</option>`).join("")}</select></label>
+      <button type="button" class="tr-step" data-trade-team-step="1" aria-label="Next trade partner">›</button>
+      <strong class="tr-picker-verb">gives</strong>
+    </div>`;
+}
+
+// ---- "What it does": one page for what the trade would mean for a team (user, 2026-11-26). Everything on it is
+// computed by the game: the team ratings and the coach's minutes come from the trade_team_impact action
+// (team_identity_report and team_rotation_projection on the roster as it would be); the payroll and the values are
+// the ones the deal page uses. The game has no forecast of four factors or of morale after a trade, so neither is
+// shown here.
+const TRADE_EFFECT_RATINGS = [
+  ["overall", "Overall", true], ["offense", "Offense", true], ["defense", "Defense", true], ["depth", "Depth", true],
+  ["spacing", "Spacing"], ["creation", "Shot creation"], ["playmaking", "Playmaking"], ["rim_pressure", "Rim pressure"],
+  ["rebounding", "Rebounding"], ["rim_protection", "Rim protection"], ["on_ball_defense", "On-ball defense"],
+  ["team_defense", "Team defense"], ["athleticism", "Athleticism"],
+];
+
+function tradeImpactRequest(participants = tradeWorkspaceParticipants()) {
+  const legs = new Map();
+  for (const row of participants) for (const asset of row.selected) {
+    if (asset.kind !== "player") continue;
+    const to = tradeAssetDestination(row.team, asset, participants);
+    if (!legs.has(to)) legs.set(to, []);
+    legs.get(to).push(String(asset.id));
+  }
+  return {teams: participants.map(row => row.team), moves: [...legs].map(([to_team, player_ids]) => ({to_team, player_ids: player_ids.sort()}))};
+}
+
+async function loadTradeImpact(force = false) {
+  const request = tradeImpactRequest();
+  const key = JSON.stringify([state.currentSave, state.home?.save?.current_date, request]);
+  if (!force && state.tradeImpact?.key === key) return;
+  const impact = {key, status: "loading", data: null, error: ""};
+  state.tradeImpact = impact;
+  const save = state.currentSave;
+  try {
+    impact.data = await action("trade_team_impact", {...savePayload(), ...request});
+    impact.status = "ready";
+  } catch (error) {
+    impact.status = "error";
+    impact.error = error.message || "The change could not be worked out.";
+  }
+  if (state.tradeImpact === impact && save === state.currentSave && state.modal?.kind === "tradeRoom" && state.tradeView === "deal") renderTradeRoom();
+}
+
+function tradeEffectRatings(team) {
+  const impact = state.tradeImpact;
+  const key = JSON.stringify([state.currentSave, state.home?.save?.current_date, tradeImpactRequest()]);
+  if (!impact || impact.key !== key || impact.status === "loading") return `<h4>Team ratings</h4><p class="tr-effect-wait" role="status">Working out the change…</p>`;
+  if (impact.status === "error") return `<h4>Team ratings</h4><p class="tr-effect-wait" role="status">${escapeHtml(impact.error)} <button type="button" class="tr-text-button" data-trade-impact-retry>Try again</button></p>`;
+  const row = (impact.data?.teams || []).find(item => item.abbrev === team);
+  if (!row) return `<h4>Team ratings</h4><p class="tr-effect-wait">No ratings for ${escapeHtml(team)}.</p>`;
+  const count = Number(impact.data.league_team_count || 30);
+  const ordinal = (n) => { const ends = ["th", "st", "nd", "rd"], v = n % 100; return n + (ends[(v - 20) % 10] || ends[v] || ends[0]); };
+  const place = (rank) => Number.isFinite(Number(rank)) && Number(rank) > 0 ? ordinal(Number(rank)) : "";
+  const ratings = TRADE_EFFECT_RATINGS.map(([id, label, main]) => {
+    const before = Number(row.before.metrics?.[id]), after = Number(row.after.metrics?.[id]);
+    if (!Number.isFinite(before) || !Number.isFinite(after)) return "";
+    const change = Math.round((after - before) * 10) / 10;
+    const rankBefore = Number(row.before.ranks?.[id]), rankAfter = Number(row.after.ranks?.[id]);
+    const moved = rankAfter && rankBefore ? rankBefore - rankAfter : 0;   // positive: climbed the league
+    const tone = (value) => value > 0 ? " is-up" : value < 0 ? " is-down" : "";
+    return `<tr class="${main ? "is-main" : ""}"><th scope="row">${label}</th><td>${before.toFixed(1)}</td><td><b>${after.toFixed(1)}</b></td>
+      <td class="tr-effect-change${tone(change)}">${change ? `${change > 0 ? "+" : "−"}${Math.abs(change).toFixed(1)}` : "–"}</td>
+      <td class="tr-effect-rank${tone(moved)}" title="League rank of ${count}">${place(rankBefore)}${moved ? ` <i aria-hidden="true">→</i> ${place(rankAfter)}` : ""}</td></tr>`;
+  }).join("");
+  const minutes = (row.minutes || []).map(item => ({...item, change: Number(item.after || 0) - Number(item.before || 0)}))
+    .filter(item => Math.abs(item.change) >= 0.5).sort((a, b) => Math.abs(b.change) - Math.abs(a.change)).slice(0, 8);
+  const moved = new Set(impact.data.moved_player_ids || []);
+  const minuteRows = minutes.map(item => `<tr><th scope="row">${escapeHtml(item.name || "")}${moved.has(item.player_id) ? `<small>${item.after == null ? "leaves" : "arrives"}</small>` : ""}</th><td>${item.before == null ? "–" : Number(item.before).toFixed(0)}</td><td><b>${item.after == null ? "–" : Number(item.after).toFixed(0)}</b></td>
+      <td class="tr-effect-change${item.change > 0 ? " is-up" : " is-down"}">${item.change > 0 ? "+" : "−"}${Math.abs(item.change).toFixed(0)}</td></tr>`).join("");
+  return `<h4>Team ratings</h4>
+    <table class="tr-effect-table" data-no-sort aria-label="${escapeAttr(team)} team ratings before and after the trade"><thead><tr><th scope="col">Rating</th><th scope="col">Now</th><th scope="col">After</th><th scope="col">Change</th><th scope="col">League rank</th></tr></thead><tbody>${ratings}</tbody></table>
+    ${minuteRows ? `<h4 title="The coach's projected minutes a game, now and with the new roster">Who plays</h4>
+    <table class="tr-effect-table tr-effect-minutes" data-no-sort aria-label="Minutes a game before and after the trade"><thead><tr><th scope="col">Player</th><th scope="col">Now</th><th scope="col">After</th><th scope="col">Change</th></tr></thead><tbody>${minuteRows}</tbody></table>` : ""}`;
+}
+
+function tradeEffectPage(participants, candidate, multi) {
+  const context = tradeIdentityContext();
+  const viewed = participants.find(row => row.side === context.side) || participants[0];
+  const names = (row) => row.selected.length ? row.selected.map(asset => escapeHtml(asset.kind === "player" ? asset.name || "" : tradePickText(asset).short)).join(", ") : "nothing";
+  const teams = `<div class="tr-effect-teams" role="tablist" aria-label="Whose team">${participants.map(row => `<button type="button" role="tab" data-trade-identity-team="${escapeAttr(row.side)}" aria-selected="${row.side === viewed.side}">${teamLogoSrc(row.team) ? `<img src="${escapeAttr(teamLogoSrc(row.team))}" alt="" />` : ""}<span>${escapeHtml(row.team)}</span></button>`).join("")}</div>`;
+  const summary = participants.map(row => `<span><b>${escapeHtml(row.team)}</b> gives ${names(row)}</span>`).join('<i aria-hidden="true">⇄</i>');
+  const value = multi ? tradeMultiValuePreview(participants) : `<div class="trade-team-decisions">${(candidate?.evaluations || []).map(tradeEvaluationPanel).join("")}</div>${tradeSegmentedValueBoard(candidate, state.selectedFrom, state.selectedTo, userTeam(), state.tradePartner)}`;
+  return `<header class="tr-effect-head">${teams}<p class="tr-effect-summary">${summary}</p></header>
+    <div class="tr-effect-grid">
+      <section class="tr-effect-ratings" aria-label="${escapeAttr(viewed.team)} ratings">${tradeEffectRatings(viewed.team)}</section>
+      <section class="tr-effect-maps tr-lower-body" data-trade-page-body="3"><div class="tr-identity-page">${tradeIdentityPage()}</div>
+        <div class="tr-effect-value tr-lower-body" data-trade-page-body="1"><div class="tr-value-page">${value}</div></div></section>
+      <section class="tr-effect-money">
+        <div class="tr-lower-body" data-trade-page-body="0">${tradePayrollAnimation(participants, viewed.team)}</div>
+      </section>
+    </div>`;
 }
 
 function tradePickParticipants() {
@@ -9709,7 +9831,7 @@ function tradeFourYearImplications(userPayload, partnerPayload, outgoing, incomi
 // change from the trade animated so you see it happen). One frame per team: its payroll today with the players it
 // sends outlined, which then gives way to its payroll after the trade with the arrivals outlined. Plays once on
 // opening; the Replay button plays it again. Same chart, colours and scale as the payroll window.
-function tradePayrollAnimation(participants) {
+function tradePayrollAnimation(participants, only = "") {
   const seasons = [...new Set(participants.flatMap(row => Object.keys(row.payload?.cap_by_year || {})))].sort().slice(0, 4);
   if (seasons.length < 4) return `<div class="trade-package-empty">Scheduled payroll unavailable</div>`;
   const teams = participants.map(row => {
@@ -9721,7 +9843,7 @@ function tradePayrollAnimation(participants) {
     const cap = team.payload.cap_by_year?.[season] || {};
     return [Number(cap.salary_total_millions || 0), Number(cap.tax_line_millions || 0), Number(cap.hard_cap_millions || 0), team.after[index].payroll || 0];
   }))) * 1.06;
-  const frames = teams.map(({team, payload, sends, receives, after}) => {
+  const frames = teams.filter(({team}) => !only || team === only).map(({team, payload, sends, receives, after}) => {
     const leaving = sends.filter(asset => asset.kind === "player").map(asset => String(asset.id));
     const arriving = receives.filter(asset => asset.kind === "player").map(asset => String(asset.id));
     const removed = new Set(leaving);
@@ -9739,7 +9861,7 @@ function tradePayrollAnimation(participants) {
   }).join("");
   return `<section class="tr-payroll${state.tradePayrollPlayed ? " is-settled" : " is-playing"}" aria-label="Four-year payroll, now and after the trade">
       <header class="tr-payroll-head"><h4>Payroll, next four seasons</h4><button type="button" class="tr-text-button" data-trade-payroll-replay>Replay</button></header>
-      <div class="tr-payroll-frames" style="--tr-frames:${teams.length}">${frames}</div>
+      <div class="tr-payroll-frames" style="--tr-frames:${only ? 1 : teams.length}">${frames}</div>
     </section>`;
 }
 
@@ -17025,7 +17147,11 @@ function tradeIdentityPage() {
   const b = window.TradeProjection.combine(after, preview.profiles, `trade-${context.team}-after`);
   if (!a || !b) return `${toolbar}<div class="trade-identity-empty">Complete spatial reference data is unavailable for this rotation.</div>`;
   const beforeById = new Map(before.map(row => [row.id,row.minutes]));
-  return `${toolbar}<div class="trade-identity-comparison"><section><h4>Before trade</h4>${spatialHeatmapMarkup(a,{compact:true})}</section><section><h4>After trade</h4>${spatialHeatmapMarkup(b,{compact:true})}</section></div><details class="trade-inferred-minutes"><summary>Inferred minutes</summary><table><thead><tr><th>Player</th><th>Before</th><th>After</th><th>Change</th></tr></thead><tbody>${[...new Map([...before,...after].map(row => [row.id,row])).values()].map(row => { const old = beforeById.get(row.id) || 0; const next = after.find(item => item.id === row.id)?.minutes || 0; return `<tr><th>${escapeHtml(row.name || row.label)}</th><td>${old}</td><td>${next}</td><td>${next-old > 0 ? "+" : ""}${next-old}</td></tr>`; }).join("")}</tbody></table></details>`;
+  // One pair of maps that fades from before to after and back (user, 2026-11-26: "have the heat fade from one to
+  // the other instead of having them one on top of the other"); the switch holds either one.
+  const fade = ["before", "after"].includes(state.tradeFade) ? state.tradeFade : "auto";
+  const fadeSwitch = `<div class="tr-fade-switch" role="group" aria-label="Which maps">${[["before", "Before"], ["auto", "Fade"], ["after", "After"]].map(([value, label]) => `<button type="button" data-trade-fade="${value}" aria-pressed="${fade === value}">${label}</button>`).join("")}</div>`;
+  return `${toolbar}<div class="trade-identity-fade" data-fade="${fade}">${fadeSwitch}<div class="trade-identity-comparison"><section class="is-before"><h4>Before the trade</h4>${spatialHeatmapMarkup(a,{compact:true})}</section><section class="is-after"><h4>After the trade</h4>${spatialHeatmapMarkup(b,{compact:true})}</section></div></div><details class="trade-inferred-minutes"><summary>Minutes behind these maps</summary><table><thead><tr><th>Player</th><th>Before</th><th>After</th><th>Change</th></tr></thead><tbody>${[...new Map([...before,...after].map(row => [row.id,row])).values()].map(row => { const old = beforeById.get(row.id) || 0; const next = after.find(item => item.id === row.id)?.minutes || 0; return `<tr><th>${escapeHtml(row.name || row.label)}</th><td>${old}</td><td>${next}</td><td>${next-old > 0 ? "+" : ""}${next-old}</td></tr>`; }).join("")}</tbody></table></details>`;
 }
 
 async function loadTradeIdentity(force = false) {
@@ -17037,7 +17163,7 @@ async function loadTradeIdentity(force = false) {
   const save = state.currentSave;
   try {
     for (let index=0; index<players.length; index+=2) {
-      if (state.tradeIdentityPreview !== preview || save !== state.currentSave || state.modal?.kind !== "tradeRoom" || state.tradeInsightPage !== 3) { preview.status = "cancelled"; return; }
+      if (state.tradeIdentityPreview !== preview || save !== state.currentSave || state.modal?.kind !== "tradeRoom" || state.tradeView !== "deal") { preview.status = "cancelled"; return; }
       const results = await Promise.all(players.slice(index,index+2).map(row => action("player_card", {...savePayload(),player_id:row.id})));
       if (state.tradeIdentityPreview !== preview || save !== state.currentSave) return;
       results.forEach((result,offset) => { preview.profiles[players[index+offset].id] = result.spatial_profile; preview.loaded++; });
@@ -17046,7 +17172,7 @@ async function loadTradeIdentity(force = false) {
     }
     preview.status = "ready";
   } catch (error) { preview.status = "error"; preview.error = error.message || "Spatial preview could not be loaded."; }
-  if (state.tradeIdentityPreview === preview && state.modal?.kind === "tradeRoom" && state.tradeInsightPage === 3) renderTradeRoom();
+  if (state.tradeIdentityPreview === preview && state.modal?.kind === "tradeRoom" && state.tradeView === "deal") renderTradeRoom();
 }
 
 function tradeAssetTable(assets, options = {}) {

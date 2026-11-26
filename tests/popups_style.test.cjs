@@ -17,7 +17,8 @@ test('every rule in the pop-up sheet starts from #modalRoot, so pages are untouc
   for (const match of css.matchAll(/([^{}]+)\{/g)) {
     const text = match[1].trim();
     if (!text || text.startsWith('@')) continue;
-    selectors.push(...text.split(',').map((s) => s.trim()).filter(Boolean));
+    // The steps of a @keyframes block ("0%, 36%", "from", "to") are not selectors.
+    selectors.push(...text.split(',').map((s) => s.trim()).filter((s) => s && !/^(\d+(\.\d+)?%|from|to)$/.test(s)));
   }
   assert.ok(selectors.length > 20, 'the sheet has rules');
   for (const selector of selectors) assert.match(selector, /#modalRoot/, selector.slice(0, 120));

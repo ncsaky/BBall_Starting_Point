@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C, checkpoint 8 published (Home as a front page, phase tabs, Awards names; trade room planned); stopped, waiting for four decisions; the trade room rebuild and the final sweep remain
+Progress: 8/9 - Stage C, checkpoint 9 published (the Trade Builder in two pages); stopped, waiting for three decisions; the Finder and Market, the rest of Home and the final sweep remain
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -592,3 +592,52 @@ slide's "of 14" should use `lottery_teams`; the player page's season strip needs
 Today tab is unchanged (contracts, payroll, picks); the market request was not timed on a slow machine; the trade
 room rebuild, the extension window and player card, the start screen, more arena photos and the final sweep
 remain; nobody has listened to the music or watched the background move.
+
+## Stage C, checkpoint 9 report (2026-11-26)
+
+**The user's answers to checkpoint 8**: the new Home good; phase tabs good; trade plan = build page 2 with the team
+ratings and ask the coordinator for real forecasts of four factors and morale; next = rebuild the trade room in two
+pages.
+
+**What changed**
+- **The Builder is two pages** (`renderTradeBuilder` in `app.js`; `state.tradeView` keeps its values: "pick" is
+  page 1, "deal" page 2; a `.tr-steps` bar switches). Page 1, "The deal" (`.tr-page-deal`): for two teams both
+  asset lists side by side (`assetColumn` twice, the partner picker at the head of the partner's list:
+  `tradePartnerPicker`), then a dock with each side's tiles and salary check (`tradeDealSide(..., {plain})`) and the
+  answer with Ask; three or more teams keep one list at a time with the strip. Page 2, "What it does"
+  (`tradeEffectPage`, `.tr-page-effect`): a team switch, then team ratings before and after with league ranks and
+  "Who plays" (`tradeEffectRatings`), the heat maps as one pair that fades (`.trade-identity-fade`, switch Before /
+  Fade / After in `state.tradeFade`), the value bars, and that team's payroll (`tradePayrollAnimation(participants,
+  only)`). The lower tabs are gone; `state.tradeInsightPage` is no longer read by the Builder.
+- **New display-only action `trade_team_impact`** (`trade_team_impact_payload` in `app_actions.py`): runs
+  `team_identity_report` on the league and on a copy with each traded player's `team_id` swapped (the copy drops the
+  `_`-prefixed caches, which index the real rosters), and returns each involved team's metrics and ranks before and
+  after plus `team_rotation_projection` minutes before and after. Nothing is saved. About 3.6 s for a four-player
+  deal on the test save, 0.4 s with no moves. Loaded when page 2 opens (`loadTradeImpact`, keyed on the moves).
+- Styles appended to `gui/popups.css`; tests in `tests/trade_two_pages.test.cjs`; `tests/popups_style.test.cjs`
+  now skips `@keyframes` steps when it collects selectors.
+- The asset lists scroll, as before: `glass-clear.css` hides the pager on purpose ("Scrolling is fine for the asset
+  list (round 8)"), so `fitTradeAssetPages` must not be called on render (it would hide rows with no way to reach
+  them; tried and reverted this round).
+
+**Checked in the game** (copies only): ticked two players a side; opened page 2; switched to the partner; held the
+maps on Before and After; went back (selection kept); on a throwaway copy pressed Ask (answer drawn) and added a
+third team. Accept and Propose were not pressed. Both pages captured at 1512 by 900 and 1280 by 760. Browser tests:
+55 of 56 files.
+
+**Engine request sent to the coordinator** (the user's choice): a roster-based four-factors projection and a morale
+effect or projection for trades. The coordinator put it up as a task card for the user ("Trade forecasts: four
+factors and morale for a proposed deal"; planned functions `project_four_factors(canonical, save, team_id, roster)`
+and `project_trade_morale(canonical, save, proposal)`) and will send the function names and shapes when done. Until
+then page 2 shows neither.
+
+**Waiting on three decisions** (page https://claude.ai/artifact/FE3fnTECUK7jUyicZbXUAf, collection `decisions`): `deal-page`
+(good | change), `effect-page` (good | change), `next` (trade-rest | home-more | rest-popups | sweep).
+
+**Known gaps**: the Finder and the Market are unchanged (the user: the Market "isn't centered ... not full"); the
+heat maps are still built in the browser from `trade-projection.js` minutes, not the coach's projection
+(`spatial.team_spatial_profile` could replace them); at 1280 by 760 the dock's contract column is cut and page 2's
+left and middle columns scroll; `trade_team_impact_payload` has no Python unit test; speed not measured on a slow
+machine. Still open from before: Home before the season and in the playoffs, the offseason Home, the extension
+window and player card, the start screen, more arena photos, the coordinator's lottery and playoff-line items, the
+final sweep.

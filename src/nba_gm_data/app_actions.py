@@ -612,6 +612,8 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return league_standings(canonical, save_path)
     if action in {"dashboard_summary_leaders", "dashboard-summary-leaders"}:
         return dashboard_summary_leaders_payload(canonical, save_path, limit=int(payload.get("limit") or 10))
+    if action == "trade_team_impact":
+        return trade_team_impact_payload(canonical, save_path, payload)
     if action == "dashboard_trends":
         return dashboard_trends_payload(canonical, save_path, str(payload.get("team") or user_team_abbrev(canonical, save_path)))
     if action == "league_leaders":
@@ -2576,6 +2578,87 @@ def dashboard_trends_payload(
                 "rank": (report.get("ranks") or {}).get("overall"),
             }
             for team_id, report in identity_by_team.items()
+        ],
+    }
+
+
+def trade_team_impact_payload(canonical: dict[str, Any], save_path: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    """Display only (the trade room's "what it does" page): the trading teams' ratings and league ranks before and
+    after the proposed player moves.
+
+    Runs team_identity_report (the numbers Team > Identity shows) on the league as it is, then on a copy in which
+    each traded player wears his new team. Nothing is saved or changed. Picks do not move these ratings. Coaching,
+    chemistry and morale are not re-simulated: the after column is the same arithmetic over the new roster and the
+    minutes the coach's projection gives it."""
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = canonical_with_save(canonical, save)
+    teams_by_id = {team["id"]: team for team in active.get("teams", [])}
+    players_by_id = {player.get("id"): player for player in active.get("players", [])}
+    moves: dict[str, str] = {}
+    involved: list[str] = []
+
+    def note(team_id: str | None) -> None:
+        if team_id in teams_by_id and team_id not in involved:
+            involved.append(team_id)
+
+    for query in payload.get("teams") or []:
+        note(resolve_team(active, str(query))["id"])
+    for leg in payload.get("moves") or []:
+        destination = resolve_team(active, str(leg.get("to_team")))["id"]
+        note(destination)
+        for player_id in leg.get("player_ids") or []:
+            player = players_by_id.get(str(player_id))
+            if player is None or player.get("team_id") == destination:
+                continue
+            note(player.get("team_id"))
+            moves[str(player_id)] = destination
+    before = team_identity_report(active, save)
+    after = before
+    hypothetical = active
+    if moves:
+        # A fresh league view: the internal caches (keys starting with "_") index the real rosters.
+        hypothetical = {key: value for key, value in active.items() if not str(key).startswith("_")}
+        hypothetical["players"] = [
+            {**player, "team_id": moves[player["id"]]} if player.get("id") in moves else player
+            for player in active.get("players", [])
+        ]
+        after = team_identity_report(hypothetical, save)
+
+    def minutes(team_id: str) -> list[dict[str, Any]]:
+        # The coach's projected minutes (the ones the ratings above are weighted by), now and with the new roster.
+        now = team_rotation_projection(active, save, team_id, integer=False)
+        then = team_rotation_projection(hypothetical, save, team_id, integer=False) if moves else now
+        rows = []
+        for player_id in {*now, *then}:
+            was, will = float(now.get(player_id) or 0.0), float(then.get(player_id) or 0.0)
+            if was <= 0 and will <= 0:
+                continue
+            player = players_by_id.get(player_id) or {}
+            rows.append({
+                "player_id": player_id,
+                "name": player.get("name"),
+                "before": round(was, 1) if player_id in now else None,
+                "after": round(will, 1) if player_id in then else None,
+            })
+        rows.sort(key=lambda row: (-(row["after"] or 0.0), -(row["before"] or 0.0), row["name"] or ""))
+        return rows
+
+    def side(report: dict[str, dict[str, Any]], team_id: str) -> dict[str, Any]:
+        row = report.get(team_id) or {}
+        return {"metrics": row.get("metrics") or {}, "ranks": row.get("ranks") or {}}
+
+    return {
+        "league_team_count": len(teams_by_id),
+        "moved_player_ids": sorted(moves),
+        "teams": [
+            {
+                "team_id": team_id,
+                "abbrev": teams_by_id[team_id].get("abbrev"),
+                "before": side(before, team_id),
+                "after": side(after, team_id),
+                "minutes": minutes(team_id),
+            }
+            for team_id in involved
         ],
     }
 
