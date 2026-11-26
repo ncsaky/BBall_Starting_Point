@@ -36,7 +36,8 @@ Method (declared, not fitted to simulation outcomes):
    input. BBI decides who is above whom; the estimator's units and spread stay.
 7. Multi-way tendencies (distribution kind, e.g. shoot/drive/pass/post/reset) are handled one choice at a time
    the same way, then the mix is rescaled to sum to 1 (choices without BBI evidence keep their relative size).
-   The shot-region mix (T02) is skipped because it is already built from observed shot locations.
+   The shot-region mix (T02) is skipped here: its two-point split is measured by apply_measured_shot_mix (rim and
+   other-two attempts, split by average two-point distance) and its three share comes from season attempts.
 The record keeps its prior/estimate provenance plus a BBI evidence entry, and becomes reason "estimated"
 (player-specific evidence) when BBI weight is material.
 """
@@ -66,7 +67,7 @@ RELIABILITY_MINUTES = 1000
 # Team possessions per player minute (about 99 per 48 minutes): turns a per-75-possession rate into a season count.
 POSSESSIONS_PER_MINUTE = 99.0 / 48.0
 OVERLAY_KINDS = ("grade", "propensity", "physical")
-# Shot-region mix is already built from observed shot locations; BBI would only repeat that data.
+# Shot-region mix: measured by apply_measured_shot_mix (two-point split) and the estimator (three share), not re-ranked.
 SKIP_DISTRIBUTIONS = {"T02", "T01"}  # T01 is set from measured per-touch rates (apply_measured_tendencies)
 MEASURED_INPUTS = {"T01", "T08"}      # measured on their own scale, not re-ranked (apply_measured_tendencies)
 # Free-throw execution is stored as a real free-throw percentage (the estimator's sample-weighted FT% from the same
@@ -603,7 +604,8 @@ def map_to_measured(table: Mapping[str, list[float]], x: float) -> float:
 
 
 def map_tendency_inputs(inputs: dict[str, Any], scale_map: Mapping[str, Any]) -> dict[str, Any]:
-    """Translate estimator-scale T01 (shoot/drive/pass/reset) and T08 onto the measured scales, in place.
+    """Translate estimator-scale T01 (shoot/drive/pass/reset), T08 and the T17 transition share onto the measured
+    scales, in place.
     Used for players without measurements, including generated rookies at install time."""
     record = inputs.get("T01")
     mix = _mix(record) if record else None
@@ -618,6 +620,18 @@ def map_tendency_inputs(inputs: dict[str, Any], scale_map: Mapping[str, Any]) ->
     if involvement and isinstance(involvement.get("value"), dict) and "probability" in involvement["value"] and "T08" in scale_map:
         involvement["value"] = {**involvement["value"], "probability": round(
             map_to_measured(scale_map["T08"], float(involvement["value"]["probability"])), 6)}
+    # Transition share of the offensive-end effort (T17) on the NBA.com play-type scale (playtype_evidence); the defense
+    # share is kept.
+    effort = inputs.get("T17")
+    mix = _mix(effort) if effort else None
+    if mix and "T17:transition_share" in scale_map and all(c in mix for c in ("offense", "defense", "transition")):
+        off = float(mix["offense"]) + float(mix["transition"])
+        if off > 0:
+            share = map_to_measured(scale_map["T17:transition_share"], float(mix["transition"]) / off)
+            defense = float(mix["defense"])
+            new_mix = {"offense": (1 - defense) * (1 - share), "defense": defense, "transition": (1 - defense) * share}
+            effort["value"] = {**effort["value"], "rows": [dict(effort["value"]["rows"][0],
+                                                                  probabilities={k: round(v, 6) for k, v in new_mix.items()})]}
     return inputs
 
 
@@ -699,3 +713,173 @@ def apply_measured_tendencies(section: dict[str, Any], root: Path) -> dict[str, 
             counts["mapped_only"] += 1
     (Path(root) / SCALE_MAP_FILE).write_text(json.dumps({"version": VERSION, **scale_map}, indent=0) + "\n")
     return counts
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Shot-location habit (T02): the two-point split measured (RATINGS-FIVE-INPUTS, 2026-11-25).
+# Until now T02's three share was measured (season 3PA/FGA) but the rim / short-paint / midrange split of the twos
+# came from a 2024-25 shot chart for only 32 players and a fixed position prior for everyone else, so the rim share
+# spread two-thirds as wide as the real one (rim share of twos vs Basketball Index r .42). Basketball Index measures
+# rim attempts and the other twos for every player and season, and the average two-point shot distance splits the
+# other twos into short paint (4-14 ft) and midrange (14 ft to the arc): on the 32 charted players the average
+# distance of the non-rim twos predicts the chart's short-paint share at r .956 out of sample (logistic line fitted
+# here, at every build, from the chart file). The three share is not touched.
+SHOT_MIX_METRICS = ("Rim Shot Attempts Per 75 Possessions", "Midrange FGA Per 75", "3PT FGA Per 75 Possessions",
+                    "Stable Avg 2PT Shot Distance")
+SHOT_CHART_FILE = "data/research/shot_chart_reference.json"
+SHOT_CHART_SEASON = "2024-25"
+RIM_SHOT_DISTANCE_FT = 2.0   # average distance of a rim attempt (inside 4 ft); used to take rim shots out of the average
+T02_PRIOR_TWOS = 100.0       # the estimator's prior strength for the two-point split (and the three share), in attempts
+T02_VERSION = "measured_shot_mix_v1_2026_11_25"
+
+
+def _nonrim_distance(avg2: float, rim_share_of_twos: float) -> float | None:
+    """Average distance (ft) of the two-point attempts outside 4 ft."""
+    if rim_share_of_twos >= 0.98:
+        return None
+    return (avg2 - RIM_SHOT_DISTANCE_FT * rim_share_of_twos) / (1.0 - rim_share_of_twos)
+
+
+def fit_short_paint_share(root: Path) -> dict[str, Any]:
+    """logit(short-paint share of the non-rim twos) = a + b * their average distance, fitted on the charted players.
+
+    Chart side: 2-ft bin centres of the 2024-25 public shot charts (4-14 ft short paint, 14 ft to the arc midrange).
+    Distance side: Basketball Index's 2024-25 average two-point distance and rim share of twos for the same players."""
+    import ast
+    from .input_estimator import _normalize
+    chart = json.loads((Path(root) / SHOT_CHART_FILE).read_text())
+    table = collect_values(root, set(SHOT_MIX_METRICS))
+    by_cid: dict[str, dict[str, float]] = defaultdict(dict)
+    for metric in SHOT_MIX_METRICS:
+        for value, _, cid in table.get((SHOT_CHART_SEASON, metric), {}).values():
+            if cid:
+                by_cid[cid][metric] = value
+    names: dict[str, str] = {}
+    universe = Path(root) / "data/canonical/universe_2026_27_offseason.json"
+    if universe.exists():
+        names = {_normalize(p["name"]): p["id"] for p in json.loads(universe.read_text())["players"]}
+    xs, ys = [], []
+    for profile in chart.get("profiles", []):
+        cid = names.get(_normalize(profile.get("name", "")))
+        vals = by_cid.get(cid or "", {})
+        if not all(m in vals for m in SHOT_MIX_METRICS):
+            continue
+        bins = profile.get("bins")
+        bins = ast.literal_eval(bins) if isinstance(bins, str) else bins or []
+        short = mid = 0.0
+        for b in bins:
+            x, y, zone, n = (float(v) for v in b[:4])
+            if zone >= 10:
+                continue
+            d = math.hypot(x, y)
+            if 4 <= d < 14:
+                short += n
+            elif d >= 14:
+                mid += n
+        rim, other = vals[SHOT_MIX_METRICS[0]], vals[SHOT_MIX_METRICS[1]]
+        if short + mid <= 0 or rim + other <= 0:
+            continue
+        dist = _nonrim_distance(vals[SHOT_MIX_METRICS[3]], rim / (rim + other))
+        if dist is None:
+            continue
+        q = min(0.98, max(0.02, short / (short + mid)))
+        xs.append(dist)
+        ys.append(math.log(q / (1 - q)))
+    if len(xs) < 10:
+        return {"players": len(xs), "a": None, "b": None}
+    mx, my = sum(xs) / len(xs), sum(ys) / len(ys)
+    b = sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sum((x - mx) ** 2 for x in xs)
+    return {"players": len(xs), "a": round(my - b * mx, 4), "b": round(b, 4)}
+
+
+def measured_shot_mix(root: Path, fit: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    """canonical_id -> {"twos": {rim, short_paint, midrange} shares of two-point attempts, "attempts": effective twos}.
+
+    Season-weighted (SEASON_WEIGHTS) by each season's two-point attempts, so a player's latest season leads and a
+    short season counts for little."""
+    table = collect_values(root, set(SHOT_MIX_METRICS))
+    acc: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
+    for season, season_weight in SEASON_WEIGHTS.items():
+        rims = table.get((season, SHOT_MIX_METRICS[0]), {})
+        others = table.get((season, SHOT_MIX_METRICS[1]), {})
+        dists = table.get((season, SHOT_MIX_METRICS[3]), {})
+        for key, (rim, minutes, cid) in rims.items():
+            if not cid or key not in others or key not in dists:
+                continue
+            other = others[key][0]
+            twos75 = rim + other
+            if twos75 <= 0 or minutes <= 0:
+                continue
+            dist = _nonrim_distance(dists[key][0], rim / twos75)
+            z = fit["a"] + fit["b"] * dist if dist is not None else 0.0
+            q = 1.0 / (1.0 + math.exp(-z)) if dist is not None else 1.0
+            attempts = twos75 / 75.0 * minutes * POSSESSIONS_PER_MINUTE
+            w = season_weight * attempts
+            a = acc[cid]
+            a["rim"] += w * rim / twos75
+            a["short_paint"] += w * q * other / twos75
+            a["midrange"] += w * (1 - q) * other / twos75
+            a["_w"] += w
+            a["_seasons"] += 1
+    out = {}
+    for cid, a in acc.items():
+        w = a.pop("_w")
+        seasons = int(a.pop("_seasons"))
+        if w > 0:
+            out[cid] = {"twos": {k: v / w for k, v in a.items()}, "attempts": w, "seasons": seasons}
+    return out
+
+
+def apply_measured_shot_mix(section: dict[str, Any], root: Path) -> dict[str, Any]:
+    """Replace T02's two-point split with the measured one, blended with the existing split by attempts
+    (measured twos against T02_PRIOR_TWOS). The three share stays exactly as built."""
+    from .input_estimator import _bounded_band
+    fit = fit_short_paint_share(root)
+    if fit.get("a") is None:
+        return {"t02_measured": 0, "short_paint_fit": fit}
+    measured = measured_shot_mix(root, fit)
+    changed = 0
+    for pid, doc in section["players"].items():
+        record = doc["inputs"].get("T02")
+        mix = _mix(record) if record else None
+        ev = measured.get(pid)
+        if not mix or not ev or not all(k in mix for k in ("rim", "short_paint", "midrange", "three")):
+            continue
+        p3 = float(mix["three"])
+        rest = sum(float(mix[k]) for k in ("rim", "short_paint", "midrange"))
+        if rest <= 0:
+            continue
+        n = ev["attempts"]
+        share = n / (n + T02_PRIOR_TWOS)
+        twos = {k: share * ev["twos"][k] + (1 - share) * float(mix[k]) / rest for k in ("rim", "short_paint", "midrange")}
+        total = sum(twos.values())
+        probs = {k: (1 - p3) * v / total for k, v in twos.items()}
+        probs["three"] = p3
+        record["value"] = {**record["value"], "rows": [dict(record["value"]["rows"][0],
+                                                              probabilities={k: round(v, 6) for k, v in probs.items()})]}
+        record["evidence"] = [*(record.get("evidence") or []), {
+            "source": f"{CACHE_DIR}/normalized.json (Leaderboards Values)",
+            "method": (f"{T02_VERSION}: two-point split from rim attempts, other twos and average two-point distance "
+                       f"({ev['seasons']} season(s), {n:.0f} season-weighted two-point attempts), blended at share "
+                       f"{share:.2f} with the earlier split; short paint vs midrange from the average distance of the "
+                       f"non-rim twos (logistic line a={fit['a']}, b={fit['b']} per ft, fitted on {fit['players']} "
+                       f"charted players, {SHOT_CHART_FILE}); three share unchanged"),
+            "shared_evidence_id": f"bbi:{pid}:T02",
+            "notes": "shares of twos: " + ", ".join(f"{k} {v:.3f}" for k, v in ev["twos"].items()),
+        }]
+        try:
+            notes = json.loads((record.get("uncertainty") or {}).get("notes") or "{}")
+        except ValueError:
+            notes = {}
+        intervals = dict(notes.get("intervals") or {})
+        for k in ("rim", "short_paint", "midrange"):
+            p = probs[k]
+            intervals[k] = _bounded_band(p, 0.03 + 2 * math.sqrt(p * (1 - p) / (n + T02_PRIOR_TWOS + 1)), 1)
+        notes["intervals"] = intervals
+        if "uncertainty" in record:
+            record["uncertainty"] = {**record["uncertainty"],
+                                     "notes": json.dumps(notes, sort_keys=True, ensure_ascii=False, separators=(",", ":"))}
+        if share >= 0.5:
+            record["status"], record["reason"] = "estimated", "estimated"
+        changed += 1
+    return {"t02_measured": changed, "short_paint_fit": fit}

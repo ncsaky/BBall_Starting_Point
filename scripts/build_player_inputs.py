@@ -754,10 +754,18 @@ def main() -> None:
         from nba_gm_data.bbi_evidence import apply_overlay, apply_measured_tendencies
         bbi_summary=apply_overlay(section,root)
         bbi_summary.update(apply_measured_tendencies(section,root))
+        # Shot-location habit: the two-point split (rim / short paint / midrange) measured per season, the three share
+        # kept (RATINGS-FIVE-INPUTS, 2026-11-25).
+        from nba_gm_data.bbi_evidence import apply_measured_shot_mix
+        bbi_summary.update(apply_measured_shot_mix(section,root))
         # Foul drawing and handle security per chance: free throws and turnovers against what an average player
         # earns or commits from the same drives, shots, passes and touches (RATINGS-FT-TOV, 2026-11-21).
         from nba_gm_data.foul_security_evidence import apply_foul_security_evidence
         bbi_summary.update(apply_foul_security_evidence(section,root,universe))
+    # Transition share of effort allocation from NBA.com's 2025-26 play types (RATINGS-FIVE-INPUTS, 2026-11-25). After the
+    # Basketball Index step, whose defense share it keeps and whose scale map it extends.
+    from nba_gm_data.playtype_evidence import apply_transition_evidence
+    bbi_summary=(bbi_summary or {})|{'playtype_transition':apply_transition_evidence(section,root)}
     # Measured dunk rates (public Basketball-Reference shooting data) for dunk execution, net of body size.
     from nba_gm_data.public_shot_evidence import apply_dunk_evidence
     bbi_summary=(bbi_summary or {})|apply_dunk_evidence(section,root,universe)
