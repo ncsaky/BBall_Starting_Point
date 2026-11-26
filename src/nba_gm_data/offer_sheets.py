@@ -438,7 +438,7 @@ def leverage_price(active: dict[str, Any], save: dict[str, Any], player_id: str,
 # Settling a sheet
 
 def _write_contract(canonical: dict[str, Any], save: dict[str, Any], sheet: dict[str, Any], team_id: str,
-                    payment: dict[str, Any], kind: str) -> dict[str, Any]:
+                    payment: dict[str, Any], kind: str, departed: dict[str, Any] | None = None) -> dict[str, Any]:
     from .contract_ai import apply_contract_to_save_state
     from .cap_ledger import contract_terms
     from .utils import stable_id
@@ -461,7 +461,7 @@ def _write_contract(canonical: dict[str, Any], save: dict[str, Any], sheet: dict
         "negotiation": {"id": negotiation_id, "negotiation_type": "free_agent_signing", "player_id": sheet["player_id"],
                         "player_name": sheet.get("name"), "team_id": team_id, "date": today, "rounds": 1,
                         "offers": [offer], "final_decision_id": decision["id"], "status": "agreement",
-                        "notes": "Offer sheet."},
+                        "notes": "Offer sheet.", **({"departure": departed} if departed else {})},
         "decision": decision, "accepted": True})
     return apply_contract_to_save_state(save, negotiation_id, date=today)
 
@@ -505,7 +505,10 @@ def settle(canonical: dict[str, Any], save: dict[str, Any], sheet: dict[str, Any
         route = (sheet.get("payment") or {}).get("route")
         quote = bidder_quote(active, save, bidder, player, terms, route=route)
         payment = quote["payment"] if quote.get("ok") else dict(sheet["payment"])   # the reserved route
-        result = _write_contract(canonical, save, sheet, bidder, payment, "passed")
+        # COACHES-FREE-AGENTS: the signing news says why he changed teams.
+        departed = {"from_team_id": holder, "from_abbrev": _abbrev(holder), "key": "offer_sheet", "clear": True,
+                    "reason": "after they declined to match his offer sheet", "icon": False, "seasons_with_team": 0}
+        result = _write_contract(canonical, save, sheet, bidder, payment, "passed", departed)
         if result.get("status") != "applied":
             sheet.update(status="pending")
             return {"ok": False, "reason": result.get("notes") or "The contract could not be written."}

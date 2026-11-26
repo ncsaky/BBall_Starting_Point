@@ -5,6 +5,8 @@ from copy import deepcopy
 from typing import Any
 
 from . import faces
+from .coach_review import (IN_SEASON_MIN_GAMES, firing_reason, head_coach_firing_chance, lost_wins_by_team,
+                           note_departures, record_coach_titles, remember_review, review_context, team_review)
 from .faces import draw_staff_identity
 from .schema import TransactionLog, to_plain
 from .staff_lifecycle import (
@@ -1301,20 +1303,6 @@ def staff_win_gap(record: dict[str, Any], expected_pct: float) -> tuple[int, flo
     return games, 82 * (wins / games - expected_pct) if games else 0.0
 
 
-def head_coach_firing_chance(win_gap: float, *, offseason: bool) -> float:
-    # docs/agents/tasks/staff-turnover-evidence.md, sections 1 and 5. Summer rates are
-    # fitted. Monthly in-season chances are gameplay estimates of the 6–7% annual rate.
-    if offseason:
-        if win_gap < -3:
-            return 0.14
-        return 0.11 if win_gap <= 3 else 0.04
-    if win_gap < -8:
-        return 0.024
-    if win_gap < -3:
-        return 0.018
-    return 0.011 if win_gap <= 3 else 0.006
-
-
 def coordinator_departure_target(draw: float, new_head: bool) -> int:
     # Two-slot projection of the 2023–25 held-out NBA bench distributions.
     # docs/agents/tasks/staff-turnover-evidence.md, section 5.
@@ -1362,12 +1350,6 @@ def staff_turnover_recommendation(
     }
 
 
-def head_review_reason(win_gap: float) -> str:
-    if win_gap < -3:
-        return f"tracking {abs(win_gap):.1f} wins per 82 games below preseason expectations"
-    return "head coach review against preseason expectations"
-
-
 def offseason_coaching_recommendations(canonical: dict[str, Any], save: dict[str, Any]) -> list[dict[str, Any]]:
     from .save import human_controlled_team_ids
 
@@ -1377,19 +1359,24 @@ def offseason_coaching_recommendations(canonical: dict[str, Any], save: dict[str
     expectations = (save.get("staff_preseason_expectations") or {}).get(season)
     if expectations is None:
         expectations = staff_win_expectations(canonical.get("team_strategic_states", []))
+    record_coach_titles(save)
+    losses_by_team = lost_wins_by_team(save)
     seed = staff_save_seed(save)
     opening = save.get("staff_opening_coaches") or {}
     opening_heads = opening["teams"] if opening.get("season") == season else {}
     recommendations = []
     for team in sorted(canonical.get("teams", []), key=lambda row: row["id"]):
         team_id = team["id"]
+        # COACHES-FREE-AGENTS: the season against what this roster was expected to do (coach_review).
+        review = team_review(canonical, save, team_id, expectations.get(team_id, 0.5), losses_by_team)
+        head = current_staff_slot(save, team_id, "head_coach")
+        context = review_context(save, head, review) if head and review else None
+        if context:
+            remember_review(save, head, review)
         if team_id in humans:
             continue
-        record = (save.get("team_records") or {}).get(team_id, {})
-        games, gap = staff_win_gap(record, expectations.get(team_id, 0.5))
-        if games < 70:
+        if not review or review["games"] < 70:
             continue
-        head = current_staff_slot(save, team_id, "head_coach")
         if not head:
             continue
         season_firings = {
@@ -1409,9 +1396,11 @@ def offseason_coaching_recommendations(canonical: dict[str, Any], save: dict[str
         elif staff_retires_after_season(head, seed, season):
             new_head = True
         elif staff_change_permission(save, team_id, "head_coach")["can_fire"]:
-            if staff_turnover_draw(save, season, team_id, "summer_head") < head_coach_firing_chance(gap, offseason=True):
+            chance = head_coach_firing_chance(review["gap"], offseason=True, **context)
+            if staff_turnover_draw(save, season, team_id, "summer_head") < chance:
                 recommendations.append(staff_turnover_recommendation(
-                    team, head, date, "fire_only", head_review_reason(gap), review_period="offseason", win_gap=gap,
+                    team, head, date, "fire_only", firing_reason(review, context), review_period="offseason",
+                    win_gap=review["gap"],
                 ))
                 new_head = True
 
@@ -1473,6 +1462,9 @@ def simulate_ai_staff_changes(
     expectations = (save.get("staff_preseason_expectations") or {}).get(season)
     if expectations is None:
         expectations = staff_win_expectations(list(states.values()))
+    if head_review:
+        note_departures(canonical, save, through_date)
+    losses_by_team = lost_wins_by_team(save) if head_review else {}
     market_by_slot = {}
     for team in teams:
         team_id = team["id"]
@@ -1507,13 +1499,16 @@ def simulate_ai_staff_changes(
             )
             if slot == "head_coach":
                 if not interim:
-                    if not head_review or games < 15 or fired_this_season or not permission["can_fire"]:
+                    if (not head_review or games < IN_SEASON_MIN_GAMES or fired_this_season
+                            or not permission["can_fire"]):
                         continue
-                    chance = head_coach_firing_chance(win_gap, offseason=False)
+                    review = team_review(canonical, save, team_id, expectations.get(team_id, 0.5), losses_by_team)
+                    context = review_context(save, current, review)
+                    chance = head_coach_firing_chance(review["gap"], offseason=False, **context)
                     if staff_turnover_draw(save, season, team_id, f"monthly_head:{through_date[:7]}") < chance:
                         recommendations.append(staff_turnover_recommendation(
-                            team, current, through_date, "fire_only", head_review_reason(win_gap),
-                            review_period="in_season", win_gap=win_gap,
+                            team, current, through_date, "fire_only", firing_reason(review, context),
+                            review_period="in_season", win_gap=review["gap"],
                         ))
                     continue
                 # Review the interim from an in-season dismissal once, during the summer.

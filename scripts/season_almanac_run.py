@@ -29,6 +29,7 @@ def main() -> int:
     parser.add_argument("--out", required=True)
     parser.add_argument("--seed", type=int, default=20261126)
     parser.add_argument("--team", default="BKN", help="the hands-off user team (no AI trades are made for it)")
+    parser.add_argument("--seasons", type=int, default=1)
     args = parser.parse_args()
     snapshots = Path(args.out).resolve() / "snapshots"
     snapshots.mkdir(parents=True, exist_ok=True)
@@ -57,7 +58,7 @@ def main() -> int:
 
     soak.SoakRunner.action = action
     gc.disable()
-    return s2.run(argparse.Namespace(engine="current", seasons=1, seed=args.seed, team=args.team,
+    return s2.run(argparse.Namespace(engine="current", seasons=args.seasons, seed=args.seed, team=args.team,
                                      checkpoint_days=31, out=args.out))
 
 
