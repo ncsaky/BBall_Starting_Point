@@ -1686,6 +1686,24 @@ def _generated_reference(root: str) -> dict[str, tuple]:
     current_ability is the canonical real-player ability coordinate; the linked
     legacy summaries only select the shape *within* that ability/position.
     """
+    reference = {iid: [] for iid in DEFINITIONS}
+    for pid, player, ability, traits, inputs in _real_reference_players(root):
+        for iid, record in inputs.items():
+            scalar = scalar_value(record)
+            if scalar is None:
+                continue
+            links = _LEGACY_PRIOR_LINKS.get(iid, ('passing_reads', 'scheme_iq'))
+            shape = _mean(traits.get(k, ability+7) for k in links)
+            reference[iid].append((pid, ability, _position(player), shape, scalar))
+    if not reference['S01']:
+        raise ValueError('Generated players require real-player input calibration records')
+    return {iid: tuple(rows) for iid, rows in reference.items()}
+
+
+@lru_cache(maxsize=1)
+def _real_reference_players(root: str) -> tuple:
+    """Real players with canonical inputs, an ability coordinate and legacy traits, sorted by id (loaded once):
+    (player id, player, current ability, legacy traits, inputs)."""
     root = Path(root)
     universe = json.loads((root / UNIVERSE_PATH).read_text())
     path = root / GENERATED_INPUTS_PATH
@@ -1696,23 +1714,51 @@ def _generated_reference(root: str) -> dict[str, tuple]:
         with gzip.open(str(path) + '.gz', 'rt') as stream:
             documents = json.load(stream)['players']
     traits = _trait_index(universe['traits'])
-    reference = {iid: [] for iid in DEFINITIONS}
+    rows = []
     for player in sorted(universe['players'], key=lambda p: p['id']):
         pid = player['id']
         ability = _get(player, 'current_ability')
         if _fictional_player(player) or pid not in documents or ability is None or not traits.get(pid):
             continue
-        inputs = documents[pid]['inputs']
-        for iid, record in inputs.items():
-            scalar = scalar_value(record)
-            if scalar is None:
+        rows.append((pid, player, ability, traits[pid], documents[pid]['inputs']))
+    return tuple(rows)
+
+
+@lru_cache(maxsize=1)
+def _generated_tendency_reference(root: str) -> dict[str, tuple]:
+    """Real players' habits for generated players (ROOKIE-THREES, 2026-11-26), keyed 'T04' for a single habit and
+    'T02.three' for one outcome of a mix: (current ability, position, linked legacy-trait shape, value) rows.
+
+    The shape uses the same legacy links that tilted the old hand-set priors (_LEGACY_PRIOR_LINKS for single habits,
+    _DISTRIBUTION_PRIOR_LINKS per mix outcome), so a generated shooter is matched with real players who have a
+    similar shooting profile at his ability and position."""
+    reference: dict[str, list] = {}
+    for pid, player, ability, traits, inputs in _real_reference_players(root):
+        position = _position(player)
+        for iid in DEFINITIONS:
+            if not iid.startswith('T') or iid == 'T08' or iid not in inputs:
                 continue
-            links = _LEGACY_PRIOR_LINKS.get(iid, ('passing_reads', 'scheme_iq'))
-            shape = _mean(traits[pid].get(k, ability+7) for k in links)
-            reference[iid].append((pid, ability, _position(player), shape, scalar))
-    if not reference['S01']:
-        raise ValueError('Generated players require real-player input calibration records')
-    return {iid: tuple(rows) for iid, rows in reference.items()}
+            value = inputs[iid].get('value') or {}
+            if iid in _DISTRIBUTION_PRIOR_LINKS:
+                rows = value.get('rows') or []
+                probs = rows[0].get('probabilities') if len(rows) == 1 else None
+                if not probs or set(probs) != set(_DISTRIBUTION_PRIOR_LINKS[iid]):
+                    continue
+                for outcome, (keys, _) in _DISTRIBUTION_PRIOR_LINKS[iid].items():
+                    shape = _mean(traits.get(k, ability + 7) for k in keys)
+                    reference.setdefault(f'{iid}.{outcome}', []).append((ability, position, shape, float(probs[outcome])))
+            elif 'probability' in value and iid in _LEGACY_PRIOR_LINKS:
+                shape = _mean(traits.get(k, ability + 7) for k in _LEGACY_PRIOR_LINKS[iid])
+                reference.setdefault(iid, []).append((ability, position, shape, float(value['probability'])))
+    return {key: tuple(rows) for key, rows in reference.items()}
+
+
+def _real_habit(rows: tuple, ability: float, shape: float, position: str) -> float:
+    """Weighted mean of the 24 nearest real players (same distance and weights as the generated skills)."""
+    candidates = sorted((((ca - ability) / 8)**2 + ((s - shape) / 10)**2 + 2 * (pos != position), v)
+                        for ca, pos, s, v in rows)[:24]
+    weights = [(math.exp(-(d - candidates[0][0]) / 2), v) for d, v in candidates]
+    return sum(w * v for w, v in weights) / sum(w for w, _ in weights)
 
 
 def _generated_player_inputs(player: dict, traits: Any) -> PlayerInputs:
@@ -1822,12 +1868,37 @@ def _generated_definition_inputs(player_json: str, traits_json: str) -> PlayerIn
             # These are fictional choices, so no observed opportunity count is
             # required. Link *relative* profile, not overall talent, to choices.
             links = _LEGACY_PRIOR_LINKS.get(iid)
-            if iid == 'T08':
+            if iid != 'T08':
+                # ROOKIE-THREES (2026-11-26): every other habit comes from the real players nearest him in ability,
+                # linked profile and position, like his skills. The hand-set role guesses it replaced (three share
+                # .38 for any guard or wing, dribble persistence .38 unless a "creator", ...) left generated guards
+                # and wings 4-5 points short of real players of their type on threes and well short on the habits
+                # behind turnovers, so the league's three share and turnovers slid as they replaced real players.
+                # The shape already picks the neighbours, so there is no profile tilt on top (it would count twice).
+                tref = _generated_tendency_reference(str(game_resource_root()))
+                if links:
+                    center = _real_habit(tref[iid], ability, _mean(values.get(k, ability+7) for k in links), position)
+                    probability = _probability(_logit(min(.9999, max(1e-4, center))) + .10 * _generated_detail(player, iid))
+                    if iid in college:
+                        target, weight = college[iid]
+                        probability = (1 - weight) * probability + weight * float(target)
+                    record['value']['probability'] = round(probability, 8)
+                    record['uncertainty']['notes'] = canonical_json(dict(interval=_bounded_band(probability, .25, 1))).strip()
+                else:
+                    probs = {}
+                    for outcome, (keys, _) in _DISTRIBUTION_PRIOR_LINKS[iid].items():
+                        center = _real_habit(tref[f'{iid}.{outcome}'], ability,
+                                             _mean(values.get(k, ability+7) for k in keys), position)
+                        probs[outcome] = max(1e-4, center) * math.exp(.10 * _generated_detail(player, iid+outcome))
+                    total = sum(probs.values())
+                    probs = {k: v/total for k, v in probs.items()}
+                    record['value']['rows'][0]['probabilities'] = probs
+                    record['uncertainty']['notes'] = canonical_json(dict(intervals={k: _bounded_band(v, .25, 1) for k,v in probs.items()})).strip()
+            else:
                 # Involvement tracks ability in the real league (better players finish and create more
                 # possessions): start from the same real neighbors as the skills, then let the profile tilt it.
                 record['value']['probability'] = _generated_involvement(
                     reference['T08'], ability, _mean(values.get(k, ability+7) for k in links), position)
-            if links:
                 residual = (_mean(values.get(k, ability+7) for k in links) - _mean(values.values())) / 20
                 old = record['value']['probability']
                 probability = _probability(_logit(old) + .5 * residual + .10 * _generated_detail(player, iid))
@@ -1836,14 +1907,6 @@ def _generated_definition_inputs(player_json: str, traits_json: str) -> PlayerIn
                     probability = (1 - weight) * probability + weight * _estimator_involvement(float(target))
                 record['value']['probability'] = round(probability, 8)
                 record['uncertainty']['notes'] = canonical_json(dict(interval=_bounded_band(probability, .25, 1))).strip()
-            else:
-                probs = record['value']['rows'][0]['probabilities']
-                for outcome, (keys, _) in _DISTRIBUTION_PRIOR_LINKS[iid].items():
-                    residual = (_mean(values.get(k, ability+7) for k in keys) - _mean(values.values())) / 20
-                    probs[outcome] *= math.exp(.5 * residual + .10 * _generated_detail(player, iid+outcome))
-                total = sum(probs.values())
-                record['value']['rows'][0]['probabilities'] = {k: v/total for k, v in probs.items()}
-                record['uncertainty']['notes'] = canonical_json(dict(intervals={k: _bounded_band(v/total, .25, 1) for k,v in probs.items()})).strip()
         notes = uncertainty_details(record)
         notes.update(basis='fictional generator definition; not an observation of a real person',
                      limitations='real-input interpolation and unspecified detail are modeling assumptions',
