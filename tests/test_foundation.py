@@ -3440,8 +3440,10 @@ class DataFoundationTests(unittest.TestCase):
         target = next(player for player in active["players"] if player["normalized_name"] == "bryce mcgowens")
         self.assertEqual(target["team_id"], seller["id"])
         # 841ddf8 requires comparable picks for a swap, so set a plausible 2028 pair.
-        next(pick for pick in active["draft_picks"] if pick["id"] == "pick_cle-2028-1")["projected_pick_slot"] = 24
-        next(pick for pick in active["draft_picks"] if pick["id"] == "pick_nop-2028-1")["projected_pick_slot"] = 26
+        # Both the projected position and the forecast finish, which sets the lottery odds (PICK-REFIT).
+        for pick_id, slot in (("pick_cle-2028-1", 24), ("pick_nop-2028-1", 26)):
+            next(pick for pick in active["draft_picks"] if pick["id"] == pick_id).update(
+                projected_pick_slot=slot, projected_finish_rank=slot)
         packages = buyer_offer_package_options(
             active,
             buyer,

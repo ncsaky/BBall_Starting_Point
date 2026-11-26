@@ -1,6 +1,6 @@
 # PICK-REFIT: trade side of the 3-2-1 lottery
 
-Progress: 8/8 - done, ready for the coordinator's review
+Progress: 9/10 - full suite on the second pass running on the cloud
 
 Owner: Claude (side session, worktree `reverent-brattain-6d2232`, branch `claude/reverent-brattain-6d2232`).
 Go-ahead from the coordinator 2026-11-26.
@@ -12,6 +12,8 @@ Go-ahead from the coordinator 2026-11-26.
 - From the 2027 draft on, computer teams price a future pick by the new lottery odds. The worst team's pick is no
   longer worth much more than the picks of the teams just above it.
 - Trade volume held (105 trades over two test seasons before, 104 after). No player ratings changed.
+- Second pass (asked for after the first report): protected picks and swap rights are priced by the odds too. See
+  "Second pass" below; trade volume there was 101 before and 99 after.
 
 ### The protection rule
 The NBA's May 28, 2026 announcement: "Teams will be unable to attach top-12 through top-15 protections to newly traded
@@ -83,7 +85,7 @@ Two deals a fan might question in the "after" seasons:
 - Cleveland (two rounds won) sent James Harden, 37, and a swap right to Chicago in a three-team deal for Norman Powell.
 
 ### Not changed
-- The flat discount on protected picks and the swap-right formula still ignore the new odds.
+- Protected picks and swap rights were still priced the old way after the first pass; the second pass changed that.
 - Draft room screens (a separate screen pass). Saved lottery results and drawn picks are valued as before.
 - The 2026 draft keeps the old pricing.
 
@@ -95,6 +97,68 @@ Two deals a fan might question in the "after" seasons:
 - Computer-team decisions change by design, so seeded seasons differ from before.
 - Full suite on a cloud machine (`run_tests_parallel.py --all --workers 2`): 2,722 tests, 0 failures, 0 errors,
   70 skipped.
+
+## Second pass: protected picks and swap rights (commit c2af00d4)
+
+**What changed in the game**
+- *Protected picks* used to lose a fixed share (top-4: 7%, top-10: 18%, top-20: 36%) whoever's pick it was. Now the
+  price follows the chance the pick lands inside the range, and counts the replacement pick that conveys instead. A
+  light protection on a strong team's pick is close to free; one that will almost surely keep the pick is priced as
+  its replacement.
+- *Swap rights* used to be worth much the same whichever side held the better pick. Now a right is worth what the
+  other pick can add: a lot when its holder's own pick is likely to be worse, almost nothing the other way round.
+  "Less favourable pick" obligations mirror it. Chains of swaps held as one pick are priced the same way.
+- Both apply from the 2027 draft on. Drafts before that keep the old formulas.
+
+Mid-season test save (3 February 2027), protected picks:
+
+| Pick and protection | Chance it stays home | Before | After |
+|---|---|---|---|
+| Dallas 2027, top-2 | 13% | 89.1 | 87.4 |
+| Miami 2027, top-14 | 8% | 42.2 | 53.8 |
+| Clippers 2028, top-16 | 90% | 61.7 | 76.4 |
+| Golden State 2030, top-20 | 87% | 48.2 | 69.1 |
+
+- The twelve protected picks in that save average 61.6 before, 66.5 after. Protected second-rounders in a new career
+  roughly double (about 9 to 17), because the game always hands over a replacement second.
+- Swap right on a first one draft ahead, example teams: strong team taking a weak team's pick 38.6 to 51.3; the
+  reverse 38.6 to 0.5; two middle teams 7.8 to 10.7.
+- Unprotected picks are unchanged by this pass.
+
+**Trades, one hands-off season per seed** (before = the first pass plus main's coaches work)
+
+| | Seed 20261126 before | after | Seed 20261127 before | after |
+|---|---|---|---|---|
+| Computer-team trades | 48 | 48 | 53 | 51 |
+| Trades that moved a pick | 33 | 38 | 39 | 32 |
+| First-round picks moved | 18 | 18 | 15 | 14 |
+| Second-round picks moved | 43 | 49 | 57 | 36 |
+| Swap rights moved | 2 | 4 | 5 | 5 |
+| Players moved | 84 | 91 | 93 | 86 |
+| New protections | none | top-4 | none | none |
+| Season sim time, seconds | 888 | 884 | 944 | 939 |
+
+Odd-trade checker, both seeds added (broad flags, not confirmed bad trades):
+
+| Flag | Before | After |
+|---|---|---|
+| First-round right given for a player who then played under 15 minutes | 2 | 2 |
+| Player given away for nothing | 1 | 0 |
+| Pick moved again within 90 days | 1 | 1 |
+| Player out 30+ days acquired | 8 | 7 |
+| Team that won 2+ playoff rounds sent out any player | 4 | 13 |
+
+The last row rose. Most of those are bench players and different teams went deep in the "after" seasons, but two
+seasons cannot rule out that the new prices let more such deals through. The separate trade-AI task on playoff teams
+(branch `claude/great-taussig-7876fd`) works on exactly these deals and should compare on top of this branch.
+
+**Checks (second pass)**
+- 690 focused trade, pick, draft and coaching tests pass. Seven new tests, including a check of the new arithmetic
+  against every pair of positions.
+- One older test (`test_ai_offer_packages_can_create_pick_swap_sweeteners`) failed, found by the trade-AI session: it
+  set its two example picks' positions without their forecast finishes, so one looked far better and no swap was
+  worth offering. It now sets both; no game code changed for it.
+- Full suite on c2af00d4: running.
 
 ### Files
 New `src/nba_gm_data/pick_lottery_value.py`; `pick_rules.py`, `transactions.py`, `play.py`, two lines in `save.py`
