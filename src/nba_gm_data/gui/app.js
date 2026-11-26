@@ -4722,6 +4722,7 @@ function seasonAwardsCard(editable) {
       <header class="season-award-head"><h3>${label}</h3></header>
       ${leader ? `<div class="season-award-race">
         ${seasonAwardLeader(leader, label, stats)}
+        ${globalThis.CardPages?.enabled?.() ? seasonAwardColumns(stats) : ""}
         ${chasers.map((row, index) => seasonAwardChaser(row, index + 2, stats)).join("")}
       </div>` : `<div class="empty">No candidates yet.</div>`}
     </section>`;
@@ -4785,6 +4786,16 @@ function seasonAwardLeader(row, label, stats) {
 }
 
 // Second to fourth: one table-style row each (rank, small face, name, team, the same stats, the weekly move).
+// The chasers' column headings, on a page (user, 2026-11-26: "it should have field headers"). The same cells as a
+// chaser's row, in the same order: rank, face, name, team, the award's stats, the change in rank.
+function seasonAwardColumns(stats) {
+  return `<div class="season-award-columns" role="row">
+      <span>#</span><span></span><span class="is-name">Player</span><span>Team</span>
+      ${stats.map(([key, statLabel]) => `<span data-stat="${key}">${statLabel}</span>`).join("")}
+      <span>Change</span>
+    </div>`;
+}
+
 function seasonAwardChaser(row, rank, stats) {
   return `<button type="button" class="season-award-chaser" data-dashboard-player-card="${escapeAttr(row.player_id)}">
       <b class="season-award-rank">${row.rank || rank}</b>

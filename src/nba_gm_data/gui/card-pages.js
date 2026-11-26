@@ -144,7 +144,7 @@
     {id: "news", group: "league", label: "News", layout: () => ({full: {fits: [1180, 620], roomy: [1500, 900]}, ...row(card("league-wire", {expanded: true, bare: true, fill: true}))})},
     {id: "awards", group: "league", label: "Awards", controls: "awards", layout: () => ({full: {fits: [1120, 560], roomy: [1500, 900]}, ...row(
       // Each race lists its ten candidates on a page (four in a board window), so the cards are taller here.
-      card("award-mvp", {fill: true, natural: "fit", size: [340, 468]}), card("award-dpoy", {fill: true, natural: "fit", size: [340, 468]}), card("award-roty", {fill: true, natural: "fit", size: [340, 468]}))})},
+      card("award-mvp", {fill: true, natural: "fit", size: [340, 500]}), card("award-dpoy", {fill: true, natural: "fit", size: [340, 500]}), card("award-roty", {fill: true, natural: "fit", size: [340, 500]}))})},
     {id: "playoffs", group: "league", label: "Playoffs", layout: () => ({full: {fits: [1100, 480], roomy: [1500, 900]}, ...row(card("phase-playoffs-bracket", {bare: true, fill: true, natural: "fit", size: [1424, 484]}))})},
     {id: "playoff-stats", group: "league", label: "Playoff Stats", layout: () => ({full: {fits: [1220, 580], roomy: [1500, 900]}, ...row(
       colOf({fill: true}, card("phase-playoffs-leaders", {fill: true})),

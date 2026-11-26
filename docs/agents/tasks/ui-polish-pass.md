@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C, checkpoint 6 published (News and Awards redone; step screens rebuilt); stopped, waiting for four decisions; pop-ups, Home phase tabs and the final sweep remain
+Progress: 8/9 - Stage C, checkpoint 7 published (Awards polish; eight pop-ups restyled); stopped, waiting for four decisions; Home phase tabs, the extension window and player card, and the final sweep remain
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -488,3 +488,43 @@ playoffs / free agency as Home tabs; names cut on the free-agent market; the Off
 in the open; fantasy draft, staff retention, cutdown and Sign Players screens unreachable in the test saves; the
 music and the background drift still untried by a person. `saves/st_draft_done.json` (a test copy) has a new
 modified time from being loaded during the helper's lottery hunt; it still opens on the finished draft.
+
+## Stage C, checkpoint 7 report (2026-11-26)
+
+**The user's answers to checkpoint 6**: News good. Awards: "the table underneath the leading person ... doesn't have
+field headers. It should have field headers and the cell with the leader and their headshot and the award image has
+sharp corners and it's a sharp box. It should probably not look like that. Other than that it looks pretty good."
+Checklist order stays (own decisions first). Next: the pop-ups.
+
+**What changed**
+- **Awards**: a headings row over each race's table on a page (`seasonAwardColumns` in `app.js`: #, Player, Team,
+  the award's stats, Change, on the chasers' own column grid); the leader band has the card radius and a hairline;
+  the leader's change in rank now sits under its "Change" label (old rules put the labels on grid row 5, so it fell
+  to row 1). Cards pinned at 340 by 500. Styles in `gui/news-awards.css`.
+- **Trade pop-ups** (Sonnet subagent, reviewed from pictures): Trade Builder (deal, pick, Value and Team identity
+  views), Trade Finder, Incoming Offers, Trade Market. All in the new `gui/popups.css`, every rule under `#modalRoot`,
+  token values only; test `tests/popups_style.test.cjs`. The Market's white strip and black headings are gone and its
+  table sizes its columns to fit so names stay on one line; the Builder's payroll chart is enlarged whole (1.3, or
+  1.1 on a short window).
+- **Other pop-ups** (second Sonnet subagent): box score (both views), Player Finder, staff talks, League Leaders,
+  in the new `gui/popups-game.css`; test `tests/popups_game_style.test.cjs`.
+- **Changed after review** (main model): box score comparison bars keep each team's own colour, lifted to a minimum
+  lightness (`oklch(from ... max(l, .66) c h)`, with a `color-mix` fallback) instead of grey and accent blue for
+  every game; on Incoming Offers, Accept Trade is the one frosted pill and Decline is plain text (they had come out
+  as two near-identical pills).
+
+**Checked**: browser tests, 53 of 54 files pass (the start-video one cannot here). Settings and the Trades tab are
+pixel-identical with and without `popups.css`. A pick's "Details" panel was opened and looked at. No button that
+changes a save was pressed (Ask, Propose, Accept, Decline, Shop).
+
+**Waiting on four decisions** (page https://claude.ai/artifact/SeJrGwfx6mz5vyzR4kMVpA, collection `decisions`):
+`awards-ok` (good | change), `popups-ok` (good | change), `accept-button` (frosted | blue), `next`
+(home-phases | rest-popups | sweep | photos).
+
+**Known gaps**: the contract extension window and the player card are built outside `#modalRoot`, so neither
+pop-up sheet reaches them; at 1280 by 760 the Builder's payroll table is cut at the bottom, the partner picker
+overlaps "gives" and long names are cut (all there before; the first slightly worse with the larger chart);
+League Leaders is the finder's table, not Player, Team, stat (needs a change to how it is built); the Value tab's
+"Roster value" bar is coloured inline; the Market's "Decision by" shows ISO dates; `popups.css` loads early in
+`index.html`, so its rules carry extra specificity. Still open from before: Home phase tabs, the start screen, more
+arena photos, the final sweep, and nobody has listened to the music or watched the background move.

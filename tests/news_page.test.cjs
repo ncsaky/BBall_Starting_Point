@@ -42,4 +42,8 @@ test('the News and Awards sheet touches only full-size pages and reads the share
 
 test('an award race lists ten candidates on a page and four in a board window', () => {
   assert.match(read('app.js'), /leaders\.slice\(0, globalThis\.CardPages\?\.enabled\?\.\(\) \? 10 : 4\)/);
+  // The chasers have column headings on a page (user: "it should have field headers"), and the leader's band is rounded.
+  assert.match(read('app.js'), /globalThis\.CardPages\?\.enabled\?\.\(\) \? seasonAwardColumns\(stats\) : ""/);
+  assert.match(read('app.js'), /<span>#<\/span><span><\/span><span class="is-name">Player<\/span><span>Team<\/span>/);
+  assert.match(read('news-awards.css'), /\.season-award-card \.season-award-leader \{ border-radius: var\(--gm-radius-card\) !important;/);
 });

@@ -56,3 +56,24 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .se
 /* The feed's frame takes the rest of the row beside the headline list. */
 html[data-layout="pages"] body .season-command-dashboard.is-pages .pages-page[data-pages-page="news"] .pages-stage.is-full .card-board-window.is-page-card { flex: 1 1 0 !important; min-width: 0 !important; }
 html[data-layout="pages"] body .season-command-dashboard.is-pages .pages-page[data-pages-page="news"] .pages-stage.is-full .card-board-window.is-page-card > .card-board-body { align-items: stretch !important; }
+
+/* ---------- Awards: the leader's band is a soft rounded tile, not a sharp box (user, 2026-11-26), and the chasers
+   have column headings. The cards are enlarged whole, so sizes here are the card's own (about 1.16 times smaller
+   than they appear): a heading is the small size once enlarged. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-card .season-award-leader { border-radius: var(--gm-radius-card) !important; border: 1px solid var(--gm-line) !important; overflow: hidden; }
+/* The leader's own numbers: headings on one line, values under them, and his change in rank under "Change" (it sat
+   alone above the first heading). */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-leader-stats > .season-award-stat-label { grid-row: 1 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-leader-stats > .season-award-stat { grid-row: 2 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-leader-stats > .season-rank-change { grid-row: 2 !important; grid-column: -2 / -1 !important; justify-self: center; font-size: var(--gm-size-row) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-columns {
+  display: grid; grid-template-columns: 18px 26px minmax(0, 1fr) 16px repeat(var(--award-stat-count, 4), 30px) 38px; column-gap: 4px; align-items: end;
+  height: 30px; padding: 0 8px 4px 0; box-sizing: border-box; border-bottom: 1.5px solid var(--gm-line-strong);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-columns > span {
+  text-align: center; white-space: nowrap; overflow: visible; color: var(--gm-ink);
+  font: var(--gm-weight-bold) calc(var(--gm-size-small) * .86)/1.2 var(--gm-font);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-columns > span.is-name { text-align: left; }
+/* "Team" is wider than its logo column: it ends at the logo's right edge and runs back over the name column's spare room. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-columns > span:nth-child(4) { display: flex; justify-content: flex-end; }

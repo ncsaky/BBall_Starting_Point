@@ -336,6 +336,21 @@ its sections share the page's width and height. The rules live in `gui/full-page
   headlines; the draft boards, the free-agent market, the offseason checklist and the playoff tables scrolled before
   and still do. Their headings stay pinned.
 
+## Pop-ups (2026-11-26)
+- Pop-up styling lives in two sheets: `gui/popups.css` (the trade room and incoming offers) and
+  `gui/popups-game.css` (box score, Player Finder, staff talks, League Leaders). Every rule sits under `#modalRoot`
+  and uses token values only, so nothing leaks onto pages; `tests/popups_style.test.cjs` and
+  `tests/popups_game_style.test.cjs` enforce both.
+- One main action per group of buttons: it is the frosted pill with bold text; the other action beside it is plain
+  text (Accept Trade and Decline).
+- A status is a coloured mark and plain words ("✓ Legal", "✕ Takes back $19.7M too much"), never a boxed chip.
+- Team-coloured bars keep the team's colour, lifted to a minimum lightness so black and navy teams still show on
+  dark glass. They are not replaced by grey and accent blue.
+- A chart with small labels is enlarged as one piece (its shape kept), never by resizing its text alone.
+- Award tables on a page carry a headings row on the same column grid as their rows (user, 2026-11-26: "it should
+  have field headers"); the leader band is rounded like a card, not a sharp box.
+- The contract extension window and the player card are built outside `#modalRoot`: these sheets do not reach them.
+
 ## Preserve (the user's favourites; don't redesign)
 - Team Identity heat maps at the current hexagon size (round 3: "looks great"). The tab style there still needs a new try.
 - Four Factors range charts (round 3: "maybe one of my favourite things").
