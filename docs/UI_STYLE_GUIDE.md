@@ -326,11 +326,15 @@ its sections share the page's width and height. The rules live in `gui/full-page
 - **The same rows in two tables are two tabs of one page** (Team: Roster | Stats).
 - **Nothing is cut to make room.** If a name cannot fit it ends in an ellipsis; a role never does (give the column
   the width). A long to-do job takes a second line.
-- **Rebuilt so far:** every tab of the four sidebar pages, and the Opening Roster step (it shares its table with
-  Two-Way Places). Not yet: the other step screens (Set The Roster, who to keep, the draft room, free agency). News
-  and Awards are enlarged whole and still leave empty room.
-- **Lists that may scroll** (the user's exceptions to "nothing scrolls"): available staff; the draft prospect board
-  and the playoff tables scrolled before and still do. Their headings stay pinned.
+- **Rebuilt so far:** every tab of the four sidebar pages and the step screens (Opening Roster, Set The Roster, the
+  offseason checklist, the draft room, free agency). Not reachable in the test saves, so not rebuilt: fantasy draft,
+  staff retention, cutdown, Sign Players. Pop-ups are untouched.
+- **News is a page, not a card** (user, 2026-11-26: keep the scrolling social feed; "keep the user engaged and
+  informed on the season they are in"): the feed two across, and beside it every headline with filters
+  (`gui/news-page.js`). Awards list ten candidates a race.
+- **Lists that may scroll** (the user's exceptions to "nothing scrolls"): available staff and the News feed and
+  headlines; the draft boards, the free-agent market, the offseason checklist and the playoff tables scrolled before
+  and still do. Their headings stay pinned.
 
 ## Preserve (the user's favourites; don't redesign)
 - Team Identity heat maps at the current hexagon size (round 3: "looks great"). The tab style there still needs a new try.

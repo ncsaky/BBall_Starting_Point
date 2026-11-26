@@ -4716,7 +4716,8 @@ function seasonAwardsCard(editable) {
   return `<div class="season-awards-grid">${races.map(([label, leaders]) => {
     const award = label.toLowerCase();
     const stats = SEASON_AWARD_STATS[label] || SEASON_AWARD_STATS.MVP;
-    const [leader, ...chasers] = leaders.slice(0, 4);
+    // A board window has room for the leader and three chasers; a page lists all ten candidates (user, 2026-11-26).
+    const [leader, ...chasers] = leaders.slice(0, globalThis.CardPages?.enabled?.() ? 10 : 4);
     return `<section class="season-command-panel season-award-card" data-award="${award}" style="--award-stat-count:${stats.length}">
       <header class="season-award-head"><h3>${label}</h3></header>
       ${leader ? `<div class="season-award-race">

@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C: all 17 tabs are full-size pages; six music tracks in; waiting for three checkpoint 5 decisions (News, Awards, what next); step screens are next
+Progress: 8/9 - Stage C, checkpoint 6 published (News and Awards redone; step screens rebuilt); stopped, waiting for four decisions; pop-ups, Home phase tabs and the final sweep remain
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -122,8 +122,11 @@ and first run, and the token sheet. End with a short list of decisions the user 
             **Waiting on four decisions**, and a yes in the chat before any music download.
       - [x] Checkpoint 5 (2026-11-26): the last six tabs; music (four CC0 tracks); the staff list scrolls; a
             play-through. Page: https://claude.ai/artifact/Kd86FRvNrWNjY7BvnLiBdZ. **Waiting on four decisions.**
-      - [ ] Next: the step screens (Set The Roster, who to keep, the draft room, free agency), News and Awards as
-            the user decides, then step 9 (the final sweep)
+      - [x] Checkpoint 6 (2026-11-26): News and Awards redone; Set The Roster, the offseason checklist, the draft
+            room and free agency rebuilt. Page: https://claude.ai/artifact/UjzCSZ8WoXbc3pZxJanq7Q. **Waiting on
+            four decisions.**
+      - [ ] Next, as the user picks: the pop-ups, draft / playoffs / free agency as Home tabs, more arena photos,
+            then step 9 (the final sweep)
             (pattern work: a cheaper model can do it from `docs/UI_STYLE_GUIDE.md` "Full-size pages"), then the step
             screens.
 
@@ -449,3 +452,39 @@ tcarisland and biggius): `diminishingreturnsinstr_0.mp3` (7.7 MB) and `downtempo
 and the game's credits list shows them, which is what CC BY 4.0 asks for. tcarisland's page asks, without requiring
 it, to be told when his music is used (a contact form on tcarisland.no): left to the user. The checkpoint 5 page's
 decisions were still unanswered.
+
+## Stage C, checkpoint 6 report (2026-11-26)
+
+**The user's checkpoint 5 answers**: News: "I like the scrollable social media as a concept ... you can reorganize as
+much as you like ... The objective is to keep the user engaged and informed on the season they are in"; Awards: more
+rows, "feel free to get experimental"; the two CC BY tracks: yes (done); next: the step screens.
+
+**What changed**
+- **News** (done on the main model): the feed keeps its posts, drawn two across and scrolling; `gui/news-page.js`
+  adds beside it a list of every headline (date, kind, team logos, one line) with filters (All, Your team, Trades,
+  Contracts, Staff, Other as present). A headline scrolls the feed to its post; a filter narrows both. Built from
+  `state.home.league_events` through `normalizeLeagueEvent`: no new data. Styles in `gui/news-awards.css`.
+- **Awards**: ten candidates a race on a page (four in a board window: `seasonAwardsCard`), cards pinned taller.
+- **Step screens** (two Sonnet subagents, reviewed from pictures): Set The Roster; the offseason checklist with the
+  Offer Builder (`.fa-builder`); the draft room's three arrangements (lottery, draft night, results); the free-agent
+  market with its builder and signing wire. All `full` layouts in `card-pages.js`, CSS appended to `full-pages.css`.
+  `layoutFull`'s whole-row fitting now also covers the draft board, the draft summary and the market.
+- White fills made glass: the free-agency cap strip, the offer salary field, Set The Roster's room boxes, the
+  lottery's "moved up" boxes.
+
+**Judgment calls the helpers made, reported to the user**: the checklist's tables are reordered by CSS (the user's
+own decisions first, "Around the league" last); the market's ask-change marks are one triangle and the amount.
+
+**Findings for the coordinator (outside this task)**: neither lottery test save opens on the lottery, and a copy
+advanced from the Finals went straight to draft night: the lottery phase is not entered (also a Stage A finding). The
+lottery card was checked by forcing it to draw.
+
+**Waiting on four decisions** (page https://claude.ai/artifact/UjzCSZ8WoXbc3pZxJanq7Q, collection `decisions`):
+`news-ok` (good | change), `awards-ok` (good | change), `checklist-order` (mine-first | as-before), `next`
+(popups | home-phases | sweep | photos).
+
+**Known gaps**: pop-ups untouched (trade room, box score, player finder, staff talks); the start screen; draft /
+playoffs / free agency as Home tabs; names cut on the free-agent market; the Offer Builder's rules text still stands
+in the open; fantasy draft, staff retention, cutdown and Sign Players screens unreachable in the test saves; the
+music and the background drift still untried by a person. `saves/st_draft_done.json` (a test copy) has a new
+modified time from being loaded during the helper's lottery hunt; it still opens on the finished draft.

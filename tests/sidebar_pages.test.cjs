@@ -323,7 +323,9 @@ test('Draft, News and Awards are full-size tabs; the pictures keep their proport
   const draft = cardsOf(layoutOf('scouting'));
   assert.equal(draft[0].natural, undefined, 'the prospect board is laid out at real sizes');
   assert.equal(draft[1].natural, 'fit', 'the draft-assets grid keeps its proportions');
-  for (const node of [...cardsOf(layoutOf('news')), ...cardsOf(layoutOf('awards'))]) assert.equal(node.natural, 'fit', node.id);
+  for (const node of cardsOf(layoutOf('awards'))) assert.equal(node.natural, 'fit', node.id);
+  // News is laid out at real sizes: a feed with a headline list beside it (news-page.js), not one enlarged post.
+  for (const node of cardsOf(layoutOf('news'))) assert.equal(node.natural, undefined, node.id);
 });
 
 test('Playoff Stats, Playoffs and Two-Way Places are full-size tabs; the bracket keeps its proportions', () => {
@@ -336,4 +338,29 @@ test('Playoff Stats, Playoffs and Two-Way Places are full-size tabs; the bracket
   }
   assert.equal(cardsOf(layoutOf('playoffs'))[0].natural, 'fit', 'the bracket is enlarged as one picture');
   assert.equal(cardsOf(layoutOf('roster-moves'))[0].natural, undefined, 'the roster table is laid out at real sizes');
+});
+
+test('Set The Roster and the Offseason Checklist are full-size step screens', () => {
+  const {pages} = load();
+  const layoutOf = (id) => pages.PAGES.find((page) => page.id === id).layout({available: () => true});
+  for (const [id, cards] of [['set-roster', ['phase-set_roster-checklist']], ['free-agency-checklist', ['phase-free_agency-checklist', 'phase-free_agency-selected']]]) {
+    const layout = layoutOf(id);
+    assert.ok(layout.full, `${id} is laid out at real sizes`);
+    assert.deepEqual(Array.from(cardsOf(layout), (node) => node.id), cards);
+  }
+});
+
+test('The draft room (three states) and Free Agency are full-size step screens', () => {
+  const {pages} = load();
+  const draft = pages.PAGES.find((page) => page.id === 'draft-room');
+  const only = (id) => draft.layout({available: (card) => card === id});
+  const lottery = only('phase-draft-lottery'), results = only('phase-draft-summary'), night = only('phase-draft-board');
+  for (const [layout, cards] of [[lottery, ['phase-draft-lottery']], [results, ['phase-draft-summary', 'phase-draft-trades']], [night, ['phase-draft-board', 'phase-draft-order']]]) {
+    assert.ok(layout.full, 'each draft state is laid out at real sizes');
+    assert.deepEqual(Array.from(cardsOf(layout), (node) => node.id), cards);
+  }
+  assert.equal(cardsOf(lottery)[0].natural, 'fit', 'the lottery is a picture, enlarged as one piece');
+  const agency = pages.PAGES.find((page) => page.id === 'free-agency').layout({available: () => true});
+  assert.ok(agency.full);
+  assert.deepEqual(Array.from(cardsOf(agency), (node) => node.id), ['phase-free_agency-market', 'phase-free_agency-selected', 'phase-free_agency-wire']);
 });

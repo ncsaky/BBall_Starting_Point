@@ -93,11 +93,15 @@
     // The step screens, in the order they follow one another.
     {id: "staff-retention", group: "now", step: true, label: "Staff Retention", layout: () => row(card("phase-staff_retention-decision", {bare: true}))},
     {id: "draft-room", group: "now", step: true, label: "Draft", layout: draftRoomLayout},
-    {id: "free-agency-checklist", group: "now", step: true, label: "Offseason Checklist", layout: () => row(card("phase-free_agency-checklist", {grow: "h"}), card("phase-free_agency-selected", {grow: "h"}))},
-    {id: "free-agency", group: "now", step: true, label: "Free Agency", layout: () => row(card("phase-free_agency-market", {grow: "h"}), card("phase-free_agency-selected", {grow: "h"}), card("phase-free_agency-wire", {grow: "h"}))},
+    {id: "free-agency-checklist", group: "now", step: true, label: "Offseason Checklist", layout: () => ({full: {fits: [1220, 660], roomy: [1500, 900]}, ...row(
+      colOf({fill: true}, card("phase-free_agency-checklist", {bare: true, fill: true})),
+      colOf({basis: 400}, card("phase-free_agency-selected", {fill: true})))})},
+    {id: "free-agency", group: "now", step: true, label: "Free Agency", layout: () => ({full: {fits: [1220, 660], roomy: [1500, 900]}, ...row(
+      colOf({fill: true}, card("phase-free_agency-market", {fill: true})),
+      colOf({basis: 340}, card("phase-free_agency-selected", {fill: true}), colOf({basis: 230}, card("phase-free_agency-wire", {fill: true}))))})},
     {id: "fantasy-draft", group: "now", step: true, label: "Fantasy Draft", layout: () => col("phase-fantasy_draft-control", row(card("phase-fantasy_draft-board", {grow: "h"}), card("phase-fantasy_draft-roster", {grow: "h"}), card("phase-fantasy_draft-ticker", {grow: "h"})))},
     {id: "roster-moves", group: "now", step: true, label: () => rosterMovesLabel(), layout: () => ({full: {fits: [1220, 640], roomy: [1500, 900]}, ...row(card("phase-cutdown-decision", {bare: true, fill: true}))})},
-    {id: "set-roster", group: "now", step: true, label: "Set The Roster", layout: () => row(card("phase-set_roster-checklist", {bare: true}))},
+    {id: "set-roster", group: "now", step: true, label: "Set The Roster", layout: () => ({full: {fits: [1220, 600], roomy: [1500, 900]}, ...row(card("phase-set_roster-checklist", {bare: true, fill: true}))})},
     // Slideshows open by themselves when they are due (and from Settings).
     {id: "outlook", group: "now", label: "Preseason Outlook", slideshow: "outlook"},
     {id: "recap", group: "now", label: "Year-End Recap", slideshow: "recap"},
@@ -136,9 +140,11 @@
     // League. The playoff tabs are listed while the playoffs are on. The bracket gets a tab of its own (it is as wide
     // as the screen). Both playoff tables are wider than their board windows were: the page gives them their width.
     {id: "standings", group: "league", label: "Standings", layout: () => ({full: {fits: [980, 580], roomy: [1500, 900]}, ...row(card("standings", {expanded: true, bare: true, fill: true}))})},
-    {id: "news", group: "league", label: "News", layout: () => ({full: {fits: [1120, 640], roomy: [1500, 900]}, ...row(card("league-wire", {expanded: true, bare: true, fill: true, natural: "fit", size: [500, 600]}))})},
+    // News: the league's feed as a page (news-page.js adds the headline list and the filters beside the posts).
+    {id: "news", group: "league", label: "News", layout: () => ({full: {fits: [1180, 620], roomy: [1500, 900]}, ...row(card("league-wire", {expanded: true, bare: true, fill: true}))})},
     {id: "awards", group: "league", label: "Awards", controls: "awards", layout: () => ({full: {fits: [1120, 560], roomy: [1500, 900]}, ...row(
-      card("award-mvp", {fill: true, natural: "fit", size: [340, 303]}), card("award-dpoy", {fill: true, natural: "fit", size: [340, 303]}), card("award-roty", {fill: true, natural: "fit", size: [340, 303]}))})},
+      // Each race lists its ten candidates on a page (four in a board window), so the cards are taller here.
+      card("award-mvp", {fill: true, natural: "fit", size: [340, 468]}), card("award-dpoy", {fill: true, natural: "fit", size: [340, 468]}), card("award-roty", {fill: true, natural: "fit", size: [340, 468]}))})},
     {id: "playoffs", group: "league", label: "Playoffs", layout: () => ({full: {fits: [1100, 480], roomy: [1500, 900]}, ...row(card("phase-playoffs-bracket", {bare: true, fill: true, natural: "fit", size: [1424, 484]}))})},
     {id: "playoff-stats", group: "league", label: "Playoff Stats", layout: () => ({full: {fits: [1220, 580], roomy: [1500, 900]}, ...row(
       colOf({fill: true}, card("phase-playoffs-leaders", {fill: true})),
@@ -163,11 +169,17 @@
       colOf({basis: 420}, ...(playoffs ? [card("opponent", {fill: true})] : ["opponent", card("standings", {link: "standings", fill: true})])))};
   }
 
+  // The draft room, by state: the lottery (a picture, enlarged), draft night (the prospect board and the order of
+  // picks), and the results (every selection, the draft-night trades). All three are full-size pages.
   function draftRoomLayout(ctx) {
     const has = (id) => ctx.available(id);
-    if (has("phase-draft-lottery")) return row(card("phase-draft-lottery", {bare: true}));
-    if (has("phase-draft-summary")) return row(card("phase-draft-summary", {grow: "h", quiet: true}), card("phase-draft-trades", {grow: "h", quiet: true}));
-    return row(card("phase-draft-board", {grow: "h"}), card("phase-draft-order", {grow: "h", quiet: true}));
+    if (has("phase-draft-lottery")) return {full: {fits: [900, 520], roomy: [1500, 900]}, ...row(card("phase-draft-lottery", {bare: true, fill: true, natural: "fit", size: [700, 454]}))};
+    if (has("phase-draft-summary")) return {full: {fits: [1100, 560], roomy: [1500, 900]}, ...row(
+      colOf({fill: true}, card("phase-draft-summary", {fill: true, quiet: true})),
+      colOf({basis: 340}, card("phase-draft-trades", {fill: true, quiet: true})))};
+    return {full: {fits: [1220, 600], roomy: [1500, 900]}, ...row(
+      colOf({fill: true}, card("phase-draft-board", {fill: true})),
+      colOf({basis: 260}, card("phase-draft-order", {fill: true, quiet: true})))};
   }
 
   function rosterMovesLabel() {
@@ -555,7 +567,7 @@
       }
       // The prospect board is a long list that scrolls: its rows are as many as fit, each 34px to 42px, so the last
       // visible row is not cut.
-      for (const list of stage.querySelectorAll(".season-prospect-list-expanded")) {
+      for (const list of stage.querySelectorAll(".season-prospect-list-expanded, .draft-prospect-scroll, .draft-summary-scroll, .fa-market-scroll")) {
         const table = list.querySelector("table");
         const legend = list.querySelector(".season-prospect-legend");
         if (!table || !list.clientHeight) continue;
