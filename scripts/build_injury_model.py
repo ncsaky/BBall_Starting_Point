@@ -13,8 +13,9 @@ one intercept per part, anchored to the complete public records of 2023-24 throu
 illnesses that cost a regular-season game; new_in_season) with the engine's history weight (injury_model.HISTORY_WEIGHT,
 recorded as rate_fit.history_weight; rebuild whenever it changes) and the history a new career starts with.
 The same-part term is the compounding effect; age/body/style terms decide which
-injuries a player tends to get. Recovery times are not modeled parametrically: the engine samples a real absence for
-the drawn part (diagnosis, days, games), weighted toward recent seasons.
+injuries a player tends to get. Recovery times are not modeled parametrically: for each part the model holds every
+diagnosis's share and its own real absences (diagnosis_recovery: recent seasons weighted more, season-end cut-offs
+corrected within the diagnosis, limits by kind of injury), and the engine draws a diagnosis, then its length.
 
     PYTHONPATH=src .venv/bin/python scripts/build_injury_model.py [--write] [--model-only]
 Writes data/canonical/injury_model_v2.json and (unless --model-only) the git-ignored per-player evidence
@@ -344,12 +345,11 @@ def correct_recovery_lengths(recovery, lengths_by_part, part_counts):
     return report
 
 
-def game_share(quantiles) -> float:
-    """Share of the engine's draws for a part that cost at least one game: it draws days = max(1, round(quantile)) and
-    misses days // 2 games (injury_model.sample_recovery, health.injury_return_date)."""
-    from nba_gm_data.injury_model import _days_at
-    n = 4000
-    return sum(1 for k in range(n) if max(1, int(round(_days_at(quantiles, (k + 0.5) / n)))) >= 2) / n
+def game_share(part_summary) -> float:
+    """Share of the engine's draws for a part that cost at least one game: it draws a diagnosis, then days =
+    max(1, round(quantile)), and misses days // 2 games (injury_model.sample_recovery, health.injury_return_date)."""
+    from nba_gm_data.injury_model import recovery_days
+    return sum(weight for days, weight in recovery_days(part_summary, 1000) if days >= 2)
 
 
 def public_history_entries(stretches, status):
@@ -427,29 +427,188 @@ def fit_season_rates(features, counts, exposure, seasons):
     return {key: intercepts.get(key) for key in sorted(season_totals)}, b[len(fitted):]
 
 
+# ---- Diagnosis names and believable lengths (INJURY-NAMES, 2026-11-26) --------------------------------------------
+# Every diagnosis has its own recovery times, so a name and a length drawn together always agree. Before, the length came
+# from the whole body part and the name from a broad length band, and an absence cut off by a season's end took the
+# typical length of longer cases anywhere in the body part (an ACL tear in the last week became a few games).
+
+# The kinds of diagnosis and the shortest and longest absence each can have, in the tracker's days (two per game missed).
+# Inside these limits the lengths are the diagnosis's own recorded absences. The limits drop records that contradict the
+# name (an ACL tear logged as a few days, a contusion logged as half a season). For 89 of the 98 diagnoses with 30+
+# cases, Basketball Index's own 90th percentile sits inside them; the nine others are contusions, "unspecified" entries,
+# elbow soreness and knee sprains and bone bruises, whose long records are what read wrong in the game. "major" runs
+# from about the shortest returned ACL or Achilles absence since 2015 to the ACL tear 90th percentile (381 days).
+KIND_DAYS = {
+    "minor": (1, 40),              # soreness, contusion, spasms, "<part> injury", headache
+    "illness": (1, 30),
+    "moderate": (1, 100),          # sprain, strain, tendinitis, inflammation, bone bruise, concussion
+    "face_fracture": (1, 60),      # nose, eye socket, head: many return behind a mask
+    "dislocation": (4, 120),
+    "fracture": (14, 200),
+    "stress_fracture": (20, 300),
+    "tear": (20, 340),             # meniscus, labrum, ligament and muscle tears
+    "surgery": (14, 365),
+    "major": (180, 381),           # season-long ligament and tendon injuries
+}
+MAJOR_DIAGNOSES = ("ACL tear", "Achilles tendon rupture", "patellar tendon tear")
+MODERATE_WORDS = ("sprain", "strain", "tendinitis", "inflammation", "bone bruise", "fasciitis", "laceration", "concussion")
+# A diagnosis with fewer returned absences (inside its limits) than this takes the lengths of its kind in the same area
+# of the body (a thumb surgery from hand and wrist surgeries, not knee surgeries), or, still short, of its kind anywhere.
+MIN_RETURNED_CASES = 3
+BORROW_AREAS = {"ankle": "foot", "foot": "foot", "toe": "foot", "knee": "knee", "back": "back", "hamstring": "leg",
+                "quadriceps": "leg", "calf": "leg", "achilles": "leg", "hip": "hip", "groin": "hip",
+                "shoulder": "shoulder", "wrist": "hand", "hand": "hand", "thumb": "hand", "head": "head",
+                "illness": "illness"}
+# Names as the game says them ("with an ankle injury", not "with a ankle (unspecified)").
+RENAMED_DIAGNOSES = {"illness general": "illness", "gi": "stomach illness", "respiratory": "respiratory illness",
+                     "viral": "viral illness", "other medical": "illness", "cardiac": "illness", "strain": "strain injury",
+                     "Achilles tendon (unspecified)": "Achilles injury", "ribs contusion": "rib contusion"}
+# Words that place a diagnosis on a model body part; a record filed under another part keeps its length but is called
+# "<part> injury" (a handful of two-injury entries, such as a rib soreness filed under the knee).
+PART_SITE_WORDS = {
+    "ankle": ("ankle",), "knee": ("knee", "acl", "mcl", "meniscus", "patella"),
+    "back": ("back", "disc", "neck", "abdomen", "rib", "chest", "tailbone"), "hamstring": ("hamstring",),
+    "hip": ("hip", "labrum"), "foot": ("foot", "heel", "plantar", "metatarsal"), "calf": ("calf", "shin", "leg"),
+    "shoulder": ("shoulder", "labrum", "rotator", "elbow", "arm"), "groin": ("groin", "adductor"),
+    "quadriceps": ("quadriceps",), "toe": ("toe",), "head": ("head", "concussion", "nose", "orbital", "eye", "dental"),
+    "wrist": ("wrist", "forearm", "metacarpal"), "hand": ("hand", "finger", "metacarpal"), "achilles": ("achilles",),
+    "thumb": ("thumb",),
+}
+QUANTILE_POINTS = 41
+
+
+def display_diagnosis(label: str) -> str:
+    """The diagnosis as the game names it."""
+    label = RENAMED_DIAGNOSES.get(label, label).replace(" (unspecified)", " injury")
+    return "A" + label[1:] if label.startswith("achilles") else label
+
+
+def part_diagnosis(label: str, part: str) -> str:
+    """The diagnosis name for a record in this part's recovery pool."""
+    name = display_diagnosis(label)
+    words = name.lower().split()
+    if part != "illness" and not any(word.startswith(site) for word in words for site in PART_SITE_WORDS[part]):
+        return display_diagnosis(f"{part} injury")
+    return name
+
+
+def diagnosis_kind(label: str, part: str) -> str:
+    text = label.lower()
+    if part == "illness":
+        return "illness"
+    if label in MAJOR_DIAGNOSES:
+        return "major"
+    if text.startswith("dental"):
+        return "minor"
+    if "surgery" in text:
+        return "surgery"
+    if "stress fracture" in text:
+        return "stress_fracture"
+    if "fracture" in text:
+        return "face_fracture" if text.split()[0] in ("nose", "orbital", "head") else "fracture"
+    if "dislocation" in text:
+        return "dislocation"
+    if "tear" in text.split() or "rupture" in text or "cartilage damage" in text:
+        return "tear"
+    return "moderate" if any(word in text for word in MODERATE_WORDS) else "minor"
+
+
+def count_season_end_absences(entries):
+    """Kaplan-Meier on one diagnosis's absences: an absence with no logged return (usually cut off by the season's end)
+    lasted at least its recorded days, so its weight passes to the longer absences of the same diagnosis, in proportion
+    to their weights. One with nothing longer keeps its recorded days. Returns new entries; total weight is unchanged."""
+    by_days = defaultdict(list)
+    for e in entries:
+        by_days[e["days"]].append(e)
+    longest = max(by_days, default=0)
+    # Weight passed on goes to every longer absence in proportion, so one running factor covers them all.
+    longer = sum(float(e.get("w") or 1.0) for e in entries)
+    factor, out = 1.0, []
+    for days in sorted(by_days):
+        group = by_days[days]
+        longer -= sum(float(e.get("w") or 1.0) for e in group)
+        passed = 0.0
+        for e in group:
+            weight = float(e.get("w") or 1.0)
+            if e["censored"] and days < longest:
+                passed += weight
+            else:
+                out.append(e | {"w": weight * factor})
+        if passed:
+            factor *= 1.0 + passed / longer
+    return out
+
+
+def diagnosis_recovery(recovery):
+    """Each part's pool rebuilt diagnosis by diagnosis: names as the game says them, lengths corrected for absences cut
+    off by a season's end (within the diagnosis) and kept inside the limits for its kind. A diagnosis with too few
+    returned absences in range takes its kind's lengths (BORROW_AREAS). Each diagnosis keeps its share of the part's
+    weight."""
+    named = {part: [e | {"label": part_diagnosis(e["label"], part), "w": float(e.get("w") or 1.0)} for e in pool]
+             for part, pool in recovery.items()}
+    kinds = defaultdict(list)   # (kind, body area) and (kind, None) for the kind anywhere
+    for part, pool in named.items():
+        for e in pool:
+            kind = diagnosis_kind(e["label"], part)
+            kinds[kind, BORROW_AREAS[part]].append(e)
+            kinds[kind, None].append(e)
+
+    def in_range(entries, kind):
+        low, high = KIND_DAYS[kind]
+        return [e for e in count_season_end_absences(entries) if low <= e["days"] <= high]
+
+    def enough(entries):
+        return sum(not e["censored"] for e in entries) >= MIN_RETURNED_CASES
+
+    kind_pools = {key: in_range(entries, key[0]) for key, entries in kinds.items()}
+    out = {}
+    for part, pool in named.items():
+        by_label = defaultdict(list)
+        for e in pool:
+            by_label[e["label"]].append(e)
+        entries = []
+        for label, own in sorted(by_label.items()):
+            kind = diagnosis_kind(label, part)
+            lengths = in_range(own, kind)
+            if not enough(lengths):
+                lengths = kind_pools[kind, BORROW_AREAS[part]]
+            if not enough(lengths):
+                lengths = kind_pools[kind, None]
+            if not lengths:
+                raise ValueError(f"no recorded {kind} absence inside {KIND_DAYS[kind]} days for {label}")
+            scale = sum(e["w"] for e in own) / sum(e["w"] for e in lengths)
+            entries.extend({"days": e["days"], "label": label, "censored": e["censored"], "w": e["w"] * scale}
+                           for e in lengths)
+        out[part] = entries
+    return out
+
+
+def weighted_quantiles(entries, points=QUANTILE_POINTS):
+    ordered = sorted(entries, key=lambda r: r["days"])
+    total = sum(float(r.get("w") or 1.0) for r in ordered)
+    quantiles, cumulative, idx = [], 0.0, 0
+    for k in range(points):
+        target = total * k / (points - 1.0)
+        while idx < len(ordered) - 1 and cumulative + float(ordered[idx].get("w") or 1.0) < target:
+            cumulative += float(ordered[idx].get("w") or 1.0)
+            idx += 1
+        quantiles.append(int(ordered[idx]["days"]))
+    return quantiles
+
+
 def summarize_recovery(recovery):
-    """Weighted duration quantiles (41 points) and diagnosis shares by duration band for each part's recovery pool."""
+    """For each part's recovery pool: its diagnoses, each with its share of the part's injuries and its own duration
+    quantiles (41 points). The engine draws a diagnosis, then a length from that diagnosis (injury_model.sample_recovery)."""
     summary = {}
     for part, pool in recovery.items():
-        ordered = sorted(pool, key=lambda r: r["days"])
-        total = sum(float(r.get("w") or 1.0) for r in ordered)
-        quantiles, cumulative, idx = [], 0.0, 0
-        for k in range(41):
-            target = total * k / 40.0
-            while idx < len(ordered) - 1 and cumulative + float(ordered[idx].get("w") or 1.0) < target:
-                cumulative += float(ordered[idx].get("w") or 1.0)
-                idx += 1
-            quantiles.append(int(ordered[idx]["days"]))
-        bands = []
-        for limit in (3, 7, 14, 30, 60, 120, 100000):
-            shares = Counter()
-            for r in ordered:
-                if (bands[-1][0] if bands else 0) < r["days"] <= limit:
-                    shares[r["label"]] += float(r.get("w") or 1.0)
-            top = shares.most_common(12)
-            band_total = sum(v for _, v in top) or 1.0
-            bands.append([limit, {label: round(v / band_total, 4) for label, v in top}])
-        summary[part] = {"quantiles": quantiles, "labels_by_days": bands}
+        total = sum(float(r.get("w") or 1.0) for r in pool)
+        by_label = defaultdict(list)
+        for r in pool:
+            by_label[r["label"]].append(r)
+        diagnoses = [{"label": label, "share": sum(float(r.get("w") or 1.0) for r in entries) / total,
+                      "quantiles": weighted_quantiles(entries)} for label, entries in by_label.items()]
+        diagnoses.sort(key=lambda d: (-d["share"], d["label"]))
+        summary[part] = {"diagnoses": [d | {"share": round(d["share"], 6)} for d in diagnoses]}
     return summary
 
 
@@ -508,7 +667,7 @@ def main():
         return [z["age"], z["age"] ** 2, z["height"], z["weight"], z["poss_pg"], z["rim_pressure"],
                 z["offensive_rebounding"], z["stamina"], f["center"], f["guard"], prior_same, prior_other]
 
-    model = {"version": "injury_model_v2_2026_11_21", "source": "Basketball Index Injury Tracker (data/research/bbi/tools)",
+    model = {"version": "injury_model_v2_2026_11_26", "source": "Basketball Index Injury Tracker (data/research/bbi/tools)",
              "first_season": FIRST_SEASON, "player_seasons": len(data), "games": sum(d[2] for d in data),
              "features": FEATURES, "standardization": {"mean": mu, "sd": sd}, "history_decay_years": HISTORY_DECAY_YEARS,
              "parts": {}, "merge": MERGE,
@@ -547,6 +706,7 @@ def main():
               " ".join(f"{k}={v:+.2f}" for k, v in zip(FEATURES, slopes) if abs(v) >= 0.08))
 
     # Recovery pools: real absences per part (diagnosis, days, games, surgery), most recent seasons first.
+    # "censored" marks an absence with no logged return: it lasted at least its recorded days.
     pools = defaultdict(list)
     for h in history:
         part = part_of(h)
@@ -555,8 +715,7 @@ def main():
                                 "surgery": int(h.get("surgery") or 0), "season": h["season"],
                                 "censored": int(h.get("censored") or 0)})
     # Injuries: Basketball Index's recorded absences (all players, since RECOVERY_FIRST_YEAR), grouped by body part,
-    # labeled with the specific diagnosis where one exists, weighted with its 6-year half-life. An absence without a
-    # logged return lasted at least its recorded days: it takes the median of longer returned cases for that part.
+    # labeled with the specific diagnosis where one exists, weighted with its 6-year half-life.
     observations = {o["observation_id"]: o for o in rows("injury_observations.json")}
     time_out = rows("injury_time_out.json")
     diagnosis = {}
@@ -577,16 +736,8 @@ def main():
                 bbi_pools[part].append(o | {"label": diagnosis.get(oid) or f"{part} injury"})
     recovery = {}
     for part, obs in bbi_pools.items():
-        returned = sorted(o["days"] for o in obs if o["return_logged"])
-        entries = []
-        for o in obs:
-            days = int(o["days"])
-            if not o["return_logged"]:
-                longer = [d for d in returned if d >= days]
-                days = int(statistics.median(longer)) if longer else days
-            entries.append({"days": days, "label": o["label"], "w": round(0.5 ** (float(o["recency_years"]) / 6.0), 5),
-                            "censored": int(not o["return_logged"])})
-        recovery[part] = entries
+        recovery[part] = [{"days": int(o["days"]), "label": o["label"], "w": round(0.5 ** (float(o["recency_years"]) / 6.0), 5),
+                           "censored": int(not o["return_logged"])} for o in obs]
     recovery["illness"] = [{"days": r["days"], "label": r["label"] or "illness", "w": 1.0, "censored": r["censored"]}
                            for r in pools.get("illness", [])]
     for part in PARTS:
@@ -619,18 +770,19 @@ def main():
     unknown_factor = (known + unknown) / known if known else 1.0
     anchor_games = sum(row[2] for row in anchor_rows)
 
-    # Recovery lengths: the tracker's pools, re-weighted to the complete records' mix of absence lengths (all players'
-    # new in-season absences in the three seasons; correct_recovery_lengths).
+    # Recovery lengths, diagnosis by diagnosis (diagnosis_recovery), then the whole pool re-weighted to the complete
+    # records' mix of absence lengths (all players' new in-season absences in the three seasons; correct_recovery_lengths).
+    recovery = diagnosis_recovery(recovery)
     length_fix = correct_recovery_lengths(recovery, lengths_by_part, target)
     for group, (complete, pool) in sorted(length_fix.items()):
         print(f"  lengths {group:15s} complete 1/2-5/6-10/11-20/21+ " + "/".join(f"{100 * v:.0f}" for v in complete)
               + "  tracker pool " + "/".join(f"{100 * v:.0f}" for v in pool))
     # Committed model = derived numbers only (user decision 2026-11-18: raw Basketball Index data stays off GitHub).
-    # Recovery pools become weighted duration quantiles plus diagnosis shares by duration band.
+    # Recovery pools become, for each diagnosis, its share of the part's injuries and its own duration quantiles.
     summary = summarize_recovery(recovery)
     # The engine also draws injuries that cost no game (a one-day absence: 4-14% of draws by part, 19% of illnesses, from
     # the tracker's recovery times), so the expected count is taken over the share of draws that cost a game.
-    shares = {part: game_share(summary[part]["quantiles"]) for part in fits if part in summary}
+    shares = {part: game_share(summary[part]) for part in fits if part in summary}
 
     # The engine adds each injury to the player's history the day it happens, so later games that season carry it.
     # The expected count does the same with the real season: each player-season is split into ANCHOR_SEGMENTS equal
@@ -689,6 +841,9 @@ def main():
     model["lasting_effects"] = [{k: r.get(k) for k in ("level", "bucket", "region", "n_treated", "d_rapm_1y_shrunk",
                                                        "d_rapm_1y_shrunk_ci", "d_rapm_2y", "d_poss_1y_pct")}
                                 for r in long_term]
+    for r in model["lasting_effects"]:
+        if r["level"] == "specific":   # matched against the diagnosis names the engine draws
+            r["bucket"] = display_diagnosis(r["bucket"])
     model["return_ramp"] = rows("injury_short_term.json")
     # Real players' recent injuries (start date, part, days) so a new save starts with their actual history:
     # the same-part and other-part history terms decay over ~1.5 years, so five seasons cover everything that still matters.

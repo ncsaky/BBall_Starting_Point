@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterator
 
 from .health import add_box_score_fatigue, advance_development, simulate_health
+from .injury_model import injury_phrase
 from .simulation_progress import emit_progress, progress_listener_active, simulation_stop_requested
 from .history_store import HISTORY_KEYS, SaveValidationError, archive_save_history, hydrate_save_history, load_history_records, validate_save_components
 from .save_locking import fsync_directory, save_lock
@@ -6077,11 +6078,14 @@ def merge_health_results(save: dict[str, Any], health: dict[str, Any], canonical
         games = event.get("expected_games_missed") or event.get("expected_days_missed") or "some"
         expected_games = int(event.get("expected_games_missed") or 0)
         player_mpg = display_minutes_projection(player) if player else 0.0
+        diagnosis = event.get("diagnosis")
+        reason = injury_phrase(diagnosis) if diagnosis else f"with a {event.get('body_area')} issue"
+        injury_line = f"{player_name} is expected to miss about {games} games {reason}."
         if expected_games > MAJOR_INJURY_GAMES_THRESHOLD and player_mpg > MAJOR_PLAYER_MPG_THRESHOLD:
             add_league_event(
                 save,
                 "injury",
-                (f"{player_name} is expected to miss about {games} games with a {event['diagnosis']}." if event.get("diagnosis") else f"{player_name} is expected to miss about {games} games with a {event.get('body_area')} issue."),
+                injury_line,
                 date_value=event.get("start_date"),
                 team_ids=[player.get("team_id")] if player.get("team_id") else [],
                 player_ids=[event.get("player_id")] if event.get("player_id") else [],
@@ -6101,7 +6105,7 @@ def merge_health_results(save: dict[str, Any], health: dict[str, Any], canonical
             add_news(
                 save,
                 "injury",
-                (f"{player_name} is expected to miss about {games} games with a {event['diagnosis']}." if event.get("diagnosis") else f"{player_name} is expected to miss about {games} games with a {event.get('body_area')} issue."),
+                injury_line,
                 date_value=event.get("start_date"),
             )
             socialized.add(event.get("id"))
