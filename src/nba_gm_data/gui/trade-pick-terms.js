@@ -35,6 +35,7 @@
       else if (rule.type==='protected_pick') {
         const max=Number(row.pick.round)===1?30:60;
         if (!(Number(rule.from)>=1 && Number(rule.through)>=Number(rule.from) && Number(rule.through)<=max)) problem='Choose a valid protected range.';
+        else if (Number(row.pick.round)===1 && Number(rule.through)>=12 && Number(rule.through)<=15) problem="The league doesn't allow new protections that stop at picks 12–15.";
         else if ((rule.fallback_pick_ids || []).length!==1 || !collateral(rule,rows).some(p=>p.id===rule.fallback_pick_ids[0])) problem='Choose a replacement pick.';
       } else if (rule.type==='pick_swap') {
         if (!recipient(row,rows)) problem='Choose a specific receiving team for a swap.';

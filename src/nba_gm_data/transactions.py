@@ -34,6 +34,9 @@ from .schema import (
     TransactionLog,
     to_plain,
 )
+from .pick_lottery_value import (
+    finish_spread, first_round_slot_value, highest_pick_allowed, lottery_applies, lottery_pick_slot, sample_draft_position,
+)
 from .spatial import spatial_fit_delta, with_spatial_fit_context
 from .utils import clamp, copy_plain, maybe_float, normalize_name, stable_id
 
@@ -1963,7 +1966,10 @@ def protected_pick_fallback_is_distinct(primary: dict[str, Any] | None, fallback
     )
 
 
-def pick_obligation_validation_errors(canonical_or_save: dict[str, Any], proposal: dict[str, Any] | None, term: dict[str, Any]) -> list[str]:
+def pick_obligation_validation_errors(canonical_or_save: dict[str, Any], proposal: dict[str, Any] | None, term: dict[str, Any], *,
+                                      new_term: bool = True) -> list[str]:
+    """``new_term``: a condition being attached in a trade now (the league's protection limits apply). Pass False when
+    checking a condition that already exists, which keeps whatever range it was agreed with."""
     if not term or term.get("type") in {None, "unprotected"}:
         return []
     errors: list[str] = []
@@ -1971,7 +1977,7 @@ def pick_obligation_validation_errors(canonical_or_save: dict[str, Any], proposa
     has_pick_table = bool(canonical_or_save.get("draft_picks"))
     locked = set(canonical_or_save.get("locked_pick_assets") or [])
     if term.get("type") == "protected_pick":
-        from .pick_rules import protection_bounds
+        from .pick_rules import new_protection_issue, protection_bounds
 
         try:
             protection_bounds(term)
@@ -1992,9 +1998,13 @@ def pick_obligation_validation_errors(canonical_or_save: dict[str, Any], proposa
             errors.append("protected pick primary does not exist")
         primary_round = int((primary or {}).get("round") or term.get("primary_round") or 0)
         try:
-            protection_bounds({**term, "round": primary_round})
+            low, high = protection_bounds({**term, "round": primary_round})
         except ValueError as error:
             errors.append(str(error))
+        else:
+            banned = new_protection_issue(low, high, primary_round) if new_term else ""
+            if banned:
+                errors.append(banned)
         primary_year = pick_season_start(primary or {"season": term.get("season")}) or pick_season_start({"season": term.get("season")}) or 0
         for fallback_id in fallback_ids:
             fallback = picks.get(fallback_id)
@@ -2381,6 +2391,20 @@ def trade_live_validation_issues(save: dict[str, Any], proposal: dict[str, Any],
                 term.get("current_rights_holder_team_id") or term.get("original_rights_holder_team_id") or term.get("receiver_team_id"),
             )
     locked_picks = set(save.get("locked_pick_assets") or [])
+    # A banned protection must stop the trade: applying it would otherwise drop the condition and move the pick bare.
+    agreed = {obligation.get("id") for obligation in save.get("pick_obligations", [])}
+    for term in proposal.get("pick_obligation_terms") or []:
+        if term.get("type") == "protected_pick" and not (term.get("id") and term.get("id") in agreed):
+            from .pick_rules import new_protection_issue, protection_bounds
+
+            try:
+                low, high = protection_bounds(term)
+            except ValueError as error:
+                issues.append(str(error))
+                continue
+            banned = new_protection_issue(low, high, int(term.get("round") or term.get("primary_round") or 0))
+            if banned:
+                issues.append(banned)
     for term in proposal.get('pick_obligation_terms') or []:
         if term.get('type') != 'pick_swap' or not term.get('pending_asset_grant'):
             continue
@@ -3171,6 +3195,8 @@ def transaction_pick_context_signature(canonical: dict[str, Any]) -> str:
             for obligation in canonical.get("pick_obligations", [])
         ),
         "locked_pick_assets": sorted(canonical.get("locked_pick_assets") or []),
+        # Drafts already held set the lottery's limits on repeat top picks.
+        "own_pick_history": canonical.get("save_own_pick_history") or {},
     }
     digest = hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:24]
     return f"transaction_pick_context_{digest}"
@@ -3210,6 +3236,8 @@ def annotate_pick_value_context(canonical: dict[str, Any]) -> None:
             continue
         if pick.get("overall_pick"):
             pick["projected_pick_slot"] = int(pick.get("overall_pick") or 30)
+            pick.pop("projected_finish_rank", None)
+            pick.pop("_highest_allowed_pick", None)
             continue
         pick_start = pick_season_start(pick)
         if pick_start is not None and pick_start < current_start:
@@ -3218,8 +3246,22 @@ def annotate_pick_value_context(canonical: dict[str, Any]) -> None:
         distance = max(0, (pick_start or current_start + 1) - current_start)
         if distance > 0 and original not in facts:
             facts[original] = _future_slot_facts(canonical, original, values, rosters.get(original, []))
-        pick["projected_pick_slot"] = int(round(future_adjusted_pick_slot(canonical, original, base_slot, distance,
-                                                                          facts=facts.get(original))))
+        finish = future_adjusted_pick_slot(canonical, original, base_slot, distance, facts=facts.get(original))
+        draft_year = pick_start or current_start + 1
+        if lottery_applies(draft_year):
+            # The 3-2-1 lottery: price the draft position the forecast finish is likely to bring, not the finish.
+            round_no = int(pick.get("round") or 2)
+            highest = highest_pick_allowed(canonical, original, draft_year) if round_no == 1 else 1
+            pick["projected_finish_rank"] = round(finish, 2)
+            pick["projected_pick_slot"] = lottery_pick_slot(pick["projected_finish_rank"], distance, round_no, highest)
+        else:
+            highest = 1
+            pick.pop("projected_finish_rank", None)
+            pick["projected_pick_slot"] = int(round(finish))
+        if highest > 1:
+            pick["_highest_allowed_pick"] = highest
+        else:
+            pick.pop("_highest_allowed_pick", None)
         pick["_future_distance_years"] = distance
 
 
@@ -3252,6 +3294,10 @@ def _future_slot_facts(canonical: dict[str, Any], team_id: str, values: dict[str
 
 def future_adjusted_pick_slot(canonical: dict[str, Any], team_id: str, base_slot: int, distance: int, *,
                               facts: tuple[str, float, float] | None = None) -> float:
+    """Forecast league finish (1 = worst record) of the team a pick comes from, ``distance`` years ahead.
+
+    Before the 2027 draft this is also the projected draft position; from 2027 pick_lottery_value turns it into one.
+    """
     if distance <= 0:
         return clamp(float(base_slot), 1, 30)
     phase, avg_top_age, youth_score = facts if facts is not None else _future_slot_facts(canonical, team_id)
@@ -6213,7 +6259,8 @@ def duplicate_trade_assets(assets: list[dict[str, Any]]) -> set[str]:
 
 def ranked_pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     """Expected value of exactly one guaranteed order statistic, not a leaf."""
-    fields = ("id", "season", "round", "original_team_id", "status", "overall_pick", "projected_pick_slot", "_protection_value_factor")
+    fields = ("id", "season", "round", "original_team_id", "status", "overall_pick", "projected_pick_slot",
+              "projected_finish_rank", "_highest_allowed_pick", "_protection_value_factor")
     leaves = []
     for pid in pick["_ranked_entitlement"]["pool_pick_ids"]:
         row = pick["_ranked_leaf_picks"][pid]
@@ -6232,13 +6279,14 @@ def ranked_pool_expected_values(pool_json: str, phase: str) -> tuple[float, ...]
 
     Farther seasons have wider team-outcome uncertainty. The existing roster
     projection already regresses future slots, so do not regress them twice.
+    From 2027 each scenario is a finish near the forecast and then a lottery draw.
     Actual lottery positions are fixed. No optional-swap premium is added:
     uncertainty enters once through the distribution of selected outcomes.
     """
     leaves = json.loads(pool_json)
     active = season_start_from_label(str(leaves[0].get("_active_season") or CANONICAL_SEASON))
     distance = max(0, (pick_season_start(leaves[0]) or active) - active)
-    spread = min(10.0, 2.0 + 1.3 * distance)
+    spread = finish_spread(distance)
     round_no = int(leaves[0].get("round") or 1)
     offset = 30 if round_no == 2 else 0
     means = []
@@ -6256,8 +6304,16 @@ def ranked_pool_expected_values(pool_json: str, phase: str) -> tuple[float, ...]
     samples = 1 if known else 96
     for pair in range(1 if known else 48):
         deviations = [0.0 if leaf.get("overall_pick") else rng.gauss(0, spread) for leaf in leaves]
+        draws = [rng.random() if leaf.get("projected_finish_rank") and not leaf.get("overall_pick") else None
+                 for leaf in leaves]
         for direction in ([1] if known else [1, -1]):
-            positions = [int(round(clamp(mean + direction * deviation, 1 + offset, 30 + offset))) for mean, deviation in zip(means, deviations)]
+            positions = [
+                int(round(clamp(mean + direction * deviation, 1 + offset, 30 + offset))) if draw is None else
+                offset + sample_draft_position(float(leaf["projected_finish_rank"]), direction * deviation,
+                                               draw if direction == 1 else 1.0 - draw, round_no,
+                                               int(leaf.get("_highest_allowed_pick") or 1))
+                for leaf, mean, deviation, draw in zip(leaves, means, deviations, draws)
+            ]
             ordered = sorted(range(len(leaves)), key=lambda index: (positions[index], leaves[index]["id"]))
             for rank, index in enumerate(ordered):
                 totals[rank] += tables[index][positions[index]]
@@ -6305,7 +6361,7 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     round_no = int(pick.get("round") or 2)
     slot = pick.get("overall_pick") or pick.get("projected_pick_slot")
     try:
-        slot_value = int(slot) if slot is not None else None
+        slot_value = float(slot) if slot is not None else None
     except (TypeError, ValueError):
         slot_value = None
     active_start = season_start_from_label(str(pick.get("_active_season") or pick.get("active_season") or CANONICAL_SEASON))
@@ -6313,21 +6369,7 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     distance = max(0, pick_start - active_start)
     if round_no == 1:
         if slot_value:
-            if slot_value == 1:
-                value = 126.0
-            elif slot_value == 2:
-                value = 118.0
-            elif slot_value == 3:
-                value = 112.0
-            elif slot_value <= 5:
-                value = 108.0 - (slot_value - 4) * 4.5
-            elif slot_value <= 10:
-                value = 96.0 - (slot_value - 6) * 3.0
-            elif slot_value <= 20:
-                value = 87.0 - (slot_value - 10) * 3.1
-            else:
-                value = 54.0 - (slot_value - 20) * 2.25
-            value = clamp(value, 28, 128)
+            value = first_round_slot_value(slot_value)
         elif pick.get("status") == "verified_2026_draft_board" and pick.get("id", "").split("-"):
             try:
                 pick_no = int(pick["id"].split("-")[2])
