@@ -653,6 +653,19 @@ def coaches_on_date(context: dict[str, Any], coach_by_team: dict[str, CoachRatin
 # Game engines the scorecards can choose between (Stage 2 seam). Normal gameplay always runs DEFAULT_ENGINE.
 DEFAULT_ENGINE = "current"
 ENGINES = ("current", "stage2")
+# Research-only switch for a save's own games (S2-MULTISEASON): set NBA_GM_SAVE_ENGINE=stage2 in the environment of a
+# test run (never the GUI) and every game a save plays (daily games, play-in and playoffs) uses that engine. Unset or
+# empty means today's engine, so normal gameplay is untouched. Not shown or stored anywhere in the save.
+SAVE_ENGINE_ENV = "NBA_GM_SAVE_ENGINE"
+
+
+def save_game_engine() -> str:
+    """The engine a save's season loop plays its games with: DEFAULT_ENGINE unless the research switch says otherwise."""
+    import os
+    engine = (os.environ.get(SAVE_ENGINE_ENV) or "").strip() or DEFAULT_ENGINE
+    if engine not in ENGINES:
+        raise ValueError(f"{SAVE_ENGINE_ENV}={engine!r} is not an engine; choose one of {', '.join(ENGINES)}")
+    return engine
 
 
 def sim_game(root: str | Path, game_id: str, mode: str = "replay-real-minutes", seed: int = 1) -> SimGameResult:
@@ -694,6 +707,9 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
         # Stage 2 seam (S2-SEAM-SHOOTING): the new possession engine gets the same game, teams and tonight's player
         # pools. Explicit scorecard/research choice only; saves and the GUI never pass it.
         from .stage2.engine import simulate_stage2_game
+        if mode == "sandbox-sim":
+            home_players = short_handed_recall(context, home_team, home_players, game_date)
+            away_players = short_handed_recall(context, away_team, away_players, game_date)
 
         return simulate_stage2_game(context, game, home_team, away_team, home_players, away_players,
                                     game_id=str(game_id), mode=mode, seed=seed)
@@ -933,6 +949,40 @@ def game_player_pool(context: dict[str, Any], game_id: str, team: dict[str, Any]
         cache[("reserves", *cache_key)] = reserves[:GARBAGE_EXTRAS_LIMIT]
     cache[cache_key] = normalize_minutes(pool)
     return cache[cache_key]
+
+
+SHORT_HANDED_MIN_PLAYERS = 5
+
+
+def short_handed_recall(context: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]],
+                        game_date: str | None) -> list[dict[str, Any]]:
+    """Season-loop bridge for Stage 2 in a save (S2-MULTISEASON; generated games, Stage 2 path only).
+
+    Late in a season a team out of the race shuts healthy veterans down, and with injuries on top the health pass can
+    leave fewer than five players (SAC on 2028-04-10 of the seed-20261125 run had four). Today's engine plays such a
+    game short-handed; Stage 2 needs five on the floor. Here the coach recalls the best healthy players he had rested or
+    shut down, just enough to field five. Injured players stay out. Normal play (today's engine) never calls this."""
+    playing = [item for item in pool if float(item.get("minutes") or 0.0) > 0]
+    if len(playing) >= SHORT_HANDED_MIN_PLAYERS:
+        return pool
+    from .health import sandbox_health_adjusted_pool
+    canonical = context["canonical"]
+    used = {item["player"]["id"] for item in pool}
+    candidates = [{"player": player, "minutes": 0.0, "actual": None} for player in canonical["players"]
+                  if player.get("team_id") == team["id"] and player["id"] not in used
+                  and not player.get("_inactive_player")]
+    rest_keys = ("rest_shutdown", "rest_game_id", "rest_date", "user_rest")
+    ids = {item["player"]["id"] for item in candidates}
+    states = [{k: v for k, v in state.items() if k not in rest_keys} if state.get("player_id") in ids else state
+              for state in canonical.get("player_health_states") or []]
+    healthy = sandbox_health_adjusted_pool({"player_health_states": states, "injury_events": canonical.get("injury_events", [])},
+                                           game_date, candidates)
+    healthy.sort(key=lambda item: (-float(item["player"].get("current_ability") or 0.0), item["player"]["id"]))
+    recalled = [{**item, "minutes": max(projected_game_minutes(item["player"]), 12.0), "short_handed_recall": True}
+                for item in healthy[:SHORT_HANDED_MIN_PLAYERS - len(playing)]]
+    if not recalled:
+        return pool
+    return normalize_minutes(playing + recalled)
 
 
 def return_ramped_player_pool(pool: list[dict[str, Any]], coach: CoachRating | None) -> list[dict[str, Any]]:
