@@ -33,7 +33,9 @@ no game code or ratings were changed.
 **1. A playoff team got the No. 4 pick (code-confirmed).**
 - What: the Lakers won the play-in for the 8th seed and played in the playoffs, yet sat in the lottery in slot 14 and
   jumped to pick 4. Orlando, knocked out in the play-in, was left out and picked 15th.
-- Why wrong: the lottery is for teams that missed the playoffs.
+- Why wrong: under the 14-team rules the game runs, the lottery is only for teams that missed the playoffs. Under
+  the real 2027 rules (below) the Lakers would be in it as a 7th-vs-8th play-in loser, with the smallest odds (per the
+  follow-up fix, `claude/fervent-antonelli-db66e4`).
 - Where: the lottery takes the 14 teams with the fewest wins and never looks at who made the playoffs
   (`src/nba_gm_data/draft.py:829-838`; wins handed over by `save.py:9886` `save_standings_for_draft`).
 - Also: the real 2027 draft uses the new 16-team "3-2-1" lottery approved in May 2026
