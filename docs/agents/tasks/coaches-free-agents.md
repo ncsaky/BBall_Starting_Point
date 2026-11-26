@@ -36,9 +36,9 @@ From the season review's "Smaller" notes and the user's comments on them (2026-1
 - Most stated reasons are "with no offer to stay": the old team made no bid.
 
 ## Checks
-- All 256 test modules passed on Azure (2,688 tests, no failures), run in pieces because a worker is killed when one
-  process holds a third of the suite (seen by other sessions too). That was before the last small edits (firing odds,
-  late fill-in reason, two data fields, own-team rule); related and new tests were rerun locally and pass.
+- Full suite on Azure on the committed code: all 256 modules, one process each; 2,688 tests, no failures, 70 skipped.
+  The two macOS packaging modules skip because the cloud machine has no packaging tools. Run one module per process:
+  a worker holding a third of the suite in one process gets killed (seen by other sessions too).
 - Final rules, seed 20261126, 3 seasons (`output/cfa-final-a`): firings 4/4/4 (in season 2/2/3). Every standard
   signing departure had a reason; camp-deal departures (56/42/27) had none. The season audit's 2 "errors" are the
   old stale checks.
