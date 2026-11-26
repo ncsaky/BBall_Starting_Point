@@ -43,7 +43,8 @@ from .narrative import (
     reset_narrative_cache,
 )
 from .schema import CANONICAL_SEASON, CANONICAL_START_DATE, CoachRating, DevelopmentEvent, to_plain
-from .sim import build_sim_indices, espn_team_id_map, invalidate_sim_cache, load_sim_context, load_sim_reference, sim_game_with_context
+from .sim import (DEFAULT_ENGINE, build_sim_indices, espn_team_id_map, invalidate_sim_cache, load_sim_context, load_sim_reference,
+                  save_game_engine, sim_game_with_context)
 from .spatial import invalidate_spatial_cache, team_spatial_profile
 from .staff import (
     COACHING_SLOTS, COORDINATOR_SLOTS, ROLE_LABELS, STAFF_SLOTS, apply_head_coach_reputation,
@@ -2320,6 +2321,35 @@ def simulation_month_calendar_progress(
     )
 
 
+def play_save_game(context: dict[str, Any], game_id: str, seed: int) -> dict[str, Any]:
+    """One of a save's own games, played by the engine the season loop uses (sim.save_game_engine: today's engine
+    unless the research switch NBA_GM_SAVE_ENGINE picks Stage 2)."""
+    engine = save_game_engine()
+    if engine == DEFAULT_ENGINE:
+        return to_plain(sim_game_with_context(context, game_id, mode="sandbox-sim", seed=seed))
+    return bridge_engine_result(to_plain(sim_game_with_context(context, game_id, mode="sandbox-sim", seed=seed,
+                                                               engine=engine)))
+
+
+def bridge_engine_result(result: dict[str, Any]) -> dict[str, Any]:
+    """Season-loop bridge for a game played by another engine (S2-MULTISEASON), so the save reads it exactly as it reads
+    today's results:
+    - a player who never got on the floor has no line (today's box scores have no zero-minute lines, and a line counts
+      as a game played in the season stats, the 65-game award rule and morale);
+    - overtime periods sit on both team lines, where the box score, game lists and history read them (from the
+      minutes played: 240 a team in regulation, 25 more per overtime)."""
+    lines = result.get("player_lines") or []
+    result["player_lines"] = [line for line in lines if float(line.get("minutes") or 0.0) > 0.0]
+    team_minutes: dict[Any, float] = {}
+    for line in result["player_lines"]:
+        team_minutes[line.get("team_id")] = team_minutes.get(line.get("team_id"), 0.0) + float(line.get("minutes") or 0.0)
+    periods = max([round((minutes - 240.0) / 25.0) for minutes in team_minutes.values()], default=0)
+    if periods > 0:
+        for team_line in result.get("team_lines") or []:
+            team_line.setdefault("overtime_periods", int(periods))
+    return result
+
+
 def advance_save_day(
     root: Path,
     canonical: dict[str, Any],
@@ -2359,7 +2389,7 @@ def advance_save_day(
             game_id = str(game.get("externalGameId"))
             if game_id in simulated_game_ids:
                 continue
-            result = to_plain(sim_game_with_context(context, game_id, mode="sandbox-sim", seed=effective_seed))
+            result = play_save_game(context, game_id, effective_seed)
             record_game_result(save, canonical, game, result)
             add_box_score_fatigue(runtime_canonical, save.setdefault("health_states", []), result, game["gameDate"], root)
             simulated_game_ids.add(game_id)
@@ -4458,7 +4488,7 @@ def simulate_playoff_game(
     context["indices"] = build_sim_indices(context)
     context["indices"]["coach_by_team"] = save_coach_ratings(active, save)
     context["starting_lineups"] = saved_starting_lineups(save)
-    result = to_plain(sim_game_with_context(context, game_id, mode="sandbox-sim", seed=seed))
+    result = play_save_game(context, game_id, seed)
     record_playoff_game_result(save, game, result)
     add_box_score_fatigue(active, save.setdefault("health_states", []), result, game_date, root)
     return result
