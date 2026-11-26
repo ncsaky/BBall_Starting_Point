@@ -265,6 +265,23 @@ these cannot be swapped blind).
   saying why.
 - The logic lives in `gui/progress.js` (one rule table, `PHASES`); `card-pages.js` places it.
 
+## The sidebar and the tabs (user, 2026-11-26)
+
+- **The sidebar is the spine, on every page:** team and date; the phase with one line under it; the to-do list; then
+  only a few pages (Home, Team, Front Office, League); the search field; Settings.
+- **The year bar runs across the top of every page, not in the sidebar** (user, 2026-11-26). Each of its seven
+  segments is as long as its part of the year (the regular season is the longest), and the current one fills only as
+  far as today.
+- **Everything else is a tab** at the page's title (the standard long pill). More tabs is fine; more sidebar pages is
+  not.
+- **A tab shows one thing, or a couple that belong together** (the rotation and the next game; a table and its
+  chart). Do not force many cards onto one page (user: "one of my biggest current issues").
+- Home's first tab is "Today": the rotation with the week under it and the next game; from the lottery to camp it is
+  contracts, payroll and picks (user's pick).
+- **Plain words on the welcome screens.** No slogans or paired punchy sentences ("One button moves time", "Red jobs
+  come first. The rest can wait."): the user reads them as machine-written. A title is a plain label ("To do",
+  "Pages"); a line under it says one concrete thing or is left out.
+
 ## Full-size pages (2026-11-26)
 
 A page is no longer cards pasted at card size and shrunk as one picture. A rebuilt page is laid out at real sizes and
@@ -282,12 +299,11 @@ its sections share the page's width and height. The rules live in `gui/full-page
   headings, one hairline between rows, no fills.
 - **Pictures keep their proportions** (the payroll chart, the draft-assets grid): the card is drawn at its own size
   and enlarged as one piece to fit its room. Never restyled, never stretched.
-- **The same rows in two tables share one page behind a picker** (Roster: Ratings | Stats; user, Stage A). The picker
-  is the standard long pill at the right of the page title.
+- **The same rows in two tables are two tabs of one page** (Team: Roster | Stats).
 - **Nothing is cut to make room.** If a name cannot fit it ends in an ellipsis; a role never does (give the column
   the width). A long to-do job takes a second line.
-- **Rebuilt so far:** Home while games are played (season, preseason, playoffs), Roster, Contracts. Not yet: Home from
-  the lottery to camp, Trades, and the rest of the Stage A list.
+- **Rebuilt so far:** Home (every phase), Roster, Stats, Contracts, Trades. Not yet: the other tabs and the step
+  screens.
 
 ## Preserve (the user's favourites; don't redesign)
 - Team Identity heat maps at the current hexagon size (round 3: "looks great"). The tab style there still needs a new try.

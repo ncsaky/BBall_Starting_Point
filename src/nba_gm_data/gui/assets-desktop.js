@@ -469,12 +469,16 @@ function refreshAssetsSurface(target = null) {
     wireAssetsCards(card.parentElement,rows,seasons);
   }
 }
+// A group is one screenful: six rows in a board window; on a page it fills the height (user, 2026-11-26: the top
+// sixteen, and each team's whole list up to sixteen).
+function leagueBlockGroupSize() { return globalThis.CardPages?.enabled?.() ? 16 : 6; }
 function leagueBlockGroups(rows) {
-  const top=[...rows].sort((a,b)=>Number(b.overall||0)-Number(a.overall||0)).slice(0,6);
+  const size=leagueBlockGroupSize();
+  const top=[...rows].sort((a,b)=>Number(b.overall||0)-Number(a.overall||0)).slice(0,size);
   const groups=[{label:'Top league targets',rows:top}];
   const byTeam=new Map();
   rows.forEach(row=>{const key=row.team_abbrev||'NBA';if(!byTeam.has(key))byTeam.set(key,[]);byTeam.get(key).push(row);});
-  [...byTeam.keys()].sort().forEach(team=>groups.push({label:team,team_abbrev:team,rows:byTeam.get(team).slice(0,6)}));
+  [...byTeam.keys()].sort().forEach(team=>groups.push({label:team,team_abbrev:team,rows:byTeam.get(team).slice(0,size)}));
   return groups;
 }
 function leagueBlockMarkup(rows) {

@@ -6,14 +6,12 @@
    Every rule starts from .pages-stage.is-full, so a page that has not been rebuilt yet is untouched. */
 
 /* ---------- The frame of a full-size page: rows and columns that share the page area. */
-html[data-layout="pages"] .pages-page.is-full .progress-body { display: block; position: relative; min-width: 0; min-height: 0; overflow: hidden; }
-html[data-layout="pages"] .pages-page.is-full :is(.progress-holder, .pages-full-holder) { position: relative; overflow: hidden; }
+html[data-layout="pages"] .pages-page.is-full .pages-full-holder { position: relative; overflow: hidden; }
 html[data-layout="pages"] .pages-stage.is-full { display: flex; width: auto; align-items: stretch; transform-origin: top left; }
 html[data-layout="pages"] .pages-stage.is-full > * { flex: 1 1 auto; min-width: 0; min-height: 0; }
 html[data-layout="pages"] .pages-stage.is-full .pages-row { display: flex; flex-direction: row; align-items: stretch; gap: var(--gm-space-5); min-width: 0; min-height: 0; }
 html[data-layout="pages"] .pages-stage.is-full .pages-col { display: flex; flex-direction: column; align-items: stretch; gap: var(--gm-space-4); min-width: 0; min-height: 0; }
 html[data-layout="pages"] .pages-stage.is-full .is-fill { flex: 1 1 0; }
-html[data-layout="pages"] .pages-stage.is-full .progress-rail { flex: 0 0 auto; }
 
 /* A section: its title, then its contents filling what the section was given. */
 html[data-layout="pages"] .pages-stage.is-full .pages-slot { flex: 0 0 auto; min-width: 0; min-height: 0; border-radius: 0; }
@@ -270,37 +268,26 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .se
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-signal-row > i > b { height: 100% !important; border-radius: var(--gm-radius-pill) !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-signal-row > strong { text-align: right; color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font) !important; font-variant-numeric: tabular-nums; }
 
-/* ---------- Home's to-do list in a full-size layout: the same list, the first section of the left column. */
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .progress-rail h3 { height: 34px; margin: 0; display: flex; align-items: center; font: var(--gm-weight-bold) var(--gm-size-section)/1.2 var(--gm-font) !important; }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .progress-todo .progress-job { height: auto !important; min-height: 40px !important; padding-top: 6px !important; padding-bottom: 6px !important; }
-/* A long job name, or a long note beside it, takes a second line instead of being cut. */
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .progress-job { grid-template-columns: 22px minmax(72px, 1fr) minmax(0, auto) 12px; }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .progress-job > b { white-space: normal; overflow: visible; text-overflow: clip; }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .progress-job > span:not(.progress-sr) { white-space: normal !important; text-align: right; }
-/* Home in a full-size layout uses a little more of the sheet's width (three columns of 13px rows need it). */
-html[data-layout="pages"] .pages-page.is-progress.is-full { inset: var(--gm-space-4) 20px var(--gm-space-3) var(--gm-space-5); }
-
-/* ---------- The picker at a page's title (Roster: Ratings | Stats): the standard long pill. A faint tray, the chosen
-   option a brighter pill with bold text. */
-html[data-layout="pages"] .pages-controls .pages-picker {
+/* ---------- The tabs at a page's title (Team: Roster | Stats | Development ...): the standard long pill. A faint tray,
+   the chosen tab a brighter pill with bold text. */
+html[data-layout="pages"] .pages-head .pages-tabs {
   display: inline-grid; grid-auto-flow: column; grid-auto-columns: minmax(max-content, 1fr); align-items: stretch;
-  height: 32px; padding: 0; box-sizing: border-box; overflow: hidden;
+  height: 32px; margin-left: var(--gm-space-5); padding: 0; box-sizing: border-box; overflow: hidden;
   background: var(--gm-glass-tile); border: 1px solid var(--gm-line); border-radius: var(--gm-radius-pill);
 }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-controls .pages-picker > button {
-  display: inline-flex !important; align-items: center; justify-content: center; height: auto !important; min-height: 0 !important; min-width: 96px !important;
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-head .pages-tabs > button {
+  display: inline-flex !important; align-items: center; justify-content: center; gap: 6px; height: auto !important; min-height: 0 !important; min-width: 84px !important;
   margin: 0 !important; padding: 0 var(--gm-space-4) !important; border: 0 !important; border-radius: var(--gm-radius-pill) !important;
   background: transparent !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
   color: var(--gm-ink-2) !important; font: var(--gm-weight-semibold) var(--gm-size-row)/1 var(--gm-font) !important; cursor: pointer;
   transition: background-color var(--gm-motion-quick) var(--gm-ease), color var(--gm-motion-quick) var(--gm-ease);
 }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-controls .pages-picker > button:hover { color: var(--gm-ink) !important; background: var(--gm-glass-tile) !important; }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-controls .pages-picker > button[aria-selected="true"] {
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-head .pages-tabs > button:hover { color: var(--gm-ink) !important; background: var(--gm-glass-tile) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-head .pages-tabs > button[aria-selected="true"] {
   color: var(--gm-ink) !important; font-weight: var(--gm-weight-bold) !important; background: var(--gm-glass-button) !important;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22) !important;
 }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-controls .pages-picker > button:focus-visible { outline: 2px solid var(--gm-focus); outline-offset: -2px; }
-html[data-layout="pages"] .pages-stage.is-full .pages-slot[hidden] { display: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-head .pages-tabs > button:focus-visible { outline: 2px solid var(--gm-focus); outline-offset: -2px; }
 
 /* ---------- Roster tables (Ratings, Stats): one table the width of the page, rows sharing the height up to the
    lone-table row height (42px). */
@@ -386,3 +373,76 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .as
   background: transparent !important; border: 0 !important;
 }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .asset-contract-key > span { display: inline-flex !important; align-items: center; gap: 6px; color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font) !important; }
+
+/* ---------- Trades: the league's targets the height of the page; your block and what teams want beside them. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .card-board-body > :is(.assets-block, .assets-team-block, .assets-wants) { display: flex !important; flex-direction: column; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full :is(.assets-block, .assets-team-block, .assets-wants) > .assets-panel-body,
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block > .assets-panel-body > div { display: flex !important; flex-direction: column; flex: 1 1 0; min-width: 0; min-height: 0 !important; width: auto !important; height: auto !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-caption {
+  flex: 0 0 auto; display: flex !important; align-items: center; gap: var(--gm-space-2); height: 32px !important; margin: 0 !important; padding: 0 var(--gm-space-2) !important; box-sizing: border-box;
+  background: transparent !important; border: 0 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .league-block-group-label { flex: 1 1 auto; display: flex !important; align-items: center; gap: var(--gm-space-2); color: var(--gm-ink) !important; font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .league-block-group-label > img { width: 24px !important; height: 24px !important; object-fit: contain; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-nav { display: flex !important; gap: var(--gm-space-1); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-nav > button {
+  display: grid !important; place-items: center; width: 28px !important; height: 28px !important; min-height: 0 !important; padding: 0 !important; border-radius: 50% !important;
+  background: var(--gm-glass-tile) !important; border: 1px solid rgba(255, 255, 255, .22) !important; box-shadow: none !important; color: var(--gm-ink) !important;
+  font: var(--gm-weight-semibold) var(--gm-size-button)/1 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-nav > button:hover { background: var(--gm-glass-tile-hover) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-caption > b { min-width: 40px; text-align: right; color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font) !important; font-variant-numeric: tabular-nums; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-table {
+  --full-row: 42px; --full-head: 26px; flex: 0 1 auto; display: grid !important; grid-template-rows: var(--full-head) !important; grid-auto-rows: minmax(0, var(--full-row)) !important; grid-template-columns: minmax(0, 1fr) !important;
+  width: auto !important; min-width: 0 !important; height: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; align-content: start;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-team-block .assets-block-table { --full-row: var(--gm-row-h); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full :is(.assets-block-head, .assets-block-row) {
+  display: grid !important; column-gap: 6px !important; align-items: center !important;
+  grid-template-columns: 46px minmax(110px, 1.5fr) 30px 30px 40px 40px 40px minmax(84px, 1fr) minmax(96px, 1fr) 56px !important;
+  width: auto !important; height: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 var(--gm-space-2) !important; box-sizing: border-box;
+  background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--gm-line-row) !important; border-radius: 0 !important;
+  color: var(--gm-ink) !important; text-align: center; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; font-variant-numeric: tabular-nums;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-head { border-bottom: 1.5px solid var(--gm-line-strong) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-head > span { color: var(--gm-ink) !important; letter-spacing: 0 !important; text-transform: none !important; white-space: nowrap; font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-head > span:nth-child(2) { text-align: left; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-row > span { color: var(--gm-ink) !important; white-space: nowrap; font: inherit !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-row:hover { background: var(--gm-glass-tile) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .league-block-portrait { position: relative; display: flex !important; align-self: stretch; align-items: flex-end; justify-content: flex-start; min-width: 0; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .league-block-portrait .player-headshot-frame { position: static !important; display: block; width: 36px !important; height: calc(100% - 2px) !important; max-height: 38px !important; min-height: 0 !important; background: none !important; border: 0 !important; border-radius: 0 !important; overflow: hidden !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .league-block-portrait .roster-player-headshot { display: block !important; width: 100% !important; height: 100% !important; object-fit: cover !important; object-position: center top !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .league-block-team-badge { position: absolute !important; right: 0 !important; bottom: 3px !important; left: auto !important; top: auto !important; width: 16px !important; height: 16px !important; object-fit: contain; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-team > img { width: 22px !important; height: 22px !important; object-fit: contain; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-row > button[data-dashboard-player-card], html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .team-block-player > button[data-dashboard-player-card] {
+  display: flex !important; align-items: center; min-width: 0; width: auto !important; height: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important;
+  background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; text-align: left; cursor: pointer;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-row .summary-player-name-label { display: flex !important; align-items: center; gap: 6px; min-width: 0; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-row .player-name-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gm-ink); font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-row .season-injury-status, html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-row .season-injury-status > span { flex: 0 0 auto; color: var(--gm-must) !important; font: var(--gm-weight-bold) var(--gm-size-row)/1 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-row .linked-rating > span { font: var(--gm-weight-bold) var(--gm-size-row)/1 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-row > span:nth-child(6) .linked-rating > span, html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-row > span:nth-child(7) .linked-rating > span { color: var(--gm-ink) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-row .linked-rating > i { display: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .block-value-meter { display: grid !important; grid-template-columns: 36px minmax(0, 1fr) !important; align-items: center; gap: 6px !important; width: 100% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .block-value-meter > b { text-align: right; color: var(--gm-ink) !important; font: var(--gm-weight-semibold) var(--gm-size-row)/1 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .block-value-bar { display: block; height: 8px !important; background: transparent !important; border-radius: var(--gm-radius-pill); overflow: hidden; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .block-value-bar > i { display: block; height: 100% !important; border-radius: var(--gm-radius-pill); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .block-find-trade {
+  justify-self: end; display: inline-flex !important; align-items: center; justify-content: center; width: auto !important; height: 26px !important; min-height: 0 !important; padding: 0 var(--gm-space-3) !important;
+  border-radius: var(--gm-radius-pill) !important; background: var(--gm-glass-tile) !important; border: 1px solid rgba(255, 255, 255, .22) !important; box-shadow: none !important;
+  color: var(--gm-ink) !important; font: var(--gm-weight-semibold) var(--gm-size-small)/1 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .block-find-trade:hover { background: var(--gm-glass-tile-hover) !important; }
+/* Your block: the same columns in the room it has; an empty row is the two pickers that add to it. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-team-block :is(.assets-block-head, .assets-block-row) { grid-template-columns: 30px minmax(96px, 1.5fr) 26px 26px 34px 34px 34px minmax(70px, 1fr) minmax(64px, .8fr) 0 !important; column-gap: 4px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-team-block .assets-block-row.is-empty-row { grid-template-columns: minmax(0, 1fr) !important; min-height: var(--gm-row-h) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .team-block-add-pair { display: flex !important; align-items: center; gap: var(--gm-space-2); grid-column: 1 / -1; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .team-block-player { display: flex !important; align-items: center; gap: 6px; min-width: 0; text-align: left; }
+/* What teams want: the team picker, then the list. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .team-wants-toolbar { flex: 0 0 auto; display: flex !important; align-items: center; gap: var(--gm-space-2); height: auto !important; margin: 0 !important; padding: 0 0 var(--gm-space-2) !important; border: 0 !important; border-bottom: 1.5px solid var(--gm-line-strong) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .team-wants-list { display: grid !important; align-content: start; gap: 0 !important; margin: 0 !important; padding: 0 !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.3 var(--gm-font) !important; color: var(--gm-ink); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .team-wants-empty { padding: var(--gm-space-2) !important; color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.3 var(--gm-font) !important; }
+/* Your block is as tall as its rows; it does not share the column's height. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-team-block > .assets-panel-body { flex: 0 0 auto; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-team-block .assets-block-table { flex: 0 0 auto; grid-auto-rows: var(--full-row) !important; overflow: visible !important; }

@@ -1181,10 +1181,10 @@ const GAME_TUTORIAL_STEPS = [
 // style, drawn from the save itself, then the Preseason Outlook, then Home. The page tips the old eleven-card tour
 // carried sit behind the small "i" beside each section title (PAGE_SECTION_TIPS).
 const FIRST_RUN_STEPS = [
-  {title: "Your team", next: "Next", body: firstRunTeamSlide},
+  {title: "Team", next: "Next", body: firstRunTeamSlide},
   {title: "The year", next: "Next", body: firstRunYearSlide},
-  {title: "One button", next: "Next", body: firstRunButtonSlide},
-  {title: "Your pages", next: "", body: firstRunPagesSlide},
+  {title: "To do", next: "Next", body: firstRunButtonSlide},
+  {title: "Pages", next: "", body: firstRunPagesSlide},
 ];
 const PAGE_SECTION_TIPS = {
   minutes: "Minutes are one of your most direct coaching decisions. Slider changes save immediately and rebalance unlocked players to 240 team minutes. Blue sliders are your fixed targets; actual game minutes can vary with health and overtime. Use player cards for ratings and context.",
@@ -1207,31 +1207,33 @@ function firstRunTeamSlide() {
   const stars = [...rosterRows(dash)].filter((row) => Number.isFinite(overall(row))).sort((a, b) => overall(b) - overall(a)).slice(0, 3);
   const logo = teamLogoSrc(team);
   return `${logo ? `<img class="first-run-logo" src="${escapeAttr(logo)}" alt="" />` : ""}
-    <h2 id="gameTutorialTitle">You run the ${escapeHtml(String(dashboardTeamName(team) || team).replace(/^.* /, ""))}.</h2>
-    ${rank ? `<p id="gameTutorialCopy">Rated ${rank}${["th", "st", "nd", "rd"][rank % 100 > 10 && rank % 100 < 14 ? 0 : rank % 10] || "th"} of ${count}</p>` : `<p id="gameTutorialCopy"></p>`}
+    <h2 id="gameTutorialTitle">${escapeHtml(String(dashboardTeamName(team) || team))}</h2>
+    ${rank ? `<p id="gameTutorialCopy">Projected ${rank}${["th", "st", "nd", "rd"][rank % 100 > 10 && rank % 100 < 14 ? 0 : rank % 10] || "th"} of ${count}</p>` : `<p id="gameTutorialCopy"></p>`}
     <div class="first-run-stars">${stars.map((row) => `<div>${playerHeadshotMarkup(row, "first-run-face")}<b>${escapeHtml(overall(row).toFixed(0))}</b><span>${escapeHtml(row.name || "")}</span></div>`).join("")}</div>`;
 }
 
 function firstRunYearSlide() {
   const progress = globalThis.GameProgress, c = progress?.context();
   const head = c ? progress.heading(c) : {step: 0, sub: ""};
-  return `<h2 id="gameTutorialTitle">One year, seven phases.</h2>
-    <ol class="first-run-year" aria-label="The year">${(progress?.YEAR || []).map((name, index) => `<li class="${index === head.step ? "is-now" : index < head.step ? "is-past" : ""}"><i></i><b>${escapeHtml(name)}</b></li>`).join("")}</ol>
-    <p id="gameTutorialCopy">You are here.${head.sub ? ` ${escapeHtml(head.sub)}.` : ""}</p>`;
+  return `<h2 id="gameTutorialTitle">The year</h2>
+    ${progress?.yearMarkup?.("first-run-year") || ""}
+    <p id="gameTutorialCopy">${escapeHtml(head.sub || "")}</p>`;
 }
 
 function firstRunButtonSlide() {
   const progress = globalThis.GameProgress;
-  return `<h2 id="gameTutorialTitle">One button moves time.</h2>
+  return `<h2 id="gameTutorialTitle">To do</h2>
     <div class="first-run-demo"><div class="progress-rail" inert>${(progress?.listMarkup(() => false) || "").replace(/<h3>.*?<\/h3>/, "").replace(/<button type="button" class="progress-job([^"]*)"[^>]*>/g, '<div class="progress-job$1">').replaceAll("</button>", "</div>")}</div><div class="first-run-dock pages-dock" inert><div class="card-board-phase-actions">${(progress?.dockMarkup() || "").replace(/ id="[^"]*"/g, "").replace(/ data-(?:phase-command|advance|pages-go)="[^"]*"/g, "")}</div></div></div>
-    <p id="gameTutorialCopy">Red jobs come first. The rest can wait.</p>`;
+    <p id="gameTutorialCopy">Red rows have to be done before you can sim.</p>`;
 }
 
 function firstRunPagesSlide() {
-  const groups = [...document.querySelectorAll(".pages-nav-group")].map((group) => [group.querySelector("h3")?.textContent || "", [...group.querySelectorAll(".pages-nav-item > span:first-child")].map((item) => item.textContent)]);
-  return `<h2 id="gameTutorialTitle">Everything else is a page.</h2>
+  // The sidebar's pages, each with its tabs (the playoff tabs appear with the playoffs).
+  const pages = globalThis.CardPages;
+  const groups = (pages?.GROUPS || []).map(([id, name]) => [name, (pages.PAGES || []).filter((page) => page.group === id && !/^playoff/.test(page.id)).map((page) => String(page.label))]);
+  return `<h2 id="gameTutorialTitle">Pages</h2>
     <div class="first-run-pages">${groups.map(([name, items]) => `<div><b>${escapeHtml(name)}</b>${items.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>`).join("")}</div>
-    <p id="gameTutorialCopy">${state.home?.save?.season_slideshow?.pending ? "Next: how the league sees you." : "Home is where you always land."}</p>`;
+    <p id="gameTutorialCopy"></p>`;
 }
 
 function renderFirstRun() {

@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C, first checkpoint published (Home, Roster, Contracts at full size); stopped, waiting for three decisions before Trades and the next pages
+Progress: 8/9 - Stage C, checkpoint 2 published (to-do in the sidebar, four pages with tabs, year bar across the top, Trades rebuilt); stopped, waiting for four decisions (page map, backgrounds, Home right column, what next)
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -112,7 +112,11 @@ and first run, and the token sheet. End with a short list of decisions the user 
             https://claude.ai/artifact/5KVWHDqgWp3oe2gy5WhTC1 ("Polish Pass Stage C"). **Waiting on three decisions** (the page's `decisions` collection):
             `summer-home` (contracts | roster-small | note), `trades-rows` (more | six), `next-pages`
             (planned | steps | note).
-      - [ ] Next: Trades, Home from the lottery to camp, then the order the user picks.
+      - [x] Checkpoint 2 (2026-11-26): the sidebar carries the to-do list; four pages with tabs; Trades and summer Home
+            rebuilt; welcome text rewritten. Page: https://claude.ai/artifact/TWVA9sPeLM8BA2nz9EZXb5.
+      - [ ] Next: the background treatment (pictures to choose from first), then the remaining tabs one at a time
+            (pattern work: a cheaper model can do it from `docs/UI_STYLE_GUIDE.md` "Full-size pages"), then the step
+            screens.
 
 ## Stage A report (2026-11-25)
 
@@ -264,3 +268,49 @@ engine or save code touched).
 
 **Working files** (git-ignored, `output/ui-polish/`): `scn/page.mjs` (one page, optional picker option),
 `scn/tour.mjs` (Contracts first, then every page), `sitec/` (the published page).
+
+## Stage C, checkpoint 2 report (2026-11-26)
+
+**The user's Stage C answers** (page 1's `decisions`): summer Home = contracts, payroll and picks; league targets
+fill the height; then the other pages in the planned order. Notes, in their words: the to-do list makes more sense in
+the sidebar "along with only a few pages"; "a lot of the current pages should be more like tabs on a page from a
+shorter selection of pages, but we can have more tabs"; "I don't like the way you force a lot of cards together on
+the pages" (these are "some of my biggest current issues"); the backgrounds are "kind of overpowering ... just you
+slapping a color filter over a photo ... we need more neutral colors and more accents of the team colors"; and the
+welcome text "sounds so much like an AI wrote it".
+
+**What changed**
+- **Sidebar** (`card-pages.js`, `progress.css`): the phase and its line, then the to-do list, on every page; four
+  pages under it (Home, Team, Front Office, League). 224px wide (was 184).
+- **Year bar** (user, mid-turn: "across the main header of the page ... each segment to vary in length depending on
+  how long it is ... each segment will only fill as far through it as we are"): a row at the top of every page
+  (`.pages-year`, `GameProgress.yearMarkup` / `yearSpans`). Segment lengths are days between the league calendar's
+  month-day boundaries; the current segment (from the save's phase) fills by today's date within them.
+- **Tabs**: every old sidebar page is a tab of one of the four (`GROUPS`; a page's `group`). The sidebar opens a page
+  on the tab last used there. Tabs: Home (Today, Schedule); Team (Two-Way Places in season, Roster, Stats,
+  Development, Staff, Identity, Profile); Front Office (Contracts, Trades, Draft); League (Standings, News, Awards,
+  Playoffs, Playoff Stats). `CardPages.go(id)` opens a tab by id.
+- **Fewer things per screen**: Home is the rotation with the week under it, and the next game. Standings, signals and
+  morale left Home (Standings tab; Identity tab). Development and Staff, Heat maps and the radars, Standings and the
+  league wire, Trades and the payroll chart no longer share a page.
+- **Trades** rebuilt at full size: sixteen league targets a group (was six; `leagueBlockGroupSize`), your block and
+  what teams want beside them.
+- **Home from the lottery to camp**: contracts, payroll and picks at full size.
+- **Welcome text** rewritten as plain labels (team name and "Projected 18th of 30"; "The year"; "To do" with one
+  instruction; "Pages" listing the four pages and their tabs).
+- Removed: the page-level to-do list and its layout node, the Ratings | Stats picker (they are tabs now).
+
+**Not done**
+- The background (the colour filter over the arena photos): not touched. Proposed next: three treatments on two
+  arenas for the user to pick from, before changing all thirty.
+- Still the older cards inside their tabs (scaled, with empty room beside them): Schedule, Development, Staff,
+  Identity, Profile, Draft, Standings, News, Awards, the playoff tabs, Two-Way Places, and every step screen.
+- Home's right column is half empty under the next game (six or seven opponent rows).
+- Signals and morale are small on the Identity tab. Two-Way Places is still its own tab in season.
+
+**Checks**: every tab captured on the regular-season copy; Home on a new save, in the playoffs, in free agency and in
+late summer; the four welcome screens. Browser tests 48 of 49 (the 49th needs the absent video); the page tests were
+rewritten for the new structure. Not played end to end again after the restructure (no sim, no step-screen walk).
+
+**Working files**: `scn/home.mjs`, `scn/page.mjs` and `shots.mjs` now open tabs through `CardPages.go`; `sited/` is
+the published page.

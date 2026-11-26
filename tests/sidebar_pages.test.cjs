@@ -38,7 +38,7 @@ test('pages have unique ids, a sidebar group and a label', () => {
   const ids = pages.PAGES.map((page) => page.id);
   assert.equal(new Set(ids).size, ids.length);
   for (const page of pages.PAGES) {
-    assert.ok(['now', 'team', 'office', 'league'].includes(page.group), page.id);
+    assert.ok(['now', 'home', 'team', 'office', 'league'].includes(page.group), page.id);
     assert.ok(page.label, page.id);
     assert.ok(page.layout || page.slideshow, page.id);
   }
@@ -167,15 +167,22 @@ test('closed actions show as closed rows, from the save\'s own legal actions', (
   assert.equal(progress.dock(progress.context()).main.label, 'Sim one game per series');
 });
 
-test('Home is the progress page, lands first, and step screens lead back to it', () => {
+test('the sidebar carries the phase and the to-do list; Home lands first, and step screens lead back to it', () => {
   const {pages} = load();
-  const home = pages.PAGES.find((page) => page.id === 'home');
-  assert.equal(home.progress, true);
+  // Only a few pages in the sidebar (user, 2026-11-26); everything else is a tab of one of them.
+  assert.deepEqual(Array.from(pages.GROUPS, ([id]) => id), ['home', 'team', 'office', 'league']);
+  const tabs = (group) => Array.from(pages.PAGES).filter((page) => page.group === group).map((page) => page.id);
+  assert.deepEqual(tabs('home'), ['home', 'schedule']);
+  for (const id of ['roster', 'stats', 'development', 'staff', 'identity', 'profile']) assert.ok(tabs('team').includes(id), id);
+  assert.deepEqual(tabs('office'), ['contracts', 'trades', 'scouting']);
+  for (const id of ['standings', 'news', 'awards', 'playoffs', 'playoff-stats']) assert.ok(tabs('league').includes(id), id);
   const source = read('card-pages.js');
-  assert.match(source, /el\.classList\.add\("is-progress"\)/);
+  assert.match(source, /progressEl\.className = "pages-progress";/);
+  assert.match(source, /progressEl\.querySelector\("\.progress-rail"\)\.innerHTML = progress\(\)\.listMarkup\(/, 'the to-do list is in the sidebar, on every page');
+  assert.match(source, /class="pages-tabs" role="tablist"/);
   assert.match(source, /if \(!stays \|\| newlyBlocked \|\| called\) return "home";/);
   assert.match(source, /class="pages-control pages-step-home" data-pages-go="home"/);
-  assert.doesNotMatch(source, /pages-step-back|Continue: |nbaGmPage:v1/, 'no step-to-step buttons and no remembered page across loads');
+  assert.doesNotMatch(source, /pages-step-back|Continue: |nbaGmPage:v1|is-progress|progress-area/, 'no step-to-step buttons, no remembered page across loads, no list on the page');
   assert.match(read('assets-desktop.js'), /phaseCommands:\(window\.CardPages\?\.enabled\?\.\(\) && window\.GameProgress\?\.dockMarkup\(\)\) \|\| clipboardPhaseCommands\(\)/);
 });
 
@@ -230,32 +237,27 @@ test('shared style values: one sheet, loaded first, and no italic or stray weigh
 const walk = (node, out = []) => { if (!node) return out; out.push(node); for (const item of node.items || []) walk(typeof item === 'string' ? {type: 'card', id: item} : item, out); return out; };
 const cardsOf = (layout) => walk(layout).filter((node) => node.type === 'card');
 
-test('Home in season is a full-size page: the list with the standings, the rotation with the week, the next game with the team bars', () => {
+test('Home shows two things in season: the rotation with the week under it, and the next game', () => {
   const {pages} = load();
   const layout = pages.PAGES.find((page) => page.id === 'home').layout({available: () => true});
   assert.ok(layout.full, 'laid out at real sizes, not scaled as one picture');
   assert.equal(layout.type, 'row');
-  assert.equal(layout.items.length, 3);
-  const [left, middle, right] = layout.items.map((column) => walk(column).filter((node) => node.type !== 'col').map((node) => node.type === 'todo' ? 'todo' : node.id));
-  assert.deepEqual(left, ['todo', 'standings']);
-  assert.deepEqual(middle, ['minutes', 'week']);
-  assert.deepEqual(right, ['opponent', 'signals', 'morale']);
-  assert.ok(layout.full.fits[0] <= 1264 && layout.full.fits[1] <= 728, 'drawn at scale 1 on a 1512 x 900 window');
+  const columns = Array.from(layout.items, (column) => cardsOf(column).map((card) => card.id));
+  assert.deepEqual(columns, [['minutes', 'week'], ['opponent']]);
 });
 
-test('Roster is one table behind a Ratings | Stats picker; Contracts keeps the payroll chart and the draft assets in proportion', () => {
+test('Roster and Stats are full-size tabs; Contracts keeps the payroll chart and the draft assets in proportion; Trades is a full-size tab', () => {
   const {pages} = load();
-  const roster = pages.PAGES.find((page) => page.id === 'roster');
-  assert.deepEqual(Array.from(roster.views, ([id]) => id), ['ratings', 'stats']);
-  const rosterCards = cardsOf(roster.layout({available: () => true}));
-  assert.deepEqual(rosterCards.map((card) => [card.id, card.view]), [['roster', 'ratings'], ['stats', 'stats']]);
-  assert.ok(roster.layout({available: () => true}).full);
+  for (const id of ['roster', 'stats', 'trades']) assert.ok(pages.PAGES.find((page) => page.id === id).layout({available: () => true}).full, id);
+  assert.deepEqual(cardsOf(pages.PAGES.find((page) => page.id === 'roster').layout({available: () => true})).map((card) => card.id), ['roster']);
   const contracts = pages.PAGES.find((page) => page.id === 'contracts').layout({available: () => true});
   assert.ok(contracts.full);
   const byId = Object.fromEntries(cardsOf(contracts).map((card) => [card.id, card]));
   assert.equal(byId.payroll.natural, 'fit', 'the payroll chart is enlarged as one piece, never stretched');
   assert.equal(byId.picks.natural, 'width');
   assert.equal(byId.contracts.natural, undefined, 'the table is laid out at real sizes');
+  assert.deepEqual(cardsOf(pages.PAGES.find((page) => page.id === 'trades').layout({available: () => true})).map((card) => card.id), ['league-block', 'team-block', 'team-wants']);
+  assert.match(read('assets-desktop.js'), /function leagueBlockGroupSize\(\) \{ return globalThis\.CardPages\?\.enabled\?\.\(\) \? 16 : 6; \}/, 'a page shows sixteen targets a group');
 });
 
 test('a full-size page is sized from its area, re-laid when its contents arrive, and its sheet reads the shared values', () => {
@@ -267,7 +269,23 @@ test('a full-size page is sized from its area, re-laid when its contents arrive,
   const css = read('full-pages.css');
   assert.match(css, /\.pages-stage\.is-full/);
   for (const rule of css.split('\n').filter((line) => /\{/.test(line) && !/^\s*(\/\*|@|--|[a-z-]+:)/.test(line) && !line.startsWith(' '))) {
-    assert.match(rule, /\.is-full|\.pages-picker/, `only full-size pages and the picker are touched: ${rule.slice(0, 90)}`);
+    assert.match(rule, /\.is-full|\.pages-tabs/, `only full-size pages and the tabs are touched: ${rule.slice(0, 90)}`);
   }
   assert.doesNotMatch(css, /font-style\s*:\s*italic|font-weight\s*:\s*\d/);
+});
+
+test('the year strip runs across the top of the page: segments as long as their part of the year, filled as far as today', () => {
+  const context = {window: {}, document: {addEventListener() {}}, state: {home: {save: {phase: 'regular_season', current_date: '2026-12-25'}}, data: {}}};
+  vm.createContext(context);
+  vm.runInContext(`${read('progress.js')}`, context);
+  const progress = context.window.GameProgress;
+  const spans = Array.from(progress.yearSpans('2026-12-25'), (span) => ({...span}));
+  assert.equal(spans.reduce((sum, span) => sum + span.days, 0), 365);
+  assert.equal(Math.max(...spans.map((span) => span.days)), spans[1].days, 'the regular season is the longest segment');
+  assert.ok(spans[1].through > .3 && spans[1].through < .45, 'Dec 25 is a bit over a third of the way through the season');
+  const source = read('card-pages.js');
+  assert.match(source, /<div class="pages-year"><\/div>\n\s*<header class="pages-head">/, 'above the title, in the page, not in the sidebar');
+  assert.match(source, /shell\.querySelector\("\.pages-year"\)\.innerHTML = progress\(\)\.yearMarkup\(\);/);
+  assert.match(read('progress.js'), /style="flex-grow:\$\{spans\[index\]\.days\}"/);
+  assert.match(read('progress.js'), /index < step \? 1 : index > step \? 0 : Math\.max\(\.04, Math\.min\(1, spans\[index\]\.through\)\)/);
 });

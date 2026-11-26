@@ -292,12 +292,43 @@
   }
 
   // ---- Home's own parts: the phase and the year strip across the top, the list down the left.
+  // The sidebar's phase heading.
   function topMarkup() {
     const c = context();
     if (!c) return "";
     const head = heading(c);
-    return `<div class="progress-phase"><h2>${esc(head.title)}</h2>${head.sub ? `<p>${esc(head.sub)}</p>` : ""}</div>
-      <ol class="progress-year" aria-label="The year">${YEAR.map((name, index) => `<li class="${index === head.step ? "is-now" : index < head.step ? "is-past" : ""}"${index === head.step ? ' aria-current="step"' : ""}><i></i><b>${esc(name)}</b></li>`).join("")}</ol>`;
+    return `<div class="progress-phase"><h2>${esc(head.title)}</h2>${head.sub ? `<p>${esc(head.sub)}</p>` : ""}</div>`;
+  }
+
+  // The year strip across the top of the page (user, 2026-11-26): each segment as long as its part of the league
+  // year, and filled only as far as today. The segment that is current comes from the save's phase; how far through
+  // it we are comes from today's date between the league calendar's dates for that part of the year (month-day, the
+  // end is the next one's start).
+  const YEAR_STARTS = ["10-01", "10-21", "04-13", "06-17", "06-30", "07-16", "09-01"];
+  const DAY = 86400000;
+  const onYear = (monthDay, year) => Date.UTC(year, Number(monthDay.slice(0, 2)) - 1, Number(monthDay.slice(3)));
+  function yearSpans(today) {
+    const now = /^\d{4}-\d{2}-\d{2}/.test(String(today || "")) ? Date.UTC(Number(today.slice(0, 4)), Number(today.slice(5, 7)) - 1, Number(today.slice(8, 10))) : NaN;
+    return YEAR_STARTS.map((start, index) => {
+      const next = YEAR_STARTS[(index + 1) % YEAR_STARTS.length];
+      const days = Math.round((onYear(next, next < start ? 2001 : 2000) - onYear(start, 2000)) / DAY);
+      let through = 0;
+      if (Number.isFinite(now)) {
+        const year = new Date(now).getUTCFullYear();
+        const began = onYear(start, year) <= now ? onYear(start, year) : onYear(start, year - 1);
+        through = (now - began) / (days * DAY);
+      }
+      return {days, through};
+    });
+  }
+  function yearMarkup(className = "progress-year") {
+    const c = context();
+    if (!c) return "";
+    const step = heading(c).step, spans = yearSpans(c.today);
+    return `<ol class="${className}" aria-label="The year">${YEAR.map((name, index) => {
+      const fill = index < step ? 1 : index > step ? 0 : Math.max(.04, Math.min(1, spans[index].through));
+      return `<li class="${index === step ? "is-now" : index < step ? "is-past" : ""}" style="flex-grow:${spans[index].days}"${index === step ? ' aria-current="step"' : ""}><i><u style="width:${(fill * 100).toFixed(1)}%"></u></i><b>${esc(name)}</b></li>`;
+    }).join("")}</ol>`;
   }
 
   const MARK = {must: "Required", warn: "Today", done: "Done", open: "", shut: "Closed"};
@@ -334,5 +365,5 @@
     return jobs(c).filter((job) => job.kind === "must").map((job) => job.label).join("|");
   }
 
-  window.GameProgress = Object.freeze({YEAR, PHASES, context, heading, jobs, dock, dockMarkup, topMarkup, listMarkup, blockingKey, gamesOn: () => rule(String(app()?.home?.save?.phase || "")).games});
+  window.GameProgress = Object.freeze({YEAR, PHASES, context, heading, jobs, dock, dockMarkup, topMarkup, yearMarkup, yearSpans, listMarkup, blockingKey, gamesOn: () => rule(String(app()?.home?.save?.phase || "")).games});
 })();

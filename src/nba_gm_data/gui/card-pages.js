@@ -11,9 +11,10 @@
    page's own controls sit at the right of its title; the one obvious next step is always at the bottom right of the
    footer, which is one piece with the sidebar (the league wire ticker beside it).
 
-   Home is the progress screen (UI polish pass, Stage B, 2026-11-25; progress.js): the phase and the year strip across
-   the top, the to-do list down the left, and beside it the cards that matter in this phase. The bottom-right button
-   only moves time; when a job blocks it, it names the job and opens it.
+   The sidebar is the game's spine (user, 2026-11-26): the phase, the to-do list (progress.js), then only a few pages
+   (the year strip runs across the top of every page): Home, Team, Front Office, League. Each of those is a short row of tabs at its title, and a tab shows one
+   thing (or a couple that belong together) at full size, instead of many cards forced onto one page. The bottom-right
+   button only moves time; when a job blocks it, it names the job and opens it.
 
    Step screens (the opening roster, Set The Roster, the draft, free agency...) are not listed in the sidebar (user,
    2026-11-24): they open from Home's to-do list and lead back to it.
@@ -27,10 +28,9 @@
   const MODE_KEY = "nbaGmLayoutMode";
   const GAP = 28;            // design pixels between cards
   const MAX_SCALE = 1.22;    // a sparse page may grow this much
-  const HOME_MAX_SCALE = 1.6;
   const MIN_SCALE = .7;      // below this the page scrolls instead of shrinking further
   const FULL_MAX_SCALE = 1.25;   // a full-size page on a large screen grows this much, no further
-  const pageView = new Map();        // per page: the picker option showing (Roster: ratings or stats)
+  const lastTab = new Map();         // per save and sidebar page: the tab last open on it
   const lastPage = new Map();        // per save, this session only: a save always opens on Home
   const lastBlocking = new Map();    // per save: the jobs that were blocking the clock at the last render
   let homeCalled = false;            // the game stopped by itself (deadline day, season end): the next render lands on Home
@@ -73,16 +73,16 @@
   // and a section that is a picture (the payroll chart, the draft-assets grid) keeps its proportions:
   //   natural  "fit": drawn at its own size, enlarged as one piece to fit the room it is given
   //            "width": enlarged to the section's width; its height follows
-  // The to-do list (Home) is a section of the layout like any other: TODO.
   const rowOf = (options, ...items) => ({type: "row", items, ...options});
   const colOf = (options, ...items) => ({type: "col", items, ...options});
-  const TODO = {type: "todo"};
 
   // app.js keeps its state in a top-level binding (not a window property).
   const appState = () => (typeof state !== "undefined" ? state : null);
 
-  // The "now" group (step screens and slideshows) has no place in the sidebar.
+  // The sidebar's pages. A page here is a tab of one of them. The "now" group (step screens and slideshows) has no
+  // place in the sidebar: step screens open from the to-do list.
   const GROUPS = [
+    ["home", "Home"],
     ["team", "Team"],
     ["office", "Front Office"],
     ["league", "League"],
@@ -101,63 +101,52 @@
     {id: "outlook", group: "now", label: "Preseason Outlook", slideshow: "outlook"},
     {id: "recap", group: "now", label: "Year-End Recap", slideshow: "recap"},
 
-    // The team.
-    {id: "home", group: "team", label: "Home", progress: true, layout: homeLayout},
-    // Roster: one table the width of the page. Ratings and Stats are the same players, so they share the page behind
-    // the standard picker (user, Stage A decision 6).
-    {id: "roster", group: "team", label: "Roster", views: [["ratings", "Ratings"], ["stats", "Stats"]],
-      layout: () => ({full: {fits: [1250, 560], roomy: [1500, 900]}, ...row(
-        card("roster", {bare: true, fill: true, view: "ratings"}), card("stats", {bare: true, fill: true, view: "stats"}))})},
-    {id: "development", group: "team", label: "Development", layout: () => row(card("development", {expanded: true}), card("staff", {expanded: true}))},
-    {id: "identity", group: "team", label: "Team Identity", layout: () => row(
-      col(card("identity", {title: "Heat Maps"}), "signals", "morale"),
-      col(row("offense", "defense"), row("factors", "efficiency")))},
+    // Home: what is about to happen. Its tabs: today (the rotation and the next game) and the calendar.
+    {id: "home", group: "home", label: "Today", layout: homeLayout},
+    {id: "schedule", group: "home", label: "Schedule", layout: () => row(card("week", {expanded: true, grow: "both", bare: true, minHeight: 480}))},
 
-    {id: "schedule", group: "team", label: "Schedule", layout: () => row(card("week", {expanded: true, grow: "both", bare: true, minHeight: 480}))},
+    // Team. Roster and Stats are full-size tables; the rest are still the older cards, one main thing a tab.
+    {id: "roster", group: "team", label: "Roster", layout: () => ({full: {fits: [1220, 560], roomy: [1500, 900]}, ...row(card("roster", {bare: true, fill: true}))})},
+    {id: "stats", group: "team", label: "Stats", layout: () => ({full: {fits: [900, 560], roomy: [1500, 900]}, ...row(card("stats", {bare: true, fill: true}))})},
+    {id: "development", group: "team", label: "Development", layout: () => row(card("development", {expanded: true, bare: true}))},
+    {id: "staff", group: "team", label: "Staff", layout: () => row(card("staff", {expanded: true, bare: true}))},
+    {id: "identity", group: "team", label: "Identity", layout: () => row(card("identity", {title: "Heat Maps"}), col("signals", "morale"))},
+    {id: "profile", group: "team", label: "Profile", layout: () => col(row("offense", "defense"), row("factors", "efficiency"))},
 
-    // The front office.
-    // Contracts: the table at full size on the left with the draft assets under it; the payroll chart, enlarged in
-    // its own proportions, down the right.
-    {id: "contracts", group: "office", label: "Contracts", title: "Contracts & Payroll", layout: () => ({full: {fits: [1250, 640], roomy: [1500, 900]}, ...row(
+    // Front office. Contracts: the table at full size with the draft assets under it; the payroll chart, enlarged in
+    // its own proportions, down the right. Trades: the league's targets the height of the page, your block and what
+    // teams want beside them.
+    {id: "contracts", group: "office", label: "Contracts", layout: () => ({full: {fits: [1200, 640], roomy: [1500, 900]}, ...row(
       colOf({fill: true}, card("contracts", {fill: true}), card("picks", {natural: "width"})),
       colOf({basis: 430}, card("payroll", {fill: true, natural: "fit"})))})},
-    {id: "trades", group: "office", label: "Trades", controls: "trades", layout: () => col(row("league-block", "payroll"), row("team-block", "team-wants"))},
-    {id: "scouting", group: "office", label: "Scouting", layout: () => col(card("prospects", {expanded: true, grow: "h", minHeight: 400}), "picks")},
+    {id: "trades", group: "office", label: "Trades", controls: "trades", layout: () => ({full: {fits: [1200, 620], roomy: [1500, 900]}, ...row(
+      colOf({fill: true}, card("league-block", {fill: true})),
+      colOf({basis: 470}, "team-block", card("team-wants", {fill: true})))})},
+    {id: "scouting", group: "office", label: "Draft", layout: () => col(card("prospects", {expanded: true, grow: "h", minHeight: 400}), "picks")},
 
-    // The league. The playoff pages are listed while the playoffs are on. The bracket gets a page of its own (it is as
-    // wide as the screen); the playoff stats and injuries sit together. Both tables are wider than their board windows
-    // were (the windows scrolled sideways): the page gives them their width.
+    // League. The playoff tabs are listed while the playoffs are on. The bracket gets a tab of its own (it is as wide
+    // as the screen). Both playoff tables are wider than their board windows were: the page gives them their width.
+    {id: "standings", group: "league", label: "Standings", layout: () => row(card("standings", {expanded: true, bare: true}))},
+    {id: "news", group: "league", label: "News", layout: () => row(card("league-wire", {expanded: true, bare: true, height: 600}))},
+    {id: "awards", group: "league", label: "Awards", controls: "awards", layout: () => row("award-mvp", "award-dpoy", "award-roty")},
     {id: "playoffs", group: "league", label: "Playoffs", layout: () => row(card("phase-playoffs-bracket", {bare: true, width: 1100}))},
     {id: "playoff-stats", group: "league", label: "Playoff Stats", layout: () => row(card("phase-playoffs-leaders", {width: 680}), card("phase-playoffs-injuries", {width: 604}))},
-    {id: "standings", group: "league", label: "Standings", layout: () => row(card("standings", {expanded: true}), card("league-wire", {expanded: true, height: 600}))},
-    {id: "awards", group: "league", label: "Awards", controls: "awards", layout: () => row("award-mvp", "award-dpoy", "award-roty")},
-
   ];
 
-  // Home, by phase. While games are played it is a full-size page of three columns: the to-do list with the standings
-  // under it, the rotation with the week under it, then the next game, signals and morale. From the lottery to
-  // training camp there are no games: the roster, the payroll and your picks stand beside the list instead of an empty
-  // week and "No upcoming game" (still the older scaled cards: the roster table is too wide to sit beside the list at
-  // full size).
+  // Home's first tab, by phase. While games are played: the rotation with the week under it, and the next game. From
+  // the lottery to training camp there are no games: contracts, the payroll and your picks (user, 2026-11-26).
   function homeLayout() {
     const phase = String(appState()?.home?.save?.phase || "");
-    const full = {fits: [1260, 700], roomy: [1500, 860]};
-    // The playoffs: the same three columns without the season's standings and week (both are over). The playoff
-    // stats table is too wide to sit beside the list at full size: it has its own page in the sidebar.
-    if (phase === "play_in" || phase === "playoffs") {
-      return {full, ...row(
-        colOf({basis: 244}, TODO),
-        colOf({fill: true}, card("minutes", {fill: true})),
-        colOf({basis: 368}, card("opponent", {fill: true}), card("signals", {link: "identity"}), "morale"))};
-    }
     if (phase && typeof window !== "undefined" && window.GameProgress?.PHASES?.[phase]?.games === false) {
-      return col(card("roster", {link: "roster", title: "Roster"}), row(card("payroll", {link: "contracts"}), card("picks", {link: "scouting"})));
+      return {full: {fits: [1200, 640], roomy: [1500, 900]}, ...row(
+        colOf({fill: true}, card("contracts", {fill: true}), card("picks", {natural: "width"})),
+        colOf({basis: 430}, card("payroll", {fill: true, natural: "fit"})))};
     }
-    // In season and in the preseason: the list and the standings, the rotation, then the next game and the team.
+    const full = {fits: [1100, 660], roomy: [1500, 880]};
+    const playoffs = phase === "play_in" || phase === "playoffs";   // the season's week is over by then
     return {full, ...row(
-      colOf({basis: 244}, TODO, card("standings", {link: "standings", fill: true})),
-      colOf({fill: true}, card("minutes", {fill: true}), card("week", {link: "schedule"})),
-      colOf({basis: 368}, card("opponent", {fill: true}), card("signals", {link: "identity"}), "morale"))};
+      colOf({fill: true}, card("minutes", {fill: true}), ...(playoffs ? [] : [card("week", {link: "schedule"})])),
+      colOf({basis: 420}, card("opponent", {fill: true})))};
   }
 
   function draftRoomLayout(ctx) {
@@ -232,7 +221,9 @@
     // During the season the roster-moves screen (two-way places) is a page to visit, not a step.
     const inSeason = () => String(appState()?.home?.save?.phase || "") === "regular_season";
     const isStep = (page) => Boolean(page.step) && !(page.id === "roster-moves" && inSeason());
-    const groupOf = (page) => isStep(page) ? null : page.id === "roster-moves" ? "team" : page.group;
+    const groupOf = (page) => !page || isStep(page) ? null : page.id === "roster-moves" ? "team" : page.group;
+    const groupPages = (group) => visiblePages().filter(page => groupOf(page) === group);
+    const groupLabel = (group) => GROUPS.find(([id]) => id === group)?.[1] || "";
     const stepPages = () => visiblePages().filter(isStep);
 
     // ---- The sidebar: the old top bar turned on its side (its buttons keep their wiring).
@@ -249,9 +240,14 @@
     if (finder) {
       finder.classList.add("pages-finder");
       finder.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.4 10.4 14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>Find a player</span>`;
-      club.after(finder);
     }
-    (finder || club).after(nav);
+    // The phase, the year and the to-do list (progress.js), then the pages, then the search field.
+    const progressEl = document.createElement("section");
+    progressEl.className = "pages-progress";
+    progressEl.innerHTML = `<header class="progress-top"></header><aside class="progress-rail"></aside>`;
+    club.after(progressEl);
+    progressEl.after(nav);
+    if (finder) nav.after(finder);
     if (settings) {
       settings.classList.add("pages-settings");
       settings.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 5.6a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8Zm5.6 3.3-.1-1.8 1.3-1-1.3-2.3-1.6.5-1.5-.9L10 1.8H7.4L6.9 3.4l-1.5.9-1.6-.5L2.5 6.1l1.3 1-.1 1.8-1.2 1 1.3 2.3 1.6-.5 1.5.9.5 1.6H10l.4-1.6 1.5-.9 1.6.5 1.3-2.3Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg><span>Settings</span>`;
@@ -261,7 +257,8 @@
     const shell = document.createElement("section");
     shell.className = "pages-shell";
     shell.innerHTML = `<div class="pages-sheet">
-        <header class="pages-head"><h1 class="pages-title"></h1><div class="pages-controls"></div></header>
+        <div class="pages-year"></div>
+        <header class="pages-head"><h1 class="pages-title"></h1><div class="pages-tabs" role="tablist"></div><div class="pages-controls"></div></header>
         <div class="pages-viewport"></div>
       </div>
       <footer class="pages-foot"><div class="pages-ticker"></div></footer>
@@ -269,6 +266,7 @@
     header.after(shell);
     const titleEl = shell.querySelector(".pages-title");
     const controlsEl = shell.querySelector(".pages-controls");
+    const tabsEl = shell.querySelector(".pages-tabs");
     const viewport = shell.querySelector(".pages-viewport");
     const foot = shell.querySelector(".pages-foot");
     const ticker = shell.querySelector(".pages-ticker");
@@ -319,12 +317,6 @@
     };
 
     function buildNode(item, parent, page, full = false) {
-      if (item.type === "todo") {
-        const rail = document.createElement("aside");
-        rail.className = "progress-rail";
-        parent.append(rail);
-        return {grow: ""};
-      }
       if (item.type === "card") {
         if (!available(item.id)) return null;
         const entry = node(item.id);
@@ -350,7 +342,6 @@
         body.className = "pages-slot-body";
         slot.append(body);
         slot.dataset.grow = item.grow || "";
-        if (item.view) slot.dataset.view = item.view;
         if (full && item.natural) slot.classList.add("is-natural");
         slot.pagesItem = item;
         share(slot, item, full);
@@ -388,21 +379,11 @@
           const stage = document.createElement("div");
           stage.className = "pages-stage";
           const tree = pageLayout(page);
-          const full = tree?.full && (page.progress ? Boolean(progress()) : true) ? tree.full : null;
+          const full = tree?.full || null;
           if (full) {
             stage.pagesFull = full;
             stage.classList.add("is-full");
             el.classList.add("is-full");
-          }
-          if (page.progress && progress()) {
-            // Home: the phase and the year strip, then the to-do list and this phase's sections. A full-size layout
-            // places the list itself; the older scaled one keeps it in a column of its own beside the cards.
-            el.classList.add("is-progress");
-            el.innerHTML = full
-              ? `<header class="progress-top"></header><div class="progress-body"><div class="progress-holder"></div></div>`
-              : `<header class="progress-top"></header><div class="progress-body"><aside class="progress-rail"></aside><div class="progress-area"><div class="progress-holder"></div></div></div>`;
-            el.querySelector(".progress-holder").append(stage);
-          } else if (full) {
             el.innerHTML = `<div class="pages-full-holder"></div>`;
             el.firstElementChild.append(stage);
           } else el.append(stage);
@@ -436,14 +417,14 @@
       renderNav();
     }
 
-    // Home's own parts, drawn by progress.js from the save.
+    // The sidebar's phase, year strip and to-do list, drawn by progress.js from the save.
     const progress = () => (typeof window !== "undefined" ? window.GameProgress : null);
     function renderProgress() {
-      const el = pageEls.get("home");
-      if (!el?.classList.contains("is-progress")) return;
-      el.querySelector(".progress-top").innerHTML = progress().topMarkup();
-      const rail = el.querySelector(".progress-rail");
-      if (rail) rail.innerHTML = progress().listMarkup((pageId) => pageEls.has(pageId));
+      if (!progress()) { progressEl.hidden = true; return; }
+      progressEl.querySelector(".progress-top").innerHTML = progress().topMarkup();
+      // The year strip runs across the top of the page (user, 2026-11-26), not in the sidebar.
+      shell.querySelector(".pages-year").innerHTML = progress().yearMarkup();
+      progressEl.querySelector(".progress-rail").innerHTML = progress().listMarkup((pageId) => pageEls.has(pageId));
     }
 
     const firstSlot = (id) => {
@@ -551,17 +532,6 @@
         const rowHeight = table.tBodies[0]?.rows[0]?.offsetHeight;
         if (rowHeight) table.style.setProperty("--full-row-px", `${rowHeight}px`);
       }
-    }
-
-    // A page with a picker shows one of its sections at a time.
-    const viewOf = (page) => {
-      if (!page?.views) return "";
-      const chosen = pageView.get(page.id);
-      return page.views.some(([id]) => id === chosen) ? chosen : page.views[0][0];
-    };
-    function applyView(page) {
-      const view = viewOf(page);
-      for (const slot of slotsByPage.get(page.id) || []) if (slot.dataset.view) slot.hidden = slot.dataset.view !== view;
     }
 
     function setExpanded(id, expanded) {
@@ -682,16 +652,13 @@
       }
       const naturalWidth = stage.offsetWidth, naturalHeight = stage.offsetHeight;
       const style = getComputedStyle(viewport);
-      const area = el.querySelector(".progress-area");
-      const holder = el.querySelector(".progress-holder") || el;
-      if (area) holder.style.width = holder.style.height = "";
-      const availableWidth = Math.max(200, area ? area.clientWidth : viewport.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
-      const availableHeight = Math.max(200, area ? area.clientHeight : viewport.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom));
+      const holder = el;
+      const availableWidth = Math.max(200, viewport.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
+      const availableHeight = Math.max(200, viewport.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom));
       const grows = el.dataset.grow || "";
       const fit = Math.min(availableWidth / Math.max(1, naturalWidth), availableHeight / Math.max(1, naturalHeight));
-      // Growing pages never enlarge their text to fill: they show more instead. Home's cards may grow further than
-      // other pages' (its text was the smallest in the game): the list beside them keeps its own size.
-      const scale = Math.max(MIN_SCALE, Math.min(grows ? 1 : area ? HOME_MAX_SCALE : MAX_SCALE, fit));
+      // Growing pages never enlarge their text to fill: they show more instead.
+      const scale = Math.max(MIN_SCALE, Math.min(grows ? 1 : MAX_SCALE, fit));
       if (grows) {
         el.classList.add("is-growing");
         stage.style.width = `${/w|both/.test(grows) ? Math.max(naturalWidth, availableWidth / scale) : naturalWidth}px`;
@@ -711,18 +678,25 @@
       dashboard.style.setProperty("--pages-scale", String(scale));
     }
 
+    // The sidebar lists the few pages; each opens on the tab last used there. The tabs sit at the page's title.
+    const tabKey = (group) => `${saveKey}:${group}`;
     function renderNav() {
-      const pages = visiblePages();
-      const groups = GROUPS.map(([group, label]) => {
-        const items = pages.filter(page => groupOf(page) === group);
+      const shown = groupOf(PAGES.find(page => page.id === shownPageId()));
+      nav.innerHTML = GROUPS.map(([group, label]) => {
+        const items = groupPages(group);
         if (!items.length) return "";
-        return `<section class="pages-nav-group" data-pages-group="${group}"><h3>${esc(label)}</h3>${items.map(page => {
-          const badge = badgeFor(page);
-          const current = shownPageId() === page.id;
-          return `<button type="button" class="pages-nav-item${current ? " is-current" : ""}" data-pages-go="${page.id}"${current ? ' aria-current="page"' : ""}><span>${esc(pageLabel(page))}</span>${badge}</button>`;
-        }).join("")}</section>`;
+        const remembered = lastTab.get(tabKey(group));
+        const target = items.find(page => page.id === remembered) || items[0];
+        const current = shown === group;
+        return `<button type="button" class="pages-nav-item${current ? " is-current" : ""}" data-pages-group="${group}" data-pages-go="${target.id}"${current ? ' aria-current="page"' : ""}><span>${esc(label)}</span>${items.map(badgeFor).find(Boolean) || ""}</button>`;
       }).join("");
-      nav.innerHTML = groups;
+    }
+    function renderTabs(page) {
+      const group = groupOf(page);
+      const items = group ? groupPages(group) : [];
+      tabsEl.hidden = items.length < 2;
+      tabsEl.setAttribute("aria-label", `${groupLabel(group)} tabs`);
+      tabsEl.innerHTML = items.length < 2 ? "" : items.map(item => `<button type="button" role="tab" data-pages-go="${item.id}" aria-selected="${item.id === page.id}">${esc(pageLabel(item))}${item.id === "trades" && offerCount ? ` <em class="pages-nav-badge">${offerCount}</em>` : ""}</button>`).join("");
     }
 
     // The page the sidebar marks: an open slideshow counts as its page (it can open by itself at the start of a season).
@@ -752,11 +726,6 @@
       const tradingClosed = page?.id === "trades" && legal && !["trades", "draft_trades"].some(action => legal.has(action));
       const lockNote = tradingClosed ? `<span class="pages-note">Trading is closed right now</span>`
         : allLocked ? `<span class="pages-note">Not available right now</span>` : "";
-      if (page?.views) {
-        const view = viewOf(page);
-        controlsEl.innerHTML = `<div class="pages-picker" role="tablist" aria-label="${esc(pageLabel(page))} view">${page.views.map(([id, label]) =>
-          `<button type="button" role="tab" data-pages-view="${esc(id)}" aria-selected="${id === view}">${esc(label)}</button>`).join("")}</div>`;
-      }
       if (page?.controls === "awards" && typeof openLeagueLeadersModal === "function") {
         controlsEl.innerHTML = `<button type="button" class="pages-control" data-pages-leaders>League Leaders</button>`;
       }
@@ -783,8 +752,10 @@
       // While a save is still loading only Home exists: don't let that overwrite the page you were on.
       if (options.phaseContext != null) lastPage.set(saveKey, pageId);
       for (const [id, el] of pageEls) el.hidden = id !== pageId;
-      titleEl.textContent = page.title || pageLabel(page);
-      shell.classList.toggle("is-progress", Boolean(pageEls.get(pageId)?.classList.contains("is-progress")));
+      const group = groupOf(page);
+      if (group && options.phaseContext != null) lastTab.set(tabKey(group), pageId);
+      titleEl.textContent = groupLabel(group) || page.title || pageLabel(page);
+      renderTabs(page);
       renderControls(page);
       // Move the page's cards in (a card can sit on more than one page), in the form this page wants.
       const slots = slotsByPage.get(pageId) || [];
@@ -794,7 +765,6 @@
         slot.querySelector(".pages-slot-body").append(frames.get(id));
         paint(id);
       }
-      applyView(page);
       if (owned.has("league-wire") && !slotOn(pageId, "league-wire")) placeTicker();
       foot.classList.toggle("has-ticker", owned.has("league-wire") && !slotOn(pageId, "league-wire"));
       layoutPage();
@@ -874,17 +844,6 @@
       if (event.target.closest("[data-pages-detail-back]")) {
         event.preventDefault();
         ctx.closeDetail?.(detailStack.at(-1));
-        return;
-      }
-      const pick = event.target.closest("[data-pages-view]");
-      if (pick && controlsEl.contains(pick)) {
-        event.preventDefault();
-        const page = PAGES.find(item => item.id === currentPage);
-        if (!page?.views) return;
-        pageView.set(page.id, pick.dataset.pagesView);
-        for (const tab of controlsEl.querySelectorAll("[data-pages-view]")) tab.setAttribute("aria-selected", String(tab === pick));
-        applyView(page);
-        layoutPage();
         return;
       }
       const go = event.target.closest("[data-pages-go]");
@@ -985,7 +944,8 @@
       updateOfferCount(count) {
         offerCount = count;
         renderNav();
-        if (currentPage) renderControls(PAGES.find(page => page.id === currentPage));
+        const page = PAGES.find(item => item.id === currentPage);
+        if (page) { renderTabs(page); renderControls(page); }
       },
       preview(id) {
         if (!previewReturn) previewReturn = currentPage;
@@ -1028,6 +988,9 @@
     try { attached?.showPage("home"); } catch { /* the next render lands there */ }
   }
 
-  window.CardPages = Object.freeze({enabled, setMode, attach, landHome, PAGES, PAGE_CARD_IDS});
+  // Open a tab by its id (the to-do list's jobs, scripts).
+  const go = (pageId) => Boolean(attached?.showPage(pageId));
+
+  window.CardPages = Object.freeze({enabled, setMode, attach, landHome, go, PAGES, GROUPS, PAGE_CARD_IDS});
   enabled();
 })();

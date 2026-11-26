@@ -3,7 +3,7 @@
    bold section title, then the card's contents exactly as they were. */
 
 html[data-layout="pages"] {
-  --pages-side-w: 184px;
+  --pages-side-w: 224px;
   --pages-gap: 10px;
   --pages-radius: 18px;
   --pages-line: rgba(255, 255, 255, .12);
@@ -82,7 +82,7 @@ html[data-layout="pages"] .pages-sidebar .season-command-club > button {
 /* Player Finder as a search field under the team. */
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-sidebar .pages-finder.pages-finder {
   display: flex !important; align-items: center; gap: 8px;
-  width: 100%; height: 34px; margin: 18px 0 4px !important; padding: 0 12px !important;
+  width: 100%; height: 34px; margin: 4px 0 4px !important; padding: 0 12px !important;
   background: rgba(255, 255, 255, .07) !important;
   border: 1px solid rgba(255, 255, 255, .12) !important;
   border-radius: 10px !important; box-shadow: none !important;
@@ -94,12 +94,7 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-sidebar .pages-fi
 html[data-layout="pages"] .pages-sidebar .pages-finder [data-key-hint], html[data-layout="pages"] .pages-sidebar .pages-finder .shortcut-hint { margin-left: auto; }
 
 /* The page list: plain text; the current page bold white on a faint frosted pill. */
-html[data-layout="pages"] .pages-nav { display: flex; flex-direction: column; gap: 16px; margin: 18px 0 14px; }
-html[data-layout="pages"] .pages-nav-group { display: flex; flex-direction: column; gap: 1px; }
-html[data-layout="pages"] .pages-nav-group > h3 {
-  margin: 0 0 5px 10px; color: #d3dde6; opacity: .78;
-  font-size: 10.5px; font-weight: var(--gm-weight-bold); letter-spacing: .09em; text-transform: uppercase;
-}
+html[data-layout="pages"] .pages-nav { display: flex; flex-direction: column; gap: 2px; margin: 14px 0 10px; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-nav .pages-nav-item {
   display: flex !important; align-items: center; justify-content: space-between; gap: 8px;
   width: 100%; min-height: 32px; height: auto; padding: 5px 10px !important; margin: 0 !important;
@@ -142,7 +137,7 @@ html[data-layout="pages"] .pages-sidebar .season-command-actions > button .short
 html[data-layout="pages"] .pages-shell { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 html[data-layout="pages"] .pages-sheet {
   flex: 1 1 auto; min-width: 0; min-height: 0; margin: var(--pages-gap);
-  display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-columns: minmax(0, 1fr);
+  display: grid; grid-template-rows: auto auto minmax(0, 1fr); grid-template-columns: minmax(0, 1fr);   /* the year strip, the title row, the page */
   background: var(--card-surface, rgba(255, 255, 255, .045));  /* Settings > Card transparency */
   border: 1px solid rgba(255, 255, 255, .13);
   border-radius: var(--pages-radius);
@@ -162,12 +157,14 @@ html[data-layout="pages"][data-arena] .pages-sheet::before,
 html[data-layout="pages"][data-arena] body #seasonSlideshow#seasonSlideshow .ss-card > :is(.ss-titlebar, .ss-content) { -webkit-backdrop-filter: blur(7px) saturate(125%) !important; backdrop-filter: blur(7px) saturate(125%) !important; }
 html[data-layout="pages"] .pages-head {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  min-height: 54px; padding: 14px 22px 2px 24px; box-sizing: border-box;
+  min-height: 48px; padding: 8px 22px 2px 24px; box-sizing: border-box;
 }
 html[data-layout="pages"] .pages-title {
   margin: 0; color: var(--gm-ink); font: var(--gm-weight-semibold) var(--gm-size-page)/1.1 var(--gm-font) !important; letter-spacing: -.01em;
 }
-html[data-layout="pages"] .pages-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+html[data-layout="pages"] .pages-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
+html[data-layout="pages"] .pages-head { justify-content: flex-start; }
+html[data-layout="pages"] .pages-tabs[hidden] { display: none; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-controls .pages-control {
   display: inline-flex !important; align-items: center; gap: 7px; height: 32px; padding: 0 14px !important;
   border-radius: 999px !important; background: rgba(255, 255, 255, .08) !important; border: 1px solid rgba(255, 255, 255, .16) !important;
