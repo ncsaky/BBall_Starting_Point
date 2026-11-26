@@ -83,13 +83,21 @@ def ratings_model_for(save: Mapping[str, Any] | None = None) -> str:
 
 
 def _inputs_path(root: Path | None = None) -> Path:
-    """The uncompressed build output if present, otherwise the git-tracked .json.gz copy."""
+    """The uncompressed build output when it is at least as new as the git-tracked .json.gz copy, otherwise the .gz.
+
+    The unpacked .json is git-ignored, so a pull or merge updates only the .gz. Preferring any existing .json left a
+    stale copy in charge: the main checkout played on 2026-11-23 inputs after the 2026-11-25 ratings merge (found by
+    S2-TENTH). A fresh build writes both files, so the .json still wins right after a local build."""
     if root is None:
         from .resource_paths import game_resource_root
         root = game_resource_root()
     path = Path(root) / INPUTS_FILE
     compressed = path.with_name(path.name + ".gz")
-    return path if path.exists() or not compressed.exists() else compressed
+    if not compressed.exists():
+        return path
+    if path.exists() and path.stat().st_mtime >= compressed.stat().st_mtime:
+        return path
+    return compressed
 
 
 def _load_inputs_keyed(root: Path | None = None) -> tuple[str, dict[str, dict[str, Any]]]:
