@@ -655,12 +655,12 @@ def merge_startup_pick_obligations(save: dict[str, Any], canonical: dict[str, An
                 # An unknown range must never be repaired by dropping the condition.
                 protection_bounds(obligation)
                 check = {**obligation, "_existing_fallback_pick_ids": obligation.get("fallback_pick_ids") or []}
-                errors = pick_obligation_validation_errors(canonical, None, check)
+                errors = pick_obligation_validation_errors(canonical, None, check, new_term=False)
                 if errors:
                     repaired = repair_protected_pick_fallback(obligation, canonical, used_fallback_ids)
                     if repaired:
                         check = {**repaired, "_existing_fallback_pick_ids": repaired.get("fallback_pick_ids") or []}
-                        errors = pick_obligation_validation_errors(canonical, None, check)
+                        errors = pick_obligation_validation_errors(canonical, None, check, new_term=False)
                     if errors:
                         invalid_fallback_ids.update(obligation.get("fallback_pick_ids") or [])
                         save.setdefault("pick_obligation_audit", []).append(
@@ -675,7 +675,7 @@ def merge_startup_pick_obligations(save: dict[str, Any], canonical: dict[str, An
                         continue
                     obligation = repaired or obligation
             elif obligation.get("type") == "pick_swap":
-                errors = pick_obligation_validation_errors(canonical, None, obligation)
+                errors = pick_obligation_validation_errors(canonical, None, obligation, new_term=False)
                 if errors:
                     save.setdefault("pick_obligation_audit", []).append(
                         {
@@ -710,11 +710,11 @@ def merge_startup_pick_obligations(save: dict[str, Any], canonical: dict[str, An
             obligation = {**obligation, "receiver_team_id": current_owner}
         if primary_id in existing_primary_ids or obligation.get("id") in existing_ids:
             continue
-        errors = pick_obligation_validation_errors(canonical or {}, None, obligation)
+        errors = pick_obligation_validation_errors(canonical or {}, None, obligation, new_term=False)
         if errors:
             repaired = repair_protected_pick_fallback(obligation, canonical or {}, set())
             obligation = repaired or obligation
-            errors = pick_obligation_validation_errors(canonical or {}, None, obligation)
+            errors = pick_obligation_validation_errors(canonical or {}, None, obligation, new_term=False)
         if errors:
             save.setdefault("pick_obligation_audit", []).append(
                 {
@@ -1562,6 +1562,7 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
     class_seed = save.get("meta", {}).get("seed")
     canonical["meta"]["draft_class_seed"] = int(class_seed if class_seed is not None else 1)
     canonical["save_team_records"] = copy_plain(save.get("team_records", {}))
+    canonical["save_own_pick_history"] = own_first_round_slots(save)
     canonical["transaction_logs"] = copy_plain(save.get("transaction_logs", []))
     canonical['waived_salary_obligations'] = copy_plain(save.get('waived_salary_obligations', []))
     canonical['waiver_wire'] = copy_plain(save.get('waiver_wire', []))
@@ -1763,6 +1764,7 @@ def refresh_active_runtime_state(
     active.setdefault("meta", {})["active_season"] = active_season
     active["meta"]["current_date"] = save.get("state", {}).get("current_date")
     active["save_team_records"] = copy_plain(save.get("team_records", {}))
+    active["save_own_pick_history"] = own_first_round_slots(save)
     active["transaction_logs"] = copy_plain(save.get("transaction_logs", []))
     active['waived_salary_obligations'] = copy_plain(save.get('waived_salary_obligations', []))
     active['waiver_wire'] = copy_plain(save.get('waiver_wire', []))
