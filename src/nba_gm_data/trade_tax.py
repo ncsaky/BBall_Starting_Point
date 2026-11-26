@@ -359,18 +359,25 @@ def young_piece_outgoing(canonical: dict[str, Any], team_id: str, outgoing: list
 # window, or a team that won DEEP_RUN_ROUNDS playoff rounds in the latest postseason) sends out one of its three best
 # players, the tax a trade saves counts for nothing, as for a young core piece: the deal has to stand on basketball
 # value. Salary it sheds elsewhere (bench contracts) still saves tax as before.
+# TRADE-CORE: the same holds for a team fresh off any playoff run (one series won), through the summer and its first 25
+# games. A later test season had Cleveland, out in round two and labelled "exiting", send Jarrett Allen (its second-best
+# player) and a pick swap for Cam Spencer: $42M of tax was worth +37 and turned a -39 deal into a "close call". The one
+# exception for these teams is a player the front office has itself marked to move (the plan's retool candidate).
 CONTENDER_CORE_TOP = 3
 
 
 def contender_core_outgoing(canonical: dict[str, Any], team_id: str, outgoing: list[dict[str, Any]]) -> bool:
-    """The team is a contender and sends out one of its CONTENDER_CORE_TOP best players (by on-court value)."""
+    """The team is a contender, or fresh off a playoff run, and sends out one of its CONTENDER_CORE_TOP best players
+    (by on-court value)."""
     leaving = {a.get("id") for a in outgoing if a.get("kind") == "player"}
     if not leaving:
         return False
     state = _state(canonical, team_id)
-    from .team_planning import DEEP_RUN_ROUNDS, latest_postseason_rounds
+    from .team_planning import DEEP_RUN_ROUNDS, fresh_off_playoff_run, latest_postseason_rounds
     if state.get("window_phase") != "peak" and latest_postseason_rounds(canonical, team_id) < DEEP_RUN_ROUNDS:
-        return False
+        if not fresh_off_playoff_run(canonical, team_id):
+            return False
+        leaving.discard(((canonical.get("team_plans") or {}).get(team_id) or {}).get("retool_candidate_id"))
     top = {pid for _, pid in _depth_chart(canonical, team_id)[:CONTENDER_CORE_TOP]}
     return bool(leaving & top)
 

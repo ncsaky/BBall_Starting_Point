@@ -48,6 +48,9 @@ CONTEND_GAP_FULL = 6.0
 DEEP_RUN_ROUNDS = 2
 DEEP_RUN_AGING_TREND = -2.0
 DEEP_RUN_CORE_OVERLAP = 0.5
+# TRADE-CORE: winning even one playoff series is a playoff run. It does not change the team's window label, but until
+# the new season's record speaks the team does not sell one of its best players cheaply (trade_tax.contender_core_outgoing).
+PLAYOFF_RUN_ROUNDS = 1
 
 
 def latest_postseason_rounds(canonical, team_id):
@@ -75,6 +78,18 @@ def latest_postseason_rounds(canonical, team_id):
         if here / len(core) < DEEP_RUN_CORE_OVERLAP:
             return 0
     return int(latest.get('rounds_won') or 0)
+
+
+def fresh_off_playoff_run(canonical, team_id):
+    """The team won a playoff series in the latest postseason (core still there) and the new season has not yet said
+    otherwise: June to September, then its first RECORD_GUARD_GAMES games."""
+    if latest_postseason_rounds(canonical, team_id) < PLAYOFF_RUN_ROUNDS:
+        return False
+    today = str((canonical.get('meta') or {}).get('current_date') or '')
+    if 6 <= int(today[5:7]) <= 9:
+        return True
+    record = (canonical.get('save_team_records') or {}).get(team_id) or {}
+    return float(record.get('wins') or 0) + float(record.get('losses') or 0) < RECORD_GUARD_GAMES
 
 
 def _record_strengths(canonical, rows):

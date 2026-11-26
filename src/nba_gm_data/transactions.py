@@ -1474,6 +1474,22 @@ def useful_player_for_nothing(candidate: dict[str, Any]) -> bool:
     return False
 
 
+def short_changed_core_sale(canonical: dict[str, Any], candidate: dict[str, Any]) -> bool:
+    """TRADE-CORE: an AI contender, or team fresh off a playoff run, would give up one of its best players in a deal it
+    does not itself rate good enough. The "close call" allowance does not cover that (trade_tax.contender_core_outgoing)."""
+    from .trade_tax import contender_core_outgoing
+    proposal = candidate.get('proposal') or {}
+    human = set(canonical.get('_human_team_ids') or [])
+    for evaluation in candidate.get('evaluations') or []:
+        tid = evaluation.get('perspective_team_id')
+        if evaluation.get('accepted') or tid in human:
+            continue
+        for side, team in (('from_assets', 'from_team_id'), ('to_assets', 'to_team_id')):
+            if tid == proposal.get(team) and contender_core_outgoing(canonical, tid, proposal.get(side) or []):
+                return True
+    return False
+
+
 def ai_trade_candidate_accepted(canonical: dict[str, Any], candidate: dict[str, Any]) -> bool:
     if candidate.get("legality", {}).get("status") != "legal":
         return False
@@ -1490,6 +1506,8 @@ def ai_trade_candidate_accepted(canonical: dict[str, Any], candidate: dict[str, 
         return False
     if candidate.get("accepted_by_all"):
         return True
+    if short_changed_core_sale(canonical, candidate):
+        return False
     from .team_planning import core_commitment
     proposal = candidate.get('proposal') or {}
     for side, tid in [('from_assets', proposal.get('from_team_id')), ('to_assets', proposal.get('to_team_id'))]:
