@@ -2238,7 +2238,13 @@ def expected_games_from_days(days: int) -> int:
 
 
 def parse_date(value: str) -> date:
-    return datetime.strptime(value[:10], "%Y-%m-%d").date()
+    return _parse_day(value[:10])
+
+
+@lru_cache(maxsize=8192)
+def _parse_day(text: str) -> date:
+    # SIM-SPEED-2: the health pass parses the same few hundred dates ~120,000 times a month; a date is immutable.
+    return datetime.strptime(text, "%Y-%m-%d").date()
 
 
 def date_to_str(value: date) -> str:

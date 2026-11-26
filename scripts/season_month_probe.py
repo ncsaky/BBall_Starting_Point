@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SEASON-SPEED-FLOOR probe: play Oct 20 -> Nov 30 of one season start (a fresh save, or a copied rollover save) and
+"""SEASON-SPEED-FLOOR probe: play Oct 20 -> Nov 30 (or --from/--to) of one season start (a fresh save, or a copied rollover save) and
 report seconds, optionally under cProfile, plus a fingerprint of the resulting save for before/after comparisons.
 
   PYTHONPATH=src .venv/bin/python scripts/season_month_probe.py --folder output/ssf/p1 [--save start.json] [--profile]
@@ -65,6 +65,7 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=20261125)
     parser.add_argument("--team", default="MIA")
     parser.add_argument("--profile", action="store_true")
+    parser.add_argument("--from", dest="start", default="10-20", help="month-day the timed window starts")
     parser.add_argument("--to", default="11-30")
     parser.add_argument("--no-floor", action="store_true",
                         help="proof runs only: switch the eight-player floor off, to compare caches with older code")
@@ -121,7 +122,7 @@ def main() -> int:
         return games
 
     year = int(load_save(save_path)["state"]["current_date"][:4])
-    advance_to(f"{year}-10-20")
+    advance_to(f"{year}-{args.start}")
     size_start = save_path.stat().st_size
     profiler = None
     if args.profile:
@@ -135,9 +136,11 @@ def main() -> int:
         profiler.disable()
         profiler.dump_stats(str(folder / "prof.out"))
     final = load_save(save_path)
+    from datetime import date
+    days = (date.fromisoformat(final["state"]["current_date"]) - date.fromisoformat(f"{year}-{args.start}")).days or 1
     (folder / "fingerprint.json").write_text(json.dumps(fingerprint(final), indent=1) + "\n")
-    print(json.dumps({"from": f"{year}-10-20", "to": final["state"]["current_date"], "games": games,
-                      "seconds": round(seconds, 1), "seconds_per_30_days": round(seconds * 30 / 41, 1),
+    print(json.dumps({"from": f"{year}-{args.start}", "to": final["state"]["current_date"], "games": games,
+                      "seconds": round(seconds, 1), "seconds_per_30_days": round(seconds * 30 / days, 1),
                       "save_mb_at_oct20": round(size_start / 1e6, 1), "save_mb_end": round(save_path.stat().st_size / 1e6, 1)}))
     return 0
 

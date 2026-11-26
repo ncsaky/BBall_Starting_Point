@@ -7925,7 +7925,10 @@ def apply_save_rotation_projection(canonical: dict[str, Any], save: dict[str, An
         by_team.setdefault(player.get("team_id"), []).append(player)
     for team_id in sorted(teams):
         fills: dict[str, dict[str, float]] = {}
-        projection = team_rotation_projection(canonical, save, team_id, integer=False, fill_out=fills)
+        # The team's roster in league order and the health index, gathered once above (SIM-SPEED-2): the same lists
+        # team_rotation_projection would build for itself (only player minutes and fill notes change in this loop).
+        projection = team_rotation_projection(canonical, save, team_id, integer=False, fill_out=fills,
+                                              _roster=by_team.get(team_id, []), _health_by_player=health_by_player)
         if not projection:
             continue
         # The coach's fill-in minutes for absent teammates; a game re-points them for its opponent (absence_fill).
@@ -7959,13 +7962,16 @@ def apply_save_rotation_projection(canonical: dict[str, Any], save: dict[str, An
 
 
 def team_rotation_projection(canonical: dict[str, Any], save: dict[str, Any], team_id: str | None, integer: bool = False,
-                             fill_out: dict[str, dict[str, float]] | None = None) -> dict[str, float]:
+                             fill_out: dict[str, dict[str, float]] | None = None, *,
+                             _roster: list[dict[str, Any]] | None = None,
+                             _health_by_player: dict[Any, Any] | None = None) -> dict[str, float]:
     if not team_id:
         return {}
-    roster = [player for player in canonical.get("players", []) if player.get("team_id") == team_id]
+    roster = _roster if _roster is not None else [player for player in canonical.get("players", []) if player.get("team_id") == team_id]
     if not roster:
         return {}
-    health_by_player = {state.get("player_id"): state for state in save.get("health_states", [])}
+    health_by_player = (_health_by_player if _health_by_player is not None
+                        else {state.get("player_id"): state for state in save.get("health_states", [])})
     user_override = (save.get("rotation_overrides") or {}).get(team_id)
     if isinstance(user_override, dict) and user_override:
         projection = user_rotation_override_projection(roster, health_by_player, user_override,
