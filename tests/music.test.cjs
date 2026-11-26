@@ -1,4 +1,4 @@
-// Background music (UI polish pass, 2026-11-26): four approved public-domain tracks, off until switched on.
+// Background music (UI polish pass, 2026-11-26): six approved tracks (four CC0, two CC BY 4.0), off until switched on.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -29,12 +29,15 @@ function load() {
   return {music: context.window.GameMusic, made, listeners, list};
 }
 
-test('every track is a file in the game, public domain, with its source', () => {
+test('every track is a file in the game, under a licence the user approved, with its source', () => {
   const list = JSON.parse(read('assets/music/tracks.json'));
-  assert.equal(list.tracks.length, 4);
+  assert.equal(list.tracks.length, 6);
+  assert.equal(list.tracks.filter((track) => track.licence === 'CC0').length, 4);
   for (const track of list.tracks) {
     assert.ok(fs.existsSync(path.join(gui, 'assets/music', track.file)), track.file);
-    assert.equal(track.licence, 'CC0', `${track.title}: only public-domain tracks were approved`);
+    // CC0 needs no credit; CC BY 4.0 needs the title, artist, source and licence link this list carries.
+    assert.ok(['CC0', 'CC BY 4.0'].includes(track.licence), `${track.title}: ${track.licence} was not approved`);
+    assert.ok(track.licence_url.startsWith('https://creativecommons.org/'), track.title);
     assert.ok(track.source_url.startsWith('https://opengameart.org/'), track.title);
     assert.ok(track.artist && track.edited, track.title);
   }
@@ -44,7 +47,7 @@ test('music is off by default, waits for a click, then plays, fades in, skips an
   const {music, made, listeners} = load();
   await new Promise((resolve) => setTimeout(resolve, 10));
   assert.deepEqual({...music.settings()}, {on: false, volume: 35});
-  assert.equal(music.tracks().length, 4);
+  assert.equal(music.tracks().length, 6);
   listeners.pointerdown();
   assert.equal(made.length, 0, 'nothing plays while it is off');
   music.set({on: true});

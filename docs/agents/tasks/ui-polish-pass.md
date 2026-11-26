@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C, checkpoint 5 published (all 17 tabs are full-size pages; game replayed after the restructure); stopped, waiting for four decisions; step screens are next
+Progress: 8/9 - Stage C: all 17 tabs are full-size pages; six music tracks in; waiting for three checkpoint 5 decisions (News, Awards, what next); step screens are next
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -439,3 +439,13 @@ button was enabled.
 **Known gaps**: the step screens other than Opening Roster are still scaled cards; News and Awards are thin; names
 are cut on Playoff Stats; the bracket uses the top 40% of its page; the cutdown and Sign Players screens (same card as
 Opening Roster) were not reachable; nobody has listened to the music or watched the drift.
+
+## Two more tracks (2026-11-26, after checkpoint 5)
+
+The user said yes in the chat ("Yes, add both"). Both pages were re-read first (each states CC-BY 4.0; authors
+tcarisland and biggius): `diminishingreturnsinstr_0.mp3` (7.7 MB) and `downtempo_0.mp3` (2.5 MB), re-encoded to
+128 kbps MP3 and levelled like the others (`gui/assets/music/diminishing-returns.mp3`, `downtempo.mp3`; the folder is
+15 MB with six tracks). `tracks.json` carries the title, artist, source, licence link and what was changed for each,
+and the game's credits list shows them, which is what CC BY 4.0 asks for. tcarisland's page asks, without requiring
+it, to be told when his music is used (a contact form on tcarisland.no): left to the user. The checkpoint 5 page's
+decisions were still unanswered.

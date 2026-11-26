@@ -1,5 +1,6 @@
-/* Background music (UI polish pass, 2026-11-26; the user asked for "free chill beats" and approved these four
-   tracks). Four public-domain tracks from OpenGameArt in assets/music/ (tracks.json lists them with their sources).
+/* Background music (UI polish pass, 2026-11-26; the user asked for "free chill beats" and approved these six
+   tracks). Six tracks from OpenGameArt in assets/music/: four public domain, two CC BY 4.0, which must stay credited
+   (tracks.json lists them with their sources; the game shows that list under Credits).
    Off until the player turns it on in Settings > Sound, with its own volume, apart from the sound effects.
 
    The tracks play in a shuffled order, each fading in and out, a short track repeating once so the changes are not

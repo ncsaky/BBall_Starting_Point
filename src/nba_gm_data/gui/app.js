@@ -13250,7 +13250,7 @@ function musicMenuRows(onOff) {
   if (!music) return "";
   const track = globalThis.GameMusic.current();
   // The track playing and its skip button sit beside the switch (the Settings window has no room for another row).
-  return `${settingsRow("Music", `<div class="settings-music">${onOff("data-music-choice", music.on)}<span class="settings-track" data-music-track>${track ? escapeHtml(track.title) : ""}</span><button type="button" class="settings-skip" data-music-skip>Next track</button></div>`, "Four free tracks. They are listed under Photo and music credits.")}
+  return `${settingsRow("Music", `<div class="settings-music">${onOff("data-music-choice", music.on)}<span class="settings-track" data-music-track>${track ? escapeHtml(track.title) : ""}</span><button type="button" class="settings-skip" data-music-skip>Next track</button></div>`, "Six free tracks. They are listed under Photo and music credits.")}
         ${settingsRow("Music volume", `<div class="settings-slider"><input type="range" min="0" max="100" step="5" value="${music.volume}" data-music-volume aria-label="Music volume"><output>${music.volume}%</output></div>`)}`;
 }
 

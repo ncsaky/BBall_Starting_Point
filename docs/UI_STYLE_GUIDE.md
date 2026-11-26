@@ -244,8 +244,9 @@ Settings > Sound has the switch, the volume and the clicks switch. Continue (the
 through), pick (a draft selection), reveal (a lottery envelope), blocked (the game refuses an action), news (a trade
 offer or draft-night trade arrives), champion (once a year), click (every button, own switch).
 
-**Music** (`gui/music.js`, `gui/assets/music/`, 2026-11-26): four public-domain tracks the user approved, off until
-switched on in Settings > Sound, with its own volume. Tracks fade in and out and play in a shuffled order. A new track
+**Music** (`gui/music.js`, `gui/assets/music/`, 2026-11-26): six tracks the user approved (four public domain, two
+CC BY 4.0, whose credit in Settings > Credits is required and must stay), off until switched on in Settings > Sound,
+with its own volume. Tracks fade in and out and play in a shuffled order. A new track
 is a download: list it for the user (title, artist, licence, size, source) and get a yes first; add it to
 `tracks.json` so it shows in the credits.
 

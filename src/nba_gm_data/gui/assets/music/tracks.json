@@ -1,9 +1,59 @@
 {
- "note": "Public-domain (CC0) music from OpenGameArt, converted to MP3 and levelled for the game. No credit is required; the artists are named as a courtesy.",
+ "note": "Music from OpenGameArt, converted to MP3 and levelled for the game. Four tracks are public domain (CC0): no credit is required, and the artists are named as a courtesy. Two are CC BY 4.0: their credit here is required.",
  "tracks": [
-  {"file": "chill-lofi-inspired.mp3", "title": "Chill lofi inspired (loop edit)", "artist": "omfgdude, made loopable by qubodup", "licence": "CC0", "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/", "source_url": "https://opengameart.org/content/chill-lofi-inspired-loop-edit", "edited": "converted to MP3, loudness levelled"},
-  {"file": "lofi-hip-hop.mp3", "title": "lofi hip hop", "artist": "omfgdude", "licence": "CC0", "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/", "source_url": "https://opengameart.org/content/lofi-hip-hop", "edited": "converted to MP3, loudness levelled"},
-  {"file": "sleepy-head.mp3", "title": "Sleepy Head", "artist": "Tsorthan Grove", "licence": "CC0", "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/", "source_url": "https://opengameart.org/content/sleepy-head", "edited": "converted to MP3, loudness levelled"},
-  {"file": "a-day-in-night-out.mp3", "title": "A Day In, Night Out (loop)", "artist": "Tsorthan Grove", "licence": "CC0", "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/", "source_url": "https://opengameart.org/content/a-day-in-night-out", "edited": "converted to MP3, loudness levelled"}
+  {
+   "file": "chill-lofi-inspired.mp3",
+   "title": "Chill lofi inspired (loop edit)",
+   "artist": "omfgdude, made loopable by qubodup",
+   "licence": "CC0",
+   "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source_url": "https://opengameart.org/content/chill-lofi-inspired-loop-edit",
+   "edited": "converted to MP3, loudness levelled"
+  },
+  {
+   "file": "lofi-hip-hop.mp3",
+   "title": "lofi hip hop",
+   "artist": "omfgdude",
+   "licence": "CC0",
+   "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source_url": "https://opengameart.org/content/lofi-hip-hop",
+   "edited": "converted to MP3, loudness levelled"
+  },
+  {
+   "file": "sleepy-head.mp3",
+   "title": "Sleepy Head",
+   "artist": "Tsorthan Grove",
+   "licence": "CC0",
+   "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source_url": "https://opengameart.org/content/sleepy-head",
+   "edited": "converted to MP3, loudness levelled"
+  },
+  {
+   "file": "a-day-in-night-out.mp3",
+   "title": "A Day In, Night Out (loop)",
+   "artist": "Tsorthan Grove",
+   "licence": "CC0",
+   "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source_url": "https://opengameart.org/content/a-day-in-night-out",
+   "edited": "converted to MP3, loudness levelled"
+  },
+  {
+   "file": "diminishing-returns.mp3",
+   "title": "Diminishing Returns",
+   "artist": "tcarisland",
+   "licence": "CC BY 4.0",
+   "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+   "source_url": "https://opengameart.org/node/123371",
+   "edited": "re-encoded as MP3, loudness levelled"
+  },
+  {
+   "file": "downtempo.mp3",
+   "title": "Downtempo",
+   "artist": "biggius",
+   "licence": "CC BY 4.0",
+   "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+   "source_url": "https://opengameart.org/node/178142",
+   "edited": "re-encoded as MP3, loudness levelled"
+  }
  ]
 }
