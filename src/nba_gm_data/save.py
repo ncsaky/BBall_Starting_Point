@@ -1581,9 +1581,11 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
     canonical["ai_trade_pressure_player_ids"] = list(save.get("ai_trade_pressure_player_ids", []))
     canonical["team_trade_blocks"] = copy_plain(save.get("team_trade_blocks", {}))
     existing_pick_ids = {pick.get("id") for pick in canonical.get("draft_picks", [])}
+    # Generated rows are copied as one list (the same independent copies as one copy per row, without the per-copy
+    # fixed cost thousands of times a rebuild; SEASON-SPEED-FLOOR).
     canonical.setdefault("draft_picks", []).extend(
-        copy_plain(pick)
-        for pick in save.get("generated_draft_picks", [])
+        pick
+        for pick in copy_plain(save.get("generated_draft_picks", []))
         if pick.get("id") and pick.get("id") not in existing_pick_ids
     )
     from .transactions import ensure_future_second_round_scaffolds
@@ -1600,9 +1602,9 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
             for row in save.get("incoming_rookies", [])
             if row.get("player_id")
         }
-        for player in save.get("generated_players", []):
-            if player.get("id") not in existing:
-                active_player = copy_plain(player)
+        for active_player in copy_plain(save.get("generated_players", [])):
+            if active_player.get("id") not in existing:
+                player = active_player
                 rookie = rookie_context.get(player.get("id")) or {}
                 for key in ("current_ability", "potential", "overall_pick", "draft_year"):
                     if active_player.get(key) is None and rookie.get(key) is not None:
@@ -1614,10 +1616,10 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
             (trait.get("player_id"), trait.get("trait_key"))
             for trait in canonical.get("traits", [])
         }
-        for trait in save.get("generated_traits", []):
+        for trait in copy_plain(save.get("generated_traits", [])):
             key = (trait.get("player_id"), trait.get("trait_key"))
             if key not in existing_traits:
-                canonical.setdefault("traits", []).append(copy_plain(trait))
+                canonical.setdefault("traits", []).append(trait)
                 existing_traits.add(key)
     from .health import ensure_generated_player_health
 
@@ -1635,9 +1637,12 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
                 player["_inactive_player"] = True
     stats_by_player = save.get("player_season_stats") or {}
     if stats_by_player:
+        # One copy of the whole table instead of one per player: the same independent per-player copies, without
+        # paying the copy's fixed cost ~900 times per rebuild (SEASON-SPEED-FLOOR).
+        stats_copy = copy_plain(stats_by_player)
         for player in canonical.get("players", []):
-            if player.get("id") in stats_by_player:
-                player["_save_stats"] = copy_plain(stats_by_player[player["id"]])
+            if player.get("id") in stats_copy:
+                player["_save_stats"] = stats_copy[player["id"]]
     roster_overrides = save.get("roster_overrides", {})
     if roster_overrides:
         for player in canonical.get("players", []):
@@ -1772,11 +1777,12 @@ def refresh_active_runtime_state(
     active["injury_events"] = copy_plain(save.get("injury_events", []))
     active["gameplay_staff_slots"] = copy_plain(save.get("staff_slots", []))
     stats_by_player = save.get("player_season_stats") or {}
+    stats_copy = copy_plain(stats_by_player) if stats_by_player else {}   # one copy, not one per player
     for player in active.get("players", []):
         player.pop("_save_stats", None)
-        stats = stats_by_player.get(player.get("id"))
+        stats = stats_copy.get(player.get("id"))
         if stats:
-            player["_save_stats"] = copy_plain(stats)
+            player["_save_stats"] = stats
     if development_events:
         apply_development_events(active, development_events)
     apply_save_rotation_projection(active, save)
@@ -4780,6 +4786,7 @@ def complete_offseason_and_rollover(
     save["free_agency_state"] = {}
     clean_free_agency_state(save, next_label)
     refresh_health_for_new_season(save, f"{next_start}-10-01")
+    prune_settled_waiver_entries(save, next_start)
     # Offseason and training-camp injuries; the season just played already carries its own long injuries over.
     apply_season_start_injuries(root, canonical_with_save(canonical, save), save, generated, seed, carried=False)
     age_staff_contracts(save, canonical, seed=seed)
@@ -11937,6 +11944,34 @@ def randomize_future_matchups(template_games: list[dict[str, Any]], season: str)
         # team that day while still producing deterministic future opponents.
         output.extend({**game, "awayTeamId": away_id} for game, away_id in zip(games, away_ids))
     return output
+
+
+def prune_settled_waiver_entries(save: dict[str, Any], new_start_year: int) -> int:
+    """Drop waiver-wire entries that nothing reads any more, at the season rollover (SEASON-SPEED-FLOOR, 2026-11-25).
+
+    Readers of the wire: the waiver room (pending entries), waiver processing (pending), stretch elections and their
+    salary (a cleared release whose contract still runs), camp affiliate bonuses (cleared that summer), and the
+    recently-claimed trade rule (claims within 30 days). The transaction log keeps every release and claim for the
+    history pages. So an entry resolved before the season that just ended, for a contract with no season left, is
+    dead weight: about 230 entries a season (roughly 1 MB of a four-season save). Returns how many were dropped."""
+    wire = save.get("waiver_wire") or []
+    last_season_floor = f"{new_start_year - 1}-07-01"
+
+    def keep(entry: dict[str, Any]) -> bool:
+        if entry.get("status") == "pending":
+            return True
+        resolved = str(entry.get("resolved_date") or entry.get("clearance_date") or entry.get("date") or "")
+        if not resolved or resolved >= last_season_floor:
+            return True
+        seasons = [str(row.get("season") or "") for row in ((entry.get("contract") or {}).get("seasons") or [])]
+        seasons += [str(row.get("season") or "") for row in entry.get("seasons") or []]
+        return any(season[:4].isdigit() and int(season[:4]) >= new_start_year for season in seasons) or not seasons
+
+    kept = [entry for entry in wire if keep(entry)]
+    dropped = len(wire) - len(kept)
+    if dropped:
+        save["waiver_wire"] = kept
+    return dropped
 
 
 def refresh_health_for_new_season(save: dict[str, Any], start_date: str) -> None:
