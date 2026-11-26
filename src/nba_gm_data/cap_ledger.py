@@ -58,6 +58,7 @@ EXCEPTION_AMOUNTS_2026 = {
 }
 EXCEPTION_MAX_YEARS = {"non_taxpayer_mle": 4, "taxpayer_mle": 2, "room_mle": 3, "bi_annual": 2, "minimum": 2}
 OUTSIDE_RAISE = 0.05
+AI_HARD_CAP_ROSTER_FILL = 14                # AI-TRADES-SENSE: see quote()
 MINIMUM_ROSTER_FOR_CAP = 12                 # empty spots below 12 carry a rookie-minimum charge from July 1
 VETERAN_MINIMUM_SERVICE = 3                 # one-year minimums for 3+ years of service are partly reimbursed
 VETERAN_MINIMUM_CAP_SERVICE = 2             # ... and count at the two-year minimum
@@ -758,6 +759,17 @@ def quote(active: dict[str, Any], save: dict[str, Any], team_id: str, player: di
             cap -= float(minimum_salary(season, 0))
         return cap
 
+    # AI-TRADES-SENSE: an AI team never signs its way into a hard cap it can't fill a roster under. The season review
+    # had Minnesota use the mid-level and the bi-annual, hard-capping itself at the first apron, and open the next
+    # season with 11 players because even a minimum contract no longer fit. Under a hard cap (one it has or the one
+    # this way of paying would trigger) an AI team keeps room for minimum contracts up to AI_HARD_CAP_ROSTER_FILL
+    # players after this signing. The user's team keeps the plain rule.
+    from .save import human_controlled_team_ids
+    fill_reserve = 0.0
+    if team_id not in human_controlled_team_ids(save):
+        fill_reserve = (max(0, AI_HARD_CAP_ROSTER_FILL - int(payroll.get("roster_count") or 0) - 1)
+                        * float(minimum_salary(season, 0)))
+
     def check_ceiling(charge: float, own_level: str | None = None) -> str:
         after = apron_now + charge
         if ceiling and after > float(ceiling["amount"]) + 1:
@@ -766,6 +778,11 @@ def quote(active: dict[str, Any], save: dict[str, Any], team_id: str, player: di
         if own_level and after > float(lines[own_level]) + 1:
             return (f"Using it requires staying under {HARD_CAP_WORDS[own_level]} ({_m(lines[own_level])}); "
                     f"this would take {team_label} to {_m(after)}.")
+        caps = ([float(ceiling["amount"])] if ceiling else []) + ([float(lines[own_level])] if own_level else [])
+        limit = min(caps) if caps else None
+        if fill_reserve and limit is not None and after + fill_reserve > limit + 1:
+            return (f"{team_label} would be left without room under its hard cap ({_m(limit)}) to fill a "
+                    f"{AI_HARD_CAP_ROSTER_FILL}-man roster with minimum contracts.")
         return ""
 
     def legal_schedule(r: str, first: float) -> tuple[list[int], list[int], float]:
