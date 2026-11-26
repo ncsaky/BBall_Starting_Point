@@ -3342,6 +3342,7 @@ function seasonCommandDashboardMarkup(rows, dash, editable, viewedTeam) {
       </div>
     </header>
     <main class="season-command-grid">
+      <section class="season-command-panel season-front-panel">${globalThis.CardPages?.enabled?.() ? globalThis.HomeFront?.markup?.() || "" : ""}</section>
       <div class="season-diagnostics-row">
         <section class="season-command-panel season-identity-panel">${seasonIdentityCard(rows, dash)}</section>
         <div class="season-signals-panel">${seasonTeamSignalsCard(dash)}</div>

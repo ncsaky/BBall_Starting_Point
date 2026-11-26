@@ -2476,6 +2476,7 @@ def dashboard_summary_leaders_payload(
                 {
                     "player_id": item.get("player_id"),
                     "player_name": item.get("player_name"),
+                    "headshot_url": item.get("headshot_url"),  # display only: Home's leaders show the face
                     "team_id": item.get("team_id"),
                     "team_abbrev": item.get("team_abbrev"),
                     "position": item.get("position"),
@@ -2566,6 +2567,16 @@ def dashboard_trends_payload(
             "scale": "points_per_100_possessions",
         },
         "four_factors": four_factors,
+        # Display only (Home's "against expectation" list): every team's roster rating and its league rank, the same
+        # team_identity_report numbers the Team Signals card shows for one team. Already computed above.
+        "roster_ranks": [
+            {
+                "team_id": team_id,
+                "overall": (report.get("metrics") or {}).get("overall"),
+                "rank": (report.get("ranks") or {}).get("overall"),
+            }
+            for team_id, report in identity_by_team.items()
+        ],
     }
 
 

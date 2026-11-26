@@ -92,11 +92,13 @@
   const PAGES = [
     // The step screens, in the order they follow one another.
     {id: "staff-retention", group: "now", step: true, label: "Staff Retention", layout: () => row(card("phase-staff_retention-decision", {bare: true}))},
-    {id: "draft-room", group: "now", step: true, label: "Draft", layout: draftRoomLayout},
-    {id: "free-agency-checklist", group: "now", step: true, label: "Offseason Checklist", layout: () => ({full: {fits: [1220, 660], roomy: [1500, 900]}, ...row(
+    // The draft, the offseason checklist, free agency and the playoffs take over Home while they are on (user,
+    // 2026-11-26): each is a Home tab, listed first, and it is where Home lands (phaseHome).
+    {id: "draft-room", group: "home", phaseHome: true, label: "Draft", layout: draftRoomLayout},
+    {id: "free-agency-checklist", group: "home", phaseHome: true, label: "Checklist", layout: () => ({full: {fits: [1220, 660], roomy: [1500, 900]}, ...row(
       colOf({fill: true}, card("phase-free_agency-checklist", {bare: true, fill: true})),
       colOf({basis: 400}, card("phase-free_agency-selected", {fill: true})))})},
-    {id: "free-agency", group: "now", step: true, label: "Free Agency", layout: () => ({full: {fits: [1220, 660], roomy: [1500, 900]}, ...row(
+    {id: "free-agency", group: "home", phaseHome: true, label: "Free Agency", layout: () => ({full: {fits: [1220, 660], roomy: [1500, 900]}, ...row(
       colOf({fill: true}, card("phase-free_agency-market", {fill: true})),
       colOf({basis: 340}, card("phase-free_agency-selected", {fill: true}), colOf({basis: 230}, card("phase-free_agency-wire", {fill: true}))))})},
     {id: "fantasy-draft", group: "now", step: true, label: "Fantasy Draft", layout: () => col("phase-fantasy_draft-control", row(card("phase-fantasy_draft-board", {grow: "h"}), card("phase-fantasy_draft-roster", {grow: "h"}), card("phase-fantasy_draft-ticker", {grow: "h"})))},
@@ -106,8 +108,13 @@
     {id: "outlook", group: "now", label: "Preseason Outlook", slideshow: "outlook"},
     {id: "recap", group: "now", label: "Year-End Recap", slideshow: "recap"},
 
-    // Home: what is about to happen. Its tabs: today (the rotation and the next game) and the calendar.
+    // Home: what is happening. Its tabs: today (the front page: home-front.js), your minutes with the next
+    // opponent beside them (while games are played), and the calendar.
+    {id: "home-playoffs", group: "home", phaseHome: true, label: "Playoffs", when: () => ["play_in", "playoffs"].includes(String(appState()?.home?.save?.phase || "")), layout: () => ({full: {fits: [1100, 480], roomy: [1500, 900]}, ...row(card("phase-playoffs-bracket", {bare: true, fill: true, natural: "fit", size: [1424, 484]}))})},
     {id: "home", group: "home", label: "Today", layout: homeLayout},
+    {id: "minutes", group: "home", label: "Minutes", when: () => phaseHasGames(), layout: () => ({full: {fits: [1100, 660], roomy: [1500, 880]}, ...row(
+      colOf({fill: true}, card("minutes", {fill: true})),
+      colOf({basis: 420}, card("opponent", {fill: true})))})},
     {id: "schedule", group: "home", label: "Schedule", layout: () => ({full: {fits: [900, 560], roomy: [1500, 900]}, ...row(card("week", {expanded: true, bare: true, fill: true}))})},
 
     // Team. Roster and Stats are full-size tables; the rest are still the older cards, one main thing a tab.
@@ -144,29 +151,28 @@
     {id: "news", group: "league", label: "News", layout: () => ({full: {fits: [1180, 620], roomy: [1500, 900]}, ...row(card("league-wire", {expanded: true, bare: true, fill: true}))})},
     {id: "awards", group: "league", label: "Awards", controls: "awards", layout: () => ({full: {fits: [1120, 560], roomy: [1500, 900]}, ...row(
       // Each race lists its ten candidates on a page (four in a board window), so the cards are taller here.
-      card("award-mvp", {fill: true, natural: "fit", size: [340, 500]}), card("award-dpoy", {fill: true, natural: "fit", size: [340, 500]}), card("award-roty", {fill: true, natural: "fit", size: [340, 500]}))})},
+      card("award-mvp", {fill: true, natural: "fit", size: [396, 590]}), card("award-dpoy", {fill: true, natural: "fit", size: [396, 590]}), card("award-roty", {fill: true, natural: "fit", size: [396, 590]}))})},
     {id: "playoffs", group: "league", label: "Playoffs", layout: () => ({full: {fits: [1100, 480], roomy: [1500, 900]}, ...row(card("phase-playoffs-bracket", {bare: true, fill: true, natural: "fit", size: [1424, 484]}))})},
     {id: "playoff-stats", group: "league", label: "Playoff Stats", layout: () => ({full: {fits: [1220, 580], roomy: [1500, 900]}, ...row(
       colOf({fill: true}, card("phase-playoffs-leaders", {fill: true})),
       colOf({basis: 540}, card("phase-playoffs-injuries", {fill: true})))})},
   ];
 
-  // Home's first tab, by phase. While games are played: the rotation, and the next game with the standings under it. From
-  // the lottery to training camp there are no games: contracts, the payroll and your picks (user, 2026-11-26).
-  function homeLayout() {
+  const phaseHasGames = () => {
     const phase = String(appState()?.home?.save?.phase || "");
-    if (phase && typeof window !== "undefined" && window.GameProgress?.PHASES?.[phase]?.games === false) {
+    return !(phase && typeof window !== "undefined" && window.GameProgress?.PHASES?.[phase]?.games === false);
+  };
+
+  // Home's Today tab, by phase. While games are played: the front page (your team now, the league, the table, the
+  // market: home-front.js). From the lottery to training camp there are no games: contracts, the payroll and your
+  // picks (user, 2026-11-26).
+  function homeLayout() {
+    if (!phaseHasGames()) {
       return {full: {fits: [1200, 640], roomy: [1500, 900]}, ...row(
         colOf({fill: true}, card("contracts", {fill: true}), card("picks", {natural: "width"})),
         colOf({basis: 430}, card("payroll", {fill: true, natural: "fit"})))};
     }
-    const full = {fits: [1100, 660], roomy: [1500, 880]};
-    // The week strip left Home (user, 2026-11-26: it is a smaller copy of the Schedule tab beside it). Under the next
-    // game: your conference's standings (the playoffs have none to show: the season is over).
-    const playoffs = phase === "play_in" || phase === "playoffs";
-    return {full, ...row(
-      colOf({fill: true}, card("minutes", {fill: true})),
-      colOf({basis: 420}, ...(playoffs ? [card("opponent", {fill: true})] : ["opponent", card("standings", {link: "standings", fill: true})])))};
+    return {full: {fits: [1180, 660], roomy: [1500, 900]}, ...row(card("front", {bare: true, fill: true}))};
   }
 
   // The draft room, by state: the lottery (a picture, enlarged), draft night (the prospect board and the order of
@@ -240,6 +246,7 @@
         const phase = String(appState()?.home?.save?.phase || "");
         return Boolean(slideshowRow(page.slideshow)) && (!phase || SLIDESHOW_PHASES[page.slideshow].includes(phase));
       }
+      if (page.when && !page.when()) return false;
       const ids = layoutIds(pageLayout(page));
       return ids.some(available);
     };
@@ -961,6 +968,9 @@
     // starts to block the clock (Stage A decision 1). Otherwise you stay on the page you were on, so a sim run from
     // Schedule or a pick made in the draft room does not throw you out of it. A step screen that is still there after a
     // phase change (the draft room, from the lottery to the board to the results) keeps you too.
+    // Where Home lands: the phase's own tab while one is on (the draft, the checklist, free agency, the playoffs),
+    // Today otherwise.
+    const homeId = () => visiblePages().find(page => page.phaseHome && groupOf(page) === "home")?.id || "home";
     function landingPage() {
       const listed = visiblePages().filter(page => !page.slideshow);
       const remembered = lastPage.get(saveKey);
@@ -972,12 +982,13 @@
       const called = homeCalled;
       homeCalled = false;
       if (!listed.some(page => page.id === "home")) return stays ? remembered : listed[0]?.id || "home";
-      if (!stays || newlyBlocked || called) return "home";
-      if (ctx.entering && !isStep(listed.find(page => page.id === remembered))) return "home";
+      if (!stays || newlyBlocked || called) return homeId();
+      if (ctx.entering && !isStep(listed.find(page => page.id === remembered))) return homeId();
       return remembered;
     }
 
     const api = {
+      homeId,
       owns: (id) => owned.has(id),
       showDetail,
       closeDetail,
@@ -1030,7 +1041,7 @@
   // The game stopped by itself: show Home now, and keep it through the render that follows.
   function landHome() {
     homeCalled = true;
-    try { attached?.showPage("home"); } catch { /* the next render lands there */ }
+    try { attached?.showPage(attached.homeId?.() || "home"); } catch { /* the next render lands there */ }
   }
 
   // Open a tab by its id (the to-do list's jobs, scripts).

@@ -336,6 +336,18 @@ its sections share the page's width and height. The rules live in `gui/full-page
   headlines; the draft boards, the free-agent market, the offseason checklist and the playoff tables scrolled before
   and still do. Their headings stay pinned.
 
+## Home is a front page (user, 2026-11-26)
+- Home's Today tab is what keeps a player reading, not a pair of tables: your team now (last result, next game,
+  form, morale, who is out), the league (headlines, scores), the table (standings, teams against expectation) and
+  the market (offers, who is being shopped, leaders). `gui/home-front.js`.
+- No boxes on it: sections are set apart by space, a heading and one line. One strong strip at the top, then columns.
+- Every line opens what it summarises (a box score, a player, a tab, the trade room). Nothing on it is a dead end.
+- Only numbers the game already holds. "Against expectation" compares a team's rank by record with its rank by
+  roster rating; no forecast is invented.
+- A list shows whole rows only; what does not fit is behind its heading.
+- A phase that has its own room (the draft, the offseason checklist, free agency, the playoffs) takes Home's first
+  tab while it is on, and Home opens there.
+
 ## Pop-ups (2026-11-26)
 - Pop-up styling lives in two sheets: `gui/popups.css` (the trade room and incoming offers) and
   `gui/popups-game.css` (box score, Player Finder, staff talks, League Leaders). Every rule sits under `#modalRoot`

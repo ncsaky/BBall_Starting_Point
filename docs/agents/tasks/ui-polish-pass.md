@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C, checkpoint 7 published (Awards polish; eight pop-ups restyled); stopped, waiting for four decisions; Home phase tabs, the extension window and player card, and the final sweep remain
+Progress: 8/9 - Stage C, checkpoint 8 published (Home as a front page, phase tabs, Awards names; trade room planned); stopped, waiting for four decisions; the trade room rebuild and the final sweep remain
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -528,3 +528,67 @@ League Leaders is the finder's table, not Player, Team, stat (needs a change to 
 "Roster value" bar is coloured inline; the Market's "Decision by" shows ISO dates; `popups.css` loads early in
 `index.html`, so its rules carry extra specificity. Still open from before: Home phase tabs, the start screen, more
 arena photos, the final sweep, and nobody has listened to the music or watched the background move.
+
+## Stage C, checkpoint 8 report (2026-11-26)
+
+**The user's answers to checkpoint 7** (their words where quoted): Accept Trade stays a frosted pill. Awards good
+"other than the fact that there's names being shortened in their fields". Next: draft, playoffs and free agency as
+Home tabs. On the pop-ups, a note that sets the direction for two screens:
+- Home: "I don't like that the homepage just shows a couple tables. It should show stuff that would be most
+  engaging to a player like the trade market, any ongoing trade rumors, standings, things going against expectation,
+  league leaders, winners, the state of your team, injuries, signings, whatever deadlines are coming up".
+- Trade room: "too much stuff is spread out"; the Market "isn't centered ... not full"; the heat maps should "fade
+  from one to the other instead of having them one on top of the other"; the pop-ups do not "show enough of the
+  change that happens after a trade like for example the four factors or the overall, the morale"; so "consolidate
+  all of those onto one page and then expand the trade asset selection page": one page "where you pick what assets
+  go and you see legality", the next "what would that trade actually entail for your team".
+
+**What changed**
+- **Home › Today is a front page** (`gui/home-front.js`, `gui/home-front.css`, card id `front`, panel
+  `.season-front-panel` in `seasonCommandDashboardMarkup`): a strip for your team (last result, next game, last
+  five, the four moods, who is out), then three columns: headlines and the latest day's scores; your conference
+  with "Against expectation"; trade talk (offers waiting, the Market's shopped players, days to the deadline) and
+  the PTS / REB / AST leaders. Every line opens what it summarises. Lists show whole rows only (rows that do not fit
+  get a 0-height implicit grid row). Before the season and in the playoffs the game loads no standings, scores or
+  leaders for a phase screen, so the middle column lists the games ahead or is dropped.
+- **Display-only server additions** (`app_actions.py`): `dashboard_trends_payload` returns `roster_ranks` (every
+  team's `team_identity_report` overall and rank, already computed there); the summary leaders' rows carry
+  `headshot_url`.
+- **Home's tabs**: Today, Minutes (the old Home: the rotation with the next opponent; only while games are played),
+  Schedule. The draft room, the offseason checklist, free agency and the playoff bracket are Home tabs listed first
+  while they are on (`phaseHome`), and Home lands on them (`homeId()`); they are no longer step screens. Pages take
+  an optional `when`.
+- **Awards**: cards drawn at 396 by 590 so no name is cut (ten of 27 were); the leader's content is centred in its
+  band.
+
+**Checked**: browser tests, 54 of 55 files (new `tests/home_front.test.cjs`; `sidebar_pages` and `tables_icons`
+updated; the start-video file cannot pass here). Clicked on Home: a score (box score opened), the standings
+heading (tab opened), a leader (player card opened). Landings checked on the playoffs, draft, free agency,
+re-signing, camp and preseason saves. `tests.test_gui_concept74` has one failure
+(`test_rating_and_scouting_bars_use_solid_sampled_color`) that is on the branch without this round's change.
+
+**Trade room: what the code and engine reading found** (plan on the page, nothing built)
+- The Builder already has two views (`state.tradeView` "pick" / "deal") and three lower tabs
+  (`state.tradeInsightPage` 0 payroll, 1 value, 3 identity). The heat maps are inline SVG built in the browser
+  (`trade-projection.js`), before and after as separate sections.
+- The engine can compute for a hypothetical roster, with display-only code in `app_actions.py`:
+  `team_identity_report` (overall, offence, defence, depth and the other metrics, with ranks) on a copied canonical;
+  `spatial.team_spatial_profile` with a roster and minutes (real team heat maps); `trade_roster.roster_projection`
+  (rotation strength, minutes, forced cuts); `trade_tax.luxury_tax_bill` / `tax_saved`.
+- It cannot: forecast four factors for a roster (Profile's are season results), or project morale or chemistry
+  after a trade (morale moves only after games and press answers). Both would be engine work for the coordinator.
+
+**From the coordinator (main 00f5c384, to fold in when those screens come up; data arrives with the next merge)**:
+the lottery card's "Four picks drawn" / "14 → 1" text is wrong when `lottery.format` is "3-2-1" (16 picks drawn);
+hide the reveal's "jumped into the top four" notice for 3-2-1; 16 rows must fit the lottery card; the year-end
+slide's "of 14" should use `lottery_teams`; the player page's season strip needs a playoff line
+(`career_seasons[].playoffs`). Details: `docs/agents/tasks/lottery-playoff-stats.md` on main.
+
+**Waiting on four decisions** (page https://claude.ai/artifact/PesnDwmQszkPJQZAicJhb3, collection `decisions`):
+`home-ok` (good | change), `phase-tabs` (good | change), `trade-plan` (ratings | ratings-only | wait), `next`
+(trade-room | home-more | rest-popups | sweep).
+
+**Known gaps**: Home is thinner before the season and in the playoffs (no league data loaded there); the offseason
+Today tab is unchanged (contracts, payroll, picks); the market request was not timed on a slow machine; the trade
+room rebuild, the extension window and player card, the start screen, more arena photos and the final sweep
+remain; nobody has listened to the music or watched the background move.

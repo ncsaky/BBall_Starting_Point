@@ -60,7 +60,7 @@ html[data-layout="pages"] body .season-command-dashboard.is-pages .pages-page[da
 /* ---------- Awards: the leader's band is a soft rounded tile, not a sharp box (user, 2026-11-26), and the chasers
    have column headings. The cards are enlarged whole, so sizes here are the card's own (about 1.16 times smaller
    than they appear): a heading is the small size once enlarged. */
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-card .season-award-leader { border-radius: var(--gm-radius-card) !important; border: 1px solid var(--gm-line) !important; overflow: hidden; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-card .season-award-leader { border-radius: var(--gm-radius-card) !important; border: 1px solid var(--gm-line) !important; overflow: hidden; justify-content: center !important; align-content: center !important; }
 /* The leader's own numbers: headings on one line, values under them, and his change in rank under "Change" (it sat
    alone above the first heading). */
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-leader-stats > .season-award-stat-label { grid-row: 1 !important; }

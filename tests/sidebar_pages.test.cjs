@@ -77,7 +77,13 @@ test('step screens stay out of the sidebar and the footer sits outside the page'
   const {pages} = load();
   const steps = pages.PAGES.filter((page) => page.step).map((page) => page.id);
   assert.equal(steps.slice(-2).join(), 'roster-moves,set-roster', 'the preseason ends on Set The Roster');
-  for (const id of ['draft-room', 'free-agency', 'free-agency-checklist']) assert.ok(steps.includes(id), id);
+  // The draft, the checklist and free agency are Home tabs while they are on (user, 2026-11-26), not step screens.
+  for (const id of ['draft-room', 'free-agency', 'free-agency-checklist']) {
+    const page = pages.PAGES.find((item) => item.id === id);
+    assert.ok(!steps.includes(id), id);
+    assert.equal(page.group, 'home', id);
+    assert.equal(page.phaseHome, true, id);
+  }
   const source = read('card-pages.js');
   assert.doesNotMatch(source, /\["now", ""\]/);
   assert.match(source, /<\/div>\n\s*<footer class="pages-foot">/);
@@ -172,7 +178,9 @@ test('the sidebar carries the phase and the to-do list; Home lands first, and st
   // Only a few pages in the sidebar (user, 2026-11-26); everything else is a tab of one of them.
   assert.deepEqual(Array.from(pages.GROUPS, ([id]) => id), ['home', 'team', 'office', 'league']);
   const tabs = (group) => Array.from(pages.PAGES).filter((page) => page.group === group).map((page) => page.id);
-  assert.deepEqual(tabs('home'), ['home', 'schedule']);
+  // Home: the phase's own tabs first (listed only in their phase), then Today, Minutes and Schedule.
+  assert.deepEqual(tabs('home'), ['draft-room', 'free-agency-checklist', 'free-agency', 'home-playoffs', 'home', 'minutes', 'schedule']);
+  assert.match(read('card-pages.js'), /const homeId = \(\) => visiblePages\(\)\.find\(page => page\.phaseHome/, 'Home lands on the phase tab while one is on');
   for (const id of ['roster', 'stats', 'development', 'staff', 'identity', 'profile']) assert.ok(tabs('team').includes(id), id);
   assert.deepEqual(tabs('office'), ['contracts', 'trades', 'scouting']);
   for (const id of ['standings', 'news', 'awards', 'playoffs', 'playoff-stats']) assert.ok(tabs('league').includes(id), id);
@@ -180,7 +188,7 @@ test('the sidebar carries the phase and the to-do list; Home lands first, and st
   assert.match(source, /progressEl\.className = "pages-progress";/);
   assert.match(source, /progressEl\.querySelector\("\.progress-rail"\)\.innerHTML = progress\(\)\.listMarkup\(/, 'the to-do list is in the sidebar, on every page');
   assert.match(source, /class="pages-tabs" role="tablist"/);
-  assert.match(source, /if \(!stays \|\| newlyBlocked \|\| called\) return "home";/);
+  assert.match(source, /if \(!stays \|\| newlyBlocked \|\| called\) return homeId\(\);/);
   assert.match(source, /class="pages-control pages-step-home" data-pages-go="home"/);
   assert.doesNotMatch(source, /pages-step-back|Continue: |nbaGmPage:v1|is-progress|progress-area/, 'no step-to-step buttons, no remembered page across loads, no list on the page');
   assert.match(read('assets-desktop.js'), /phaseCommands:\(window\.CardPages\?\.enabled\?\.\(\) && window\.GameProgress\?\.dockMarkup\(\)\) \|\| clipboardPhaseCommands\(\)/);
@@ -237,13 +245,16 @@ test('shared style values: one sheet, loaded first, and no italic or stray weigh
 const walk = (node, out = []) => { if (!node) return out; out.push(node); for (const item of node.items || []) walk(typeof item === 'string' ? {type: 'card', id: item} : item, out); return out; };
 const cardsOf = (layout) => walk(layout).filter((node) => node.type === 'card');
 
-test('Home in season: the rotation, and the next game with the standings under it; no week strip', () => {
+test('Home in season: Today is the front page; the rotation and the next opponent are the Minutes tab', () => {
   const {pages} = load();
   const layout = pages.PAGES.find((page) => page.id === 'home').layout({available: () => true});
   assert.ok(layout.full, 'laid out at real sizes, not scaled as one picture');
-  assert.equal(layout.type, 'row');
-  const columns = Array.from(layout.items, (column) => cardsOf(column).map((card) => card.id));
-  assert.deepEqual(columns, [['minutes'], ['opponent', 'standings']]);
+  assert.deepEqual(cardsOf(layout).map((card) => card.id), ['front']);
+  const minutes = pages.PAGES.find((page) => page.id === 'minutes');
+  assert.equal(minutes.group, 'home');
+  assert.deepEqual(Array.from(minutes.layout({available: () => true}).items, (column) => cardsOf(column).map((card) => card.id)), [['minutes'], ['opponent']]);
+  assert.match(read('card-board.js'), /\["front", "\.season-front-panel", "Today"\]/);
+  assert.match(read('app.js'), /season-front-panel">\$\{globalThis\.CardPages\?\.enabled\?\.\(\) \? globalThis\.HomeFront\?\.markup/);
 });
 
 test('Roster and Stats are full-size tabs; Contracts keeps the payroll chart and the draft assets in proportion; Trades is a full-size tab', () => {
