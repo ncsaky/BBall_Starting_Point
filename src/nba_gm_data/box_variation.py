@@ -56,6 +56,50 @@ TWO_ATTEMPTS_FLOOR = 0.25
 OWN_RATE_MISSES = True
 
 
+# Turnovers per player (SHOOTING-SPLITS, 2026-11-26). A Poisson count around his rate, times a shared team-day factor,
+# spread wider than real: the 30 most turnover-prone players' game-to-game variance ran 1.12x their mean (real 0.93),
+# team totals sd 4.5 (real 4.05), and 10-turnover games 8-14 a season (real 3). A real player loses the ball on a share of
+# the plays he has it, so his count is binomial-like: TURNOVER_CHANCE is that share (his count ~ Binomial(n, chance) with
+# n = mean / chance), and TURNOVER_DAY_SCALE sizes the team's shared day so team totals keep their real spread.
+TURNOVER_CHANCE = 0.19
+TURNOVER_DAY_SCALE = 0.8
+
+
+def binomial_count(u, mean, chance):
+    """Inverse-CDF draw from Binomial(n, mean / n) with n = ceil(mean / chance): mean `mean`, variance ~ mean x (1 - chance)."""
+    if mean <= 0:
+        return 0
+    n = max(1, math.ceil(mean / chance))
+    p = min(1.0, mean / n)
+    if p >= 1.0:
+        return n
+    pmf = (1 - p) ** n
+    cdf, k = pmf, 0
+    while u > cdf and k < n:
+        pmf *= (n - k) / (k + 1) * p / (1 - p)
+        k += 1
+        cdf += pmf
+    return k
+
+
+# Team steals' game-to-game spread on top of the players' own draws. 2.0 held team steals to sd 2.1 a game (real 3.2,
+# 2025-26); it was set while the total was shared by scaling the draws, which fattened players' tails (reshare_by_rates).
+STEAL_GAME_SIGMA = 3.1
+RESHARE_BY_RATE = True   # team steal/block totals move one event at a time by players' rates (sim.reshare_by_rates)
+
+
+def event_rate(key, feat, line):
+    """A player's expected steals or blocks tonight (his fitted rate x minutes); 0 without features or minutes."""
+    minutes = float(line.get('minutes') or 0)
+    if not feat or minutes <= 0:
+        return 0.0
+    from .sim import steal_rate_per_minute
+    if key == 'steals':
+        return minutes * steal_rate_per_minute(feat)
+    from .defense import block_rate_per36
+    return minutes / 36.0 * block_rate_per36(feat.get('rim_deterrence', 50), feat.get('contest_jump'))
+
+
 def two_attempts_per36(feat):
     """The player's expected two-point attempts per 36 (new ratings), or None (old ratings)."""
     points = feat.get('points_per36')
@@ -115,7 +159,7 @@ def increased_counts(weights, extra, identities):
 
 
 def vary_box_score(canonical, groups, team_lines, feature_groups, seed):
-    from .sim import player_feature_vector, redistribute_integer_stat, turnover_rate_per_minute
+    from .sim import player_feature_vector, redistribute_integer_stat, reshare_by_rates, turnover_rate_per_minute
     from .box_score import reduced_counts
     rng = random.Random(seed)
     player_features = {}
@@ -162,8 +206,12 @@ def vary_box_score(canonical, groups, team_lines, feature_groups, seed):
             # rounded draw and a usage formula, which handed bench players extra turnovers and flattened ball
             # handlers to ~2 per 36 (2026-11-18).
             baseline = minutes * turnover_rate_per_minute(feat)
-            turnover_mean = baseline * max(.5, 1 + pressure * .22 - passing * .12 + disruption_day)
-            line['turnovers'] = poisson(rng, turnover_mean)
+            if TURNOVER_CHANCE:
+                turnover_mean = baseline * max(.5, 1 + pressure * .22 - passing * .12 + disruption_day * TURNOVER_DAY_SCALE)
+                line['turnovers'] = binomial_count(rng.random(), turnover_mean, TURNOVER_CHANCE)
+            else:
+                turnover_mean = baseline * max(.5, 1 + pressure * .22 - passing * .12 + disruption_day)
+                line['turnovers'] = poisson(rng, turnover_mean)
         team = team_lines[index]
         # Fixed scores do not permit unlimited cold-shooting misses on top of
         # turnovers. Bound the estimated possession budget (FT trips are not
@@ -223,9 +271,14 @@ def vary_box_score(canonical, groups, team_lines, feature_groups, seed):
         redistribute_integer_stat(lines, 'rebounds', rebounds, 1.)
         # Blocks already arrive as per-player Poisson draws (team sd ~2.2); the real 2025-26 team-game sd is 2.46, so
         # only the remaining sqrt(2.46^2 - 2.2^2) ~ 1.1 is added here (was 1.7 on a near-fixed team total).
-        for key, sigma in (('steals', 2.0), ('blocks', 1.1)):
+        for key, sigma in (('steals', STEAL_GAME_SIGMA), ('blocks', 1.1)):
             target = max(0, round(float(team.get(key) or 0) + rng.gauss(0, sigma)))
-            redistribute_integer_stat(lines, key, target, 1.)
+            if RESHARE_BY_RATE:
+                # Added or removed one at a time by each player's own rate, not by scaling the draws (sim.reshare_by_rates).
+                reshare_by_rates(lines, key, target, [event_rate(key, player_features.get(line['player_id']), line)
+                                                      for line in lines])
+            else:
+                redistribute_integer_stat(lines, key, target, 1.)
         team['offensive_rebounds'] = min(rebounds, round(own_miss * oreb_rate * player_share))
         team['defensive_rebounds'] = max(0, rebounds - team['offensive_rebounds'])
     # Screen assists (new ratings): their own generator, after every other draw; see screens.py.

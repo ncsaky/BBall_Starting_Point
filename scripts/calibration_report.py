@@ -39,7 +39,7 @@ def main() -> int:
     results = [to_plain(sim_game_with_context(context, str(g["externalGameId"]), mode=args.mode, seed=args.seed, engine=args.engine)) for g in picked]
     elapsed = time.time() - t0
     agg = aggregate_from_results(results)
-    report = compare(agg["league_totals"], agg["player_lines"], targets, min_sim_games=3)
+    report = compare(agg["league_totals"], agg["player_lines"], targets, min_sim_games=3, sim_texture=agg["texture"])
     print(f"{len(results)} games in {elapsed:.1f}s (seed {args.seed}, mode {args.mode}, engine {args.engine})")
     print(format_report(report))
     if args.json_out:

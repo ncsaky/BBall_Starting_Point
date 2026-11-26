@@ -2114,6 +2114,11 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
     # Real shooters' big nights are their made threes. His hot/cold draw now shares the part of his scoring swing that his
     # three-point makes explain (rho = sd of his three-point points / sd of his points, up to .95), from the same
     # standardised count; the rest stays independent. Long-run points and percentages are unchanged.
+    # SHOOTING-SPLITS (2026-11-26): this now covers every player (THREES_FIRST_MIN_SHARE 0). For the rest, made threes were
+    # drawn after the points at a chance scaled by tonight's points (offense.night_three_pct), and a one- or two-point
+    # night holds no three, so the league shot ~1.2 points under its players' own percentage (2.5-3.7 in a season, where
+    # the scaling also used unshared points per 36). True shooting against real moves .0200 -> .0213 (150 players, three
+    # seeds), within the noise that turned the 2026-11-19 test against it.
     from .offense import draw_threes
     pre_threes: list[tuple[int, int] | None] = []
     for index, item in enumerate(pool):
@@ -2121,6 +2126,11 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
         feat = features[item["player"]["id"]]
         usage = float(feat.get("scoring_usage") or feat.get("usage") or 50)
         hot_cold_sigma = scoring_game_volatility(item, feat)
+        if new_ratings_lines and SCORING_COUNT_SPREAD:
+            # Scoring nights spread like counts: variance about SCORING_COUNT_SPREAD x his expected points on top of his
+            # role's swing (see SCORING_COUNT_SPREAD).
+            hot_cold_sigma = math.sqrt(hot_cold_sigma ** 2
+                                       + math.log(1.0 + SCORING_COUNT_SPREAD / max(0.5, scoring_expectations[index])))
         threes = (draw_threes(feat, minutes, rng) if THREES_FIRST and new_ratings_lines and feat.get("offense_model_version")
                   and float(feat.get("three_share_habit") or 0.0) >= THREES_FIRST_MIN_SHARE
                   else None)
@@ -2167,11 +2177,12 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
     lines = []
     from .ratings_model import uses_inputs_model
     expected = {"assists": 0.0, "steals": 0.0, "assist_model": "inputs" if uses_inputs_model(canonical) else "legacy"}
-    # Each player's normal output for tonight's minutes (new ratings: his fitted points per 36; old ratings: his share of
-    # tonight's team points). Tonight's three-point accuracy follows his points relative to it (offense.night_three_pct).
-    normal_points = [float(item.get("minutes") or 0.0) * float(features[item["player"]["id"]]["points_per36"]) / 36.0
-                     if features[item["player"]["id"]].get("points_per36") is not None else scoring_expectations[index]
-                     for index, item in enumerate(pool)]
+    # Each player's normal output tonight: his expected share of tonight's team points (new ratings: his fitted points
+    # per 36 times his minutes, scaled so the team's shares add up to its points). Tonight's three-point accuracy follows
+    # his points relative to it (offense.night_three_pct). This used to be his points per 36 times his minutes, unscaled:
+    # those add up to more than a team scores (a team of scorers shares one ball), so players averaged ~95% of it and shot
+    # threes ~2.5 points under their own percentage all season (SHOOTING-SPLITS, 2026-11-26; Markkanen .255 vs .351).
+    normal_points = scoring_expectations
     for index, item in enumerate(pool):
         player = item["player"]
         points = point_values[index]
@@ -2189,7 +2200,8 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
                 "health_fatigue": round(float(item.get("health_fatigue") or 0), 2),
                 "health_rust": round(float(item.get("health_rust") or 0), 2),
                 "points": points,
-                **shooting_line(points, feat, item["minutes"], rng, normal_points[index], threes=pre_threes[index]),
+                **shooting_line(points, feat, item["minutes"], rng, normal_points[index], threes=pre_threes[index],
+                                defer_parity=PAIR_ODD_LINES),
                 "rim_attempts": max(0, int(round(item["minutes"] * feat["rim_pressure"] / 1150 + rng.random()))),
                 # Rebounds: a Poisson count around his own rate from the same single Gaussian draw (2026-11-19). The old
                 # +0.45 plus wide Gaussian noise, floored at zero, flattened everyone toward the middle; the 1.32 sharing
@@ -2208,12 +2220,25 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
                 "blocks": poisson_count(rng.random(), item["minutes"] / 36.0 * block_rate_per36(feat["rim_deterrence"], feat.get("contest_jump"))),
             }
         )
+    if PAIR_ODD_LINES:
+        from .offense import settle_odd_lines
+        settle_odd_lines(lines, [features[item["player"]["id"]] for item in pool], f"{team['id']}:{team_points}:{point_values}")
     normalize_secondary_box_score_totals(lines, features, team_points, possessions, expected=expected)
     return lines
 
 
+# Odd point remainders are settled across the team (offense.settle_odd_lines) instead of with a free throw on each line.
+PAIR_ODD_LINES = True
+
+
+# Game-to-game spread of a player's points (new ratings; SHOOTING-SPLITS, 2026-11-26). The hot/cold draw alone held
+# every scoring tier to 68-87% of its real spread (every 2025-26 game replayed with real minutes: 10-15 points a game sd
+# 4.4 vs 6.3; top-30 scorers 6.2 vs 8.1), so 40-point games ran 47-51 a season against 133 real. Points scored are counts
+# of baskets, and real variance runs ~2.5-3.7x the mean, so the draw's squared spread gains log(1 + K / expected points).
+# K = 2 brings every tier to 92-107% of real; 40-point games 143-154, 50-point 16-17 (real 133 and 17).
+SCORING_COUNT_SPREAD = 2.0
 THREES_FIRST = True   # tonight's threes drawn before the points split (distribute_player_lines)
-THREES_FIRST_MIN_SHARE = 0.70   # only players who take 70%+ of their shots from three (shot-location habit)
+THREES_FIRST_MIN_SHARE = 0.0   # every player (SHOOTING-SPLITS, 2026-11-26; was 0.70: only players who take 70%+ of shots from three)
 
 
 def make_room_for_threes(pool: list[dict[str, Any]], features: dict[str, dict[str, float]], points: list[int],
@@ -2409,7 +2434,53 @@ def normalize_secondary_box_score_totals(
             + (possessions - 99.0) * 0.035 + (raw["steals"] - expected["steals"]) * 0.16, 2, 15))
         powers["assists"] = model["power"]
     for key, target in targets.items():
-        redistribute_integer_stat(lines, key, int(target), powers[key])
+        if key == "steals" and expected is not None and RESHARE_STEALS_BY_RATE:
+            rates = [max(0.0, float(line.get("minutes") or 0.0))
+                     * steal_rate_per_minute(features.get(str(line.get("player_id"))) or {}) for line in lines]
+            reshare_by_rates(lines, key, int(target), rates)
+        else:
+            redistribute_integer_stat(lines, key, int(target), powers[key])
+
+
+# Team steal totals move by adding or removing single steals (reshare_by_rates), not by scaling players' draws.
+RESHARE_STEALS_BY_RATE = True
+
+
+def reshare_by_rates(lines: list[dict[str, Any]], key: str, target: int, rates: list[float]) -> None:
+    """Bring a team's count of `key` to `target` without scaling anyone's own draws (SHOOTING-SPLITS, 2026-11-26).
+
+    Players' counts are Poisson draws around their own rates; the team total is then set on its own. Sharing that
+    total in proportion to the draws (redistribute_integer_stat) multiplied whoever drew a few on a quiet night:
+    3 raw steals on a team that drew 4, scaled to a total of 9, became 6 or 7. Six-steal games ran ~2.7x real
+    (2025-26: 27; season review: 52, Jarrett Allen 9) and steals game-to-game spread wider than real. Here each missing
+    steal goes to a player in proportion to his own expected steals tonight (`rates`), and each extra one is taken from
+    a drawn steal at random, which keeps every player's count Poisson-like around his own rate. A side generator
+    seeded from the lines (as in redistribute_integer_stat's tie-break) makes the choices; the game's stream is
+    unchanged."""
+    counts = [max(0, int(line.get(key) or 0)) for line in lines]
+    have, target = sum(counts), max(0, int(target))
+    if target == have or not lines:
+        return
+    import hashlib
+    salt = hashlib.sha256("|".join(
+        f"{line.get('player_id')}:{line.get('minutes')}:{line.get('points')}:{line.get(key)}" for line in lines
+    ).encode()).hexdigest() + f":{key}:{target}"
+    side = random.Random(salt)
+    weights = [max(0.0, float(rate)) for rate in rates]
+    if target > have and sum(weights) <= 0:
+        redistribute_integer_stat(lines, key, target, 1.0)
+        return
+    for _ in range(abs(target - have)):
+        pool = weights if target > have else counts
+        mark, running, pick = side.random() * sum(pool), 0.0, len(pool) - 1
+        for index, weight in enumerate(pool):
+            running += weight
+            if weight > 0 and running >= mark:
+                pick = index
+                break
+        counts[pick] += 1 if target > have else -1
+    for line, count in zip(lines, counts):
+        line[key] = count
 
 
 def redistribute_integer_stat(lines: list[dict[str, Any]], key: str, target: int, power: float) -> None:
@@ -2558,10 +2629,11 @@ def assist_rate_from_features(feat: dict[str, float]) -> float:
 
 
 def shooting_line(points: int, feat: dict[str, float], minutes: float, rng: random.Random,
-                  expected_points: float | None = None, threes: tuple[int, int] | None = None) -> dict[str, int]:
+                  expected_points: float | None = None, threes: tuple[int, int] | None = None,
+                  defer_parity: bool = False) -> dict[str, int]:
     if feat.get('offense_model_version'):
         from .offense import shooting_line as profile_shooting_line
-        return profile_shooting_line(points, feat, minutes, rng, expected_points, threes=threes)
+        return profile_shooting_line(points, feat, minutes, rng, expected_points, threes=threes, defer_parity=defer_parity)
     spacing = float(feat.get("spacing") or 50)
     rim_pressure = float(feat.get("rim_pressure") or 50)
     creation = float(feat.get("shot_creation") or feat.get("usage") or 50)

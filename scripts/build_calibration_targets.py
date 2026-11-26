@@ -15,12 +15,17 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from nba_gm_data.calibration_targets import (  # noqa: E402
-    BAND_STD_MULT, LEAGUE_METRICS, PLAYER_COMPARE_METRICS, PLAYER_COUNT_STATS, league_metrics_from_totals, player_rates,
+    BAND_STD_MULT, LEAGUE_METRICS, PLAYER_COMPARE_METRICS, PLAYER_COUNT_STATS, TEXTURE_METRICS, league_metrics_from_totals,
+    player_rates, texture_from_games,
 )
 
 SEASON = "2025-26"
 MIN_MINUTES = 500
 ALT_MIN_GAMES, ALT_MIN_MPG = 20, 15.0
+# Tighter bands than 1.5 team std where a league average follows straight from players' own ratings: three-point and
+# free-throw percentage (the team-std rule would pass a whole league shooting 2 points under its players' ratings).
+# Two-point percentage keeps the team rule: it is what makes a team's points and possessions add up.
+LEAGUE_BAND_HALF = {"fg3_pct": 0.010, "ft_pct": 0.012}
 
 
 def norm(name: str) -> str:
@@ -89,6 +94,15 @@ def build() -> dict:
         }
         if league[m]["mean"] is None:
             league[m]["reason"] = "not computable from local data"
+        if m in LEAGUE_BAND_HALF:
+            league[m]["band_half"] = LEAGUE_BAND_HALF[m]
+    # ---- box-score texture: players used per team-game and rare nights (regular season, final games)
+    finals = [g for g in box["games"] if g.get("phase") == "regular" and g.get("status") == "STATUS_FINAL"
+              and len(g.get("teams") or []) == 2]
+    real_texture = texture_from_games([[p for p in g.get("players") or [] if not p.get("dnp")] for g in finals])
+    texture = {m: {"mean": round(real_texture[m], 5), "games": real_texture["games"],
+                   **({"count": real_texture["counts"][m]} if m in real_texture["counts"] else {})}
+               for m in TEXTURE_METRICS}
     # ---- players
     career = json.load(open(ROOT / "data/research/player_career_stats.json"))["players"]
     universe = json.load(open(ROOT / "data/canonical/universe_2026_27_offseason.json"))["players"]
@@ -144,7 +158,7 @@ def build() -> dict:
             "season": SEASON,
             "description": "Real NBA 2025-26 regular-season calibration targets.",
             "possession_formula": "FGA + 0.44*FTA - ORB + TOV (team total, tov includes team turnovers)",
-            "band_rule": f"within_band = |sim - mean| <= {BAND_STD_MULT} * std (std = spread of the season value across the 30 teams)",
+            "band_rule": f"within_band = |sim - mean| <= {BAND_STD_MULT} * std (std = spread of the season value across the 30 teams), or <= band_half where given",
             "league_source": "data/research/game_boxscores_2025_26.json team box stats (regular season, final games). Player-level FGM/FGA in that cache are 0 (known parser bug), so they are NOT used.",
             "team_games_used": tinfo["games_used"] * 2,
             "league_notes": {
@@ -154,13 +168,17 @@ def build() -> dict:
                 "efg_pct": "(FGM + 0.5*3PM)/FGA",
                 "ts_pct": "PTS/(2*(FGA+0.44*FTA))",
                 "ast_rate": "AST/FGM",
+                "fg2_pct": "(FGM - 3PM)/(FGA - 3PA)", "fg3_pct": "3PM/3PA", "ft_pct": "FTM/FTA",
             },
+            "texture_notes": "players_used: players with minutes per team-game; <stat><N>_per_game: player lines with "
+                             "stat >= N per game (count = real season count). Bands: calibration_targets.texture_band.",
             "player_source": "data/research/player_career_stats.json 2025-26 season totals (ESPN); usage/ORB%/DRB% from Player Stats/player_stats.json (Crafted NBA) when the name matches uniquely.",
             "player_eligibility": f"minutes >= {MIN_MINUTES} OR (games >= {ALT_MIN_GAMES} AND minutes/game >= {ALT_MIN_MPG})",
             "player_usage_note": "usage_pct is the source-provided usage rate (BBRef style), not recomputed; it is not part of compare().",
             "player_keys": "universe_2026_27_offseason players[].id; matched by ESPN id, then unique normalized name",
         },
         "league": league,
+        "texture": texture,
         "player_spread": spread,
         "players": players,
         "player_match": {"eligible": eligible, "matched": len(players), "match_rate": round(len(players) / eligible, 4) if eligible else None,
