@@ -158,6 +158,55 @@ def lottery_pick_slot(finish: float, distance: int, round_no: int, highest: int 
     return round(slot_for_value(expected) if round_no == 1 else expected, 2)
 
 
+def position_value(round_no: int, position: float, distance: int = 0) -> float:
+    """Base value of a position within the round (1-30), ``distance`` drafts ahead (the same scale as
+    transactions.pick_asset_value before team phase and conditions)."""
+    if round_no == 1:
+        return first_round_slot_value(position) - max(0, distance - 1) * 1.18
+    return min(24.5, max(8.0, 24.5 - (position - 1) * 0.32)) - max(0, distance - 1) * 0.42
+
+
+@lru_cache(maxsize=20000)
+def position_odds(finish: float, distance: int, round_no: int, highest: int = 1) -> tuple[float, ...]:
+    """Chance of each position within the round for an undrawn pick; index 0 is the first pick of the round."""
+    chances = [0.0] * TEAMS
+    for rank, weight in enumerate(finish_weights(finish, finish_spread(distance)), start=1):
+        odds = pick_odds(rank, highest if round_no == 1 else 1)
+        total = sum(chance for _, chance in odds)
+        for position, chance in odds:
+            landing = position if round_no == 1 else second_round_position(rank, position)
+            chances[landing - 1] += weight * chance / total
+    return tuple(chances)
+
+
+def known_position_odds(position: int) -> tuple[float, ...]:
+    return tuple(1.0 if index == position - 1 else 0.0 for index in range(TEAMS))
+
+
+def expected_gain(held: tuple[float, ...], other: tuple[float, ...], values: tuple[float, ...]) -> float:
+    """Average of max(0, value of ``other`` - value of ``held``): what the right to take the other pick is worth when
+    it lands better. ``values`` fall (or stay level) from the first position to the last."""
+    mass = weighted = total = 0.0
+    for held_chance, other_chance, value in zip(held, other, values):
+        total += held_chance * (weighted - mass * value)   # every position where the other pick landed earlier
+        mass += other_chance
+        weighted += other_chance * value
+    return total
+
+
+def selected_odds(left: tuple[float, ...], right: tuple[float, ...], better: bool) -> tuple[float, ...]:
+    """Odds of the earlier (``better``) or later of two picks' positions."""
+    if not better:
+        return tuple(reversed(selected_odds(tuple(reversed(left)), tuple(reversed(right)), True)))
+    out, left_after, right_after = [], 1.0, 1.0
+    for left_chance, right_chance in zip(left, right):
+        before = left_after * right_after
+        left_after = max(0.0, left_after - left_chance)
+        right_after = max(0.0, right_after - right_chance)
+        out.append(before - left_after * right_after)
+    return tuple(out)
+
+
 def sample_draft_position(finish: float, deviation: float, quantile: float, round_no: int, highest: int = 1) -> int:
     """One possible position within the round: a finish ``deviation`` places from the forecast, then its lottery."""
     place = finish + deviation

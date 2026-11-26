@@ -110,5 +110,95 @@ class PickLotteryValueTests(unittest.TestCase):
         self.assertGreaterEqual(plv.sample_draft_position(1.0, 0.0, 0.0, 1, 6), 6)
 
 
+class ProtectionAndSwapValueTests(unittest.TestCase):
+    def pick(self, pid, owner, finish, year=2027, round_no=1):
+        distance = year - 2026
+        return {"id": pid, "season": str(year), "round": round_no, "original_team_id": owner,
+                "current_owner_team_id": owner, "_active_season": "2026-27", "_future_distance_years": distance,
+                "projected_finish_rank": finish,
+                "projected_pick_slot": plv.lottery_pick_slot(float(finish), distance, round_no)}
+
+    def factor(self, finish, through, low=1, fallback_finish=15):
+        primary, later = self.pick("p", "s", finish), self.pick("q", "s", fallback_finish, 2029)
+        term = {"type": "protected_pick", "primary_pick_id": "p", "round": 1,
+                "protected_range": {"from": low, "through": through}, "fallback_pick_ids": ["q"]}
+        return tx.protected_pick_value_factor(primary, term, {"p": primary, "q": later})
+
+    def swap(self, held, other, benefit="better", **extra):
+        mine, theirs = self.pick("mine", "h", held), self.pick("theirs", "g", other)
+        mine.update(extra.get("mine", {}))
+        theirs.update(extra.get("theirs", {}))
+        term = {"type": "pick_swap", "team_a_pick_id": "theirs", "team_b_pick_id": "mine",
+                "current_rights_holder_team_id": "h", "benefit": benefit}
+        data = {"meta": {"active_season": "2026-27"}, "draft_picks": [theirs, mine]}
+        return tx.pick_swap_asset_value(data, term)
+
+    def test_the_fast_sums_match_every_pair_of_positions(self):
+        a, b = plv.position_odds(4.0, 1, 1), plv.position_odds(19.0, 3, 1)
+        values = tuple(plv.position_value(1, position) for position in range(1, 31))
+        pairs = [(i, j, a[i] * b[j]) for i in range(30) for j in range(30)]
+        self.assertAlmostEqual(plv.expected_gain(a, b, values),
+                               sum(p * max(0.0, values[j] - values[i]) for i, j, p in pairs))
+        for better, choose in ((True, min), (False, max)):
+            expected = [0.0] * 30
+            for i, j, chance in pairs:
+                expected[choose(i, j)] += chance
+            for got, want in zip(plv.selected_odds(a, b, better), expected):
+                self.assertAlmostEqual(got, want)
+
+    def test_a_protection_costs_more_the_likelier_the_pick_lands_inside_it(self):
+        self.assertLess(self.factor(5, 4), 0.95)
+        self.assertAlmostEqual(self.factor(28, 4), 1.0, delta=0.005)
+        self.assertLess(self.factor(5, 4), self.factor(20, 4))
+        self.assertLess(self.factor(5, 4), self.factor(5, 1))
+
+    def test_a_pick_that_can_never_convey_is_worth_its_replacement(self):
+        primary, later = self.pick("p", "s", 5), self.pick("q", "s", 15, 2029)
+        expected = (plv.position_value(1, later["projected_pick_slot"], 3)
+                    / sum(c * plv.position_value(1, n, 1) for n, c in
+                          enumerate(tx.pick_position_odds(primary), start=1)))
+        self.assertAlmostEqual(self.factor(5, 30), expected, places=3)
+        no_replacement = tx.protected_pick_value_factor(primary, {
+            "type": "protected_pick", "primary_pick_id": "p", "round": 1,
+            "protected_range": {"from": 1, "through": 30}, "fallback_pick_ids": []}, {"p": primary})
+        self.assertEqual(no_replacement, 0.05)
+
+    def test_protections_before_2027_keep_the_flat_discount(self):
+        old = {"id": "p", "season": "2026", "round": 1}
+        term = {"type": "protected_pick", "primary_pick_id": "p",
+                "protected_range": {"from": 1, "through": 10}}
+        self.assertIsNone(tx.protected_pick_value_factor(old, term, {}))
+        self.assertEqual(tx.pick_obligation_value_factor([term], lambda _: None), 0.82)
+
+    def test_a_swap_right_is_worth_what_the_other_pick_can_add(self):
+        useful, useless, even = self.swap(27, 4), self.swap(4, 27), self.swap(15, 15)
+        self.assertGreater(useful, 35)
+        self.assertLess(useless, 2)
+        self.assertTrue(useless < even < useful)
+        # The less favourable side mirrors it: it loses when its own pick is the one likely to land better.
+        self.assertAlmostEqual(self.swap(4, 27, "worse"), -useful)
+        self.assertAlmostEqual(self.swap(27, 4, "worse"), -useless)
+
+    def test_drawn_picks_make_a_swap_exact(self):
+        drawn = {"mine": {"overall_pick": 20, "_future_distance_years": 1},
+                 "theirs": {"overall_pick": 3, "_future_distance_years": 1}}
+        gap = plv.position_value(1, 3) - plv.position_value(1, 20)
+        self.assertAlmostEqual(self.swap(15, 15, **drawn), gap, places=2)
+
+    def test_a_chain_of_rights_is_priced_from_the_position_it_ends_with(self):
+        leaves = {pid: self.pick(pid, pid, finish, 2029) for pid, finish in (("x", 6), ("y", 14), ("z", 24))}
+        def priced(first, second):
+            tree = {"type": "swap", "benefit": second, "right": {"type": "pick", "pick_id": "z"}, "left": {
+                "type": "swap", "benefit": first, "left": {"type": "pick", "pick_id": "x"},
+                "right": {"type": "pick", "pick_id": "y"}}}
+            return tx.nested_pick_asset_value({"season": "2029", "round": 1, "_active_season": "2026-27",
+                                               "_nested_leaf_picks": leaves,
+                                               "_nested_entitlement": {"tree": tree}}, "neutral")
+        singles = [tx.pick_asset_value({**row, "_ranked_scenario": True}, "neutral") for row in leaves.values()]
+        self.assertGreater(priced("better", "better"), max(singles))
+        self.assertLess(priced("worse", "worse"), min(singles) + 3)
+        self.assertTrue(priced("worse", "worse") < priced("better", "worse") < priced("better", "better"))
+
+
 if __name__ == "__main__":
     unittest.main()
