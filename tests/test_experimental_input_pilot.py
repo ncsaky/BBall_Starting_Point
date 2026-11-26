@@ -16,6 +16,7 @@ from nba_gm_data.interior_game import validate_accounting
 from nba_gm_data.screen_navigation import compile_screen
 from nba_gm_data.schema import to_plain
 from box_score_neutral import box_neutral
+from tests.local_fixtures import needs_local
 from experiments.player_input_pilot.pilot import build_pilot,variant,export_layer,named_config,prepared,IDS,ROLES,packet,READINESS
 from experiments.player_input_pilot.verification import reference_modules,reference_config,use_reference,pre_optimization_module,pre_optimization_config,traced_game
 from experiments.screen_navigation.fixtures import screen_fixture
@@ -193,6 +194,8 @@ class PilotBoundaryTests(unittest.TestCase):
         body=variant(p,{'zubac':{'P01':200}},name='matched_body_control')
         self.assertIn('not a reported athlete',view(body,'zubac').to_dict()['inputs']['P01']['value']['measurements'][0]['protocol'])
 
+    @needs_local('output/player-input-pilot-2026-11-14/cost-audit/pre-optimization-source.json',
+                 'output/player-input-pilot-2026-11-14/cost-audit/screen_navigation.pre-optimization.py')
     def test_exact_local_validation_reuse_preserves_full_results_and_rng(self):
         before=pre_optimization_module()
         for name in ('native','interpreted'):

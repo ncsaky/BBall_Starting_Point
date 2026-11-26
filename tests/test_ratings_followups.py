@@ -17,6 +17,10 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import build_player_inputs as bpi  # noqa: E402
 from nba_gm_data import ratings_model  # noqa: E402
+from tests.local_fixtures import needs_local  # noqa: E402
+
+# Basketball Index capture (git-ignored). Without it the builder gives every thin-sample player a zero own weight.
+LEBRON_CAPTURE = "data/research/bbi/captures/fanspo_tools/lebron/lebron_separate-seasons_raw_all-2010-2026.csv"
 
 UNIVERSE = json.loads((ROOT / bpi.UNIVERSE_PATH).read_text())
 PLAYERS = {p["id"]: p for p in UNIVERSE["players"]}
@@ -74,11 +78,13 @@ class ThinSampleTest(unittest.TestCase):
             self.assertNotEqual(PLAYERS[pid].get("draft_year"), 2026)
             self.assertTrue(0 < t["minutes"] < 1000)
 
+    @needs_local(LEBRON_CAPTURE)
     def test_own_number_counts_by_minutes(self):
         k = self.evidence["minutes_k"]
         for t in self.targets.values():
             self.assertAlmostEqual(t["own_weight"], t["minutes"] / (t["minutes"] + k), places=3)
 
+    @needs_local(LEBRON_CAPTURE)
     def test_pull_moves_toward_the_group_in_both_directions(self):
         above = below = 0
         for t in self.targets.values():

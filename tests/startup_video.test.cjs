@@ -42,12 +42,24 @@ function fixture({hidden = false, reduced = false} = {}) {
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
 
-test('startup movie is bundled, silent, and alternates real action and draft rooms', () => {
-  const assets = path.join(gui, 'assets/startup/video');
+// The film is git-ignored. The main checkout (the only folder with a .git directory) must have it; a worktree or a
+// copy without it skips the byte check and still runs every other check.
+const assets = path.join(gui, 'assets/startup/video');
+const moviePath = path.join(assets, 'front-office.mp4');
+const gitDir = path.join(__dirname, '../.git');
+const mainCheckout = fs.existsSync(gitDir) && fs.statSync(gitDir).isDirectory();
+const noMovie = !mainCheckout && !fs.existsSync(moviePath)
+  && 'local-only file not in this checkout: src/nba_gm_data/gui/assets/startup/video/front-office.mp4';
+
+test('startup movie file matches its manifest', {skip: noMovie}, () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(assets, 'manifest.json')));
-  const movie = fs.readFileSync(path.join(assets, 'front-office.mp4'));
+  const movie = fs.readFileSync(moviePath);
   assert.equal(crypto.createHash('sha256').update(movie).digest('hex'), manifest.sha256);
   assert.equal(movie.length, manifest.bytes);
+});
+
+test('startup movie is bundled, silent, and alternates real action and draft rooms', () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(assets, 'manifest.json')));
   const credits = fs.readFileSync(path.join(gui, 'assets/startup/VIDEO_SOURCES.md'), 'utf8');
   assert.ok(credits.includes(manifest.duration_seconds.toFixed(3) + '-second'));
   for (const source of Object.values(manifest.sources)) assert.ok(credits.includes(source.id));

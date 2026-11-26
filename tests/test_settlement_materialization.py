@@ -9,11 +9,14 @@ from unittest.mock import patch
 import weakref
 
 from nba_gm_data import save as sv, transactions as tx, trade_roster as tr
+from tests.local_fixtures import needs_local
 
 ROOT=Path(__file__).resolve().parents[1]
 INPUTS=ROOT/'output/settlement-materialization-pass/inputs'
 
 
+@needs_local('output/settlement-materialization-pass/inputs/canonical.json.gz',
+             *(f'output/settlement-materialization-pass/inputs/settlement-{i}.json.gz' for i in range(5)))
 class SettlementMaterializationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

@@ -17,6 +17,13 @@ from experiments.pilot_response_calibration.fixtures import fixture,boundary_sta
 from experiments.pilot_response_calibration.probes import choice_probability,path_endpoint_sweep
 from experiments.pilot_response_calibration.verification import reference_modules,use_reference,reference_config
 from experiments.pilot_response_calibration.overlay import apply_overlay,VERSION as OVERLAY_VERSION
+from tests.local_fixtures import needs_local
+
+# Saved milestone-6 modules (hash-checked), and the saved input layer the overlay tests edit.
+FROZEN=tuple('output/pilot-response-calibration-2026-11-14/reference/'+n for n in
+    ('hashes.json','creation_passing.py.reference','offense_response.py.reference','interior_defense.py.reference',
+     'screen_navigation.py.reference','shot_geometry.py.reference','interior_game.py.reference','sim.py.reference'))
+BASE_LAYER='output/player-input-pilot-2026-11-14/verified/initial-readiness-completion-layer.json'
 
 
 def action(state,draws=None):
@@ -107,6 +114,7 @@ class ResponseCausalTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'immutable'):HelpShotContext(defender_route_origin_m=[1,1])
         with self.assertRaisesRegex(ValueError,'shot geometry'):interior_response(s['anchors']['response_b'].profile,s['contexts']['response_b'],defender_route_origin_m=(1,1))
 
+    @needs_local(*FROZEN)
     def test_frozen_reference_context_uses_its_own_screen_classes(self):
         modules=reference_modules()
         with use_reference(modules):
@@ -131,6 +139,7 @@ class ResponseCausalTests(unittest.TestCase):
         self.assertNotIn('finish',r['record']['choice_scores']);self.assertFalse(r['record']['help']['committed'])
         self.assertNotIn('help_finish_projection',r['record'])
 
+    @needs_local(*FROZEN)
     def test_policy_revision_is_explicit_and_default_legacy_is_authentic(self):
         s,_,x=fixture(self.pilot);_,_,y=fixture(self.pilot,policy=HELP_RESPONSE_POLICY)
         self.assertNotEqual(x.revision,y.revision)
@@ -194,9 +203,10 @@ class ResponseCausalTests(unittest.TestCase):
         self.assertTrue(all(ref() is None for ref in refs))
 
 
+@needs_local(BASE_LAYER)
 class EvidenceOverlayTests(unittest.TestCase):
     def overlay(self):
-        base_path=Path(__file__).resolve().parents[1]/'output/player-input-pilot-2026-11-14/verified/initial-readiness-completion-layer.json'
+        base_path=Path(__file__).resolve().parents[1]/BASE_LAYER
         base=json.loads(base_path.read_text());pid=IDS['luka'];key='S17'
         before=deepcopy(base['pilot_section']['players'][pid]['inputs'][key]);after=deepcopy(before);after['value']['grade']=84
         proposed=deepcopy(base['pilot_section']);proposed['players'][pid]['inputs'][key]=after

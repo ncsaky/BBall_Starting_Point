@@ -15,8 +15,10 @@ from nba_gm_data import sim
 from nba_gm_data.shot_geometry import contest_at_angle
 from experiments.action_choice_consistency.fixtures import pinned_pilot,make_case,decision,observed_draws
 from experiments.action_choice_consistency.empirical import validate_candidate
+from tests.local_fixtures import needs_local
 
 
+@needs_local('output/action-choice-consistency-2026-11-14/reference/targeted-input-overlay.json')
 class ActionChoiceTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):cls.pilot=pinned_pilot()

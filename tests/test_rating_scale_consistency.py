@@ -9,6 +9,7 @@ from nba_gm_data import save as sv,sim,trade_wants as wants,transactions as tx
 from nba_gm_data.fantasy_draft import fantasy_growth_outlook
 from test_defensive_alignment import fixture
 import test_trade_wants
+from tests.local_fixtures import needs_local
 
 
 class RatingScaleConsistencyTests(unittest.TestCase):
@@ -64,6 +65,7 @@ class RatingScaleConsistencyTests(unittest.TestCase):
             self.assertEqual(direct[key],shifted[key])
         self.assertEqual(direct['ceiling_overall'],direct['engine_ceiling_overall'])
 
+    @needs_local('output/defensive-scale-comparison-2026-11-10/canonical-before.json.gz')
     def test_reviewed_top_rim_anchor_preserves_other_inputs_and_development(self):
         root=Path(__file__).resolve().parents[1]
         with gzip.open(root/'output/defensive-scale-comparison-2026-11-10/canonical-before.json.gz','rt') as f:
