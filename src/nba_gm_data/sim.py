@@ -272,14 +272,16 @@ MEMO_IGNORED_PLAYER_FIELDS = frozenset({"_save_stats", "_absence_fill", "_fill_s
 
 def _feature_memo_key(canonical: dict[str, Any], cache: dict[str, Any], player: dict[str, Any],
                       include_spatial: bool) -> bytes | None:
-    """Everything player_feature_vector reads, pickled: the player record, his trait values in trait order, the
-    talent / offense / ratings model switches, his frozen offensive priors, the new-ratings tables and his input
-    deltas, and for the zone grids the league playmaking baseline. None when it cannot be keyed (the caller then
-    computes as before).
+    """Everything the minutes-free part of player_feature_vector reads (_compute_player_feature_core), pickled: the
+    player record without his minutes projection, his trait values in trait order, the talent / offense model
+    switches, his frozen offensive priors, the new-ratings tables and his input deltas. None when it cannot be keyed
+    (the caller then computes as before).
 
-    The season box totals (_save_stats, new after every game) are left out: the strength features never read them,
-    and the zone grids read them only into the profile's signature text (spatial.player_spatial_profile), never
-    into the zone values the vector keeps."""
+    Left out: the season box totals (_save_stats, new after every game: the strength features never read them, and
+    the zone grids read them only into the profile's signature text, never into the zone values the vector keeps);
+    tonight's minutes projection (SIM-SPEED-2: only usage, scoring usage and the zone grids read it, and those are
+    redone from the record on every lookup, _assemble_player_feature_vector); and the league playmaking baseline (it
+    moves only the spatial profile's playmaking lifts, which the vector never reads: it keeps the zone grids)."""
     from . import impact_value
     if impact_value._BUILDING:
         return None
@@ -289,16 +291,15 @@ def _feature_memo_key(canonical: dict[str, Any], cache: dict[str, Any], player: 
     traits = cache["traits_by_player"].get(pid, {})
     meta = canonical.get("meta") or {}
     model = canonical.get(MODEL_KEY) or {}
-    record = {k: v for k, v in player.items() if k not in MEMO_IGNORED_PLAYER_FIELDS}
+    record = {k: v for k, v in player.items() if k not in MEMO_IGNORED_PLAYER_FIELDS and k != "minutes_projection"}
     try:
         return pickle.dumps((
-            "player_features_v1", include_spatial, record,
+            "player_features_core_v2", include_spatial, record,
             tuple((key, row.get("value", _NO_VALUE) if isinstance(row, dict) else row) for key, row in traits.items()),
             talent_enabled(canonical), offense_enabled(canonical),
             (meta.get("offensive_profiles") or {}).get(pid),
             model.get("mode"), model.get("inputs_key"), model.get("fitted_key"), model.get("impact_tables_key"),
             (model.get("input_deltas") or {}).get(pid), (model.get("generated") or {}).get(pid),
-            league_playmaking_mean(canonical) if include_spatial else None,
         ), protocol=pickle.HIGHEST_PROTOCOL)
     except (pickle.PicklingError, TypeError, AttributeError):
         return None
@@ -321,33 +322,139 @@ def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any], *, 
     if memo_key is None:
         vector = _compute_player_feature_vector(canonical, cache, player, include_spatial)
     else:
-        from .ratings_model import effective_inputs
-        inputs = effective_inputs(canonical, player["id"])
-        remembered = _FEATURE_MEMO.get(memo_key)
-        if remembered is not None and remembered[0] is inputs:
-            vector = remembered[1]
-            if _FEATURE_MEMO_AUDIT and _compute_player_feature_vector(canonical, cache, player, include_spatial) != vector:
-                raise AssertionError(f"player feature memo disagrees for {player.get('id')}")
-        else:
-            vector = _compute_player_feature_vector(canonical, cache, player, include_spatial)
-            if len(_FEATURE_MEMO) >= _FEATURE_MEMO_LIMIT:
-                _FEATURE_MEMO.pop(next(iter(_FEATURE_MEMO)))
-            _FEATURE_MEMO[memo_key] = (inputs, vector)
+        vector = _finished_player_features(cache, player, _feature_memo_entry(canonical, cache, player, include_spatial, memo_key))[0]
+        if _FEATURE_MEMO_AUDIT and _compute_player_feature_vector(canonical, cache, player, include_spatial) != vector:
+            raise AssertionError(f"player feature memo disagrees for {player.get('id')}")
     cache["player_features"][feature_key] = vector
     return vector
 
 
+def _feature_memo_entry(canonical: dict[str, Any], cache: dict[str, Any], player: dict[str, Any], include_spatial: bool,
+                        memo_key: bytes) -> tuple:
+    """SIM-SPEED-2: the memo holds, per minutes-free key, the player's effective inputs (checked by identity), the
+    minutes-free part (core) and, per minutes projection, the finished vector and zone grids."""
+    from .ratings_model import effective_inputs
+    inputs = effective_inputs(canonical, player["id"])
+    remembered = _FEATURE_MEMO.get(memo_key)
+    if remembered is None or remembered[0] is not inputs:
+        core = _compute_player_feature_core(canonical, cache, player, include_spatial)
+        if len(_FEATURE_MEMO) >= _FEATURE_MEMO_LIMIT:
+            _FEATURE_MEMO.pop(next(iter(_FEATURE_MEMO)))
+        remembered = (inputs, core, {})
+        _FEATURE_MEMO[memo_key] = remembered
+    return remembered
+
+
+def _finished_player_features(cache: dict[str, Any], player: dict[str, Any], remembered: tuple) -> tuple:
+    """(vector, zone grids or None) for this record's minutes projection, remembered per minutes value."""
+    by_minutes = remembered[2]
+    minutes = player.get("minutes_projection")
+    try:
+        finished = by_minutes.get(minutes)
+    except TypeError:   # an unhashable minutes value: computed, never remembered
+        finished, by_minutes = None, None
+    if finished is None:
+        finished = _assemble_player_feature_parts(cache, player, remembered[1])
+        if by_minutes is not None:
+            if len(by_minutes) >= 64:
+                by_minutes.clear()
+            by_minutes[minutes] = finished
+    return finished
+
+
+def player_zone_grids_for(canonical: dict[str, Any], player: dict[str, Any]) -> dict[str, Any]:
+    """spatial.player_spatial_profile(canonical, player)'s offense and defense zone grids (SIM-SPEED-2)."""
+    return _player_zone_parts(canonical, player)[1]
+
+
+def player_zone_profile(canonical: dict[str, Any], player: dict[str, Any]) -> dict[str, Any]:
+    """The lean spatial profile spatial.team_zone_grids reads (zone grids, playmaking lifts): the same values as
+    spatial.player_spatial_profile(canonical, player), from the parts player_feature_vector remembers (SIM-SPEED-2)."""
+    from .spatial import lean_player_profile
+    static, grids = _player_zone_parts(canonical, player)
+    return lean_player_profile(static, grids, canonical)
+
+
+def _player_zone_parts(canonical: dict[str, Any], player: dict[str, Any]) -> tuple:
+    """(minutes-free zone part, zone grids) for this exact player record: keyed by the whole record like
+    player_spatial_profile's own signature (never by id alone), so hypothetical records get their own values."""
+    from .spatial import player_zone_grids, player_zone_static
+    cache = canonical_sim_cache(canonical)
+    memo_key = _feature_memo_key(canonical, cache, player, True)
+    if memo_key is None or _FEATURE_MEMO_AUDIT:
+        static = player_zone_static(canonical, player)
+        fresh = (static, player_zone_grids(static, player))
+        if memo_key is not None:
+            remembered = _feature_memo_entry(canonical, cache, player, True, memo_key)
+            if _finished_player_features(cache, player, remembered)[1] != fresh[1]:
+                raise AssertionError(f"player zone memo disagrees for {player.get('id')}")
+        return fresh
+    remembered = _feature_memo_entry(canonical, cache, player, True, memo_key)
+    return remembered[1][2], _finished_player_features(cache, player, remembered)[1]
+
+
+def team_zone_grids(canonical: dict[str, Any], team_id: str, minutes: dict[str, float] | None = None,
+                    roster: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    """spatial.team_spatial_profile(canonical, team_id, minutes, roster=roster)'s zone grids, the only part the game
+    reads (SIM-SPEED-2)."""
+    from .spatial import team_zone_grids as _team_zone_grids
+    return _team_zone_grids(canonical, team_id, minutes, roster=roster,
+                            player_profile=lambda player: player_zone_profile(canonical, player))
+
+
 def _compute_player_feature_vector(canonical: dict[str, Any], cache: dict[str, Any], player: dict[str, Any],
                                    include_spatial: bool) -> SimFeatureVector:
+    return _assemble_player_feature_vector(cache, player,
+                                           _compute_player_feature_core(canonical, cache, player, include_spatial))
+
+
+def _assemble_player_feature_vector(cache: dict[str, Any], player: dict[str, Any], core: tuple) -> SimFeatureVector:
+    return _assemble_player_feature_parts(cache, player, core)[0]
+
+
+def _assemble_player_feature_parts(cache: dict[str, Any], player: dict[str, Any], core: tuple) -> tuple:
+    """The finished vector: the minutes-free features (core) plus the parts that read tonight's minutes projection
+    (usage, scoring usage, zone grids), in the original key order and rounding; and the zone grids (None without)."""
+    base, usage_impact, zone_static = core
     traits = cache["traits_by_player"].get(player["id"], {})
     get = lambda key, default=50.0: float(traits.get(key, {}).get("value", default))
-    synthetic_actual = player.get("rotation_priority") == "actual_boxscore_unmatched"
+    features = dict(base)
+    if player.get("rotation_priority") == "actual_boxscore_unmatched":
+        features["usage"] = synthetic_actual_usage(player)
+        features["scoring_usage"] = synthetic_actual_usage(player)
+    else:
+        features["usage"] = projected_usage(player, get, usage_impact)
+        features["scoring_usage"] = projected_scoring_usage(player, get, usage_impact)
+    grids = None
+    if zone_static is not None:
+        from .spatial import player_zone_grids
+        grids = player_zone_grids(zone_static, player)
+        features.update(flatten_spatial_profile(grids))
+    rounded = {key: round(value, 3) for key, value in features.items()}
+    return SimFeatureVector(
+        id=stable_id("sim_feature", "player", player["id"]),
+        entity_type="player",
+        entity_id=player["id"],
+        features=dict(rounded),
+        confidence=0.62,
+        source_ids=["src_trait_method_v1", "src_tracking_sources_2025_26"],
+        notes="V0 sim feature vector from canonical hidden traits, roles, and public/raw stat proxies.",
+    ), grids
+
+
+def _compute_player_feature_core(canonical: dict[str, Any], cache: dict[str, Any], player: dict[str, Any],
+                                 include_spatial: bool) -> tuple:
+    """Everything in the player's feature vector that does not read his minutes projection: the features (unrounded,
+    in final key order, usage and scoring usage left as placeholders), the impact blend usage reads, and the
+    minutes-free part of his zone grids (None without zone grids)."""
+    traits = cache["traits_by_player"].get(player["id"], {})
+    get = lambda key, default=50.0: float(traits.get(key, {}).get("value", default))
     from .defense import defensive_components
     defense = defensive_components(get)
     defensive_mobility = defense.activity
     impact = player_impact_score(get, player.get("position"), role_aware=talent_enabled(canonical))
-    usage = synthetic_actual_usage(player) if synthetic_actual else projected_usage(player, get, impact)
-    scoring_usage = synthetic_actual_usage(player) if synthetic_actual else projected_scoring_usage(player, get, impact)
+    usage_impact = impact
+    usage = scoring_usage = None   # minutes-dependent: _assemble_player_feature_vector
     from .impact_value import sim_impact
     fitted_impact = sim_impact(canonical, player, {key: float(row["value"]) for key, row in traits.items()})
     if fitted_impact is not None:
@@ -424,19 +531,11 @@ def _compute_player_feature_vector(canonical: dict[str, Any], cache: dict[str, A
             features["points_per36"] = box_rates.shot_points_blend(
                 float(features["points_per36"]), features["three_share_habit"], profile["three_per36"],
                 profile["three_pct"], profile["two_pct"], features.get("fta_per_point"), profile["ft_pct"])
+    zone_static = None
     if include_spatial:
-        features.update(flatten_spatial_profile(player_spatial_profile(canonical, player)))
-    rounded = {key: round(value, 3) for key, value in features.items()}
-    vector = SimFeatureVector(
-        id=stable_id("sim_feature", "player", player["id"]),
-        entity_type="player",
-        entity_id=player["id"],
-        features=dict(rounded),
-        confidence=0.62,
-        source_ids=["src_trait_method_v1", "src_tracking_sources_2025_26"],
-        notes="V0 sim feature vector from canonical hidden traits, roles, and public/raw stat proxies.",
-    )
-    return vector
+        from .spatial import player_zone_static
+        zone_static = player_zone_static(canonical, player)
+    return features, usage_impact, zone_static
 
 
 def synthetic_actual_usage(player: dict[str, Any]) -> float:
@@ -550,7 +649,7 @@ def team_feature_vector(canonical: dict[str, Any], team: dict[str, Any], *, incl
     features["defensive_anchor"] = max([defensive_anchor_score(player_features[player["id"]]) for player in players] or [50])
     if include_spatial:
         spatial_weights = {player["id"]: max(0.0, projected_game_minutes(player)) for player in players}
-        features.update(flatten_spatial_profile(team_spatial_profile(canonical, team["id"], spatial_weights)))
+        features.update(flatten_spatial_profile(team_zone_grids(canonical, team["id"], spatial_weights)))
     features.update(lineup_fit_features([(player, player_features[player["id"]], projected_game_minutes(player)) for player in players]))
     from .offense import extend_lineup_features
     extend_lineup_features(features, player_features, weights)
@@ -1418,7 +1517,7 @@ def lineup_feature_vector(canonical: dict[str, Any], pool: list[dict[str, Any]])
     features["defensive_anchor"] = max([defensive_anchor_score(player_features[item["player"]["id"]]) for item in pool] or [50])
     features.update(
         flatten_spatial_profile(
-            team_spatial_profile(
+            team_zone_grids(
                 canonical,
                 str(pool[0]["player"].get("team_id") or "lineup") if pool else "lineup",
                 {item["player"]["id"]: float(item.get("minutes") or 0.0) for item in pool},

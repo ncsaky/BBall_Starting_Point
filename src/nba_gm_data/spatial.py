@@ -12,7 +12,7 @@ import math
 import weakref
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 from .utils import clamp, normalize_name
 from .defense import COMPONENT_VERSION, zone_defense
@@ -247,6 +247,142 @@ def official_spatial_priors() -> dict[str, dict[str, Any]]:
     return {}
 
 
+# SIM-SPEED-2: the zone grids (offense and defense per zone) split in two: the part that reads only the player's traits,
+# size, position, shooting priors and offensive profile (_zone_static), and the part that also reads his usage, which
+# follows tonight's minutes (_zone_grids). The game's player features keep the first part across days and redo only
+# the second (sim.player_feature_vector). Same arithmetic in the same order as before, so the same values.
+def _zone_static(player_id: str, traits: dict[str, float], height: float, position: str, prior: Any,
+                 offensive: dict[str, Any] | None) -> dict[str, Any]:
+    get = lambda key, default=50.0: float(traits.get(key, default))
+    return {
+        "shooting": (get("shooting_range") * 0.45 + get("shot_versatility") * 0.35 + get("release_speed") * 0.20),
+        "creation": (get("handle_pressure") * 0.48 + get("shot_versatility") * 0.37 + get("passing_reads") * 0.15),
+        "rim_pressure": get("rim_pressure"),
+        "portability": get("portability"),
+        "versatility": get("shot_versatility"),
+        "offensive_rebounding": get("offensive_rebounding"),
+        "height": height,
+        "position": position,
+        "prior": prior,
+        "offensive": offensive,
+        "defensive_zones": zone_defense(get),
+        "side": {key: (_stable_unit(player_id, key, "side") - 0.5) * 3.2 for key in ZONE_KEYS},
+        "jitter": {key: (_stable_unit(player_id, key, SPATIAL_PROFILE_VERSION) - 0.5) * 5.0 for key in ZONE_KEYS},
+    }
+
+
+def spatial_usage(player: dict[str, Any], creation: float) -> float:
+    return clamp(35 + float(player.get("minutes_projection") or player.get("prior_minutes") or 18) * 1.1 + (creation - 50) * 0.22, 20, 92)
+
+
+def player_zone_static(canonical: dict[str, Any], player: dict[str, Any]) -> dict[str, Any]:
+    """The minutes-free part of player_spatial_profile's zone grids (see _zone_static)."""
+    player_id = str(player.get("id") or player.get("player_id") or player.get("name") or "unknown")
+    traits = _trait_index(canonical).get(player_id, {})
+    from .offense import enabled as offense_enabled, offensive_profile
+    offensive = offensive_profile(canonical, player, traits) if offense_enabled(canonical) else None
+    height = float(player.get("height_inches") or 78.0)
+    static = _zone_static(player_id, traits, height, str(player.get("position") or "").upper(),
+                          official_spatial_priors().get(normalize_name(player.get("name", ""))), offensive)
+    get = lambda key, default=50.0: float(traits.get(key, default))
+    static["playmaking_raw"] = playmaking_by_group(get, height)
+    return static
+
+
+def player_zone_grids(static: dict[str, Any], player: dict[str, Any]) -> dict[str, Any]:
+    """player_spatial_profile(...)'s offense and defense zone grids for this player record's minutes."""
+    offense, defense, _, _ = _zone_grids(static, spatial_usage(player, static["creation"]))
+    return {"offense": offense, "defense": defense}
+
+
+def _zone_grids(static: dict[str, Any], usage: float) -> tuple[dict[str, dict[str, float]], dict[str, dict[str, float]],
+                                                               list[str], float]:
+    shooting = static["shooting"]
+    creation = static["creation"]
+    rim_pressure = static["rim_pressure"]
+    portability = static["portability"]
+    versatility = static["versatility"]
+    height = static["height"]
+    position = static["position"]
+    prior = static["prior"]
+    offensive = static["offensive"]
+    weights: dict[str, float] = {}
+    for key in ZONE_KEYS:
+        side = static["side"][key]
+        if key == "restricted_area":
+            value = 14 + rim_pressure * 0.46 + max(0.0, height - 78) * 0.8 - shooting * 0.07
+        elif key == "paint_non_ra":
+            value = 9 + rim_pressure * 0.19 + static["offensive_rebounding"] * 0.08 + max(0.0, height - 80) * 0.45
+        elif key.startswith("short_mid"):
+            value = 7 + versatility * 0.12 + creation * 0.05 + side
+        elif key.startswith("long_mid"):
+            value = 5 + versatility * 0.11 + creation * 0.07 - shooting * 0.025 + side
+        elif key.startswith("corner_three"):
+            value = 4 + shooting * 0.15 + portability * 0.07 - max(0.0, creation - 72) * 0.025 + side
+        else:
+            value = 5 + shooting * 0.18 + creation * 0.075 + max(0.0, usage - 62) * 0.045 + side
+        if ZONE_BY_KEY[key]["group"] in {"corner_three", "above_break_three"}:
+            value *= clamp((shooting - 25) / 65, 0.12, 1.16)
+        if "C" in position and key.startswith("above_break"):
+            value -= max(0.0, 64 - shooting) * 0.08
+        weights[key] = max(0.5, value)
+
+    source_ids = ["src_trait_method_v1", "src_spatial_model_v1"]
+    confidence = 0.58
+    if prior:
+        prior_frequency = prior.get("frequency", {})
+        for key in ZONE_KEYS:
+            if key in prior_frequency:
+                weights[key] = weights[key] * 0.35 + max(0.0, float(prior_frequency[key])) * 100.0 * 0.65
+        source_ids.extend(prior.get("source_ids") or ["src_nba_stats_shot_zones_2025_26"])
+        confidence = 0.82
+    if offensive:
+        threes = [k for k in ZONE_KEYS if ZONE_BY_KEY[k]['group'] in {'corner_three', 'above_break_three'}]
+        three_share = clamp(offensive['three_per36']/16, 0, .72)
+        three_total = sum(weights[k] for k in threes) or 1
+        other_total = sum(weights[k] for k in ZONE_KEYS if k not in threes) or 1
+        weights = {k: weights[k]*three_share/three_total if k in threes
+                   else weights[k]*(1-three_share)/other_total for k in ZONE_KEYS}
+    total = sum(weights.values()) or 1.0
+    frequency = {key: weights[key] / total for key in ZONE_KEYS}
+
+    offense: dict[str, dict[str, float]] = {}
+    defense: dict[str, dict[str, float]] = {}
+    defensive_zones = static["defensive_zones"]
+    for key in ZONE_KEYS:
+        jitter = static["jitter"][key]
+        group = ZONE_BY_KEY[key]["group"]
+        if group == "rim":
+            efficiency = 31 + rim_pressure * 0.55 + max(0.0, height - 78) * 0.65 + jitter
+            if offensive:
+                if key == 'paint_non_ra':
+                    efficiency = 30+.40*offensive['post_creation']+.18*offensive['assisted_finishing']+jitter
+                else:
+                    efficiency = 35+.50*offensive['assisted_finishing']+max(0, height-78)*.5+jitter
+            gravity = 24 + rim_pressure * 0.58 + creation * 0.18 + usage * 0.12 + jitter * 0.35
+        elif group == "midrange":
+            efficiency = 25 + versatility * 0.47 + creation * 0.17 + jitter
+            gravity = 25 + versatility * 0.35 + creation * 0.26 + usage * 0.08 + jitter * 0.35
+        else:
+            efficiency = 20 + shooting * 0.66 + versatility * 0.08 + jitter
+            gravity = 18 + shooting * 0.58 + creation * 0.14 + portability * 0.12 + jitter * 0.35
+        suppression, contest = defensive_zones[group if group in {'rim', 'midrange'} else 'perimeter']
+        suppression += jitter * .25
+        offense[key] = {
+            "frequency": round(frequency[key], 5),
+            "efficiency": round(clamp(efficiency, 1, 99), 2),
+            "gravity": round(clamp(gravity, 1, 99), 2),
+            "intensity": round(clamp(efficiency * 0.46 + gravity * 0.36 + min(99.0, frequency[key] * 700) * 0.18, 1, 99), 2),
+        }
+        defense[key] = {
+            "frequency_influence": round(clamp(50 + (suppression - 50) * -0.34, 1, 99), 2),
+            "contest": round(max(1.0, contest), 2),  # no top clip: elite rim protection exceeds 99 (defense.rim_response)
+            "suppression": round(max(1.0, suppression), 2),
+            "intensity": round(clamp(suppression * 0.62 + contest * 0.38, 1, 99), 2),
+        }
+    return offense, defense, source_ids, confidence
+
+
 def player_spatial_profile(canonical: dict[str, Any], player: dict[str, Any] | str, *, include_chart: bool = False) -> dict[str, Any]:
     if isinstance(player, str):
         player = next((row for row in canonical.get("players", []) if str(row.get("id")) == player), {})
@@ -315,80 +451,8 @@ def player_spatial_profile(canonical: dict[str, Any], player: dict[str, Any] | s
             cached["shot_chart"] = project_player_chart(player, traits, cached)
         return cached
 
-    weights: dict[str, float] = {}
-    for key in ZONE_KEYS:
-        side = (_stable_unit(player_id, key, "side") - 0.5) * 3.2
-        if key == "restricted_area":
-            value = 14 + rim_pressure * 0.46 + max(0.0, height - 78) * 0.8 - shooting * 0.07
-        elif key == "paint_non_ra":
-            value = 9 + rim_pressure * 0.19 + get("offensive_rebounding") * 0.08 + max(0.0, height - 80) * 0.45
-        elif key.startswith("short_mid"):
-            value = 7 + get("shot_versatility") * 0.12 + creation * 0.05 + side
-        elif key.startswith("long_mid"):
-            value = 5 + get("shot_versatility") * 0.11 + creation * 0.07 - shooting * 0.025 + side
-        elif key.startswith("corner_three"):
-            value = 4 + shooting * 0.15 + portability * 0.07 - max(0.0, creation - 72) * 0.025 + side
-        else:
-            value = 5 + shooting * 0.18 + creation * 0.075 + max(0.0, usage - 62) * 0.045 + side
-        if ZONE_BY_KEY[key]["group"] in {"corner_three", "above_break_three"}:
-            value *= clamp((shooting - 25) / 65, 0.12, 1.16)
-        if "C" in position and key.startswith("above_break"):
-            value -= max(0.0, 64 - shooting) * 0.08
-        weights[key] = max(0.5, value)
-
-    source_ids = ["src_trait_method_v1", "src_spatial_model_v1"]
-    confidence = 0.58
-    if prior:
-        prior_frequency = prior.get("frequency", {})
-        for key in ZONE_KEYS:
-            if key in prior_frequency:
-                weights[key] = weights[key] * 0.35 + max(0.0, float(prior_frequency[key])) * 100.0 * 0.65
-        source_ids.extend(prior.get("source_ids") or ["src_nba_stats_shot_zones_2025_26"])
-        confidence = 0.82
-    if offensive:
-        threes = [k for k in ZONE_KEYS if ZONE_BY_KEY[k]['group'] in {'corner_three', 'above_break_three'}]
-        three_share = clamp(offensive['three_per36']/16, 0, .72)
-        three_total = sum(weights[k] for k in threes) or 1
-        other_total = sum(weights[k] for k in ZONE_KEYS if k not in threes) or 1
-        weights = {k: weights[k]*three_share/three_total if k in threes
-                   else weights[k]*(1-three_share)/other_total for k in ZONE_KEYS}
-    total = sum(weights.values()) or 1.0
-    frequency = {key: weights[key] / total for key in ZONE_KEYS}
-
-    offense: dict[str, dict[str, float]] = {}
-    defense: dict[str, dict[str, float]] = {}
-    defensive_zones = zone_defense(get)
-    for key in ZONE_KEYS:
-        jitter = (_stable_unit(player_id, key, SPATIAL_PROFILE_VERSION) - 0.5) * 5.0
-        group = ZONE_BY_KEY[key]["group"]
-        if group == "rim":
-            efficiency = 31 + rim_pressure * 0.55 + max(0.0, height - 78) * 0.65 + jitter
-            if offensive:
-                if key == 'paint_non_ra':
-                    efficiency = 30+.40*offensive['post_creation']+.18*offensive['assisted_finishing']+jitter
-                else:
-                    efficiency = 35+.50*offensive['assisted_finishing']+max(0, height-78)*.5+jitter
-            gravity = 24 + rim_pressure * 0.58 + creation * 0.18 + usage * 0.12 + jitter * 0.35
-        elif group == "midrange":
-            efficiency = 25 + get("shot_versatility") * 0.47 + creation * 0.17 + jitter
-            gravity = 25 + get("shot_versatility") * 0.35 + creation * 0.26 + usage * 0.08 + jitter * 0.35
-        else:
-            efficiency = 20 + shooting * 0.66 + get("shot_versatility") * 0.08 + jitter
-            gravity = 18 + shooting * 0.58 + creation * 0.14 + portability * 0.12 + jitter * 0.35
-        suppression, contest = defensive_zones[group if group in {'rim', 'midrange'} else 'perimeter']
-        suppression += jitter * .25
-        offense[key] = {
-            "frequency": round(frequency[key], 5),
-            "efficiency": round(clamp(efficiency, 1, 99), 2),
-            "gravity": round(clamp(gravity, 1, 99), 2),
-            "intensity": round(clamp(efficiency * 0.46 + gravity * 0.36 + min(99.0, frequency[key] * 700) * 0.18, 1, 99), 2),
-        }
-        defense[key] = {
-            "frequency_influence": round(clamp(50 + (suppression - 50) * -0.34, 1, 99), 2),
-            "contest": round(max(1.0, contest), 2),  # no top clip: elite rim protection exceeds 99 (defense.rim_response)
-            "suppression": round(max(1.0, suppression), 2),
-            "intensity": round(clamp(suppression * 0.62 + contest * 0.38, 1, 99), 2),
-        }
+    static = _zone_static(player_id, traits, height, position, prior, offensive)
+    offense, defense, source_ids, confidence = _zone_grids(static, usage)
     creation_volume = clamp(
         usage * 0.52
         + creation * 0.28
@@ -486,42 +550,10 @@ def prospect_spatial_profile(canonical: dict[str, Any], prospect: dict[str, Any]
     }, include_chart=include_chart)
 
 
-def team_spatial_profile(
-    canonical: dict[str, Any],
-    team_id: str,
-    minutes: dict[str, float] | None = None,
-    health_states: Iterable[dict[str, Any]] | dict[str, dict[str, Any]] | None = None,
-    roster: list[dict[str, Any]] | None = None,
-    *,
-    include_chart: bool = False,
-) -> dict[str, Any]:
-    roster = roster if roster is not None else [row for row in canonical.get("players", []) if str(row.get("team_id")) == str(team_id)]
-    health_by_player = health_states if isinstance(health_states, dict) else {
-        str(row.get("player_id")): row for row in (health_states or canonical.get("player_health_states", []))
-    }
-    weighted: list[tuple[dict[str, Any], float]] = []
-    for player in roster:
-        player_id = str(player.get("id") or "")
-        state = health_by_player.get(player_id, {}) if isinstance(health_by_player, dict) else {}
-        if str(state.get("availability_status") or "active").lower() not in {"active", "available", "healthy"}:
-            continue
-        weight = float((minutes or {}).get(player_id, player.get("minutes_projection") or player.get("prior_minutes") or 0.0))
-        if weight > 0:
-            weighted.append((player_spatial_profile(canonical, player, include_chart=include_chart), weight))
-    if not weighted:
-        weighted = [(neutral_spatial_profile(team_id), 1.0)]
-    total_weight = sum(weight for _, weight in weighted) or 1.0
-    signature = hashlib.sha256(json.dumps({
-        "version": SPATIAL_PROFILE_VERSION,
-        "team_id": team_id,
-        "rotation": sorted((profile.get("input_signature") or profile.get("entity_id"), round(weight, 3)) for profile, weight in weighted),
-    }, sort_keys=True, default=str).encode("utf-8")).hexdigest()
-    cache_key = (str(team_id), signature)
-    if cache_key in _TEAM_PROFILE_CACHE:
-        cached = _TEAM_PROFILE_CACHE[cache_key]
-        if include_chart and "shot_chart" not in cached:
-            cached["shot_chart"] = combine_team_charts(weighted)
-        return cached
+def _team_zone_grids(weighted: list[tuple[dict[str, Any], float]], total_weight: float
+                     ) -> tuple[dict[str, dict[str, float]], dict[str, dict[str, float]], float, float]:
+    """team_spatial_profile's zone grids (and its display volumes) from the weighted player profiles. Reads each
+    profile's offense and defense grids, playmaking lifts, creation volume and defensive activity."""
     offense: dict[str, dict[str, float]] = {}
     defense: dict[str, dict[str, float]] = {}
     non_shooter_share = sum(
@@ -568,6 +600,86 @@ def team_spatial_profile(
     frequency_total = sum(row["frequency"] for row in offense.values()) or 1.0
     for row in offense.values():
         row["frequency"] = round(row["frequency"] / frequency_total, 5)
+    return offense, defense, creation_volume, defensive_activity
+
+
+# SIM-SPEED-2: the game reads only a team profile's zone grids (flatten_spatial_profile). team_zone_grids gives the
+# same grids as team_spatial_profile(...) for the same arguments, from lean player profiles (zone grids and playmaking
+# lifts; player_profile builds them) instead of full ones (visual pockets, signatures, shot charts), and keeps no cache.
+def lean_player_profile(static: dict[str, Any], grids: dict[str, Any], canonical: dict[str, Any]) -> dict[str, Any]:
+    """The parts of player_spatial_profile(...) that _team_zone_grids reads for the sim: grids from player_zone_grids,
+    playmaking lifts on the league baseline. creation_volume / defensive_activity only feed display volumes."""
+    playmaking_zero = league_playmaking_mean(canonical)
+    return {"offense": grids["offense"], "defense": grids["defense"],
+            "playmaking": {group: round(value - playmaking_zero[group], 3) for group, value in static["playmaking_raw"].items()}}
+
+
+def team_zone_grids(
+    canonical: dict[str, Any],
+    team_id: str,
+    minutes: dict[str, float] | None = None,
+    health_states: Iterable[dict[str, Any]] | dict[str, dict[str, Any]] | None = None,
+    roster: list[dict[str, Any]] | None = None,
+    *,
+    player_profile: Callable[[dict[str, Any]], dict[str, Any]],
+) -> dict[str, Any]:
+    roster = roster if roster is not None else [row for row in canonical.get("players", []) if str(row.get("team_id")) == str(team_id)]
+    health_by_player = health_states if isinstance(health_states, dict) else {
+        str(row.get("player_id")): row for row in (health_states or canonical.get("player_health_states", []))
+    }
+    weighted: list[tuple[dict[str, Any], float]] = []
+    for player in roster:
+        player_id = str(player.get("id") or "")
+        state = health_by_player.get(player_id, {}) if isinstance(health_by_player, dict) else {}
+        if str(state.get("availability_status") or "active").lower() not in {"active", "available", "healthy"}:
+            continue
+        weight = float((minutes or {}).get(player_id, player.get("minutes_projection") or player.get("prior_minutes") or 0.0))
+        if weight > 0:
+            weighted.append((player_profile(player), weight))
+    if not weighted:
+        weighted = [(neutral_spatial_profile(team_id), 1.0)]
+    total_weight = sum(weight for _, weight in weighted) or 1.0
+    offense, defense, _, _ = _team_zone_grids(weighted, total_weight)
+    return {"offense": offense, "defense": defense}
+
+
+def team_spatial_profile(
+    canonical: dict[str, Any],
+    team_id: str,
+    minutes: dict[str, float] | None = None,
+    health_states: Iterable[dict[str, Any]] | dict[str, dict[str, Any]] | None = None,
+    roster: list[dict[str, Any]] | None = None,
+    *,
+    include_chart: bool = False,
+) -> dict[str, Any]:
+    roster = roster if roster is not None else [row for row in canonical.get("players", []) if str(row.get("team_id")) == str(team_id)]
+    health_by_player = health_states if isinstance(health_states, dict) else {
+        str(row.get("player_id")): row for row in (health_states or canonical.get("player_health_states", []))
+    }
+    weighted: list[tuple[dict[str, Any], float]] = []
+    for player in roster:
+        player_id = str(player.get("id") or "")
+        state = health_by_player.get(player_id, {}) if isinstance(health_by_player, dict) else {}
+        if str(state.get("availability_status") or "active").lower() not in {"active", "available", "healthy"}:
+            continue
+        weight = float((minutes or {}).get(player_id, player.get("minutes_projection") or player.get("prior_minutes") or 0.0))
+        if weight > 0:
+            weighted.append((player_spatial_profile(canonical, player, include_chart=include_chart), weight))
+    if not weighted:
+        weighted = [(neutral_spatial_profile(team_id), 1.0)]
+    total_weight = sum(weight for _, weight in weighted) or 1.0
+    signature = hashlib.sha256(json.dumps({
+        "version": SPATIAL_PROFILE_VERSION,
+        "team_id": team_id,
+        "rotation": sorted((profile.get("input_signature") or profile.get("entity_id"), round(weight, 3)) for profile, weight in weighted),
+    }, sort_keys=True, default=str).encode("utf-8")).hexdigest()
+    cache_key = (str(team_id), signature)
+    if cache_key in _TEAM_PROFILE_CACHE:
+        cached = _TEAM_PROFILE_CACHE[cache_key]
+        if include_chart and "shot_chart" not in cached:
+            cached["shot_chart"] = combine_team_charts(weighted)
+        return cached
+    offense, defense, creation_volume, defensive_activity = _team_zone_grids(weighted, total_weight)
     visual_pockets: dict[str, list[dict[str, Any]]] = {"offense": [], "defense": []}
     for profile, weight in weighted:
         rotation_share = weight / total_weight
@@ -701,17 +813,22 @@ def with_spatial_fit_context(canonical: dict[str, Any]) -> dict[str, Any]:
     Keep these on a disposable view: later roster or health changes must start
     a new batch rather than reusing these profiles.
     """
+    # SIM-SPEED-2: the fit reads only zone grids, so the lean team grids (same values as team_spatial_profile's).
+    from .sim import team_zone_grids as sim_team_zone_grids
     return {**canonical, "_spatial_fit_team_profiles": {
-        str(team["id"]): team_spatial_profile(canonical, str(team["id"]))
+        str(team["id"]): sim_team_zone_grids(canonical, str(team["id"]))
         for team in canonical.get("teams", [])
     }}
 
 
 def spatial_fit_delta(canonical: dict[str, Any], team_id: str, player: dict[str, Any], cap: float = 3.0) -> float:
+    """Reads only zone grids: the team's and the candidate's (lean paths, the same values as team_spatial_profile and
+    player_spatial_profile; SIM-SPEED-2)."""
+    from .sim import player_zone_grids_for, team_zone_grids as sim_team_zone_grids
     team = (canonical.get("_spatial_fit_team_profiles") or {}).get(str(team_id))
     if team is None:
-        team = team_spatial_profile(canonical, team_id)
-    candidate = player_spatial_profile(canonical, player)
+        team = sim_team_zone_grids(canonical, team_id)
+    candidate = player_zone_grids_for(canonical, player)
     perimeter_need = max(0.0, 58 - _perimeter_average(team, "offense", "gravity"))
     rim_need = max(0.0, 58 - _group_average(team, "defense", "suppression", "rim"))
     perimeter_value = _perimeter_average(candidate, "offense", "gravity") - 50

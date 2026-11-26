@@ -27,17 +27,23 @@ class TransactionFeatureDemandTests(unittest.TestCase):
         team = data['teams'][0]
         players = [p for p in data['players'] if p['team_id'] == team['id']]
         needs = tx.team_needs_and_excesses(deepcopy(data),team,players,'contending',_full_features=True)
+        # SIM-SPEED-2: the game's zone grids come from spatial.player_zone_static (minutes-free part) and the lean team
+        # grids; the full profiles are display-only.
         with patch.object(sim,'player_spatial_profile',side_effect=AssertionError('Unused player zones')), \
-             patch.object(sim,'team_spatial_profile',side_effect=AssertionError('Unused team zones')):
+             patch.object(sim,'team_spatial_profile',side_effect=AssertionError('Unused team zones')), \
+             patch.object(spatial,'player_zone_static',side_effect=AssertionError('Unused player zones')), \
+             patch.object(spatial,'team_zone_grids',side_effect=AssertionError('Unused team zones')):
             self.assertEqual(tx.build_player_asset_valuations(deepcopy(data)), expected)
             self.assertEqual(tx.team_needs_and_excesses(deepcopy(data),team,players,'contending'), needs)
 
     def test_full_reference_still_prepares_spatial_features_and_matches_fresh_context(self):
         data = source()
-        with patch.object(sim,'player_spatial_profile',wraps=spatial.player_spatial_profile) as spatial_calls:
+        sim._FEATURE_MEMO.clear()   # earlier tests remember these players' minutes-free features (zones included)
+        with patch.object(spatial,'player_zone_static',wraps=spatial.player_zone_static) as spatial_calls:
             expected = tx.full_transaction_context_reference(deepcopy(data))
             self.assertGreater(spatial_calls.call_count,0)
-        with patch.object(sim,'player_spatial_profile',side_effect=AssertionError('Unused zones in context')):
+        with patch.object(sim,'player_spatial_profile',side_effect=AssertionError('Unused zones in context')), \
+             patch.object(spatial,'player_zone_static',side_effect=AssertionError('Unused zones in context')):
             actual = tx.build_transaction_context(deepcopy(data))
         self.assertEqual(actual,expected)
 
