@@ -649,6 +649,8 @@ def speed(args: argparse.Namespace) -> int:
                 shutil.copy2(start, folder / start.name)
                 if db:
                     shutil.copy2(start.parent / db, folder / db)
+                for entry in ((save.get("season_archive") or {}).get("seasons") or {}).values():
+                    shutil.copy2(start.parent / entry["file"], folder / entry["file"])
                 save_path = folder / start.name
             else:
                 save_path = None

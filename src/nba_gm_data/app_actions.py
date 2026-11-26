@@ -2198,7 +2198,7 @@ def player_card_payload(canonical: dict[str, Any], save_path: Path, player_id: s
     result["draft_status"] = player.get("draft_status") or career.get("draft_status")
     result["season"]["season"] = str(save.get("meta", {}).get("season") or CANONICAL_SEASON)
     result["season"]["team_abbrevs"] = [team["abbrev"]] if team.get("abbrev") else []
-    result["career_seasons"] = player_career_seasons(player, save, result["season"])
+    result["career_seasons"] = player_career_seasons(player, save, result["season"], save_path)
     if 'post_creation' in attrs:
         result['offensive_contributions'] = [
             {'key': key, 'label': label, 'rating': attrs[key], 'modeled': True}
@@ -2677,7 +2677,9 @@ def weekly_efficiency_events(active: dict[str, Any], save: dict[str, Any], save_
     """Dated team events with recorded, rather than invented, rotation changes."""
     today = str(save.get("state", {}).get("current_date") or "")
     players = {p["id"]: p for p in active.get("players", [])}
-    injuries = [e for e in save.get("injury_events", []) if e.get("team_id") == team_id and str(e.get("start_date") or "") <= today]
+    from .season_archive import full_injury_events
+    # Injuries of archived seasons keep their full rows in the season archive files (SEASON-ARCHIVE).
+    injuries = [e for e in full_injury_events(save_path, save) if e.get("team_id") == team_id and str(e.get("start_date") or "") <= today]
     logs = [r for r in [*load_history_records(save_path, save, "player_game_logs"), *save.get("player_game_logs", [])] if r.get("team_id") == team_id] if injuries else []
     logs = list({r.get("id", f"{r.get('game_id')}:{r.get('player_id')}"): r for r in logs}.values())
     days = sorted({str(r.get("date") or "")[:10] for r in logs})
@@ -6000,7 +6002,7 @@ def season_slideshow_action(canonical: dict[str, Any], save_path: Path, payload:
         raise AppActionError("Choose the year-end recap or the preseason outlook.")
     current = str((save.get("meta") or {}).get("season") or "")
     season = str(payload.get("season") or current)
-    data = stored_recap(save, season) if kind == "recap" else stored_outlook(save, season)
+    data = stored_recap(save, season, save_path) if kind == "recap" else stored_outlook(save, season, save_path)
     from .season_slides import OUTLOOK_FORMAT
     if kind == "outlook" and data is not None and season == current and data.get("format") != OUTLOOK_FORMAT \
             and str((save.get("state") or {}).get("phase") or "") == "preseason":

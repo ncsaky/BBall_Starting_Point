@@ -95,8 +95,12 @@ class RolloverHistoryTests(unittest.TestCase):
         self.assertEqual(current["team_game_logs"], [])
         self.assertEqual(current["player_game_logs"], [])
         self.assertNotIn("_history_to_archive", current)
-        # Score summaries (date and final score) are kept for every game, including finished seasons.
-        self.assertEqual({row["game_id"]: row["date"] for row in current["game_result_summaries"]}, all_dates)
+        # Score summaries (date and final score) are kept for every game: in the save for the current and last
+        # season, in the season archive files for older seasons (SEASON-ARCHIVE).
+        from nba_gm_data.season_archive import archive_entries, archived_tables
+        archived = [row for label in archive_entries(current)
+                    for row in archived_tables(path, current, label).get("game_result_summaries", [])]
+        self.assertEqual({row["game_id"]: row["date"] for row in [*current["game_result_summaries"], *archived]}, all_dates)
 
     def test_rollover_keeps_current_detail_and_drops_finished_season_boxes(self):
         with tempfile.TemporaryDirectory() as tmp:

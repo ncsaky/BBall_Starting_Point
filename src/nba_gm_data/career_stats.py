@@ -32,8 +32,10 @@ def season_summary(totals, season, team_games=None):
         result[key]=round(float(totals.get(made) or 0)/float(totals[attempts])*100,1) if totals.get(attempts) else None
     return result
 
-def player_career_seasons(player, save, current):
-    history=save.get('season_history') or []
+def player_career_seasons(player, save, current, save_path=None):
+    from .season_archive import full_season_history
+    # Seasons older than last season keep their player totals in the season archive files (SEASON-ARCHIVE).
+    history=full_season_history(save_path, save)
     current_label=str(save.get('meta',{}).get('season') or current.get('season') or '')
     starts=[int(str(row['season']).split('-')[0]) for row in history if str(row.get('season','')).split('-')[0].isdigit()]
     if current_label.split('-')[0].isdigit(): starts.append(int(current_label.split('-')[0]))

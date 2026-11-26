@@ -91,9 +91,12 @@ def main() -> int:
     if args.save:
         start = Path(args.save).resolve()
         shutil.copy2(start, folder / start.name)
-        db = (json.loads(start.read_text()).get("history_store") or {}).get("path")
+        manifest = json.loads(start.read_text())
+        db = (manifest.get("history_store") or {}).get("path")
         if db:
             shutil.copy2(start.parent / db, folder / db)
+        for entry in ((manifest.get("season_archive") or {}).get("seasons") or {}).values():
+            shutil.copy2(start.parent / entry["file"], folder / entry["file"])
         save_path = folder / start.name
     else:
         created = act("create_save", team=args.team, seed=args.seed, save_name="speed")

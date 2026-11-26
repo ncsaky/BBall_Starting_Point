@@ -11,6 +11,7 @@ import hashlib
 import io
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import sqlite3
@@ -38,6 +39,13 @@ MAX_MANIFEST_BYTES = 512 * 1024 * 1024
 
 class SaveRecoveryError(ValueError):
     pass
+
+
+SEASON_ARCHIVE_MEMBER = re.compile(r"^season-\d{4}-\d{2}\.json\.gz$")
+
+
+def season_archive_member(label: str) -> str:
+    return f"season-{label}.json.gz"
 
 
 def previous_backup_path(path: str | Path) -> Path:
@@ -115,6 +123,15 @@ def _write_archive(path: Path, output: BinaryIO, *, local: bool = False, restore
             staged_manifest.write_text(json.dumps(checked), encoding="utf-8")
             load_save(staged_manifest)
             members["history.sqlite3"] = snapshot
+        if not local:
+            # Finished seasons' archive files travel with a portable export. Local recovery archives leave them out:
+            # they are written once and never change, and stay beside the save the backup restores.
+            from .season_archive import archive_entries, archive_file_path
+            for label, entry in sorted(archive_entries(save).items()):
+                source = archive_file_path(target, entry)
+                if source is None or not source.is_file():
+                    raise SaveRecoveryError(f"The {label} season archive file is missing. Keep the save's files together.")
+                members[season_archive_member(label)] = source
         descriptions = {}
         for name, member in members.items():
             with member.open("rb") as reader:
@@ -186,7 +203,8 @@ def _extract_archive(source: Path | BinaryIO, directory: Path, *, local: bool = 
             entries = archive.infolist()
             names = [entry.filename for entry in entries]
             allowed = {"backup.json", "save.json", "history.sqlite3"}
-            if len(names) != len(set(names)) or not {"backup.json", "save.json"}.issubset(names) or set(names) - allowed:
+            if len(names) != len(set(names)) or not {"backup.json", "save.json"}.issubset(names) or {
+                    name for name in set(names) - allowed if not SEASON_ARCHIVE_MEMBER.match(name)}:
                 raise SaveRecoveryError("Invalid backup members or unsafe archive paths. Choose an exported NBA GM backup.")
             for entry in entries:
                 mode = entry.external_attr >> 16
@@ -322,10 +340,28 @@ def _restore_staged(target: Path, directory: Path, *, replace: bool) -> dict[str
         if store:
             store["path"] = f"{target.stem}.restored-{uuid.uuid4().hex}.history.sqlite3"
             atomic_copy_file(target.parent / store["path"], directory / "history.sqlite3")
+        _restore_season_archives(target, directory, manifest)
         # The old manifest and its database are untouched until this single switch.
         atomic_write_bytes(target, (json.dumps(manifest, ensure_ascii=False, separators=(",", ":"), sort_keys=True) + "\n").encode("utf-8"))
         finish_pending_restore(target)
     return {"status": "restored", "save_path": str(target)}
+
+
+def _restore_season_archives(target: Path, directory: Path, manifest: dict[str, Any]) -> None:
+    """Put an export's season archive files beside the restored save under its name. A local recovery archive
+    carries none: the files it references are still beside the save."""
+    from .season_archive import archive_entries
+
+    for label, entry in archive_entries(manifest).items():
+        staged = directory / season_archive_member(label)
+        if not staged.is_file():
+            continue
+        with staged.open("rb") as reader:
+            digest = hashlib.file_digest(reader, "sha256").hexdigest()
+        if digest != entry.get("sha256"):
+            raise SaveRecoveryError(f"The {label} season archive in this backup does not match its save.")
+        entry["file"] = f"{target.stem}.season-{label}.{digest[:12]}.json.gz"
+        atomic_copy_file(target.parent / entry["file"], staged)
 
 
 def recover_previous_save(path: str | Path) -> dict[str, Any]:
@@ -344,5 +380,5 @@ def recover_previous_save(path: str | Path) -> dict[str, Any]:
 def ensure_new_save_path(path: str | Path) -> None:
     target = Path(path)
     # A manifest lost in an interruption must not cause old history to be adopted.
-    if target.exists() or target.is_symlink() or target.with_suffix(".history.sqlite3").exists() or previous_backup_path(target).exists() or pending_restore_path(target).exists() or any(target.parent.glob(f"{target.stem}.*.history.sqlite3")):
+    if target.exists() or target.is_symlink() or target.with_suffix(".history.sqlite3").exists() or previous_backup_path(target).exists() or pending_restore_path(target).exists() or any(target.parent.glob(f"{target.stem}.*.history.sqlite3")) or any(target.parent.glob(f"{target.stem}.season-*.json.gz")):
         raise SaveRecoveryError(f"A save or recovery data named '{target.stem}' already exists. Choose a different save name or recover the existing save.")
