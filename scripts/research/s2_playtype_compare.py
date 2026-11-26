@@ -21,7 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 GROUPS = {
     "transition": (("trans_rim", "trans_three"), ("transition",)),
-    "cut_roll": (("rim_finish",), ("cut", "roll_man")),
+    "cut_roll": (("rim_finish", "short_finish"), ("cut", "roll_man")),
     "putback": (("putback",), ("putbacks",)),
     "post": (("hook",), ("post_up",)),
     "self_created": (("rim_drive", "floater", "short_jumper", "mid_pull", "three_pull"), ("isolation", "ball_handler", "handoff")),

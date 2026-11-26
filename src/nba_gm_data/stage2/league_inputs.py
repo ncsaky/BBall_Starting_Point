@@ -58,17 +58,23 @@ _MEMORY: dict[str, Any] = {}
 
 
 def _load_json(path: Path) -> Any:
+    if path.suffix == ".gz":
+        import gzip
+        return json.loads(gzip.decompress(path.read_bytes()))
     return json.loads(path.read_text())
 
 
 def _inputs_path(root: str | Path) -> Path:
+    """The unpacked build output when it is at least as new as the git-tracked .json.gz copy, otherwise the .gz (the same
+    rule as ratings_model._inputs_path). The unpacked copy is git-ignored, so a merge updates only the .gz; preferring
+    any existing unpacked copy left stale inputs in charge (S2-TENTH found replays on pre-update inputs)."""
     path = Path(root) / INPUTS_FILE
-    if not path.exists():
-        gz = path.with_suffix(path.suffix + ".gz")
-        if gz.exists():
-            import gzip
-            path.write_bytes(gzip.decompress(gz.read_bytes()))
-    return path
+    gz = path.with_suffix(path.suffix + ".gz")
+    if not gz.exists():
+        return path
+    if path.exists() and path.stat().st_mtime >= gz.stat().st_mtime:
+        return path
+    return gz
 
 
 def load_league_documents(root: str | Path) -> dict[str, dict]:
