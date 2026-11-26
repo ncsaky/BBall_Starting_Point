@@ -7,7 +7,8 @@ from .utils import clamp, normalize_name
 
 # When a line's points cannot hold all the threes it sampled, this share of the excess makes is removed together
 # with their attempts; the rest stay as missed attempts (a cold night). 1.0 removed all of them. Only for lines without
-# an expected output (night_three_pct sets the made-three chance for the others, and their attempts are kept).
+# an expected output (night_three_pct sets the made-three chance for the others, and their attempts are kept). With new
+# ratings every player's threes are drawn first (sim.THREES_FIRST_MIN_SHARE), so night_three_pct is the fallback.
 THREE_TRIM_SHARE = 0.5
 FT_LEVEL = 0.98  # league-level scale on the fitted free throws per point (sim features 'fta_per_point')
 MODEL_VERSION = 1
@@ -324,13 +325,15 @@ def draw_threes(feat, minutes, rng):
     return fg3a, sum(rng.random() < feat['three_pct'] for _ in range(fg3a))
 
 
-def shooting_line(points, feat, minutes, rng, expected_points=None, threes=None):
+def shooting_line(points, feat, minutes, rng, expected_points=None, threes=None, defer_parity=False):
     """Preserve assigned points; sample distinct 2PT/3PT/FT shot profiles.
 
     expected_points: the player's normal output for these minutes (new ratings: his fitted points per 36). When
     given, tonight's three-point accuracy follows tonight's points (night_three_pct).
     threes: (attempts, makes) already drawn for tonight (draw_threes; new ratings), whose points already lean on them;
-    the makes are kept up to what his points hold."""
+    the makes are kept up to what his points hold.
+    defer_parity: new ratings only. When his points less his free throws and threes are odd, the line is returned with
+    '_odd' set (two-point makes rounded down) and its two-point attempt noise in '_noise', for settle_odd_lines."""
     rate = clamp(.13+max(0, feat.get('rim_pressure', 50)-55)*.0028
                  +max(0, feat.get('shot_creation', 50)-70)*.0015, .08, .34)
     # Unbiased stochastic rounding. The previous round(x + U(0, 1.8)) added ~0.9 free throws to every player
@@ -373,6 +376,12 @@ def shooting_line(points, feat, minutes, rng, expected_points=None, threes=None)
     if sampled > fg3m and expected_points is None:
         fg3a = max(fg3m, fg3a-round(THREE_TRIM_SHARE*(sampled-fg3m)/feat['three_pct']))
     remainder = points-ftm-3*fg3m
+    if remainder % 2 and per_point is not None and defer_parity:
+        # Settled across the team (settle_odd_lines); the two-point attempt noise is drawn here, as before.
+        fg2m = remainder//2
+        noise = rng.gauss(0, .6)
+        return {'fgm': fg2m+fg3m, 'fga': max(fg2m, round(fg2m/feat['two_pct']+noise))+fg3a, 'fg3m': fg3m, 'fg3a': fg3a,
+                'ftm': ftm, 'fta': max(fta, ftm), '_odd': 1, '_noise': noise}
     if remainder % 2 and per_point is not None:
         # Two-point makes need an even remainder. Adding a made attempt every time handed every odd line an extra
         # ~0.4 attempts whatever the player's profile. Instead add one made attempt or remove one, half the time
@@ -400,3 +409,71 @@ def shooting_line(points, feat, minutes, rng, expected_points=None, threes=None)
     fg2a = max(fg2m, round(fg2m/feat['two_pct']+rng.gauss(0, .6)))
     return {'fgm': fg2m+fg3m, 'fga': fg2a+fg3a, 'fg3m': fg3m, 'fg3a': fg3a,
             'ftm': ftm, 'fta': max(fta, ftm)}
+
+
+def settle_odd_lines(lines, feats, key):
+    """Make every line's points add up, across the team, without handing out free throws (new ratings).
+
+    A player's points are set before his shots, so about half of all lines are left with an odd number of points after
+    their free throws and threes (shooting_line with defer_parity). Each such line used to settle it with one free throw,
+    a made one whenever he had no make yet: free throws ran ~4% above the players' own rate and the league made ~81-82%
+    of them (real 78.3%; the players' own 77.6%; season review). Here odd lines are paired
+    within the team, one gaining a point and the other losing one (a coin flip; the team's points are unchanged, each
+    player's expected points too). Two-point makes absorb the point. When the team has an odd number of odd lines (its
+    free-throw and three-point makes then cannot add up to its points), one player's free throws change: a made attempt
+    added or removed, half the time each, so free-throw makes and attempts keep their expected values. That player is
+    an odd line with a made free throw if there is one, otherwise any teammate with a made free throw (who is then paired
+    like the rest); only with no made free throw on the team does an odd line get one. A side generator seeded by `key`
+    makes the choices, so the game's random stream is unchanged.
+    """
+    odd = [i for i, line in enumerate(lines) if line.get('_odd')]
+    if not odd:
+        for line in lines:
+            line.pop('_noise', None)
+        return
+    side = random.Random(f'parity:{key}')
+    delta = {}
+    if len(odd) % 2:
+        flip = next((i for i in odd if lines[i]['ftm'] >= 1), None)
+        if flip is None:
+            flip = next((i for i in sorted(range(len(lines)), key=lambda i: -lines[i]['fta'])
+                         if i not in odd and lines[i]['ftm'] >= 1), None)
+            if flip is not None:
+                odd.append(flip)   # a flip on an even line makes it odd; it is paired below
+        if flip is None:
+            flip = odd[0]
+            lines[flip]['ftm'] += 1
+            lines[flip]['fta'] += 1
+        elif side.random() < .5:
+            lines[flip]['ftm'] -= 1
+            lines[flip]['fta'] -= 1
+        else:
+            lines[flip]['ftm'] += 1
+            lines[flip]['fta'] += 1
+        if lines[flip].get('_odd'):
+            odd.remove(flip)
+            delta[flip] = 0
+        else:
+            lines[flip]['_odd'] = 1
+            lines[flip]['_noise'] = None
+    side.shuffle(odd)
+    room = {i: lines[i]['points']-lines[i]['ftm']-3*lines[i]['fg3m'] for i in odd}
+    for a, b in zip(odd[::2], odd[1::2]):
+        up = side.random() < .5
+        if room[a] < 1 or room[b] < 1:   # a teammate whose added free throw left no room keeps the point
+            up = room[a] < 1
+        delta[a], delta[b] = (1, -1) if up else (-1, 1)
+    for i, line in enumerate(lines):
+        noise = line.pop('_noise', None)
+        if not line.pop('_odd', None):
+            continue
+        line['points'] += delta[i]
+        fg2m = (line['points']-line['ftm']-3*line['fg3m'])//2
+        old2m, old2a = line['fgm']-line['fg3m'], line['fga']-line['fg3a']
+        if noise is None:   # an even line whose free throws changed: keep its attempts' spread
+            fg2a = max(fg2m, old2a+fg2m-old2m)
+        else:
+            fg2a = max(fg2m, round(fg2m/feats[i]['two_pct']+noise))
+        line['fgm'] = fg2m+line['fg3m']
+        line['fga'] = fg2a+line['fg3a']
+        line['fta'] = max(line['fta'], line['ftm'])

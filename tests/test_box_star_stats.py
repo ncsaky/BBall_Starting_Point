@@ -123,7 +123,9 @@ class TeamShareTests(unittest.TestCase):
                       "assists": box_rates.poisson_quantile(rates[k] * minutes[k] / 36, rng.random()),
                       "steals": box_rates.poisson_quantile(steal_rates[k] * minutes[k] / 36, rng.random()),
                       "rebounds": 5, "blocks": 1} for k in rates]
-            normalize_secondary_box_score_totals(lines, {}, 114, 100.0, expected={**expected_sums, "assist_model": "inputs"})
+            # Each player's own steal rate (the team total's missing steals are handed out by it, sim.reshare_by_rates).
+            features = {k: {"steals_per36": steal_rates[k]} for k in rates}
+            normalize_secondary_box_score_totals(lines, features, 114, 100.0, expected={**expected_sums, "assist_model": "inputs"})
             for line in lines:
                 for key in totals:
                     totals[key][line["player_id"]] += line[key]
@@ -135,7 +137,10 @@ class TeamShareTests(unittest.TestCase):
 
 
 class ScoresUnchangedTests(unittest.TestCase):
-    """The box-score rates only decide who gets the events: changing them must not move a single point."""
+    """The box-score rates only decide who gets the events: changing them must not move a game's score.
+
+    Free throws can move a player's points by a point or two: a line's points less its free throws and threes must be
+    even, and odd lines are settled by moving a point between teammates (offense.settle_odd_lines, SHOOTING-SPLITS)."""
 
     @classmethod
     def setUpClass(cls):
@@ -163,6 +168,13 @@ class ScoresUnchangedTests(unittest.TestCase):
         self.assertNotEqual([g['player_lines'] for g in base], [g['player_lines'] for g in changed])
         for a, b in zip(base, changed):
             self.assertEqual((a['home_score'], a['away_score']), (b['home_score'], b['away_score']))
+            self.assertEqual([(p['player_id'], p['minutes']) for p in a['player_lines']],
+                             [(p['player_id'], p['minutes']) for p in b['player_lines']])
+            for p, q in zip(a['player_lines'], b['player_lines']):
+                self.assertLessEqual(abs(p['points'] - q['points']), 2, (p['player_name'], p['points'], q['points']))
+        with patch('nba_gm_data.sim.TURNOVER_LEVEL', 2.0), patch('nba_gm_data.sim.STEAL_LEVEL', 2.0):
+            no_free_throw_change = self.run_games()
+        for a, b in zip(base, no_free_throw_change):
             self.assertEqual([(p['player_id'], p['points'], p['minutes']) for p in a['player_lines']],
                              [(p['player_id'], p['points'], p['minutes']) for p in b['player_lines']])
         fta = lambda games: sum(t['fta'] for g in games for t in g['team_lines'])

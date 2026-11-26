@@ -28,6 +28,21 @@
    "team_max": 0.5768,
    "team_min": 0.5203
   },
+  "fg2_pct": {
+   "mean": 0.55,
+   "n_teams": 30,
+   "std": 0.0163,
+   "team_max": 0.5954,
+   "team_min": 0.5284
+  },
+  "fg3_pct": {
+   "band_half": 0.01,
+   "mean": 0.3597,
+   "n_teams": 30,
+   "std": 0.0131,
+   "team_max": 0.3957,
+   "team_min": 0.3404
+  },
   "fg3a_per100": {
    "mean": 36.0667,
    "n_teams": 30,
@@ -48,6 +63,14 @@
    "std": 1.7263,
    "team_max": 91.7871,
    "team_min": 83.265
+  },
+  "ft_pct": {
+   "band_half": 0.012,
+   "mean": 0.7828,
+   "n_teams": 30,
+   "std": 0.0216,
+   "team_max": 0.8227,
+   "team_min": 0.7302
   },
   "ft_rate": {
    "mean": 0.2635,
@@ -128,11 +151,14 @@
   }
  },
  "meta": {
-  "band_rule": "within_band = |sim - mean| <= 1.5 * std (std = spread of the season value across the 30 teams)",
+  "band_rule": "within_band = |sim - mean| <= 1.5 * std (std = spread of the season value across the 30 teams), or <= band_half where given",
   "description": "Real NBA 2025-26 regular-season calibration targets.",
   "league_notes": {
    "ast_rate": "AST/FGM",
    "efg_pct": "(FGM + 0.5*3PM)/FGA",
+   "fg2_pct": "(FGM - 3PM)/(FGA - 3PA)",
+   "fg3_pct": "3PM/3PA",
+   "ft_pct": "FTM/FTA",
    "orb_pct": "ORB/(ORB + opponent DRB), same-game opponent",
    "pace": "possessions per 48 minutes using each team's own estimate; overtime handled via box minutes when plausible.",
    "tov_pct": "100*TOV/(FGA+0.44*FTA+TOV)",
@@ -145,7 +171,8 @@
   "player_usage_note": "usage_pct is the source-provided usage rate (BBRef style), not recomputed; it is not part of compare().",
   "possession_formula": "FGA + 0.44*FTA - ORB + TOV (team total, tov includes team turnovers)",
   "season": "2025-26",
-  "team_games_used": 2462
+  "team_games_used": 2462,
+  "texture_notes": "players_used: players with minutes per team-game; <stat><N>_per_game: player lines with stat >= N per game (count = real season count). Bands: calibration_targets.texture_band."
  },
  "player_match": {
   "eligible": 386,
@@ -12517,6 +12544,37 @@
    "turnovers_per36": 2.0692,
    "turnovers_per_game": 1.2703,
    "usage_pct": 19.2
+  }
+ },
+ "texture": {
+  "players_used": {
+   "games": 1231,
+   "mean": 10.79001
+  },
+  "pts40_per_game": {
+   "count": 133,
+   "games": 1231,
+   "mean": 0.10804
+  },
+  "pts50_per_game": {
+   "count": 17,
+   "games": 1231,
+   "mean": 0.01381
+  },
+  "reb20_per_game": {
+   "count": 26,
+   "games": 1231,
+   "mean": 0.02112
+  },
+  "stl6_per_game": {
+   "count": 27,
+   "games": 1231,
+   "mean": 0.02193
+  },
+  "tov10_per_game": {
+   "count": 3,
+   "games": 1231,
+   "mean": 0.00244
   }
  }
 }
