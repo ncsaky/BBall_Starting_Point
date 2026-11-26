@@ -193,7 +193,7 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .se
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-header-rating > small { color: var(--gm-ink-2) !important; font: var(--gm-weight-bold) var(--gm-size-small)/1.3 var(--gm-font) !important; letter-spacing: 0 !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-header .season-opponent-date { flex: 0 0 auto; color: var(--gm-ink-2) !important; font-weight: var(--gm-weight-regular) !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-opponent-table {
-  flex: 0 1 auto; min-height: 0 !important; display: grid !important; --full-row: 42px;
+  flex: 0 1 auto; min-height: 0 !important; display: grid !important; --full-row: var(--gm-row-h);
   grid-template-rows: var(--full-head) !important; grid-auto-rows: minmax(0, var(--full-row)) !important; grid-template-columns: minmax(0, 1fr) !important;
 }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full :is(.season-opponent-head, .season-opponent-row) {
@@ -446,3 +446,148 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .te
 /* Your block is as tall as its rows; it does not share the column's height. */
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-team-block > .assets-panel-body { flex: 0 0 auto; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-team-block .assets-block-table { flex: 0 0 auto; grid-auto-rows: var(--full-row) !important; overflow: visible !important; }
+
+/* ---------- League > Standings: the two conferences side by side, each a table whose rows share the height. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .standings-card { display: flex !important; flex-direction: column; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standings-expanded {
+  flex: 1 1 0; min-height: 0 !important; display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  column-gap: var(--gm-space-5) !important; width: auto !important; height: auto !important; margin: 0 !important; padding: 0 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standings-conference {
+  display: flex !important; flex-direction: column; min-width: 0; min-height: 0; width: auto !important; height: auto !important; margin: 0 !important; padding: 0 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standings-conference > h3 {
+  display: block !important; flex: 0 0 34px; height: 34px !important; margin: 0 !important; padding: 0 !important; text-align: left !important; color: var(--gm-ink) !important;
+  font: var(--gm-weight-bold) var(--gm-size-section)/1.2 var(--gm-font) !important; line-height: 34px !important; letter-spacing: 0 !important; text-transform: none !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standings-table-expanded { --full-row: 42px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standings-table-expanded :is(.season-standings-head, .season-standing-row) {
+  grid-template-columns: 36px minmax(0, 1fr) 110px 100px 80px !important; column-gap: var(--gm-space-2) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standings-table-expanded .season-standings-head .house-th:nth-child(2) { justify-content: flex-start !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standings-table-expanded .season-standings-head .house-th { justify-content: center !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standings-table-expanded .season-standing-team-cell > img { width: 24px !important; height: 24px !important; }
+/* The playoff line (after 6th) and the play-in line (after 10th). */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standings-table-expanded .season-standing-row.playoff-line { border-bottom: 1.5px dashed var(--gm-warn) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standings-table-expanded .season-standing-row.play-in-line { border-bottom: 1.5px solid var(--gm-must) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standings-table-expanded .season-standing-row.playoff-line + .season-standing-row,
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-standings-table-expanded .season-standing-row.play-in-line + .season-standing-row { border-top: 0 !important; }
+
+/* ---------- Home > Schedule: the month calendar, weeks sharing the height. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-week-panel.is-expanded { display: flex !important; flex-direction: column; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar {
+  flex: 1 1 0; display: flex !important; flex-direction: column; min-width: 0 !important; min-height: 0 !important; width: auto !important; height: auto !important;
+  gap: 0; color: var(--gm-ink);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-head {
+  flex: 0 0 auto; height: 34px; display: flex !important; align-items: center; justify-content: space-between; padding: 0 !important; margin-bottom: var(--gm-space-1);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-head h2 {
+  margin: 0 !important; color: var(--gm-ink) !important; letter-spacing: 0; text-transform: none;
+  font: var(--gm-weight-bold) var(--gm-size-section)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-head > div { display: flex; gap: var(--gm-space-2); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-head button {
+  min-width: 34px; height: 28px !important; min-height: 0 !important; padding: 0 var(--gm-space-3) !important; border-radius: var(--gm-radius-pill) !important;
+  background: var(--gm-glass-tile) !important; border: 1px solid rgba(255, 255, 255, .22) !important; box-shadow: none !important; color: var(--gm-ink) !important;
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-head button:hover:not(:disabled) { background: var(--gm-glass-tile-hover) !important; color: var(--gm-ink) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .trade-deadline-calendar-notice {
+  flex: 0 0 auto; display: flex; align-items: center; justify-content: flex-start; gap: var(--gm-space-3); height: 26px; padding: 0 var(--gm-space-2) !important;
+  background: transparent !important; border: 0 !important; color: var(--gm-warn) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .trade-deadline-calendar-notice strong { font-weight: var(--gm-weight-bold) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-weekdays {
+  flex: 0 0 auto; height: 26px; display: grid !important; grid-template-columns: repeat(7, minmax(0, 1fr)) !important; align-items: center; text-align: center;
+  color: var(--gm-ink) !important; border-bottom: 1.5px solid var(--gm-line-strong); font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-grid {
+  flex: 1 1 0; min-height: 0; display: grid !important; grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  grid-template-rows: repeat(var(--calendar-weeks), minmax(0, 1fr)) !important; border: 0 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-day {
+  display: flex !important; flex-direction: column; gap: 2px; min-width: 0; min-height: 0; margin: 0 !important; padding: var(--gm-space-1) var(--gm-space-2) !important; box-sizing: border-box; overflow: hidden;
+  background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--gm-line-row) !important; border-right: 1px solid var(--gm-line-row) !important; border-radius: 0 !important;
+  box-shadow: none !important; outline: 0 !important; color: var(--gm-ink) !important; text-align: center; cursor: default;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-day:nth-child(7n + 1) { border-left: 1px solid var(--gm-line-row) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-day.blank { border-color: transparent !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full button.clipboard-calendar-day { cursor: pointer; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full button.clipboard-calendar-day:hover { background: var(--gm-glass-tile) !important; outline: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full button.clipboard-calendar-day:focus-visible { outline: 2px solid var(--gm-focus) !important; outline-offset: -2px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-day.today { outline: 2px solid var(--gm-accent) !important; outline-offset: -2px; background: color-mix(in srgb, var(--gm-accent) 12%, transparent) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-date {
+  flex: 0 0 auto; display: flex; justify-content: space-between; align-items: baseline; color: var(--gm-ink) !important;
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; font-variant-numeric: tabular-nums;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-day.past .clipboard-calendar-date { color: var(--gm-ink-2) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-day.today .clipboard-calendar-date { color: var(--gm-accent) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-date small { color: var(--gm-accent) !important; font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-matchup {
+  flex: 1 1 0; min-height: 0; display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--gm-ink) !important;
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-matchup img { flex: 0 1 30px; width: 30px !important; height: 30px !important; min-height: 0; object-fit: contain; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-matchup > span { font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; white-space: nowrap; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-matchup strong { font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; white-space: nowrap; font-variant-numeric: tabular-nums; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-matchup .win { color: var(--gm-good) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-matchup .loss { color: var(--gm-bad) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-matchup .national-tv-marker {
+  padding: 0 var(--gm-space-1); border: 1px solid currentColor; border-radius: 2px; color: var(--gm-ink-2); opacity: 1;
+  font: var(--gm-weight-bold) var(--gm-size-small)/1.3 var(--gm-font) !important; letter-spacing: 0;
+}
+/* Deadline day: no filled square; its ring and label take the deadline colour. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-day.trade-deadline-day { background: transparent !important; outline: 2px solid var(--gm-warn) !important; outline-offset: -2px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .clipboard-calendar-day.trade-deadline-day.today { background: color-mix(in srgb, var(--gm-warn) 12%, transparent) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .trade-deadline-day-label { color: var(--gm-warn) !important; font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important; }
+
+/* ---------- Team > Development: the growth chart and its player picks (left, drawn at its own width so the chart's
+   text is its real size) beside the table of changes, rows sharing the height. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-development-panel {
+  display: grid !important; grid-template-columns: 660px minmax(0, 1fr) !important; grid-template-rows: minmax(0, 1fr) !important;
+  column-gap: var(--gm-space-5) !important; align-items: stretch; overflow: visible !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .dev-graph {
+  grid-column: 1; align-self: start; display: flex; flex-direction: column; min-width: 0; padding: 0 !important; border: 0 !important; gap: var(--gm-space-2);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .dev-graph-bar { display: flex; align-items: center; gap: var(--gm-space-3); margin: 0; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .dev-views button { font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .dev-graph-bar .g-info { font: var(--gm-weight-bold) var(--gm-size-small)/1 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .dev-plot { display: block; width: 100% !important; height: auto !important; max-height: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .dev-plot .dev-axis { font-size: var(--gm-size-small) !important; fill: var(--gm-ink-2) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .dev-plot .dev-name { font-size: var(--gm-size-small) !important; font-weight: var(--gm-weight-bold) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .dev-picks { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: var(--gm-space-1) var(--gm-space-3) !important; padding: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .dev-pick { color: var(--gm-ink) !important; white-space: nowrap; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .dev-pick.is-on { font-weight: var(--gm-weight-bold) !important; }
+
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-development-list {
+  --full-row: 42px; grid-column: 2; min-height: 0 !important; display: grid !important;
+  grid-template-rows: var(--full-head) !important; grid-auto-rows: minmax(0, var(--full-row)) !important; grid-template-columns: minmax(0, 1fr) !important; align-self: stretch; align-content: start;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full :is(.season-development-head, .season-development-row) {
+  display: grid !important; column-gap: var(--gm-space-2) !important; grid-template-columns: minmax(0, 1.25fr) 44px minmax(0, 1fr) !important;
+  background: transparent !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; cursor: pointer; text-align: left;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-development-head { cursor: default; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-development-head > .house-th { justify-content: center; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-development-head > .house-th:first-child { justify-content: flex-start; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-development-row:hover { background: var(--gm-glass-tile) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-development-player { display: flex !important; align-items: center; align-self: stretch; gap: var(--gm-space-2) !important; min-width: 0; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-development-name {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gm-ink) !important;
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-development-age {
+  text-align: center; color: var(--gm-ink) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; font-variant-numeric: tabular-nums;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-development-metrics { display: grid !important; grid-template-rows: repeat(2, minmax(0, 1fr)); align-self: stretch; gap: 0 !important; min-width: 0; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-development-metric { display: grid !important; grid-template-columns: 46px minmax(0, 1fr) 40px !important; align-items: center; gap: var(--gm-space-1) !important; min-height: 0; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-development-period { color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1 var(--gm-font) !important; text-align: left; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-development-metric > strong {
+  text-align: right; color: var(--gm-ink) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1 var(--gm-font) !important; font-variant-numeric: tabular-nums;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-development-metric > strong.positive { color: var(--gm-good) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-development-metric > strong.negative { color: var(--gm-bad) !important; }
+/* Schedule: a played game keeps its opponent's logo in colour (the old grey fade hid dark logos on the dark page). */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-week-panel img { filter: none !important; opacity: 1 !important; }

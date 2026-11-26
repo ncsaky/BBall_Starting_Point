@@ -237,13 +237,13 @@ test('shared style values: one sheet, loaded first, and no italic or stray weigh
 const walk = (node, out = []) => { if (!node) return out; out.push(node); for (const item of node.items || []) walk(typeof item === 'string' ? {type: 'card', id: item} : item, out); return out; };
 const cardsOf = (layout) => walk(layout).filter((node) => node.type === 'card');
 
-test('Home shows two things in season: the rotation with the week under it, and the next game', () => {
+test('Home in season: the rotation, and the next game with the standings under it; no week strip', () => {
   const {pages} = load();
   const layout = pages.PAGES.find((page) => page.id === 'home').layout({available: () => true});
   assert.ok(layout.full, 'laid out at real sizes, not scaled as one picture');
   assert.equal(layout.type, 'row');
   const columns = Array.from(layout.items, (column) => cardsOf(column).map((card) => card.id));
-  assert.deepEqual(columns, [['minutes', 'week'], ['opponent']]);
+  assert.deepEqual(columns, [['minutes'], ['opponent', 'standings']]);
 });
 
 test('Roster and Stats are full-size tabs; Contracts keeps the payroll chart and the draft assets in proportion; Trades is a full-size tab', () => {
@@ -288,4 +288,14 @@ test('the year strip runs across the top of the page: segments as long as their 
   assert.match(source, /shell\.querySelector\("\.pages-year"\)\.innerHTML = progress\(\)\.yearMarkup\(\);/);
   assert.match(read('progress.js'), /style="flex-grow:\$\{spans\[index\]\.days\}"/);
   assert.match(read('progress.js'), /index < step \? 1 : index > step \? 0 : Math\.max\(\.04, Math\.min\(1, spans\[index\]\.through\)\)/);
+});
+
+test('Standings, Schedule and Development are full-size tabs, each holding its one card', () => {
+  const {pages} = load();
+  for (const [id, card] of [['standings', 'standings'], ['schedule', 'week'], ['development', 'development']]) {
+    const layout = pages.PAGES.find((page) => page.id === id).layout({available: () => true});
+    assert.ok(layout.full, `${id} is laid out at real sizes`);
+    assert.deepEqual(Array.from(cardsOf(layout), (node) => node.id), [card]);
+    assert.equal(cardsOf(layout)[0].natural, undefined, `${id} is not scaled as a picture`);
+  }
 });

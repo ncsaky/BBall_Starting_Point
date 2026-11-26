@@ -276,8 +276,9 @@ these cannot be swapped blind).
   not.
 - **A tab shows one thing, or a couple that belong together** (the rotation and the next game; a table and its
   chart). Do not force many cards onto one page (user: "one of my biggest current issues").
-- Home's first tab is "Today": the rotation with the week under it and the next game; from the lottery to camp it is
-  contracts, payroll and picks (user's pick).
+- Home's first tab is "Today": the rotation, and the next game with your conference's standings under it; from the
+  lottery to camp it is contracts, payroll and picks (user's picks). No small copy of another tab on Home: the week
+  strip was removed because the Schedule tab is one click away (user, 2026-11-26).
 - **Plain words on the welcome screens.** No slogans or paired punchy sentences ("One button moves time", "Red jobs
   come first. The rest can wait."): the user reads them as machine-written. A title is a plain label ("To do",
   "Pages"); a line under it says one concrete thing or is left out.
@@ -302,8 +303,8 @@ its sections share the page's width and height. The rules live in `gui/full-page
 - **The same rows in two tables are two tabs of one page** (Team: Roster | Stats).
 - **Nothing is cut to make room.** If a name cannot fit it ends in an ellipsis; a role never does (give the column
   the width). A long to-do job takes a second line.
-- **Rebuilt so far:** Home (every phase), Roster, Stats, Contracts, Trades. Not yet: the other tabs and the step
-  screens.
+- **Rebuilt so far:** Home (every phase), Schedule, Roster, Stats, Development, Contracts, Trades, Standings. Not
+  yet: Staff, Identity, Profile, Draft, News, Awards, the playoff tabs, Two-Way Places and the step screens.
 
 ## Preserve (the user's favourites; don't redesign)
 - Team Identity heat maps at the current hexagon size (round 3: "looks great"). The tab style there still needs a new try.

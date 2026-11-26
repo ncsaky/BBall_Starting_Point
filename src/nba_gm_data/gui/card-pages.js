@@ -103,12 +103,12 @@
 
     // Home: what is about to happen. Its tabs: today (the rotation and the next game) and the calendar.
     {id: "home", group: "home", label: "Today", layout: homeLayout},
-    {id: "schedule", group: "home", label: "Schedule", layout: () => row(card("week", {expanded: true, grow: "both", bare: true, minHeight: 480}))},
+    {id: "schedule", group: "home", label: "Schedule", layout: () => ({full: {fits: [900, 560], roomy: [1500, 900]}, ...row(card("week", {expanded: true, bare: true, fill: true}))})},
 
     // Team. Roster and Stats are full-size tables; the rest are still the older cards, one main thing a tab.
     {id: "roster", group: "team", label: "Roster", layout: () => ({full: {fits: [1220, 560], roomy: [1500, 900]}, ...row(card("roster", {bare: true, fill: true}))})},
     {id: "stats", group: "team", label: "Stats", layout: () => ({full: {fits: [900, 560], roomy: [1500, 900]}, ...row(card("stats", {bare: true, fill: true}))})},
-    {id: "development", group: "team", label: "Development", layout: () => row(card("development", {expanded: true, bare: true}))},
+    {id: "development", group: "team", label: "Development", layout: () => ({full: {fits: [1120, 620], roomy: [1500, 900]}, ...row(card("development", {expanded: true, bare: true, fill: true}))})},
     {id: "staff", group: "team", label: "Staff", layout: () => row(card("staff", {expanded: true, bare: true}))},
     {id: "identity", group: "team", label: "Identity", layout: () => row(card("identity", {title: "Heat Maps"}), col("signals", "morale"))},
     {id: "profile", group: "team", label: "Profile", layout: () => col(row("offense", "defense"), row("factors", "efficiency"))},
@@ -126,14 +126,14 @@
 
     // League. The playoff tabs are listed while the playoffs are on. The bracket gets a tab of its own (it is as wide
     // as the screen). Both playoff tables are wider than their board windows were: the page gives them their width.
-    {id: "standings", group: "league", label: "Standings", layout: () => row(card("standings", {expanded: true, bare: true}))},
+    {id: "standings", group: "league", label: "Standings", layout: () => ({full: {fits: [980, 580], roomy: [1500, 900]}, ...row(card("standings", {expanded: true, bare: true, fill: true}))})},
     {id: "news", group: "league", label: "News", layout: () => row(card("league-wire", {expanded: true, bare: true, height: 600}))},
     {id: "awards", group: "league", label: "Awards", controls: "awards", layout: () => row("award-mvp", "award-dpoy", "award-roty")},
     {id: "playoffs", group: "league", label: "Playoffs", layout: () => row(card("phase-playoffs-bracket", {bare: true, width: 1100}))},
     {id: "playoff-stats", group: "league", label: "Playoff Stats", layout: () => row(card("phase-playoffs-leaders", {width: 680}), card("phase-playoffs-injuries", {width: 604}))},
   ];
 
-  // Home's first tab, by phase. While games are played: the rotation with the week under it, and the next game. From
+  // Home's first tab, by phase. While games are played: the rotation, and the next game with the standings under it. From
   // the lottery to training camp there are no games: contracts, the payroll and your picks (user, 2026-11-26).
   function homeLayout() {
     const phase = String(appState()?.home?.save?.phase || "");
@@ -143,10 +143,12 @@
         colOf({basis: 430}, card("payroll", {fill: true, natural: "fit"})))};
     }
     const full = {fits: [1100, 660], roomy: [1500, 880]};
-    const playoffs = phase === "play_in" || phase === "playoffs";   // the season's week is over by then
+    // The week strip left Home (user, 2026-11-26: it is a smaller copy of the Schedule tab beside it). Under the next
+    // game: your conference's standings (the playoffs have none to show: the season is over).
+    const playoffs = phase === "play_in" || phase === "playoffs";
     return {full, ...row(
-      colOf({fill: true}, card("minutes", {fill: true}), ...(playoffs ? [] : [card("week", {link: "schedule"})])),
-      colOf({basis: 420}, card("opponent", {fill: true})))};
+      colOf({fill: true}, card("minutes", {fill: true})),
+      colOf({basis: 420}, ...(playoffs ? [card("opponent", {fill: true})] : ["opponent", card("standings", {link: "standings", fill: true})])))};
   }
 
   function draftRoomLayout(ctx) {

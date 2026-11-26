@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C, checkpoint 2 published (to-do in the sidebar, four pages with tabs, year bar across the top, Trades rebuilt); stopped, waiting for four decisions (page map, backgrounds, Home right column, what next)
+Progress: 8/9 - Stage C, checkpoint 3 published (background options to pick from; Standings, Schedule, Development rebuilt; Home has standings, no week strip); stopped, waiting for five decisions
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -114,7 +114,10 @@ and first run, and the token sheet. End with a short list of decisions the user 
             (planned | steps | note).
       - [x] Checkpoint 2 (2026-11-26): the sidebar carries the to-do list; four pages with tabs; Trades and summer Home
             rebuilt; welcome text rewritten. Page: https://claude.ai/artifact/TWVA9sPeLM8BA2nz9EZXb5.
-      - [ ] Next: the background treatment (pictures to choose from first), then the remaining tabs one at a time
+      - [x] Checkpoint 3 (2026-11-26): background options as pictures; Standings, Schedule, Development rebuilt;
+            Home has standings under the next game and no week strip. Page:
+            https://claude.ai/artifact/MEuxkg2VnNosDHY8GG5cES. **Waiting on five decisions.**
+      - [ ] Next: build the chosen background treatment for all thirty, then the remaining tabs one at a time
             (pattern work: a cheaper model can do it from `docs/UI_STYLE_GUIDE.md` "Full-size pages"), then the step
             screens.
 
@@ -314,3 +317,32 @@ rewritten for the new structure. Not played end to end again after the restructu
 
 **Working files**: `scn/home.mjs`, `scn/page.mjs` and `shots.mjs` now open tabs through `CardPages.go`; `sited/` is
 the published page.
+
+## Stage C, checkpoint 3 report (2026-11-26)
+
+**The user's checkpoint 2 answers**: the page map is good ("more important to master each of these ... tabs than
+... the organization"); later, the draft, the playoffs and free agency should take over Home with a tab of their own
+while they are on; backgrounds: natural photos with team colour as accents, and ideas: several pictures per team
+(different spots of the arena by page or by phase), slight movement, transitions between places, background music
+("free chill beats"); Home's right column: standings, and delete the week strip from Home (a smaller copy of the
+Schedule tab); next: backgrounds, then the remaining tabs.
+
+**What changed**
+- Home: the week strip is gone; your conference's standings sit under the next game (not in the playoffs).
+- Standings, Schedule and Development rebuilt at full size. Done by a Sonnet subagent from a written brief and the
+  style guide, reviewed from its pictures; one fix after review (played games' logos kept in colour on Schedule).
+- Background options, as pictures only (nothing changed in the game): `output/ui-polish/bg/make.py` makes three
+  treatments from the photos already picked and credited in the main checkout's `output/ui-workbench/arena` (read
+  only): A natural, B team colour kept (hue-selective saturation), C neutral and darker. Shown behind Home for OKC,
+  BOS and DEN, plus Boston's two other photos behind Team and Front Office.
+
+**Waiting on five decisions** (page https://claude.ai/artifact/MEuxkg2VnNosDHY8GG5cES, collection `decisions`):
+`bg-treatment` (b | a | c | note), `bg-spots` (by-page | by-phase | one), `bg-motion` (drift-fade | fade | none),
+`music` (list | browser | later), `draft-home` (office | team | note).
+
+**Notes for whoever continues**
+- Music needs files: the task rule stands (no downloads without the user's yes). The proposal is a list of free
+  tracks with licence and size for approval first.
+- Movement reverses the style guide's "never anything looping": ask before building (asked).
+- Still old cards: Staff, Identity, Profile, Draft, News, Awards, the playoff tabs, Two-Way Places, the step screens.
+- Not replayed end to end since the restructure (no sim, no step-screen walk).
