@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C: music added (four approved public-domain tracks, off by default); waiting for three checkpoint 4 decisions (staff list, background darkness, what next)
+Progress: 8/9 - Stage C, checkpoint 5 published (all 17 tabs are full-size pages; game replayed after the restructure); stopped, waiting for four decisions; step screens are next
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -120,7 +120,10 @@ and first run, and the token sheet. End with a short list of decisions the user 
       - [x] Checkpoint 4 (2026-11-26): backgrounds rebuilt (treatment C, phase photos, a moving layer); Staff,
             Identity, Profile rebuilt; a music shortlist. Page: https://claude.ai/artifact/J3LFyTZsyd2XSEdJ7dEFXM.
             **Waiting on four decisions**, and a yes in the chat before any music download.
-      - [ ] Next: the last five tabs (Draft, News, Awards, playoff tabs, Two-Way Places), one at a time
+      - [x] Checkpoint 5 (2026-11-26): the last six tabs; music (four CC0 tracks); the staff list scrolls; a
+            play-through. Page: https://claude.ai/artifact/Kd86FRvNrWNjY7BvnLiBdZ. **Waiting on four decisions.**
+      - [ ] Next: the step screens (Set The Roster, who to keep, the draft room, free agency), News and Awards as
+            the user decides, then step 9 (the final sweep)
             (pattern work: a cheaper model can do it from `docs/UI_STYLE_GUIDE.md` "Full-size pages"), then the step
             screens.
 
@@ -405,3 +408,34 @@ settled by the chat answer).
   off pauses. Nobody has listened to the tracks in the game: the level and the fades are untested by ear.
 - Tests: `tests/music.test.cjs` (3), `tests/photo_credits.test.cjs` updated for the renamed list. Browser tests 50
   of 51 (the 51st needs the absent start-screen video).
+
+## Stage C, checkpoint 5 report (2026-11-26)
+
+**The user's checkpoint 4 answers**: all six music tracks (on the page; the chat yes covered the four CC0 ones, so
+the two CC BY ones still need a yes in the chat); the available staff list scrolls; the arenas' darkness is good; next:
+the last five tabs.
+
+**What changed**
+- Every tab is now a `full` layout (17 of 17). This round, by two Sonnet subagents from written briefs, reviewed from
+  their pictures: Draft (the prospect board at page width, whole rows between 34 and 42px, its sixty rows still
+  scrolling inside it as before; draft assets under it), News and Awards (enlarged whole with `natural`; both leave
+  empty room), Playoff Stats (two tables at real sizes), Playoffs (the bracket enlarged whole; white boxes replaced
+  by glass; the user's series marked through `data-yours`, set in `layoutFull`), Two-Way Places and Opening Roster
+  (the same card: real sizes, all rows fit; Details and Rules open as small glass pop-ups).
+- Available staff scrolls (user's pick), headings pinned.
+- Roster's columns rebalanced after the sidebar widened (role names were cut); a role cell never clips.
+
+**Played through after the restructure** (copies, port 8775): a brand-new Milwaukee save from the start screen (13 s
+to build; welcome, Outlook, Home with two red rookie-option jobs and the blocked button); every to-do job on four
+saves opens its screen and step screens have their Home button; a sim from Home, a week from Roster (stays), the
+year bar and the record move; Front Office reopens on its last tab. Not replayed: the deadline and season-end stops,
+the draft itself, a signing. The earlier "new save will not create" scare was the capture script clicking before the
+button was enabled.
+
+**Waiting on four decisions** (page https://claude.ai/artifact/Kd86FRvNrWNjY7BvnLiBdZ, collection `decisions`):
+`music-two` (yes | no; also needs a chat yes), `news` (feed | two | as-is), `awards` (more-rows | bigger | as-is),
+`next` (steps | home-phases | photos).
+
+**Known gaps**: the step screens other than Opening Roster are still scaled cards; News and Awards are thin; names
+are cut on Playoff Stats; the bracket uses the top 40% of its page; the cutdown and Sign Players screens (same card as
+Opening Roster) were not reachable; nobody has listened to the music or watched the drift.

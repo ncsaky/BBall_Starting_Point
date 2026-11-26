@@ -96,7 +96,7 @@
     {id: "free-agency-checklist", group: "now", step: true, label: "Offseason Checklist", layout: () => row(card("phase-free_agency-checklist", {grow: "h"}), card("phase-free_agency-selected", {grow: "h"}))},
     {id: "free-agency", group: "now", step: true, label: "Free Agency", layout: () => row(card("phase-free_agency-market", {grow: "h"}), card("phase-free_agency-selected", {grow: "h"}), card("phase-free_agency-wire", {grow: "h"}))},
     {id: "fantasy-draft", group: "now", step: true, label: "Fantasy Draft", layout: () => col("phase-fantasy_draft-control", row(card("phase-fantasy_draft-board", {grow: "h"}), card("phase-fantasy_draft-roster", {grow: "h"}), card("phase-fantasy_draft-ticker", {grow: "h"})))},
-    {id: "roster-moves", group: "now", step: true, label: () => rosterMovesLabel(), layout: () => row(card("phase-cutdown-decision", {bare: true}))},
+    {id: "roster-moves", group: "now", step: true, label: () => rosterMovesLabel(), layout: () => ({full: {fits: [1220, 640], roomy: [1500, 900]}, ...row(card("phase-cutdown-decision", {bare: true, fill: true}))})},
     {id: "set-roster", group: "now", step: true, label: "Set The Roster", layout: () => row(card("phase-set_roster-checklist", {bare: true}))},
     // Slideshows open by themselves when they are due (and from Settings).
     {id: "outlook", group: "now", label: "Preseason Outlook", slideshow: "outlook"},
@@ -129,15 +129,20 @@
     {id: "trades", group: "office", label: "Trades", controls: "trades", layout: () => ({full: {fits: [1200, 620], roomy: [1500, 900]}, ...row(
       colOf({fill: true}, card("league-block", {fill: true})),
       colOf({basis: 470}, "team-block", card("team-wants", {fill: true})))})},
-    {id: "scouting", group: "office", label: "Draft", layout: () => col(card("prospects", {expanded: true, grow: "h", minHeight: 400}), "picks")},
+    {id: "scouting", group: "office", label: "Draft", layout: () => ({full: {fits: [1120, 640], roomy: [1500, 900]}, ...col(
+      rowOf({fill: true}, card("prospects", {expanded: true, fill: true})),
+      rowOf({basis: 290}, card("picks", {fill: true, natural: "fit"})))})},
 
     // League. The playoff tabs are listed while the playoffs are on. The bracket gets a tab of its own (it is as wide
     // as the screen). Both playoff tables are wider than their board windows were: the page gives them their width.
     {id: "standings", group: "league", label: "Standings", layout: () => ({full: {fits: [980, 580], roomy: [1500, 900]}, ...row(card("standings", {expanded: true, bare: true, fill: true}))})},
-    {id: "news", group: "league", label: "News", layout: () => row(card("league-wire", {expanded: true, bare: true, height: 600}))},
-    {id: "awards", group: "league", label: "Awards", controls: "awards", layout: () => row("award-mvp", "award-dpoy", "award-roty")},
-    {id: "playoffs", group: "league", label: "Playoffs", layout: () => row(card("phase-playoffs-bracket", {bare: true, width: 1100}))},
-    {id: "playoff-stats", group: "league", label: "Playoff Stats", layout: () => row(card("phase-playoffs-leaders", {width: 680}), card("phase-playoffs-injuries", {width: 604}))},
+    {id: "news", group: "league", label: "News", layout: () => ({full: {fits: [1120, 640], roomy: [1500, 900]}, ...row(card("league-wire", {expanded: true, bare: true, fill: true, natural: "fit", size: [500, 600]}))})},
+    {id: "awards", group: "league", label: "Awards", controls: "awards", layout: () => ({full: {fits: [1120, 560], roomy: [1500, 900]}, ...row(
+      card("award-mvp", {fill: true, natural: "fit", size: [340, 303]}), card("award-dpoy", {fill: true, natural: "fit", size: [340, 303]}), card("award-roty", {fill: true, natural: "fit", size: [340, 303]}))})},
+    {id: "playoffs", group: "league", label: "Playoffs", layout: () => ({full: {fits: [1100, 480], roomy: [1500, 900]}, ...row(card("phase-playoffs-bracket", {bare: true, fill: true, natural: "fit", size: [1424, 484]}))})},
+    {id: "playoff-stats", group: "league", label: "Playoff Stats", layout: () => ({full: {fits: [1220, 580], roomy: [1500, 900]}, ...row(
+      colOf({fill: true}, card("phase-playoffs-leaders", {fill: true})),
+      colOf({basis: 540}, card("phase-playoffs-injuries", {fill: true})))})},
   ];
 
   // Home's first tab, by phase. While games are played: the rotation, and the next game with the standings under it. From
@@ -492,6 +497,13 @@
     }
     function layoutFull(el, stage, slots) {
       el.classList.remove("is-growing", "is-scrolling");
+      // The bracket: the series your team plays in carries a mark the style can pick out.
+      const mine = appState()?.home?.save?.user_team;
+      const mineId = String(mine?.id ?? mine?.team_id ?? mine ?? "");
+      for (const card of stage.querySelectorAll(".series-card")) {
+        const yours = Boolean(mineId) && [...card.querySelectorAll(".series-team[data-team-id]")].some(row => row.dataset.teamId === mineId);
+        if (yours) card.dataset.yours = "true"; else delete card.dataset.yours;
+      }
       for (const slot of slots) {
         const body = slot.querySelector(".pages-slot-body");
         Object.assign(body.style, {minWidth: "", minHeight: "", height: ""});
@@ -540,6 +552,18 @@
       for (const slot of slots) for (const table of slot.querySelectorAll("table")) {
         const rowHeight = table.tBodies[0]?.rows[0]?.offsetHeight;
         if (rowHeight) table.style.setProperty("--full-row-px", `${rowHeight}px`);
+      }
+      // The prospect board is a long list that scrolls: its rows are as many as fit, each 34px to 42px, so the last
+      // visible row is not cut.
+      for (const list of stage.querySelectorAll(".season-prospect-list-expanded")) {
+        const table = list.querySelector("table");
+        const legend = list.querySelector(".season-prospect-legend");
+        if (!table || !list.clientHeight) continue;
+        const room = list.clientHeight - 26 - (legend ? legend.offsetHeight : 0);
+        const count = Math.max(1, Math.floor(room / 34));
+        const rowPx = Math.min(42, room / count);
+        table.style.setProperty("--prospect-row", `${rowPx.toFixed(2)}px`);
+        table.style.setProperty("--full-row-px", `${rowPx.toFixed(2)}px`);
       }
     }
 

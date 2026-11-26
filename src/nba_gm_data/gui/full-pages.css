@@ -336,7 +336,8 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .li
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .player-name-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gm-ink); font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group tr.injured .player-name-text { color: var(--gm-bad) !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .season-injury-status, html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .season-injury-status > span { flex: 0 0 auto; color: var(--gm-must) !important; font: var(--gm-weight-bold) var(--gm-size-row)/1 var(--gm-font) !important; }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .role-text { white-space: nowrap; font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .role-text { white-space: nowrap; overflow: visible !important; text-overflow: clip !important; font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group td:has(> .role-text) { overflow: visible !important; text-overflow: clip !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .tr-tile-value { display: grid !important; grid-template-columns: 34px minmax(0, 1fr) !important; align-items: center; gap: 6px !important; width: auto !important; padding: 0 var(--gm-space-1); }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .tr-tile-value > strong { text-align: right; color: var(--gm-ink) !important; font: var(--gm-weight-semibold) var(--gm-size-row)/1 var(--gm-font) !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .tr-tile-value > i { display: block; height: 8px !important; background: transparent !important; border-radius: var(--gm-radius-pill); overflow: hidden; }
@@ -346,13 +347,13 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .li
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .assets-rating-plain { font: var(--gm-weight-regular) var(--gm-size-row)/1 var(--gm-font) !important; color: var(--gm-ink) !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group .rating-drop { color: var(--gm-bad) !important; font: var(--gm-weight-bold) var(--gm-size-small)/1 var(--gm-font) !important; }
 /* Ratings: player, age, position, the two roles, value, then the ratings (overall with its two halves in bold). */
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col { width: 4.82% !important; }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(1) { width: 17.4% !important; }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(2) { width: 2.4% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col { width: 4.7% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(1) { width: 16.8% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(2) { width: 2.3% !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(3) { width: 2.5% !important; }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(4), html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(5) { width: 9.8% !important; }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(6) { width: 7.6% !important; }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(7) { width: 6% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(4), html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(5) { width: 10.5% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(6) { width: 7.5% !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(7) { width: 6.1% !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(8), html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings col:nth-child(9) { width: 5.4% !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings td:nth-child(8) .assets-rating-plain, html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-ratings td:nth-child(9) .assets-rating-plain { font-weight: var(--gm-weight-bold) !important; }
 /* Stats: the same players at a width eight numbers can be read across. */
@@ -650,13 +651,283 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .se
   color: var(--gm-ink) !important; font: var(--gm-weight-semibold) var(--gm-size-small)/1 var(--gm-font) !important;
 }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-staff-action:hover:not(:disabled) { background: var(--gm-glass-tile-hover) !important; }
-/* Available staff are many: whole rows that fit, best grade first; the role picker narrows the list. Rows that do not
-   fit wrap into a column beside the list and are clipped, so no row is ever cut in half or scrolled. */
+/* Available staff are many (about thirty): this one list scrolls (user, 2026-11-26: an exception to "nothing scrolls",
+   like the trade room's asset list). Its headings stay at the top while the rows move under them. */
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-staff-market-list {
-  flex: 1 1 0 !important; display: flex !important; flex-direction: column; flex-wrap: wrap; align-content: flex-start; align-items: flex-start; overflow: hidden !important; container-type: size;
+  flex: 1 1 0 !important; display: block !important; overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .28) transparent;
 }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-staff-market-list > * { flex: 0 0 auto; width: 100cqw !important; box-sizing: border-box; }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-staff-market-list > .season-staff-head { height: var(--full-head) !important; }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-staff-market-list > .season-staff-row { height: var(--full-row) !important; }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full [data-house-table="staff-market"] > [data-house-head] { width: 100cqw !important; height: var(--full-head) !important; }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full [data-house-table="staff-market"] > [data-house-row] { width: 100cqw !important; height: var(--full-row) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full [data-house-table="staff-market"] > [data-house-head] {
+  position: sticky !important; top: 0; z-index: 1; height: var(--full-head) !important;
+  background: color-mix(in srgb, var(--gm-glass-popup) 92%, transparent) !important; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full [data-house-table="staff-market"] > [data-house-row] { height: var(--full-row) !important; }
+
+/* ---------- Front Office > Draft: the prospect board (rows as many as fit, 34px to 42px; the board scrolls under its
+   headings, as it always has) with the draft-assets picture under it. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospects-panel { display: block !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospects-expanded-body { height: 100% !important; overflow: hidden !important; padding: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-list-expanded {
+  height: 100% !important; overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain; padding: 0 !important;
+  scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .28) transparent;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-table {
+  --full-head: 26px; width: 100% !important; height: auto !important; table-layout: fixed !important; border-collapse: separate !important; border-spacing: 0 !important; margin: 0 !important;
+  color: var(--gm-ink); font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; font-variant-numeric: tabular-nums;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-table thead th {
+  position: sticky !important; top: 0; z-index: 2; height: var(--full-head) !important; padding: 0 var(--gm-space-1) !important; box-sizing: border-box; vertical-align: middle; text-align: center;
+  background: rgb(from var(--gm-glass-popup) r g b / 1) !important; border: 0 !important; border-bottom: 1.5px solid var(--gm-line-strong) !important; box-shadow: none !important;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); overflow: visible !important; text-overflow: clip !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-table thead th > button {
+  display: inline-flex !important; align-items: center; gap: 3px; width: auto !important; height: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important;
+  background: transparent !important; border: 0 !important; box-shadow: none !important; color: var(--gm-ink) !important; letter-spacing: 0 !important; text-transform: none !important; white-space: nowrap; cursor: pointer;
+  font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-sort-arrow { font-size: calc(var(--gm-size-small) * .72) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-table th.season-prospect-col-rank { width: 56px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-table th.season-prospect-col-from { width: 170px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-table th.season-prospect-col-range { width: 230px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-table th.season-prospect-col-yours { width: 130px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-table th.season-prospect-col-scouted { width: 210px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-table thead th.is-name-col { text-align: left; padding-left: var(--gm-space-2) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-table tbody tr { height: var(--prospect-row, var(--gm-row-h)) !important; cursor: pointer; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-table tbody td {
+  height: var(--prospect-row, var(--gm-row-h)) !important; padding: 0 var(--gm-space-1) !important; box-sizing: border-box; vertical-align: middle; text-align: center; white-space: nowrap;
+  background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--gm-line-row) !important;
+  color: var(--gm-ink) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-table tbody tr:hover > td { background: var(--gm-glass-tile) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-table td.is-name-col { text-align: left !important; padding: 0 0 0 var(--gm-space-2) !important; vertical-align: bottom; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-name { display: flex !important; align-items: center; gap: var(--gm-space-2) !important; height: calc(var(--prospect-row, var(--gm-row-h)) - 1px) !important; min-height: 0 !important; min-width: 0; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-face { flex: 0 0 auto !important; align-self: flex-end; width: 34px !important; height: calc(var(--prospect-row, var(--gm-row-h)) - 2px) !important; max-height: 42px; min-height: 0 !important; overflow: hidden !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-face img { display: block !important; width: 100% !important; height: 100% !important; object-fit: cover !important; object-position: center top !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-id { display: flex !important; flex-direction: column; justify-content: center; min-width: 0; gap: 0 !important; text-align: left; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-id b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gm-ink) !important; font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-id small { display: block; white-space: nowrap; color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-table .ss-school { display: inline-flex !important; align-items: center; gap: var(--gm-space-2); font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-table .ss-school > span { font: inherit !important; color: var(--gm-ink) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-origin { flex: 0 0 22px !important; width: 22px !important; height: 22px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-flag { font-size: var(--gm-size-section) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-range { grid-template-columns: minmax(0, 1fr) !important; width: 100% !important; min-width: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-range-number { font: var(--gm-weight-regular) var(--gm-size-row)/1 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-range-number.is-ours { color: var(--gm-accent) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .ss-your-rank { display: inline-flex; align-items: baseline; justify-content: center; gap: var(--gm-space-1); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .ss-your-rank > b { font: var(--gm-weight-regular) var(--gm-size-row)/1 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .ss-rank-diff { font: var(--gm-weight-bold) var(--gm-size-small)/1 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .ss-rank-diff.is-up { color: var(--gm-good) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .ss-rank-diff.is-down { color: var(--gm-bad) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .ss-scouted strong { font: var(--gm-weight-regular) var(--gm-size-row)/1 var(--gm-font) !important; }
+/* The key to the range bars stays under the board while the rows move. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-legend {
+  position: sticky; bottom: 0; z-index: 2; display: flex !important; justify-content: center; align-items: center; flex-wrap: nowrap; gap: var(--gm-space-5); height: 26px; padding: 0 !important; box-sizing: border-box;
+  background: rgb(from var(--gm-glass-popup) r g b / 1) !important; border-top: 1px solid var(--gm-line-row);
+  color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-prospect-legend > span { display: inline-flex; align-items: center; gap: var(--gm-space-2); font: inherit !important; color: inherit !important; }
+
+/* ---------- League > Playoff Stats: the leaders table (14 columns) and the injuries table side by side, each at real
+   sizes. Rows are the page row height (34px); both lists are long (every playoff player, every injury), so each scrolls under
+   its headings, as they always have. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full :is(.phase-leaders-panel, .playoff-injuries-panel).playoff-stats-panel {
+  display: flex !important; flex-direction: column; flex: 1 1 auto; width: auto !important; height: auto !important; min-width: 0; min-height: 0;
+  padding: 0 !important; margin: 0 !important; overflow: visible !important; background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .seasonal-clipboard-card:has(.playoff-stats-panel) { display: flex !important; flex-direction: column; flex: 1 1 auto; width: auto !important; height: auto !important; min-height: 0; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-scroll { flex: 1 1 0; min-height: 0; overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .28) transparent; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-table {
+  --full-head: 26px; width: 100% !important; min-width: 0 !important; max-width: none; table-layout: fixed !important; border-collapse: separate !important; border-spacing: 0 !important; margin: 0 !important;
+  height: auto !important;
+  background: transparent !important; color: var(--gm-ink); font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; font-variant-numeric: tabular-nums;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-table thead th {
+  position: sticky !important; top: 0; z-index: 1; height: var(--full-head) !important; padding: 0 1px !important; box-sizing: border-box; vertical-align: middle; text-align: center;
+  background: color-mix(in srgb, var(--gm-glass-popup) 92%, transparent) !important; border: 0 !important; border-bottom: 1.5px solid var(--gm-line-strong) !important; box-shadow: none !important; overflow: visible !important; text-overflow: clip !important;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-table thead th > button {
+  display: inline-flex !important; align-items: center; justify-content: center; gap: 3px; width: auto !important; height: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important;
+  background: transparent !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  color: var(--gm-ink) !important; letter-spacing: 0 !important; text-transform: none !important; white-space: nowrap; cursor: pointer;
+  font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-table thead th .sort-tri { font-size: calc(var(--gm-size-small) * .72) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-table thead th.is-name-col, html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-table thead th.is-name-col > button { text-align: left; justify-content: flex-start; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-table thead th.is-name-col { padding-left: var(--gm-space-2) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-table tbody tr, html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-table tbody tr:nth-child(even) { background: transparent !important; height: var(--gm-row-h); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-table tbody :is(th, td) {
+  height: var(--gm-row-h) !important; padding: 0 2px !important; box-sizing: border-box; vertical-align: middle; text-align: center; white-space: nowrap;
+  background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--gm-line-row) !important;
+  color: var(--gm-ink) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; overflow: hidden; text-overflow: ellipsis;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-table tbody tr:is(:hover, :focus-within) > :is(th, td) { background: var(--gm-glass-tile) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-table tbody :is(th, td).is-name-col { text-align: left !important; padding: 0 0 0 var(--gm-space-2) !important; vertical-align: bottom; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-player-link {
+  display: flex !important; align-items: center; gap: var(--gm-space-1); width: 100% !important; min-width: 0; height: calc(var(--gm-row-h) - 1px) !important; max-height: none !important; min-height: 0 !important;
+  margin: 0 !important; padding: 0 var(--gm-space-1) 0 0 !important; background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+  color: var(--gm-ink) !important; text-align: left; text-decoration: none !important; cursor: pointer;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-player-link:is(:hover, :focus-visible) { text-decoration: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-player-link .player-headshot-frame {
+  position: static !important; flex: 0 0 auto; align-self: flex-end; width: 26px !important; height: calc(100% - 1px) !important; max-height: 40px !important; min-height: 0 !important;
+  margin: 0 !important; background: none !important; border: 0 !important; border-radius: 0 !important; overflow: hidden !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-player-link .roster-player-headshot { display: block !important; width: 100% !important; height: 100% !important; object-fit: cover !important; object-position: center top !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-rank { flex: 0 0 auto; color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; min-width: 16px; text-align: right; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-player-link .player-name-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gm-ink) !important; font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-table tbody tr.is-user-team .player-name-text { color: var(--gm-accent) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-table tbody tr.is-user-team > .playoff-stats-col-player { box-shadow: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-team { display: flex; align-items: center; justify-content: flex-start; gap: var(--gm-space-1); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-team img { width: 20px !important; height: 20px !important; object-fit: contain; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-table tbody .playoff-stats-col-team { text-align: left !important; padding-left: 4px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-table thead .playoff-stats-col-team { text-align: left !important; padding-left: 4px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-table thead .playoff-stats-col-team > button { justify-content: flex-start; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-panel .playoff-stats-empty td { text-align: center; color: var(--gm-ink-2) !important; }
+/* Leaders: player takes what is left; the other thirteen columns are fixed. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-leaders-panel .playoff-stats-table col { width: 36px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-leaders-panel .playoff-stats-table col:nth-child(1) { width: auto !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-leaders-panel .playoff-stats-table col:nth-child(2) { width: 62px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-leaders-panel .playoff-stats-table col:nth-child(3) { width: 28px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-leaders-panel .playoff-stats-table col:nth-child(n+12) { width: 40px !important; }
+/* Injuries: your team / playoff teams switch and the count over the table; the ratings with their small bars. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-toolbar {
+  flex: 0 0 auto; display: flex !important; align-items: center; justify-content: space-between; gap: var(--gm-space-3); height: 34px; margin: 0 !important; padding: 0 var(--gm-space-2) !important; box-sizing: border-box;
+  background: transparent !important; border: 0 !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-scope { display: inline-flex !important; overflow: hidden; height: 26px; background: var(--gm-glass-tile); border: 1px solid var(--gm-line); border-radius: var(--gm-radius-pill); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-scope button {
+  height: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 var(--gm-space-3) !important; border-radius: var(--gm-radius-pill) !important; background: transparent !important; border: 0 !important; box-shadow: none !important;
+  color: var(--gm-ink-2) !important; font: var(--gm-weight-semibold) var(--gm-size-small)/1 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-scope button[aria-pressed="true"] { background: var(--gm-glass-button) !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22) !important; color: var(--gm-ink) !important; font-weight: var(--gm-weight-bold) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-scope button:hover:not([aria-pressed="true"]) { background: var(--gm-glass-tile) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-count { color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table col { width: 36px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table col:nth-child(1) { width: auto !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table col:nth-child(2) { width: 62px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table col:nth-child(6) { width: 104px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table col:nth-child(7) { width: 88px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table tbody :is(.playoff-stats-col-status, .playoff-stats-col-back), html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table thead :is(.playoff-stats-col-status, .playoff-stats-col-back) { text-align: center !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injury-rating { display: grid !important; grid-template-columns: 20px 14px !important; align-items: center; justify-content: center; gap: var(--gm-space-1) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injury-rating > em { text-align: right; font: var(--gm-weight-bold) var(--gm-size-row)/1 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injury-rating > i { display: block; height: 5px !important; background: var(--gm-line) !important; border-radius: var(--gm-radius-pill); overflow: hidden; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injury-rating > i > b { border-radius: var(--gm-radius-pill); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injury-status { display: flex; align-items: center; justify-content: flex-start; gap: var(--gm-space-1); max-width: 100%; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injury-status.is-out .season-injury-status, html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injury-status .season-injury-status { color: var(--gm-must) !important; font: var(--gm-weight-bold) var(--gm-size-row)/1 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injury-status.is-returning { color: var(--gm-bad) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-col-back small { color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1 var(--gm-font) !important; }
+
+/* ---------- League > Playoffs: the bracket is a picture. Its card is drawn at its own size (card-pages.js) and enlarged or
+   shrunk as one piece. Only its boxes change look: glass with a hairline instead of the old white fill, white text,
+   the round names at the row size. The structure, lines and content are the card's own. Your team's series has a
+   blue edge. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-bracket-shell .series-card {
+  background: var(--gm-glass-tile) !important; border: 1px solid var(--gm-line) !important; border-radius: var(--gm-radius-tile) !important; box-shadow: none !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important; color: var(--gm-ink) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-bracket-shell .series-card-button:hover, html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-bracket-shell .series-card-button:focus-visible { background: var(--gm-glass-tile-hover) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-bracket-shell .series-card[data-yours="true"] {
+  background: color-mix(in srgb, var(--gm-accent) 16%, transparent) !important; border-color: var(--gm-accent) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-bracket-shell .series-card[data-yours="true"]:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--gm-accent) 24%, transparent) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-bracket-shell .series-team :is(strong, span) { color: var(--gm-ink) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-bracket-shell .series-team + .series-team { border-top-color: var(--gm-line) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-bracket-shell .series-team-winner :is(strong, span) { font-weight: var(--gm-weight-bold) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-bracket-shell .series-team-loser { opacity: .6 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-bracket-shell .series-card:not(:has(img)) .series-team strong { color: var(--gm-ink-3) !important; font-size: var(--gm-size-row) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-bracket-shell .bracket-round-title { color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; letter-spacing: 0 !important; text-transform: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-bracket-shell .bracket-conference-title { color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-section)/1.2 var(--gm-font) !important; letter-spacing: 0 !important; text-transform: none !important; }
+
+/* ---------- Team > Two-Way Places, and the Opening Roster / cutdown step screens (one card): the roster table at full size
+   (the user's favourite: every column, the Keep | Waive | Buy out pill and the two-way places stay), rows sharing the
+   height up to 34px, the two-way places under it as a section, and the footer with the counts and "Roster set". */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-workspace { display: flex !important; flex-direction: column; flex: 1 1 auto; width: auto !important; height: auto !important; min-width: 0; min-height: 0; margin: 0 !important; padding: 0 !important; background: transparent !important; border: 0 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .seasonal-clipboard-card:has(.cutdown-workspace) { display: flex !important; flex-direction: column; flex: 1 1 auto; width: auto !important; height: auto !important; min-height: 0; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-scroll { flex: 1 1 0; min-height: 0; overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .28) transparent; padding: 0 !important; background: transparent !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table {
+  --full-head: 26px; width: 100% !important; min-width: 0 !important; max-width: none; table-layout: fixed !important; border-collapse: separate !important; border-spacing: 0 !important; margin: 0 !important;
+  height: min(100%, calc(var(--full-head) + var(--full-rows, 18) * var(--gm-row-h))) !important;
+  background: transparent !important; color: var(--gm-ink); font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; font-variant-numeric: tabular-nums;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table col { width: 50px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table col:nth-child(1) { width: auto !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table col:nth-child(2) { width: 52px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table col:nth-child(3) { width: 48px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table col:nth-child(4) { width: 52px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table col:nth-child(5) { width: 260px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table col:nth-child(6) { width: 118px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table col:nth-child(7) { width: 96px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table col:nth-child(8) { width: 128px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table col:nth-child(9) { width: 240px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table thead th {
+  position: sticky !important; top: 0; z-index: 1; height: var(--full-head) !important; padding: 0 var(--gm-space-1) !important; box-sizing: border-box; vertical-align: middle; text-align: center; white-space: nowrap;
+  background: color-mix(in srgb, var(--gm-glass-popup) 92%, transparent) !important; border: 0 !important; border-bottom: 1.5px solid var(--gm-line-strong) !important; box-shadow: none !important;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: var(--gm-ink) !important; letter-spacing: 0 !important; text-transform: none !important;
+  font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important; overflow: hidden; text-overflow: ellipsis;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table thead th .sort-label, html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table thead th .sort-tri { font: inherit !important; color: inherit !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table thead th .sort-tri { font-size: calc(var(--gm-size-small) * .72) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table thead th:first-child { text-align: left; padding-left: var(--gm-space-2) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table tbody tr { background: transparent !important; height: 1px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table tbody :is(th, td) {
+  height: auto !important; padding: 0 2px !important; box-sizing: border-box; vertical-align: middle; text-align: center; white-space: nowrap;
+  background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--gm-line-row) !important; box-shadow: none !important;
+  color: var(--gm-ink) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; overflow: hidden; text-overflow: ellipsis;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table tbody tr:not(.cutdown-section-row):hover > :is(th, td) { background: var(--gm-glass-tile) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table tbody th.is-name-col { text-align: left !important; padding: 0 0 0 var(--gm-space-2) !important; vertical-align: bottom; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-player { display: flex !important; align-items: center; gap: var(--gm-space-2); padding: 0 !important; margin: 0 !important; min-width: 0; height: calc(var(--full-row-px, var(--gm-row-h)) - 1px); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-player .player-headshot-frame { position: static !important; flex: 0 0 auto; align-self: flex-end; width: 28px !important; height: 100% !important; max-height: 40px !important; min-height: 0 !important; margin: 0 !important; background: none !important; border: 0 !important; border-radius: 0 !important; overflow: hidden !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-player .roster-player-headshot { display: block !important; width: 100% !important; height: 100% !important; object-fit: cover !important; object-position: center top !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-player-name {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: auto !important; height: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important;
+  background: transparent !important; border: 0 !important; box-shadow: none !important; color: var(--gm-ink) !important; text-align: left; text-decoration: none !important; cursor: pointer;
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-player .season-injury-status { flex: 0 0 auto; color: var(--gm-must) !important; font: var(--gm-weight-bold) var(--gm-size-row)/1 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-ovr { font: var(--gm-weight-bold) var(--gm-size-row)/1 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table .season-minute-roles { display: inline-flex !important; flex-direction: row !important; align-items: center; justify-content: center; gap: var(--gm-space-2); min-width: 0; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table .role-text { white-space: nowrap; overflow: visible !important; text-overflow: clip !important; font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table :is(.cutdown-guarantee, .cutdown-cost, .cutdown-quote) { font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; color: var(--gm-ink) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table .cutdown-guarantee small, html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table .cutdown-tag { color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font) !important; margin-left: var(--gm-space-1); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table tr.is-releasing .cutdown-player-name { color: var(--gm-bad) !important; }
+/* The two-way places: a section heading in the table, then their rows. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table .cutdown-section-row > th {
+  position: relative; text-align: left !important; vertical-align: middle; padding: 0 var(--gm-space-2) !important; overflow: visible !important;
+  font: var(--gm-weight-bold) var(--gm-size-section)/1.2 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table .cutdown-section-row > th > span { display: inline !important; color: var(--gm-ink) !important; font: inherit !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-details { display: inline-block; position: relative; margin-left: var(--gm-space-3); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-details > summary { display: inline; cursor: pointer; list-style: none; color: var(--gm-accent) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-details > summary::-webkit-details-marker { display: none; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-details > p {
+  position: absolute; z-index: 5; left: 0; top: calc(100% + var(--gm-space-1)); width: 420px; margin: 0 !important; padding: var(--gm-space-3) !important; white-space: normal;
+  background: var(--gm-glass-popup) !important; border: 1px solid var(--gm-line) !important; border-radius: var(--gm-radius-tile) !important; box-shadow: none !important;
+  color: var(--gm-ink) !important; text-align: left; font: var(--gm-weight-regular) var(--gm-size-row)/1.4 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-details.is-foot > p { top: auto; bottom: calc(100% + var(--gm-space-2)); left: auto; right: 0; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table .cutdown-tw-row .cutdown-choice:not(.is-slider) { display: inline-flex; justify-content: center; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table .cutdown-tw-row .cutdown-choice:not(.is-slider) > button { font: var(--gm-weight-semibold) var(--gm-size-row)/1 var(--gm-font) !important; }
+/* Keep | Waive | Buy out: the same long pill, its text at the row size. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table .cutdown-choice.is-slider > button { font: var(--gm-weight-semibold) var(--gm-size-row)/1 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-table .cutdown-choice.is-slider > button.is-active { font-weight: var(--gm-weight-bold) !important; }
+/* The footer: what is needed, the counts, the rules, the one button. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-foot {
+  flex: 0 0 auto; display: flex !important; align-items: center; gap: var(--gm-space-5); min-height: 44px; margin: 0 !important; padding: var(--gm-space-1) var(--gm-space-2) 0 !important; box-sizing: border-box;
+  background: transparent !important; border: 0 !important; border-top: 1px solid var(--gm-line-row) !important; box-shadow: none !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-foot-status { flex: 1 1 0; min-width: 0; display: block !important; color: var(--gm-ink) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.3 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-foot-status :is(strong, span) { color: inherit !important; font: inherit !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-foot-status > span { display: block; color: var(--gm-ink-2) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-foot-count { flex: 0 0 auto; display: inline-flex !important; align-items: baseline; gap: var(--gm-space-1); color: var(--gm-ink) !important; white-space: nowrap; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-foot-count > b { font: var(--gm-weight-bold) var(--gm-size-figure)/1 var(--gm-font) !important; color: var(--gm-ink) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-foot-count.is-ready > b:first-child { color: var(--gm-good) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-foot-count > i { margin: 0 var(--gm-space-2); font-style: normal; color: var(--gm-ink-2); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-foot .cutdown-confirm {
+  flex: 0 0 auto; display: inline-flex !important; align-items: center; justify-content: center; height: 30px !important; min-height: 0 !important; margin: 0 !important; padding: 0 var(--gm-space-4) !important;
+  border-radius: var(--gm-radius-pill) !important; background: var(--gm-glass-button) !important; border: 1px solid rgba(255, 255, 255, .22) !important; box-shadow: none !important;
+  color: var(--gm-ink) !important; font: var(--gm-weight-semibold) var(--gm-size-row)/1 var(--gm-font) !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-foot .cutdown-confirm:hover:not(:disabled) { background: var(--gm-glass-button-hover) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .cutdown-foot .cutdown-confirm:disabled { opacity: .6; cursor: default; }

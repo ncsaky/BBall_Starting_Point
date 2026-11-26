@@ -325,8 +325,11 @@ its sections share the page's width and height. The rules live in `gui/full-page
 - **The same rows in two tables are two tabs of one page** (Team: Roster | Stats).
 - **Nothing is cut to make room.** If a name cannot fit it ends in an ellipsis; a role never does (give the column
   the width). A long to-do job takes a second line.
-- **Rebuilt so far:** Home (every phase), Schedule, Roster, Stats, Development, Staff, Identity, Profile, Contracts,
-  Trades, Standings. Not yet: Draft, News, Awards, the playoff tabs, Two-Way Places and the step screens.
+- **Rebuilt so far:** every tab of the four sidebar pages, and the Opening Roster step (it shares its table with
+  Two-Way Places). Not yet: the other step screens (Set The Roster, who to keep, the draft room, free agency). News
+  and Awards are enlarged whole and still leave empty room.
+- **Lists that may scroll** (the user's exceptions to "nothing scrolls"): available staff; the draft prospect board
+  and the playoff tables scrolled before and still do. Their headings stay pinned.
 
 ## Preserve (the user's favourites; don't redesign)
 - Team Identity heat maps at the current hexagon size (round 3: "looks great"). The tab style there still needs a new try.

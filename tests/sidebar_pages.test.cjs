@@ -311,3 +311,29 @@ test('Staff, Identity and Profile are full-size tabs; the heat maps and charts k
   assert.equal(picture('identity', 'identity').natural, 'fit');
   for (const card of ['offense', 'defense', 'factors', 'efficiency']) assert.equal(picture('profile', card).natural, 'fit');
 });
+
+test('Draft, News and Awards are full-size tabs; the pictures keep their proportions', () => {
+  const {pages} = load();
+  const layoutOf = (id) => pages.PAGES.find((page) => page.id === id).layout({available: () => true});
+  for (const [id, cards] of [['scouting', ['prospects', 'picks']], ['news', ['league-wire']], ['awards', ['award-mvp', 'award-dpoy', 'award-roty']]]) {
+    const layout = layoutOf(id);
+    assert.ok(layout.full, `${id} is laid out at real sizes`);
+    assert.deepEqual(Array.from(cardsOf(layout), (node) => node.id), cards);
+  }
+  const draft = cardsOf(layoutOf('scouting'));
+  assert.equal(draft[0].natural, undefined, 'the prospect board is laid out at real sizes');
+  assert.equal(draft[1].natural, 'fit', 'the draft-assets grid keeps its proportions');
+  for (const node of [...cardsOf(layoutOf('news')), ...cardsOf(layoutOf('awards'))]) assert.equal(node.natural, 'fit', node.id);
+});
+
+test('Playoff Stats, Playoffs and Two-Way Places are full-size tabs; the bracket keeps its proportions', () => {
+  const {pages} = load();
+  const layoutOf = (id) => pages.PAGES.find((page) => page.id === id).layout({available: () => true});
+  for (const [id, cards] of [['playoff-stats', ['phase-playoffs-leaders', 'phase-playoffs-injuries']], ['playoffs', ['phase-playoffs-bracket']], ['roster-moves', ['phase-cutdown-decision']]]) {
+    const layout = layoutOf(id);
+    assert.ok(layout.full, `${id} is laid out at real sizes`);
+    assert.deepEqual(Array.from(cardsOf(layout), (node) => node.id), cards);
+  }
+  assert.equal(cardsOf(layoutOf('playoffs'))[0].natural, 'fit', 'the bracket is enlarged as one picture');
+  assert.equal(cardsOf(layoutOf('roster-moves'))[0].natural, undefined, 'the roster table is laid out at real sizes');
+});
