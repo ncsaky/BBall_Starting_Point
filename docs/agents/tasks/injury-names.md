@@ -1,6 +1,6 @@
 # INJURY-NAMES: injury names agree with how long players are out
 
-Progress: 7/7 - waiting on the full test run
+Progress: 7/7 - done, ready for review
 
 ## Summary (plain language)
 
@@ -85,7 +85,9 @@ three seasons.
 
 - New tests: `tests/test_injury_names.py`. Updated: `tests/test_injury_anchor.py` (checks the drawn mix against the real
   records), `tests/test_injuries_2.py` (new file layout). All injury test modules and the related save tests pass.
-- Full suite: running on the Azure pool (result below).
+- Full suite on the Azure pool: 2,624 Python tests, 35 skipped, 15 failures or errors. All 15 fail the same way on the
+  unchanged parent commit `9ec8eaad` (packaging, two screen-style checks, thin-sample rating and experimental-engine
+  tests), so none come from this change. The browser tests were not part of the run.
 - Not run: the betting-odds test and the real-stat scorecard (season-one games missed are essentially unchanged).
 - Not checked by eye in the browser.
 - Old saves keep their existing injuries; only new draws use the new model.
@@ -100,4 +102,4 @@ Raw before/after output: `output/injury-names/`.
 
 ## Resume state
 
-Code, model and report done on branch `claude/loving-chatelet-4c6b58`. Waiting only on the full test run.
+Code, model, report and full test run done on branch `claude/loving-chatelet-4c6b58`. Ready for review and merge.
