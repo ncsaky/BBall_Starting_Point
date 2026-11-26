@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 0/9 - not started
+Progress: 6/9 - Stage A done and published; stopped at the checkpoint, waiting for the user's eight decisions
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -100,6 +100,53 @@ and first run, and the token sheet. End with a short list of decisions the user 
 - Keep this file's Progress line and resume state current; reread it after any context compaction.
 
 ## Resume state
-- [ ] Stage A
+- [x] Stage A: done 2026-11-25, published as one page: https://claude.ai/artifact/5BDfbWFKX68gDLMaKUqKLJ ("Polish Pass Stage A").
+      **Waiting on the user's eight decisions** (they save into the page's `decisions` collection; read them with the
+      artifact data tool before starting Stage B).
 - [ ] Stage B
 - [ ] Stage C
+
+## Stage A report (2026-11-25)
+
+Nothing in `src/` changed. Stage A is the audit and the design.
+
+**What was done**
+1. 45 screens captured at 12 points of the game year, from copies of the test saves on a private server (port 8775,
+   launch entry `polish-preview`). Not captured: the extension card and the shortcut list (would not open from the
+   script), fantasy draft, staff retention, multiplayer (no test save reaches them).
+2. Phase map: seven phases, the one button of each, what blocks it, what is open and what is closed.
+3. Main progress screen: Home becomes it (year strip, a to-do list with required jobs first, one button that only
+   moves time). Mockup with nine phase states.
+4. First run: four short screens, then the Preseason Outlook, then Home (today: 9 slides + 11 text cards).
+5. Style values: 7 text sizes, 3 weights, 4 corner sizes, about 20 colours, 4 motion timings, 5 glass levels, and a
+   sound plan made in the browser (11 draft sounds, playable on the page).
+6. Page-by-page list with measurements, and before/after mockups for Home, Roster and Trades.
+
+**Measurements (regular-season save, 1512 x 900; share of page covered by cards / share of text under 11px)**
+Home 59% / 86%, Roster 52% / 23%, Trades 43% / 72%, Contracts 57% / 19%, Schedule 94% / 8%, Standings 73% / 1%,
+Development 62% / 84%, Team Identity 57% / 28%, Scouting 61% / 71%, Awards 42% / 3%, Two-Way Places 86% / 15%.
+Stylesheets today: 24 files, 28,116 lines, 86 text sizes, 21 weights, 44 corner sizes, 1,340 colour values, 60 motion
+timings, 4,014 `!important`.
+
+**Findings worth keeping**
+- A new save starts on Oct 20 (the day before opening night), in preseason, not in the offseason. Its phase chip reads
+  "Step 4 of 4" and the first screen is the keep-or-waive table.
+- The footer button means three things (go to another screen, move time, return to a step).
+- Home is dead outside the season ("No upcoming game", "No standings yet").
+- White or cream fills on glass: trade market header, free-agency cap strip, playoff bracket boxes, the deadline-day
+  calendar square, the date strip in the deadline and season-end prompts (text nearly invisible). Black bars in the box
+  score. The start screen, first-run guide and command list are still the old grey style.
+- Draft night shows three equal buttons; on the path from the offseason checklist the lottery reveal never appeared.
+- Rule gaps: minutes, waive/buy out and the trade block have no phase rule; the post-deadline trade block and the
+  pending-coach-decision block are enforced only in the browser (engine side is outside this task: for the
+  coordinator); the `draft_lottery` phase name is never entered; there is no All-Star break.
+
+**Working files (git-ignored, in this worktree's `output/ui-polish/`)**
+`make_stages.py` (builds save copies at each phase; each copy gets its own history file, which a plain file copy
+breaks), `shots.mjs` + `scn/*.mjs` (headless screenshots and table scraping), `site/` (the published page:
+`src.html` is the source, `index.html` the built file, `shots/`, `faces/`, `img/`).
+
+**Decisions asked of the user**
+1. Home becomes the progress screen. 2. What the button does when a job blocks it. 3. First run. 4. Smallest text
+(11px floor proposed). 5. Italic (never, proposed). 6. Two tables with the same rows (one table with a picker,
+proposed). 7. Sound. 8. Things shown twice.
