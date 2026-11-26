@@ -47,7 +47,11 @@ STEALS_INPUTS = {"constant": -0.76884, "S43": 0.01181, "S42": 0.00667}  # r 0.92
 # negative sign; the technique grades are built from the same steal record), so gambling shows up as fouls
 # (FOULS_INPUTS), not extra steals. No team-defence penalty either: teams that gamble more defended better in 2025-26
 # (r -0.69 with defensive rating), so the data cannot separate a gambling cost from the skill behind it.
-FTA_PER_POINT_INPUTS = {"constant": -0.70954, "log T18": 2.06953, "S24": 0.00406, "log T08": -0.52594}  # r 0.89
+# Refitted 2026-11-25 (RATINGS-FIVE-INPUTS) with scripts/fit_box_stat_rates.py after contact seeking (T18) became a per-shot
+# rate: it used to be built from free throws per 75 possessions, which carried shot volume, and the -0.53 involvement term
+# here cancelled it. On the corrected inputs the involvement term shrinks to -0.14; out-of-fold r 0.873 (old coefficients
+# on the new inputs) -> 0.916. Previous: constant -0.70954, log T18 2.06953, S24 0.00406, log T08 -0.52594.
+FTA_PER_POINT_INPUTS = {"constant": -0.31016, "log T18": 1.92826, "S24": 0.00366, "log T08": -0.13616}  # r 0.92
 
 # Points per 36: involvement (T08), shoot-first vs pass-first choices (T01 shoot +, pass -), close-range touch (S10)
 # and contact seeking (T18, free throws). Sets each player's share of the team's points (sim.distribute_player_lines).
@@ -55,8 +59,12 @@ FTA_PER_POINT_INPUTS = {"constant": -0.70954, "log T18": 2.06953, "S24": 0.00406
 # his shooting-mode habit T03) and the cutting habit (T09: cutters score more off the ball at the same involvement).
 # Without the shooting term, pure shooters were handed fewer points than their own made threes add up to (AJ Green 11.4
 # per 36 vs 12.8 real). Out-of-fold r 0.933 -> 0.940, mean abs error 1.45 -> 1.35 (shooting alone: 0.938 / 1.37).
-POINTS_INPUTS = {"constant": 3.95082, "log T08": 0.88387, "log T01.pass": -0.27562, "log T01.shoot": 0.2955,
-                 "S10": 0.00345, "log T18": 0.33929, "S.three_mode": 0.0024, "log T09": 0.13677}  # r 0.94
+# Refitted 2026-11-25 (RATINGS-FIVE-INPUTS, scripts/fit_box_stat_rates.py) on the rebuilt inputs: per-shot contact seeking
+# (T18 weight 0.34 -> 0.23) and the measured shot-location and transition habits. Out-of-fold r 0.94, mean abs error
+# 1.35, as before. Previous: constant 3.95082, log T08 0.88387, log T01.pass -0.27562, log T01.shoot 0.2955, S10 0.00345,
+# log T18 0.33929, S.three_mode 0.0024, log T09 0.13677.
+POINTS_INPUTS = {"constant": 3.89466, "log T08": 0.95809, "log T01.pass": -0.29506, "log T01.shoot": 0.295,
+                 "S10": 0.00355, "log T18": 0.23492, "S.three_mode": 0.00268, "log T09": 0.14299}  # r 0.94
 # Fallback for new-ratings players without inputs (generated draftees, unmatched box-score names).
 POINTS_TRAITS = {"constant": 1.71917, "handle_pressure": 0.0082, "shot_versatility": 0.00591, "rim_pressure": 0.00507,
                  "shooting_range": 0.00155}  # r 0.78

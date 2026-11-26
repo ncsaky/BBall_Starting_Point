@@ -1,5 +1,5 @@
 {
- "version": "bbi_input_mapping_v7_2026_11_23",
+ "version": "bbi_input_mapping_v8_2026_11_25",
  "notes": "Reviewed map from Basketball Index (BBI) metric names to the 94 approved player-model inputs. Metric names only; BBI definition text stays in the git-ignored capture catalog. Layers are kept separate: technique inputs (S/F) use rate, per-shot or versus-expected quality metrics; tendency inputs (T) use frequencies, shares and attempt rates; physical inputs (P) use only listed height/weight and weak in-game speed; coach usage, teammates, opponents and on/off impact are context only. direction: +1 means a higher metric value means more of the input (better skill, larger tool, or more frequent choice); -1 the reverse. Direction is about the raw BBI value; check whether a capture stores a percentile already ordered by desirability before applying it. strength: primary = the most direct available measure; supporting = relevant but mixed with other factors; weak = indirect, use only as a small nudge. Every BBI result is an effective on-court observation that also contains physical tools, role and teammates. It constrains the estimate; it is not 'technique only'. Metrics named '... Per 75' must be divided by the relevant exposure (touches, drives, attempts, contests) before informing a skill. A metric listed under several inputs is one shared signal (one correlation group), never independent evidence. BBI 'Talent' grades fold in volume or self-creation, so per-shot 'Shot Making Efficiency' and 'Stable' percentages are preferred as primary. Passing families share three generic recognition metrics and two generic execution metrics; only drive-and-kick, connector, skip and outlet passes have any family-specific signal. For distribution inputs, outcome names the registry outcome the metric informs; T02 outcomes three_corner_share and three_deep_share describe detail within the three region. volume (2026-11-19): a metric for a secondary shot type (pull-up, movement, deep) may carry {\"per75\": metric, \"minus\": optional metric, \"half\": n}; its weight in a season is multiplied by attempts / (attempts + half), attempts = (per75 - minus) / 75 x minutes x 99/48. A pull-up or off-screen percentage on a handful of attempts (or one shrunk to the league mean) no longer outweighs the player's three-point or midrange shooting as a whole, which stays ungated as the fallback (talent metrics include volume, so non-shooters stay low). measured_by (2026-11-21, RATINGS-FT-TOV): an input whose entry names a module is measured there from opportunity-adjusted counts (foul_security_evidence: free throws and turnovers against what an average player earns or commits from the same chances); the overlay skips it so the same data is not counted twice, and its metric list stays as the record of what Basketball Index offers. INPUT-DATA-FIXES (2026-11-23): vote_group names near-copies of one measurement (rank r above 0.98 in every build season); the overlay counts a group as one vote, weighted like its strongest member, so the same signal is not counted twice. valid_range [lo, hi] marks a rate that cannot fall outside that range; a player-season outside it is a capture or denominator error and is not read (the input itself is never capped). Removed columns are listed under excluded with the reason.",
  "inputs": {
   "P01": {
@@ -2209,7 +2209,8 @@
     }
    ],
    "coverage": "good",
-   "gap_note": "No left/right side data and no explicit short-paint attempt count (derive by subtraction). Outcomes ending in _share are within-three detail, not a fifth region."
+   "gap_note": "No left/right side data and no explicit short-paint attempt count (derive by subtraction). Outcomes ending in _share are within-three detail, not a fifth region. Measured since 2026-11-25 by bbi_evidence.apply_measured_shot_mix: rim attempts and the other twos per season, the other twos split into short paint and midrange by their average distance (fitted on the charted players); the three share stays from season attempts.",
+   "measured_by": "bbi_evidence.apply_measured_shot_mix"
   },
   "T03": {
    "name": "Shooting-mode preferences",
@@ -2608,18 +2609,26 @@
      "direction": 1,
      "strength": "supporting",
      "outcome": null,
-     "why": "Free-throw attempts; divide by shot attempts for a free-throw rate."
+     "why": "Free throws per shot attempt (free-throw attempt rate). Divided by attempts since 2026-11-25: per 75 possessions it mostly measured how often a player shoots (r .60 with involvement).",
+     "per_sum": [
+      "Stable 2PTA Per 75",
+      "3PT FGA Per 75 Possessions"
+     ]
     },
     {
      "metric": "Stable Fouls Drawn Per 75",
      "direction": 1,
      "strength": "weak",
      "outcome": null,
-     "why": "All fouls drawn."
+     "why": "All fouls drawn per shot attempt (divided since 2026-11-25, as above).",
+     "per_sum": [
+      "Stable 2PTA Per 75",
+      "3PT FGA Per 75 Possessions"
+     ]
     }
    ],
    "coverage": "partial",
-   "gap_note": "Cannot separate seeking contact (tendency) from skill at drawing fouls; per-attack foul rates stay with the foul-drawing skill. Stable Shooting Fouls Drawn Per 75 removed 2026-11-21: the captured column is zero for every player in every season, so it ranked everyone the same and pulled every contact-seeking value toward the middle (its season-to-season check read the identical tie order as perfect repeatability)."
+   "gap_note": "Cannot separate seeking contact (tendency) from skill at drawing fouls; per-attack foul rates stay with the foul-drawing skill. Stable Shooting Fouls Drawn Per 75 removed 2026-11-21: the captured column is zero for every player in every season, so it ranked everyone the same and pulled every contact-seeking value toward the middle (its season-to-season check read the identical tie order as perfect repeatability). RATINGS-FIVE-INPUTS 2026-11-25: both counts are now per shot attempt, matching the input's reference condition (one scoring attempt); the per-75 versions ranked high-usage players as contact seekers."
   }
  },
  "context_only": [
