@@ -188,3 +188,124 @@ test('storylines on the page: dated steps, escaped names, a decision date only w
   assert.doesNotMatch(load(empty).markup(), /<h2>Storylines<\/h2>/, 'no block when there is no story');
 });
 
+// ---------- Storylines from the home_storylines action: trade talks that reveal more each round, bidding, streaks,
+// key injuries, coaches under pressure.
+const talk = (rounds, extra = {}) => ({key: 'hou|sac|p_murray', player: {player_id: 'p_murray', name: 'Keegan Murray', headshot_url: '/m.png', team: 'SAC'}, buyer: 'HOU', buyer_conference: 'West', seller: 'SAC', opened: '2026-11-27', status: 'open', rounds, ...extra});
+const round = (date, offer, final_by = []) => ({date, offer: {HOU: offer, SAC: ['Keegan Murray']}, final_by});
+const quiet = () => {
+  const state = season();
+  state.home.league_events.events = [];
+  state.data.tradeMarket = {shopped: []};
+  state.data.dashboardMorale.players = [];
+  return state;
+};
+const lines = (state, key) => {
+  const thread = Array.from(load(state).storylines(state, 'OKC')).find((item) => item.key === key);
+  return thread ? {status: thread.status, name: thread.name, closed: thread.closed, steps: Array.from(thread.steps, (step) => `${step.date} ${step.text}`)} : null;
+};
+
+test('trade talks reveal a piece at a time: two teams, then the player, then the offer, then the end', () => {
+  const state = quiet();
+  state.data.homeStories = {date: '2026-12-25', talks: [talk([round('2026-11-27', ['Tari Eason'])])]};
+  const first = lines(state, 'talks:hou|sac|p_murray');
+  assert.deepEqual(first.steps, ['2026-11-27 HOU and SAC opened trade talks']);
+  assert.equal(first.name, 'HOU and SAC', 'the player is not named yet');
+  assert.doesNotMatch(load(state).markup(), /Keegan Murray/, 'and he is nowhere on the page');
+
+  state.data.homeStories.talks = [talk([round('2026-11-27', ['Tari Eason']), round('2026-12-10', ['Tari Eason'])])];
+  const second = lines(state, 'player:p_murray');
+  assert.deepEqual(second.steps, ['2026-11-27 HOU and SAC opened trade talks', '2026-12-10 The talks are about Keegan Murray']);
+  assert.equal(second.name, 'Keegan Murray');
+
+  state.data.homeStories.talks = [talk([round('2026-11-27', ['Tari Eason']), round('2026-12-10', ['Tari Eason']), round('2026-12-17', ['Tari Eason', 'Steven Adams', '2027 R1: HOU receives the more favourable of HOU/BKN'])])];
+  assert.equal(lines(state, 'player:p_murray').steps.at(-1), '2026-12-17 HOU has offered Tari Eason and Steven Adams and 1 more');
+  assert.equal(lines(state, 'player:p_murray').status, 'Offer made');
+
+  state.data.homeStories.talks = [talk([round('2026-11-27', ['Tari Eason']), round('2026-12-10', ['Tari Eason'], ['HOU'])], {status: 'dead', ended: {date: '2026-12-10', final_by: ['HOU']}})];
+  const dead = lines(state, 'player:p_murray');
+  assert.equal(dead.steps.at(-1), "2026-12-10 Talks broke off: HOU's final offer was refused");
+  assert.equal(dead.status, 'Fell apart');
+  assert.equal(dead.closed, true);
+
+  state.data.homeStories.talks = [talk([round('2026-11-27', ['Tari Eason'])], {status: 'closed', outcome: 'traded', closed_date: '2026-11-27'})];
+  assert.equal(lines(state, 'player:p_murray').steps.at(-1), '2026-11-27 Done: Keegan Murray to HOU');
+});
+
+test('a sale in the open: first only which conference leads, then the team and its offer, then the end', () => {
+  const state = quiet();
+  const sale = (extra) => ({player: {player_id: 'p_cj', name: 'Cameron Johnson', team: 'DEN'}, seller: 'DEN', started: '2026-12-17', status: 'bidding', decide_by: '2026-12-30', interested: ['LAL'], bids: [{date: '2026-12-17', leader: 'LAL', leader_conference: 'West', offer: {LAL: ['Jarred Vanderbilt', 'Kevon Looney']}}], ...extra});
+  state.data.homeStories = {date: '2026-12-25', shopped: [sale({})]};
+  assert.deepEqual(lines(state, 'player:p_cj').steps, ['2026-12-17 Put on the market by DEN', '2026-12-17 A team from the West leads the bidding']);
+  state.data.homeStories.shopped = [sale({status: 'sold', sold_date: '2026-12-22', winner: 'LAL'})];
+  assert.equal(lines(state, 'player:p_cj').steps.at(-1), '2026-12-22 Sold to LAL for Jarred Vanderbilt and Kevon Looney');
+  state.data.homeStories.shopped = [sale({status: 'lapsed', bids: []})];
+  assert.equal(lines(state, 'player:p_cj').steps.at(-1), '2026-12-30 No deal: DEN kept him');
+});
+
+test('streaks, key injuries and coaches under pressure are storylines; minor injuries are not', () => {
+  const state = quiet();
+  state.data.homeStories = {date: '2026-12-25',
+    streaks: [{team: 'MIN', result: 'W', length: 14, since: '2026-11-26'}, {team: 'BOS', result: 'W', length: 9, since: '2026-12-01', ended: '2026-12-23', ended_by: 'MIA'}],
+    injuries: [
+      {player: {player_id: 'p_jokic', name: 'Nikola Jokic', team: 'DEN'}, start_date: '2026-12-20', return_date: '2027-01-30', returned: false, diagnosis: 'shoulder injury', expected_games_missed: 19},
+      {player: {player_id: 'p_minor', name: 'Bradley Beal', team: 'LAC'}, start_date: '2026-12-23', return_date: '2027-01-12', returned: false, diagnosis: 'plantar fasciitis', expected_games_missed: 9},
+      {player: {player_id: 'p_young', name: 'Trae Young', team: 'WAS'}, start_date: '2026-12-21', return_date: '2028-05-02', returned: false, diagnosis: 'ACL tear', expected_games_missed: 201},
+    ],
+    hot_seats: [{team: 'SAC', name: 'Doug Christie', games: 30, wins_vs_expected_per_82: -28.2}]};
+  assert.deepEqual(lines(state, 'streak:MIN'), {status: '14 straight wins', name: 'MIN', closed: false, steps: ['2026-11-26 First of 14 straight wins']});
+  assert.deepEqual(lines(state, 'streak:BOS').steps, ['2026-12-01 First of 9 straight wins', '2026-12-23 Beaten by MIA']);
+  assert.equal(lines(state, 'streak:BOS').status, 'Streak over');
+  assert.deepEqual(lines(state, 'player:p_jokic').steps, ['2026-12-20 Out: shoulder injury, about 19 games', '2027-01-30 Expected back']);
+  assert.equal(lines(state, 'player:p_jokic').status, 'Out', 'a return date still ahead is not where it stands');
+  assert.deepEqual(lines(state, 'player:p_young').steps, ['2026-12-21 Out for the season: ACL tear']);
+  assert.equal(lines(state, 'player:p_minor'), null, 'nine games is routine');
+  assert.deepEqual(lines(state, 'staff:SAC:head_coach').steps, [' Doug Christie: on pace for 28 fewer wins than expected, 30 games in']);
+  assert.equal(lines(state, 'staff:SAC:head_coach').status, 'Hot seat');
+});
+
+test('the block shows a mix: at most two of a kind, unless they are yours', () => {
+  const state = quiet();
+  state.data.homeStories = {date: '2026-12-25', hot_seats: ['SAC', 'ORL', 'MIL', 'DEN'].map((team, index) => ({team, name: `Coach ${index}`, games: 30, wins_vs_expected_per_82: -20 + index})),
+    streaks: [{team: 'MIN', result: 'W', length: 14, since: '2026-11-26'}]};
+  const html = load(state).markup();
+  assert.equal((html.match(/Hot seat/g) || []).length, 2);
+  assert.match(html, /14 straight wins/);
+});
+
+test('in the offseason the front page leads with the payroll and the roster, and lists the biggest deals', () => {
+  const state = quiet();
+  state.home.save.phase = 'offseason';
+  state.data.statusDashboard.cap_summary = {salary_total_millions: 222, tax_space_millions: -14.5, cap_room_millions: -54.5, hard_cap_space_millions: 7.5, ledger: {empty_roster_spots: 2}};
+  state.data.statusDashboard.rotation = [{id: 'p1', name: 'Derrick White', extension_eligible: true, salary_by_year: {a: 1, b: 2}}, {id: 'p2', name: 'Sam Hauser'}];
+  state.home.league_events.events = [
+    {id: 'x', date: '2027-08-01', kind: 'extension', team_ids: ['team_ind'], player_ids: ['p_h'], details: {player_id: 'p_h', team_id: 'team_ind', aav_millions: 50.7, annual_salary: 50700000, years: 3}, activity_groups: [{subjects: [{id: 'p_h', name: 'Tyrese Haliburton'}]}]},
+    {id: 'y', date: '2027-07-03', kind: 'free_agent_signing', team_ids: ['team_mem'], player_ids: ['p_j'], details: {player_id: 'p_j', team_id: 'team_mem', aav_millions: 12, years: 2}, activity_groups: [{subjects: [{id: 'p_j', name: 'Ty Jerome'}]}]},
+  ];
+  const context = {window: {GameProgress: {PHASES: {offseason: {games: false}}}}, state};
+  vm.createContext(context);
+  vm.runInContext(read('home-front.js'), context);
+  const html = context.window.HomeFront.markup();
+  assert.match(html, /class="front is-summer"/);
+  assert.match(html, /front-hero is-offseason/);
+  assert.match(html, /Payroll<\/small><span class="front-score">\$222\.0M<\/span><span class="front-versus front-loss">\$14\.5M over the tax line/);
+  assert.match(html, /Roster<\/small><span class="front-score">2 players<\/span><span class="front-versus ">2 open spots/);
+  assert.match(html, /Biggest deals/);
+  assert.ok(html.indexOf('Tyrese Haliburton') < html.indexOf('Ty Jerome'), 'largest first');
+  assert.match(html, /Can be extended[\s\S]*Derrick White[\s\S]*2 years left/);
+  assert.doesNotMatch(html, /Last game|Scores <small>|Against expectation/, 'nothing about games that are not being played');
+  assert.match(read('card-pages.js'), /function homeLayout\(\) \{\n\s+return \{full: \{fits: \[1180, 660\], roomy: \[1500, 900\]\}, \.\.\.row\(card\("front", \{bare: true, fill: true\}\)\)\};/, 'Today is the front page all year');
+});
+
+test('the storyline data is gathered by a display-only action: stored things only, nothing saved', () => {
+  const server = fs.readFileSync(path.join(gui, '../app_actions.py'), 'utf8');
+  const payload = server.slice(server.indexOf('def home_storylines_payload('), server.indexOf('def league_efficiency_average('));
+  assert.match(server, /if action == "home_storylines":\n\s+return home_storylines_payload\(canonical, save_path\)/);
+  assert.match(payload, /if buyer in humans or seller in humans/, 'your own talks are left out');
+  assert.match(payload, /save\.get\("team_game_logs"\)/);
+  assert.match(payload, /save\.get\("injury_events"\)/);
+  assert.match(payload, /staff_win_gap\(/, 'the coach review\'s own measure');
+  assert.match(payload, /< days_back\(6\)/, 'no streak or pace without a recent game');
+  assert.doesNotMatch(payload, /write_save|save_save|json\.dump|random\./, 'nothing is saved or rolled');
+  assert.match(read('home-front.js'), /call\("action", "home_storylines", call\("savePayload"\)\)/);
+});
+

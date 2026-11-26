@@ -9547,16 +9547,21 @@ function tradeEffectTeam(team) {
       <span class="tr-effect-hero-figure"><em>${item.before.toFixed(1)}</em><i aria-hidden="true">→</i><b>${item.after.toFixed(1)}</b></span>
       <span class="tr-effect-hero-foot"><b class="tr-effect-change${tone(item.change)}">${signed(item.change)}</b><span class="tr-effect-rank${tone(item.moved)}" title="League rank of ${data.count}">${rank(item)}</span></span>
     </div>`).join("");
-  const rest = data.ratings.filter(item => !item.main).map(item => `<tr><th scope="row">${item.label}</th><td>${item.before.toFixed(1)}</td><td><b>${item.after.toFixed(1)}</b></td>
+  // Beside each rating, where it sits now (the tick) and after the trade (the bar), on the scale the ratings share.
+  const low = 40, high = 85;
+  const place = (value) => Math.max(0, Math.min(100, (value - low) / (high - low) * 100)).toFixed(1);
+  const bar = (item) => `<td class="tr-effect-bar${tone(item.change)}" aria-hidden="true"><i><u style="width:${place(item.after)}%"></u><s style="left:${place(item.before)}%"></s></i></td>`;
+  const rest = data.ratings.filter(item => !item.main).map(item => `<tr><th scope="row">${item.label}</th>${bar(item)}<td>${item.before.toFixed(1)}</td><td><b>${item.after.toFixed(1)}</b></td>
       <td class="tr-effect-change${tone(item.change)}">${signed(item.change)}</td><td class="tr-effect-rank${tone(item.moved)}" title="League rank of ${data.count}">${rank(item)}</td></tr>`).join("");
-  const minuteRows = data.minutes.slice(0, 12).map(item => `<tr><th scope="row">${escapeHtml(item.name || "")}${item.traded ? `<small>${item.after == null ? "leaves" : "arrives"}</small>` : ""}</th><td>${item.before == null ? "–" : Number(item.before).toFixed(0)}</td><td><b>${item.after == null ? "–" : Number(item.after).toFixed(0)}</b></td>
+  const minuteBar = (item) => `<td class="tr-effect-bar${tone(item.change)}" aria-hidden="true"><i><u style="width:${Math.min(100, Number(item.after || 0) / 40 * 100).toFixed(1)}%"></u><s style="left:${Math.min(100, Number(item.before || 0) / 40 * 100).toFixed(1)}%"></s></i></td>`;
+  const minuteRows = data.minutes.slice(0, 12).map(item => `<tr><th scope="row">${escapeHtml(item.name || "")}${item.traded ? `<small>${item.after == null ? "leaves" : "arrives"}</small>` : ""}</th>${minuteBar(item)}<td>${item.before == null ? "–" : Number(item.before).toFixed(0)}</td><td><b>${item.after == null ? "–" : Number(item.after).toFixed(0)}</b></td>
       <td class="tr-effect-change${tone(item.change)}">${signed(item.change, 0)}</td></tr>`).join("");
   return `<div class="tr-effect-team">
       <div class="tr-effect-heroes">${heroes}</div>
       <section><h4>Every rating</h4>
-        <table class="tr-effect-table" data-no-sort aria-label="${escapeAttr(team)} team ratings before and after the trade"><thead><tr><th scope="col">Rating</th><th scope="col">Now</th><th scope="col">After</th><th scope="col">Change</th><th scope="col">League rank</th></tr></thead><tbody>${rest}</tbody></table></section>
+        <table class="tr-effect-table" data-no-sort aria-label="${escapeAttr(team)} team ratings before and after the trade"><thead><tr><th scope="col">Rating</th><th scope="col" aria-hidden="true"></th><th scope="col">Now</th><th scope="col">After</th><th scope="col">Change</th><th scope="col">League rank</th></tr></thead><tbody>${rest}</tbody></table></section>
       <section><h4 title="The coach's projected minutes a game, now and with the new roster">Who plays</h4>
-        ${minuteRows ? `<table class="tr-effect-table tr-effect-minutes" data-no-sort aria-label="Minutes a game before and after the trade"><thead><tr><th scope="col">Player</th><th scope="col">Now</th><th scope="col">After</th><th scope="col">Change</th></tr></thead><tbody>${minuteRows}</tbody></table>` : `<p class="tr-effect-wait">Nobody's minutes change.</p>`}</section>
+        ${minuteRows ? `<table class="tr-effect-table tr-effect-minutes" data-no-sort aria-label="Minutes a game before and after the trade"><thead><tr><th scope="col">Player</th><th scope="col" aria-hidden="true"></th><th scope="col">Now</th><th scope="col">After</th><th scope="col">Change</th></tr></thead><tbody>${minuteRows}</tbody></table>` : `<p class="tr-effect-wait">Nobody's minutes change.</p>`}</section>
     </div>`;
 }
 

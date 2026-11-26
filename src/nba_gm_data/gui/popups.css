@@ -821,3 +821,19 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-sh
 /* The deal's rows have the room: the name is never cut while the box is this wide. */
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-deal:not(.is-multi) .tr-tile,
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-deal:not(.is-multi) .tr-tiles-head { grid-template-columns: 56px minmax(160px, 1.5fr) minmax(92px, 1fr) 84px 28px 78px 20px !important; }
+
+/* "What it does", sharpened: a bar beside each rating and each player's minutes (the tick is now, the bar is after);
+   rows a little taller; the payroll without a box of its own, so the three sections read as one page each. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table tbody th, html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table tbody td { height: 32px; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table td.tr-effect-bar { width: 34%; padding: 0 var(--gm-space-3) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table td.tr-effect-bar > i { position: relative; display: block; height: 6px; border-radius: var(--gm-radius-pill); background: var(--gm-line); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table td.tr-effect-bar > i > u { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: var(--gm-ink-2); text-decoration: none; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table td.tr-effect-bar.is-up > i > u { background: var(--gm-good); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table td.tr-effect-bar.is-down > i > u { background: var(--gm-bad); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table td.tr-effect-bar > i > s { position: absolute; top: -4px; width: 2px; height: 14px; margin-left: -1px; background: var(--gm-ink); text-decoration: none; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-team { padding-top: var(--gm-space-2); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-heroes { column-gap: var(--gm-space-7); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-hero { padding: var(--gm-space-2) 0; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-money .tr-payroll, html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-money .tr-payroll-frame { background: transparent !important; border: 0 !important; box-shadow: none !important; padding-left: 0 !important; padding-right: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-money .tr-payroll-head h4 { margin: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .trade-identity-toolbar { margin-bottom: var(--gm-space-2) !important; }

@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C, checkpoint 10 published (Builder in three steps, the Market, storylines on Home); stopped, waiting for five decisions; more storylines, the Finder and the final sweep remain
+Progress: 8/9 - Stage C, checkpoint 11 published (rumors that reveal, more storylines, the front page all year); stopped, waiting for five decisions; a Storylines page, the Finder and the final sweep remain
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -712,3 +712,62 @@ minutes; the Market's sold / final-offer / own-offer states were not seen in a r
 were not pressed this round. Still open from before: Home before the season and in the playoffs, the extension
 window and player card, the start screen, more arena photos, the coordinator's lottery and playoff-line items, the
 final sweep.
+
+## Stage C, checkpoint 11 report (2026-11-26)
+
+**The user's answers to checkpoint 10** (their words where quoted): the Builder's steps good; the effect sections
+"look a little shoddy on [their] own, but I like the division"; the offseason Today tab becomes the front page;
+next = more storylines. On storylines: "I definitely like to see how the storylines evolve, that's a big thing.
+One thing about the trades: they evolve by getting more and more revealing, like not knowing who might be involved
+in a trade, revealing a few assets at a time, and then the picture of the final trade becoming more clear as it
+gets closer to being completed (unless there's a falling out or some new development, which makes things
+interesting, and it would be great to show that to the user so they could experience it)."
+
+**What changed**
+- **New display-only action `home_storylines`** (`home_storylines_payload` in `app_actions.py`; about 0.35 s on the
+  test save; nothing saved): `talks` (the trade market's negotiations of the last 30 days that do not involve a
+  human team: buyer, seller, player, status, outcome, how it ended, and every round with its date and each side's
+  offer), `shopped` (shopping entries with their bids, leader, winner, dates), `streaks` (five or more in a row,
+  or seven or more that ended in the last four days; needs a game in the last six days), `injuries` (26 or more
+  projected minutes, eight or more games, still out or back within five days), `hot_seats` (AI teams 20 or more
+  games in and eight or more wins per 82 below the expectation the coach review uses; needs a recent game).
+  `gui/home-front.js` asks for it once a game day with the market and stores it in `state.data.homeStories`.
+- **Trade rumors reveal by round** (`storylines()` in `gui/home-front.js`): round 1 "A and B opened trade talks"
+  (thread named for the two teams; the player appears nowhere), round 2 "The talks are about X" (the thread takes
+  his name and face), round 3 on "A has offered ..." and each changed offer, a final offer, then "Done: X to A",
+  "Talks broke off: ..." or "He was traded elsewhere". A player already public (asked out, shopped, or with several
+  suitors once one has named him) is named from the start. A sale in the open: "A team from the West leads the
+  bidding", then the leader and its offer, then "Sold to ..." or "No deal: SELLER kept him".
+- **More storylines**: streaks ("First of 14 straight wins", "Beaten by MIA"), key injuries (15 games or more, or
+  just back, or yours; "Out for the season" when the return is after June 30), coaches under pressure (merges into
+  the fire and hire thread). Ranking: the heaviest step, plus size (streak length, games missed, wins below pace),
+  plus yours, minus closed, minus staleness (days since the last step that has happened; a streak, a hot seat, a
+  mood or an award lead counts as today). Home shows five, at most two of one family unless they are the user's.
+  Step dates carry the year when it is not this year.
+- **Home's Today tab is the front page all year** (`homeLayout` in `card-pages.js`; `offseason()` in
+  `home-front.js`): from the lottery to camp the strip leads with payroll, cap room and roster
+  (`statusDashboard.cap_summary`), the middle column is "Biggest deals" (`moves()`: signed extensions and
+  free-agent signings by total value), the right column is trade talk, "Can be extended" (`eligible()`) and the
+  games ahead.
+- **What it does, sharpened** (`tradeEffectTeam` in `app.js`, `gui/popups.css`): a bar beside every rating and every
+  player's minutes (tick = now, bar = after), taller rows, the payroll without its own box.
+- Tests: fifteen in `tests/home_front.test.cjs` (each rumor stage, the sale, streaks, injuries, hot seats, the mix,
+  the offseason page, the server action read as source). Browser tests: 56 of 57 files.
+
+**Found and fixed on the way**: last season's streaks and coach paces showed in the summer (the game logs and
+records stay until rollover); both now need a game in the last six days.
+
+**From the coordinator, still to fold in after merging main**: the 3-2-1 lottery card and reveal, the year-end
+slide's "of 14", the player page's playoff line, and free-agent departure reasons on the signing wire and the
+signing-day recap.
+
+**Waiting on five decisions** (page https://claude.ai/artifact/Tq8Sn3j827RkwJFCwKk9zN, collection `decisions`): `rumor-pace` (good | slower | change),
+`story-mix` (good | change), `summer-front` (good | change), `effect-sharper` (good | more), `next`
+(story-page | trade-rest | rest-popups | sweep).
+
+**Known gaps**: rumor stages past round two (offer, final offer, falling-out) are covered by tests but were not
+seen in a real save; Home shows five of the test save's 53 storylines and there is no page listing them all;
+rumors are not ranked by how good the player is (no rating in the payload); in the offseason the injury storylines
+are last season's long absences; `home_storylines_payload` has no Python unit test; the court section of What it
+does was not touched. Engine work the user has not been asked to request: refusals to re-sign, demands by the
+user's own players, what an unhappy player wants, morale history.

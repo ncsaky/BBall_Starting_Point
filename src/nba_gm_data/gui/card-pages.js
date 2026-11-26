@@ -163,15 +163,10 @@
     return !(phase && typeof window !== "undefined" && window.GameProgress?.PHASES?.[phase]?.games === false);
   };
 
-  // Home's Today tab, by phase. While games are played: the front page (your team now, the league, the table, the
-  // market: home-front.js). From the lottery to training camp there are no games: contracts, the payroll and your
-  // picks (user, 2026-11-26).
+  // Home's Today tab is the front page all year (home-front.js; user, 2026-11-26): while games are played it leads
+  // with your results, from the lottery to training camp with the payroll and the roster. Contracts, the payroll
+  // chart and your picks are one click away under Front Office.
   function homeLayout() {
-    if (!phaseHasGames()) {
-      return {full: {fits: [1200, 640], roomy: [1500, 900]}, ...row(
-        colOf({fill: true}, card("contracts", {fill: true}), card("picks", {natural: "width"})),
-        colOf({basis: 430}, card("payroll", {fill: true, natural: "fit"})))};
-    }
     return {full: {fits: [1180, 660], roomy: [1500, 900]}, ...row(card("front", {bare: true, fill: true}))};
   }
 

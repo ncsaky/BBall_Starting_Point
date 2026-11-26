@@ -90,7 +90,59 @@
     const hurtBlock = `<div class="front-out"><small>${hurt.length ? `${hurt.length} out` : "Injuries"}</small><span>${hurt.length
       ? hurt.slice(0, 4).map((row) => `<button type="button" data-front-player="${esc(row.id)}">${esc(row.name)}</button>`).join("") + (hurt.length > 4 ? `<em>+${hurt.length - 4} more</em>` : "")
       : "<em>Everyone is available</em>"}</span></div>`;
-    return `<header class="front-hero">${lastBlock}${nextBlock}${formBlock}${meterBlock}${hurtBlock}</header>`;
+    if (!offseason(st)) return `<header class="front-hero">${lastBlock}${nextBlock}${formBlock}${meterBlock}${hurtBlock}</header>`;
+    // From the lottery to camp there are no results to lead with: the payroll, the room under the lines and the
+    // roster do (the same numbers Front Office > Contracts shows).
+    const cap = dash.cap_summary || {};
+    const money = (value) => `$${Math.abs(Number(value)).toFixed(1)}M`;
+    const has = (value) => value !== null && value !== undefined && Number.isFinite(Number(value));
+    const figure = (label, big, foot, tone = "") => `<button type="button" class="front-game front-figure" data-front-go="contracts"><small>${label}</small><span class="front-score">${big}</span><span class="front-versus ${tone}">${foot}</span></button>`;
+    const blocks = [];
+    if (has(cap.salary_total_millions)) blocks.push(figure("Payroll", money(cap.salary_total_millions), has(cap.tax_space_millions) ? `${money(cap.tax_space_millions)} ${Number(cap.tax_space_millions) >= 0 ? "under" : "over"} the tax line` : "", Number(cap.tax_space_millions) < 0 ? "front-loss" : ""));
+    if (has(cap.cap_room_millions)) blocks.push(figure("Cap room", Number(cap.cap_room_millions) > 0 ? money(cap.cap_room_millions) : "None", has(cap.hard_cap_space_millions) ? `${money(cap.hard_cap_space_millions)} ${Number(cap.hard_cap_space_millions) >= 0 ? "under" : "over"} the hard cap` : ""));
+    const roster = (dash.rotation || []).length;
+    const open = Number(cap.ledger?.empty_roster_spots);
+    if (roster) blocks.push(figure("Roster", `${roster} players`, Number.isFinite(open) ? (open > 0 ? `${open} open spot${open === 1 ? "" : "s"}` : "Full") : ""));
+    return `<header class="front-hero is-offseason">${blocks.join("")}${nextBlock}${meterBlock}${hurtBlock}</header>`;
+  }
+
+  // No games are played from the lottery to training camp (progress.js knows the phases).
+  function offseason(st) {
+    const phase = String(st?.home?.save?.phase || "");
+    return Boolean(phase) && typeof window !== "undefined" && window.GameProgress?.PHASES?.[phase]?.games === false;
+  }
+
+  // Your players who can sign an extension now (the same flag the Contracts table marks).
+  function eligible(st) {
+    const dash = st?.data?.statusDashboard || {};
+    const rows = (dash.rotation || []).filter((row) => row.extension_eligible);
+    if (!rows.length) return "";
+    const left = (row) => Object.values(row.salary_by_year || {}).filter((value) => Number(value) > 0).length;
+    return `<section class="front-block front-eligible"><h2><button type="button" data-front-go="contracts">Can be extended</button></h2>
+      <div class="front-list front-movelist">${rows.slice(0, 10).map((row) => `<button type="button" class="front-move" data-front-player="${esc(row.id)}">
+        <span class="front-face">${row.headshot_url ? `<img src="${esc(row.headshot_url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : ""}</span>
+        <b>${esc(row.name)}</b><span></span><i>${left(row) ? `${left(row)} year${left(row) === 1 ? "" : "s"} left` : ""}</i></button>`).join("")}</div></section>`;
+  }
+
+  // The summer's biggest signatures: extensions and free-agent deals, largest first (the same league events as the news).
+  function moves(st) {
+    const rows = [];
+    for (const event of st?.home?.league_events?.events || []) {
+      const details = event.details || {};
+      const signed = event.kind === "free_agent_signing" || event.kind === "free_agency_signing";
+      if (!(signed || (event.kind === "extension" && (details.annual_salary || details.contract)))) continue;
+      const subject = (event.activity_groups || []).flatMap((group) => group.subjects || []).find((item) => item.id === (details.player_id || (event.player_ids || [])[0])) || {};
+      const yearly = Number(details.aav_millions) || Number(details.annual_salary) / 1e6 || 0;
+      const years = Number(details.years || details.contract?.years || 0);
+      if (!subject.name || !yearly) continue;
+      rows.push({id: subject.id, name: subject.name, face: subject.headshot_url || "", team: abbrevOf(details.team_id || (event.team_ids || [])[0]), kind: signed ? "Signed" : "Extended", yearly, years, date: event.date});
+    }
+    if (!rows.length) return "";
+    rows.sort((a, b) => b.yearly * Math.max(1, b.years) - a.yearly * Math.max(1, a.years));
+    return `<section class="front-block front-moves"><h2><button type="button" data-front-go="news">Biggest deals</button></h2>
+      <div class="front-list front-movelist">${rows.slice(0, 14).map((row) => `<button type="button" class="front-move" data-front-player="${esc(row.id)}" title="${esc(`${shortDate(row.date)}: ${row.kind === "Signed" ? "signed with" : "extended by"} ${row.team}`)}">
+        <span class="front-face">${row.face ? `<img src="${esc(row.face)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : logoImg(row.team)}</span>
+        <b>${esc(row.name)}</b><span title="${esc(`${row.kind === "Signed" ? "Signed with" : "Extended by"} ${row.team}`)}">${logoImg(row.team)}</span><i>$${row.yearly.toFixed(1)}M${row.years ? ` × ${row.years}` : ""}</i></button>`).join("")}</div></section>`;
   }
 
   // ---------- Storylines (user, 2026-11-26: "it is fun to follow a narrative and see its conclusion ... we have those
@@ -105,6 +157,7 @@
     for (const event of events) for (const group of event.activity_groups || []) for (const subject of group.subjects || []) {
       if (subject?.id && !people.has(subject.id)) people.set(subject.id, subject);
     }
+    const today = String(st?.home?.save?.current_date || "");
     const threads = new Map();
     const thread = (key, seed) => { if (!threads.has(key)) threads.set(key, {key, steps: [], ...seed}); return threads.get(key); };
     const team = (id) => abbrevOf(id);
@@ -183,44 +236,142 @@
       entry.name ||= player.name; entry.face ||= names.get(player.id)?.headshot_url || player.headshot_url || "";
       entry.steps.push({type: "unhappy", date: "", text: `Unhappy with ${parts[0][1]} right now (${Math.round(parts[0][0])} of 100)`});
     }
+    // 5. From the home_storylines action (asked for once a game day): the trade market's own ledger, this season's
+    // results, the injury log and the coaches' review numbers.
+    const extra = st?.data?.homeStories || {};
+    const assets = (labels) => {
+      const short = (labels || []).map((label) => String(label).split(/[:;(]/)[0].trim()).filter(Boolean);
+      return short.length ? `${short.slice(0, 2).join(" and ")}${short.length > 2 ? ` and ${short.length - 2} more` : ""}` : "a package";
+    };
+    // Trade talks come out a piece at a time (user, 2026-11-26: "they evolve by getting more and more revealing").
+    // The first round is only that two teams are talking; the second names the player; the third says what is on
+    // the table; then each change of the offer, a final offer, and the end: done, or broken off. A player who is
+    // already publicly in play (he asked out, he is being shopped) is named from the start.
+    const suitors = new Map();
+    for (const talk of extra.talks || []) if (talk.player?.player_id && (talk.rounds || []).length) suitors.set(talk.player.player_id, (suitors.get(talk.player.player_id) || 0) + 1);
+    const outed = new Set((extra.talks || []).filter((talk) => (talk.rounds || []).length >= 2 || (talk.status === "closed" && talk.outcome === "traded")).map((talk) => talk.player?.player_id));
+    for (const talk of [...(extra.talks || [])].sort((a, b) => String(a.opened || "").localeCompare(String(b.opened || "")))) {
+      const rounds = talk.rounds || [];
+      const id = talk.player?.player_id;
+      if (!rounds.length || !id || !talk.buyer || !talk.seller) continue;
+      const done = talk.status === "closed" && talk.outcome === "traded";
+      // Publicly in play already (asked out, shopped), or several teams are after him: the player is no secret.
+      const known = threads.has(`player:${id}`) || (outed.has(id) && suitors.get(id) > 1);
+      const named = known || outed.has(id);
+      const steps = [{type: "talks", date: rounds[0].date || talk.opened || "", text: known ? `${talk.buyer} opened talks with ${talk.seller} about him` : `${talk.buyer} and ${talk.seller} opened trade talks`}];
+      if (named && !known && !done && rounds[1]) steps.push({type: "target", date: rounds[1].date, text: `The talks are about ${talk.player.name}`});
+      else if (known && !done && rounds[1]) steps.push({type: "talks", date: rounds[1].date, text: JSON.stringify(rounds[1].offer?.[talk.buyer] || []) !== JSON.stringify(rounds[0].offer?.[talk.buyer] || []) ? `${talk.buyer} came back with a new offer` : `${talk.buyer} and ${talk.seller} talked again`});
+      let shown = "";
+      rounds.forEach((round, index) => {
+        const offered = JSON.stringify(round.offer?.[talk.buyer] || []);
+        if (index >= 2 && offered !== shown) steps.push({type: "offer", date: round.date, text: `${talk.buyer} ${shown ? "changed its offer:" : "has offered"} ${assets(round.offer?.[talk.buyer])}`});
+        if (index >= 2) shown = offered;
+        for (const club of round.final_by || []) steps.push({type: "final", date: round.date, text: `${club} made a final offer`});
+      });
+      if (done) steps.push({type: "traded", date: talk.closed_date || "", text: `Done: ${talk.player.name} to ${talk.buyer}`});
+      else if (talk.status === "dead") steps.push({type: "collapsed", date: talk.ended?.date || "", text: talk.ended?.final_by?.length ? `Talks broke off: ${talk.ended.final_by[0]}'s final offer was refused` : talk.ended?.cancelled ? `Talks broke off: ${talk.ended.cancelled}` : "Talks broke off"});
+      else if (talk.outcome === "player_moved") steps.push({type: "collapsed", date: talk.closed_date || "", text: "He was traded elsewhere"});
+      const entry = named
+        ? thread(`player:${id}`, {kind: "player", id, team: talk.seller})
+        : thread(`talks:${talk.key}`, {kind: "talks", name: `${talk.buyer} and ${talk.seller}`, team: talk.buyer});
+      if (named) { entry.name ||= talk.player.name; entry.face ||= talk.player.headshot_url || ""; }
+      // A step another negotiation already told (he was traded) is not repeated.
+      for (const step of steps) if (!entry.steps.some((item) => item.type === step.type && item.date === step.date && item.text === step.text) && !(step.type === "traded" && entry.steps.some((item) => item.type === "traded"))) entry.steps.push(step);
+    }
+    // A sale in the open: who leads the bidding (first only which conference, then the team and its offer), and the end.
+    for (const sale of extra.shopped || []) {
+      const id = sale.player?.player_id;
+      const active = ["bidding", "sold", "lapsed", "cancelled"].includes(sale.status) || (sale.bids || []).length;
+      if (!id || !active) continue;
+      const entry = thread(`player:${id}`, {kind: "player", id, team: sale.seller});
+      entry.name ||= sale.player.name; entry.face ||= sale.player.headshot_url || "";
+      if (!entry.steps.some((step) => step.type === "market" || step.type === "bidding")) entry.steps.push({type: "market", date: sale.started || "", text: `Put on the market by ${sale.seller}`});
+      (sale.bids || []).forEach((bid, index) => entry.steps.push({type: "bid", date: bid.date || "", text: index === 0 && sale.status === "bidding" && (sale.bids || []).length === 1
+        ? `A team from the ${bid.leader_conference || "league"} leads the bidding` : `${bid.leader} leads, offering ${assets(bid.offer?.[bid.leader])}`}));
+      const last = (sale.bids || []).at(-1);
+      if (sale.status === "sold" && !entry.steps.some((step) => step.type === "traded" && step.date)) {
+        entry.steps = entry.steps.filter((step) => step.type !== "traded");
+        entry.steps.push({type: "traded", date: sale.sold_date || "", text: `Sold to ${sale.winner || "another team"}${last && sale.winner ? ` for ${assets(last.offer?.[sale.winner])}` : ""}`});
+      } else if (sale.status === "lapsed") entry.steps.push({type: "collapsed", date: sale.decide_by || "", text: `No deal: ${sale.seller} kept him`});
+      else if (sale.status === "cancelled") entry.steps.push({type: "collapsed", date: "", text: `The sale was called off${sale.cancel_reason ? `: ${sale.cancel_reason}` : ""}`});
+    }
+    // Streaks: five or more in a row, or seven or more that ended in the last few days.
+    for (const run of extra.streaks || []) {
+      const won = run.result === "W";
+      const entry = thread(`streak:${run.team}`, {kind: "team", name: call("dashboardTeamName", run.team) || run.team, team: run.team, streak: run.length, won});
+      entry.steps.push({type: "streak", date: run.since || "", text: `First of ${run.length} straight ${won ? "wins" : "losses"}`});
+      if (run.ended) entry.steps.push({type: "snapped", date: run.ended, text: won ? `Beaten by ${run.ended_by}` : `Ended it against ${run.ended_by}`});
+    }
+    // Key injuries: when he went down and with what, and when he is due back (or that he is back).
+    const seasonEnd = `${Number(String(extra.date || "").slice(0, 4)) + (String(extra.date || "").slice(5, 7) >= "07" ? 1 : 0)}-06-30`;
+    for (const injury of extra.injuries || []) {
+      const id = injury.player?.player_id;
+      if (!id) continue;
+      const entry = thread(`player:${id}`, {kind: "player", id, team: injury.player.team});
+      entry.name ||= injury.player.name; entry.face ||= injury.player.headshot_url || ""; entry.missed = injury.expected_games_missed;
+      const season = injury.return_date > seasonEnd;
+      entry.steps.push({type: "injured", date: injury.start_date, text: season ? `Out for the season: ${injury.diagnosis}` : `Out: ${injury.diagnosis}, about ${injury.expected_games_missed} games`});
+      if (injury.returned) entry.steps.push({type: "returned", date: injury.return_date, text: "Back in the lineup"});
+      else if (!season) entry.steps.push({type: "due", date: injury.return_date, text: "Expected back"});
+    }
+    // Coaches under pressure: the same number the game's own review of a coach uses.
+    for (const seat of extra.hot_seats || []) {
+      const entry = thread(`staff:${seat.team}:head_coach`, {kind: "staff", team: seat.team, name: `${seat.team} head coach`, face: seat.headshot_url || ""});
+      entry.face ||= seat.headshot_url || ""; entry.gap = Math.abs(Number(seat.wins_vs_expected_per_82) || 0);
+      if (!entry.steps.some((step) => step.type === "fired")) entry.steps.push({type: "hot", date: "", text: `${seat.name}: on pace for ${entry.gap.toFixed(0)} fewer wins than expected, ${seat.games} games in`});
+    }
     // Who it is, where it stands, and how much it matters.
-    const weight = {demand: 100, bidding: 85, unhappy: 70, fired: 60, lead: 55, market: 50, hired: 40, traded: 40, signed: 30, stalled: 15};
-    const closing = new Set(["traded", "signed", "hired"]);
-    const status = {demand: "Wants out", bidding: "Bidding war", market: "On the market", stalled: "Talks stalled", unhappy: "Unhappy", fired: "Job open", lead: "New leader", traded: "Traded", signed: "Signed", hired: "Filled"};
+    const weight = {demand: 100, final: 92, offer: 86, bidding: 85, bid: 84, collapsed: 80, target: 76, unhappy: 70, talks: 64, snapped: 62, fired: 60, returned: 56, lead: 55, streak: 54, hot: 52, market: 50, injured: 48, due: 48, hired: 40, traded: 40, signed: 30, stalled: 15};
+    const closing = new Set(["traded", "signed", "hired", "collapsed", "snapped", "returned"]);
+    const status = {demand: "Wants out", bidding: "Bidding war", bid: "Bidding war", market: "On the market", stalled: "Talks stalled", unhappy: "Unhappy", fired: "Job open", lead: "New leader", traded: "Traded", signed: "Signed", hired: "Filled",
+      talks: "In talks", target: "In talks", offer: "Offer made", final: "Final offer", collapsed: "Fell apart", streak: "Streak", snapped: "Streak over", injured: "Out", due: "Out", returned: "Back", hot: "Hot seat"};
+    const family = {demand: "trade", bidding: "trade", bid: "trade", market: "trade", stalled: "trade", traded: "trade", signed: "trade", talks: "trade", target: "trade", offer: "trade", final: "trade", collapsed: "trade",
+      streak: "streak", snapped: "streak", injured: "injury", due: "injury", returned: "injury", hot: "staff", fired: "staff", hired: "staff", lead: "award", unhappy: "room"};
     const out = [];
     for (const entry of threads.values()) {
       entry.steps.sort((a, b) => (a.date || "9999").localeCompare(b.date || "9999") || (closing.has(a.type) ? 1 : 0) - (closing.has(b.type) ? 1 : 0));
-      const last = entry.steps.at(-1);
+      // Where it stands is its last step that has happened (a return date still ahead is not the state of things).
+      const last = entry.steps.filter((step) => step.type !== "due").at(-1) || entry.steps.at(-1);
       if (!last) continue;
       const person = people.get(entry.id) || {};
       entry.name ||= person.name || "";
       entry.face ||= person.headshot_url || "";
       if (!entry.name) continue;
       entry.closed = closing.has(last.type);
-      entry.status = status[last.type] || "";
+      entry.status = last.type === "streak" ? `${entry.streak} straight ${entry.won ? "wins" : "losses"}` : status[last.type] || "";
       entry.mine = Boolean(mine) && entry.team === mine;
-      entry.latest = entry.steps.map((step) => step.date).filter(Boolean).sort().at(-1) || "";
+      // The last thing that has happened in it; something still going on (a streak, a hot seat, a mood) is today's.
+      const ongoing = !entry.closed && ["streak", "hot", "unhappy", "lead"].includes(last.type);
+      entry.latest = ongoing ? today : entry.steps.map((step) => step.date).filter((date) => date && (!today || date <= today)).sort().at(-1) || "";
+      const stale = today && entry.latest ? Math.max(0, daysBetween(entry.latest, today)) : 0;
       const top = Math.max(...entry.steps.map((step) => weight[step.type] || 0));
+      const lead = entry.steps.reduce((best, step) => ((weight[step.type] || 0) > (weight[best.type] || 0) ? step : best), entry.steps[0]);
+      entry.family = family[lead.type] || "other";
       // A lone "talks stalled" or "on the market" is routine (the market has its own list on this page); it is a
       // storyline once something else happened to him too.
-      if (top <= weight.market && entry.steps.length < 2) continue;
-      entry.score = top + (entry.mine ? 40 : 0) + Math.min(20, entry.steps.length * 5) - (entry.closed ? 25 : 0);
+      if (top <= weight.market && entry.steps.length < 2 && family[last.type] !== "injury") continue;
+      // An injury is a storyline when it is long, when he has just come back, or when it is your player.
+      if (family[last.type] === "injury" && !entry.mine && !(entry.missed >= 15 || last.type === "returned") && entry.steps.every((step) => family[step.type] === "injury")) continue;
+      // More to it when it is long (a streak), costly (an injury) or far off the pace (a coach).
+      const size = entry.family === "streak" ? Math.min(30, (entry.streak || 0) * 2) : entry.family === "injury" ? Math.min(30, (entry.missed || 0) / 3) : entry.family === "staff" ? Math.min(20, entry.gap || 0) : 0;
+      entry.score = top + size + (entry.mine ? 40 : 0) + Math.min(20, entry.steps.length * 5) - (entry.closed ? 25 : 0) - Math.min(45, stale * 1.5);
       out.push(entry);
     }
     return out.sort((a, b) => b.score - a.score || b.latest.localeCompare(a.latest) || a.name.localeCompare(b.name));
   }
 
   function stories(st, mine) {
-    const list = storylines(st, mine).slice(0, 4);
+    const seen = {};
+    const list = storylines(st, mine).filter((entry) => { if (entry.mine) return true; seen[entry.family] = (seen[entry.family] || 0) + 1; return seen[entry.family] <= 2; }).slice(0, 5);
     const today = String(st?.home?.save?.current_date || "");
     if (!list.length) return "";
     return `<section class="front-block front-stories"><h2>Storylines</h2>
       <div class="front-storylist">${list.map((entry) => {
-        const steps = entry.steps.slice(-3).map((step, index, shown) => `<span class="${index === shown.length - 1 ? "is-latest" : ""}"><time>${step.date ? esc(shortDate(step.date)) : "Now"}</time><span>${esc(step.text)}${step.until && step.until >= today && index === shown.length - 1 ? `, decision by ${esc(shortDate(step.until))}` : ""}</span></span>`).join("");
-        const action = entry.kind === "staff" ? `data-front-go="news"` : `data-front-player="${esc(entry.id)}"`;
+        const steps = entry.steps.slice(-3).map((step, index, shown) => `<span class="${index === shown.length - 1 ? "is-latest" : ""}"><time>${step.date ? esc(shortDate(step.date) + (today && step.date.slice(0, 4) !== today.slice(0, 4) ? ` ${step.date.slice(0, 4)}` : "")) : "Now"}</time><span>${esc(step.text)}${step.until && step.until >= today && index === shown.length - 1 ? `, decision by ${esc(shortDate(step.until))}` : ""}</span></span>`).join("");
+        const action = entry.kind === "player" && entry.id ? `data-front-player="${esc(entry.id)}"` : entry.kind === "team" ? `data-front-go="standings"` : `data-front-go="news"`;
         return `<button type="button" class="front-story${entry.mine ? " is-mine" : ""}${entry.closed ? " is-closed" : ""}" ${action}>
           <span class="front-face">${entry.face ? `<img src="${esc(entry.face)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : logoImg(entry.team)}</span>
-          <span class="front-story-head"><b>${esc(entry.name)}</b>${entry.kind !== "staff" && entry.team ? `<span>${logoImg(entry.team)}${esc(entry.team)}</span>` : ""}<em>${esc(entry.status)}</em></span>
+          <span class="front-story-head"><b>${esc(entry.name)}</b>${entry.kind === "player" && entry.team ? `<span>${logoImg(entry.team)}${esc(entry.team)}</span>` : ""}<em>${esc(entry.status)}</em></span>
           <span class="front-story-steps">${steps}</span></button>`;
       }).join("")}</div></section>`;
   }
@@ -331,9 +482,10 @@
     const league = table(st);
     // Before the season and in the playoffs the game loads no standings, scores or leaders for this page: the
     // middle column then lists the games ahead, or is left out.
-    const middle = standings(league, mine) + expectation(surprises(st, league)) || comingUp(st, league);
-    const cols = [stories(st, mine) + headlines(st, mine), middle, market(st) + scores(st, mine) + leaders(st)].filter(Boolean);
-    return `<div class="front">
+    const summer = offseason(st);
+    const middle = summer ? moves(st) : standings(league, mine) + expectation(surprises(st, league)) || comingUp(st, league);
+    const cols = [stories(st, mine) + headlines(st, mine), middle, summer ? market(st) + eligible(st) + comingUp(st, league) : market(st) + scores(st, mine) + leaders(st)].filter(Boolean);
+    return `<div class="front${summer ? " is-summer" : ""}">
       ${hero(st, league, mine)}
       <div class="front-cols" data-front-cols="${cols.length}">${cols.map((col) => `<div class="front-col">${col}</div>`).join("")}</div>
     </div>`;
@@ -347,6 +499,13 @@
     const day = `${st.currentSave || ""}|${st.home.save.current_date || ""}`;
     if (marketDay === day) return;
     marketDay = day;
+    Promise.resolve(call("action", "home_storylines", call("savePayload"))).then((result) => {
+      const now = app();
+      if (!result || !now?.data || `${now.currentSave || ""}|${now.home?.save?.current_date || ""}` !== day) return;
+      now.data.homeStories = result;
+      const front = document.querySelector(".season-front-panel");
+      if (front) front.innerHTML = markup();
+    }).catch(() => {});
     Promise.resolve(call("loadTradeMarket", true)).then(() => {
       const target = document.querySelector("[data-front-shops]");
       if (target && app()?.data?.tradeMarket) target.innerHTML = marketRows(app()) || `<p class="front-none">Nobody is being shopped right now.</p>`;
@@ -374,5 +533,5 @@
     if (document.body) start(); else document.addEventListener("DOMContentLoaded", start);
   }
 
-  if (typeof window !== "undefined") window.HomeFront = Object.freeze({markup, table, surprises, storylines});
+  if (typeof window !== "undefined") window.HomeFront = Object.freeze({markup, table, surprises, storylines, moves});
 })();

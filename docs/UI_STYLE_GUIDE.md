@@ -369,6 +369,13 @@ its sections share the page's width and height. The rules live in `gui/full-page
   morale). Nothing is predicted, and a step with no stored date says "Now".
 - A routine event alone (talks stalled, on the market) is not a storyline; it becomes one when something follows.
 - The user's own team comes first; open threads before closed ones.
+- A storyline evolves (user: "I definitely like to see how the storylines evolve, that's a big thing"). A trade
+  rumor comes out a piece at a time: first only that two teams are talking, then who it is about, then what is on
+  the table, then the end, a deal or a falling-out. Each step is a real round of the game's own negotiation; the
+  page withholds, it never invents. A player who is already public is named from the start.
+- Home shows a mix: five storylines, at most two of one kind unless they are the user's. Recent beats old.
+- The front page is Home's Today tab all year: results lead while games are played, the payroll and the roster in
+  the offseason.
 
 ## Pop-ups (2026-11-26)
 - Pop-up styling lives in two sheets: `gui/popups.css` (the trade room and incoming offers) and
