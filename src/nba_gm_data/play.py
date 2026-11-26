@@ -4616,11 +4616,11 @@ def print_lottery(order: dict[str, Any]) -> None:
         if odds:
             odds_context = lottery.get("odds_context_by_team") or {}
             print("\nOdds")
-            for team_id, pct in sorted(odds.items(), key=lambda item: -float(item[1]))[:14]:
+            for team_id, pct in sorted(odds.items(), key=lambda item: -float(item[1])):
                 context = f" {odds_context.get(team_id)}" if odds_context.get(team_id) else ""
                 print(f"{str(team_id).replace('team_', '').upper():<4} {float(pct) * 100:>5.1f}%{context}")
             print("\nReveal")
-    for idx, pick in enumerate((order.get("draft_order") or [])[:14], start=1):
+    for idx, pick in enumerate((order.get("draft_order") or [])[:len(lottery.get("final_lottery_order") or []) or 14], start=1):
         owner = pick.get("team_abbrev") or team_id_to_abbrev(pick.get("current_owner_team_id"))
         print(f"{idx:>2}. {owner}  #{pick.get('overall_pick')}")
 

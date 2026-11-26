@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SEASON-ALMANAC: one hands-off season of today's game, keeping what a "season in review" needs.
+"""SEASON-ALMANAC: hands-off seasons of today's game (one by default), keeping what a "season in review" needs.
 
 Wraps ``s2_multiseason.py run --engine current`` with two changes, both harness-only:
 
@@ -7,7 +7,7 @@ Wraps ``s2_multiseason.py run --engine current`` with two changes, both harness-
 * a small gzipped copy of the save file at every calendar phase change (``<out>/snapshots``), so standings, stats,
   the playoff bracket, the draft and the market can be read before the next phase resets them.
 
-  PYTHONPATH=src .venv/bin/python scripts/season_almanac_run.py --out output/almanac/run
+  PYTHONPATH=src .venv/bin/python scripts/season_almanac_run.py --out output/almanac/run [--seasons 2]
 """
 from __future__ import annotations
 
@@ -29,6 +29,7 @@ def main() -> int:
     parser.add_argument("--out", required=True)
     parser.add_argument("--seed", type=int, default=20261126)
     parser.add_argument("--team", default="BKN", help="the hands-off user team (no AI trades are made for it)")
+    parser.add_argument("--seasons", type=int, default=1)
     args = parser.parse_args()
     snapshots = Path(args.out).resolve() / "snapshots"
     snapshots.mkdir(parents=True, exist_ok=True)
@@ -57,7 +58,7 @@ def main() -> int:
 
     soak.SoakRunner.action = action
     gc.disable()
-    return s2.run(argparse.Namespace(engine="current", seasons=1, seed=args.seed, team=args.team,
+    return s2.run(argparse.Namespace(engine="current", seasons=args.seasons, seed=args.seed, team=args.team,
                                      checkpoint_days=31, out=args.out))
 
 

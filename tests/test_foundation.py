@@ -975,8 +975,8 @@ class DataFoundationTests(unittest.TestCase):
         other = generate_draft_order(self.plain, "2027", seed=5)
         self.assertEqual(first, second)
         self.assertEqual(first["pick_count"], 60)
-        self.assertEqual(len(first["lottery"]["lottery_draw"]), 4)
-        self.assertEqual(len(set(first["lottery"]["lottery_draw"])), 4)
+        self.assertEqual(len(first["lottery"]["lottery_draw"]), 16)   # the 3-2-1 lottery draws every pick
+        self.assertEqual(len(set(first["lottery"]["lottery_draw"])), 16)
         self.assertNotEqual(first["lottery"]["lottery_draw"], other["lottery"]["lottery_draw"])
         first_round = [pick for pick in first["draft_order"] if pick["round"] == 1]
         second_round = [pick for pick in first["draft_order"] if pick["round"] == 2]
@@ -1018,7 +1018,7 @@ class DataFoundationTests(unittest.TestCase):
                 canonical=self.plain,
             )
             self.assertEqual(odds_room["presentation_stage"], "odds")
-            self.assertEqual(len(odds_room["lottery"]["odds"]), 14)
+            self.assertEqual(len(odds_room["lottery"]["odds"]), 16)
             self.assertGreater(len(odds_room["draft_board"]["entries"]), 18)
 
             reveal = dispatch_app_action(
@@ -1030,7 +1030,7 @@ class DataFoundationTests(unittest.TestCase):
             )
             room = reveal["room"]
             self.assertEqual(reveal["status"], "revealed")
-            self.assertEqual(len(room["lottery"]["reveal"]), 14)
+            self.assertEqual(len(room["lottery"]["reveal"]), 16)
             teams = {team["id"]: team for team in self.plain["teams"]}
             sample = {
                 "selection": {"id": "selection_1", "pick_id": "pick_1", "overall_pick": 1, "team_id": "team_gsw", "prospect_id": "prospect_1"},

@@ -1,4 +1,5 @@
-"""The draft lottery is for the teams that missed the playoffs after the play-in, whatever their records say."""
+"""The 14-team lottery (the 2026 draft) is for the teams that missed the playoffs after the play-in, whatever their
+records say. From 2027 the 3-2-1 lottery applies (test_draft_lottery_321)."""
 from copy import deepcopy
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -40,7 +41,7 @@ class DraftLotteryFieldTests(unittest.TestCase):
         return save, seeds
 
     def order(self, save, seed=4):
-        return generate_draft_order(self.canonical, "2027", seed=seed,
+        return generate_draft_order(self.canonical, "2026", seed=seed,
                                     standings=engine.save_standings_for_draft(self.canonical, save))
 
     def by_record(self, save, team_ids):
@@ -100,17 +101,17 @@ class DraftLotteryFieldTests(unittest.TestCase):
                        if r["round"] == 1 and r["original_team_id"] == winner)
         save["draft_pick_overrides"] = {pick_id: receiver}
         save["pick_obligations"] = [{
-            "id": "winner_top14", "type": "protected_pick", "status": "active", "season": "2027", "round": 1,
+            "id": "winner_top14", "type": "protected_pick", "status": "active", "season": "2026", "round": 1,
             "primary_pick_id": pick_id, "sender_team_id": winner, "receiver_team_id": receiver,
             "protected_range": {"from": 1, "through": 14}, "protected_top_n": 14, "fallback_pick_ids": [],
         }]
-        order = engine.run_draft_lottery_state(self.canonical, save, "2027", seed=4)
+        order = engine.run_draft_lottery_state(self.canonical, save, "2026", seed=4)
         row = next(r for r in order["draft_order"] if r["id"] == pick_id)
         # A top-14 protected pick from a playoff team lands outside the protection and conveys.
         self.assertEqual(row["overall_pick"], 15)
         self.assertEqual(row["current_owner_team_id"], receiver)
         self.assertEqual(save["pick_obligations"][0]["status"], "resolved_primary_conveyed")
-        self.assertEqual(save["draft_orders"]["2027"], order)
+        self.assertEqual(save["draft_orders"]["2026"], order)
 
 
 if __name__ == "__main__":
