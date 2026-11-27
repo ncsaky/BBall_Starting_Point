@@ -8,7 +8,9 @@ Jalen Brunson, one of its three best players, away for a bench guard because the
 
 1. A star leaves only for a comparable player, a top young player or STAR_FIRSTS first-round picks, and each departing
    star needs a return of his own. A star is one of the STAR_LEAGUE_RANK best players on court today, or
-   STAR_YOUNG_AGE or younger and priced at STAR_YOUNG_PRICE or more.
+   STAR_YOUNG_AGE or younger and priced at STAR_YOUNG_PRICE or more. A comparable player must also be priced at least
+   STAR_COMPARABLE_PRICE_SHARE as high as the star: ratings alone let a deep reserve count as comparable to a prized
+   young player (a test season sent Alex Condon away for D'Angelo Russell and two picks).
 2. A team does not add a pick to get rid of one of its CORE_TOP best players (rated CORE_MIN_ON_COURT or better) unless
    a comparable player, a top young player or a first-round pick comes back.
 
@@ -26,6 +28,7 @@ STAR_MIN_ON_COURT = 62.0
 STAR_YOUNG_AGE = 25
 STAR_YOUNG_PRICE = 80.0
 STAR_FIRSTS = 3
+STAR_COMPARABLE_PRICE_SHARE = 0.8
 CORE_TOP = 3
 CORE_MIN_ON_COURT = 62.0
 OLD_AGE = 34
@@ -49,20 +52,40 @@ def _on_court(values: dict[str, Any], player_id: str) -> float:
     return float((values.get(player_id) or {}).get("on_court_value") or 0.0)
 
 
-def replaces(canonical: dict[str, Any], departing: dict[str, Any], arriving: dict[str, Any]) -> bool:
-    """The arriving player is a real return for the departing one: comparable on court and in the playoffs, or a young
-    player (25 or younger) with real upside who is already decent and priced near him."""
+def comparable(canonical: dict[str, Any], departing: dict[str, Any], arriving: dict[str, Any]) -> bool:
+    """The arriving player rates close to the departing one, on court and in the playoffs."""
+    values = _tx().player_asset_values_by_id(canonical)
+    gone, value = values.get(departing["id"]) or {}, values.get(arriving["id"]) or {}
+    return (float(value.get("on_court_value") or 0.0) >= float(gone.get("on_court_value") or 0.0) - 4
+            and float(value.get("playoff_value") or 0.0) >= float(gone.get("playoff_value") or 50.0) - 8)
+
+
+def young_centerpiece(canonical: dict[str, Any], departing: dict[str, Any], arriving: dict[str, Any]) -> bool:
+    """The arriving player is young (25 or younger) with real upside, already decent and priced near the departing one."""
     tx = _tx()
     values = tx.player_asset_values_by_id(canonical)
     gone, value = values.get(departing["id"]) or {}, values.get(arriving["id"]) or {}
-    quality = float(gone.get("on_court_value") or 0.0)
-    playoff = float(gone.get("playoff_value") or 50.0)
-    ability = float(value.get("on_court_value") or 0.0)
-    if ability >= quality - 4 and float(value.get("playoff_value") or 0.0) >= playoff - 8:
-        return True
-    return (_age(arriving) <= 25 and ability >= max(60, quality - 18)
+    return (_age(arriving) <= 25
+            and float(value.get("on_court_value") or 0.0) >= max(60, float(gone.get("on_court_value") or 0.0) - 18)
             and float(value.get("development_upside") or 0.0) >= 12
             and tx.market_trade_target_value(arriving, value) >= tx.market_trade_target_value(departing, gone) * .6)
+
+
+def replaces(canonical: dict[str, Any], departing: dict[str, Any], arriving: dict[str, Any]) -> bool:
+    """The arriving player is a real return for the departing one: comparable, or a young centerpiece."""
+    return comparable(canonical, departing, arriving) or young_centerpiece(canonical, departing, arriving)
+
+
+def replaces_star(canonical: dict[str, Any], star: dict[str, Any], arriving: dict[str, Any]) -> bool:
+    """As ``replaces``, but a comparable player must also be priced near the star."""
+    if young_centerpiece(canonical, star, arriving):
+        return True
+    if not comparable(canonical, star, arriving):
+        return False
+    tx = _tx()
+    values = tx.player_asset_values_by_id(canonical)
+    price = lambda p: tx._search_market_value(canonical, p, values.get(p["id"]) or {})
+    return price(arriving) >= STAR_COMPARABLE_PRICE_SHARE * price(star)
 
 
 def _covered(player: dict[str, Any], value: dict[str, Any]) -> bool:
@@ -133,7 +156,7 @@ def _star_issue(canonical, incoming_assets, outgoing):
     # The best star first; each takes the weakest arrival that replaces him, so a better one stays for the next.
     for star in sorted(stars, key=lambda p: (-_on_court(values, p["id"]), p["id"])):
         match = next((p for p in sorted(spare, key=lambda p: (_on_court(values, p["id"]), p["id"]))
-                      if replaces(canonical, star, p)), None)
+                      if replaces_star(canonical, star, p)), None)
         if match is not None:
             spare.remove(match)
         elif firsts >= STAR_FIRSTS:

@@ -1,6 +1,6 @@
 # TRADE-PRICE: cheap star sales and the Brunson trade
 
-Progress: 9/9 - both rules built and tested; one follow-up fix waits for your OK
+Progress: 5/5 - both rules and the comparable price floor built and tested; ready for review
 
 Owner: Claude (side session, worktree `festive-chaplygin-aacfb6`, branch `claude/festive-chaplygin-aacfb6`).
 
@@ -9,11 +9,12 @@ Owner: Claude (side session, worktree `festive-chaplygin-aacfb6`, branch `claude
 **TL;DR**
 - Both rules are built (your OK, 2026-11-27). A computer team now needs a real return for a star, and will not add a
   pick to get rid of a core player. The Brunson deal is refused.
-- Two fresh two-season test runs made 201 trades against 188 without the rules: no drop in volume. The full test
-  suite passes (2,763 tests, 0 failures, 80 skipped).
-- One gap showed up: a much lesser player can count as "comparable" for a young star. A fix needs your OK (section 5).
+- Two fresh two-season test runs made 201 trades against 188 without the rules: no drop in volume.
+- A gap those runs showed is closed (your OK): for a star, a "comparable" player must now also be priced at least 80%
+  as high (section 5). The full test suite passes (2,764 tests, 0 failures, 70 skipped).
 
-Everything here was measured on `main`. The earlier branch (`claude/vigilant-cori-6ae562`: injury rule and champion
+Everything here was measured on `main` as it stood on 2026-11-26 (later `main` commits changed screens, not these
+trade rules). The earlier branch (`claude/vigilant-cori-6ae562`: injury rule and champion
 promise) is not merged yet; this branch merges with it without conflicts, but the two have not been tested together.
 
 ## 1. Offer tests: what is believable
@@ -94,12 +95,12 @@ The retool listing was the suspected cause. The main cause is the tax saving.
 Both rules only refuse trades; neither makes any trade easier. Textbook trade rules, ratings, pick values and LeBron's
 exception are untouched. They apply to computer trades and to your offers.
 
-**Rule A: a star needs a real return.** A computer team trades a star only for a comparable player, a strong young
-centerpiece, or three first-round picks.
+**Rule A: a star needs a real return.** A computer team trades a star only for a comparable player (priced at least
+80% as high; see section 5), a strong young centerpiece, or three first-round picks.
 - Star: one of the league's 30 best on court, or 25 or younger and priced 80 or more.
 - Not covered: players 34 and older, very costly contracts, high injury risk.
-- Offer test: 47 of the 48 sales of young or prime stars now cost three picks (today one or two; the other also brings
-  back a young player). One-pick sales fall from 145 to 120.
+- Offer test: all 48 sales of young or prime stars now cost three picks (one or two before). One-pick sales fall from
+  145 to 120.
 
 **Rule B: no paying to get rid of a core player.** A computer team does not add its own pick when it sends away one of
 its three best players (rated 62 or better, under 34, not a costly contract or injury risk), unless a comparable player,
@@ -146,8 +147,8 @@ or "The team will not add a pick to give away ..., one of its three best players
 ## 4. After building
 
 ### Offer tests and the Brunson deal
-The built game gives exactly the prototype's answers on all the offers. All three versions of the Brunson deal are
-refused.
+The rules as first built gave exactly the prototype's answers on all the offers. All three versions of the Brunson
+deal are refused.
 
 ### Two fresh two-season test runs (same seeds as the runs without the rules)
 | Trades | First run, without | First run, with | Second run, without | Second run, with |
@@ -165,20 +166,27 @@ refused.
   stop those unless a pick is added; most are modest swaps.
 - No crashes. The Brunson-for-Spencer deal did not happen in either new run.
 
-## 5. The gap: what counts as "comparable"
-"Comparable" looks only at ratings (within 4 points on court, 8 in the playoffs). A young star is often rated like a
-backup but priced far above one.
-- In the second new run, Denver sent 23-year-old Alex Condon (a star by price, rated 62) to Minnesota for D'Angelo
-  Russell (30, rated 58), a deep reserve, a first and a second. The rule let it through because Russell counts as
-  comparable.
-- In offer tests, 11 of 207 stars could be bought with one pick plus a player priced under 80% of the star.
+## 5. Closed gap: what counts as "comparable"
+"Comparable" used to look only at ratings (within 4 points on court, 8 in the playoffs). A young star is often rated
+like a backup but priced far above one: in the second new run, Denver sent 23-year-old Alex Condon (a star by price,
+rated 62) to Minnesota for D'Angelo Russell (30, rated 58), a deep reserve, a first and a second.
 
-**Proposed:** a comparable player must also be priced at least 80% of the star. Not built or measured over seasons.
+**Added (your OK):** for a star, a comparable player must also be priced at least 80% as high. The "young centerpiece"
+route and rule B are unchanged.
+- Replaying that season to the deadline, Denver refuses every offer built around Russell, and the deal is not made.
+- Offer tests: stars bought with one pick plus a much cheaper player fall from 11 of 207 to none. All 48 sales of young
+  or prime stars now cost three picks.
+- Past trades: of 566 completed computer trades in six saved runs, judged on the saved leagues, none is newly refused.
+  The two season runs above were made before this addition; no new ones were run.
+- It also covers star-for-star swaps where the player coming back is priced more than 20% lower.
 
 Also seen, and allowed by design: Denver added two picks to swap Aaron Gordon for Keegan Murray. Gordon's rating
 slipped from 63 to 61 that summer, under rule B's floor of 62.
 
 ## 6. Still not solved
+- A top young player plus one pick still buys many stars, because that route allows him to be rated well below the
+  star. In one test summer Brooklyn's 19-year-old rookie (rated 62, priced 88) and a pick could get Scottie Barnes or
+  Cooper Flagg. By the game's prices it is a fair offer; a fan might not agree.
 - Curry, 39 and marked by his own team, still costs one pick. That is a "legends keep jobs" rule of its own.
 - Good players rated outside the top 30 still go for one top pick.
 - A good player with a low summer minutes projection is priced like a reserve (Donovan Clingan: rated 74, priced 44 with
@@ -196,7 +204,7 @@ slipped from 63 to 61 that summer, under rule B's floor of 62.
 ## Files
 Scripts and results are in this worktree's `output/trade-price/` (git-ignored): `tools/offer_terms_probe.py` (offer
 test with every pricing term; `VARIANT=` applies a prototype, on code from before the rules were built),
-`compare_runs.py`, `comparable_gap_probe.py`, `analyze_terms.py`, `compare_variants.py`,
+`compare_runs.py`, `comparable_gap_probe.py`, `price_floor_trades.py`, `replay_condon.py`, `analyze_terms.py`, `compare_variants.py`,
 `candidate_rules.py` (the prototypes), `trade_log_estimate.py` (volume look-back), `brunson_replay.py`. Saved test
 seasons come from `.claude/worktrees/vigilant-cori-6ae562/output/core-renew/`.
 

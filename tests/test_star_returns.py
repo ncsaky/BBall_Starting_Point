@@ -55,6 +55,15 @@ class StarReturnTests(unittest.TestCase):
         self.assertIsNone(self.issue(data, ['star'], ['peer']))
         self.assertIsNone(self.issue(data, ['star'], ['prospect']))
 
+    def test_a_comparable_player_must_also_be_priced_near_the_star(self):
+        data = league(player('star', 'a', 22, 74, 90), player('reserve', 'b', 30, 72, 71),
+                      player('peer', 'b', 30, 72, 72), player('prospect', 'b', 21, 66, 60, upside=15))
+        self.assertIn('is a star', self.issue(data, ['star'], ['reserve', 'first0']))
+        self.assertIsNone(self.issue(data, ['star'], ['peer']))
+        # A top young player keeps his own, lower, price bar; three firsts still do it.
+        self.assertIsNone(self.issue(data, ['star'], ['prospect']))
+        self.assertIsNone(self.issue(data, ['star'], ['reserve', 'first0', 'first1', 'first2']))
+
     def test_each_departing_star_needs_a_return_of_his_own(self):
         data = league(player('star', 'a', 27, 82), player('other_star', 'a', 27, 81), player('peer', 'b', 28, 80),
                       player('other', 'b', 28, 79))
@@ -107,6 +116,10 @@ class PayingToMoveTests(unittest.TestCase):
     def test_without_a_pick_or_with_a_real_return_the_rule_stays_out(self):
         self.assertIsNone(self.issue(self.data(), ['guard'], ['bench']))
         self.assertIsNone(self.issue(self.data(), ['guard', 'second'], ['peer']))
+        # The star price bar does not apply here: a much cheaper comparable player still counts.
+        cheap = self.data()
+        next(v for v in cheap['player_asset_valuations'] if v['player_id'] == 'peer')['player_value'] = 20
+        self.assertIsNone(self.issue(cheap, ['guard', 'second'], ['peer']))
         self.assertIsNone(self.issue(self.data(), ['guard', 'second'], ['bench', 'first0']))
 
     def test_other_players_may_be_moved_with_a_pick(self):
