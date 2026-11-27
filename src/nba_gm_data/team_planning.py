@@ -51,6 +51,33 @@ DEEP_RUN_CORE_OVERLAP = 0.5
 # TRADE-CORE: winning even one playoff series is a playoff run. It does not change the team's window label, but until
 # the new season's record speaks the team does not sell one of its best players cheaply (trade_tax.contender_core_outgoing).
 PLAYOFF_RUN_ROUNDS = 1
+# INJURY-NARROW: any core player, even a reserve, 90 days from returning used to switch off the team's protections for
+# everyone: the core promise, "picks cannot pay for a star" and "a competing team does not weaken its rotation". A
+# reserve due back before opening night let a user buy a team's best player for a pick. Now only one of the team's
+# INJURY_REVIEW_TOP best players (by on-court value) who will miss INJURY_REVIEW_SEASON_DAYS of regular season, about
+# half of one, opens a review, and the review frees only him (review_frees). A stalled trade talk with a core player
+# (core_trade_pressure_review) still opens the whole team, as before.
+INJURY_REVIEW = 'serious_core_injury_review'
+INJURY_REVIEW_TOP = 3
+INJURY_REVIEW_SEASON_DAYS = 90
+SEASON_OPENS, SEASON_ENDS = (10, 20), (4, 12)  # the regular season, about: (month, day)
+
+
+def season_days_missed(from_day, return_day):
+    """Days of regular season between two ISO dates: what an injury still costs. Summer days count for nothing."""
+    start, back = date.fromisoformat(from_day), date.fromisoformat(return_day)
+    return sum(max(0, (min(back, date(year + 1, *SEASON_ENDS)) - max(start, date(year, *SEASON_OPENS))).days)
+               for year in range(start.year - 1, back.year + 1))
+
+
+def review_frees(plan, player_ids):
+    """The team's open review lets a trade that sends these players skip its protections. An injury review covers only
+    trades whose players are all the injured ones; any other review covers the whole team."""
+    exception = (plan or {}).get('review_exception')
+    if exception != INJURY_REVIEW:
+        return bool(exception)
+    ids = set(player_ids)
+    return bool(ids) and ids <= set(plan.get('injury_review_ids') or [])
 
 
 def latest_postseason_rounds(canonical, team_id):
@@ -244,7 +271,7 @@ def core_commitment(canonical, team_id, player_id):
     plan = canonical.get('team_plans', {}).get(team_id, {})
     today = str(canonical.get('meta', {}).get('current_date') or '')
     return bool(player_id in plan.get('core_ids', []) and today and today <= plan.get('commit_until', '')
-                and not plan.get('review_exception'))
+                and not review_frees(plan, [player_id]))
 
 
 def acquisition_date(canonical, team_id, core_ids, values):
@@ -305,11 +332,13 @@ def refresh_team_plans(active, save, stamp):
             until = f'{start_year+1}-06-30'
         if acquired and acquired > previous.get('major_acquisition_date', ''):
             until = max(until or '', (date.fromisoformat(acquired)+timedelta(days=365)).isoformat())
-        exception = None
-        for h in save.get('health_states', []):
-            if h.get('player_id') in core and h.get('availability_status') == 'out' and h.get('return_date'):
-                if (date.fromisoformat(h['return_date'])-date.fromisoformat(stamp)).days >= 90:
-                    exception = 'serious_core_injury_review'
+        best = sorted((pid for pid, owner in owners.items() if owner == tid and not players[pid].get('_inactive_player')),
+                      key=lambda pid: (-float(values.get(pid, {}).get('on_court_value') or 0), pid))[:INJURY_REVIEW_TOP]
+        injured = sorted({h['player_id'] for h in save.get('health_states', [])
+                          if h.get('player_id') in core and h.get('player_id') in best
+                          and h.get('availability_status') == 'out' and h.get('return_date')
+                          and season_days_missed(stamp, h['return_date']) >= INJURY_REVIEW_SEASON_DAYS})
+        exception = INJURY_REVIEW if injured else None
         if any(pid in set(save.get('ai_trade_pressure_player_ids') or []) for pid in core):
             exception = 'core_trade_pressure_review'
         overlap = len(set(old_core) & set(core))/max(1, len(old_core))
@@ -346,6 +375,8 @@ def refresh_team_plans(active, save, stamp):
                  'review_exception': exception, 'route': route, 'postseason_outcomes': outcomes[-4:],
                  'retool_candidate_id': retool,
                  'assessment_note': 'Relative fit/strength and bounded development scenario; not calibrated championship odds.'}
+        if injured:
+            entry['injury_review_ids'] = injured
         plans[tid] = entry
     save['team_plan_review_signature'] = signature
     save['team_plan_review_date'] = stamp

@@ -1,5 +1,5 @@
 diff --git a/src/nba_gm_data/team_planning.py b/src/nba_gm_data/team_planning.py
-index 561fb531..cf8ddb60 100644
+index 6616ef1..89c2f5e 100644
 --- a/src/nba_gm_data/team_planning.py
 +++ b/src/nba_gm_data/team_planning.py
 @@ -51,6 +51,26 @@ DEEP_RUN_CORE_OVERLAP = 0.5
@@ -9,8 +9,8 @@ index 561fb531..cf8ddb60 100644
 +# CORE-RENEW: the promise to keep a core (``commit_until``) starts with the career and with a major acquisition, so
 +# from the second summer most computer teams had none. A deep playoff run renews it: a team that won RENEW_ROUNDS
 +# series in the latest postseason keeps that core until the next June 30 (``run_commit_until``), while at least
-+# DEEP_RUN_CORE_OVERLAP of the players who made the run are still there. The injury and trade-demand exceptions
-+# (``review_exception``) cancel it like any other promise.
++# DEEP_RUN_CORE_OVERLAP of the players who made the run are still there. The injury and trade-demand reviews
++# (``review_frees``) lift it like any other promise.
 +RENEW_ROUNDS = DEEP_RUN_ROUNDS
 +
 +
@@ -26,17 +26,17 @@ index 561fb531..cf8ddb60 100644
 +    if sum(owners.get(pid) == team_id for pid in core) / len(core) < DEEP_RUN_CORE_OVERLAP:
 +        return ''
 +    return f"{int(latest['year']) + 1}-06-30"
- 
- 
- def latest_postseason_rounds(canonical, team_id):
-@@ -243,10 +263,18 @@ def core_commitment(canonical, team_id, player_id):
+ # INJURY-NARROW: any core player, even a reserve, 90 days from returning used to switch off the team's protections for
+ # everyone: the core promise, "picks cannot pay for a star" and "a competing team does not weaken its rotation". A
+ # reserve due back before opening night let a user buy a team's best player for a pick. Now only one of the team's
+@@ -270,10 +290,18 @@ def core_commitment(canonical, team_id, player_id):
          return False
      plan = canonical.get('team_plans', {}).get(team_id, {})
      today = str(canonical.get('meta', {}).get('current_date') or '')
 -    return bool(player_id in plan.get('core_ids', []) and today and today <= plan.get('commit_until', '')
 +    until = max(str(plan.get('commit_until') or ''), str(plan.get('run_commit_until') or ''))
 +    return bool(player_id in plan.get('core_ids', []) and today and today <= until
-                 and not plan.get('review_exception'))
+                 and not review_frees(plan, [player_id]))
  
  
 +def run_promise(canonical, team_id):
@@ -49,7 +49,7 @@ index 561fb531..cf8ddb60 100644
  def acquisition_date(canonical, team_id, core_ids, values):
      from .transactions import transaction_log_flows
      found = ''
-@@ -328,10 +356,13 @@ def refresh_team_plans(active, save, stamp):
+@@ -357,10 +385,13 @@ def refresh_team_plans(active, save, stamp):
          phase = state.get('window_phase') or 'rebuilding'
          route = {'peak': 'extend_peak', 'entering': 'patient_growth_then_selective_upgrade',
                   'exiting': 'retool_before_teardown', 'rebuilding': 'acquire_and_develop_foundations'}[phase]
@@ -65,20 +65,20 @@ index 561fb531..cf8ddb60 100644
              eligible = [pid for pid in core if route.startswith('review_') or
                          float(players[pid].get('display_age', players[pid].get('age')) or 27) >= 30]
              if eligible:
-@@ -346,6 +377,8 @@ def refresh_team_plans(active, save, stamp):
-                  'review_exception': exception, 'route': route, 'postseason_outcomes': outcomes[-4:],
-                  'retool_candidate_id': retool,
+@@ -377,6 +408,8 @@ def refresh_team_plans(active, save, stamp):
                   'assessment_note': 'Relative fit/strength and bounded development scenario; not calibrated championship odds.'}
+         if injured:
+             entry['injury_review_ids'] = injured
 +        if run_until:
 +            entry['run_commit_until'] = run_until
          plans[tid] = entry
      save['team_plan_review_signature'] = signature
      save['team_plan_review_date'] = stamp
 diff --git a/src/nba_gm_data/transactions.py b/src/nba_gm_data/transactions.py
-index 3552ca8e..ec187dd5 100644
+index 4545c84..d328c39 100644
 --- a/src/nba_gm_data/transactions.py
 +++ b/src/nba_gm_data/transactions.py
-@@ -4977,8 +4977,13 @@ def evaluate_trade_for_team(
+@@ -4980,8 +4980,13 @@ def evaluate_trade_for_team(
      if legality["status"] == "illegal":
          decision = "illegal_reject"
      reasons = []
@@ -93,7 +93,7 @@ index 3552ca8e..ec187dd5 100644
      if premium_issue:
          reasons.append(premium_issue)
      if outlook and outlook['issue']:
-@@ -5013,7 +5018,9 @@ def evaluate_trade_for_team(
+@@ -5016,7 +5021,9 @@ def evaluate_trade_for_team(
          decision_reasons=reasons,
          notes=(
              evaluation_notes(canonical, perspective_team_id, net, threshold, strategic, personality, legality, accepted=accepted)
@@ -106,10 +106,10 @@ index 3552ca8e..ec187dd5 100644
              + (tax_note(canonical, perspective_team_id, incoming_assets, outgoing_assets, tax_term[0]) if tax_term[0] else '')
 diff --git a/tests/test_core_renew.py b/tests/test_core_renew.py
 new file mode 100644
-index 00000000..64910e18
+index 0000000..a764899
 --- /dev/null
 +++ b/tests/test_core_renew.py
-@@ -0,0 +1,133 @@
+@@ -0,0 +1,134 @@
 +"""CORE-RENEW: a deep playoff run renews a computer team's promise to keep its core."""
 +from types import SimpleNamespace as Row
 +import unittest
@@ -195,12 +195,13 @@ index 00000000..64910e18
 +        self.assertNotIn('run_commit_until', saved['team_plans']['a'])
 +        self.assertFalse(self.promised(data, '2027-07-08'))
 +
-+    def test_serious_injury_and_trade_demand_still_cancel_the_promise(self):
++    def test_serious_injury_and_trade_demand_still_lift_the_promise(self):
 +        data, saved = self.team()
 +        saved['health_states'] = [{'player_id': 'star', 'availability_status': 'out', 'return_date': '2028-03-01'}]
 +        self.playoffs(data, saved, 2027, 4)
-+        self.assertEqual(saved['team_plans']['a']['review_exception'], 'serious_core_injury_review')
-+        self.assertFalse(self.promised(data, '2027-07-01', 'guard'))
++        self.assertEqual(saved['team_plans']['a']['injury_review_ids'], ['star'])
++        self.assertFalse(self.promised(data, '2027-07-01', 'star'))
++        self.assertTrue(self.promised(data, '2027-07-01', 'guard'))
 +        data, saved = self.team()
 +        saved['ai_trade_pressure_player_ids'] = ['star']
 +        self.playoffs(data, saved, 2027, 4)

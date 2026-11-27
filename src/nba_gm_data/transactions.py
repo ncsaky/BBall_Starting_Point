@@ -4863,7 +4863,10 @@ def premium_return_issue(canonical, team_id, incoming_assets, outgoing_assets):
                 and market_trade_target_value(player, value) >= price*.6):
             return None
     plan = canonical.get('team_plans', {}).get(team_id, {})
-    reviewing = bool(plan.get('review_exception') or plan.get('route') == 'review_core_ceiling_and_retool_alternatives')
+    from .team_planning import review_frees
+    # An injury review lets picks pay only for the injured player, never for another premium player sent with him.
+    reviewing = bool(review_frees(plan, [p['id'] for p in premium])
+                     or plan.get('route') == 'review_core_ceiling_and_retool_alternatives')
     if not competitive or reviewing:
         firsts = [pick_asset_value(pick_by_id(canonical, pid), state.get('phase', 'neutral'))
                   for pid in sorted({a['id'] for a in incoming_assets if a.get('kind') == 'pick'})

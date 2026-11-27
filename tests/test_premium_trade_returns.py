@@ -68,7 +68,8 @@ class PremiumTradeReturnTests(unittest.TestCase):
         data['_human_team_ids'] = ['a']
         self.assertIsNone(self.issue(data, outgoing, []))
         data.pop('_human_team_ids')
-        data['team_plans']['a'] = {'review_exception': 'serious_core_injury_review'}
+        data['team_plans']['a'] = {'review_exception': 'serious_core_injury_review',
+                                   'injury_review_ids': [a['id'] for a in outgoing]}
         self.assertIsNone(self.issue(data, outgoing, [{'kind': 'pick', 'id': p['id']} for p in data['draft_picks']]))
 
     def test_positive_additive_value_cannot_override_a_missing_premium_return(self):

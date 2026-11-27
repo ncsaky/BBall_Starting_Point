@@ -34,11 +34,13 @@ def refresh_team_plans(active, save, stamp):
             until = f'{start_year+1}-06-30'
         if acquired and acquired > previous.get('major_acquisition_date', ''):
             until = max(until or '', (date.fromisoformat(acquired)+timedelta(days=365)).isoformat())
-        exception = None
-        for h in save.get('health_states', []):
-            if h.get('player_id') in core and h.get('availability_status') == 'out' and h.get('return_date'):
-                if (date.fromisoformat(h['return_date'])-date.fromisoformat(stamp)).days >= 90:
-                    exception = 'serious_core_injury_review'
+        best = sorted((pid for pid, owner in owners.items() if owner == tid and not players[pid].get('_inactive_player')),
+                      key=lambda pid: (-float(values.get(pid, {}).get('on_court_value') or 0), pid))[:INJURY_REVIEW_TOP]
+        injured = sorted({h['player_id'] for h in save.get('health_states', [])
+                          if h.get('player_id') in core and h.get('player_id') in best
+                          and h.get('availability_status') == 'out' and h.get('return_date')
+                          and season_days_missed(stamp, h['return_date']) >= INJURY_REVIEW_SEASON_DAYS})
+        exception = INJURY_REVIEW if injured else None
         if any(pid in set(save.get('ai_trade_pressure_player_ids') or []) for pid in core):
             exception = 'core_trade_pressure_review'
         overlap = len(set(old_core) & set(core))/max(1, len(old_core))
@@ -73,6 +75,8 @@ def refresh_team_plans(active, save, stamp):
                  'review_exception': exception, 'route': route, 'postseason_outcomes': outcomes[-4:],
                  'retool_candidate_id': retool,
                  'assessment_note': 'Relative fit/strength and bounded development scenario; not calibrated championship odds.'}
+        if injured:
+            entry['injury_review_ids'] = injured
         plans[tid] = entry
     save['team_plan_review_signature'] = signature
     save['team_plan_review_date'] = stamp
