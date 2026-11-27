@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C, checkpoint 12 published (the player's page and the contract extension readable; rumors a round slower); stopped, waiting for five decisions; a Storylines page, the Finder, merging main and the final sweep remain
+Progress: 8/9 - Stage C, checkpoint 13 published (a player's Career and Hotspots tabs, the League Storylines page, the amber close state on extensions); stopped, waiting for five decisions; merging main, the Finder, the start screen and the final sweep remain
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -814,3 +814,54 @@ rebuild at real size belongs in the final sweep); at 1280 by 760 the Ratings tab
 picker open, hover states, a prospect's page, coach cards (still pop-ups); the extension chart's label sizing needs
 a browser with `calc()` length division. Still open: a Storylines page, the Finder, engine heat maps, the start
 screen, the coordinator's items after merging main, the final sweep.
+
+## Stage C, checkpoint 13 report (2026-11-26)
+
+**The user's answers to checkpoint 12**: the Ratings tab without the top strip is fine; an amber close state on the
+extension page: yes; the rumor pace is good; next = a Storylines page; the player's page: "Good sections: Ratings,
+Health. ... The first section should be the players career stats. Tabs for playoffs and regular season and per36.
+Then also maybe just a 1 row table for their contract, and a projected ovr by age table like we have in the
+extensions. Look at the JFresh dylan larkin game page reference ... Maybe a financial page? Not sure if enough info
+... Give the hotspots their own page ... I'd put a storylines or narratives or 'things to watch' kind of section in
+there here somewhere."
+
+**What changed**
+- **A player's first tab is his career** (`gui/player-career.js`, new; `window.PlayerCareer`): the contract as one
+  row (`contractRow`, from `salary_seasons`: a column a season, the first free-agent year, the total); the career
+  table (`careerRows` / `careerTable`: a row a season oldest first and a Career line; switches `data-pp-scope`
+  regular | playoffs and `data-pp-mode` game | per36; per 36 scales the counting numbers only; playoffs read
+  `career_seasons[].playoffs`, which this branch does not have until main is merged); Things to watch (`watch`:
+  the storylines he is in from `HomeFront.storylines`, then last contract season, extension eligible, decline
+  watch or room to grow, games lost to injury); Projected overall by age (`outlookChart`, lazy-loaded).
+- **Hotspots have their own tab**: in `openPlayerCard`'s markup (`gui/app.js`, `careerFirst` / `careerShift`) the
+  page version of a non-prospect's card is Career, Hotspots, Ratings, Health (+ Contract Extension). Prospects and
+  the floating card keep their old first page.
+- **`player_outlook`** (display-only action in `app_actions.py`): `ability_projection(active, player, start,
+  start + 5)`, the same scenario model the extension page draws. No save is written.
+- **League > Storylines** (`storiesPage()` in `gui/home-front.js`; card `storylines`, panel
+  `.season-stories-panel`, page entry in `gui/card-pages.js`, icon `thread`): every storyline in a list, filter
+  pills by kind (only kinds with something in them), the chosen one's whole history on the right with a button to
+  his page / the standings / the news. On Home the Storylines heading and every storyline row open this page
+  (`data-front-story`).
+- **Stars lead in rumors**: `home_storylines` now sends each player's displayed overall; the ranking adds up to
+  +24 for a star and down to -12 for a deep-bench player (75 is neutral).
+- **The extension page's close state** (`extensionVerdictClose` in `gui/app.js`): a no at 90% to under 100% of his
+  price reads "Close, but he says no" with an amber dot and bar (`.fa-verdict-no.is-close` in
+  `gui/extension-window.css`). The answer itself is unchanged.
+- Styles: Career and Hotspots rules appended to `gui/player-page.css`; Storylines page rules appended to
+  `gui/home-front.css`. Cache version `polish-c50`.
+- Tests: `tests/player_career.test.cjs` (10 tests); `tests/home_front.test.cjs` updated for the Storylines heading
+  button. Browser tests: 58 of 59 files (only `startup_video.test.cjs`, as before).
+
+**Waiting on five decisions** (page https://claude.ai/artifact/UULHN3WKdNgcVZsbdiYwoj, collection `decisions`):
+`career-tab` (good | change), `money-tab` (no | yes), `hotspots-tab` (good | change), `stories-page`
+(good | change), `next` (merge-main | trade-rest | sweep | start).
+
+**Known gaps**: the Playoffs switch is empty until main's `career_seasons[].playoffs` is merged (never seen with
+real numbers); a big window leaves the lower third of the Career tab empty for a mid-length career; no separate
+money tab (judged one row's worth; asked); the star bonus was only tested with made-up talks; not seen in the game:
+a two-team season, a 20-season career, hover states on the Storylines page; no Python unit tests for
+`player_outlook` or the `overall` field in `home_storylines`.
+
+**For the coordinator (ratings, not display)**: Thomas Sorber, 20, shows "Room to grow: 2.3 of 5" beside a
+projected overall of 76.9 at 20 to 77.1 at 25 from `ability_projection`. Both are shown as the game gives them.

@@ -149,6 +149,8 @@
     {id: "standings", group: "league", label: "Standings", layout: () => ({full: {fits: [980, 580], roomy: [1500, 900]}, ...row(card("standings", {expanded: true, bare: true, fill: true}))})},
     // News: the league's feed as a page (news-page.js adds the headline list and the filters beside the posts).
     {id: "news", group: "league", label: "News", layout: () => ({full: {fits: [1180, 620], roomy: [1500, 900]}, ...row(card("league-wire", {expanded: true, bare: true, fill: true}))})},
+    // Storylines: every thread the game is following, and the whole history of the one you pick (home-front.js).
+    {id: "storylines", group: "league", label: "Storylines", layout: () => ({full: {fits: [1100, 600], roomy: [1500, 900]}, ...row(card("storylines", {bare: true, fill: true}))})},
     {id: "awards", group: "league", label: "Awards", controls: "awards", layout: () => ({full: {fits: [1120, 560], roomy: [1500, 900]}, ...row(
       // Each race lists its ten candidates on a page (four in a board window), so the cards are taller here.
       card("award-mvp", {fill: true, natural: "fit", size: [396, 590]}), card("award-dpoy", {fill: true, natural: "fit", size: [396, 590]}), card("award-roty", {fill: true, natural: "fit", size: [396, 590]}))})},

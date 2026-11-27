@@ -377,17 +377,26 @@ its sections share the page's width and height. The rules live in `gui/full-page
 - Home shows a mix: five storylines, at most two of one kind unless they are the user's. Recent beats old.
 - The front page is Home's Today tab all year: results lead while games are played, the payroll and the roster in
   the offseason.
+- League has a Storylines tab: every storyline in one list (filter pills by kind, shown only for kinds that have
+  something), and the chosen one's whole history beside it, a dated step a line, newest last. A storyline on Home
+  opens it there.
+- In rumors a star outranks a bench player at the same stage (by the overall his page shows).
 
 ## A player's page (2026-11-26)
-- A player is a page like any other: his name is the page title, and Season, Ratings, Health (and Contract
-  Extension when he can sign one) are its tabs in the usual place. No small "1/3" with arrows.
+- A player is a page like any other: his name is the page title, and Career, Hotspots, Ratings, Health (and
+  Contract Extension when he can sign one) are its tabs in the usual place. No small "1/3" with arrows.
+- The Career tab comes first (user, checkpoint 12, after the JFresh Dylan Larkin page): the contract as one row,
+  the career table (Regular season | Playoffs, Per game | Per 36), things to watch about him (his storylines,
+  then plain facts the game knows), and his projected overall by age. No boxes; a heading, a line, space.
+- The court maps have the Hotspots tab to themselves.
 - Each tab fits without scrolling at the usual window size and has nothing under 11px. The Ratings tab leaves the
-  top strip (photo, OVR / OFF / DEF, contract) to the Season tab to do it.
+  top strip (photo, OVR / OFF / DEF, contract) to the other tabs to do it.
 - The heat maps, range bars and body map keep their colours and shapes; only their size and the text around them
   changed.
 - On the extension page: fields are glass, never a white box; the answer is a coloured dot and plain words; the
   chosen option in a row is a frosted pill and the others plain text on a faint tray.
-- Styles: `gui/player-page.css` and `gui/extension-window.css`, both scoped to the page version of the card
+- A no within a tenth of his price is amber and says "Close, but he says no". It is still a no.
+- Code: `gui/player-career.js` (the Career tab). Styles: `gui/player-page.css` and `gui/extension-window.css`, both scoped to the page version of the card
   (`.card-board-window.is-detail-card`), so the floating version is untouched.
 
 ## Pop-ups (2026-11-26)

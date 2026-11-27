@@ -72,6 +72,7 @@
     ["staff", ".season-staff-panel", "Coaching Staff"],
     ["league-wire", ".season-league-wire", "League Wire"],
     ["front", ".season-front-panel", "Today"],
+    ["storylines", ".season-stories-panel", "Storylines"],
   ];
   const ASSET_CARDS = [
     ["roster", ".assets-roster", "Roster"],

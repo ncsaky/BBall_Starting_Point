@@ -616,6 +616,8 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return trade_team_impact_payload(canonical, save_path, payload)
     if action == "home_storylines":
         return home_storylines_payload(canonical, save_path)
+    if action == "player_outlook":
+        return player_outlook_payload(canonical, save_path, str(payload.get("player_id") or ""))
     if action == "dashboard_trends":
         return dashboard_trends_payload(canonical, save_path, str(payload.get("team") or user_team_abbrev(canonical, save_path)))
     if action == "league_leaders":
@@ -2665,6 +2667,21 @@ def trade_team_impact_payload(canonical: dict[str, Any], save_path: Path, payloa
     }
 
 
+def player_outlook_payload(canonical: dict[str, Any], save_path: Path, player_id: str) -> dict[str, Any]:
+    """Display only (a player's page, "Projected overall by age"): the same scenario model the extension page and the
+    Player Development graph show (extension_analysis.ability_projection: the middle path and its range), for one
+    player over this season and the next five. Read-only; a player without a team has no projection."""
+    from .extension_analysis import ability_projection
+
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = canonical_with_save(canonical, save)
+    player = next((row for row in active.get("players", []) if row.get("id") == player_id), None)
+    start = int(str((save.get("meta") or {}).get("season") or CANONICAL_SEASON)[:4])
+    if player is None or not player.get("team_id") or player.get("_inactive_player"):
+        return {"player_id": player_id, "start_season": start, "projection": []}
+    return {"player_id": player_id, "start_season": start, "projection": ability_projection(active, player, start, start + 5)}
+
+
 def home_storylines_payload(canonical: dict[str, Any], save_path: Path) -> dict[str, Any]:
     """Display only (Home's storylines): what the save already records about trade talks, shopped players, streaks,
     key injuries and coaches under pressure, gathered for the front page.
@@ -2693,10 +2710,22 @@ def home_storylines_payload(canonical: dict[str, Any], save_path: Path) -> dict[
     def days_back(days: int) -> str:
         return (date.fromisoformat(today) - timedelta(days=days)).isoformat() if today else ""
 
+    overalls: dict[Any, float | None] = {}
+
+    def overall(player_id: Any) -> float | None:
+        # The displayed overall (the same number his page shows), so a star's story can lead.
+        if player_id not in overalls:
+            try:
+                overalls[player_id] = round(float(player_display_attribute_summary(active, player_id)["overall"]), 1) if player_id in players else None
+            except (KeyError, TypeError, ValueError):
+                overalls[player_id] = None
+        return overalls[player_id]
+
     def person(player_id: Any, fallback_name: Any = None) -> dict[str, Any]:
         player = players.get(player_id) or {}
         return {
             "player_id": player_id,
+            "overall": overall(player_id),
             "name": player.get("name") or fallback_name,
             "headshot_url": player.get("headshot_url"),
             "position": compact_position(player.get("position")) if player else None,

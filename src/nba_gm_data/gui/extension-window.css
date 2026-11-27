@@ -167,3 +167,7 @@ html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-de
 html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-card-page--extension .extension-analysis-view { min-height: 190px !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-card-page--extension .ext-cap-table :is(tbody td, tbody th) { height: 26px !important; }
 }
+
+/* A near miss (within a tenth of his price) is amber: still a no, but close. */
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-card-page--extension .fa-verdict-no.is-close .fa-verdict-line > strong::before { background: var(--gm-warn) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-card-page--extension .fa-verdict-no.is-close .fa-verdict-meter > i > b { background: var(--gm-warn) !important; }

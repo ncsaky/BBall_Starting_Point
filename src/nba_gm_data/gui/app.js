@@ -3343,6 +3343,7 @@ function seasonCommandDashboardMarkup(rows, dash, editable, viewedTeam) {
     </header>
     <main class="season-command-grid">
       <section class="season-command-panel season-front-panel">${globalThis.CardPages?.enabled?.() ? globalThis.HomeFront?.markup?.() || "" : ""}</section>
+      <section class="season-command-panel season-stories-panel">${globalThis.CardPages?.enabled?.() ? globalThis.HomeFront?.storiesPage?.() || "" : ""}</section>
       <div class="season-diagnostics-row">
         <section class="season-command-panel season-identity-panel">${seasonIdentityCard(rows, dash)}</section>
         <div class="season-signals-panel">${seasonTeamSignalsCard(dash)}</div>
@@ -11876,24 +11877,33 @@ function approvedPlayerCardBody(detail, options = {}) {
     if (detail.is_prospect && axes.some(([,value]) => value == null)) return `<div class="player-rating-radar prospect-radar-placeholder" role="img" aria-label="${escapeAttr(title)} locked until its ratings are scouted">${prospectLockIcon()}<span>Profile locked</span><small>Scout all profile ratings to unlock</small></div>`;
     return axes.length >= 3 ? fantasyPlayerRadar(title, axes, `${tone} player-rating-radar`, false) : `<div class="player-page-empty">${escapeHtml(title)} profile unavailable.</div>`;
   };
+  // On a page (not the small floating card) a contracted player's first tab is his career (player-career.js; user,
+  // 2026-11-27) and the heat maps are a tab of their own. Prospects keep their college page.
+  const careerFirst = !detail.is_prospect && Boolean(globalThis.CardPages?.enabled?.()) && Boolean(globalThis.PlayerCareer);
+  const careerShift = careerFirst ? 1 : 0;
   return `<div class="approved-player-card approved-player-pages${detail.is_prospect ? " approved-prospect-pages" : ""}" data-player-pages>
-    <div class="player-page-bar"><span data-player-page-title>${extension ? "Contract Extension" : detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}</span><div class="player-page-nav"><button type="button" class="ui-command" data-player-page-step="-1" aria-label="Previous player card page" title="Previous page">‹</button><button type="button" class="ui-command" data-player-page-step="1" aria-label="Next player card page" title="Next page">›</button><span data-player-page-count aria-live="polite" aria-atomic="true">1/${(extension ? 1 : 0) + 2 + (detail.is_prospect ? 0 : 1)}</span></div></div>
+    <div class="player-page-bar"><span data-player-page-title>${extension ? "Contract Extension" : detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}</span><div class="player-page-nav"><button type="button" class="ui-command" data-player-page-step="-1" aria-label="Previous player card page" title="Previous page">‹</button><button type="button" class="ui-command" data-player-page-step="1" aria-label="Next player card page" title="Next page">›</button><span data-player-page-count aria-live="polite" aria-atomic="true">1/${(extension ? 1 : 0) + 2 + (detail.is_prospect ? 0 : 1) + careerShift}</span></div></div>
     <section class="approved-player-identity player-page-identity"><div class="approved-player-profile-head"><span class="profile-headshot-wrap">${playerHeadshotMarkup(detail, "approved-profile-headshot")}${detail.team?.abbrev && typeof teamLogoSrc === "function" && teamLogoSrc(detail.team.abbrev) ? `<img class="profile-team-badge" src="${escapeAttr(teamLogoSrc(detail.team.abbrev))}" alt="${escapeAttr(detail.team.name || detail.team.abbrev)}" title="${escapeAttr(detail.team.name || detail.team.abbrev)}" />` : ""}</span><div class="approved-profile-name"><h3>${escapeHtml(detail.name || options.name || "Player")}</h3><p>${escapeHtml([detail.position, detail.age != null ? `${detail.age} years` : "", detail.height].filter(Boolean).join(" · "))}</p><p class="player-draft-details">${escapeHtml(detail.is_prospect ? [detail.college_profile ? detail.source_team : (detail.scouting_profile?.where || detail.source_team), detail.college_profile?.coach ? `Coach ${detail.college_profile.coach}` : "", `${detail.draft_year} draft class`].filter(Boolean).join(" · ") : detail.draft_position ? `${detail.draft_year || 'Draft'} · Pick #${detail.draft_position}` : detail.draft_status==='undrafted' ? `Undrafted${detail.draft_year?` · ${detail.draft_year}`:''}` : detail.draft_year ? `Draft year ${detail.draft_year}` : 'Draft details unavailable')}</p></div>${playerSummaryRatings(detail)}</div>${typeof playerHeaderFacts === "function" ? playerHeaderFacts(detail) : playerCardEvidence(detail)}${options.actions || ""}</section>
     ${extension ? extensionNegotiationPage(extension.room, extension.selectedPlayerId, extension.response, detail, extension.draft) : ""}
-    <section class="player-card-page player-card-page--overview" data-player-page="${pageOffset}" data-page-title="${detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}" aria-label="Season statistics, recent games, game score and contract">
+    ${careerFirst ? `<section class="player-card-page player-card-page--overview player-card-page--career" data-player-page="${pageOffset}" data-page-title="Career, Contract & Outlook" aria-label="Career statistics, contract and outlook">
+      ${globalThis.PlayerCareer.page(detail)}
+    </section>
+    <section class="player-card-page player-card-page--overview player-card-page--hotspots" data-player-page="${pageOffset + 1}" data-page-title="Hotspots" aria-label="Shooting and defense by zone" hidden>
+      <section class="approved-card-panel approved-player-spatial player-overview-court">${spatialHeatmapMarkup(detail.spatial_profile, { compact: true })}</section>
+    </section>` : `<section class="player-card-page player-card-page--overview" data-player-page="${pageOffset}" data-page-title="${detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}" aria-label="Season statistics, recent games, game score and contract">
       ${detail.scouting_profile && !detail.college_profile ? scoutingProfileStrip(detail.scouting_profile) : playerSeasonStrip(season, detail.career_seasons || [])}
       ${detail.college_profile ? collegeProfileStrip(detail.college_profile, detail.scouting_profile) : ""}
       ${/* Round 10: the heat maps are this page's main display (recent games, the game-score chart and the payroll
           share left the page; the contract is in the header). */ ""}
       <section class="approved-card-panel approved-player-spatial player-overview-court">${spatialHeatmapMarkup(detail.spatial_profile, { compact: true })}</section>
-    </section>
-    <section class="player-card-page player-card-page--details${detail.inputs_profile ? " player-card-page--layers" : ""}" data-player-page="${pageOffset + 1}" data-page-title="Ratings & Profiles" aria-label="Complete ratings and radar profiles" hidden>
+    </section>`}
+    <section class="player-card-page player-card-page--details${detail.inputs_profile ? " player-card-page--layers" : ""}" data-player-page="${pageOffset + 1 + careerShift}" data-page-title="Ratings & Profiles" aria-label="Complete ratings and radar profiles" hidden>
       ${detail.inputs_profile ? inputsProfilePage(detail.inputs_profile) : `<div class="approved-player-identity-ratings" aria-label="Complete ratings">${playerCardGroupedRatings(ratings, detail, {
         Offense: radar("Offensive shape", offenseAxes, "offense"),
         Defense: radar("Defense / physical", defenseAxes, "defense")
       })}</div>`}
     </section>
-    ${detail.is_prospect ? "" : `<section class="player-card-page player-card-page--health" data-player-page="${pageOffset + 2}" data-page-title="Health & Injury Outlook" aria-label="Injury body map and outlook" hidden>${injuryBodyMapPanel(detail)}</section>`}
+    ${detail.is_prospect ? "" : `<section class="player-card-page player-card-page--health" data-player-page="${pageOffset + 2 + careerShift}" data-page-title="Health & Injury Outlook" aria-label="Injury body map and outlook" hidden>${injuryBodyMapPanel(detail)}</section>`}
   </div>`;
 }
 
@@ -13703,11 +13713,20 @@ function extensionShapeEffect(factor, path, option) {
   return ` ${pieces.join("; ").replace(/^./, (c) => c.toUpperCase())}: he counts it as ${Math.round(Math.abs(factor - 1) * 100)}% ${factor > 1 ? "more" : "less"} than the same first-season salary, flat with no option.`;
 }
 
+// A no that is within a tenth of the salary he would sign for reads as close (amber), not as a flat no (user,
+// 2026-11-27). The answer itself is unchanged: it is still a no until the offer reaches his price.
+function extensionVerdictClose(preview) {
+  return preview?.verdict?.tone === "no" && Number.isFinite(preview.price) && Number(preview.ratio) >= 0.9 && Number(preview.ratio) < 1;
+}
+function extensionVerdictClass(preview) {
+  return `approved-card-panel fa-offer-verdict ext-verdict fa-verdict-${preview.verdict.tone}${extensionVerdictClose(preview) ? " is-close" : ""}`;
+}
+
 function extensionVerdictMarkup(preview) {
   const verdict = preview.verdict;
   const meter = clampNumber(preview.ratio * 100, 0, 150);
   return `<header>Will He Sign?</header>
-    <div class="fa-verdict-line" title="${escapeAttr(verdict.detail)}"><strong>${escapeHtml(verdict.headline)}</strong> <i class="ext-info" aria-hidden="true">i</i><span class="ext-hint">${escapeHtml(verdict.detail)}</span></div>
+    <div class="fa-verdict-line" title="${escapeAttr(verdict.detail)}"><strong>${escapeHtml(extensionVerdictClose(preview) ? "Close, but he says no" : verdict.headline)}</strong> <i class="ext-info" aria-hidden="true">i</i><span class="ext-hint">${escapeHtml(verdict.detail)}</span></div>
     ${Number.isFinite(preview.price) ? `<div class="fa-verdict-meter" title="Your salary against the salary he needs from you (100% signs)"><i><b style="width:${meter / 1.5}%"></b><u style="left:${100 / 1.5}%"></u></i><em>${Math.round(preview.ratio * 100)}% of his price</em></div>` : ""}`;
 }
 
@@ -13798,7 +13817,7 @@ function extensionNegotiationPage(room, selectedPlayerId, response = null, detai
           </section>
           ${status}
         </div>
-        <section class="approved-card-panel fa-offer-verdict ext-verdict fa-verdict-${preview.verdict.tone}" data-extension-verdict role="status" aria-live="polite">${extensionVerdictMarkup(preview)}</section>
+        <section class="${extensionVerdictClass(preview)}" data-extension-verdict role="status" aria-live="polite">${extensionVerdictMarkup(preview)}</section>
         <footer class="fa-builder-foot" data-extension-foot>${extensionOfferFootMarkup(preview, true)}</footer>
       </form>
       <div class="extension-page-impact">
@@ -13966,7 +13985,7 @@ function updateExtensionPreview(modal = state.modal, root = els.modalRoot) {
   const premium = Number(candidate.security_premium_pct?.non_guaranteed);
   if (note) note.textContent = preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on January 10; release him before then and you owe nothing. He asks ${Number.isFinite(premium) ? `${premium.toFixed(1)}%` : ""} more for this.`;
   const verdict = root.querySelector("[data-extension-verdict]");
-  if (verdict) { verdict.className = `approved-card-panel fa-offer-verdict ext-verdict fa-verdict-${preview.verdict.tone}`; verdict.innerHTML = extensionVerdictMarkup(preview); }
+  if (verdict) { verdict.className = extensionVerdictClass(preview); verdict.innerHTML = extensionVerdictMarkup(preview); }
   const cap = root.querySelector("[data-extension-cap]");
   if (cap) cap.innerHTML = extensionCapTableMarkup(preview, candidate);
   const foot = root.querySelector("[data-extension-foot]");

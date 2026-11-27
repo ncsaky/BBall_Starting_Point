@@ -284,6 +284,7 @@
         ? thread(`player:${id}`, {kind: "player", id, team: talk.seller})
         : thread(`talks:${talk.key}`, {kind: "talks", name: `${talk.buyer} and ${talk.seller}`, team: talk.buyer});
       if (named) { entry.name ||= talk.player.name; entry.face ||= talk.player.headshot_url || ""; }
+      entry.overall = Math.max(entry.overall || 0, Number(talk.player.overall) || 0);
       // A step another negotiation already told (he was traded) is not repeated.
       for (const step of steps) if (!entry.steps.some((item) => item.type === step.type && item.date === step.date && item.text === step.text) && !(step.type === "traded" && entry.steps.some((item) => item.type === "traded"))) entry.steps.push(step);
     }
@@ -293,7 +294,7 @@
       const active = ["bidding", "sold", "lapsed", "cancelled"].includes(sale.status) || (sale.bids || []).length;
       if (!id || !active) continue;
       const entry = thread(`player:${id}`, {kind: "player", id, team: sale.seller});
-      entry.name ||= sale.player.name; entry.face ||= sale.player.headshot_url || "";
+      entry.name ||= sale.player.name; entry.face ||= sale.player.headshot_url || ""; entry.overall = Math.max(entry.overall || 0, Number(sale.player.overall) || 0);
       if (!entry.steps.some((step) => step.type === "market" || step.type === "bidding")) entry.steps.push({type: "market", date: sale.started || "", text: `Put on the market by ${sale.seller}`});
       (sale.bids || []).forEach((bid, index) => entry.steps.push({type: "bid", date: bid.date || "", text: index === 0 && sale.status === "bidding" && (sale.bids || []).length === 1
         ? `A team from the ${bid.leader_conference || "league"} leads the bidding` : `${bid.leader} leads, offering ${assets(bid.offer?.[bid.leader])}`}));
@@ -317,7 +318,7 @@
       const id = injury.player?.player_id;
       if (!id) continue;
       const entry = thread(`player:${id}`, {kind: "player", id, team: injury.player.team});
-      entry.name ||= injury.player.name; entry.face ||= injury.player.headshot_url || ""; entry.missed = injury.expected_games_missed;
+      entry.name ||= injury.player.name; entry.face ||= injury.player.headshot_url || ""; entry.missed = injury.expected_games_missed; entry.overall = Math.max(entry.overall || 0, Number(injury.player.overall) || 0);
       const season = injury.return_date > seasonEnd;
       entry.steps.push({type: "injured", date: injury.start_date, text: season ? `Out for the season: ${injury.diagnosis}` : `Out: ${injury.diagnosis}, about ${injury.expected_games_missed} games`});
       if (injury.returned) entry.steps.push({type: "returned", date: injury.return_date, text: "Back in the lineup"});
@@ -363,7 +364,9 @@
       if (family[last.type] === "injury" && !entry.mine && !(entry.missed >= 15 || last.type === "returned") && entry.steps.every((step) => family[step.type] === "injury")) continue;
       // More to it when it is long (a streak), costly (an injury) or far off the pace (a coach).
       const size = entry.family === "streak" ? Math.min(30, (entry.streak || 0) * 2) : entry.family === "injury" ? Math.min(30, (entry.missed || 0) / 3) : entry.family === "staff" ? Math.min(20, entry.gap || 0) : 0;
-      entry.score = top + size + (entry.mine ? 40 : 0) + Math.min(20, entry.steps.length * 5) - (entry.closed ? 25 : 0) - Math.min(45, stale * 1.5);
+      // A star's story outranks a deep-bench player's (his overall, when the game sent it: 75 is an ordinary starter).
+      const star = entry.overall ? Math.max(-12, Math.min(24, (entry.overall - 75) * 1.6)) : 0;
+      entry.score = top + size + star + (entry.mine ? 40 : 0) + Math.min(20, entry.steps.length * 5) - (entry.closed ? 25 : 0) - Math.min(45, stale * 1.5);
       out.push(entry);
     }
     return out.sort((a, b) => b.score - a.score || b.latest.localeCompare(a.latest) || a.name.localeCompare(b.name));
@@ -374,16 +377,55 @@
     const list = storylines(st, mine).filter((entry) => { if (entry.mine) return true; seen[entry.family] = (seen[entry.family] || 0) + 1; return seen[entry.family] <= 2; }).slice(0, 5);
     const today = String(st?.home?.save?.current_date || "");
     if (!list.length) return "";
-    return `<section class="front-block front-stories"><h2>Storylines</h2>
+    return `<section class="front-block front-stories"><h2><button type="button" data-front-go="storylines">Storylines</button></h2>
       <div class="front-storylist">${list.map((entry) => {
         const steps = entry.steps.slice(-3).map((step, index, shown) => `<span class="${index === shown.length - 1 ? "is-latest" : ""}"><time>${step.date ? esc(shortDate(step.date) + (today && step.date.slice(0, 4) !== today.slice(0, 4) ? ` ${step.date.slice(0, 4)}` : "")) : "Now"}</time><span>${esc(step.text)}${step.until && step.until >= today && index === shown.length - 1 ? `, decision by ${esc(shortDate(step.until))}` : ""}</span></span>`).join("");
-        const action = entry.kind === "player" && entry.id ? `data-front-player="${esc(entry.id)}"` : entry.kind === "team" ? `data-front-go="standings"` : `data-front-go="news"`;
+        const action = `data-front-story="${esc(entry.key)}"`;
         return `<button type="button" class="front-story${entry.mine ? " is-mine" : ""}${entry.closed ? " is-closed" : ""}" ${action}>
           <span class="front-face">${entry.face ? `<img src="${esc(entry.face)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : logoImg(entry.team)}</span>
           <span class="front-story-head"><b>${esc(entry.name)}</b>${entry.kind === "player" && entry.team ? `<span>${logoImg(entry.team)}${esc(entry.team)}</span>` : ""}<em>${esc(entry.status)}</em></span>
           <span class="front-story-steps">${steps}</span></button>`;
       }).join("")}</div></section>`;
   }
+
+  // ---------- League > Storylines: every storyline on the left; the one you pick on the right with its whole
+  // history, step by step (user, 2026-11-26: "it is fun to follow a narrative and see its conclusion").
+  const board = {filter: "all", key: ""};
+  const FAMILIES = [["all", "All"], ["mine", "Your team"], ["trade", "Trades"], ["staff", "Coaches"], ["streak", "Streaks"], ["injury", "Injuries"], ["award", "Awards"], ["room", "Your room"]];
+  function storiesPage() {
+    const st = app();
+    if (!st?.home?.save) return "";
+    const mine = abbrevOf(st.home.save.user_team?.abbrev || call("userTeam") || "");
+    const today = String(st.home.save.current_date || "");
+    const all = storylines(st, mine);
+    const inFilter = (entry, id) => id === "all" || (id === "mine" ? entry.mine : entry.family === id);
+    const filters = FAMILIES.filter(([id]) => id === "all" || all.some((entry) => inFilter(entry, id)));
+    if (!filters.some(([id]) => id === board.filter)) board.filter = "all";
+    const list = all.filter((entry) => inFilter(entry, board.filter));
+    const chosen = list.find((entry) => entry.key === board.key) || list[0];
+    const when = (iso) => (iso ? shortDate(iso) + (today && iso.slice(0, 4) !== today.slice(0, 4) ? ` ${iso.slice(0, 4)}` : "") : "Now");
+    const face = (entry) => `<span class="front-face">${entry.face ? `<img src="${esc(entry.face)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : logoImg(entry.team)}</span>`;
+    const rows = list.map((entry) => {
+      const last = entry.steps.filter((step) => step.type !== "due").at(-1) || entry.steps.at(-1);
+      return `<button type="button" class="stories-row${entry === chosen ? " is-chosen" : ""}${entry.mine ? " is-mine" : ""}${entry.closed ? " is-closed" : ""}" data-story-key="${esc(entry.key)}" aria-pressed="${entry === chosen}">
+        ${face(entry)}<span class="stories-row-head"><b>${esc(entry.name)}</b>${entry.kind === "player" && entry.team ? `<span>${logoImg(entry.team)}${esc(entry.team)}</span>` : ""}<em>${esc(entry.status)}</em></span>
+        <span class="stories-row-last"><time>${esc(when(last.date))}</time>${esc(last.text)}</span></button>`;
+    }).join("");
+    const open = chosen && (chosen.kind === "player" && chosen.id ? `<button type="button" class="stories-open" data-front-player="${esc(chosen.id)}">His page</button>`
+      : chosen.kind === "team" ? `<button type="button" class="stories-open" data-front-go="standings">Standings</button>`
+      : `<button type="button" class="stories-open" data-front-go="news">League news</button>`);
+    const detail = chosen ? `<header class="stories-detail-head">${face(chosen)}<div><h2>${esc(chosen.name)}</h2><p>${chosen.kind === "player" && chosen.team ? `${logoImg(chosen.team)}<span>${esc(chosen.team)}</span>` : ""}<em class="${chosen.closed ? "is-closed" : ""}">${esc(chosen.status)}</em></p></div>${open}</header>
+      <ol class="stories-steps">${chosen.steps.map((step, index) => `<li class="${index === chosen.steps.length - 1 ? "is-latest" : ""}${step.type === "due" ? " is-ahead" : ""}"><time>${esc(when(step.date))}</time><span>${esc(step.text)}${step.until && step.until >= today ? `, decision by ${esc(when(step.until))}` : ""}</span></li>`).join("")}</ol>`
+      : `<p class="front-none">No storylines right now. They start when something happens: talks open, a streak builds, a coach falls behind his pace.</p>`;
+    return `<div class="stories">
+      <div class="stories-list">
+        <div class="stories-filters" role="tablist" aria-label="Kind of storyline">${filters.map(([id, label]) => `<button type="button" role="tab" data-story-filter="${id}" aria-selected="${id === board.filter}">${label}<small>${all.filter((entry) => inFilter(entry, id)).length}</small></button>`).join("")}</div>
+        <div class="stories-rows">${rows || `<p class="front-none">Nothing of this kind right now.</p>`}</div>
+      </div>
+      <article class="stories-detail" aria-live="polite">${detail}</article>
+    </div>`;
+  }
+  const paintStories = () => { if (typeof document !== "undefined") for (const panel of document.querySelectorAll(".season-stories-panel")) panel.innerHTML = storiesPage(); };
 
   // ---------- The league: headlines, then the latest day's scores.
   function headlines(st, mine) {
@@ -514,6 +556,7 @@
       now.data.homeStories = result;
       const front = document.querySelector(".season-front-panel");
       if (front) front.innerHTML = markup();
+      paintStories();
     }).catch(() => {});
     Promise.resolve(call("loadTradeMarket", true)).then(() => {
       const target = document.querySelector("[data-front-shops]");
@@ -526,7 +569,13 @@
 
   if (typeof document !== "undefined") {
     document.addEventListener("click", (event) => {
-      const hit = (name) => event.target.closest?.(`.front [${name}]`);
+      const hit = (name) => event.target.closest?.(`.front [${name}], .stories [${name}]`);
+      const filter = hit("data-story-filter");
+      if (filter) { board.filter = filter.dataset.storyFilter; board.key = ""; paintStories(); return; }
+      const row = hit("data-story-key");
+      if (row) { board.key = row.dataset.storyKey; paintStories(); return; }
+      const story = hit("data-front-story");
+      if (story) { board.filter = "all"; board.key = story.dataset.frontStory; globalThis.CardPages?.go?.("storylines"); paintStories(); return; }
       const box = hit("data-front-box");
       if (box) { call("openBoxScore", box.dataset.frontBox); return; }
       const player = hit("data-front-player");
@@ -542,5 +591,5 @@
     if (document.body) start(); else document.addEventListener("DOMContentLoaded", start);
   }
 
-  if (typeof window !== "undefined") window.HomeFront = Object.freeze({markup, table, surprises, storylines, moves});
+  if (typeof window !== "undefined") window.HomeFront = Object.freeze({markup, table, surprises, storylines, moves, storiesPage, board});
 })();

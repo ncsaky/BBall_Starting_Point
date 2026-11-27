@@ -177,7 +177,7 @@ test('storylines: routine things alone are not stories; your own players come fi
 test('storylines on the page: dated steps, escaped names, a decision date only while it is ahead', () => {
   const state = storyState();
   const html = load(state).markup();
-  assert.match(html, /<h2>Storylines<\/h2>/);
+  assert.match(html, /<h2><button type="button" data-front-go="storylines">Storylines<\/button><\/h2>/, 'the heading opens the Storylines page');
   assert.match(html, /Jaylen &lt;b&gt;Brown&lt;\/b&gt;/);
   assert.match(html, /<time>Now<\/time><span>Unhappy with his role/);
   assert.match(html, /Bidding war, 4 teams, decision by 2026-12-30/);
@@ -185,7 +185,7 @@ test('storylines on the page: dated steps, escaped names, a decision date only w
   assert.doesNotMatch(load(state).markup(), /decision by/);
   const empty = season();
   empty.data.tradeMarket = {shopped: []};
-  assert.doesNotMatch(load(empty).markup(), /<h2>Storylines<\/h2>/, 'no block when there is no story');
+  assert.doesNotMatch(load(empty).markup(), /front-stories/, 'no block when there is no story');
 });
 
 // ---------- Storylines from the home_storylines action: trade talks that reveal more each round, bidding, streaks,
