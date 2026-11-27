@@ -1771,6 +1771,12 @@ def _apply_trade_to_state(
                 return
             for obligation_id in bundle["obligation_ids"]:
                 update_retraded_pick_swap_obligation(save, obligation_id, destination, date)
+        # What the trade does to morale and chemistry, worked out on the league before it (trade_morale; the trade
+        # room shows the same numbers beforehand) and stored once the players have moved.
+        morale_effect = None
+        if live is not None:
+            from .trade_morale import compute_trade_morale, trade_moves
+            morale_effect = compute_trade_morale(live, save, trade_moves(live, proposal_payload))
         for asset in proposal_payload.get("from_assets", []):
             if asset.get("kind") == "player":
                 save.setdefault("roster_overrides", {})[asset["id"]] = to_team_id
@@ -1793,6 +1799,9 @@ def _apply_trade_to_state(
             if team_id:
                 save.setdefault("rotation_snapshots", {}).pop(team_id, None)
         apply_pick_obligation_terms_to_save(save, proposal_payload, proposal.get("pick_obligation_terms") or [], date)
+        if morale_effect is not None:
+            from .trade_morale import apply_trade_morale
+            apply_trade_morale(save, morale_effect)
         from .save import add_league_event, add_news
 
         headline = trade_headline_from_payload(proposal_payload)

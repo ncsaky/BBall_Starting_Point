@@ -157,6 +157,9 @@ def apply_multi_team_trade_to_state(save, candidate, date, *, canonical, config=
         for field in ('nested_input', 'nested_other_input', 'nested_other_pick_id', 'nested_anchor_pick_id', 'allocation_slot_pick_ids'):
             if field in live_terms.get(row.get('id'), {}):
                 row[field] = deepcopy(live_terms[row['id']][field])
+    # Morale and chemistry (trade_morale), worked out on the league before the trade and stored with it.
+    from .trade_morale import apply_trade_morale, compute_trade_morale, trade_moves
+    morale_effect = compute_trade_morale(active, working, trade_moves(active, fresh['proposal']))
     for edge in fresh['proposal']['transfers']:
         for asset in edge['assets']:
             dest, aid = edge['to_team_id'], asset['id']
@@ -180,6 +183,7 @@ def apply_multi_team_trade_to_state(save, candidate, date, *, canonical, config=
             return {'status': 'not_applied_stale_assets', 'issues': ['A conditional right could not be created.']}
     for tid in participants:
         working.setdefault('rotation_snapshots', {}).pop(tid, None)
+    apply_trade_morale(working, morale_effect)
     log = {'id': stable_id('transaction_log', pid, date), 'date': date, 'transaction_type': 'trade',
            'proposal_id': pid, 'status': 'applied_to_save_ledger', 'teams': participants,
            'assets': {'format': 'multi_team_v1', 'transfers': deepcopy(fresh['proposal']['transfers'])},
