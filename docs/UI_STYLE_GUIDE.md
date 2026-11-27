@@ -462,6 +462,11 @@ its sections share the page's width and height. The rules live in `gui/full-page
 - A list that is the point of a screen must be checked on that screen: Sign Players showed no list and Set The
   Roster hid "Decline" while every page-by-page picture looked fine, because no test save sat on those screens.
 
+## The fantasy draft (2026-11-27)
+- It is a Home tab called Draft, laid out like the rookie draft: the footer picks and sims, "Finish draft" asks
+  first and lets the assistant make the rest of your picks.
+- Players are names with faces, never name buttons or boxed rows. The line at the top says who is on the clock.
+
 ## Preserve (the user's favourites; don't redesign)
 - Team Identity heat maps at the current hexagon size (round 3: "looks great"). The tab style there still needs a new try.
 - Four Factors range charts (round 3: "maybe one of my favourite things").

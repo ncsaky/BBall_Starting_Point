@@ -95,12 +95,17 @@
     // The draft, the offseason checklist, free agency and the playoffs take over Home while they are on (user,
     // 2026-11-26): each is a Home tab, listed first, and it is where Home lands (phaseHome).
     {id: "draft-room", group: "home", phaseHome: true, label: "Draft", layout: draftRoomLayout},
+    // The fantasy draft is where a new fantasy league starts: Home lands on it, like the rookie draft.
+    {id: "fantasy-draft", group: "home", phaseHome: true, label: "Draft", layout: () => ({full: {fits: [1220, 620], roomy: [1500, 900]}, ...col(
+      card("phase-fantasy_draft-control", {bare: true}),
+      rowOf({fill: true}, colOf({fill: true}, card("phase-fantasy_draft-board", {fill: true, title: "Players"})),
+        colOf({basis: 290}, card("phase-fantasy_draft-roster", {fill: true, title: "Your Roster"})),
+        colOf({basis: 200}, card("phase-fantasy_draft-ticker", {fill: true, title: "Picks"}))))})},
     {id: "free-agency-checklist", group: "home", phaseHome: true, label: "Checklist", layout: () => ({full: {fits: [1220, 660], roomy: [1500, 900]}, ...row(
       colOf({fill: true}, card("phase-free_agency-checklist", {bare: true, fill: true})))})},
     {id: "free-agency", group: "home", phaseHome: true, label: "Free Agency", when: () => typeof signingsOpen !== "function" || signingsOpen(), layout: () => ({full: {fits: [1220, 660], roomy: [1500, 900]}, ...row(
       colOf({fill: true}, card("phase-free_agency-market", {fill: true})),
       colOf({basis: 308}, card("phase-free_agency-wire", {fill: true})))})},
-    {id: "fantasy-draft", group: "now", step: true, label: "Fantasy Draft", layout: () => col("phase-fantasy_draft-control", row(card("phase-fantasy_draft-board", {grow: "h"}), card("phase-fantasy_draft-roster", {grow: "h"}), card("phase-fantasy_draft-ticker", {grow: "h"})))},
     {id: "roster-moves", group: "now", step: true, label: () => rosterMovesLabel(), layout: () => ({full: {fits: [1220, 640], roomy: [1500, 900]}, ...row(card("phase-cutdown-decision", {bare: true, fill: true}))})},
     {id: "set-roster", group: "now", step: true, label: "Set The Roster", layout: () => ({full: {fits: [1220, 600], roomy: [1500, 900]}, ...row(card("phase-set_roster-checklist", {bare: true, fill: true}))})},
     // Slideshows open by themselves when they are due (and from Settings).

@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 5/5 - checkpoint 19 (answers built, a season played through); waiting on the user
+Progress: 5/5 - checkpoint 20 (new games and fantasy draft) finished; waiting on the user's notes
 
 ## Handover (2026-11-26): finishing on a cheaper model
 
@@ -1171,4 +1171,22 @@ Not interface, seen while playing: sims are slow on this laptop (14 days took 36
 a month. This branch changes no engine code. Camp-invite and max-offer rule fixes are in a separate session
 (`claude/dreamy-yonath-57ede0`, uncommitted, not reviewed); it noted two-way deals still ignore a player's asking
 price. Main has no commits this branch lacks.
+
+## Round for checkpoint 20 (2026-11-27): "Run it now": new games and the fantasy draft
+
+Checkpoint 19 answers: playtest "Merge it and playtest now" ("just start the game and ill make notes ... queue ones
+you think may be above your abilities as a model (sonnet 5.5)"); speed "have a session find out why"; next "more".
+The merge request went to the coordinator through the parent session. Playtest queue:
+`playtest-queue.md` in the shared notes folder.
+
+Done: creating a standard and a fantasy game works (6 to 7 s on the server). The fantasy draft is a Home tab driven
+by the footer, restyled, with faces (`fantasy_room_view` in `app_actions.py`, display only); "Finish draft" added
+(existing `fantasy_draft_sim_all`); whole ages; the welcome slide no longer shows the old roster; no red message
+after skipping the welcome. Played one fantasy game through its draft into opening week on a copy.
+
+The player page opened from the draft had no name and broken figures; repaired (`player-page.css`). It is still the
+older fantasy card, with small text at 1280 by 760 (queued, not redesigned).
+
+Not checked: a shared-league (multiplayer) fantasy draft, a draft picked by hand to the end, the full Python tests
+(all browser tests, the two interface modules and the fantasy draft module pass).
 

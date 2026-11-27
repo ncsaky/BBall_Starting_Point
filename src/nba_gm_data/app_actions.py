@@ -591,7 +591,7 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         save = ensure_league_save_defaults(load_save(save_path), canonical)
         team = str(payload.get("team") or user_team_abbrev(canonical, save_path))
         write_save(save_path, save)
-        return fantasy_draft_room(canonical, save, team)
+        return fantasy_room_view(canonical, save, team)
     if action == "fantasy_draft_pick":
         return fantasy_draft_pick_action(canonical, save_path, payload)
     if action == "fantasy_draft_sim_one":
@@ -1021,6 +1021,21 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
     raise AppActionError(f"Unknown app action {action!r}")
 
 
+def fantasy_room_view(canonical: dict[str, Any], save: dict[str, Any], team_query: str) -> dict[str, Any]:
+    """The fantasy draft room with each player's photo (display only; the draft itself is untouched)."""
+    room = fantasy_draft_room(canonical, save, team_query)
+    faces = {str(player.get("id")): player.get("headshot_url") for player in canonical.get("players", [])
+             if player.get("headshot_url")}
+
+    def shown(rows: Any) -> list[dict[str, Any]]:
+        return [{**row, "headshot_url": faces.get(str(row.get("player_id")))} for row in rows or []]
+
+    for key in ("available_players", "viewer_roster", "watchlist"):
+        if key in room:
+            room[key] = shown(room[key])
+    return room
+
+
 def fantasy_draft_pick_action(
     canonical: dict[str, Any],
     save_path: Path,
@@ -1049,7 +1064,7 @@ def fantasy_draft_pick_action(
     return {
         **result,
         "ai_picks": ai_picks,
-        "room": fantasy_draft_room(canonical, save, team["abbrev"]),
+        "room": fantasy_room_view(canonical, save, team["abbrev"]),
     }
 
 
@@ -1066,7 +1081,7 @@ def fantasy_draft_sim_one_action(
         **result,
         "applied_count": 1 if result.get("selection") else 0,
         "picks": [result["selection"]] if result.get("selection") else [],
-        "room": fantasy_draft_room(canonical, save, team["abbrev"]),
+        "room": fantasy_room_view(canonical, save, team["abbrev"]),
     }
 
 
@@ -1083,7 +1098,7 @@ def fantasy_draft_sim_to_user_action(
         "status": (save.get("fantasy_draft_state") or {}).get("status"),
         "applied_count": len(applied),
         "picks": applied,
-        "room": fantasy_draft_room(canonical, save, team["abbrev"]),
+        "room": fantasy_room_view(canonical, save, team["abbrev"]),
     }
 
 
@@ -1102,7 +1117,7 @@ def fantasy_draft_watchlist_action(
     write_save(save_path, save)
     return {
         **result,
-        "room": fantasy_draft_room(canonical, save, team["abbrev"]),
+        "room": fantasy_room_view(canonical, save, team["abbrev"]),
     }
 
 
@@ -1119,7 +1134,7 @@ def fantasy_draft_sim_all_action(
         "status": (save.get("fantasy_draft_state") or {}).get("status"),
         "applied_count": len(applied),
         "picks": applied,
-        "room": fantasy_draft_room(canonical, save, team["abbrev"]),
+        "room": fantasy_room_view(canonical, save, team["abbrev"]),
     }
 
 

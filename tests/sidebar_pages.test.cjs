@@ -189,7 +189,7 @@ test('the sidebar carries the phase and the to-do list; Home lands first, and st
   assert.deepEqual(Array.from(pages.GROUPS, ([id]) => id), ['home', 'team', 'office', 'league']);
   const tabs = (group) => Array.from(pages.PAGES).filter((page) => page.group === group).map((page) => page.id);
   // Home: the phase's own tabs first (listed only in their phase), then Today, Minutes and Schedule.
-  assert.deepEqual(tabs('home'), ['draft-room', 'free-agency-checklist', 'free-agency', 'home-playoffs', 'home', 'minutes', 'schedule']);
+  assert.deepEqual(tabs('home'), ['draft-room', 'fantasy-draft', 'free-agency-checklist', 'free-agency', 'home-playoffs', 'home', 'minutes', 'schedule']);
   assert.match(read('card-pages.js'), /const homeId = \(\) => visiblePages\(\)\.find\(page => page\.phaseHome/, 'Home lands on the phase tab while one is on');
   for (const id of ['roster', 'stats', 'development', 'staff', 'identity', 'profile']) assert.ok(tabs('team').includes(id), id);
   assert.deepEqual(tabs('office'), ['contracts', 'trades', 'scouting']);

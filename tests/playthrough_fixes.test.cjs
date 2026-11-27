@@ -50,3 +50,16 @@ test('Staff Retention takes the page and draft-night trades write the date out',
   assert.match(read('card-pages.js'), /id: "staff-retention",[^\n]*card\("phase-staff_retention-decision", \{bare: true, fill: true\}\)/);
   assert.match(app, /<small>\$\{escapeHtml\(formatWrittenDate\(row\.date\) \|\| row\.date\)\}<\/small>/);
 });
+
+test('the fantasy draft is a Home page the footer drives, with no slideshow error on the way in', () => {
+  const pages = read('card-pages.js');
+  assert.match(pages, /id: "fantasy-draft", group: "home", phaseHome: true, label: "Draft"/);
+  const progress = read('progress.js');
+  for (const command of ['fantasy-pick', 'fantasy-one', 'fantasy-user', 'fantasy-all']) {
+    assert.ok(progress.includes(`data-phase-command="${command}"`), command);
+    assert.ok(app.includes(`'${command}':`), command);
+  }
+  assert.match(app, /async function fantasyDraftFinish\(\) \{\n  if \(!await askConfirm\(/);
+  assert.match(app, /if \(String\(state\.home\?\.save\?\.phase \|\| ""\) === "fantasy_draft"\) return;\n/);
+  assert.match(app, /You build this roster in the fantasy draft\./);
+});
