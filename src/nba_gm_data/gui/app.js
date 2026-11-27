@@ -9165,8 +9165,14 @@ async function setTradeWorkspaceTeam(team) {
       if (save !== state.currentSave || team !== state.tradeFinderScope) return;
       state.data.tradeRuleCounterparty = {team,payload};
     }
+    state.tradeFinderSearching = Boolean(searched && state.selectedFrom.length);
     renderTradeRoom();
-    if (searched && state.selectedFrom.length) await runTradeSearch();
+    if (searched && state.selectedFrom.length) {
+      try { await runTradeSearch(); }
+      finally {
+        if (state.tradeFinderSearching) { state.tradeFinderSearching = false; renderTradeRoom(); }
+      }
+    }
     return;
   }
   state.tradePartner = team;
@@ -10065,32 +10071,45 @@ function renderTradeFinder(root) {
   const fresh = state.tradeFreshAsset || "";
   state.tradeFreshAsset = "";
   const scopeName = state.tradeFinderScope || "the league";
-  body.innerHTML = `
-    <div class="trade-finder-layout tr-finder">
-      ${assetColumn(`${finderTeam} ${targetMode ? "target" : "available"} assets`, userAssets, side, finderTeam)}
-      <div class="trade-finder-workspace tr-finder-workspace">
-        <section class="trade-finder-brief tr-finder-brief" ${teamBrandStyle(userTeam())}>
+  // Two steps, like the Builder (checkpoint 14, "finish the trade room"): what you shop or want on the first page, the
+  // trades the game found on the second, so each has the whole window. state.tradeFinderView is "pick" or "results".
+  const searching = Boolean(state.tradeFinderSearching);
+  const searched = state.tradeSearchCompleted || searching;
+  const view = state.tradeFinderView === "results" && searched ? "results" : "pick";
+  const step = (target, number, label, count = "") => `<button type="button" data-finder-view="${target}" ${view === target ? 'aria-current="step"' : ""} ${target === "results" && !searched ? "disabled" : ""}><i>${number}</i>${label}${count === "" ? "" : `<b class="tr-steps-found">${count}</b>`}</button>`;
+  const clear = `<button id="clearTradeMarket" type="button" class="tr-text-button" ${selection.length || state.tradeResults.length ? "" : "disabled"}>Clear</button>`;
+  const find = `<button id="runTrade" type="button" class="tr-button is-primary" ${selection.length && !tradePickRuleErrors().length ? "" : "disabled"}>Find trades</button>`;
+  const steps = `<nav class="tr-steps" aria-label="Finder steps">${step("pick", 1, "Pick assets")}${step("results", 2, "Found trades", state.tradeResults.length || "")}<span class="tr-steps-onward">${clear}${view === "pick" ? find : ""}</span></nav>`;
+  body.innerHTML = view === "pick" ? `
+    <div class="trade-finder-layout tr-finder tr-finder-page is-pick">
+      ${steps}
+      <div class="tr-finder-body">
+        ${assetColumn(`${finderTeam} ${targetMode ? "target" : "available"} assets`, userAssets, side, finderTeam)}
+        <section class="trade-finder-brief tr-finder-brief" data-trade-scroll="finder-brief" ${teamBrandStyle(userTeam())}>
           <header class="tr-side-head"><span class="tr-side-team">${teamLogoSrc(finderTeam) ? `<img src="${escapeAttr(teamLogoSrc(finderTeam))}" alt="" />` : ""}<strong>${targetMode ? `Get from ${escapeHtml(finderTeam)}` : `Shop to ${escapeHtml(scopeName)}`}</strong></span><span class="trade-selection-count">${selection.length} of 2</span></header>
           <ul class="tr-tiles" data-trade-scroll="selected-${escapeAttr(side)}">${selection.length ? selection.map(asset => tradeDealTile(asset, {removeSide: side, fresh: fresh === `${side}:${asset.kind}:${asset.id}`})).join("") : `<li class="tr-tiles-empty"><span>Choose up to two assets from the list</span></li>`}</ul>
-          <div class="trade-finder-cap"><header>${teamLogoSrc(userTeam()) ? `<img src="${escapeAttr(teamLogoSrc(userTeam()))}" alt="" />` : ""}<span>${escapeHtml(userTeam())} payroll, next four seasons</span></header>${tradeFinderPayrollChart(targetMode, selection) || tradeCapDeltaChart(capRows)}</div>
           ${selection.some(asset => asset.kind !== "player") || (state.tradePickRules || []).length ? tradePickTermsMarkup() : ""}
-          <div class="trade-finder-actions"><button id="clearTradeMarket" type="button" class="tr-text-button" ${selection.length || state.tradeResults.length ? "" : "disabled"}>Clear</button><button id="runTrade" type="button" class="tr-button is-primary" ${selection.length && !tradePickRuleErrors().length ? "" : "disabled"}>Find trades</button></div>
-        </section>
-        <section class="trade-finder-results tr-finder-results">
-          <div class="trade-results-head"><strong>Found trades</strong><span>${state.tradeResults.length || ""}</span></div>
-          <div id="tradeResults" class="trade-results-list scroll-list" aria-live="polite">${tradeResultCards(state.tradeResults)}</div>
+          <div class="trade-finder-cap"><header>${teamLogoSrc(userTeam()) ? `<img src="${escapeAttr(teamLogoSrc(userTeam()))}" alt="" />` : ""}<span>${escapeHtml(userTeam())} payroll, next four seasons</span></header>${tradeFinderPayrollChart(targetMode, selection) || tradeCapDeltaChart(capRows)}</div>
         </section>
       </div>
+    </div>` : `
+    <div class="trade-finder-layout tr-finder tr-finder-page is-results">
+      ${steps}
+      <section class="trade-finder-results tr-finder-results">
+        <div id="tradeResults" class="trade-results-list" data-trade-scroll="finder-results" aria-live="polite">${searching ? `<p class="tr-effect-wait" role="status">Finding trades…</p>` : tradeResultCards(state.tradeResults)}</div>
+      </section>
     </div>`;
   wireTradeAssetControls(body);
   wireTradeInsightPagers(body);
-  body.querySelector("#runTrade").addEventListener("click", () => runTradeSearch().catch(error => showToast(error.message || String(error), true)));
+  body.querySelectorAll("[data-finder-view]").forEach(button => button.addEventListener("click", () => { state.tradeFinderView = button.dataset.finderView; renderTradeRoom(); }));
+  body.querySelector("#runTrade")?.addEventListener("click", () => runTradeSearch().catch(error => showToast(error.message || String(error), true)));
   body.querySelector("#clearTradeMarket").addEventListener("click", () => {
     state.tradePickRules = [];
     state.selectedFrom = [];
     state.selectedTo = [];
     state.tradeResults = [];
     state.tradeSearchCompleted = false;
+    state.tradeFinderView = "pick";
     renderTradeRoom();
   });
   body.querySelectorAll("[data-inspect-finder]").forEach((button) => {
@@ -10207,8 +10226,10 @@ async function runTradeSearch() {
   if (save !== state.currentSave || target !== (state.tradeFinderTargetTeam || null) || scope !== (state.tradeFinderScope || "")) return;
   const currentSelection = state.tradeFinderTargetTeam ? state.selectedTo : state.selectedFrom;
   if (selectionKey !== JSON.stringify([currentSelection.map(asset => `${asset.kind}:${asset.id}`).sort(),tradePickRulesRequest()])) return;
+  state.tradeFinderSearching = false;
   state.tradeResults = data.candidates || data.offers || [];
   state.tradeSearchCompleted = true;
+  state.tradeFinderView = "results";
   renderTradeRoom();
 }
 

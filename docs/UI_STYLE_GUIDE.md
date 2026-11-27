@@ -359,6 +359,10 @@ its sections share the page's width and height. The rules live in `gui/full-page
   factors, morale, wins) is left out until the engine provides it.
 - Before and after of the same picture share one place and fade between each other, with a switch to hold either.
 - The asset lists scroll (round 8); they are not paged.
+- The Finder has two steps with the same step bar: Pick assets (the list, and beside it what is shopped, its
+  conditions and the payroll) and Found trades (offers two across, set apart by a line, no boxes). Find trades is the
+  step bar's one button.
+- A ticked box is blue with a white tick.
 - The Market is a page of tall rows, a player each, with the interested teams as logos and a button straight into
   an offer; it fills the window.
 

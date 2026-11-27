@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C, checkpoint 14 published and handed over (see Handover below); waiting for four decisions; then the 0.0% lottery teams, the Finder, the start screen and the final sweep
+Progress: 8/9 - Stage C, checkpoint 15 published (the trade Finder in two steps); stopped, waiting for three decisions; then the start screen and the final sweep
 
 ## Handover (2026-11-26): finishing on a cheaper model
 
@@ -998,3 +998,36 @@ has `departure_text` null because the save predates the origins record.
 `tests/test_gui_concept71.py` (Settings looks expected glass, font, buttons; found "motion", the Background
 movement switch from checkpoint 4). The user was asked and said to keep the switch; the test now allows it
 (6071d437 and the commit after it). The branch's browser tests alone had not caught this since checkpoint 4.
+
+## Stage C, checkpoint 15 report (2026-11-26, a Sonnet 5.5 session)
+
+**The user's answers to checkpoint 14**: the lottery card good; the 0.0% teams "leave"; the signing wire's reason
+good; next = "trade-rest" ("The Finder, and the heat maps from the game's own team map"). The handover above lists
+those heat maps under "do not do", so only the Finder was built and the heat maps are asked again.
+
+**What changed**
+- **The Finder is two steps** (`renderTradeFinder` in `app.js`; `state.tradeFinderView` "pick" | "results", with the
+  Builder's `.tr-steps` bar): step 1 the asset list beside what is shopped (tiles, pick conditions, payroll); step 2
+  the found trades, two across. Find trades moves to step 2; changing assets falls back to step 1; changing the team
+  shopped to searches again and stays on step 2 ("Finding trades…", `state.tradeFinderSearching`). `tradeResultCards`
+  and the search request are unchanged.
+- Styles appended to `gui/popups.css`. Height and growth runway stay off the Finder's list (as before) so the value
+  column is on screen; at 1400px wide or less injury risk goes too and the side column narrows; at 820px tall or less
+  the payroll chart is zoomed to .78.
+- **Fixed on the way**: ticked checkboxes in the whole trade room looked empty (the pop-up sheet's `background`
+  shorthand wiped the tick); a pick condition being edited ran off the Finder's side column.
+- Tests: `tests/trade_finder_steps.test.cjs` (6). Browser tests: all 61 files; `test_gui_concept71` and
+  `test_gui_concept74` pass. Cache version `polish-c62`.
+
+**How it was checked** (copy `playtest.json`, port 8775, 1512 by 900 and 1280 by 760): shopped two players, shopped a
+pick and added a protection, searched, opened Trade analysis (both pages), switched to acquiring from ATL, searched,
+opened an offer in the Builder and came back, cleared, changed the team shopped to (a search with no match).
+
+**Waiting on three decisions** (page https://claude.ai/artifact/Jk4wDXBit2uHT8Nqvr4KNM, collection `decisions`):
+`finder-steps` (good | change), `heat-maps` (build | leave), `next` (start | sweep).
+
+**Known gaps**: found trades show a dash for roles (the search results carry none; true before); the colour key under
+the value bars in Trade analysis has no colour squares (for the sweep); a long result list, an opened analysis and
+the side column during a condition edit still scroll; the sentence "You can review each returned offer in the builder"
+no longer shows (its empty results panel is not reachable before a search); not seen: swap-right or two conditions,
+hover states, windows under 1280 by 760, more than three results; no Python changed, full suite not run.
