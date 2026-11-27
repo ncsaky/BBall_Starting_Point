@@ -183,10 +183,10 @@ route and rule B are unchanged.
 Also seen, and allowed by design: Denver added two picks to swap Aaron Gordon for Keegan Murray. Gordon's rating
 slipped from 63 to 61 that summer, under rule B's floor of 62.
 
-## 6. Still not solved
-- A top young player plus one pick still buys many stars, because that route allows him to be rated well below the
-  star. In one test summer Brooklyn's 19-year-old rookie (rated 62, priced 88) and a pick could get Scottie Barnes or
-  Cooper Flagg. By the game's prices it is a fair offer; a fan might not agree.
+## 6. Kept on purpose, and still not solved
+- **Kept (your choice, 2026-11-27):** a top young player plus one pick can get a star, even if he is rated well below
+  him. In one test summer Brooklyn's 19-year-old rookie (rated 62, priced 88) and a pick could get Scottie Barnes or
+  Cooper Flagg. By the game's prices it is a fair offer.
 - Curry, 39 and marked by his own team, still costs one pick. That is a "legends keep jobs" rule of its own.
 - Good players rated outside the top 30 still go for one top pick.
 - A good player with a low summer minutes projection is priced like a reserve (Donovan Clingan: rated 74, priced 44 with
