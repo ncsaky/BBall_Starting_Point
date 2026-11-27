@@ -439,19 +439,28 @@ its sections share the page's width and height. The rules live in `gui/full-page
   side-bar offer builder; do not bring one back. ("It just makes more to have a unified look.")
 - Left: what he wants, your offer, whether he signs, the button. Right: the cap table, then one panel with the tabs
   How it's paid, Rival bids, Your cap sheet, Other ways. The cap sheet is long and takes the whole right side.
+- It opens on an offer the cap allows: if the game says the first terms cannot be paid, the page moves to the
+  largest it accepts. Once the user changes anything, it leaves their terms alone.
 - It opens from a free-agent row, the checklist's Negotiate, the comparison window and a player's name. A signing
   that goes through closes it and returns you to where you were.
 - In a short window the verdict and the button stay on screen and each side scrolls by itself.
 - One-click signings (a two-way on the roster screen, "Sign Players", waivers) are not negotiations and are unchanged.
 
 ## Closed things, rows and captions (user, 2026-11-27)
-- When trading or signings are closed, the buttons and tabs that would open them are not shown. A short note says
-  they are closed.
+- When trading or signings are closed, the buttons and tabs that would open them are not shown, the Trades tab
+  included (user, checkpoint 18). The sidebar says they are closed.
 - Every row of a list is the same height, tall enough for a name on two lines, and a one-line name sits in the middle
   of it. No ending a name in dots.
 - A news line too long for its two lines fades out; the whole text is on hover.
 - A line explaining how something works sits behind a small "i" beside the title.
 - A coach card closes when you change page, unless pinned.
+
+## The clock and confirmations (2026-11-27, from playing a season)
+- A button does what its words say: "Sim to next game" goes through that game in one press.
+- Dates on screen are written ("Jun 27"), and a move from last summer says its year.
+- "Please confirm" is a glass box with one main button.
+- A list that is the point of a screen must be checked on that screen: Sign Players showed no list and Set The
+  Roster hid "Decline" while every page-by-page picture looked fine, because no test save sat on those screens.
 
 ## Preserve (the user's favourites; don't redesign)
 - Team Identity heat maps at the current hexagon size (round 3: "looks great"). The tab style there still needs a new try.

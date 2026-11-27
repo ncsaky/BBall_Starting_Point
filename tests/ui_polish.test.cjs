@@ -96,7 +96,9 @@ test('dialogs with a window title bar get their own icon; trade dialogs keep the
 test('league wire and full standings show written dates, not raw ISO dates', () => {
   const wire = app.slice(app.indexOf('function seasonLeagueWire('), app.indexOf('function setLeagueWireCardExpanded('));
   assert.doesNotMatch(wire, /escapeHtml\(normalized\.date\)/);
-  assert.equal((wire.match(/formatDashboardShortDate\(normalized\.date\)/g) || []).length, 2);
+  // The activity list writes the short date; the ticker adds the year to last summer's moves.
+  assert.equal((wire.match(/formatDashboardShortDate\(normalized\.date\)/g) || []).length, 1);
+  assert.match(wire, /escapeHtml\(wireTickerDate\(normalized\.date, /);
   const standings = app.slice(app.indexOf('function openStandingsModal('), app.indexOf('function dashboardMonthCalendar('));
   assert.match(standings, /formatWrittenDate\(state\.home\?\.save\?\.current_date\)/);
   assert.match(standings, /logos: true/);

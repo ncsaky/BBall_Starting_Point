@@ -91,7 +91,7 @@
 
   const PAGES = [
     // The step screens, in the order they follow one another.
-    {id: "staff-retention", group: "now", step: true, label: "Staff Retention", layout: () => row(card("phase-staff_retention-decision", {bare: true}))},
+    {id: "staff-retention", group: "now", step: true, label: "Staff Retention", layout: () => ({full: {fits: [1220, 600], roomy: [1500, 900]}, ...row(card("phase-staff_retention-decision", {bare: true, fill: true}))})},
     // The draft, the offseason checklist, free agency and the playoffs take over Home while they are on (user,
     // 2026-11-26): each is a Home tab, listed first, and it is where Home lands (phaseHome).
     {id: "draft-room", group: "home", phaseHome: true, label: "Draft", layout: draftRoomLayout},
@@ -136,7 +136,7 @@
     {id: "contracts", group: "office", label: "Contracts", layout: () => ({full: {fits: [1200, 640], roomy: [1500, 900]}, ...row(
       colOf({fill: true}, card("contracts", {fill: true}), card("picks", {natural: "width"})),
       colOf({basis: 430}, card("payroll", {fill: true, natural: "fit"})))})},
-    {id: "trades", group: "office", label: "Trades", controls: "trades", layout: () => ({full: {fits: [1200, 620], roomy: [1500, 900]}, ...row(
+    {id: "trades", group: "office", label: "Trades", controls: "trades", when: () => typeof tradingOpen !== "function" || tradingOpen(), layout: () => ({full: {fits: [1200, 620], roomy: [1500, 900]}, ...row(
       colOf({fill: true}, card("league-block", {fill: true})),
       colOf({basis: 470}, "team-block", card("team-wants", {fill: true})))})},
     {id: "scouting", group: "office", label: "Draft", layout: () => ({full: {fits: [1120, 640], roomy: [1500, 900]}, ...col(

@@ -27,6 +27,7 @@ test('trading and signings are open only while the game lists them', () => {
 });
 
 test('closed: no trade buttons, no Find column, no free agency tab', () => {
+  assert.match(pages, /id: "trades", [^\n]*when: \(\) => typeof tradingOpen !== "function" \|\| tradingOpen\(\)/);
   assert.match(pages, /controlsEl\.innerHTML = tradingClosed \|\| options\.toolbarActions\?\.tradeDisabled \? lockNote : `<button/);
   assert.match(pages, /id: "free-agency", [^\n]*when: \(\) => typeof signingsOpen !== "function" \|\| signingsOpen\(\)/);
   assert.match(app, /\["find","Find",58\]\]\.filter\(\(\[key\]\)=>key!=="find" \|\| typeof tradingOpen!=="function" \|\| tradingOpen\(\)\);/);

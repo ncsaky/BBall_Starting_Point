@@ -70,3 +70,22 @@ test('the wire has one row height and no dots; the pinned button survives a shor
 test('the free-agent list only offers the Trade Room while trading is open', () => {
   assert.match(app, /\$\{tradingOpen\(\) \? `<button type="button" class="ui-command" data-fa-open-trade>Trade Room<\/button>` : ""\}/);
 });
+
+test('the page moves off terms the cap blocks, to the largest the game accepts, and stops when you touch it', () => {
+  const context = {roundOfferTenth: (v) => Math.round(Number(v) * 10) / 10, freeAgencyPlayerMinimum: () => 2.8};
+  vm.createContext(context);
+  vm.runInContext(slice('function freeAgencyStartCandidates(', 'function freeAgencyOfferPreview(').split('\nfunction freeAgencyRaisePct(')[0], context);
+  const room = {cap_ledger: {current: {cap_room_millions: -56.3, exceptions: {
+    full: {available: true, balance_millions: 15.6, max_years: 4}, taxpayer: {available: true, balance_millions: 6.27, max_years: 2}, room: {available: false, balance_millions: 9.7, max_years: 3},
+  }}}};
+  const draft = {aav: 15.5, years: 4, auto: true};
+  assert.deepEqual(JSON.parse(JSON.stringify(context.freeAgencyStartCandidates({}, room, draft))), [{aav: 6.2, years: 2}, {aav: 2.8, years: 2}]);
+  assert.equal(context.freeAgencyStartStep({}, room, draft, {ok: false}), true);
+  assert.deepEqual([draft.aav, draft.years], [6.2, 2]);
+  assert.equal(context.freeAgencyStartStep({}, room, draft, {ok: true}), false);
+  assert.equal(draft.auto, false);
+  assert.equal(context.freeAgencyStartStep({}, room, draft, {ok: false}), false, 'settled terms stay put');
+  const stuck = {aav: 15.5, years: 4, auto: true};
+  for (let i = 0; i < 3; i += 1) context.freeAgencyStartStep({}, room, stuck, {ok: false});
+  assert.deepEqual([stuck.aav, stuck.years, stuck.auto], [15.5, 4, false], 'nothing payable: the opening terms return');
+});

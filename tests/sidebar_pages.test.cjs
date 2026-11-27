@@ -136,7 +136,7 @@ test('in season the one button sims to the next game, with a week and a month be
   const dock = progress.dock(progress.context());
   assert.equal(dock.main.label, 'Sim to next game');
   assert.equal(dock.main.sub, 'to Dec 28 · at OKC');
-  assert.match(dock.main.attrs, /data-advance="next-event"/);
+  assert.match(dock.main.attrs, /data-advance="next-game" data-advance-date="2026-12-28"/);
   assert.equal(dock.more.map((button) => button.label).join(), 'Week,Month');
   assert.equal(dock.main.blocked, false);
   const markup = progress.dockMarkup();
@@ -158,6 +158,9 @@ test('a job that blocks the clock is first in the list and named by the button',
   assert.match(dock.main.attrs, /data-pages-go="roster-moves"/);
   assert.doesNotMatch(dock.main.attrs, /data-advance|data-phase-command/, 'a blocked button never moves time');
   assert.match(progress.dockMarkup(), /class="ui-command progress-go is-blocked"/);
+  // Two short: the game's pending figure is still 1.
+  const two = loadProgress(save, {required: 'cutdown', kind: 'cutdown', data: {cutdown: {short: {count: 12, minimum: 14}}}});
+  assert.equal(two.jobs(two.context())[0].label, 'Sign 2 more players');
   assert.equal(progress.blockingKey(), 'Sign 1 more player');
 });
 

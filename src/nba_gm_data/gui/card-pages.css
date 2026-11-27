@@ -392,3 +392,17 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-finder .shortcut-
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-slot.is-locked :is(.block-find-trade, [data-want-add], .team-block-table select, .team-block-table .glass-select) { visibility: hidden !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-slot.is-locked .assets-block-table:has(.block-find-trade) .assets-block-head > span:last-child { visibility: hidden; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-slot.is-locked .team-block-table .assets-block-row.is-empty-row { visibility: hidden !important; }
+
+/* "Please confirm" in the game's glass: it was a near-white box (never white fills). One main button. */
+html[data-layout="pages"] body.unified-terminal-ui .ask-confirm-root { background: rgba(4, 8, 16, .5); }
+html[data-layout="pages"] body.unified-terminal-ui .ask-confirm { background: var(--gm-glass-popup); color: var(--gm-ink); border: 1px solid var(--gm-line); border-radius: var(--gm-radius-tile); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); overflow: hidden; }
+html[data-layout="pages"] body.unified-terminal-ui .ask-confirm header { background: transparent; border: 0; padding: var(--gm-space-4) var(--gm-space-4) 0; }
+html[data-layout="pages"] body.unified-terminal-ui .ask-confirm h3 { color: var(--gm-ink); font: var(--gm-weight-bold) var(--gm-size-section)/1.2 var(--gm-font); }
+html[data-layout="pages"] body.unified-terminal-ui .ask-confirm p { color: var(--gm-ink); font: var(--gm-weight-regular) var(--gm-size-row)/1.45 var(--gm-font); padding: var(--gm-space-3) var(--gm-space-4); }
+html[data-layout="pages"] body.unified-terminal-ui .ask-confirm footer { border: 0; padding: 0 var(--gm-space-4) var(--gm-space-4); gap: var(--gm-space-3); }
+html[data-layout="pages"] body.unified-terminal-ui .ask-confirm footer .ui-command { min-height: 32px; padding: 0 var(--gm-space-4) !important; border: 1px solid transparent !important; border-radius: var(--gm-radius-pill) !important; background: transparent !important; box-shadow: none !important; color: var(--gm-ink) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1 var(--gm-font) !important; }
+html[data-layout="pages"] body.unified-terminal-ui .ask-confirm footer .ui-command:hover { background: var(--gm-glass-tile-hover) !important; }
+html[data-layout="pages"] body.unified-terminal-ui .ask-confirm footer .ui-command.ask-confirm-ok { border-color: var(--gm-line-strong) !important; background: var(--gm-glass-button) !important; font-weight: var(--gm-weight-bold) !important; }
+html[data-layout="pages"] body.unified-terminal-ui .ask-confirm footer .ui-command.ask-confirm-ok:hover { background: var(--gm-glass-button-hover) !important; }
+html[data-layout="pages"] body.unified-terminal-ui .ask-confirm footer .ui-command:focus-visible { outline: 2px solid var(--gm-focus); outline-offset: 1px; }
+

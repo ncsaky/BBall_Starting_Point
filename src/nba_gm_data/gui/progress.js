@@ -120,7 +120,12 @@
     // Required first: these stop the clock.
     if (Number(pending.staff || 0) > 0) add("must", "Keep or replace your coach", plural(Number(pending.staff), "decision"), {page: "staff-retention"});
     if (Number(pending.cutdowns || 0) > 0) add("must", `Cut ${plural(Number(pending.cutdowns), "player")}`, rosterCount(c), {page: "roster-moves"});
-    if (Number(pending.roster_minimum || 0) > 0) add("must", `Sign ${Number(pending.roster_minimum)} more ${Number(pending.roster_minimum) === 1 ? "player" : "players"}`, rosterCount(c), {page: "roster-moves"});
+    // The game's pending figure only says the roster is short (1 or 0); how many short comes from the roster itself.
+    if (Number(pending.roster_minimum || 0) > 0) {
+      const short = c.data.cutdown?.short;
+      const need = Number(short?.minimum) - Number(short?.count);
+      add("must", need > 0 ? `Sign ${plural(need, "more player", "more players")}` : "Sign more players", rosterCount(c), {page: "roster-moves"});
+    }
 
     if (c.phase === "fantasy_draft") add("open", "Fantasy draft", "", {page: "fantasy-draft"});
 
@@ -274,8 +279,12 @@
     const game = (c.dash.next_games || [])[0];
     const opponent = versus(game);
     const deadlineDay = c.phase === "regular_season" && c.today === c.deadline;
+    // The button goes where its words say: through your next game. "next-event" is the league's next day, which took
+    // two or three presses to reach the game named under it.
+    const toGame = !deadlineDay && String(game?.date || "") > String(c.today || "");
     return {
-      main: main(deadlineDay ? "Sim past the deadline" : "Sim to next game", deadlineDay ? "closes trading" : [game?.date ? `to ${day(game.date)}` : next, opponent].filter(Boolean).join(" · "), 'data-advance="next-event"'),
+      main: main(deadlineDay ? "Sim past the deadline" : "Sim to next game", deadlineDay ? "closes trading" : [game?.date ? `to ${day(game.date)}` : next, opponent].filter(Boolean).join(" · "),
+        toGame ? `data-advance="next-game" data-advance-date="${esc(String(game.date).slice(0, 10))}"` : 'data-advance="next-event"'),
       more: [side("Week", 'data-advance="week"'), side("Month", 'data-advance="month"')],
     };
   }

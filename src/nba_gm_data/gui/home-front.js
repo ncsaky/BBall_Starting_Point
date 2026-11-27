@@ -102,7 +102,8 @@
     if (has(cap.cap_room_millions)) blocks.push(figure("Cap room", Number(cap.cap_room_millions) > 0 ? money(cap.cap_room_millions) : "None", has(cap.hard_cap_space_millions) ? `${money(cap.hard_cap_space_millions)} ${Number(cap.hard_cap_space_millions) >= 0 ? "under" : "over"} the hard cap` : ""));
     const roster = (dash.rotation || []).length;
     const open = Number(cap.ledger?.empty_roster_spots);
-    if (roster) blocks.push(figure("Roster", `${roster} players`, Number.isFinite(open) ? (open > 0 ? `${open} open spot${open === 1 ? "" : "s"}` : "Full") : ""));
+    // The game's open-spot figure counts places under the minimum of twelve, so none of those is not a full roster.
+    if (roster) blocks.push(figure("Roster", `${roster} players`, !Number.isFinite(open) ? "" : open > 0 ? `${open} open spot${open === 1 ? "" : "s"}` : roster >= 15 ? "Full" : "of 15 places"));
     return `<header class="front-hero is-offseason">${blocks.join("")}${nextBlock}${meterBlock}${hurtBlock}</header>`;
   }
 
@@ -483,6 +484,7 @@
 
   // ---------- The market: offers to you, who is being shopped, the leaders, what is coming up.
   let marketDay = "";
+  let marketAsking = false;
   function marketRows(st) {
     const rows = st?.data?.tradeMarket?.shopped || [];
     return rows.slice(0, 8).map((row) => {
@@ -517,7 +519,8 @@
     const lines = want.map(([key, label]) => {
       const field = (board.fields || []).find((item) => item.key === key || item.label === label);
       const top = field?.leaders || [];
-      if (!top.length) return "";
+      // Nobody leads anything before a game has been played: a column of 0.0 says nothing.
+      if (!top.length || !(Number(top[0].value) > 0)) return "";
       const lead = top[0];
       const face = lead.headshot_url || faces.get(lead.player_id);
       const value = (row) => Number(row.value).toFixed(1);
@@ -550,8 +553,11 @@
     const list = typeof document !== "undefined" ? document.querySelector("[data-front-shops]") : null;
     if (!st?.home?.save || !list) return;
     const day = `${st.currentSave || ""}|${st.home.save.current_date || ""}`;
-    if (marketDay === day) return;
+    // Asked once a day, and again if the answer has since been thrown away: a sim empties the loaded rooms after the
+    // question was asked, which left "Checking the market…" on screen until the next day.
+    if (marketDay === day && (marketAsking || st.data?.tradeMarket)) return;
     marketDay = day;
+    marketAsking = true;
     Promise.resolve(call("action", "home_storylines", call("savePayload"))).then((result) => {
       const now = app();
       if (!result || !now?.data || `${now.currentSave || ""}|${now.home?.save?.current_date || ""}` !== day) return;
@@ -566,7 +572,7 @@
       // The market's rows are steps of the storylines too.
       const front = document.querySelector(".season-front-panel");
       if (front && app()?.data?.tradeMarket) front.innerHTML = markup();
-    }).catch(() => { marketDay = ""; });
+    }).catch(() => { marketDay = ""; }).finally(() => { marketAsking = false; });
   }
 
   if (typeof document !== "undefined") {

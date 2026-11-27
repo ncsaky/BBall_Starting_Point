@@ -274,7 +274,7 @@ function gameCommands() {
     {label:"Settings", keys:"g ,", run:openSettingsModal, available:ready},
     {label:"Year-end recap", run:() => openLatestSeasonSlideshow("recap"), available:() => ready() && seasonSlideshowsAvailable().some(row => row.kind === "recap")},
     {label:"Preseason outlook", run:() => openLatestSeasonSlideshow("outlook"), available:() => ready() && seasonSlideshowsAvailable().some(row => row.kind === "outlook")},
-    {label:dashboardPhaseKind() === "playoffs" ? "One game per series" : "Next event / one pick", keys:"s e", run:click('[data-advance="next-event"], #fantasySimOne, #draftSimCurrent, #faAdvanceDay, #reSignAdvanceDay'), available:available('[data-advance="next-event"], #fantasySimOne, #draftSimCurrent, #faAdvanceDay, #reSignAdvanceDay')},
+    {label:dashboardPhaseKind() === "playoffs" ? "One game per series" : "Next event / one pick", keys:"s e", run:click('[data-advance="next-event"], [data-advance="next-game"], #fantasySimOne, #draftSimCurrent, #faAdvanceDay, #reSignAdvanceDay'), available:available('[data-advance="next-event"], [data-advance="next-game"], #fantasySimOne, #draftSimCurrent, #faAdvanceDay, #reSignAdvanceDay')},
     {label:dashboardPhaseKind() === "playoffs" ? "One full series" : "Simulate week", keys:"s w", run:click('[data-advance="week"]'), available:available('[data-advance="week"]')},
     {label:dashboardPhaseKind() === "playoffs" ? "Finish playoffs" : "Simulate month", keys:"s m", run:click('[data-advance="month"]'), available:available('[data-advance="month"]')},
     {label:"Simulate to my pick", keys:"s p", run:click('#draftToUser, #fantasyToUser'), available:available('#draftToUser, #fantasyToUser')},
@@ -518,6 +518,7 @@ function wireEvents() {
       return advance({ next_event:true, postseason_sim:{"next-event":"game", week:"series", month:"all"}[mode] });
     }
     if (mode === "next-event") return advance({ next_event: true });
+    if (mode === "next-game") return advance({ to_date: button.dataset.advanceDate, next_event: false });
     if (mode === "week") return advance({ days: 7, checkpoint_days: 7 });
     if (mode === "month") return advance({ days: 31, checkpoint_days: 31 });
     if (mode === "deadline") return advanceToMilestone("deadline");
@@ -1819,9 +1820,9 @@ async function advanceSave(payload, simulationId) {
     window.CardBoard?.open("phase-set_roster-checklist");
   } else if (result.status === "stopped" || result.result?.status === "stopped") {
     const stoppedDate = result.result?.through_date || state.home?.save?.current_date;
-    showToast(`Simulation stopped at ${stoppedDate || "the current date"}.`);
+    showToast(`Simulation stopped at ${formatDashboardShortDate(stoppedDate) || "the current date"}.`);
   } else {
-    showToast(`Advanced to ${state.home?.save?.current_date || "next date"}`);
+    showToast(`Advanced to ${formatDashboardShortDate(state.home?.save?.current_date) || "the next date"}`);
   }
 }
 
@@ -5389,7 +5390,7 @@ function seasonLeagueWire(expanded = false) {
       const logo = teamLogoSrc(team);
       return logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(team)}" />` : "";
     }).join("");
-    return `<span class="season-wire-item">${marks}<em>${escapeHtml(formatDashboardShortDate(normalized.date) || normalized.date)}</em><strong>${escapeHtml(normalized.text)}</strong></span>`;
+    return `<span class="season-wire-item">${marks}<em>${escapeHtml(wireTickerDate(normalized.date, state.home?.save?.current_date))}</em><strong>${escapeHtml(normalized.text)}</strong></span>`;
   }).join("");
   return `<footer class="season-league-wire"><div class="season-wire-window"><div class="season-wire-track">${items || `<span class="season-wire-item"><strong>No recent league events.</strong></span>`}</div></div></footer>`;
 }
@@ -6703,7 +6704,7 @@ function completedDraftSummary(rows) {
 }
 
 function completedDraftTradeRecap(rows) {
-  return `<div class="draft-trade-recap-list">${rows.map((row, index) => `<article class="draft-trade-recap-item"><span>${row.overall_pick ? `Pick #${escapeHtml(row.overall_pick)}` : `Trade ${index + 1}`}</span><strong>${escapeHtml(row.headline || textValue(row))}</strong>${row.date ? `<small>${escapeHtml(row.date)}</small>` : ""}</article>`).join("") || `<div class="draft-trade-recap-empty"><strong>No draft-night trades</strong><p>All selections were made without a trade.</p></div>`}</div>`;
+  return `<div class="draft-trade-recap-list">${rows.map((row, index) => `<article class="draft-trade-recap-item"><span>${row.overall_pick ? `Pick #${escapeHtml(row.overall_pick)}` : `Trade ${index + 1}`}</span><strong>${escapeHtml(row.headline || textValue(row))}</strong>${row.date ? `<small>${escapeHtml(formatWrittenDate(row.date) || row.date)}</small>` : ""}</article>`).join("") || `<div class="draft-trade-recap-empty"><strong>No draft-night trades</strong><p>All selections were made without a trade.</p></div>`}</div>`;
 }
 
 function draftTeamLogo(team) {
@@ -7505,9 +7506,48 @@ function freeAgencyOfferDraft(player, room = state.data.freeagency || {}) {
       // decrease) and the final-season option ("none", "player", "team").
       path: "rising",
       option: "none",
+      // Not touched yet: if the cap blocks these terms, the page moves to ones it allows (freeAgencyStartStep).
+      auto: true,
     };
   }
   return state.freeAgentOfferDrafts[key];
+}
+
+// The signing page opens on an offer you can make (user, 2026-11-27). When the game says the opening terms cannot be
+// paid, these are tried in turn, largest salary first: each way of paying that the cap sheet shows money in. The game's
+// quote decides every one; nothing here says what is legal.
+function freeAgencyStartCandidates(player, room, draft) {
+  const minimum = freeAgencyPlayerMinimum(player, room);
+  const fewest = player.offer_sheet ? Number(player.offer_sheet.min_years || 2) : 1;
+  const books = room.cap_ledger?.current || {};
+  const ways = [
+    ...(player.bird_rights ? [{ most: Number(player.bird_rights.limit_millions), longest: draft.years }] : []),
+    { most: Number(books.cap_room_millions), longest: draft.years },
+    ...Object.values(books.exceptions || {}).filter((row) => row.available).map((row) => ({ most: Number(row.balance_millions), longest: Number(row.max_years) })),
+    { most: minimum, longest: 2 },
+  ];
+  const seen = new Set([`${draft.aav}:${draft.years}`]);
+  return ways.map((way) => ({
+    aav: roundOfferTenth(Math.min(Number(draft.aav), Math.floor(way.most * 10 + 1e-6) / 10)),
+    years: Math.max(fewest, Math.min(Number(draft.years), way.longest || draft.years)),
+  })).filter((terms) => {
+    const key = `${terms.aav}:${terms.years}`;
+    if (!(terms.aav >= minimum - 1e-9) || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).sort((a, b) => b.aav - a.aav || b.years - a.years);
+}
+
+// One step of that search, after a quote arrives. True when the terms changed and the page should ask again. When
+// nothing can be paid the opening terms come back, with the reasons.
+function freeAgencyStartStep(player, room, draft, quote) {
+  if (!draft.auto || !quote) return false;
+  if (quote.ok || player.offer_sheet?.blocked_reason || player.signing_blocked_reason) { draft.auto = false; return false; }
+  if (draft.auto === true) draft.auto = { first: { aav: draft.aav, years: draft.years }, left: freeAgencyStartCandidates(player, room, draft) };
+  const next = draft.auto.left.shift();
+  Object.assign(draft, next || draft.auto.first);
+  if (!next) draft.auto = false;
+  return true;
 }
 
 const CONTRACT_PATH_LABELS = { rising: "Rising", flat: "Flat", declining: "Declining" };
@@ -10845,6 +10885,9 @@ async function playDraftSimulation(finalRoom, events, appliedCount) {
     updateDraftPlaybackCard();
     state.busyDepth = Math.max(0, state.busyDepth - 1);
     setBusy(state.busyDepth > 0 || state.hydrating);
+    // The footer and the sidebar were drawn at the first pick: draw them again for where the draft now stands, or they
+    // keep saying "Pick 1 is up" and "Sim to my pick" when you are on the clock.
+    renderDashboard();
     window.AssistantGMPhone?.setDraftPlaybackActive?.(false);
     if(typeof maybeShowWantReminder==='function')maybeShowWantReminder();
   }
@@ -10881,7 +10924,7 @@ async function draftAdvanceStage() {
   applyPhaseRouting();
   await ensureViewData(true);
   render();
-  showToast(`Advanced to ${state.home?.save?.current_date || "next stage"}`);
+  showToast(`Advanced to ${formatDashboardShortDate(state.home?.save?.current_date) || "the next stage"}`);
 }
 
 function renderFreeAgency() {
@@ -11060,6 +11103,12 @@ function wireFreeAgencyBuilderPanel(panel) {
   const update = () => {
     const preview = freeAgencyOfferPreview(player, room, draft);
     if (!preview.quote) requestFreeAgencyQuote(player, { ...draft, aav: preview.aav, years: preview.years }, update);
+    if (freeAgencyStartStep(player, room, draft, preview.quote)) {
+      if (number) number.value = draft.aav.toFixed(1);
+      if (range) range.value = String(draft.aav);
+      update();
+      return;
+    }
     const fill = (name, markup) => { const slot = panel.querySelector(`[data-fa-slot="${name}"]`); if (slot) slot.innerHTML = markup; };
     fill("verdict", freeAgencyVerdictMarkup(preview));
     fill("cap", freeAgencyCapTableMarkup(preview));
@@ -11098,6 +11147,7 @@ function wireFreeAgencyBuilderPanel(panel) {
     const parsed = Number(value);
     if (!Number.isFinite(parsed)) return;
     const salary = commit || fromRange ? roundOfferTenth(clampNumber(parsed, minimum, maximum)) : parsed;
+    draft.auto = false;
     draft.aav = roundOfferTenth(clampNumber(salary, minimum, maximum));
     if (number && (commit || fromRange)) number.value = draft.aav.toFixed(1);
     if (range) range.value = String(draft.aav);
@@ -11111,13 +11161,13 @@ function wireFreeAgencyBuilderPanel(panel) {
   const wireRadios = (selector, apply) => {
     const buttons = [...panel.querySelectorAll(selector)];
     buttons.forEach((button, index) => {
-      button.addEventListener("click", () => { apply(button); update(); });
+      button.addEventListener("click", () => { draft.auto = false; apply(button); update(); });
       button.addEventListener("keydown", (event) => {
         const step = ["ArrowRight", "ArrowDown"].includes(event.key) ? 1 : ["ArrowLeft", "ArrowUp"].includes(event.key) ? -1 : 0;
         if (!step) return;
         event.preventDefault();
         const next = buttons[(index + step + buttons.length) % buttons.length];
-        apply(next); update(); next.focus();
+        draft.auto = false; apply(next); update(); next.focus();
       });
     });
   };
@@ -11138,7 +11188,7 @@ function wireFreeAgencyBuilderPanel(panel) {
       other.classList.toggle("is-active", active); other.setAttribute("aria-checked", String(active));
     });
   });
-  panel.querySelector("[data-fa-offer-route]")?.addEventListener("change", (event) => { draft.route = event.target.value || ""; update(); });
+  panel.querySelector("[data-fa-offer-route]")?.addEventListener("change", (event) => { draft.auto = false; draft.route = event.target.value || ""; update(); });
   panel.querySelectorAll("[data-fa-renounce]").forEach((button) => button.addEventListener("click", () => renounceCapHold(button.dataset.faRenounce || "")));
   panel.querySelector("[data-fa-submit-offer]")?.addEventListener("click", () => submitFreeAgentOffer(player.id));
   // FA-REAL slice 4: two-way, camp invite and sign-and-trade.
@@ -12398,7 +12448,7 @@ async function freeAgencyAdvanceStage() {
   if (state.view === "freeagents" || state.view === "freeagency") state.view = "dashboard";
   await ensureViewData(true);
   render();
-  showToast(`Advanced to ${state.home?.save?.current_date || "next phase"}`);
+  showToast(`Advanced to ${formatDashboardShortDate(state.home?.save?.current_date) || "the next phase"}`);
 }
 
 function expandedStaffMarkup(report, slots, market) {
@@ -16058,6 +16108,13 @@ function formatWrittenDate(value) {
     year: "numeric",
     timeZone: "UTC",
   });
+}
+
+// A move from last summer says its year: "Jul 3" in June reads as a date that has not come yet.
+function wireTickerDate(value, today) {
+  const label = formatDashboardShortDate(value) || String(value || "");
+  const old = (Date.parse(String(today || "").slice(0, 10)) - Date.parse(String(value || "").slice(0, 10))) / 86400000 > 270;
+  return old ? `${label}, ${String(value).slice(0, 4)}` : label;
 }
 
 function formatDashboardShortDate(value) {

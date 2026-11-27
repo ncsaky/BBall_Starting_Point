@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 6/6 - round after the final sweep finished (checkpoint 18); waiting on the user's answers
+Progress: 5/5 - checkpoint 19 (answers built, a season played through); waiting on the user
 
 ## Handover (2026-11-26): finishing on a cheaper model
 
@@ -1143,3 +1143,32 @@ Seen and left alone (game rules, not interface):
 - The offer opens on the highest salary, so for an expensive player it starts "Blocked by the cap".
 
 **Waiting on decisions** (checkpoint 18 page, collection `decisions`).
+
+## Checkpoint 19 (2026-11-27): answers to checkpoint 18, then a season played through the interface
+
+Answers: signing form "keep as his page"; first offer "start on one the cap allows"; next "more"; their note:
+"the trades tab shouldn't even exist when it is an illegal time to make trades"; and "I feel like we're probably at a
+point where I could playtest very soon, don't you think?" Last season's numbers: not answered (left as is).
+
+Done: Trades tab hidden when closed; offers open on payable terms. Then one copied save was played from training
+camp 2027 to preseason 2028 (`output/ui-polish/scn/play.mjs`). No script errors. Found and fixed:
+- Sign Players showed no player list; Set The Roster cut off "Decline".
+- "Sim to next game" moved one league day, usually two or three presses a game.
+- After a draft sim the footer and sidebar stayed at the first pick.
+- Home: "Checking the market…" stuck after a sim; 0.0 leaders before any game; "Full" at 12 players; text in dots.
+- "Sign 1 more player" when two were needed (the game's pending figure is a yes/no flag).
+- Near-white confirm box; Staff Retention squeezed with salaries cut off; draft summary reasons and prospect names in
+  dots; raw dates; last summer's ticker moves without a year.
+
+Checked: all browser tests and the two Python interface tests; before and after pictures. Staff Retention's new
+layout was checked with made-up data on screen (no test save is waiting on a coach decision after the run).
+
+Not checked: signed offer sheet, completed sign-and-trade, fantasy draft, windows under 1280 by 760, the full Python
+tests (no Python changed), a second season.
+
+Not interface, seen while playing: sims are slow on this laptop (14 days took 36 s in the server alone; months took
+77 to 124 s in the browser; free-agency days about 25 to 30 s; the jump to preseason 93 s). The target is 10 to 20 s
+a month. This branch changes no engine code. Camp-invite and max-offer rule fixes are in a separate session
+(`claude/dreamy-yonath-57ede0`, uncommitted, not reviewed); it noted two-way deals still ignore a player's asking
+price. Main has no commits this branch lacks.
+
