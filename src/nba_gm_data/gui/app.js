@@ -2873,6 +2873,7 @@ function renderStartup() {
     grid.hidden = false;
     els.multiplayerLobby.hidden = true;
     els.multiplayerLobby.innerHTML = "";
+    els.multiplayerLobby.lobbyMarkup = "";
     return;
   }
   grid.hidden = true;
@@ -2881,7 +2882,7 @@ function renderStartup() {
   const isHost = league.host_manager_id === manager.id;
   const claimedByTeam = new Map((league.managers || []).filter((row) => row.team_id).map((row) => [row.team_id, row]));
   const allReady = Boolean(league.managers?.length) && league.managers.every((row) => row.ready);
-  els.multiplayerLobby.innerHTML = `
+  const markup = `
     <header class="multiplayer-lobby-head">
       <div>
         <p class="eyebrow">Multiplayer Lobby</p>
@@ -2960,6 +2961,11 @@ function renderStartup() {
         </div>
       </aside>
     </div>`;
+  // The lobby is checked every two seconds. Redraw it only when something on it changed, so an open menu stays open
+  // and a number being typed is not wiped.
+  if (els.multiplayerLobby.lobbyMarkup === markup) return;
+  els.multiplayerLobby.lobbyMarkup = markup;
+  els.multiplayerLobby.innerHTML = markup;
   wireMultiplayerLobby();
 }
 

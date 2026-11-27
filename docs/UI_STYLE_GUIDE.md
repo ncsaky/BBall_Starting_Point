@@ -386,6 +386,12 @@ its sections share the page's width and height. The rules live in `gui/full-page
   opens it there.
 - In rumors a star outranks a bench player at the same stage (by the overall his page shows).
 
+## The start screen (2026-11-26)
+- The panels, the multiplayer lobby and the loading box are the same dark glass as the game, over the film or the
+  photo backdrop: white text, hairlines, frosted pills, one bold main button a panel.
+- Its drop-downs are the game's glass menus; the team is chosen on the logo wheel.
+- Styles: `gui/startup.css`.
+
 ## A player's page (2026-11-26)
 - A player is a page like any other: his name is the page title, and Career, Hotspots, Ratings, Health (and
   Contract Extension when he can sign one) are its tabs in the usual place. No small "1/3" with arrows.

@@ -1,11 +1,11 @@
 // Glass drop-down menus (taste deck round 6: "please make the drop-down menus better").
-// Every single-choice <select> inside a window, pop-up or slide gets a glass button and a glass menu. The real
+// Every single-choice <select> inside a window, pop-up, slide or the start screen gets a glass button and a glass menu. The real
 // <select> stays in the page (visually hidden) and keeps its value; choosing from the menu sets that value and fires
 // the same change and input events, so the game's own handlers work unchanged. Long menus open in columns rather
 // than scrolling (the user never wants to scroll).
 (() => {
   "use strict";
-  const SCOPE = "#modalRoot, .card-board-body, .card-board-menu, .season-slideshow";
+  const SCOPE = "#modalRoot, .card-board-body, .card-board-menu, .season-slideshow, #startupScreen";
   const ROWS_PER_COLUMN = 12;
   let current = null;
 
@@ -112,6 +112,7 @@
 
   function enhance(select) {
     if (select.dataset.glassSelect || select.multiple || Number(select.size) > 1) return;
+    if (select.classList.contains("startup-team-select-native")) return;  // the team wheel is its control
     if (!select.closest(SCOPE)) return;
     select.dataset.glassSelect = "1";
     const width = select.offsetWidth;

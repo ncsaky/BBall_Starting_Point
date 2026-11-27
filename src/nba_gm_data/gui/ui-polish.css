@@ -33,24 +33,6 @@ body.unified-terminal-ui .modal-head .card-board-window-mark.has-window-icon {
 }
 body.unified-terminal-ui .modal-head .card-board-window-mark.has-window-icon .window-icon { display: block; width: 100%; height: 100%; }
 
-/* Fix 7: the one main action on each start-screen panel (Enter Save, Create New Save, Create Lobby) stands out
-   from the secondary buttons, in the blue of the trade window's main buttons. Flat colour: the shared skin turns
-   background gradients off everywhere, so a gradient here would leave white text on a white button. */
-.startup-screen .startup-pane .startup-primary-action:not(:disabled) {
-  background-color: #2f6688;
-  border: 1px solid #214b69;
-  box-shadow: inset 1px 1px #9abbd1, inset -1px -1px #1a4360, 0 2px 3px #1d354653;
-  color: #fff;
-  font-weight: var(--gm-weight-bold);
-  text-shadow: 0 1px #1c4560;
-}
-.startup-screen .startup-pane .startup-primary-action:not(:disabled):hover {
-  background-color: #3b7aa0;
-  border-color: #173f5c;
-  color: #fff;
-}
-.startup-screen .startup-pane .startup-primary-action[aria-busy="true"] { cursor: progress; }
-
 /* Fix 11: Full Standings dialog in the house table style (rule 12): window-style title bar with the date, small
    bold headers over a double rule, alternating rows, whole-row hover, team logos, your team marked. */
 body.unified-terminal-ui .modal-shell.modal-standings { width: min(860px, calc(100vw - 32px)); }

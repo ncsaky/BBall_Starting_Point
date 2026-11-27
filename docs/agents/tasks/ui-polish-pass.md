@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C, checkpoint 15 published (the trade Finder in two steps); stopped, waiting for three decisions; then the start screen and the final sweep
+Progress: 8/9 - Stage C, checkpoint 16 published (the start screen, lobby and loading box); stopped, waiting for three decisions; then the final sweep
 
 ## Handover (2026-11-26): finishing on a cheaper model
 
@@ -1031,3 +1031,30 @@ the value bars in Trade analysis has no colour squares (for the sweep); a long r
 the side column during a condition edit still scroll; the sentence "You can review each returned offer in the builder"
 no longer shows (its empty results panel is not reachable before a search); not seen: swap-right or two conditions,
 hover states, windows under 1280 by 760, more than three results; no Python changed, full suite not run.
+
+## Stage C, checkpoint 16 report (2026-11-26)
+
+**The user's answers to checkpoint 15**: the Finder's two steps good; the heat maps "leave"; next = the start screen.
+
+**What changed**
+- `gui/startup.css` rewritten below the film / photo backdrop (that part unchanged): the three panels, the multiplayer
+  lobby and the loading box are the dark glass with token values; no white fills, no Arial.
+- The start screen's selects use the game's glass menus (`glass-select.js` SCOPE gains `#startupScreen`; the hidden
+  team select is skipped, the wheel stays the control). A long menu scrolls inside the window.
+- `renderStartup` redraws the lobby only when its markup changed (`lobbyMarkup`): the two-second check used to shut
+  open menus and wipe typed rule values.
+- Removed the old blue primary-button rules from `ui-polish.css`. In `index.html`: "Choose your franchise · preview
+  highlights" and the "Join code" hint in sentence case.
+- Tests: `tests/start_screen_glass.test.cjs` (4). Browser tests: all 62 files; `test_gui_concept71` and
+  `test_gui_concept74` pass. Cache version `polish-c65`.
+
+**How it was checked** (port 8775, 1512 by 900 and 1280 by 760): each panel, the save menu, entering a save, creating
+a new Milwaukee save (removed afterwards), a broken save file (removed afterwards), a lobby with one manager (claim,
+ready, change a rule through the menu and save, leave), the loading box.
+
+**Waiting on three decisions** (page https://claude.ai/artifact/6HpYHz3NdHu3PV2mf8tSZX, collection `decisions`):
+`start-look` (good | change), `extra-lines` (cut | keep), `next` (sweep | stop).
+
+**Known gaps**: not seen over the start-screen film (not in this worktree); export, restore, recover, join by code, a
+second manager, starting a multiplayer league and windows under 1280 by 760 not tried; no Python changed, full suite
+not run.
