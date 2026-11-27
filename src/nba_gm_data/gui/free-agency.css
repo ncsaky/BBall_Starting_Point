@@ -325,3 +325,6 @@ body.unified-terminal-ui .fa-hold-table .ui-command { min-height:18px; padding:0
 body.unified-terminal-ui .card-board-body .seasonal-clipboard-card :is(.unified-phase-dashboard, [data-seasonal-context]) > .fa-panel {
   border: 1px solid #89949f;
 }
+
+/* A payment that cannot be made: red words on the glass, not a near-white box. */
+html[data-glass="clear"] body.unified-terminal-ui #app .fa-offer-pay .fa-pay-blocked { background: transparent !important; border: 0 !important; color: var(--gm-bad) !important; padding: var(--gm-space-1) 0 !important; font-size: var(--gm-size-row) !important; font-weight: var(--gm-weight-regular) !important; }

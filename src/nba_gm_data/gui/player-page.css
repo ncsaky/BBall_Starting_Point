@@ -262,3 +262,12 @@ html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-de
 html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pp-career-table thead th, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pp-career-table tbody th, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pp-career-table tbody td { padding-left: var(--gm-space-1) !important; padding-right: var(--gm-space-1) !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pp-career-table thead th:first-child, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pp-career-table tbody th, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pp-career-table tbody td.pp-none { padding-left: 0 !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pp-career-table thead th:last-child, html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .pp-career-table tbody td:last-child { padding-right: 0 !important; }
+
+/* A prospect's first tab: his season, college rates and the scouts' notes, each at its own height. */
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .approved-prospect-pages .player-card-page--overview:not(.player-card-page--hotspots) { display: flex !important; flex-direction: column !important; gap: var(--gm-space-4) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .approved-prospect-pages .player-card-page--overview:not(.player-card-page--hotspots):not([hidden]) > * { flex: 0 0 auto !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .approved-prospect-pages .player-card-page--overview[hidden] { display: none !important; }
+
+/* The season picker opens above the table under it, on solid glass. */
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .approved-season-line > header { position: relative !important; z-index: 5 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .card-board-window.is-detail-card .player-career-menu { z-index: 30 !important; background: rgb(12, 22, 36) !important; border: 1px solid var(--gm-line) !important; border-radius: var(--gm-radius-tile) !important; }

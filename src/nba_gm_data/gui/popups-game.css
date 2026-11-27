@@ -105,3 +105,9 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-pl
   html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-box-score .modal-body { max-height:calc(100dvh - 88px) !important; overflow:auto !important; }
 }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-box-score .box-score-player-table thead th { vertical-align:middle !important; height:var(--gm-row-h-popup) !important; }
+
+/* Report an Issue: the fields stand in from the edges; the button is a pill of readable size. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell .issue-report-form { padding: var(--gm-space-4) var(--gm-space-5) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell .issue-report-form button.ui-command,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-settings .settings-actions button,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-settings .settings-return-button { font-size: var(--gm-size-row) !important; }

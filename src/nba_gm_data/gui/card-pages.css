@@ -160,7 +160,7 @@ html[data-layout="pages"] .pages-head {
   min-height: 48px; padding: 8px 22px 2px 24px; box-sizing: border-box;
 }
 html[data-layout="pages"] .pages-title {
-  margin: 0; color: var(--gm-ink); font: var(--gm-weight-semibold) var(--gm-size-page)/1.1 var(--gm-font) !important; letter-spacing: -.01em;
+  margin: 0; color: var(--gm-ink); font: var(--gm-weight-semibold) var(--gm-size-page)/1.1 var(--gm-font) !important; letter-spacing: -.01em; white-space: nowrap;
 }
 html[data-layout="pages"] .pages-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
 html[data-layout="pages"] .pages-head { justify-content: flex-start; }
@@ -216,7 +216,8 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-slot-head .pages-
 html[data-layout="pages"] .pages-slot-link svg { width: 11px; height: 11px; opacity: .55; transition: transform var(--gm-motion-open) var(--gm-ease), opacity var(--gm-motion-open) var(--gm-ease); }
 html[data-layout="pages"] .pages-slot-link:hover svg { opacity: 1; transform: translateX(2px); }
 html[data-layout="pages"] .pages-slot-body { position: relative; flex: 1 1 auto; min-width: 0; }
-html[data-layout="pages"] .pages-slot.is-locked .pages-slot-body { opacity: .5; }
+/* The page says it is closed and takes no clicks; its words and numbers stay readable, the controls dim. */
+html[data-layout="pages"] .pages-slot.is-locked .pages-slot-body :is(button, select, input):not([data-dashboard-player-card]) { opacity: .55; }
 html[data-layout="pages"] .pages-slot.is-flash { animation: pages-flash 1.1s ease; }
 @keyframes pages-flash { 0%, 100% { box-shadow: 0 0 0 0 rgba(124, 192, 255, 0); } 25% { box-shadow: 0 0 0 6px rgba(124, 192, 255, .28); } }
 
@@ -383,3 +384,6 @@ html[data-layout="pages"] body .season-command-dashboard.is-pages .is-page-card 
   border-color: transparent !important; box-shadow: none !important;
 }
 html[data-layout="pages"] .pages-note { color: #d3dde6; font-size: 13px; font-weight: var(--gm-weight-semibold); margin-right: 6px; }
+
+/* The finder's shortcut keys, readable. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-finder .shortcut-hint { opacity: 1 !important; color: var(--gm-ink-2) !important; font-size: var(--gm-size-small) !important; }

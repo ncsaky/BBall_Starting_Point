@@ -324,8 +324,9 @@ its sections share the page's width and height. The rules live in `gui/full-page
 - **Pictures keep their proportions** (the payroll chart, the draft-assets grid): the card is drawn at its own size
   and enlarged as one piece to fit its room. Never restyled, never stretched.
 - **The same rows in two tables are two tabs of one page** (Team: Roster | Stats).
-- **Nothing is cut to make room.** If a name cannot fit it ends in an ellipsis; a role never does (give the column
-  the width). A long to-do job takes a second line.
+- **Nothing is cut to make room.** A name that cannot fit takes a second line (final sweep, 2026-11-27; asked at
+  checkpoint 17); a role never does (give the column the width). A long to-do job takes a second line.
+- **A closed page stays readable**: it says it is closed and dims only its buttons.
 - **Rebuilt so far:** every tab of the four sidebar pages and the step screens (Opening Roster, Set The Roster, the
   offseason checklist, the draft room, free agency). Not reachable in the test saves, so not rebuilt: fantasy draft,
   staff retention, cutdown, Sign Players. Pop-ups are untouched.

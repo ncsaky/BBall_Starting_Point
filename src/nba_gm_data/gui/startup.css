@@ -277,11 +277,9 @@ body[data-view="startup"] .startup-screen .startup-save-status.is-error { color:
 .startup-team-select-native, .startup-team-select-native + .glass-select { display: none !important; }
 
 /* Choosing a team: no box, the chosen team, then the wheel. */
-body[data-view="startup"] .startup-screen .startup-field-hint { color: var(--gm-ink-2); font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font) !important; letter-spacing: 0; margin: 0; text-transform: none; }
 .startup-team-picker { border-bottom: 1px solid var(--gm-line); display: grid; gap: var(--gm-space-2); min-width: 0; padding-bottom: var(--gm-space-2); }
-.startup-team-selected { align-items: center; display: grid; gap: 2px var(--gm-space-3); grid-template-columns: 44px minmax(0, 1fr); min-height: 44px; }
-body[data-view="startup"] .startup-screen .startup-team-selection-label { align-self: end; color: var(--gm-ink-2); font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font); grid-column: 2; }
-.startup-selected-team-mark { align-items: center; display: grid; grid-row: 1 / span 2; height: 44px; justify-items: center; width: 44px; }
+.startup-team-selected { align-items: center; display: grid; gap: var(--gm-space-3); grid-template-columns: 44px minmax(0, 1fr); min-height: 44px; }
+.startup-selected-team-mark { align-items: center; display: grid; height: 44px; justify-items: center; width: 44px; }
 .startup-selected-team-mark img { height: 44px; object-fit: contain; width: 44px; }
 body[data-view="startup"] .startup-screen .startup-selected-team-mark b,
 .startup-wheel-random-mark { align-items: center; background: #e78335; border: 2px solid #66351c; border-radius: var(--gm-radius-pill); box-shadow: inset 0 0 0 1px #ffd7a4; color: #17212a; display: flex; font: var(--gm-weight-bold) var(--gm-size-figure)/1 var(--gm-font); height: 37px; justify-content: center; width: 37px; }

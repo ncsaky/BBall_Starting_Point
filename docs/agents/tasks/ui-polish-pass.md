@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C, checkpoint 16 published (the start screen, lobby and loading box); stopped, waiting for three decisions; then the final sweep
+Progress: 9/9 - the final sweep is published (checkpoint 17); stopped, waiting for five decisions
 
 ## Handover (2026-11-26): finishing on a cheaper model
 
@@ -1058,3 +1058,40 @@ ready, change a rule through the menu and save, leave), the loading box.
 **Known gaps**: not seen over the start-screen film (not in this worktree); export, restore, recover, join by code, a
 second manager, starting a multiplayer league and windows under 1280 by 760 not tried; no Python changed, full suite
 not run.
+
+## Stage C, checkpoint 17 report: the final sweep (2026-11-27)
+
+**The user's answers to checkpoint 16**: the start screen good; the repeated lines "cut"; next = the final sweep.
+
+**What changed**
+- Start screen and lobby: "Choose your franchise · preview highlights", "Selected team", the film sentence,
+  "Multiplayer Lobby" and "Franchises" are gone.
+- A prospect on a page: Hotspots is its own tab (the maps were drawn over the college tables). `app.js`
+  `prospectCourt`; the floating card is unchanged.
+- A closed page no longer fades (`card-pages.css` dims only its controls).
+- Readability: the blocked-payment box in free agency; preseason Home morale labels; close salary marks take up to
+  three rows (`positionSalaryMarks`); the extension chart's two axis lines; a long name keeps the page title on one
+  line; the season picker above its table; Report an Issue's padding; the value bars' colour key and full pick names;
+  "Over the tax by" on the year-end slide.
+- Names: a name too long for its column takes a second line (roster, playoff stats and injuries, free agency,
+  checklist, Home); contract rows are 24px on windows 820px tall or less so the colour key covers nobody.
+- Text under 11px raised (awards, news, draft assets, bracket labels, slides, Settings, the finder shortcut).
+- Tests: `tests/final_sweep_fixes.test.cjs`. Browser tests: all 63 files; `test_gui_concept71` and
+  `test_gui_concept74` pass. Cache version `polish-c83`.
+
+**How it was checked** (copies, port 8775): every page on `playtest`, `st_new`, `st_playoffs`, `st_draft`,
+`st_resign`, `st_fa_open`, `st_camp`, `st_finals_done`; pop-ups, hover states, both slideshows, a prospect's page,
+the season picker, signing day; the changed pages also at 1280 by 760. Tools in `output/ui-polish/`: `scn/sw.mjs` +
+`sweep-check.js` (the sweep and its report), `scn/ba.mjs` with `OLD_GUI=oldgui` (before pictures from an earlier
+copy of the interface, served through the screenshot tool).
+
+**Waiting on five decisions** (page https://claude.ai/artifact/PGaohigd2QwMND42drqBV6, collection `decisions`):
+`sweep` (good | change), `long-names` (wrap | wider), `coach-card` (close | keep), `captions` (info | keep), `next`
+(stop | more).
+
+**Known gaps**: at 1280 by 760 a page shrinks as one piece (text under 11px; the extension page and a prospect's
+Ratings tab scroll a little; true before); boxes remain on the coach card, staff talks, news posts and parts of Trade
+analysis; long pick conditions clip inside a news post and fill a headline; wrapped names make some rows taller;
+disabled offer buttons are faint; the Finder's value rows were not re-pictured; not seen: fantasy draft, staff
+retention, cutdown, Sign Players, the board layout, the lottery screen this round, the start screen over its film,
+windows under 1280 by 760; no Python changed, full suite not run.

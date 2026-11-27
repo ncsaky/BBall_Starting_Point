@@ -475,3 +475,6 @@ html[data-glass="clear"] .ss-depth-table.is-fields thead tr.ss-depth-fields th {
 .season-slideshow .ss-panel-payroll .ss-payroll-block > .ss-payroll { flex: 1 1 auto; min-height: 0; height: auto !important; max-height: none !important; display: flex; justify-content: center; }
 .season-slideshow .ss-panel-payroll .ss-payroll-block > .ss-cap-table { flex: none; width: 100% !important; max-width: 420px; }
 .season-slideshow .ss-body:has(.ss-panel-payroll) { overflow: hidden !important; }
+
+/* Final sweep: nothing on a slide under 11px. */
+html[data-glass="clear"] body.unified-terminal-ui .season-slideshow.season-slideshow :is(.ss-view-all, .ss-tile-pos, .ss-depth-name, .sort-label, .ss-clamp, th, .rating-drop) { font-size: var(--gm-size-small) !important; }

@@ -2885,7 +2885,6 @@ function renderStartup() {
   const markup = `
     <header class="multiplayer-lobby-head">
       <div>
-        <p class="eyebrow">Multiplayer Lobby</p>
         <h2>${escapeHtml(league.name || "Shared League")}</h2>
         <p>${league.managers?.length || 0} human GM${league.managers?.length === 1 ? "" : "s"} · AI controls every open team</p>
       </div>
@@ -2896,7 +2895,7 @@ function renderStartup() {
     <div class="multiplayer-lobby-layout">
       <section class="lobby-team-board">
         <div class="section-head">
-          <div><p class="eyebrow">Franchises</p><h3>Claim Your Team</h3></div>
+          <h3>Claim Your Team</h3>
           <span>${claimedByTeam.size}/30 claimed</span>
         </div>
         <div class="lobby-team-grid">
@@ -11912,7 +11911,10 @@ function approvedPlayerCardBody(detail, options = {}) {
   // On a page (not the small floating card) a contracted player's first tab is his career (player-career.js; user,
   // 2026-11-27) and the heat maps are a tab of their own. Prospects keep their college page.
   const careerFirst = !detail.is_prospect && Boolean(globalThis.CardPages?.enabled?.()) && Boolean(globalThis.PlayerCareer);
-  const careerShift = careerFirst ? 1 : 0;
+  // A prospect's page splits the same way: with the maps under the college tables they were drawn over each other.
+  const prospectCourt = Boolean(detail.is_prospect) && Boolean(globalThis.CardPages?.enabled?.());
+  const careerShift = careerFirst || prospectCourt ? 1 : 0;
+  const court = `<section class="approved-card-panel approved-player-spatial player-overview-court">${spatialHeatmapMarkup(detail.spatial_profile, { compact: true })}</section>`;
   return `<div class="approved-player-card approved-player-pages${detail.is_prospect ? " approved-prospect-pages" : ""}" data-player-pages>
     <div class="player-page-bar"><span data-player-page-title>${extension ? "Contract Extension" : detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}</span><div class="player-page-nav"><button type="button" class="ui-command" data-player-page-step="-1" aria-label="Previous player card page" title="Previous page">‹</button><button type="button" class="ui-command" data-player-page-step="1" aria-label="Next player card page" title="Next page">›</button><span data-player-page-count aria-live="polite" aria-atomic="true">1/${(extension ? 1 : 0) + 2 + (detail.is_prospect ? 0 : 1) + careerShift}</span></div></div>
     <section class="approved-player-identity player-page-identity"><div class="approved-player-profile-head"><span class="profile-headshot-wrap">${playerHeadshotMarkup(detail, "approved-profile-headshot")}${detail.team?.abbrev && typeof teamLogoSrc === "function" && teamLogoSrc(detail.team.abbrev) ? `<img class="profile-team-badge" src="${escapeAttr(teamLogoSrc(detail.team.abbrev))}" alt="${escapeAttr(detail.team.name || detail.team.abbrev)}" title="${escapeAttr(detail.team.name || detail.team.abbrev)}" />` : ""}</span><div class="approved-profile-name"><h3>${escapeHtml(detail.name || options.name || "Player")}</h3><p>${escapeHtml([detail.position, detail.age != null ? `${detail.age} years` : "", detail.height].filter(Boolean).join(" · "))}</p><p class="player-draft-details">${escapeHtml(detail.is_prospect ? [detail.college_profile ? detail.source_team : (detail.scouting_profile?.where || detail.source_team), detail.college_profile?.coach ? `Coach ${detail.college_profile.coach}` : "", `${detail.draft_year} draft class`].filter(Boolean).join(" · ") : detail.draft_position ? `${detail.draft_year || 'Draft'} · Pick #${detail.draft_position}` : detail.draft_status==='undrafted' ? `Undrafted${detail.draft_year?` · ${detail.draft_year}`:''}` : detail.draft_year ? `Draft year ${detail.draft_year}` : 'Draft details unavailable')}</p></div>${playerSummaryRatings(detail)}</div>${typeof playerHeaderFacts === "function" ? playerHeaderFacts(detail) : playerCardEvidence(detail)}${options.actions || ""}</section>
@@ -11927,8 +11929,10 @@ function approvedPlayerCardBody(detail, options = {}) {
       ${detail.college_profile ? collegeProfileStrip(detail.college_profile, detail.scouting_profile) : ""}
       ${/* Round 10: the heat maps are this page's main display (recent games, the game-score chart and the payroll
           share left the page; the contract is in the header). */ ""}
-      <section class="approved-card-panel approved-player-spatial player-overview-court">${spatialHeatmapMarkup(detail.spatial_profile, { compact: true })}</section>
-    </section>`}
+      ${prospectCourt ? "" : court}
+    </section>${prospectCourt ? `<section class="player-card-page player-card-page--overview player-card-page--hotspots" data-player-page="${pageOffset + 1}" data-page-title="Hotspots" aria-label="Shooting and defense by zone" hidden>
+      ${court}
+    </section>` : ""}`}
     <section class="player-card-page player-card-page--details${detail.inputs_profile ? " player-card-page--layers" : ""}" data-player-page="${pageOffset + 1 + careerShift}" data-page-title="Ratings & Profiles" aria-label="Complete ratings and radar profiles" hidden>
       ${detail.inputs_profile ? inputsProfilePage(detail.inputs_profile) : `<div class="approved-player-identity-ratings" aria-label="Complete ratings">${playerCardGroupedRatings(ratings, detail, {
         Offense: radar("Offensive shape", offenseAxes, "offense"),
@@ -15047,7 +15051,7 @@ function positionSalaryMarks(scope) {
     const marks = [...track.querySelectorAll(".salary-mark")]
       .map((mark) => ({ mark, value: Number(mark.dataset.salaryMarkValue) }))
       .sort((a, b) => a.value - b.value);
-    let lastTop = -1;
+    const rows = [-1, -1, -1];  // where the last label of each of the three rows sits
     marks.forEach(({ mark, value }) => {
       mark.hidden = !Number.isFinite(value);
       if (mark.hidden) return;
@@ -15061,10 +15065,14 @@ function positionSalaryMarks(scope) {
       // Labels at either end of the track lean inward so they stay inside it.
       mark.classList.toggle("is-start", share < 0.12);
       mark.classList.toggle("is-end", share > 0.88);
-      // A mark close to the previous one drops its label a row so the two never overlap.
-      const low = lastTop >= 0 && share - lastTop < 0.18;
-      mark.classList.toggle("is-low", low);
-      if (!low) lastTop = share;
+      // A mark close to the one before it drops its label a row (or two), so labels never overlap. A label is about
+      // 70px wide, and one at the left end leans right, so on a narrow track the gap has to be bigger.
+      const room = (last) => (track.clientWidth ? Math.max(0.18, (last < 0.12 ? 100 : 72) / track.clientWidth) : 0.18);
+      let row = rows.findIndex((last) => last < 0 || share - last >= room(last));
+      if (row < 0) row = rows.length - 1;
+      mark.classList.toggle("is-low", row === 1);
+      mark.classList.toggle("is-lower", row === 2);
+      rows[row] = share;
     });
   });
 }

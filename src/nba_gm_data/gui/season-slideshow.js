@@ -261,7 +261,7 @@
       const cap = slide.cap || {};
       return `<div class="ss-split"><section><h4>The draft</h4><p class="ss-lead">${draftText}</p>
         ${table([{label: "Cons.", render: (p) => p.consensus_rank, cls: "ss-num"}, {label: "Prospect", render: (p) => `<b>${esc(p.name)}</b>`, cls: "ss-left"}, {label: "Pos", render: (p) => esc(p.position)}, {label: "From", render: (p) => esc(p.school || "—")}, {label: "Your scouts", render: (p) => (p.your_rank ? `#${p.your_rank}` : "—"), cls: "ss-num"}], slide.prospects || [], {sorted: 0, caption: "Consensus top 5"})}</section>
-        <section class="ss-feature"><h4>Your cap for ${esc(cap.season)}</h4><dl class="ss-dl"><dt>Committed payroll</dt><dd>${money(cap.payroll_millions)}</dd><dt>Tax line</dt><dd>${money(cap.tax_line_millions)}</dd><dt>Room under the tax</dt><dd>${money(cap.tax_space_millions)}</dd><dt>Hard cap room</dt><dd>${money(cap.hard_cap_space_millions)}</dd></dl></section></div>`;
+        <section class="ss-feature"><h4>Your cap for ${esc(cap.season)}</h4><dl class="ss-dl"><dt>Committed payroll</dt><dd>${money(cap.payroll_millions)}</dd><dt>Tax line</dt><dd>${money(cap.tax_line_millions)}</dd><dt>${Number(cap.tax_space_millions) < 0 ? "Over the tax by" : "Room under the tax"}</dt><dd>${money(Number(cap.tax_space_millions) < 0 ? -cap.tax_space_millions : cap.tax_space_millions)}</dd><dt>${Number(cap.hard_cap_space_millions) < 0 ? "Over the hard cap by" : "Hard cap room"}</dt><dd>${money(Number(cap.hard_cap_space_millions) < 0 ? -cap.hard_cap_space_millions : cap.hard_cap_space_millions)}</dd></dl></section></div>`;
     },
 
     // ---------------------------------------------------------------- outlook slides

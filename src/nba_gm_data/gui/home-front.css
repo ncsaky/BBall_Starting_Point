@@ -229,3 +229,13 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .st
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .stories-steps > li.is-latest::before { background: var(--gm-accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--gm-accent) 26%, transparent); }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .stories-steps > li.is-ahead { color: var(--gm-ink-3); }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .stories-steps > li.is-ahead::before { background: transparent; border: 1.5px solid var(--gm-ink-2); box-sizing: border-box; }
+
+/* With no last game or form to show (before the season) the meters still need their width. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .front-hero .front-meters { min-width: 340px; }
+
+/* Injured names take a second line instead of ending in dots; "Everyone is available" stays on one. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .front-hero .front-out { min-width: 200px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .front-hero .front-out button { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; text-align: left !important; justify-content: flex-start !important; justify-self: start; line-height: 1.15 !important; height: auto !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .front-hero .front-out > span > em { grid-column: 1 / -1; }
+/* The trade-talk and leader names do the same on a small window. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .front-list > :not(.front-headline) b { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; line-height: 1.15 !important; }

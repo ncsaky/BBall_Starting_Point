@@ -182,6 +182,7 @@ body.unified-terminal-ui .salary-mark {
 }
 .salary-mark i { display: block; width: 2px; height: 7px; background: #6f7c88; }
 .salary-mark.is-low i { height: 18px; }
+.salary-mark.is-lower i { height: 30px; }
 body.unified-terminal-ui .salary-mark:hover { color: #18212a !important; text-decoration: underline; }
 .salary-mark:hover i { background: #18212a; }
 .salary-mark[hidden] { display: none !important; }

@@ -1462,3 +1462,50 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full [da
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full [data-pages-slot="phase-draft-lottery"] .draft-reveal-row { height: auto !important; min-height: 0 !important; }
 /* Why a free agent left his old team: a line of its own on the signing wire, wrapped rather than cut. */
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-wire-row > div > span.fa-wire-why { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
+
+/* ---- Final sweep ---- */
+/* Salary marks close together take two rows, so their names do not run into each other. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-builder .salary-mark i { width: 1px !important; height: 6px !important; background: var(--gm-ink-3) !important; }
+/* The old frosting on a mark blurred the label under its neighbour. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-builder .salary-mark { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-builder .salary-mark.is-low i { height: 6px !important; margin-bottom: 14px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-builder .salary-mark.is-lower i { height: 6px !important; margin-bottom: 28px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-builder .fa-offer-salary:has(.salary-mark.is-lower) > small { margin-top: var(--gm-space-5) !important; }
+/* The checklist's status column fits "Your decision". */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .offseason-checklist:not(.has-outlook) .offseason-table:has(> colgroup > col:nth-child(7)) > colgroup > col:nth-child(1) { width: 160px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .offseason-checklist:not(.has-outlook) .offseason-table:has(> colgroup > col:nth-child(7)) > colgroup > col:nth-child(3) { width: 168px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .offseason-checklist:not(.has-outlook) .offseason-table:has(> colgroup > col:nth-child(7)) > colgroup > col:nth-child(4) { width: 76px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .offseason-checklist:not(.has-outlook) .offseason-table:has(> colgroup > col:nth-child(7)) > colgroup > col:nth-child(5) { width: 52px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .offseason-checklist:not(.has-outlook) .offseason-table:has(> colgroup > col:nth-child(7)) > colgroup > col:nth-child(6) { width: 128px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .offseason-checklist:not(.has-outlook) .offseason-table:has(> colgroup > col:nth-child(7)) > colgroup > col:nth-child(7) { width: 170px !important; }
+/* A name that does not fit takes a second line; nothing ends in dots. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .player-name-text,
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .offseason-checklist .offseason-table .fa-player-name,
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .front-move > b { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; max-width: none !important; line-height: 1.15 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-block-row > span:has(+ span .block-value-meter) { white-space: normal !important; line-height: 1.15 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .assets-team-block .assets-block-head > span:nth-child(10) { visibility: hidden; }
+/* Playoff stats: narrower number columns give the names two full lines; an injury and its date wrap. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-leaders-panel .playoff-stats-table col:nth-child(n+4) { width: 34px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-leaders-panel .playoff-stats-table col:nth-child(2) { width: 58px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .phase-leaders-panel .playoff-stats-table col:nth-child(n+12) { width: 38px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table tbody :is(.playoff-stats-col-status, .playoff-stats-col-back) :is(span, b, em, strong) { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; line-height: 1.15 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table tbody .playoff-stats-col-status { white-space: normal !important; overflow: visible !important; line-height: 1.15 !important; }
+/* Nothing under 11px (the drawn-small pieces are given room for it). */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .draft-assets-board > :is(strong, b, .draft-assets-corner) { font-size: var(--gm-size-small) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full :is(.wire-reporter-avatar, .wire-post-author span, .news-row time, .wire-comments > summary, .wire-profile-note) { font-size: var(--gm-size-row) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full :is(.season-award-stat-label, .season-award-columns > span) { font-size: var(--gm-size-row) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full :is(.play-in-feeder-label, .bracket-champion) { font-size: var(--gm-size-row) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .draft-rank-move { font-size: var(--gm-size-small) !important; }
+
+/* A long decision ("Your free agent (Early Bird)") takes a second line. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .offseason-checklist .offseason-table tbody td:nth-child(3) { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; line-height: 1.15 !important; }
+
+/* A short window: contract rows a touch shorter, so the colour key under the table covers nobody. */
+@media (max-height: 820px) {
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group.linked-contracts { --full-row-px: 24px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group.linked-contracts table tbody :is(tr, th, td) { height: 24px !important; }
+}
+
+/* The offer builder's day-to-day change in the asking price, readable. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-builder .ask-change, html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-builder .ask-change b { font-size: var(--gm-size-small) !important; line-height: 1.2 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-builder .ask-change-arrows { display: none !important; }
