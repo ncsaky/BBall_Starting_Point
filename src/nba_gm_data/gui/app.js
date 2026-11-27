@@ -6497,10 +6497,10 @@ function draftPickStage(draft, freshPick) {
 
 function draftLotteryOddsWorkspace(draft) {
   const lottery = draft.lottery || {};
-  return `<div class="draft-lottery-card">
+  return `<div class="draft-lottery-card" style="--lottery-rows:${Math.ceil((lottery.odds || []).length / 2) || 7}">
     <header class="draft-lottery-summary"><strong>${escapeHtml(draft.year || "")} Draft Lottery</strong><span>No. 1 Odds</span></header>
     <div class="draft-odds-grid">${(lottery.odds || []).map((row) => `<article class="draft-odds-row"><span class="draft-seed">${escapeHtml(row.seed)}</span>${draftTeamLogo(row.team)}<strong>${escapeHtml(teamLabel(row.team))}</strong><em>${(Number(row.odds || 0) * (Number(row.odds || 0) <= 1 ? 100 : 1)).toFixed(1)}%</em>${row.context ? `<small>${escapeHtml(row.context)}</small>` : ""}</article>`).join("") || `<div class="empty">Lottery odds are not available for this fixed draft order.</div>`}</div>
-    <footer class="draft-lottery-note">Four picks drawn · Remaining teams follow record order.</footer>
+    <footer class="draft-lottery-note">${lotteryDrawsEveryPick(lottery) ? `All ${(lottery.odds || []).length} picks drawn` : "Four picks drawn · Remaining teams follow record order."}</footer>
   </div>`;
 }
 
@@ -6510,20 +6510,23 @@ function draftLotteryGridPicks(total) {
   return Array.from({length:Math.max(0, Number(total) || 0)},(_,i)=>i+1);
 }
 
+// From the 2027 draft the lottery is the NBA's "3-2-1" format: 16 teams, every pick drawn (lottery.format).
+function lotteryDrawsEveryPick(lottery) { return lottery?.format === "3-2-1"; }
+
 function draftLotteryRevealWorkspace(draft) {
   const lottery = draft.lottery || {};
   const count = lotteryRevealCount(draft);
   const reveal = GameSimulation.lotteryRevealState(lottery,count);
   const visible = new Map(reveal.revealed.map(row=>[Number(row.pick),row]));
-  const jumping = (lottery.odds || []).filter(row=>reveal.promoted.includes(row.team.id) && !reveal.revealed.some(p=>p.original_team?.id===row.team.id));
-  return `<div class="draft-lottery-card draft-reveal-shell" aria-label="Draft lottery reveal">
+  const jumping = lotteryDrawsEveryPick(lottery) ? [] : (lottery.odds || []).filter(row=>reveal.promoted.includes(row.team.id) && !reveal.revealed.some(p=>p.original_team?.id===row.team.id));
+  return `<div class="draft-lottery-card draft-reveal-shell" aria-label="Draft lottery reveal" style="--lottery-rows:${Math.ceil(reveal.total / 2) || 7}">
     <header class="draft-lottery-summary"><strong>${escapeHtml(draft.year || "")} Draft Lottery</strong><span>${reveal.complete ? 'Order Complete' : `Next: #${reveal.nextPick}`}</span></header>
     <div class="draft-reveal-grid">${draftLotteryGridPicks(reveal.total).map(pick=>{
       const row = visible.get(pick);
       if (!row) return `<article class="draft-reveal-row is-unrevealed" data-lottery-pick="${pick}"><span class="draft-pick-number">${pick}</span><div class="lottery-envelope" aria-hidden="true"></div><strong>Unrevealed</strong><span>—</span></article>`;
       return `<article class="draft-reveal-row${row === reveal.revealed.at(-1) ? ' is-latest' : ''}" data-lottery-pick="${pick}" data-revealed="true"><span class="draft-pick-number">${pick}</span>${draftTeamLogo(row.original_team)}<div><strong>${escapeHtml(teamLabel(row.original_team))}</strong><small>Seed ${escapeHtml(row.starting_seed || pick)}${row.ownership_changed ? ` · Pick → ${escapeHtml(teamLabel(row.owner_team))}` : ''}</small></div><em class="${Number(row.movement)>0?'up':Number(row.movement)<0?'down':''}">${Number(row.movement)>0?`↑${row.movement}`:Number(row.movement)<0?`↓${Math.abs(row.movement)}`:'—'}</em></article>`;
     }).join('')}</div>
-    <footer class="draft-lottery-note${jumping.length ? ' lottery-jump-notice' : ''}" role="status">${jumping.length ? `${jumping.map(row=>escapeHtml(teamLabel(row.team))).join(', ')} jumped into the top four` : reveal.complete ? 'Lottery complete' : '14 → 1'}</footer>
+    <footer class="draft-lottery-note${jumping.length ? ' lottery-jump-notice' : ''}" role="status">${jumping.length ? `${jumping.map(row=>escapeHtml(teamLabel(row.team))).join(', ')} jumped into the top four` : reveal.complete ? 'Lottery complete' : `${reveal.total} → 1`}</footer>
   </div>`;
 }
 
@@ -6992,7 +6995,7 @@ function signingDayRecap(room) {
   const userId = room.team?.id;
   const mine = (room.league_moves || []).filter((move) => (move.team_ids || []).includes(userId)
     && FREE_AGENCY_SIGNING_KINDS.has(move.kind));
-  const departed = (room.offseason_checklist?.departed || []).map((row) => ({headline: `${row.name} signed with ${row.team_abbrev}.`}));
+  const departed = (room.offseason_checklist?.departed || []).map((row) => ({headline: `${row.name} signed with ${row.team_abbrev}${row.departure_text ? `, ${row.departure_text}` : ""}.`}));
   const line = (move) => `<li>${escapeHtml(move.headline || move.player_name || "")}${move.aav_millions ? ` <small>${money(move.aav_millions)}${move.years ? ` × ${move.years}` : ""}</small>` : ""}</li>`;
   return `<div class="offseason-recap">
     <section><h4>Your signings</h4>${mine.length ? `<ul>${mine.slice(0, 8).map(line).join("")}</ul>` : "<p>None yet.</p>"}</section>
@@ -7980,6 +7983,8 @@ function freeAgencyWireKind(kind) {
   return "other";
 }
 
+function sentenceCase(text) { const value = String(text || ""); return value.charAt(0).toUpperCase() + value.slice(1); }
+
 function freeAgencySigningWirePanel(room = state.data.freeagency || {}) {
   const userId = room.team?.id || "";
   const filter = state.freeAgencyWireFilter || "all";
@@ -8008,7 +8013,7 @@ function freeAgencySigningWirePanel(room = state.data.freeagency || {}) {
         ? `${teams[0] || ""} · ${money(move.aav_millions)}${move.years ? ` × ${move.years}` : ""}${move.years ? ` · ${money(Number(move.aav_millions) * Number(move.years))} total` : ""}`
         : String(move.headline || "").replace(/^Trade completed:\s*/, "");
       const when = freeAgencyWireDate(move.date, room.as_of_date);
-      return `<li class="fa-wire-row fa-wire-${kind}${ours ? " is-ours" : ""}"><time datetime="${escapeAttr(when.date)}"${when.title ? ` title="${escapeAttr(when.title)}"` : ""}>${escapeHtml(when.label)}</time><span class="fa-wire-logos">${logos}</span><div><strong>${escapeHtml(title)}</strong><span title="${escapeAttr(move.headline || "")}">${escapeHtml(terms)}</span></div></li>`;
+      return `<li class="fa-wire-row fa-wire-${kind}${ours ? " is-ours" : ""}"><time datetime="${escapeAttr(when.date)}"${when.title ? ` title="${escapeAttr(when.title)}"` : ""}>${escapeHtml(when.label)}</time><span class="fa-wire-logos">${logos}</span><div><strong>${escapeHtml(title)}</strong><span title="${escapeAttr(move.headline || "")}">${escapeHtml(terms)}</span>${kind === "signing" && move.departure_text ? `<span class="fa-wire-why">${escapeHtml(sentenceCase(move.departure_text))}</span>` : ""}</div></li>`;
     }).join("") || `<li class="fa-empty">${moves.length ? "No moves of this kind yet." : "No league moves yet."}</li>`}</ol>
   </section>`;
 }

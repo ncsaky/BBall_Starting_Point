@@ -256,7 +256,7 @@
     look_ahead(slide) {
       const d = slide.draft || {};
       const draftText = (d.status === "drawn" ? `Your first pick: No. ${esc(d.pick ?? "—")}`
-        : d.status === "lottery" ? `Lottery position ${esc(d.lottery_position)} of 14 · ${num(d.odds_first_pick)}% chance at the No. 1 pick`
+        : d.status === "lottery" ? `Lottery position ${esc(d.lottery_position)} of ${esc(d.lottery_teams ?? 14)} · ${num(d.odds_first_pick)}% chance at the No. 1 pick`
         : `Playoff team: projected pick ${esc(d.projected_pick ?? "—")}`) + (d.pick_owner ? `<br><small class="ss-muted">Your own first-round pick belongs to ${esc(d.pick_owner)}${d.protection ? ` (${esc(d.protection)})` : ""}.</small>` : "");
       const cap = slide.cap || {};
       return `<div class="ss-split"><section><h4>The draft</h4><p class="ss-lead">${draftText}</p>

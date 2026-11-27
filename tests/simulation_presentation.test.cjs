@@ -50,6 +50,19 @@ test('lottery reveals only visible envelopes and infers jumps without exact-pick
   assert.deepEqual(Array.from(done.promoted).sort(),['t1','t13','t14','t2']);
   assert.equal(lotteryRevealState({...lottery,draw_count:0},1).promoted.length,0);
 });
+test('the 3-2-1 lottery draws every pick: 16 envelopes, nobody "jumps into the top four"',()=>{
+  const team = id=>({id,abbrev:id});
+  const odds = Array.from({length:16},(_,i)=>({seed:i+1,team:team(`t${i+1}`)}));
+  const order = [9,3,16,1,2,4,5,6,7,8,10,11,12,13,14,15];
+  const lottery = {format:'3-2-1',draw_count:16,odds,reveal:order.map((seed,i)=>({pick:i+1,starting_seed:seed,original_team:team(`t${seed}`)}))};
+  const first = lotteryRevealState(lottery,1);
+  assert.equal(first.total,16);
+  assert.equal(first.nextPick,15);
+  assert.deepEqual(Array.from(first.revealed,r=>r.pick),[16]);
+  assert.equal(first.promoted.length,0);
+  assert.equal(lotteryRevealState(lottery,16).promoted.length,0);
+  assert.equal(lotteryRevealState(lottery,16).complete,true);
+});
 
 test('draft playback reveals selections and prospect availability in chronological frames',()=>{
   const row=(pick,team,prospect,status='selected')=>({selection:{overall_pick:pick,team_id:team,prospect_id:prospect},team:{id:team,abbrev:team},prospect:{id:prospect,name:`Prospect ${pick}`},draft_status:status});

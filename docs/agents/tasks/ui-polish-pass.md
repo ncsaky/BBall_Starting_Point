@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C, checkpoint 13 published (a player's Career and Hotspots tabs, the League Storylines page, the amber close state on extensions); stopped, waiting for five decisions; merging main, the Finder, the start screen and the final sweep remain
+Progress: 8/9 - Stage C, checkpoint 14 published (main merged in; the 16-team lottery card and reveal, playoff lines, free-agent departure reasons); stopped, waiting for four decisions; the Finder, the start screen and the final sweep remain
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -865,3 +865,45 @@ a two-team season, a 20-season career, hover states on the Storylines page; no P
 
 **For the coordinator (ratings, not display)**: Thomas Sorber, 20, shows "Room to grow: 2.3 of 5" beside a
 projected overall of 76.9 at 20 to 77.1 at 25 from `ability_projection`. Both are shown as the game gives them.
+
+## Stage C, checkpoint 14 report (2026-11-26)
+
+**The user's answers to checkpoint 13**: the Career tab good; no money tab; Hotspots on their own tab good; the
+Storylines page good; next = merge main and fold in the coordinator's items.
+
+**What changed**
+- **Main merged into the branch** (57 commits, through 903fd10b; no conflicts).
+- **The lottery under the 3-2-1 format** (`gui/app.js`): `lotteryDrawsEveryPick(lottery)` reads `lottery.format`.
+  The odds card says "All 16 picks drawn" (the old format keeps "Four picks drawn ..."); the reveal counts down
+  from `reveal.total` and shows no "jumped into the top four" notice; `lotteryRevealState`
+  (`gui/simulation-presentation.js`) reports no promoted teams for 3-2-1. Both grids get `--lottery-rows` (half
+  the teams) and `gui/full-pages.css` uses it for the row count: the grids fill a column at a time and had seven
+  fixed rows, so teams 15 and 16 spilled into a third column. The reveal's rows share the height (they were 48px
+  fixed) so eight fit without scrolling.
+- **Year-end slide** (`gui/season-slideshow.js`): "Lottery position N of `lottery_teams`" (14 when absent).
+- **Playoff lines**: the Career tab's Playoffs switch (checkpoint 13) reads `career_seasons[].playoffs`, which
+  the merge brought in. No code change; seen with real numbers on a copy of the Finals test save.
+- **Why a free agent left**: `freeAgencySigningWirePanel` shows `move.departure_text` on a line of its own
+  (`.fa-wire-why`, wraps); `signingDayRecap` appends `departed[].departure_text` after "signed with TEAM".
+- Tests: `tests/main_followups.test.cjs` (5 tests), a 3-2-1 case in `tests/simulation_presentation.test.cjs`, the
+  recap's reason in `tests/offseason_checklist.test.cjs`. Browser tests: all 60 files (main's change makes the
+  start-video test skip when the video is missing). Cache version `polish-c54`.
+
+**How it was checked**: a copy of `st_playoffs.json` was played through to draft night under the merged code, which
+gave a real 2027 lottery (format 3-2-1, 16 teams). The lottery screen was switched to by hand
+(`state.draftPresentationStage`), because the game still goes straight to draft night. A copy of `st_fa_open.json`
+was played four market days; one of 30 signings carried a reason (the save predates `free_agent_origins`).
+
+**Waiting on four decisions** (page https://claude.ai/artifact/XuGrBpFHKywQ8yyTiCgEdC, collection `decisions`):
+`lottery-card` (good | change), `pick-range` (range | barred | leave), `wire-why` (good | change), `next`
+(trade-rest | sweep | start).
+
+**Known gaps**: the year-end slide's count and the recap's reason line are tested but were not seen in the game;
+playoff history starts with the save (real earlier playoff runs are not loaded: on the coordinator's list for
+others); the Python suite was not rerun on the merged branch (browser tests only, per the light-testing rule for
+UI work); the odds card shows 0.0% for teams barred from the top pick without saying why (rows carry
+`highest_pick` / `lowest_pick`; asked).
+
+**For the coordinator**: the lottery screen is still skipped (third report: the game goes from re-signing straight
+to draft night with `presentation_stage` "reveal" already set); the test save's departed free agent (Luka Garza)
+has `departure_text` null because the save predates the origins record.

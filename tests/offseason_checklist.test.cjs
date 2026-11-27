@@ -92,6 +92,9 @@ test('signing day recaps the first wave and says what is still open', () => {
     {kind: 'free_agent_signing', team_ids: ['bos'], headline: 'BOS signs Own Guy.', aav_millions: 20, years: 4, player_id: 'd'}]});
   assert.match(html, /Your signings<\/h4><ul><li>GSW signs New Guy\./);
   assert.match(html, /Your free agents who left<\/h4><ul><li>Own Guy signed with BOS\./);
+  const why = context().offseasonChecklistPanel({...room, stop: 'finalize',
+    offseason_checklist: {...room.offseason_checklist, departed: [{player_id: 'd', name: 'Own Guy', team_abbrev: 'BOS', departure_text: 'leaving GSW to join a <contender>'}]}, league_moves: []});
+  assert.match(why, /<li>Own Guy signed with BOS, leaving GSW to join a &lt;contender&gt;\.<\/li>/, 'the game\'s stated reason, escaped');
   // FA-REAL slice 3 (rule changed): offer sheets exist now; with none this summer the box says what can still happen.
   assert.match(html, /No offer sheets this summer yet/);
 });

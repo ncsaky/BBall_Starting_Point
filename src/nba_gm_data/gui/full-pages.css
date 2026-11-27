@@ -1454,3 +1454,11 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-market-title { width: 100% !important; max-width: none !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-market-head { grid-template-columns: minmax(0, 1fr) !important; grid-template-areas: none !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-market-head > * { grid-area: auto !important; }
+
+/* The 3-2-1 lottery has 16 teams. The card fills a column at a time and had seven fixed rows, so teams 15 and 16
+   spilled into a third column: the row count now comes from the card (--lottery-rows, half the teams), and the
+   reveal's rows share the height instead of being 48px each, so eight fit without scrolling. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full [data-pages-slot="phase-draft-lottery"] :is(.draft-odds-grid, .draft-reveal-grid) { grid-template-rows: repeat(var(--lottery-rows, 7), minmax(0, 1fr)) !important; overflow: hidden !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full [data-pages-slot="phase-draft-lottery"] .draft-reveal-row { height: auto !important; min-height: 0 !important; }
+/* Why a free agent left his old team: a line of its own on the signing wire, wrapped rather than cut. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-wire-row > div > span.fa-wire-why { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }

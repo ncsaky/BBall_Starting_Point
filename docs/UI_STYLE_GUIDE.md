@@ -399,6 +399,14 @@ its sections share the page's width and height. The rules live in `gui/full-page
 - Code: `gui/player-career.js` (the Career tab). Styles: `gui/player-page.css` and `gui/extension-window.css`, both scoped to the page version of the card
   (`.card-board-window.is-detail-card`), so the floating version is untouched.
 
+## The lottery and the signing wire (2026-11-26)
+- The lottery card takes its row count from the number of teams (two columns, half the teams each: seven rows for
+  the old 14-team lottery, eight for the 16-team one). Nothing scrolls and nothing spills into a third column.
+- Its wording follows the format the game reports: "All 16 picks drawn" and a countdown from 16 under the 3-2-1
+  lottery; no "jumped into the top four" notice there, because every pick is drawn.
+- A reason the game states (why a free agent left) is shown where the move is shown, as a line of its own that
+  wraps. It is never left to a hover.
+
 ## Pop-ups (2026-11-26)
 - Pop-up styling lives in two sheets: `gui/popups.css` (the trade room and incoming offers) and
   `gui/popups-game.css` (box score, Player Finder, staff talks, League Leaders). Every rule sits under `#modalRoot`
