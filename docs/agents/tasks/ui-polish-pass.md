@@ -2,7 +2,93 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 8/9 - Stage C, checkpoint 14 published (main merged in; the 16-team lottery card and reveal, playoff lines, free-agent departure reasons); stopped, waiting for four decisions; the Finder, the start screen and the final sweep remain
+Progress: 8/9 - Stage C, checkpoint 14 published and handed over (see Handover below); waiting for four decisions; then the 0.0% lottery teams, the Finder, the start screen and the final sweep
+
+## Handover (2026-11-26): finishing on a cheaper model
+
+The user asked (2026-11-26) to finish the last items on a cheaper model to save usage, then make their own edits.
+The Fable session that did Stages A to C (checkpoints 1 to 14) wrote this section for whoever continues. Everything
+decided so far is in the checkpoint reports below and in `docs/UI_STYLE_GUIDE.md`; you do not need the old chat.
+
+**Start here**
+1. Read `AGENTS.md`, `CLAUDE.md`, the "Standing UI rules" and "Boundaries" sections of this file, and
+   `docs/UI_STYLE_GUIDE.md` (its "Preserve" and "Never do" sections are binding).
+2. Read the user's checkpoint 14 answers: page https://claude.ai/artifact/XuGrBpFHKywQ8yyTiCgEdC, collection
+   `decisions` (the artifact data tool, action `list`). Keys: `lottery-card` (good | change), `pick-range`
+   (range | barred | leave), `wire-why` (good | change), `next` (trade-rest | sweep | start). A `note` field holds
+   anything they typed. What they wrote there is their direction; follow it over the order below.
+
+**What is left, in this order unless the user's `next` answer says otherwise**
+1. **The 0.0% lottery teams** (`pick-range`). On the odds card (`draftLotteryOddsWorkspace` in `gui/app.js`) teams
+   barred from the top pick show 0.0% with no reason. Each `lottery.odds` row carries `highest_pick` and
+   `lowest_pick`. "range": a small "picks 2 to 16" on every row. "barred": a short note only on rows whose
+   `highest_pick` is above 1. "leave": nothing. The card's `small` is hidden by an old rule in `styles.css`; add
+   the new rule in `gui/full-pages.css` beside the other lottery rules. Test save: `c14_playoffs.json` (below).
+2. **The Finder** in the trade room (`renderTradeFinder` in `gui/app.js`, about line 10050). Restyle it to match the
+   Builder and the Market (`gui/popups.css`, `gui/trade-market.css`): glass, no boxes, hairlines, readable sizes.
+   Do not change what it shows. Asset lists in the trade room scroll on purpose; do not page them.
+3. **The start screen** (`renderStartup` in `gui/app.js`, about line 2865): same look as the rest of the game.
+4. **The final sweep** (plan step 9): take a picture of every page and state, compare each with the style guide,
+   and fix what does not match. Screens nobody has looked at closely yet: a prospect's page, coach cards (still
+   pop-ups), the season picker when open, hover states, the year-end slides, the signing-day recap. The contrast
+   checker is `output/ui-workbench/audit.js` in the main checkout (`__check()`).
+
+**Decided: do not do these**
+- Rebuilding the player's page at its real size. It is drawn large and shrunk, with a `zoom` rule in
+  `gui/player-page.css` cancelling that for text. It works and is tested; the user approved these tabs.
+- Heat maps in the trade room from the game's own team map (they still use `trade-projection.js` minutes).
+- Four factors and morale after a trade: the engine has no forecast. The coordinator has a task card for it
+  (`project_four_factors`, `project_trade_morale`). Never show made-up numbers.
+- Music files or more arena photos: any download needs the user's yes first (file name, source, size).
+- Merging to main or pushing. The coordinator does that with the user's OK.
+
+**How to look at the game**
+- Test server: `polish-preview` in `.claude/launch.json` (port 8775, saves in `output/ui-polish/saves`). Never use
+  the user's game on port 8766. Restart the server after any Python change.
+- Pictures: `cd output/ui-polish && SHOT_SLOT=1 node shots.mjs scn/<name>.mjs`. A scenario is
+  `export default {save, prefix, steps: [[name, code, waitMs], ...]}`; a step named "" runs its code without a
+  picture and prints what the code returns; pictures land in `shots/<prefix>-<name>.jpg`. `SHOT_W=1280 SHOT_H=760`
+  gives the small window. Copy a recent scenario (`scn/pc5.mjs` a player page, `scn/st.mjs` the Storylines page,
+  `scn/c14i.mjs` the lottery) rather than writing one from nothing. Look at every picture you take.
+- After pressing a sim button in a scenario, wait on `state.busy`, not only `state.simulationRunning`.
+- Saves: `playtest.json` (midseason, OKC), `st_*.json` (one per phase), and copies made for checkpoint 14:
+  `c14_playoffs.json` (draft night with a real 16-team lottery; the lottery screen has to be switched to by hand,
+  see `scn/c14i.mjs`), `c14_fa.json` (free agency with one signing that states a reason), `c14_finals.json`.
+  Copy a save before any scenario that sims. At most two heavy jobs at once on this laptop.
+
+**How to change things**
+- Styles: add rules to the page's own sheet with the long prefix the sheet already uses and `!important`; use only
+  values from `gui/tokens.css` (`--gm-*`). The tests fail on literal font sizes, numeric weights, italic and hex
+  colours in the newer sheets.
+- Bump the cache version in `gui/index.html` after any CSS or JS change (now `polish-c54`; replace it everywhere
+  in that file with the next number).
+- Tests before every checkpoint: `nice -n 10 /Users/noahtyler/Developer/BBall_data/BBall_Starting_Point/.venv/bin/python scripts/run_tests_parallel.py --js --workers 2`
+  (all 60 files pass today), **and** the Python tests that read the interface's source, which the browser run
+  misses: `PYTHONPATH=src <that python> -m unittest tests.test_gui_concept71 tests.test_gui_concept74`. Write long
+  test output to a file and search it; do not print it.
+- A new card needs an entry in `gui/card-board.js` `CARDS`, a panel in `seasonCommandDashboardMarkup`, a page in
+  `gui/card-pages.js` and its own icon in `gui/window-icons.js` (a test checks icons are unique).
+- `.venv` in the worktree is a link the coordinator added. Leave it out of commits.
+
+**Checkpoints (the user's routine)**
+After each item or two: before and after pictures, tests passing, one published page with the pictures, what is not
+done or not seen, and a few decisions (your pick first) that save to the page's `decisions` collection; record the
+answers and a report at the bottom of this file; commit on the branch, not pushed; stop and wait for "Answered,
+continue". Templates: `output/ui-polish/checkpoint-tools/` (`build_c14.py` builds a page from the previous one in
+`output/ui-polish/sitep/`; `docs_c14.py`; `commit_c14.txt`). Write to the user in plain everyday language, lead
+with what changed, and say plainly what was not checked.
+
+**Mistakes made earlier in this task, to check for before showing the user anything**
+- Names or labels cut off with "..." (the user's most repeated complaint after contrast). Widen the column.
+- Striped table rows, boxes around sections, grey text on grey, a black-on-white field. The look is glass,
+  hairlines and space.
+- A tab or page that scrolls at the usual window size, or a list that leaves a half row showing.
+- Extra words: kicker lines, a caption repeating its heading, a legend restating the title.
+- A number the game did not send. If the data is missing, say so on the page or leave it out.
+- A change that looked fine at 16 rows or one size and broke another: compare with the old picture, and check the
+  small window.
+- Class names that collide with the game's own (`.is-win` did; prefix new classes).
+- Trusting a helper's report without opening its pictures.
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
