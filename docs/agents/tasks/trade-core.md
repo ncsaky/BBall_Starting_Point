@@ -69,7 +69,7 @@ a first and a second (still allowed: Orlando rated it a gain without the tax).
 - **First-round exits are not covered.** Both remaining top-three sales in the test seasons were such teams: Denver
   sent Aaron Gordon and picks for Keegan Murray (believable: similar player, five years younger, $16M of tax saved);
   Minnesota sent Jaden McDaniels to San Antonio for a young player, Tobias Harris, a spare wing and a first (debatable:
-  tax counted +17, but real cap-strapped teams do make that kind of move). Say if you want them covered too.
+  tax counted +17, but real cap-strapped teams do make that kind of move). Decided by the user 2026-11-26: keep as is.
 - **Core promises are never renewed.** The promise a team makes to keep its core is set when a career starts and ends
   June 30 of that first season; only a major acquisition starts a new one. Not changed here.
 
