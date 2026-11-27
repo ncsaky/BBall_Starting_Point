@@ -1,6 +1,6 @@
 # PICK-REFIT: trade side of the 3-2-1 lottery
 
-Progress: 9/10 - full suite on the second pass running on the cloud
+Progress: 10/10 - done, ready for the coordinator's review
 
 Owner: Claude (side session, worktree `reverent-brattain-6d2232`, branch `claude/reverent-brattain-6d2232`).
 Go-ahead from the coordinator 2026-11-26.
@@ -158,9 +158,10 @@ seasons cannot rule out that the new prices let more such deals through. The sep
 - One older test (`test_ai_offer_packages_can_create_pick_swap_sweeteners`) failed, found by the trade-AI session: it
   set its two example picks' positions without their forecast finishes, so one looked far better and no swap was
   worth offering. It now sets both; no game code changed for it.
-- Full suite on c2af00d4: running.
+- Full suite on c2af00d4 on a cloud machine: 2,742 tests, 70 skipped, 1 failure (the test above). That test, rerun
+  after its fix with the new pick tests, passes; the fix changed no game code.
 
 ### Files
 New `src/nba_gm_data/pick_lottery_value.py`; `pick_rules.py`, `transactions.py`, `play.py`, two lines in `save.py`
 (past draft results reach the pick values) plus its startup protection check, `gui/trade-pick-terms.js`.
-Run outputs and comparison scripts: `output/pick-refit/` in this worktree.
+Run outputs and comparison scripts: `output/pick-refit/` and `output/odds2/` in this worktree.
