@@ -500,7 +500,9 @@
     const today = String(st?.home?.save?.current_date || "");
     const left = deadline && today ? daysBetween(today, deadline) : NaN;
     const clock = Number.isFinite(left) && left >= 0 ? `<small>${left === 0 ? "Deadline today" : `${left} day${left === 1 ? "" : "s"} to the deadline`}</small>` : "";
-    return `<section class="front-block front-market"><h2><button type="button" data-front-market>Trade talk</button> ${clock}</h2>
+    const legal = st?.home?.save?.legal_actions || [];
+    const open = !legal.length || legal.includes("trades") || legal.includes("draft_trades");
+    return `<section class="front-block front-market"><h2>${open ? `<button type="button" data-front-market>Trade talk</button>` : "<span>Trade talk</span>"} ${clock}</h2>
       ${offers ? `<button type="button" class="front-offers" data-front-offers><b>${offers}</b> offer${offers === 1 ? "" : "s"} waiting for your answer</button>` : ""}
       <div class="front-list front-shops" data-front-shops>${loaded ? marketRows(st) || `<p class="front-none">Nobody is being shopped right now.</p>` : `<p class="front-none">Checking the market…</p>`}</div></section>`;
   }

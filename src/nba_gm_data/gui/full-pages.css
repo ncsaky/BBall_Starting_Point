@@ -1509,3 +1509,21 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .li
 /* The offer builder's day-to-day change in the asking price, readable. */
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-builder .ask-change, html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-builder .ask-change b { font-size: var(--gm-size-small) !important; line-height: 1.2 !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-builder .ask-change-arrows { display: none !important; }
+
+/* Every row of a list is the same height, tall enough for a name on two lines, and a one-line name sits in its
+   middle (user, 2026-11-27). Where a list has no room for two lines the name column is wide enough for one. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group.linked-contracts .player-name-text { white-space: nowrap !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table col:nth-child(n+3) { width: 29px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table col:nth-child(2) { width: 62px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table col:nth-child(6) { width: 136px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table col:nth-child(7) { width: 80px !important; }
+/* Whatever a row holds, two lines at most: the rows of one list stay one height. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-table tbody tr { height: 36px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table tbody .playoff-stats-col-status * { font-size: var(--gm-size-small) !important; }
+/* The explaining "i" beside a title: the note opens under it, over whatever is there. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .page-info { margin-left: var(--gm-space-2); vertical-align: middle; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .page-info .ss-info-tip { z-index: 40; width: 320px; white-space: normal; text-align: left; font: var(--gm-weight-regular) var(--gm-size-row)/1.4 var(--gm-font) !important; color: var(--gm-ink) !important; background: rgb(12, 22, 36) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-market-title, html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-market-head { overflow: visible !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-market-title h3 { display: flex !important; align-items: center; overflow: visible !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .draft-board-head .page-info { margin-left: auto; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .draft-board-head { overflow: visible !important; }

@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 9/9 - the final sweep is published (checkpoint 17); stopped, waiting for five decisions
+Progress: 1/6 - round after the final sweep: uniform two-line rows, captions behind an i, coach card closes, closed buttons hidden, one signing page, then UI/UX hunting
 
 ## Handover (2026-11-26): finishing on a cheaper model
 
@@ -1095,3 +1095,23 @@ analysis; long pick conditions clip inside a news post and fill a headline; wrap
 disabled offer buttons are faint; the Finder's value rows were not re-pictured; not seen: fantasy draft, staff
 retention, cutdown, Sign Players, the board layout, the lottery screen this round, the start screen over its film,
 windows under 1280 by 760; no Python changed, full suite not run.
+
+## Round after the final sweep: the user's checkpoint 17 answers (2026-11-27)
+
+Sweep fixes good. Long names: second line, and (their note) "i dislike when rows are non-uniform in their
+dimensions, so for any name that is short enough to be on one line, make their rows ... wide enough to fit two rows,
+and then center the singular row of text vertically". Coach card: close on page change. Captions: behind an "i".
+Next: one more round. Their "Anything else" note:
+1. "When trading or signings are closed, don't show the buttons to even open those pages."
+2. "The contract extension page as the first page on the player card looks pretty good. Much better than the 'Offer
+   builder' side bar on the right in the free agency. I want to make the contract extension page that is the first
+   page on the player card the only way to negotiate signings ... a unified look whenever dealing with player
+   signings. Just delete the offer builder side bar and refit that page and make the contract extension page work
+   with the free agency/options and make it the popup that is needed to actually do the signing from ... LMK how it
+   goes"
+3. "Just keep looking for natural UI/UX issues while playing the game. i trust your nose ... (I am saying I would
+   allow new visual features and stuff ...) one core thing is I still think aspects of the game feel a bit still
+   mechanical rather than human, like the trade negotiations and the player and coach interactions on your team, but
+   those are larger and we probably need a smarter model ... we can do it later, we have a lot more simple UI/UX
+   work we can do first for a few days"
+

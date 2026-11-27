@@ -98,7 +98,7 @@
     {id: "free-agency-checklist", group: "home", phaseHome: true, label: "Checklist", layout: () => ({full: {fits: [1220, 660], roomy: [1500, 900]}, ...row(
       colOf({fill: true}, card("phase-free_agency-checklist", {bare: true, fill: true})),
       colOf({basis: 400}, card("phase-free_agency-selected", {fill: true})))})},
-    {id: "free-agency", group: "home", phaseHome: true, label: "Free Agency", layout: () => ({full: {fits: [1220, 660], roomy: [1500, 900]}, ...row(
+    {id: "free-agency", group: "home", phaseHome: true, label: "Free Agency", when: () => typeof signingsOpen !== "function" || signingsOpen(), layout: () => ({full: {fits: [1220, 660], roomy: [1500, 900]}, ...row(
       colOf({fill: true}, card("phase-free_agency-market", {fill: true})),
       colOf({basis: 340}, card("phase-free_agency-selected", {fill: true}), colOf({basis: 230}, card("phase-free_agency-wire", {fill: true}))))})},
     {id: "fantasy-draft", group: "now", step: true, label: "Fantasy Draft", layout: () => col("phase-fantasy_draft-control", row(card("phase-fantasy_draft-board", {grow: "h"}), card("phase-fantasy_draft-roster", {grow: "h"}), card("phase-fantasy_draft-ticker", {grow: "h"})))},
@@ -601,6 +601,11 @@
       sizeFrame("league-wire", width, 31);
     }
 
+    // Anything floating over a page (a coach card) hears that the page changed.
+    function announcePage(pageId) {
+      if (typeof CustomEvent === "function") document.dispatchEvent?.(new CustomEvent("gm:pagechange", {detail: {page: pageId}}));
+    }
+
     // ---- Player pages: the player's card fills the page, scaled as one piece; Back returns to where you were.
     function layoutDetail() {
       const id = detailStack.at(-1), el = pageEls.get(DETAIL), stage = el?.querySelector(".pages-stage");
@@ -625,7 +630,7 @@
       // A slideshow that stepped aside for this player (its "Back to" button is up) keeps its place.
       const suspended = document.getElementById("ssReturn");
       if (!suspended) closeSlideshowFor();
-      if (currentPage !== DETAIL) returnPage = currentPage;
+      if (currentPage !== DETAIL) { returnPage = currentPage; announcePage(DETAIL); }
       detailStack = [...detailStack.filter(other => other !== id && layout[other]?.visible), id];
       openDetails.set(saveKey, [...detailStack]);
       currentPage = DETAIL;
@@ -802,8 +807,9 @@
       // A step screen opened from Home's list leads back to it.
       if (page && isStep(page) && pageEls.has("home")) controlsEl.insertAdjacentHTML("afterbegin", `<button type="button" class="pages-control pages-step-home" data-pages-go="home"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2.5 4 6l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Home</button>`);
       if (page?.controls === "trades") {
-        const disabled = options.toolbarActions?.tradeDisabled ? " disabled" : "";
-        controlsEl.innerHTML = `${lockNote}<button type="button" class="pages-control" data-pages-trade="finder"${disabled}>Trade Finder</button><button type="button" class="pages-control" data-pages-trade="builder"${disabled}>Trade Builder</button><button type="button" class="pages-control" data-pages-trade="offers"${disabled}>Incoming Offers${offerCount ? ` <em class="pages-nav-badge">${offerCount}</em>` : ""}</button><button type="button" class="pages-control" data-pages-trade="market"${disabled}>Trade Market</button>`;
+        // Closed: the buttons that open the trade room are not shown at all (user, 2026-11-27).
+        const disabled = "";
+        controlsEl.innerHTML = tradingClosed || options.toolbarActions?.tradeDisabled ? lockNote : `<button type="button" class="pages-control" data-pages-trade="finder"${disabled}>Trade Finder</button><button type="button" class="pages-control" data-pages-trade="builder"${disabled}>Trade Builder</button><button type="button" class="pages-control" data-pages-trade="offers"${disabled}>Incoming Offers${offerCount ? ` <em class="pages-nav-badge">${offerCount}</em>` : ""}</button><button type="button" class="pages-control" data-pages-trade="market"${disabled}>Trade Market</button>`;
       }
     }
 
@@ -818,6 +824,7 @@
       if (currentPage === DETAIL) leaveDetails();
       const previous = currentPage;
       currentPage = pageId;
+      if (previous !== pageId) announcePage(pageId);
       // While a save is still loading only Home exists: don't let that overwrite the page you were on.
       if (options.phaseContext != null) lastPage.set(saveKey, pageId);
       for (const [id, el] of pageEls) el.hidden = id !== pageId;

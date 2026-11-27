@@ -6439,11 +6439,11 @@ function draftDashboardWorkspace() {
             <div class="draft-board-decision">${current.selection
               ? `<span>${userOnClock ? "Your pick" : "AI selection"}</span><strong>${userOnClock ? (selectedProspect ? escapeHtml(selectedProspect.name) : "Choose a prospect from the board") : `Next: pick #${escapeHtml(currentPick)}`}</strong>`
               : `<span>All ${escapeHtml(draft.state?.total_picks || "")} selections are in</span>`}</div>
+            ${pageInfoMark(`Consensus: the median of all 30 teams' scouting. Your board: ${boardContext}'s scouts, talent only${draft.draft_board?.month_label ? ` (${draft.draft_board.month_label} update)` : ""}. ${userOnClock ? "Click a row, or press Enter on it, to choose your pick." : "Rows become selectable when your team is on the clock."}`)}
             <label class="draft-board-filter"><span>Show</span><select id="draftBoardFilter" aria-label="Prospect availability filter"><option value="available" ${state.draftBoardFilter === "available" ? "selected" : ""}>Available</option><option value="all" ${state.draftBoardFilter === "all" ? "selected" : ""}>All prospects</option></select></label>
           </header>
           ${draftPickStage(draft, freshPick)}
           ${(draft.trade_news || []).length ? `<div class="draft-news-strip"><strong>Breaking:</strong> ${escapeHtml((draft.trade_news || []).map((item) => item.headline || textValue(item)).join(" · "))}</div>` : ""}
-          <p class="draft-board-note">Consensus: the median of all 30 teams' scouting. Your board: ${escapeHtml(boardContext)}'s scouts, talent only${draft.draft_board?.month_label ? ` (${escapeHtml(draft.draft_board.month_label)} update)` : ""}. ${userOnClock ? "Click a row, or press Enter on it, to choose your pick." : "Rows become selectable when your team is on the clock."}</p>
           ${draftProspectBoard(visibleBoard, userOnClock, state.selectedDraftProspect, freshPick)}
         </section>
         <aside class="draft-ledger-column">
@@ -7297,7 +7297,7 @@ function phaseFreeAgencyMarketCard(room = state.data.freeagency || {}) {
     <header class="fa-market-head">
       <div class="fa-market-title">
         ${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(userTeam())} logo" />` : ""}
-        <div><p>${escapeHtml(day)} · ${escapeHtml(rows.length)} of ${escapeHtml(total)} players</p><h3>${escapeHtml(title)}</h3><span>${escapeHtml(note)}</span></div>
+        <div><p>${escapeHtml(day)} · ${escapeHtml(rows.length)} of ${escapeHtml(total)} players</p><h3>${escapeHtml(title)}${pageInfoMark(note)}</h3></div>
       </div>
       <div class="fa-cap-chips" aria-label="${escapeAttr(`${room.signing_season || "Next season"} cap position`)}" title="${escapeAttr(`Your ${room.signing_season || "next-season"} books, the season a new contract starts. Cap room counts cap holds and empty roster spots; the tax and the aprons count signed salaries only.`)}">
         ${chip("Roster", room.roster_count == null ? "—" : `${room.roster_count} / ${freeAgencyRosterMaximum(room)}`, Number(room.roster_count) >= freeAgencyRosterMaximum(room) ? "over" : "")}
@@ -10393,6 +10393,33 @@ function clipboardLegalActions() {
   return new Set(state.home?.save?.legal_actions || state.data.dashboard?.legal_actions || []);
 }
 
+// When trading or signings are closed, the buttons that open them are not shown at all (user, 2026-11-27).
+function tradingOpen() {
+  const legal = clipboardLegalActions();
+  return !legal.size || legal.has("trades") || legal.has("draft_trades");
+}
+function signingsOpen() {
+  const legal = clipboardLegalActions();
+  return !legal.size || (legal.has("free_agent_signings") && state.data.freeagency?.state?.status !== "completed");
+}
+
+// An explaining line, kept behind a small "i" (user, 2026-11-27).
+function pageInfoMark(text) {
+  return `<span class="ss-info page-info"><i class="g-info" tabindex="0" aria-label="${escapeAttr(text)}">i</i><span class="ss-info-tip" aria-hidden="true">${escapeHtml(text)}</span></span>`;
+}
+
+// A coach card floats over the page it was opened on: leaving the page closes it, unless it is pinned.
+function closeCoachCards() {
+  const coaches = (state.clipboardPlayerCards || []).filter(entry => entry.kind === "coach");
+  for (const entry of coaches) {
+    const close = document.querySelector(`[data-board-close="${CSS.escape(entry.id)}"]`);
+    if (close?.closest(".card-board-window")?.classList.contains("is-pinned")) continue;
+    close?.click();
+    state.clipboardPlayerCards = state.clipboardPlayerCards.filter(item => item !== entry);
+  }
+}
+if (typeof document !== "undefined" && document.addEventListener) document.addEventListener("gm:pagechange", () => closeCoachCards());
+
 // [width, height, sizing revision] for phase cards that open together. A new revision resets a saved size once.
 // Draft-night cards take the window's height (between 420 and 820 pixels) so the board shows as many rows as fit.
 const draftNightCardHeight = () => Math.round(Math.min(820, Math.max(420, (window.innerHeight || 900) - 160)));
@@ -13118,9 +13145,10 @@ function playerFinderValue(row,key) {
 
 function playerFinderTable(rows) {
   const finder=state.playerFinder || {};
-  const fields=[["player","Player",260],["team","Team",48],["position","Pos",40],["age","Age",36],["height_inches","Height",54],["overall","OVR",104],["offense","OFF",104],["defense","DEF",104],["health_risk","Risk",56],["upside_remaining","Runway",60],["find","Find",58]];
+  const fields=[["player","Player",260],["team","Team",48],["position","Pos",40],["age","Age",36],["height_inches","Height",54],["overall","OVR",104],["offense","OFF",104],["defense","DEF",104],["health_risk","Risk",56],["upside_remaining","Runway",60],["find","Find",58]].filter(([key])=>key!=="find" || typeof tradingOpen!=="function" || tradingOpen());
+  const canFind=fields.some(([key])=>key==="find");
   const head=fields.map(([key,label])=>`<th scope="col" ${key!=="find"?`aria-sort="${finder.sortField===key?(finder.sortDirection==='asc'?'ascending':'descending'):'none'}"`:""}>${key==='find'?label:`<button type="button" data-finder-sort="${key}">${label}${finder.sortField===key?`<i class="sort-tri" aria-hidden="true">${finder.sortDirection==='asc'?'▲':'▼'}</i>`:''}</button>`}</th>`).join('');
-  const body=rows.map(row=>`<tr data-finder-player="${escapeAttr(row.id)}" tabindex="0" aria-label="Open player card for ${escapeAttr(row.name)}"><td><span class="player-finder-identity">${playerHeadshotMarkup(row,'roster-player-headshot') || playerHeadshotMarkup({is_prospect:true},'roster-player-headshot')}${playerNameWithInjuryMarkup(row)}</span></td><td>${teamLogoSrc(row.team_abbrev)?`<span class="player-finder-team-logo" title="${escapeAttr(row.team_abbrev)}"><img src="${escapeAttr(teamLogoSrc(row.team_abbrev))}" alt="${escapeAttr(row.team_abbrev)} logo" loading="lazy" decoding="async"></span>`:escapeHtml(row.team_abbrev || "FA")}</td><td>${escapeHtml(compactPos(row.position))}</td><td>${escapeHtml(row.age == null ? "—" : Math.floor(row.age))}</td><td>${escapeHtml(heightFromRow(row) || "—")}</td>${['overall','offense','defense'].map(key=>`<td>${compactRatingBar(playerFinderValue(row,key))}</td>`).join('')}<td>${injuryRiskBody(row.health_risk,row.injury_body)}</td><td>${row.upside_remaining==null?'—':playerEvidenceRing('Growth runway',row.upside_remaining,5,playerUpsideColor(row.upside_remaining),' / 5')}</td><td><button type="button" class="ui-command" data-finder-trade="${escapeAttr(row.id)}" aria-label="Find trades for ${escapeAttr(row.name)}" ${!row.team_id || row.team_abbrev==='FA'?'disabled title="Free agents cannot be traded"':'title="Open Trade Finder with this player selected"'}>Find</button></td></tr>`).join('');
+  const body=rows.map(row=>`<tr data-finder-player="${escapeAttr(row.id)}" tabindex="0" aria-label="Open player card for ${escapeAttr(row.name)}"><td><span class="player-finder-identity">${playerHeadshotMarkup(row,'roster-player-headshot') || playerHeadshotMarkup({is_prospect:true},'roster-player-headshot')}${playerNameWithInjuryMarkup(row)}</span></td><td>${teamLogoSrc(row.team_abbrev)?`<span class="player-finder-team-logo" title="${escapeAttr(row.team_abbrev)}"><img src="${escapeAttr(teamLogoSrc(row.team_abbrev))}" alt="${escapeAttr(row.team_abbrev)} logo" loading="lazy" decoding="async"></span>`:escapeHtml(row.team_abbrev || "FA")}</td><td>${escapeHtml(compactPos(row.position))}</td><td>${escapeHtml(row.age == null ? "—" : Math.floor(row.age))}</td><td>${escapeHtml(heightFromRow(row) || "—")}</td>${['overall','offense','defense'].map(key=>`<td>${compactRatingBar(playerFinderValue(row,key))}</td>`).join('')}<td>${injuryRiskBody(row.health_risk,row.injury_body)}</td><td>${row.upside_remaining==null?'—':playerEvidenceRing('Growth runway',row.upside_remaining,5,playerUpsideColor(row.upside_remaining),' / 5')}</td>${canFind?`<td><button type="button" class="ui-command" data-finder-trade="${escapeAttr(row.id)}" aria-label="Find trades for ${escapeAttr(row.name)}" ${!row.team_id || row.team_abbrev==='FA'?'disabled title="Free agents cannot be traded"':'title="Open Trade Finder with this player selected"'}>Find</button></td>`:''}</tr>`).join('');
   return `<table class="player-finder-table"><colgroup>${fields.map(([, ,width])=>`<col style="width:${width}px">`).join('')}</colgroup><thead><tr>${head}</tr></thead><tbody>${body || '<tr><td colspan="11" class="player-finder-empty">No players match these filters.</td></tr>'}</tbody></table>`;
 }
 
