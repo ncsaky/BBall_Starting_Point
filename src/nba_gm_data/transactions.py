@@ -4825,6 +4825,11 @@ def premium_return_issue(canonical, team_id, incoming_assets, outgoing_assets):
     state = next((s for s in canonical.get('team_strategic_states', []) if s.get('team_id') == team_id), None)
     if not state:
         return None
+    # TRADE-PRICE: stars need a star's return, and no pick is added to get rid of a core player.
+    from .trade_stars import replaces, return_issue
+    star_issue = return_issue(canonical, team_id, incoming_assets, outgoing_assets)
+    if star_issue:
+        return star_issue
     competitive = state.get('window_phase') in {'entering', 'peak'} or state.get('phase') in {'contending', 'contending_with_future_upside'}
     values = player_asset_values_by_id(canonical)
     outgoing = [player_by_id(canonical, a['id']) for a in outgoing_assets if a.get('kind') == 'player']
@@ -4844,24 +4849,10 @@ def premium_return_issue(canonical, team_id, incoming_assets, outgoing_assets):
     if not premium:
         return None
     anchor = max(premium, key=lambda p: float(values[p['id']]['on_court_value']))
-    quality = float(values[anchor['id']]['on_court_value'])
-    playoff = float(values[anchor['id']].get('playoff_value') or 50)
     price = market_trade_target_value(anchor, values[anchor['id']])
-    for asset in incoming_assets:
-        if asset.get('kind') != 'player':
-            continue
-        player = player_by_id(canonical, asset['id'])
-        if not player:
-            continue
-        value = values.get(player['id'], {})
-        ability = float(value.get('on_court_value') or 0)
-        if ability >= quality-4 and float(value.get('playoff_value') or 0) >= playoff-8:
-            return None
-        age = float(player.get('display_age', player.get('age')) or 99)
-        if (age <= 25 and ability >= max(60, quality-18)
-                and float(value.get('development_upside') or 0) >= 12
-                and market_trade_target_value(player, value) >= price*.6):
-            return None
+    arriving = (player_by_id(canonical, a['id']) for a in incoming_assets if a.get('kind') == 'player')
+    if any(player and replaces(canonical, anchor, player) for player in arriving):
+        return None
     plan = canonical.get('team_plans', {}).get(team_id, {})
     reviewing = bool(plan.get('review_exception') or plan.get('route') == 'review_core_ceiling_and_retool_alternatives')
     if not competitive or reviewing:

@@ -1,20 +1,20 @@
 # TRADE-PRICE: cheap star sales and the Brunson trade
 
-Progress: 8/8 - report ready for review; no game rule changed
+Progress: 9/9 - both rules built and tested; one follow-up fix waits for your OK
 
 Owner: Claude (side session, worktree `festive-chaplygin-aacfb6`, branch `claude/festive-chaplygin-aacfb6`).
 
 ## Report
 
 **TL;DR**
-- Both findings are real. Stars and prized young players go for one or two picks, and New York's Brunson trade is not
-  believable.
-- Stars: a good pick is priced about like the best players in the league, and most teams have no minimum return.
-  Brunson: New York's luxury-tax saving carries the trade.
-- Proposed: two new refusals. In the test seasons they would have stopped 7 of 333 completed computer trades (about 2%).
-  Nothing is switched on.
+- Both rules are built (your OK, 2026-11-27). A computer team now needs a real return for a star, and will not add a
+  pick to get rid of a core player. The Brunson deal is refused.
+- Two fresh two-season test runs made 201 trades against 188 without the rules: no drop in volume. The full test
+  suite passes (2,763 tests, 0 failures, 80 skipped).
+- One gap showed up: a much lesser player can count as "comparable" for a young star. A fix needs your OK (section 5).
 
-Everything here was measured on `main`. The earlier injury-rule branch (`claude/vigilant-cori-6ae562`) is not merged yet.
+Everything here was measured on `main`. The earlier branch (`claude/vigilant-cori-6ae562`: injury rule and champion
+promise) is not merged yet; this branch merges with it without conflicts, but the two have not been tested together.
 
 ## 1. Offer tests: what is believable
 
@@ -89,7 +89,7 @@ one (a run with the unmerged injury rule).
 
 The retool listing was the suspected cause. The main cause is the tax saving.
 
-## 3. Proposed fix (needs your OK)
+## 3. The two rules (built)
 
 Both rules only refuse trades; neither makes any trade easier. Textbook trade rules, ratings, pick values and LeBron's
 exception are untouched. They apply to computer trades and to your offers.
@@ -106,7 +106,7 @@ its three best players (rated 62 or better, under 34, not a costly contract or i
 a young centerpiece or a first-round pick comes back.
 - Refuses all three versions of the Brunson deal. Memphis will not do it without the pick.
 
-### Likely effect on trade volume
+### Estimate of the effect on trade volume (made before building)
 A look back at 333 completed computer trades in four two-season test runs (32 three-team trades not judged):
 
 | | Trades refused | |
@@ -130,31 +130,75 @@ The seven:
 | Rising teams price picks like everyone else | 27 | Raises only 11 of 145 one-pick offers to two; no change for prime stars |
 | Drop the second 14% pick bonus | 37 | Raises 17; no change for prime stars |
 
-### Choices for you
-1. Switch on rules A and B?
-2. Under rule A, three first-round picks (my pick) or two? Two would still let Flagg go for two.
-3. Under rule A, should an injured star stay buyable for less, as on the injury-rule branch? As prototyped, he needs the
-   full return unless his injury risk is high.
+### As built
+`trade_stars.py`, called from `transactions.premium_return_issue`, so computer trades and your offers both go through
+it. Four details go slightly beyond the description above:
+- Two departing stars each need a return of their own.
+- A pick so heavily protected that it is worth almost nothing does not count as a first.
+- Nobody rated below 62 is a star by rank. In real leagues the 30th-best rates about 69 to 70, so this only matters in
+  tiny test leagues (it fixed 10 failing tests).
+- An injured star needs the full return unless his injury risk is high, even where the unmerged injury rule would let
+  him go for less.
 
-### Not solved by this
+A refused offer says why: "... is a star: it takes a comparable player, a top young player or three first-round picks."
+or "The team will not add a pick to give away ..., one of its three best players."
+
+## 4. After building
+
+### Offer tests and the Brunson deal
+The built game gives exactly the prototype's answers on all the offers. All three versions of the Brunson deal are
+refused.
+
+### Two fresh two-season test runs (same seeds as the runs without the rules)
+| Trades | First run, without | First run, with | Second run, without | Second run, with |
+|---|---|---|---|---|
+| 2026-27 season | 20 | 23 | 23 | 22 |
+| Summer 2027 | 23 | 26 | 30 | 28 |
+| 2027-28 season | 22 | 28 | 22 | 23 |
+| Summer 2028 | 27 | 30 | 21 | 21 |
+| All | 92 | 107 | 96 | 94 |
+
+- The histories split early (November and December 2026), so differences of this size are mostly chance. The runs show
+  no loss of volume; they do not show a gain.
+- Computer trades sending out a star: 3 without the rules (two Porzingis deals, Dereck Lively II), 1 with them.
+- Trades sending out a non-star from a team's top three: more with the rules (28) than without (21). The rules do not
+  stop those unless a pick is added; most are modest swaps.
+- No crashes. The Brunson-for-Spencer deal did not happen in either new run.
+
+## 5. The gap: what counts as "comparable"
+"Comparable" looks only at ratings (within 4 points on court, 8 in the playoffs). A young star is often rated like a
+backup but priced far above one.
+- In the second new run, Denver sent 23-year-old Alex Condon (a star by price, rated 62) to Minnesota for D'Angelo
+  Russell (30, rated 58), a deep reserve, a first and a second. The rule let it through because Russell counts as
+  comparable.
+- In offer tests, 11 of 207 stars could be bought with one pick plus a player priced under 80% of the star.
+
+**Proposed:** a comparable player must also be priced at least 80% of the star. Not built or measured over seasons.
+
+Also seen, and allowed by design: Denver added two picks to swap Aaron Gordon for Keegan Murray. Gordon's rating
+slipped from 63 to 61 that summer, under rule B's floor of 62.
+
+## 6. Still not solved
 - Curry, 39 and marked by his own team, still costs one pick. That is a "legends keep jobs" rule of its own.
 - Good players rated outside the top 30 still go for one top pick.
 - A good player with a low summer minutes projection is priced like a reserve (Donovan Clingan: rated 74, priced 44 with
   21 minutes).
 
 ## Limits
-- The volume figures look back at trades that happened. They do not show what the market would do instead, so the real
-  change is probably smaller. Before switching on, run the same two seeds for two seasons, as the injury task did.
+- Two seeds only. The look-back estimate counts only lost trades; the season runs are the measure of what the market
+  does instead.
 - Pick-price options can also allow new trades; the look-back counts only lost ones.
 - The offer test judges only the selling team, uses one very good set of picks, and asks for one player at a time.
 - "Comparable player" and "young centerpiece" are the definitions the current minimum-return rule already uses.
-- Two July summers from two seeds. Later drafts are made-up players. Nothing was checked on screen. No game code or
-  tests changed, so no tests were run.
+- Two July summers from two seeds. Later drafts are made-up players. Nothing was checked on screen, and the browser
+  tests were not run (no screen code changed; the refusal text uses the existing trade answer line).
 
 ## Files
 Scripts and results are in this worktree's `output/trade-price/` (git-ignored): `tools/offer_terms_probe.py` (offer
-test with every pricing term; `VARIANT=` applies a prototype), `analyze_terms.py`, `compare_variants.py`,
+test with every pricing term; `VARIANT=` applies a prototype, on code from before the rules were built),
+`compare_runs.py`, `comparable_gap_probe.py`, `analyze_terms.py`, `compare_variants.py`,
 `candidate_rules.py` (the prototypes), `trade_log_estimate.py` (volume look-back), `brunson_replay.py`. Saved test
 seasons come from `.claude/worktrees/vigilant-cori-6ae562/output/core-renew/`.
 
-If approved, the change is in `transactions.premium_return_issue` plus tests.
+Game code: `src/nba_gm_data/trade_stars.py` (new), `transactions.premium_return_issue`,
+`tests/test_star_returns.py`. New test runs are in `output/trade-price/run-26` and `run-27`.
