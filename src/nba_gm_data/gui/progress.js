@@ -216,7 +216,23 @@
     const blocked = () => ({main: main(first.label, first.detail, `data-pages-go="${first.go.page}" data-progress-blocked`, true), more: []});
     if (c.required && first?.go?.page) return blocked();
     if (c.save.postseason_exit_required) return {main: main("Start the offseason", c.dates.offseason_opens ? `to ${day(c.dates.offseason_opens)}` : next, 'id="postseasonAdvance" data-phase-command="postseason-exit"'), more: []};
-    if (c.kind === "fantasy_draft") return {main: null, more: []};
+    // The fantasy draft: the footer picks and sims, as it does on rookie draft night.
+    if (c.kind === "fantasy_draft") {
+      const room = c.data.fantasyDraft;
+      if (!room || room.status !== "in_progress") return {main: null, more: []};
+      const pick = `pick ${Number(room.pick_number || 0)}`;
+      const online = c.st.multiplayer?.league?.status === "active";
+      // The rest of the draft in one press, yours included (it asks first). Not in a shared league.
+      const rest = online ? [] : [side("Finish draft", 'data-phase-command="fantasy-all"')];
+      if (room.is_viewer_turn) {
+        const chosen = (room.available_players || []).find((row) => row.player_id === c.st.selectedFantasyPlayer);
+        return chosen
+          ? {main: main(`Draft ${chosen.name}`, pick, 'data-phase-command="fantasy-pick"'), more: rest}
+          : {main: main("Choose a player", pick, 'data-pages-go="fantasy-draft" data-progress-blocked', true), more: rest};
+      }
+      if (online) return {main: null, more: []};
+      return {main: main("Sim to my pick", pick, 'data-phase-command="fantasy-user"'), more: [...rest, side("Sim one pick", 'data-phase-command="fantasy-one"')]};
+    }
 
     if (c.kind === "free_agency") {
       const room = c.data.freeagency;

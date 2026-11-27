@@ -493,6 +493,8 @@ function wireEvents() {
         'draft-next':draftAdvanceStage,
         'resign-day':()=>advanceReSigning('day'), 'resign-open':openFreeAgencyFromStopOne,
         'fa-day':()=>advanceFreeAgency('day'), 'fa-end':()=>advanceFreeAgency('end'), 'fa-next':()=>advanceFreeAgency('end'),
+        'fantasy-pick':fantasyDraftPick, 'fantasy-one':()=>fantasyDraftSim('fantasy_draft_sim_one'),
+        'fantasy-user':()=>fantasyDraftSim('fantasy_draft_sim_to_user'), 'fantasy-all':fantasyDraftFinish,
         'preseason-roster':()=>window.CardBoard?.open('phase-set_roster-checklist'), 'preseason-start':()=>advance({ next_event: true }),
         'offseason-next':()=>advance({ next_event: true }),
       };
@@ -1229,6 +1231,10 @@ function firstRunTeamSlide() {
   const overall = (row) => Number(playerOverallToday(row)?.healthy ?? NaN);
   const stars = [...rosterRows(dash)].filter((row) => Number.isFinite(overall(row))).sort((a, b) => overall(b) - overall(a)).slice(0, 3);
   const logo = teamLogoSrc(team);
+  // A fantasy league redrafts everyone: the stars and the projection of today's roster would not be yours.
+  if (String(state.home?.save?.phase || "") === "fantasy_draft") return `${logo ? `<img class="first-run-logo" src="${escapeAttr(logo)}" alt="" />` : ""}
+    <h2 id="gameTutorialTitle">${escapeHtml(String(dashboardTeamName(team) || team))}</h2>
+    <p id="gameTutorialCopy">You build this roster in the fantasy draft.</p>`;
   return `${logo ? `<img class="first-run-logo" src="${escapeAttr(logo)}" alt="" />` : ""}
     <h2 id="gameTutorialTitle">${escapeHtml(String(dashboardTeamName(team) || team))}</h2>
     ${rank ? `<p id="gameTutorialCopy">Projected ${rank}${["th", "st", "nd", "rd"][rank % 100 > 10 && rank % 100 < 14 ? 0 : rank % 10] || "th"} of ${count}</p>` : `<p id="gameTutorialCopy"></p>`}
@@ -2621,6 +2627,8 @@ function openLatestSeasonSlideshow(kind) {
 function maybeOpenSeasonSlideshow() {
   const pending = state.home?.save?.season_slideshow?.pending;
   if (!pending || !state.currentSave || state.slideshowOpening || window.SeasonSlideshow?.isOpen()) return;
+  // During a fantasy draft the game refuses the slideshow (a red message after the welcome); it opens afterwards.
+  if (String(state.home?.save?.phase || "") === "fantasy_draft") return;
   if (state.modal || state.tutorial || state.simulationRunning || state.hydrating || state.multiplayer?.session) return;
   if (firstRunDue()) return;   // the welcome first; it opens this when it ends
   state.seasonSlideshowAutoKeys ||= new Set();
@@ -5665,6 +5673,11 @@ function dashboardPhaseWorkspace(kind) {
   return `<div class="empty">Seasonal workspace unavailable.</div>`;
 }
 
+// "22", not "22.0": a whole age is written whole.
+function wholeAge(value) {
+  return Number.isInteger(Number(value)) && value !== null && value !== "" ? String(Number(value)) : plainNumber(value);
+}
+
 function fantasyDraftDashboardWorkspace() {
   const room = state.data.fantasyDraft || {};
   const current = room.current_team || {};
@@ -5697,7 +5710,7 @@ function fantasyDraftDashboardWorkspace() {
       </div>
       <div class="fantasy-clock">
         <span>Pick ${escapeHtml(room.pick_number || 0)} / ${escapeHtml(room.total_picks || 450)}</span>
-        <strong>${escapeHtml(current.abbrev || "Complete")}</strong>
+        <strong>${escapeHtml(room.is_viewer_turn ? "You're on the clock" : current.abbrev ? `${current.abbrev} on the clock` : "Complete")}</strong>
         <small>Round ${escapeHtml(room.round || 1)}${isMultiplayer && clock.remaining_seconds !== undefined ? ` · ${formatClock(clock.remaining_seconds)}` : ""}</small>
       </div>
       <div class="toolbar phase-workspace-controls">
@@ -5734,10 +5747,11 @@ function fantasyDraftDashboardWorkspace() {
             const fit = Number(player.fit_score || 0);
             return `<div class="fantasy-player-row ${state.selectedFantasyPlayer === player.player_id ? "selected" : ""}" data-fantasy-player="${escapeAttr(player.player_id)}" role="button" tabindex="0">
               <span class="fantasy-player-name">
+                ${playerHeadshotMarkup(player, "fantasy-headshot")}
                 <button data-fantasy-card="${escapeAttr(player.player_id)}" title="Open player card">${escapeHtml(player.name || "Unknown")}</button>
                 <small>${escapeHtml(player.position || "—")} · ${escapeHtml(heightFromRow(player) || "—")}</small>
               </span>
-              <span>${plainNumber(player.age)}</span>
+              <span>${wholeAge(player.age)}</span>
               <span class="fantasy-meter" style="--meter:${Math.max(0, Math.min(100, value))}%"><i></i><em>${plainNumber(value)}</em></span>
               <span class="fantasy-ceiling"><strong>${plainNumber(player.ceiling_overall || value)}</strong><small>+${plainNumber(player.growth_runway || 0)}</small></span>
               <span class="fantasy-meter fit" style="--meter:${Math.max(0, Math.min(100, fit))}%"><i></i><em>${plainNumber(fit)}</em></span>
@@ -5753,7 +5767,7 @@ function fantasyDraftDashboardWorkspace() {
           ${roster.map((player, index) => `<div>
             <span>${index + 1}</span>
             <strong><button data-fantasy-card="${escapeAttr(player.player_id)}">${escapeHtml(player.name || "Unknown")}</button></strong>
-            <small>${escapeHtml(player.position || "")} · age ${plainNumber(player.age)}</small>
+            <small>${escapeHtml(player.position || "")} · age ${wholeAge(player.age)}</small>
             <em>${money(player.salary_millions)}</em>
           </div>`).join("") || `<div class="empty">Your first selection will establish the roster.</div>`}
         </div>
@@ -5772,7 +5786,7 @@ function fantasyDraftDashboardWorkspace() {
         ${selected ? `<div class="fantasy-selection-card">
           <p class="eyebrow">On Your Board</p>
           <h4><button data-fantasy-card="${escapeAttr(selected.player_id)}">${escapeHtml(selected.name)}</button></h4>
-          <p>${escapeHtml(selected.position || "")} · age ${plainNumber(selected.age)} · ${escapeHtml(heightFromRow(selected) || "")}</p>
+          <p>${escapeHtml(selected.position || "")} · age ${wholeAge(selected.age)} · ${escapeHtml(heightFromRow(selected) || "")}</p>
           <div class="fantasy-selection-metrics">
             <span><small>On court</small><strong>${plainNumber(selected.on_court_value)}</strong></span>
             <span><small>Contract surplus</small><strong>${plainNumber(selected.contract_surplus)}</strong></span>
@@ -5843,6 +5857,7 @@ async function fantasyPlayerCard(playerId) {
   ].filter(([, value]) => value !== undefined && value !== null);
   const available = (room.available_players || []).some((row) => row.player_id === playerId);
   const body = `<div class="fantasy-player-card">
+      <header class="approved-profile-name fantasy-card-name">${playerHeadshotMarkup(player, "fantasy-headshot")}<h3>${escapeHtml(player.name || "Player")}</h3><span>${escapeHtml([player.position, `age ${Math.round(Number(player.age) || 0) || "—"}`, heightFromRow(player)].filter(Boolean).join(" · "))}</span></header>
       <section class="fantasy-card-hero">
         <div class="fantasy-card-number">
           <span>OVR</span>
@@ -8677,14 +8692,20 @@ async function fantasyDraftPick() {
 }
 
 async function fantasyDraftSim(actionName) {
-  showToast(actionName === "fantasy_draft_sim_one" ? "Simulating one selection..." : "Advancing to your pick...");
+  showToast(actionName === "fantasy_draft_sim_one" ? "Simulating one selection..." : actionName === "fantasy_draft_sim_all" ? "Finishing the draft..." : "Advancing to your pick...");
   const result = await action(actionName, {
     ...savePayload(),
     team: userTeam(),
   });
   state.selectedFantasyPlayer = "";
-  showToast(`${result.applied_count || 0} selection(s) completed`);
+  const count = Number(result.applied_count || 0);
+  showToast(`${count} pick${count === 1 ? "" : "s"} made`);
   await refreshDashboardAfterPhaseMutation("fantasyDraft", result.room);
+}
+
+async function fantasyDraftFinish() {
+  if (!await askConfirm("Finish the draft? Your assistant makes the rest of your picks. This cannot be undone.", {confirmLabel: "Finish draft"})) return;
+  await fantasyDraftSim("fantasy_draft_sim_all");
 }
 
 async function fantasyDraftToggleWatchlist(playerId) {
