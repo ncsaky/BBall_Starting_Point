@@ -1514,9 +1514,11 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa
    middle (user, 2026-11-27). Where a list has no room for two lines the name column is wide enough for one. */
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .linked-roster-group.linked-contracts .player-name-text { white-space: nowrap !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table col:nth-child(n+3) { width: 29px !important; }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table col:nth-child(2) { width: 62px !important; }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table col:nth-child(6) { width: 136px !important; }
-html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table col:nth-child(7) { width: 80px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table col:nth-child(2) { width: 58px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table col:nth-child(3) { width: 40px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table col:nth-child(6) { width: 118px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table col:nth-child(7) { width: 104px !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table tbody tr > :nth-child(n+3):nth-child(-n+5) { padding-left: 0 !important; padding-right: 0 !important; text-align: center !important; overflow: visible !important; text-overflow: clip !important; }
 /* Whatever a row holds, two lines at most: the rows of one list stay one height. */
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-stats-table tbody tr { height: 36px !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .playoff-injuries-table tbody .playoff-stats-col-status * { font-size: var(--gm-size-small) !important; }
@@ -1527,3 +1529,11 @@ html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-market-title h3 { display: flex !important; align-items: center; overflow: visible !important; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .draft-board-head .page-info { margin-left: auto; }
 html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .draft-board-head { overflow: visible !important; }
+
+/* Signing wire: every row is one height. Details take a second line and fade out past it, with no dots; the whole
+   headline stays on hover. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-wire-row { height: 64px; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-wire-row > div > span { white-space: normal !important; text-overflow: clip !important; max-height: 2.4em; -webkit-mask-image: linear-gradient(to bottom, #000 1.2em, transparent 1.2em), linear-gradient(to right, #000 78%, transparent 98%); mask-image: linear-gradient(to bottom, #000 1.2em, transparent 1.2em), linear-gradient(to right, #000 78%, transparent 98%); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-wire-row > div > span:not(:first-of-type) { max-height: 1.2em; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-wire-row > div > span.fa-wire-why { white-space: nowrap !important; overflow: hidden !important; -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .fa-wire-row > div:has(> .fa-wire-why) > span:not(.fa-wire-why) { max-height: 1.2em; white-space: nowrap !important; -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); }

@@ -6740,7 +6740,6 @@ function freeAgencyDashboardWorkspace() {
   ensureFreeAgencySelection(room);
   return `<div class="fa-room" data-free-agency-room>
     ${phaseFreeAgencyMarketCard(room)}
-    ${freeAgencyOfferBuilderPanel(room)}
     ${freeAgencySigningWirePanel(room)}
     ${room.offseason_checklist ? offseasonChecklistPanel(room) : ""}
   </div>`;
@@ -6881,7 +6880,7 @@ function offseasonItemActions(item, editable) {
   }
   if (item.kind === "own_free_agent") {
     const hold = (state.data.freeagency?.cap_ledger?.current?.holds || []).find((row) => String(row.player_id) === String(item.player_id));
-    return `<button type="button" class="ui-command" data-offseason-negotiate="${pid}">Negotiate</button>
+    return `${typeof signingsOpen !== "function" || signingsOpen() ? `<button type="button" class="ui-command" data-offseason-negotiate="${pid}">Negotiate</button>` : ""}
       ${hold?.renounce ? `<button type="button" class="ui-command" data-fa-renounce="${pid}" title="${escapeAttr(hold.renounce.loses)}">Renounce</button>` : ""}`;
   }
   if (item.kind === "rookie_extension") return `<button type="button" class="ui-command" data-offseason-extend="${pid}">Extend</button>`;
@@ -7161,11 +7160,7 @@ function wireOffseasonChecklist(panel) {
     decideQualifyingOffer(button.dataset.playerId || "", button.dataset.offseasonQo || "")));
   panel.querySelectorAll("[data-offer-sheet-match]").forEach((button) => button.addEventListener("click", () => decideOfferSheet(button.dataset.offerSheetMatch || "", true)));
   panel.querySelectorAll("[data-offer-sheet-pass]").forEach((button) => button.addEventListener("click", () => decideOfferSheet(button.dataset.offerSheetPass || "", false)));
-  panel.querySelectorAll("[data-offseason-negotiate]").forEach((button) => button.addEventListener("click", () => {
-    state.selectedFreeAgent = button.dataset.offseasonNegotiate || null;
-    refreshFreeAgencyPanels({ market: true, builder: true });
-    window.CardBoard?.open("phase-free_agency-selected");
-  }));
+  panel.querySelectorAll("[data-offseason-negotiate]").forEach((button) => button.addEventListener("click", () => openFreeAgentNegotiation(button.dataset.offseasonNegotiate || "")));
   panel.querySelectorAll("[data-fa-renounce]").forEach((button) => button.addEventListener("click", () => renounceCapHold(button.dataset.faRenounce || "")));
   panel.querySelectorAll("[data-offseason-extend]").forEach((button) => button.addEventListener("click", () => openExtensionNegotiation(button.dataset.offseasonExtend || "")));
   panel.querySelectorAll("[data-offseason-cutdown]").forEach((button) => button.addEventListener("click", () => openRosterView()));
@@ -7250,13 +7245,15 @@ function freeAgencyOpenRosterSpots(room = state.data.freeagency || {}) {
 // any legal way to pay lets you offer him: Bird rights, cap room or an exception's remaining budget).
 function freeAgencyPlayerMinimum(player, room = state.data.freeagency || {}) {
   const value = Number(player?.legal?.min_millions);
-  return Number.isFinite(value) && value > 0 ? value : freeAgencyMinimum(room);
+  // Rounded up to the slider's tenth: rounding down offered a salary under his real minimum, which nothing can pay.
+  return Number.isFinite(value) && value > 0 ? Math.ceil(value * 10 - 1e-6) / 10 : freeAgencyMinimum(room);
 }
 
 function freeAgencyPlayerMaximum(player, room = state.data.freeagency || {}) {
   const value = Number(player?.legal?.most_you_can_pay_millions);
   const top = Number.isFinite(value) && value > 0 ? value : Math.max(freeAgencyMaxOffer(room), Number(player?.bird_rights?.limit_millions || 0));
-  return Math.max(freeAgencyPlayerMinimum(player, room), top);
+  // Rounded down to the slider's tenth, so the top of the slider is a salary that can really be paid.
+  return Math.max(freeAgencyPlayerMinimum(player, room), Math.floor(top * 10 + 1e-6) / 10);
 }
 
 // "Fits our room": he would sign a guaranteed offer you can legally make, and you have an open roster spot.
@@ -7318,7 +7315,7 @@ function phaseFreeAgencyMarketCard(room = state.data.freeagency || {}) {
       <label class="fa-filter-check" title="${escapeAttr(`Only players who would sign a guaranteed offer from you that fits under your cap limit, while you have an open roster spot (${room.roster_count ?? "?"} of ${freeAgencyRosterMaximum(room)} used; rosters are cut to ${freeAgencyRosterMaximum(room)} before opening night)`)}"><input type="checkbox" data-fa-filter-afford ${filters.afford ? "checked" : ""} /> <span>Fits our room</span></label>
       <button type="button" class="ui-command" data-fa-filter-reset>Reset</button>
       <button type="button" class="ui-command${compareMode ? " is-active" : ""}" data-fa-compare-toggle aria-pressed="${compareMode}">${escapeHtml(compareLabel)}</button>
-      <span class="fa-market-links"><button type="button" class="ui-command" data-fa-open-roster>My Roster</button><button type="button" class="ui-command" data-fa-open-trade>Trade Room</button><button type="button" class="ui-command" data-open-waivers>Waivers</button></span>
+      <span class="fa-market-links"><button type="button" class="ui-command" data-fa-open-roster>My Roster</button>${tradingOpen() ? `<button type="button" class="ui-command" data-fa-open-trade>Trade Room</button>` : ""}<button type="button" class="ui-command" data-open-waivers>Waivers</button></span>
     </div>
     <div class="fa-market-scroll">${freeAgencyMarketTable(rows, room)}</div>
   </section>`;
@@ -7672,16 +7669,37 @@ function freeAgencyMaxYears(player, rules = {}) {
   return Math.min(Number(rules.max_years || 5), Number(player?.bird_rights?.max_years || rules.outside_max_years || 4));
 }
 
-function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
-  const candidates = room.candidates || [];
-  const player = candidates.find((candidate) => String(candidate.id) === String(state.selectedFreeAgent || "")) || null;
+// One place to negotiate (user, 2026-11-27): a free agent is signed on his own page, the first tab, laid out like
+// the contract extension page. There is no offer builder beside the market or the checklist any more.
+const FREE_AGENCY_SIGNING_VIEWS = [["pay", "How it's paid"], ["bids", "Rival bids"], ["cap", "Your cap sheet"], ["other", "Other ways"]];
+const FREE_AGENCY_SIGNING_TITLES = {pay: "How It's Paid", bids: "Rival Bids", cap: "Your Cap Sheet", other: "Other Ways To Add Him"};
+
+function freeAgencySigningTitle(player, room = state.data.freeagency || {}) {
+  return player?.offer_sheet ? "Offer Sheet" : freeAgencyRoomState(room).exclusive ? "Re-signing Offer" : "Contract Offer";
+}
+
+function freeAgencySigningPage(room, player) {
+  const title = freeAgencySigningTitle(player, room);
+  return `<section class="player-card-page player-card-page--extension player-card-page--signing" data-player-page="0" data-page-title="${title}" aria-label="${title}">${freeAgencySigningLayout(room, player.id)}</section>`;
+}
+
+// What he asks for. The "signs with you from" figure follows the length you choose.
+function freeAgencyFloorMarkup(player, preview) {
+  const floor = freeAgencyAcceptFloor(player, preview.years, "guaranteed");
+  const loose = freeAgencyAcceptFloor(player, preview.years, "non_guaranteed");
+  const term = `${preview.years} year${preview.years === 1 ? "" : "s"}`;
+  const words = Number.isFinite(floor)
+    ? `${term}, guaranteed: ${money(floor)}; without a guarantee: ${Number.isFinite(loose) ? money(loose) : "no salary"}. Your offer is judged by the same rule as rival bids.`
+    : `No salary beats the best rival bid for ${term}. His bar drops each day.`;
+  return `<div title="${escapeAttr(words)}"><dt>Signs with you from <i class="ext-info" aria-hidden="true">i</i></dt><dd><strong>${Number.isFinite(floor) ? money(floor) : "Not today"}</strong><span class="ext-hint">${escapeHtml(words)}</span></dd></div>`;
+}
+
+function freeAgencySigningLayout(room, playerId) {
+  const player = (room.candidates || []).find((candidate) => String(candidate.id) === String(playerId)) || null;
+  if (!player) return `<div class="extension-page-layout" data-free-agency-builder data-fa-builder-player=""><p class="extension-analysis-empty">He is no longer a free agent.</p></div>`;
   const { exclusive, open } = freeAgencyRoomState(room);
-  if (!player) {
-    return `<section class="fa-panel fa-builder" data-free-agency-builder aria-label="Offer builder"><div class="fa-empty">${candidates.length ? "Choose a player in the market to build an offer." : "No free agents are available."}</div></section>`;
-  }
   const draft = freeAgencyOfferDraft(player, room);
   const preview = freeAgencyOfferPreview(player, room, draft);
-  const ratings = player.ratings || {};
   const minimum = freeAgencyPlayerMinimum(player, room);
   const maximum = freeAgencyPlayerMaximum(player, room);
   const sheet = player.offer_sheet || null;
@@ -7689,65 +7707,27 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
   const legal = clipboardLegalActions().has("free_agent_signings");
   const shortlisted = state.freeAgentShortlistIds.includes(player.id);
   const safe = preview.safe;
-  const stat = (label, value) => `<span><small>${label}</small><strong>${draftMetric(value)}</strong></span>`;
-  const rating = (label, value) => `<span class="fa-id-rating player-rating-bar" style="${playerRatingBarStyle(value)}"><small>${label}</small><strong>${draftMetric(value)}</strong><i aria-hidden="true"><b style="${playerRatingBarStyle(value)}"></b></i></span>`;
   const radio = (name, value, label, checked, disabled = false, title = "") => `<button type="button" role="radio" aria-checked="${checked}" class="${checked ? "is-active" : ""}" data-fa-offer-${name}="${escapeAttr(value)}" tabindex="${checked ? 0 : -1}"${disabled ? " disabled" : ""}${title ? ` title="${escapeAttr(title)}"` : ""}>${escapeHtml(label)}</button>`;
+  const info = `<i class="ext-info" aria-hidden="true">i</i>`;
+  const limit = `${money(minimum)} his minimum (${player.legal?.years_of_service ?? "?"} years in the league) to ${money(maximum)}, the most a legal way to pay lets you offer${Number(player.legal?.max_millions) > maximum + 0.05 ? ` (his maximum is ${money(player.legal.max_millions)})` : ""}.${player.bird_rights ? ` ${player.bird_rights.text}` : ""}`;
+  const guaranteeWords = preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on ${room.offer_rules?.non_guaranteed_until || "January 10"}; release him before then and you owe nothing. He asks more for this.`;
+  const routeWords = "Bird rights, cap room, the minimum, the mid-level or the bi-annual. The engine picks the first legal one unless you choose.";
+  const pct = Number(preview.terms?.max_raise ? Math.round(preview.terms.max_raise * 100) : (player.bird_rights && ["full", "early"].includes(player.bird_rights.level) ? 8 : 5));
+  const path = draft.path || "rising";
+  const option = draft.option || "none";
+  const pathButtons = ["rising", "flat", "declining"].map((value) => radio("path", value, CONTRACT_PATH_LABELS[value], path === value, Boolean(sheet) && value === "declining", sheet && value === "declining" ? "Offer sheets rise or stay flat" : contractShapeTitle(value, pct))).join("");
+  const optionButtons = ["none", "player", "team"].map((value) => radio("option", value, CONTRACT_OPTION_LABELS[value], option === value, Boolean(sheet) && value !== "none", sheet && value !== "none" ? "Offer sheets in this game carry no option" : contractOptionTitle(value))).join("");
   const bids = (room.active_offers || [])
     .filter((offer) => String(offer.player_id || "") === String(player.id))
     .sort((a, b) => Number(b.interest_score || 0) - Number(a.interest_score || 0) || Number(b.aav_millions || 0) - Number(a.aav_millions || 0));
   const bar = Number(player.sign_bar_today);
   const history = (room.user_offer_history || []).filter((row) => String(row.player_id) === String(player.id));
   const lastResult = state.freeAgentOfferResults?.[`${state.currentSave || ""}:${player.id}`];
-  return `<section class="fa-panel fa-builder" data-free-agency-builder data-fa-builder-player="${escapeAttr(player.id)}" aria-label="Offer builder for ${escapeAttr(player.name)}">
-    <header class="fa-builder-identity">
-      ${playerHeadshotMarkup(player, "approved-profile-headshot") || playerHeadshotMarkup({ is_prospect: true }, "approved-profile-headshot")}
-      <div class="fa-builder-name"><p>${exclusive ? "Re-sign your player" : "Free agent"}</p><h3>${playerNameWithInjuryMarkup(player)}</h3><span>${escapeHtml([player.position, Number.isFinite(Number(player.age)) ? `${Math.round(Number(player.age))} years` : "", player.height].filter(Boolean).join(" · "))}</span></div>
-      <div class="fa-builder-ratings">${rating("OVR", ratings.overall)}${rating("OFF", ratings.offense ?? ratings.overall)}${rating("DEF", ratings.defense)}</div>
-      <div class="fa-builder-actions"><button type="button" class="ui-command" data-fa-intel-card="${escapeAttr(player.id)}">Player Card</button><button type="button" class="ui-command fa-star${shortlisted ? " is-active" : ""}" data-fa-shortlist="${escapeAttr(player.id)}" aria-pressed="${shortlisted}">${shortlisted ? "★ Shortlisted" : "☆ Shortlist"}</button></div>
-    </header>
-    <div class="fa-builder-scroll">
-      <section class="approved-card-panel fa-builder-season"><header>Last Season</header><div>${stat("GP", player.games)}${stat("MPG", player.previous_mpg)}${stat("PTS", player.ppg)}${stat("REB", player.rpg)}${stat("AST", player.apg)}${stat("STL", player.spg)}${stat("BLK", player.bpg)}${stat("TO", player.topg)}</div></section>
-      <section class="approved-card-panel fa-builder-market"><header>What He Wants</header><dl>
-        <div><dt title="His market ask per season: what rival teams bid against. It moves each day.">Market ask</dt><dd><strong>${money(player.ask_millions)}</strong>${freeAgencyAskChange(player.ask_change_millions)}<small>rival teams bid against this</small></dd></div>
-        <div><dt title="The salary your offer must reach today for him to sign it, by the same rule as rival bids: his interest (salary against his market ask, years, your team) must reach today's bar and beat the best rival bid.">Signs with you from</dt><dd>${Number.isFinite(freeAgencyAcceptFloor(player, preview.years, "guaranteed"))
-          ? `<strong>${money(freeAgencyAcceptFloor(player, preview.years, "guaranteed"))}</strong><small>${preview.years} year${preview.years === 1 ? "" : "s"}, guaranteed · ${Number.isFinite(freeAgencyAcceptFloor(player, preview.years, "non_guaranteed")) ? money(freeAgencyAcceptFloor(player, preview.years, "non_guaranteed")) : "no salary"} without a guarantee</small>`
-          : `<strong>Not today</strong><small>no salary beats the best rival bid for ${preview.years} year${preview.years === 1 ? "" : "s"}</small>`}</dd></div>
-        <div><dt>Longest deal</dt><dd><strong>${safe >= 5 ? "5 years" : safe < 1 ? "None" : `${safe} year${safe === 1 ? "" : "s"}`}</strong><small>${safe >= 5 ? "the league maximum" : "he plans to retire after that"}</small></dd></div>
-      </dl></section>
-      <section class="approved-card-panel fa-builder-offer"><header>Your Offer</header>
-        <div class="fa-offer-field fa-offer-salary">
-          <label for="faOfferAav"><small>Salary per season</small></label>
-          <span class="money-input"><b>$</b><input id="faOfferAav" type="number" inputmode="decimal" min="${minimum.toFixed(1)}" max="${maximum.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-fa-offer-aav aria-describedby="faOfferAavHelp"><b>M</b></span>
-          <div class="salary-track"><input type="range" min="${minimum.toFixed(1)}" max="${maximum.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-fa-offer-range aria-label="Salary per season, in millions" />
-            ${salaryMarksMarkup([
-              ...(Number.isFinite(preview.floorOffer) ? [{ label: "His price", value: preview.floorOffer, attr: "data-fa-offer-set", title: `What he signs for from you: ${money(preview.floorOffer)}` }] : []),
-              { label: "Market ask", value: Number(player.ask_millions), attr: "data-fa-offer-set", title: `His market ask: ${money(player.ask_millions)}` },
-              { label: "Minimum", value: minimum, attr: "data-fa-offer-set", title: `His minimum: ${money(minimum)}` },
-            ])}</div>
-          <small id="faOfferAavHelp">${money(minimum)} his minimum (${escapeHtml(player.legal?.years_of_service ?? "?")} years in the league) to ${money(maximum)}, the most a legal way to pay lets you offer${Number(player.legal?.max_millions) > maximum + 0.05 ? ` (his maximum is ${money(player.legal.max_millions)})` : ""}</small>
-          ${player.bird_rights ? `<p class="fa-offer-note fa-offer-bird">${escapeHtml(player.bird_rights.text)}</p>` : ""}
-        </div>
-        <div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferYearsLabel">Years</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferYearsLabel">${[1, 2, 3, 4, 5].map((years) => radio("years", years, String(years), preview.years === years, years > preview.maxYears || years < (preview.minYears || 1), sheet && (years > preview.maxYears || years < preview.minYears) ? `An offer sheet runs ${preview.minYears} to ${preview.maxYears} seasons` : years > preview.maxYears ? "Only a team with full Bird rights can offer a fifth year" : years > safe ? `He plans to retire after ${safe} season${safe === 1 ? "" : "s"}; he refuses ${years} years` : "")).join("")}</div></div>
-        <div class="fa-offer-field"><small id="faOfferGuaranteeLabel">Guarantee</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferGuaranteeLabel">${radio("guarantee", "true", "Guaranteed", preview.guaranteed)}${radio("guarantee", "false", "Non-guaranteed", !preview.guaranteed, Boolean(sheet), sheet ? "Offer sheets are fully guaranteed" : "")}</div>
-          <p class="fa-offer-note">${preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on ${escapeHtml(room.offer_rules?.non_guaranteed_until || "January 10")}; release him before then and you owe nothing. He asks more for this.`}</p></div></div>
-        ${(() => {
-          // CONTRACT-TERMS: salary path and final-season option selectors (offer sheets stay rising or flat, no option).
-          const pct = Number(preview.terms?.max_raise ? Math.round(preview.terms.max_raise * 100) : (player.bird_rights && ["full", "early"].includes(player.bird_rights.level) ? 8 : 5));
-          const path = draft.path || "rising";
-          const option = draft.option || "none";
-          const pathButtons = ["rising", "flat", "declining"].map((value) => radio("path", value, CONTRACT_PATH_LABELS[value], path === value, Boolean(sheet) && value === "declining", sheet && value === "declining" ? "Offer sheets rise or stay flat" : contractShapeTitle(value, pct))).join("");
-          const optionButtons = ["none", "player", "team"].map((value) => radio("option", value, CONTRACT_OPTION_LABELS[value], option === value, Boolean(sheet) && value !== "none", sheet && value !== "none" ? "Offer sheets in this game carry no option" : contractOptionTitle(value))).join("");
-          return `<div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferPathLabel">Salary path</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferPathLabel" data-fa-path-group>${pathButtons}</div></div>
-            <div class="fa-offer-field"><small id="faOfferOptionLabel">Option on the last season</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferOptionLabel" data-fa-option-group>${optionButtons}</div></div></div>`;
-        })()}
-        <div class="fa-offer-field"><label for="faOfferRoute"><small>How you pay</small></label><select id="faOfferRoute" data-fa-offer-route aria-describedby="faOfferRouteHelp"><option value="">Best legal way</option>${routes.map((row) => `<option value="${escapeAttr(row.route)}" ${draft.route === row.route ? "selected" : ""}>${escapeHtml(row.short)}</option>`).join("")}</select><p id="faOfferRouteHelp" class="fa-offer-note">Bird rights, cap room, the minimum, the mid-level or the bi-annual. The engine picks the first legal one unless you choose.</p></div>
-        <p class="fa-offer-note fa-offer-options" data-fa-offer-shape>${escapeHtml(freeAgencyShapeNote(preview, draft))}</p>
-        ${sheet ? freeAgencyOfferSheetMarkup(player, draft, preview) : ""}
-      </section>
-      <div data-fa-offer-preview>${freeAgencyOfferPreviewMarkup(preview)}</div>
-      ${freeAgencyOtherDealsMarkup(player, room)}
-      ${freeAgencyCapSheetMarkup(room)}
-      <section class="approved-card-panel fa-builder-bids"><header>${exclusive ? "Rival Bids" : `Rival Bids · ${bids.length}`}</header>${exclusive
+  const other = freeAgencyOtherDealsMarkup(player, room);
+  const views = FREE_AGENCY_SIGNING_VIEWS.filter(([key]) => key !== "other" || other);
+  const view = views.some(([key]) => key === state.freeAgentSigningView) ? state.freeAgentSigningView : "pay";
+  const count = { bids: exclusive ? 0 : bids.length };
+  const bidsMarkup = `<div class="fa-builder-bids">${exclusive
         ? `<p class="fa-muted">Exclusive window: no other team may bid until free agency opens.</p>`
         : bids.length ? `<ol>${bids.map((offer, index) => {
           const team = teamLabel(offer.team_id || offer.team_abbrev || "");
@@ -7755,14 +7735,52 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
           const interest = Number(offer.interest_score || 0);
           const ready = Number.isFinite(bar) && interest >= bar;
           return `<li class="${index === 0 ? "is-leading" : ""}">${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(team)} logo" />` : `<b>${escapeHtml(team)}</b>`}<strong>${money(offer.aav_millions)} × ${escapeHtml(offer.years || 1)}</strong><span class="fa-mood fa-mood-${ready ? "hot" : "cool"}" title="${escapeAttr(`Interest ${interest.toFixed(1)}${Number.isFinite(bar) ? `; he needs ${bar.toFixed(0)} today to sign it` : ""}`)}"><i aria-hidden="true"><b style="width:${clampNumber(interest, 0, 100)}%"></b>${Number.isFinite(bar) ? `<u style="left:${clampNumber(bar, 0, 100)}%"></u>` : ""}</i><em>${interest.toFixed(0)}</em></span><small>${index === 0 ? (ready ? "Leading · ready to sign" : "Leading") : `Day ${escapeHtml(offer.day || 1)}`}</small></li>`;
-        }).join("")}</ol><p class="fa-muted">He settles rival bids at the end of each day: the best bid signs once its interest reaches ${Number.isFinite(bar) ? bar.toFixed(0) : "today's bar"}. Your offer is judged the same way, on the spot: it must reach that bar and beat the leading bid.</p>` : `<p class="fa-muted">No rival bids yet.</p>`}</section>
-      ${history.length || lastResult ? `<section class="approved-card-panel fa-builder-history"><header>Your Offers To Him</header><ol>${[
+        }).join("")}</ol><p class="fa-muted">He settles rival bids at the end of each day: the best bid signs once its interest reaches ${Number.isFinite(bar) ? bar.toFixed(0) : "today's bar"}. Your offer is judged the same way, on the spot: it must reach that bar and beat the leading bid.</p>` : `<p class="fa-muted">No rival bids yet.</p>`}</div>
+      ${history.length || lastResult ? `<div class="fa-builder-history"><h4>Your Offers To Him</h4><ol>${[
         ...(lastResult ? [lastResult] : []),
         ...history.filter((row) => !lastResult || row.date !== lastResult.date || Number(row.aav_millions) !== Number(lastResult.aav_millions)),
-      ].slice(0, 4).map((row) => `<li><span>${escapeHtml(String(row.date || "").slice(5))}</span><strong>${money(row.aav_millions)} × ${escapeHtml(row.years || 1)}${row.guaranteed === false ? " non-gtd" : ""}</strong><em class="${row.accepted ? "is-yes" : "is-no"}">${escapeHtml(row.accepted ? "Signed" : row.decision === "retirement_risk" ? "Declined: retiring" : row.decision === "blocked" ? "Blocked" : `Declined${row.needed_millions ? ` · needed ${money(row.needed_millions)}` : ""}`)}</em></li>`).join("")}</ol></section>` : ""}
-    </div>
-    <footer class="fa-builder-foot" data-fa-offer-foot>${freeAgencyOfferFootMarkup(player, preview, { legal, open, exclusive })}</footer>
-  </section>`;
+      ].slice(0, 4).map((row) => `<li><span>${escapeHtml(String(row.date || "").slice(5))}</span><strong>${money(row.aav_millions)} × ${escapeHtml(row.years || 1)}${row.guaranteed === false ? " non-gtd" : ""}</strong><em class="${row.accepted ? "is-yes" : "is-no"}">${escapeHtml(row.accepted ? "Signed" : row.decision === "retirement_risk" ? "Declined: retiring" : row.decision === "blocked" ? "Blocked" : `Declined${row.needed_millions ? ` · needed ${money(row.needed_millions)}` : ""}`)}</em></li>`).join("")}</ol></div>` : ""}
+`;
+  const body = { pay: `${sheet ? freeAgencyOfferSheetMarkup(player, draft, preview) : ""}<div data-fa-slot="pay">${freeAgencyPayMarkup(preview, sheet?.blocked_reason)}</div>`, bids: bidsMarkup, cap: freeAgencyCapSheetMarkup(room), other };
+  return `<div class="extension-page-layout" data-free-agency-builder data-fa-builder-player="${escapeAttr(player.id)}" aria-label="Contract offer for ${escapeAttr(player.name)}">
+      <div class="fa-panel fa-builder ext-builder">
+        <div class="fa-builder-scroll">
+          <section class="approved-card-panel fa-builder-market"><header>What He Wants${exclusive ? "" : `<button type="button" class="ui-command fa-star signing-star${shortlisted ? " is-active" : ""}" data-fa-shortlist="${escapeAttr(player.id)}" aria-pressed="${shortlisted}">${shortlisted ? "★ Shortlisted" : "☆ Shortlist"}</button>`}</header><dl>
+            <div title="His market ask per season: what rival teams bid against. It moves each day."><dt>Market ask ${info}</dt><dd><strong>${money(player.ask_millions)}</strong>${freeAgencyAskChange(player.ask_change_millions)}</dd></div>
+            <div class="signing-floor" data-fa-slot="floor">${freeAgencyFloorMarkup(player, preview)}</div>
+            <div title="${safe >= 5 ? "The league maximum" : "He plans to retire after that"}"><dt>Longest deal ${info}</dt><dd><strong>${safe >= 5 ? "5 years" : safe < 1 ? "None" : `${safe} year${safe === 1 ? "" : "s"}`}</strong></dd></div>
+          </dl></section>
+          <section class="approved-card-panel fa-builder-offer"><header>Your Offer</header>
+            <div class="fa-offer-field fa-offer-salary" title="${escapeAttr(limit)}">
+              <label for="faOfferAav"><small>Salary per season ${info}</small></label>
+              <span class="money-input"><b>$</b><input id="faOfferAav" type="number" inputmode="decimal" min="${minimum.toFixed(1)}" max="${maximum.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-fa-offer-aav aria-describedby="faOfferAavHelp"><b>M</b></span>
+              <div class="salary-track"><input type="range" min="${minimum.toFixed(1)}" max="${maximum.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-fa-offer-range aria-label="Salary per season, in millions" />
+                ${salaryMarksMarkup([
+                  ...(Number.isFinite(preview.floorOffer) ? [{ label: "His price", value: preview.floorOffer, attr: "data-fa-offer-set", title: `What he signs for from you: ${money(preview.floorOffer)}` }] : []),
+                  { label: "Market ask", value: Number(player.ask_millions), attr: "data-fa-offer-set", title: `His market ask: ${money(player.ask_millions)}` },
+                  { label: "Minimum", value: minimum, attr: "data-fa-offer-set", title: `His minimum: ${money(minimum)}` },
+                ])}</div>
+              <small id="faOfferAavHelp" class="ext-hint">${escapeHtml(limit)}</small>
+            </div>
+            <div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferYearsLabel">Years</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferYearsLabel">${[1, 2, 3, 4, 5].map((years) => radio("years", years, String(years), preview.years === years, years > preview.maxYears || years < (preview.minYears || 1), sheet && (years > preview.maxYears || years < preview.minYears) ? `An offer sheet runs ${preview.minYears} to ${preview.maxYears} seasons` : years > preview.maxYears ? "Only a team with full Bird rights can offer a fifth year" : years > safe ? `He plans to retire after ${safe} season${safe === 1 ? "" : "s"}; he refuses ${years} years` : "")).join("")}</div></div>
+              <div class="fa-offer-field" title="${escapeAttr(guaranteeWords)}"><small id="faOfferGuaranteeLabel">Guarantee ${info}</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferGuaranteeLabel">${radio("guarantee", "true", "Guaranteed", preview.guaranteed)}${radio("guarantee", "false", "Non-guaranteed", !preview.guaranteed, Boolean(sheet), sheet ? "Offer sheets are fully guaranteed" : "")}</div>
+                <p class="fa-offer-note ext-hint">${escapeHtml(guaranteeWords)}</p></div></div>
+            <div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferPathLabel">Salary path</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferPathLabel" data-fa-path-group>${pathButtons}</div></div>
+              <div class="fa-offer-field"><small id="faOfferOptionLabel">Option on the last season</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferOptionLabel" data-fa-option-group>${optionButtons}</div></div></div>
+            <div class="fa-offer-field signing-route" title="${escapeAttr(routeWords)}"><label for="faOfferRoute"><small>How you pay ${info}</small></label><select id="faOfferRoute" data-fa-offer-route aria-describedby="faOfferRouteHelp"><option value="">Best legal way</option>${routes.map((row) => `<option value="${escapeAttr(row.route)}" ${draft.route === row.route ? "selected" : ""}>${escapeHtml(row.short)}</option>`).join("")}</select><p id="faOfferRouteHelp" class="fa-offer-note ext-hint">${routeWords}</p></div>
+            <p class="fa-offer-note fa-offer-options ext-hint" data-fa-offer-shape>${escapeHtml(freeAgencyShapeNote(preview, draft))}</p>
+          </section>
+        </div>
+        <div data-fa-slot="verdict">${freeAgencyVerdictMarkup(preview)}</div>
+        <footer class="fa-builder-foot" data-fa-offer-foot>${freeAgencyOfferFootMarkup(player, preview, { legal, open, exclusive })}</footer>
+      </div>
+      <div class="extension-page-impact" data-signing-open="${view}">
+        <section class="approved-card-panel fa-offer-cap ext-cap" data-fa-slot="cap">${freeAgencyCapTableMarkup(preview)}</section>
+        <section class="approved-card-panel extension-analysis signing-more"><header><span data-signing-title>${FREE_AGENCY_SIGNING_TITLES[view]}</span><div class="extension-analysis-tabs" role="tablist" aria-label="More about this offer">${views.map(([key, label]) => `<button type="button" role="tab" data-signing-tab="${key}" aria-selected="${key === view}">${label}${count[key] ? ` · ${count[key]}` : ""}</button>`).join("")}</div></header>
+          ${views.map(([key]) => `<div class="signing-view" data-signing-view="${key}"${key === view ? "" : " hidden"}>${body[key]}</div>`).join("")}
+        </section>
+      </div>
+    </div>`;
 }
 
 // FA-REAL slice 4: the other ways to add a player: a two-way contract, a camp deal (Exhibit 10), a sign-and-trade.
@@ -7787,7 +7805,7 @@ function freeAgencyOtherDealsMarkup(player, room = state.data.freeagency || {}) 
     : `${snt.rights_abbrev} holds his rights: they re-sign him and trade him to you. You send back salary (if you're over the cap) and a pick; you become hard-capped at the first apron.`)}</small></div>
     <span class="fa-edge-buttons"><button type="button" class="ui-command" data-fa-snt-open>${snt.role === "sender" ? "Find a partner" : `Ask ${escapeHtml(snt.rights_abbrev)}`}</button></span></div>
     ${state.signAndTrade?.player_id === String(player.id) ? freeAgencySignAndTradeMarkup(player, room) : ""}` : "";
-  return `<section class="approved-card-panel fa-builder-edge" data-fa-edge><header>Other Ways To Add Him</header>${twoWay}${campRow}${sntRow}</section>`;
+  return `<section class="approved-card-panel fa-builder-edge" data-fa-edge>${twoWay}${campRow}${sntRow}</section>`;
 }
 
 function freeAgencySignAndTradeMarkup(player, room) {
@@ -7854,6 +7872,7 @@ async function freeAgencySignAndTrade(player, step, extra = {}) {
     return;
   }
   state.signAndTrade = null;
+  closeSigningCards(player.id);
   showToast(`Sign-and-trade done: ${player.name}.`);
   const room = await action("free_agency_room", { ...savePayload(), team: userTeam(), seed: 7 });
   await refreshDashboardAfterPhaseMutation("freeagency", room);
@@ -7870,6 +7889,7 @@ async function freeAgencyRosterEdgeSign(player, kind, years = 1) {
   }
   showToast(kind === "camp" ? `${player.name} invited to camp` : `${player.name} signed to a two-way contract`);
   state.selectedFreeAgent = null;
+  closeSigningCards(player.id);
   const room = await action("free_agency_room", { ...savePayload(), team: userTeam(), seed: 7 });
   await refreshDashboardAfterPhaseMutation("freeagency", room);
 }
@@ -7891,9 +7911,19 @@ function freeAgencyOfferSheetMarkup(player, draft, preview) {
     </div>`;
 }
 
-function freeAgencyOfferPreviewMarkup(preview) {
+function freeAgencyVerdictMarkup(preview) {
   const verdict = preview.verdict;
   const meter = clampNumber(preview.ratio * 100, 0, 150);
+  // A no within a tenth of his price is amber and says so, as on the extension page. It is still a no.
+  const close = verdict.tone === "no" && !preview.offerSheet && Number(preview.ratio) >= 0.9 && Number(preview.ratio) < 1;
+  return `<section class="approved-card-panel fa-offer-verdict ext-verdict fa-verdict-${verdict.tone}${close ? " is-close" : ""}" role="status" aria-live="polite">
+      <header>Will He Sign?</header>
+      <div class="fa-verdict-line" title="${escapeAttr(verdict.detail)}"><strong>${escapeHtml(close ? "Close, but he says no" : verdict.headline)}</strong> <i class="ext-info" aria-hidden="true">i</i><span class="ext-hint">${escapeHtml(verdict.detail)}</span></div>
+      ${Number.isFinite(preview.floor) ? `<div class="fa-verdict-meter" title="Your salary against the salary he needs from you (100% signs)"><i><b style="width:${meter / 1.5}%"></b><u style="left:${100 / 1.5}%"></u></i><em>${Math.round(preview.ratio * 100)}% of his price</em></div>` : ""}
+    </section>`;
+}
+
+function freeAgencyCapTableMarkup(preview) {
   const rows = preview.seasons.map((row, index) => {
     const tone = row.apronRoom < 0 ? "is-hard" : row.taxRoom < 0 ? "is-tax" : "";
     return `<tr class="${row.salary ? "has-offer" : ""} ${tone}">
@@ -7906,29 +7936,36 @@ function freeAgencyOfferPreviewMarkup(preview) {
       <td class="${row.apronRoom < 0 ? "is-negative" : ""}">${signedMoney(row.apronRoom)}</td>
     </tr>`;
   }).join("");
+  return `<header>Cap Position With This Offer <i class="ext-info" aria-hidden="true" title="${escapeAttr(`${preview.seasons[0] ? shortSeasonLabel(preview.seasons[0].season) : "Next season"} payroll counts cap holds for your unsigned free agents and a minimum charge for each empty spot below 12; later seasons count signed contracts only.`)}">i</i></header>
+      <table class="fa-cap-table ext-cap-table" aria-label="Payroll by season with this offer">
+        <colgroup><col style="width:12%"><col style="width:15%"><col style="width:13%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:15%"></colgroup>
+        <thead><tr><th scope="col">Season</th><th scope="col" title="Cap payroll: signed salaries, dead money and, this season, cap holds and empty-spot charges">Payroll</th><th scope="col" title="What this contract counts on the cap that season">Offer</th><th scope="col" title="Tax payroll after this offer (signed salaries and dead money)">After</th><th scope="col" title="Cap room after this offer">Cap room</th><th scope="col" title="Room under the luxury tax after this offer">Tax room</th><th scope="col" title="Room under the first apron after this offer">1st apron</th></tr></thead>
+        <tbody>${rows || `<tr><td colspan="7" class="fa-empty">No cap seasons available.</td></tr>`}</tbody>
+      </table>
+      <p class="fa-muted ext-hint">* ${escapeHtml(preview.seasons[0] ? shortSeasonLabel(preview.seasons[0].season) : "Next season")} payroll counts cap holds for your unsigned free agents and a minimum charge for each empty spot below 12; later seasons count signed contracts only.</p>`;
+}
+
+function freeAgencyPayMarkup(preview, said = "") {
   const quote = preview.quote;
   const paidWith = !quote ? `<p class="fa-muted fa-pay-pending">Checking how you can pay…</p>` : quote.ok
     ? `<dl class="fa-pay-terms">
         <div><dt>Paid with</dt><dd><strong>${escapeHtml(quote.label || "")}</strong></dd></div>
         <div><dt>Salary by year</dt><dd>${quote.schedule.map((row) => `<span title="${escapeAttr(row.cap_charge_millions !== row.salary_millions ? `Counts ${money(row.cap_charge_millions)} on the cap: the league pays the rest of a veteran's one-year minimum` : "")}">${escapeHtml(shortSeasonLabel(row.season))} ${money(row.salary_millions)}</span>`).join(" · ")}<small>${escapeHtml(money(quote.total_millions))} total${Number(quote.raise_pct) > 0 ? `, ${quote.raise_pct}% raises` : Number(quote.raise_pct) < 0 ? `, ${-quote.raise_pct}% decreases` : ", flat"}${preview.terms?.option && preview.terms.option !== "none" ? `, ${CONTRACT_OPTION_LABELS[preview.terms.option].toLowerCase()} on ${escapeHtml(shortSeasonLabel(quote.schedule[quote.schedule.length - 1]?.season || ""))}` : ""}</small></dd></div>
         ${quote.locks ? `<div><dt>Locks in</dt><dd class="${quote.hard_cap ? "fa-pay-lock" : ""}">${escapeHtml(quote.locks)}</dd></div>` : ""}
-        <div><dt>Tradable from</dt><dd>${escapeHtml(quote.trade_eligible_date || "—")}</dd></div>
+        <div><dt>Tradable from</dt><dd>${escapeHtml(formatWrittenDate(quote.trade_eligible_date) || quote.trade_eligible_date || "—")}</dd></div>
       </dl>`
-    : `<p class="fa-pay-blocked">${escapeHtml(quote.message || "No legal way to pay this.")}</p><ul class="fa-pay-routes">${(quote.routes || []).filter((row) => row.reason && row.route !== "bird" || row.ok).map((row) => `<li class="${row.ok ? "is-ok" : ""}"><b>${escapeHtml(row.short)}</b> ${escapeHtml(row.ok ? "would work" : row.reason)}</li>`).join("")}</ul>`;
-  return `<section class="approved-card-panel fa-offer-verdict fa-verdict-${verdict.tone}" role="status" aria-live="polite">
-      <header>Will He Sign?</header>
-      <div class="fa-verdict-line"><strong>${escapeHtml(verdict.headline)}</strong><span>${escapeHtml(verdict.detail)}</span></div>
-      ${Number.isFinite(preview.floor) ? `<div class="fa-verdict-meter" title="Your salary against the salary he needs from you (100% signs)"><i><b style="width:${meter / 1.5}%"></b><u style="left:${100 / 1.5}%"></u></i><em>${Math.round(preview.ratio * 100)}% of his price</em></div>` : ""}
-    </section>
-    <section class="approved-card-panel fa-offer-pay" role="status" aria-live="polite"><header>How It's Paid</header>${paidWith}</section>
-    <section class="approved-card-panel fa-offer-cap"><header>Cap Position With This Offer</header>
-      <table class="fa-cap-table" aria-label="Payroll by season with this offer">
-        <colgroup><col style="width:12%"><col style="width:15%"><col style="width:13%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:15%"></colgroup>
-        <thead><tr><th scope="col">Season</th><th scope="col" title="Cap payroll: signed salaries, dead money and, this season, cap holds and empty-spot charges">Payroll</th><th scope="col" title="What this contract counts on the cap that season">Offer</th><th scope="col" title="Tax payroll after this offer (signed salaries and dead money)">After</th><th scope="col" title="Cap room after this offer">Cap room</th><th scope="col" title="Room under the luxury tax after this offer">Tax room</th><th scope="col" title="Room under the first apron after this offer">1st apron</th></tr></thead>
-        <tbody>${rows || `<tr><td colspan="7" class="fa-empty">No cap seasons available.</td></tr>`}</tbody>
-      </table>
-      <p class="fa-muted">* ${escapeHtml(preview.seasons[0] ? shortSeasonLabel(preview.seasons[0].season) : "Next season")} payroll counts cap holds for your unsigned free agents and a minimum charge for each empty spot below 12; later seasons count signed contracts only.</p>
-    </section>`;
+    : freeAgencyBlockedMarkup(quote, said);
+  return paidWith;
+}
+
+// No legal way to pay: the headline once, then one line per way. The game's message repeats every way's reason after
+// its first sentence, so only that sentence heads the list when the list is there.
+function freeAgencyBlockedMarkup(quote, said = "") {
+  const rows = (quote.routes || []).filter((row) => row.reason && row.route !== "bird" || row.ok);
+  const full = String(quote.message || "No legal way to pay this.");
+  const repeats = rows.some((row) => row.reason && full.includes(`${row.short}: ${row.reason}`));
+  const message = repeats ? full.split(/(?<=\.)\s/)[0] : full;
+  return `${said && message === said ? "" : `<p class="fa-pay-blocked">${escapeHtml(message)}</p>`}<ul class="fa-pay-routes">${rows.map((row) => `<li class="${row.ok ? "is-ok" : ""}"><b>${escapeHtml(row.short)}</b> ${escapeHtml(row.ok ? "would work" : row.reason)}</li>`).join("")}</ul>`;
 }
 
 // FA-REAL: your books as the cap ledger sees them, with the holds you can renounce (before/after room shown).
@@ -7946,7 +7983,7 @@ function freeAgencyCapSheetMarkup(room = state.data.freeagency || {}) {
       <td>${money(hold.amount_millions)}</td>
       <td>${hold.renounce ? signedMoney(hold.renounce.cap_room_after_millions) : "—"}</td>
       <td>${hold.renounce ? `<button type="button" class="ui-command" data-fa-renounce="${escapeAttr(hold.player_id)}" title="${escapeAttr(hold.renounce.loses)}">Renounce</button>` : ""}</td></tr>`).join("");
-  return `<section class="approved-card-panel fa-cap-sheet" data-fa-cap-sheet><header>Your Cap Sheet · ${escapeHtml(shortSeasonLabel(ledger.season))}</header>
+  return `<section class="approved-card-panel fa-cap-sheet" data-fa-cap-sheet aria-label="Your cap sheet ${escapeAttr(shortSeasonLabel(ledger.season))}">
     <dl class="fa-cap-lines">
       ${line("Signed salaries", money(now.signed_millions))}
       ${line("Dead money", money(now.dead_millions))}
@@ -7977,7 +8014,7 @@ function freeAgencyOfferFootMarkup(player, preview, { legal = true, open = true,
   const label = preview.offerSheet ? "Sign Offer Sheet" : preview.accepts ? `${exclusive ? "Re-sign" : "Sign"} for ${money(preview.aav)} × ${preview.years}` : "Make Offer";
   const paid = preview.quote?.ok ? `paid with ${preview.quote.label}` : preview.quote ? "no legal way to pay" : "checking how you pay";
   return `<div><strong>${escapeHtml(money(preview.aav))} first year × ${escapeHtml(preview.years)} yr${preview.years === 1 ? "" : "s"} · ${escapeHtml(money(preview.total))} total</strong><span>${escapeHtml(reason || `${preview.guaranteed ? "Guaranteed" : "Non-guaranteed"} · ${paid} · ${preview.verdict.headline.toLowerCase()}`)}</span></div>
-    <button type="button" class="ui-command fa-submit${preview.accepts && !disabled ? " is-ready" : ""}" data-fa-submit-offer="${escapeAttr(player.id)}" ${disabled ? "disabled" : ""}>${escapeHtml(label)}</button>`;
+    <button type="button" class="ui-command fa-submit extension-submit${preview.accepts && !disabled ? " is-ready" : ""}" data-fa-submit-offer="${escapeAttr(player.id)}" ${disabled ? "disabled" : ""}>${escapeHtml(label)}</button>`;
 }
 
 // ---- Signing wire --------------------------------------------------------------------------------------------------
@@ -10400,7 +10437,9 @@ function tradingOpen() {
 }
 function signingsOpen() {
   const legal = clipboardLegalActions();
-  return !legal.size || (legal.has("free_agent_signings") && state.data.freeagency?.state?.status !== "completed");
+  const room = state.data.freeagency || {};
+  const over = room.phase !== "re_signing" && room.state?.status === "completed";
+  return !legal.size || (legal.has("free_agent_signings") && !over);
 }
 
 // An explaining line, kept behind a small "i" (user, 2026-11-27).
@@ -10464,9 +10503,9 @@ function clipboardEntryLayout() {
         && state.data.freeagency.offseason_checklist) {
       // Side by side with the offer builder ("Negotiate" fills it); the market and wire are one click away (a second
       // row of tall cards does not fit the window, so the board would leave it closed anyway).
-      return {rows: [["phase-free_agency-checklist", "phase-free_agency-selected"]]};
+      return {rows: [["phase-free_agency-checklist"]]};
     }
-    return {rows: [["phase-free_agency-market", "phase-free_agency-selected", "phase-free_agency-wire"]]};
+    return {rows: [["phase-free_agency-market", "phase-free_agency-wire"]]};
   }
   return null;
 }
@@ -10492,7 +10531,6 @@ function seasonalClipboardCards(dashboard) {
     // One room: the market table, the offer builder (selected player, offer, cap position, rival bids) and the wire.
     free_agency: [
       ["market", "[data-free-agency-market-card]", "Free-Agent Market"],
-      ["selected", "[data-free-agency-builder]", "Offer Builder"],
       ["wire", "[data-free-agency-wire]", "Signing Wire"],
       ["checklist", "[data-offseason-checklist]", "Offseason Checklist"],
     ],
@@ -10950,14 +10988,15 @@ function wireFreeAgencyMarketPanel(panel) {
   rows.forEach((row, index) => {
     row.addEventListener("click", (event) => {
       if (event.target.closest("button, input, select, a, label")) return;
-      selectFreeAgent(row.dataset.faSelect || "");
+      selectFreeAgent(row.dataset.faSelect || "", { focusRow: false });
+      openFreeAgentNegotiation(row.dataset.faSelect || "");
     });
     row.addEventListener("keydown", (event) => {
       if (event.target !== row) return;
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
-        selectFreeAgent(row.dataset.faSelect || "");
-        if (event.key === "Enter") focusFreeAgencyBuilder();
+        selectFreeAgent(row.dataset.faSelect || "", { focusRow: false });
+        openFreeAgentNegotiation(row.dataset.faSelect || "");
       } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         event.preventDefault();
         const next = rows[index + (event.key === "ArrowDown" ? 1 : -1)];
@@ -10979,7 +11018,7 @@ function wireFreeAgencyShortlistButtons(panel) {
   }));
 }
 
-// Selecting a player: mark the row in place (no table rebuild, scroll kept) and rebuild only the offer builder.
+// Selecting a player marks his row in place (no table rebuild, scroll kept).
 function selectFreeAgent(playerId, { focusRow = true } = {}) {
   if (!playerId) return;
   state.selectedFreeAgent = playerId;
@@ -10995,18 +11034,22 @@ function selectFreeAgent(playerId, { focusRow = true } = {}) {
       row.scrollIntoView?.({ block: "nearest" });
     }
   });
-  refreshFreeAgencyPanels({ builder: true });
-}
-
-function focusFreeAgencyBuilder() {
-  if (window.CardBoard?.isOpen && !window.CardBoard.isOpen("phase-free_agency-selected")) window.CardBoard.open("phase-free_agency-selected");
-  els.content.querySelector("[data-free-agency-builder] [data-fa-offer-aav]")?.focus();
 }
 
 function wireFreeAgencyBuilderPanel(panel) {
+  if (panel.dataset.faWired) return;
+  panel.dataset.faWired = "1";
+  panel.querySelectorAll("[data-signing-tab]").forEach((tab) => tab.addEventListener("click", () => {
+    state.freeAgentSigningView = tab.dataset.signingTab;
+    panel.querySelectorAll("[data-signing-tab]").forEach((other) => other.setAttribute("aria-selected", String(other === tab)));
+    panel.querySelectorAll("[data-signing-view]").forEach((view) => { view.hidden = view.dataset.signingView !== tab.dataset.signingTab; });
+    const side = panel.querySelector("[data-signing-open]");
+    if (side) side.dataset.signingOpen = tab.dataset.signingTab;
+    const title = panel.querySelector("[data-signing-title]");
+    if (title) title.textContent = FREE_AGENCY_SIGNING_TITLES[tab.dataset.signingTab] || "";
+  }));
   const room = state.data.freeagency || {};
   const player = freeAgencyCandidate(panel.dataset.faBuilderPlayer || "");
-  panel.querySelectorAll("[data-fa-intel-card]").forEach((button) => button.addEventListener("click", () => freeAgentPlayerCard(button.dataset.faIntelCard || "")));
   wireFreeAgencyShortlistButtons(panel);
   if (!player) return;
   const draft = freeAgencyOfferDraft(player, room);
@@ -11017,8 +11060,11 @@ function wireFreeAgencyBuilderPanel(panel) {
   const update = () => {
     const preview = freeAgencyOfferPreview(player, room, draft);
     if (!preview.quote) requestFreeAgencyQuote(player, { ...draft, aav: preview.aav, years: preview.years }, update);
-    const slot = panel.querySelector("[data-fa-offer-preview]");
-    if (slot) slot.innerHTML = freeAgencyOfferPreviewMarkup(preview);
+    const fill = (name, markup) => { const slot = panel.querySelector(`[data-fa-slot="${name}"]`); if (slot) slot.innerHTML = markup; };
+    fill("verdict", freeAgencyVerdictMarkup(preview));
+    fill("cap", freeAgencyCapTableMarkup(preview));
+    fill("pay", freeAgencyPayMarkup(preview, player.offer_sheet?.blocked_reason));
+    fill("floor", freeAgencyFloorMarkup(player, preview));
     const foot = panel.querySelector("[data-fa-offer-foot]");
     const { exclusive, open } = freeAgencyRoomState(room);
     if (foot) {
@@ -11043,8 +11089,10 @@ function wireFreeAgencyBuilderPanel(panel) {
     });
     const shape = panel.querySelector("[data-fa-offer-shape]");
     if (shape) shape.textContent = freeAgencyShapeNote(preview, draft);
-    const note = panel.querySelector("[data-fa-offer-guarantee]")?.closest(".fa-offer-field")?.querySelector(".fa-offer-note");
-    if (note) note.textContent = preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on ${room.offer_rules?.non_guaranteed_until || "January 10"}; release him before then and you owe nothing. He asks more for this.`;
+    const guarantee = panel.querySelector("[data-fa-offer-guarantee]")?.closest(".fa-offer-field");
+    const words = preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on ${room.offer_rules?.non_guaranteed_until || "January 10"}; release him before then and you owe nothing. He asks more for this.`;
+    const note = guarantee?.querySelector(".fa-offer-note");
+    if (note) { note.textContent = words; guarantee.setAttribute("title", words); }
   };
   const setSalary = (value, { fromRange = false, commit = false } = {}) => {
     const parsed = Number(value);
@@ -11167,10 +11215,11 @@ function refreshFreeAgencyPanels({ market = false, builder = false, wire = false
   const caret = active && typeof active.selectionStart === "number" ? [active.selectionStart, active.selectionEnd] : null;
   const replace = (selector, markup) => {
     els.content.querySelectorAll(selector).forEach((panel) => {
+      const own = typeof markup === "function" ? markup(panel) : markup;
       const scroll = panel.querySelector(".fa-market-scroll, .fa-builder-scroll, .fa-wire-list");
       const position = scroll ? [scroll.scrollLeft, scroll.scrollTop] : null;
       const holder = document.createElement("div");
-      holder.innerHTML = markup;
+      holder.innerHTML = own;
       const next = holder.firstElementChild;
       if (!next) return;
       panel.replaceWith(next);
@@ -11180,7 +11229,7 @@ function refreshFreeAgencyPanels({ market = false, builder = false, wire = false
     });
   };
   if (market) replace("[data-free-agency-market-card]", phaseFreeAgencyMarketCard(room));
-  if (builder) replace("[data-free-agency-builder]", freeAgencyOfferBuilderPanel(room));
+  if (builder) replace("[data-free-agency-builder]", (panel) => freeAgencySigningLayout(room, panel.dataset.faBuilderPlayer));
   if (wire) replace("[data-free-agency-wire]", freeAgencySigningWirePanel(room));
   if (focus) {
     const target = els.content.querySelector(focus);
@@ -11197,18 +11246,36 @@ function freeAgencyCandidate(playerId) {
   return (state.data.freeagency?.candidates || []).find((player) => String(player.id) === String(playerId));
 }
 
-// "Build Offer" from a player card or the comparison: select him in the room and bring the offer builder forward.
+// Negotiating with a free agent: his page opens with the offer as its first tab. Every way in comes here.
 async function openFreeAgentNegotiation(playerId) {
   const player = freeAgencyCandidate(playerId);
   if (!player) return;
-  state.selectedFreeAgent = player.id;
   if (["freeAgentComparison", "freeAgentPlayer"].includes(state.modal?.kind)) closeModal();
-  if (!els.content.querySelector("[data-free-agency-builder]")) {
-    await openClipboardWindow("freeagency");
-  }
   selectFreeAgent(player.id, { focusRow: false });
-  window.CardBoard?.open?.("phase-free_agency-selected");
-  requestAnimationFrame(() => els.content.querySelector("[data-free-agency-builder] [data-fa-offer-aav]")?.focus({ preventScroll: true }));
+  const detail = await loadPlayerCardDetail(player.id);
+  if (!detail) return;
+  const context = { playerId: player.id, detail };
+  await openPlayerCardOnClipboard({
+    key: `signing:${player.id}`, title: `${player.name || "Free Agent"} · ${freeAgencySigningTitle(player)}`, kind: "signing", context,
+    body: signingCardBody(context),
+  });
+}
+
+// The page as the room stands now: the offer comes first while he can be signed; otherwise it is his plain page.
+function signingCardBody(context) {
+  const room = state.data.freeagency || {};
+  const player = freeAgencyCandidate(context.playerId);
+  const detail = player ? { ...context.detail, ratings: player.ratings || context.detail.ratings, name: player.name } : context.detail;
+  return approvedPlayerCardBody(detail, { signing: player && signingsOpen() ? { room, player } : null });
+}
+
+// A signing that goes through closes his offer page and takes you back to where you were.
+function closeSigningCards(playerId) {
+  const cards = (state.clipboardPlayerCards || []).filter((entry) => entry.kind === "signing" && String(entry.context?.playerId) === String(playerId));
+  for (const entry of cards) {
+    document.querySelector(`[data-board-close="${CSS.escape(entry.id)}"]`)?.click();
+    state.clipboardPlayerCards = state.clipboardPlayerCards.filter((item) => item !== entry);
+  }
 }
 
 function freeAgentOfferSummary(player) {
@@ -11926,7 +11993,8 @@ function inputsProfilePage(profile) {
 
 function approvedPlayerCardBody(detail, options = {}) {
   const extension = options.extension || null;
-  const pageOffset = extension ? 1 : 0;
+  const signing = options.signing || null;
+  const pageOffset = extension || signing ? 1 : 0;
   const ratings = detail.ratings || options.ratings || {};
   const season = detail.season || {};
   const offenseAxes = [["Shooting", ratings.shooting], ["Spacing", ratings.spacing], ["Creation", ratings.creation], ["Passing", ratings.passing], ["Rim pressure", ratings.rim_pressure], ["Portability", ratings.portability]].filter(([, value]) => detail.is_prospect || value != null);
@@ -11943,10 +12011,11 @@ function approvedPlayerCardBody(detail, options = {}) {
   const careerShift = careerFirst || prospectCourt ? 1 : 0;
   const court = `<section class="approved-card-panel approved-player-spatial player-overview-court">${spatialHeatmapMarkup(detail.spatial_profile, { compact: true })}</section>`;
   return `<div class="approved-player-card approved-player-pages${detail.is_prospect ? " approved-prospect-pages" : ""}" data-player-pages>
-    <div class="player-page-bar"><span data-player-page-title>${extension ? "Contract Extension" : detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}</span><div class="player-page-nav"><button type="button" class="ui-command" data-player-page-step="-1" aria-label="Previous player card page" title="Previous page">‹</button><button type="button" class="ui-command" data-player-page-step="1" aria-label="Next player card page" title="Next page">›</button><span data-player-page-count aria-live="polite" aria-atomic="true">1/${(extension ? 1 : 0) + 2 + (detail.is_prospect ? 0 : 1) + careerShift}</span></div></div>
+    <div class="player-page-bar"><span data-player-page-title>${extension ? "Contract Extension" : signing ? freeAgencySigningTitle(signing.player, signing.room) : detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}</span><div class="player-page-nav"><button type="button" class="ui-command" data-player-page-step="-1" aria-label="Previous player card page" title="Previous page">‹</button><button type="button" class="ui-command" data-player-page-step="1" aria-label="Next player card page" title="Next page">›</button><span data-player-page-count aria-live="polite" aria-atomic="true">1/${(extension ? 1 : 0) + 2 + (detail.is_prospect ? 0 : 1) + careerShift}</span></div></div>
     <section class="approved-player-identity player-page-identity"><div class="approved-player-profile-head"><span class="profile-headshot-wrap">${playerHeadshotMarkup(detail, "approved-profile-headshot")}${detail.team?.abbrev && typeof teamLogoSrc === "function" && teamLogoSrc(detail.team.abbrev) ? `<img class="profile-team-badge" src="${escapeAttr(teamLogoSrc(detail.team.abbrev))}" alt="${escapeAttr(detail.team.name || detail.team.abbrev)}" title="${escapeAttr(detail.team.name || detail.team.abbrev)}" />` : ""}</span><div class="approved-profile-name"><h3>${escapeHtml(detail.name || options.name || "Player")}</h3><p>${escapeHtml([detail.position, detail.age != null ? `${detail.age} years` : "", detail.height].filter(Boolean).join(" · "))}</p><p class="player-draft-details">${escapeHtml(detail.is_prospect ? [detail.college_profile ? detail.source_team : (detail.scouting_profile?.where || detail.source_team), detail.college_profile?.coach ? `Coach ${detail.college_profile.coach}` : "", `${detail.draft_year} draft class`].filter(Boolean).join(" · ") : detail.draft_position ? `${detail.draft_year || 'Draft'} · Pick #${detail.draft_position}` : detail.draft_status==='undrafted' ? `Undrafted${detail.draft_year?` · ${detail.draft_year}`:''}` : detail.draft_year ? `Draft year ${detail.draft_year}` : 'Draft details unavailable')}</p></div>${playerSummaryRatings(detail)}</div>${typeof playerHeaderFacts === "function" ? playerHeaderFacts(detail) : playerCardEvidence(detail)}${options.actions || ""}</section>
     ${extension ? extensionNegotiationPage(extension.room, extension.selectedPlayerId, extension.response, detail, extension.draft) : ""}
-    ${careerFirst ? `<section class="player-card-page player-card-page--overview player-card-page--career" data-player-page="${pageOffset}" data-page-title="Career, Contract & Outlook" aria-label="Career statistics, contract and outlook">
+    ${signing ? freeAgencySigningPage(signing.room, signing.player) : ""}
+    ${careerFirst ? `<section class="player-card-page player-card-page--overview player-card-page--career" data-player-page="${pageOffset}" data-page-title="Career, Contract & Outlook" aria-label="Career statistics, contract and outlook"${signing ? " hidden" : ""}>
       ${globalThis.PlayerCareer.page(detail)}
     </section>
     <section class="player-card-page player-card-page--overview player-card-page--hotspots" data-player-page="${pageOffset + 1}" data-page-title="Hotspots" aria-label="Shooting and defense by zone" hidden>
@@ -12069,8 +12138,9 @@ document.addEventListener('click',event=>{
 function clipboardPlayerCardWindows(cardId = null) {
   const saveId = String(state.currentSave || "");
   return (state.clipboardPlayerCards || []).filter(entry => entry.saveId === saveId && (!cardId || entry.id === cardId)).map(entry => {
+    if (entry.kind === "signing") entry.body = signingCardBody(entry.context);
     const card = document.createElement("div");
-    card.className = `clipboard-player-card${entry.kind === "fantasy" ? " clipboard-player-card--fantasy" : entry.kind === "extension" ? " clipboard-player-card--extension" : entry.kind === "coach" ? " clipboard-player-card--coach" : ""}`;
+    card.className = `clipboard-player-card${entry.kind === "fantasy" ? " clipboard-player-card--fantasy" : entry.kind === "extension" ? " clipboard-player-card--extension" : entry.kind === "signing" ? " clipboard-player-card--extension clipboard-player-card--signing" : entry.kind === "coach" ? " clipboard-player-card--coach" : ""}`;
     if(entry.kind==="extension") card.dataset.extensionEntryId=entry.id;
     card.innerHTML = entry.body;
     wirePlayerCardPages(card, entry);
@@ -12084,6 +12154,8 @@ function clipboardPlayerCardWindows(cardId = null) {
       const close=async()=>{ const applied=Boolean(entry.context?.extensionApplied); if(applied) entry.context.extensionApplied=false; card.closest('.card-board-window')?.querySelector('[data-board-close]')?.click(); state.clipboardPlayerCards=state.clipboardPlayerCards.filter(item=>item.id!==entry.id); if(applied){ showToast(`${entry.context.outcome?.message||"Player signed an extension."}`); await refreshHome(); } };
       wireExtensionNegotiationModal(card,entry.context,redraw,close);
       if(entry.context?.outcome) mountPlayerExtensionOutcome(card,entry.context,close);
+    } else if (entry.kind === "signing") {
+      wireFreeAgencyRoom(card);
     } else if (entry.kind === "freeAgent") {
       card.addEventListener("click", event => {
         const button = event.target.closest("[data-fa-card-negotiate]");
@@ -12108,7 +12180,7 @@ function clipboardPlayerCardWindows(cardId = null) {
       });
     }
     const isFantasyCard = entry.kind === "fantasy";
-    const isExtensionCard = entry.kind === "extension";
+    const isExtensionCard = entry.kind === "extension" || entry.kind === "signing";
     const sizeRevision = Number(entry.sizeRevision) || 0;
     return {
       id:entry.id,
@@ -12150,7 +12222,7 @@ async function openPlayerCardOnClipboard({key, title, body, kind = "player", con
   if (!entry && kind === "extension") entry = state.clipboardPlayerCards.find(item => item.saveId === saveId && item.key === `dashboard:${context?.selectedPlayerId}`);
   if (!entry) {
     state.clipboardPlayerCardSequence += 1;
-    entry = {id:`player-card-${state.clipboardPlayerCardSequence}`, saveId, key, title, body, kind, width:kind === "coach" ? 900 : kind === "fantasy" ? 1120 : kind === "extension" ? 1530 : 2100, height:kind === "coach" ? 252 : kind === "fantasy" ? 700 : kind === "extension" ? 900 : 1270, sizeRevision:kind === "extension" ? 9 : 6};
+    entry = {id:`player-card-${state.clipboardPlayerCardSequence}`, saveId, key, title, body, kind, width:kind === "coach" ? 900 : kind === "fantasy" ? 1120 : kind === "extension" || kind === "signing" ? 1530 : 2100, height:kind === "coach" ? 252 : kind === "fantasy" ? 700 : kind === "extension" || kind === "signing" ? 900 : 1270, sizeRevision:kind === "extension" || kind === "signing" ? 9 : 6};
     state.clipboardPlayerCards.push(entry);
   } else {
     const extensionSizeUpdate = kind === "extension" && (Number(entry.sizeRevision) || 0) < 9
@@ -12159,7 +12231,7 @@ async function openPlayerCardOnClipboard({key, title, body, kind = "player", con
     Object.assign(entry, {key, title, body, kind, ...extensionSizeUpdate});
   }
   entry.context=context;
-  if(kind==="extension") entry.page=0;
+  if(kind==="extension" || kind==="signing") entry.page=0;
 
   if (state.view !== "dashboard") {
     state.view = "dashboard";
@@ -12185,6 +12257,8 @@ async function dashboardPlayerCard(playerId) {
   const player = rosterRows(state.data.dashboard || {}).find((row) => String(row.id) === String(playerId));
   const detail = await loadPlayerCardDetail(playerId);
   if (!detail) return;
+  // A free agent you can sign is negotiated with wherever you open him.
+  if (!tradeReturn && state.data.freeagency && freeAgencyCandidate(playerId) && signingsOpen()) return openFreeAgentNegotiation(playerId);
   const returnLabel = tradeReturn?.kind === "tradeOffers" ? "Back to Offers" : tradeReturn?.activeTab === "finder" ? "Back to Trade Finder" : "Back to Trade Builder";
   await openPlayerCardOnClipboard({
     key:`dashboard:${playerId}`,
@@ -12200,16 +12274,14 @@ async function freeAgentPlayerCard(playerId) {
   const player = freeAgencyCandidate(playerId);
   // Round 13: offseason tables use this button for the user's own players too; they get their regular card.
   if (!player) return dashboardPlayerCard(playerId);
+  if (signingsOpen()) return openFreeAgentNegotiation(playerId);
   const detail = await loadPlayerCardDetail(playerId);
   if (!detail) return;
   await openPlayerCardOnClipboard({
     key:`free-agent:${playerId}`,
     title:`${player.name || "Free Agent"} · Player Card`,
     kind:"freeAgent",
-    body:approvedPlayerCardBody(
-      { ...detail, ratings: player.ratings || detail.ratings, name: player.name },
-      { actions: `<button type="button" class="approved-player-primary-action" data-fa-card-negotiate="${escapeAttr(player.id)}">Build Offer</button>` },
-    ),
+    body:approvedPlayerCardBody({ ...detail, ratings: player.ratings || detail.ratings, name: player.name }),
   });
 }
 
@@ -12234,7 +12306,7 @@ function openFreeAgentComparison() {
       <div class="free-agent-comparison-market"><span>${escapeHtml(player.offer_count || 0)} active offer${Number(player.offer_count || 0) === 1 ? "" : "s"}</span>${freeAgentOfferSummary(player)}</div>
       <div class="free-agent-comparison-stats"><span><small>GP</small><b>${escapeHtml(player.games || 0)}</b></span><span><small>MPG</small><b>${draftMetric(player.previous_mpg)}</b></span><span><small>PTS</small><b>${draftMetric(player.ppg)}</b></span><span><small>REB</small><b>${draftMetric(player.rpg)}</b></span><span><small>AST</small><b>${draftMetric(player.apg)}</b></span><span><small>STL</small><b>${draftMetric(player.spg)}</b></span><span><small>BLK</small><b>${draftMetric(player.bpg)}</b></span><span><small>TO</small><b>${draftMetric(player.topg)}</b></span></div>
       <div class="free-agent-comparison-ratings">${ratingFields.map(([label, key]) => `<div><span>${escapeHtml(label)}</span><i><b style="width:${clampNumber(Number(player.ratings?.[key] || 0), 0, 99)}%"></b></i><strong>${draftMetric(player.ratings?.[key])}</strong></div>`).join("")}</div>
-      <button type="button" class="free-agency-negotiate-button" data-fa-comparison-negotiate="${escapeAttr(player.id)}">Negotiate</button>
+      ${signingsOpen() ? `<button type="button" class="free-agency-negotiate-button" data-fa-comparison-negotiate="${escapeAttr(player.id)}">Negotiate</button>` : ""}
     </article>`).join("")}</div>`,
   };
   renderModal();
@@ -12267,6 +12339,7 @@ async function submitFreeAgentOffer(playerId = state.selectedFreeAgent) {
   if (!await askConfirm(question)) return;
   const result = await action("submit_free_agent_offer", { ...savePayload(), player_id: player.id, team: userTeam(), years: preview.years, guaranteed: preview.guaranteed, aav_millions: preview.aav, route: draft.route || "", raise_pct: freeAgencyRaisePct(player, draft), salary_path: draft.path || "rising", option: draft.option || "none", backload: Boolean(draft.backload), auto_apply: true, seed: 7 });
   state.freeAgentQuotes = {};
+  if ((result.offer_sheet && result.status === "offer_sheet_signed") || result.apply_result?.status === "applied") closeSigningCards(player.id);
   if (result.offer_sheet) {
     // FA-REAL slice 3: an offer sheet is signed when he agrees; his team then has a day to match.
     if (result.status === "offer_sheet_signed") showToast(`${player.name} signed your offer sheet: ${terms}. ${player.restricted?.team_abbrev || "His team"} has until the end of ${result.sheet?.match_deadline || "tomorrow"} to match.`);

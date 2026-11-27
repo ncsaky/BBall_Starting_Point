@@ -361,7 +361,7 @@ test('Playoff Stats, Playoffs and Two-Way Places are full-size tabs; the bracket
 test('Set The Roster and the Offseason Checklist are full-size step screens', () => {
   const {pages} = load();
   const layoutOf = (id) => pages.PAGES.find((page) => page.id === id).layout({available: () => true});
-  for (const [id, cards] of [['set-roster', ['phase-set_roster-checklist']], ['free-agency-checklist', ['phase-free_agency-checklist', 'phase-free_agency-selected']]]) {
+  for (const [id, cards] of [['set-roster', ['phase-set_roster-checklist']], ['free-agency-checklist', ['phase-free_agency-checklist']]]) {
     const layout = layoutOf(id);
     assert.ok(layout.full, `${id} is laid out at real sizes`);
     assert.deepEqual(Array.from(cardsOf(layout), (node) => node.id), cards);
@@ -380,5 +380,5 @@ test('The draft room (three states) and Free Agency are full-size step screens',
   assert.equal(cardsOf(lottery)[0].natural, 'fit', 'the lottery is a picture, enlarged as one piece');
   const agency = pages.PAGES.find((page) => page.id === 'free-agency').layout({available: () => true});
   assert.ok(agency.full);
-  assert.deepEqual(Array.from(cardsOf(agency), (node) => node.id), ['phase-free_agency-market', 'phase-free_agency-selected', 'phase-free_agency-wire']);
+  assert.deepEqual(Array.from(cardsOf(agency), (node) => node.id), ['phase-free_agency-market', 'phase-free_agency-wire']);
 });

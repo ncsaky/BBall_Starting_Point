@@ -49,7 +49,7 @@
     "phase-cutdown-decision": .86,
     "phase-playoffs-control": .9, "phase-playoffs-bracket": .74, "phase-playoffs-leaders": .78, "phase-playoffs-injuries": .78,
     "phase-draft-control": .9, "phase-draft-lottery": .8, "phase-draft-board": .84, "phase-draft-order": .82, "phase-draft-summary": .84, "phase-draft-trades": .82,
-    "phase-free_agency-control": .9, "phase-free_agency-market": .82, "phase-free_agency-selected": .84, "phase-free_agency-offers": .84, "phase-free_agency-wire": .82, "phase-free_agency-payroll": .82, "phase-free_agency-cap": .82,
+    "phase-free_agency-control": .9, "phase-free_agency-market": .82, "phase-free_agency-offers": .84, "phase-free_agency-wire": .82, "phase-free_agency-payroll": .82, "phase-free_agency-cap": .82,
     "phase-fantasy_draft-control": .9, "phase-fantasy_draft-board": .82, "phase-fantasy_draft-roster": .84, "phase-fantasy_draft-ticker": .82,
   };
   const CARDS = [

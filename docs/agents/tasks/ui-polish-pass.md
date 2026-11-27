@@ -2,7 +2,7 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 1/6 - round after the final sweep: uniform two-line rows, captions behind an i, coach card closes, closed buttons hidden, one signing page, then UI/UX hunting
+Progress: 6/6 - round after the final sweep finished (checkpoint 18); waiting on the user's answers
 
 ## Handover (2026-11-26): finishing on a cheaper model
 
@@ -1115,3 +1115,31 @@ Next: one more round. Their "Anything else" note:
    those are larger and we probably need a smarter model ... we can do it later, we have a lot more simple UI/UX
    work we can do first for a few days"
 
+### Report (checkpoint 18)
+
+Done:
+- Closed trading or signings: their buttons, the Find column and the Free Agency tab are gone (this includes the
+  market's Trade Room button).
+- Long names: uniform two-line rows; explaining lines behind an "i"; a coach card closes on page change.
+- One signing page: the side-bar offer builder is deleted. Signing opens the player's page with the offer as its
+  first tab ("Contract Offer", "Re-signing Offer" or "Offer Sheet").
+- Found on the way and fixed: the salary slider rounded the top legal salary up (and the minimum down), so the most
+  you could offer came back "blocked"; the cap's reasons printed twice; the Sign button off screen at 1280 by 760;
+  signing-wire lines ending in dots; the market's last column clipped; the injury list's "Expected back" and ratings
+  clipped; "Tradable from 2028-01-15" now a written date.
+
+Checked on copies of saves (`output/ui-polish/saves/sub_*`): a re-signing refused and accepted, an open-market offer
+refused and one that signed, a two-way, a camp invite, renouncing a cap hold, entry from a market row by keyboard,
+comparison, player name and checklist, a regular-season save (no offer tab), 1512 by 900 and 1280 by 760. All browser
+test files and the two Python interface tests pass.
+
+Not checked: a signed offer sheet and a completed sign-and-trade (no test save allows either; both use the same
+"close the page" step as the paths that were tested), the draft-day signing-closed state this round beyond the
+earlier picture, windows under 1280 by 760, the full Python tests (no Python changed).
+
+Seen and left alone (game rules, not interface):
+- A camp invite is allowed for every free agent: a player asking about $23M accepted one at his minimum.
+- "The most you can pay" can be a salary the cap then blocks (the full mid-level for a team over the first apron).
+- The offer opens on the highest salary, so for an expensive player it starts "Blocked by the cap".
+
+**Waiting on decisions** (checkpoint 18 page, collection `decisions`).

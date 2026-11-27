@@ -60,7 +60,7 @@ function builderScope() {
   vm.createContext(scope);
   vm.runInContext(slice('function freeAgencyRoomState(', 'function ensureFreeAgencySelection('), scope);
   vm.runInContext(slice('function freeAgencyMinimum(', 'function phaseFreeAgencyMarketCard('), scope);
-  vm.runInContext(slice('function roundOfferTenth(', 'function freeAgencyOfferBuilderPanel('), scope);
+  vm.runInContext(slice('function roundOfferTenth(', 'const FREE_AGENCY_SIGNING_VIEWS'), scope);
   scope.CONTRACT_PATH_LABELS = {rising: 'Rising', flat: 'Flat', declining: 'Declining'};
   scope.CONTRACT_OPTION_LABELS = {none: 'None', player: 'Player option', team: 'Team option'};
   return scope;
@@ -253,33 +253,33 @@ test('market: mood compares the best rival bid with today\'s bar; filters and so
   assert.deepEqual(Array.from(scope.freeAgencyMarketRows(r), (p) => p.id), ['p_c', 'p_miller', 'p_b']);
 });
 
-test('free agency opens the market, the offer builder and the signing wire together, once, in one row', () => {
+test('free agency opens the market and the signing wire together, once, in one row', () => {
   const scope = {state: {data: {freeagency: room()}, home: {save: {phase: 'free_agency'}}}, dashboardPhaseKind: () => 'free_agency'};
   vm.createContext(scope);
   vm.runInContext(slice('function clipboardEntryLayout(', 'function seasonalClipboardCards('), scope);
   const layout = scope.clipboardEntryLayout();
-  assert.deepEqual(JSON.parse(JSON.stringify(layout.rows)), [['phase-free_agency-market', 'phase-free_agency-selected', 'phase-free_agency-wire']]);
+  assert.deepEqual(JSON.parse(JSON.stringify(layout.rows)), [['phase-free_agency-market', 'phase-free_agency-wire']]);
   const cardBoardScope = {window: {}, structuredClone};
   vm.createContext(cardBoardScope);
   vm.runInContext(board, cardBoardScope);
   const {arrangeEntryRows, entryLayoutDue} = cardBoardScope.window.CardBoard;
   const card = (width) => ({x: 0, y: 0, width, height: 740, scale: 1, minScale: .72, visible: false});
-  const cards = {'phase-free_agency-market': card(756), 'phase-free_agency-selected': card(440), 'phase-free_agency-wire': card(220)};
+  const cards = {'phase-free_agency-market': card(900), 'phase-free_agency-wire': card(360)};
   arrangeEntryRows(cards, layout.rows, {clientWidth: 1440, clientHeight: 840, scrollLeft: 0, scrollTop: 0});
-  const [market, builder, wire] = Object.values(cards);
-  assert.ok(market.visible && builder.visible && wire.visible);
-  assert.equal(market.y, builder.y);
-  assert.ok(market.x + market.width * market.scale <= builder.x && builder.x + builder.width * builder.scale <= wire.x, 'side by side, no overlap');
+  const [market, wire] = Object.values(cards);
+  assert.ok(market.visible && wire.visible);
+  assert.equal(market.y, wire.y);
+  assert.ok(market.x + market.width * market.scale <= wire.x, 'side by side, no overlap');
   assert.ok(market.scale >= .95, `readable at 1440 wide (${market.scale})`);
   // Once: a reload in the same phase keeps the saved arrangement.
   assert.equal(entryLayoutDue(layout, {phaseCards: ['phase-free_agency-market']}, false), false);
   assert.equal(entryLayoutDue(layout, {phaseCards: ['phase-free_agency-market']}, true), true);
 });
 
-test('free-agency windows: three cards, no leftover controls/payroll/cap windows, day controls in the top bar', () => {
+test('free-agency windows: two cards and the checklist, no leftover controls/payroll/cap windows, day controls in the top bar', () => {
   const section = slice('    free_agency: [', '    fantasy_draft: [');
   // FA-REAL slice 2 (changed): a fourth window, the offseason checklist (stop 1 and signing day).
-  assert.deepEqual(Array.from(section.matchAll(/\["(\w+)", "([^"]+)", "([^"]+)"\]/g), (m) => m[1]), ['market', 'selected', 'wire', 'checklist']);
+  assert.deepEqual(Array.from(section.matchAll(/\["(\w+)", "([^"]+)", "([^"]+)"\]/g), (m) => m[1]), ['market', 'wire', 'checklist']);
   const commands = slice('function freeAgencyPhaseCommands(', 'function freeAgencyMinimum(');
   // FA-REAL slice 2: stop 1 goes to draft night, then opens free agency (no more exclusive days).
   for (const id of ['reSignToDraft', 'reSignOpenMarket', 'faAdvanceStage', 'faAdvanceDay', 'faAdvanceEnd']) assert.match(commands, new RegExp(id));

@@ -96,11 +96,10 @@
     // 2026-11-26): each is a Home tab, listed first, and it is where Home lands (phaseHome).
     {id: "draft-room", group: "home", phaseHome: true, label: "Draft", layout: draftRoomLayout},
     {id: "free-agency-checklist", group: "home", phaseHome: true, label: "Checklist", layout: () => ({full: {fits: [1220, 660], roomy: [1500, 900]}, ...row(
-      colOf({fill: true}, card("phase-free_agency-checklist", {bare: true, fill: true})),
-      colOf({basis: 400}, card("phase-free_agency-selected", {fill: true})))})},
+      colOf({fill: true}, card("phase-free_agency-checklist", {bare: true, fill: true})))})},
     {id: "free-agency", group: "home", phaseHome: true, label: "Free Agency", when: () => typeof signingsOpen !== "function" || signingsOpen(), layout: () => ({full: {fits: [1220, 660], roomy: [1500, 900]}, ...row(
       colOf({fill: true}, card("phase-free_agency-market", {fill: true})),
-      colOf({basis: 340}, card("phase-free_agency-selected", {fill: true}), colOf({basis: 230}, card("phase-free_agency-wire", {fill: true}))))})},
+      colOf({basis: 308}, card("phase-free_agency-wire", {fill: true})))})},
     {id: "fantasy-draft", group: "now", step: true, label: "Fantasy Draft", layout: () => col("phase-fantasy_draft-control", row(card("phase-fantasy_draft-board", {grow: "h"}), card("phase-fantasy_draft-roster", {grow: "h"}), card("phase-fantasy_draft-ticker", {grow: "h"})))},
     {id: "roster-moves", group: "now", step: true, label: () => rosterMovesLabel(), layout: () => ({full: {fits: [1220, 640], roomy: [1500, 900]}, ...row(card("phase-cutdown-decision", {bare: true, fill: true}))})},
     {id: "set-roster", group: "now", step: true, label: "Set The Roster", layout: () => ({full: {fits: [1220, 600], roomy: [1500, 900]}, ...row(card("phase-set_roster-checklist", {bare: true, fill: true}))})},

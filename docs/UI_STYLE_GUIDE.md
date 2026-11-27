@@ -433,6 +433,26 @@ its sections share the page's width and height. The rules live in `gui/full-page
   have field headers"); the leader band is rounded like a card, not a sharp box.
 - The contract extension window and the player card are built outside `#modalRoot`: these sheets do not reach them.
 
+## One signing page (user, 2026-11-27)
+- Every negotiated signing happens on the player's page, laid out like the contract extension tab: re-signing, an
+  open-market offer, an offer sheet, and under "Other ways" the two-way, camp and sign-and-trade deals. There is no
+  side-bar offer builder; do not bring one back. ("It just makes more to have a unified look.")
+- Left: what he wants, your offer, whether he signs, the button. Right: the cap table, then one panel with the tabs
+  How it's paid, Rival bids, Your cap sheet, Other ways. The cap sheet is long and takes the whole right side.
+- It opens from a free-agent row, the checklist's Negotiate, the comparison window and a player's name. A signing
+  that goes through closes it and returns you to where you were.
+- In a short window the verdict and the button stay on screen and each side scrolls by itself.
+- One-click signings (a two-way on the roster screen, "Sign Players", waivers) are not negotiations and are unchanged.
+
+## Closed things, rows and captions (user, 2026-11-27)
+- When trading or signings are closed, the buttons and tabs that would open them are not shown. A short note says
+  they are closed.
+- Every row of a list is the same height, tall enough for a name on two lines, and a one-line name sits in the middle
+  of it. No ending a name in dots.
+- A news line too long for its two lines fades out; the whole text is on hover.
+- A line explaining how something works sits behind a small "i" beside the title.
+- A coach card closes when you change page, unless pinned.
+
 ## Preserve (the user's favourites; don't redesign)
 - Team Identity heat maps at the current hexagon size (round 3: "looks great"). The tab style there still needs a new try.
 - Four Factors range charts (round 3: "maybe one of my favourite things").
