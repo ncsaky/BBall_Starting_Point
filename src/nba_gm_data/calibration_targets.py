@@ -25,7 +25,17 @@ LEAGUE_METRICS = [
     "pace", "off_rating", "points_per_game", "fga_per100", "fg3a_per100", "fta_per100",
     "fg3a_rate", "ft_rate", "efg_pct", "ts_pct", "tov_per100", "tov_pct", "orb_pct",
     "ast_per100", "ast_rate", "stl_per100", "blk_per100", "pf_per100",
+    "fg2_pct", "fg3_pct", "ft_pct",
 ]
+# Box-score texture (SHOOTING-SPLITS, 2026-11-26): players used per team-game and how often rare nights happen.
+# Scored apart from the league metrics. Rare-night bands allow for both seasons' sampling noise (see texture_band).
+TEXTURE_EVENTS = {
+    "pts40_per_game": ("points", 40), "pts50_per_game": ("points", 50), "reb20_per_game": ("rebounds", 20),
+    "stl6_per_game": ("steals", 6), "tov10_per_game": ("turnovers", 10),
+}
+TEXTURE_METRICS = ["players_used"] + list(TEXTURE_EVENTS)
+PLAYERS_USED_BAND = 0.5      # players per team-game, either side of real
+TEXTURE_MODEL_TOLERANCE = 0.15   # share of the real rate allowed on top of sampling noise
 PLAYER_COUNT_STATS = ["points", "fga", "fg3a", "fta", "rebounds", "assists", "turnovers", "steals", "blocks"]
 PLAYER_COMPARE_METRICS = [f"{s}_per36" for s in PLAYER_COUNT_STATS] + ["ts_pct"]
 
@@ -62,8 +72,48 @@ def league_metrics_from_totals(t: dict[str, float]) -> dict[str, float | None]:
         "stl_per100": _div(100.0 * t["stl"], poss),
         "blk_per100": _div(100.0 * t["blk"], poss),
         "pf_per100": _div(100.0 * t["pf"], poss) if t.get("pf") is not None else None,
+        "fg2_pct": _div(t["fgm"] - t["fg3m"], t["fga"] - t["fg3a"]) if "fg3m" in t else None,
+        "fg3_pct": _div(t["fg3m"], t["fg3a"]) if "fg3m" in t else None,
+        "ft_pct": _div(t["ftm"], t["fta"]) if "ftm" in t else None,
     }
     return out
+
+
+def texture_from_games(games: Iterable[list[dict[str, Any]]]) -> dict[str, Any]:
+    """Players used per team-game and rare-night counts from games given as lists of player lines.
+
+    Each line needs team_id (or team_abbrev), minutes, points, rebounds, steals, turnovers; a line with no minutes
+    did not play."""
+    n_games, used, counts = 0, [], {k: 0 for k in TEXTURE_EVENTS}
+    for lines in games:
+        n_games += 1
+        per_team: dict[Any, int] = defaultdict(int)
+        for line in lines:
+            if float(line.get("minutes") or 0) <= 0:
+                continue
+            per_team[line.get("team_id", line.get("team_abbrev"))] += 1
+            for key, (stat, threshold) in TEXTURE_EVENTS.items():
+                counts[key] += float(line.get(stat) or 0) >= threshold
+        used += list(per_team.values())
+    out: dict[str, Any] = {"games": n_games, "counts": counts,
+                           "players_used": statistics.fmean(used) if used else None}
+    out.update({k: (v / n_games if n_games else None) for k, v in counts.items()})
+    return out
+
+
+def texture_band(metric: str, target: dict[str, Any], sim_games: int) -> tuple[float, float] | None:
+    """Acceptance band for a texture metric: players used +/- PLAYERS_USED_BAND; a rare-night rate per game +/- two
+    standard errors of both seasons' counts (Poisson) plus TEXTURE_MODEL_TOLERANCE of the real rate."""
+    mean = target.get("mean")
+    if mean is None:
+        return None
+    if metric == "players_used":
+        return mean - PLAYERS_USED_BAND, mean + PLAYERS_USED_BAND
+    real_games = float(target.get("games") or 0)
+    if not real_games or not sim_games:
+        return None
+    half = 2.0 * math.sqrt(mean / real_games + mean / sim_games) + TEXTURE_MODEL_TOLERANCE * mean
+    return max(0.0, mean - half), mean + half
 
 
 def player_rates(totals: dict[str, float]) -> dict[str, float | None]:
@@ -88,6 +138,7 @@ def aggregate_from_results(results: Iterable[dict[str, Any]]) -> dict[str, Any]:
     League metrics are computed on league-wide summed totals; per-team metrics are also computed
     so a sim team spread is available (``team_std``).
     """
+    results = list(results)
     team_tot: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
     players: dict[str, dict[str, Any]] = {}
     n_games = 0
@@ -127,7 +178,7 @@ def aggregate_from_results(results: Iterable[dict[str, Any]]) -> dict[str, Any]:
             # Trust player minutes only when they look like 240 + 25 per overtime; otherwise assume regulation.
             t["minutes"] += 240.0 + 25.0 * ot if abs(tm - (240.0 + 25.0 * ot)) <= 8.0 else 240.0
             for key, src in (("points", "points"), ("fga", "fga"), ("fgm", "fgm"), ("fg3m", "fg3m"), ("fg3a", "fg3a"),
-                             ("fta", "fta"), ("orb", "offensive_rebounds"), ("tov", "turnovers"), ("ast", "assists"),
+                             ("fta", "fta"), ("ftm", "ftm"), ("orb", "offensive_rebounds"), ("tov", "turnovers"), ("ast", "assists"),
                              ("stl", "steals"), ("blk", "blocks"), ("pf", "personal_fouls")):
                 t[key] += float(tl.get(src) or 0)
             t["opp_drb"] += opp_drb
@@ -145,7 +196,9 @@ def aggregate_from_results(results: Iterable[dict[str, Any]]) -> dict[str, Any]:
     for pid, rec in players.items():
         if rec["games"] > 0:
             player_out[pid] = {**rec, **player_rates(rec)}
-    return {"n_games": n_games, "league_totals": league, "team_std": team_std, "player_lines": player_out}
+    texture = texture_from_games([res.get("player_lines") or [] for res in results])
+    return {"n_games": n_games, "league_totals": league, "team_std": team_std, "player_lines": player_out,
+            "texture": texture}
 
 
 # ---------------------------------------------------------------- targets I/O and comparison
@@ -158,16 +211,18 @@ def load_targets(path: str | Path) -> dict[str, Any]:
 def _league_band(target: dict[str, Any]) -> tuple[float, float] | None:
     if target.get("mean") is None or target.get("std") is None:
         return None
-    half = BAND_STD_MULT * float(target["std"])
+    half = float(target["band_half"]) if target.get("band_half") is not None else BAND_STD_MULT * float(target["std"])
     return float(target["mean"]) - half, float(target["mean"]) + half
 
 
 def compare(sim_league_totals: dict[str, Any], sim_player_lines: dict[str, dict[str, Any]], targets: dict[str, Any],
-            top_n: int = 150, n_misses: int = 20, min_sim_games: int = 5) -> dict[str, Any]:
+            top_n: int = 150, n_misses: int = 20, min_sim_games: int = 5,
+            sim_texture: dict[str, Any] | None = None) -> dict[str, Any]:
     """Compare a simulation with the targets.
 
     sim_league_totals: {metric: value} (the "league_totals" from aggregate_from_results).
     sim_player_lines: {player_id: {games, minutes, <metric>_per36, ts_pct, ...}} (the "player_lines").
+    sim_texture: the "texture" from aggregate_from_results (players used, rare nights); scored when the targets have it.
     """
     metrics = []
     for name, tgt in targets["league"].items():
@@ -209,7 +264,18 @@ def compare(sim_league_totals: dict[str, Any], sim_player_lines: dict[str, dict[
         ds = [e["metrics"][m]["delta"] for e in deltas if m in e["metrics"]]
         if ds:
             bias[m] = {"mean_delta": statistics.fmean(ds), "mean_abs_delta": statistics.fmean(abs(d) for d in ds), "n": len(ds)}
+    texture = []
+    for name, tgt in (targets.get("texture") or {}).items():
+        sim_v = (sim_texture or {}).get(name)
+        band = texture_band(name, tgt, int((sim_texture or {}).get("games") or 0))
+        row = {"metric": name, "sim": sim_v, "target": tgt.get("mean"), "band": list(band) if band else None,
+               "sim_count": ((sim_texture or {}).get("counts") or {}).get(name), "real_count": tgt.get("count")}
+        row["within_band"] = None if sim_v is None or band is None else band[0] - 1e-9 <= sim_v <= band[1] + 1e-9
+        texture.append(row)
+    scored_texture = [t for t in texture if t["within_band"] is not None]
     return {
+        "texture": texture,
+        "texture_summary": {"within_band": sum(1 for t in scored_texture if t["within_band"]), "scored": len(scored_texture)},
         "league": metrics,
         "league_summary": {"within_band": sum(1 for m in scored if m["within_band"]), "scored": len(scored),
                            "all_within_band": all(m["within_band"] for m in scored) if scored else None},
@@ -230,6 +296,19 @@ def format_report(report: dict[str, Any]) -> str:
         lines.append(f"{m['metric']:<16}{m['sim']:>9.3f}{m['target']:>9.3f}{m['std']:>8.3f}{m['z']:>7.1f}  {'yes' if m['within_band'] else 'NO'}")
     s = report["league_summary"]
     lines.append(f"{s['within_band']}/{s['scored']} league metrics within band")
+    if report.get("texture"):
+        lines.append("\nBox-score texture (per game; rare nights scaled to a 1,230-game season in brackets)")
+        lines.append(f"{'metric':<16}{'sim':>9}{'target':>9}  {'band':<17} in band")
+        for t in report["texture"]:
+            if t["sim"] is None or t["band"] is None:
+                lines.append(f"{t['metric']:<16}{'n/a':>9}")
+                continue
+            season = "" if t["metric"] == "players_used" else f"  [{t['sim'] * 1230:.0f} vs {t['target'] * 1230:.0f}]"
+            lines.append(f"{t['metric']:<16}{t['sim']:>9.4f}{t['target']:>9.4f}  {t['band'][0]:.4f}-{t['band'][1]:.4f}"
+                         f"  {'yes' if t['within_band'] else 'NO'}{season}")
+        ts = report["texture_summary"]
+        lines.append(f"{ts['within_band']}/{ts['scored']} texture metrics within band (sandbox-sim uses projected minutes, "
+                     "flatter than a coach's: players used and big nights are judged on replay-real-minutes or a season)")
     lines.append(f"\nPlayers compared: {report['players_compared']}. Average per-36 bias (sim minus real):")
     for k, v in report["player_bias"].items():
         lines.append(f"  {k:<18}{v['mean_delta']:>+8.3f}  (mean abs {v['mean_abs_delta']:.3f})")

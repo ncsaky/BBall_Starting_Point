@@ -484,7 +484,15 @@ def simulate_health(
         schedule_facts = cached_league_schedule_context(season_schedule or schedule)
         stars = star_ids(canonical, through_date[:7])
     regulars_out: dict[str, int] = {}
+    # Everyone on each roster, for the eight-player floor (players outside the health pass's list are healthy reserves
+    # or players the coach has shut down).
+    team_roster: dict[str, list[dict[str, Any]]] = {}
+    events_by_player: dict[str, list[dict[str, Any]]] = {}
     if rest_ready:
+        for player in canonical.get("players", []):
+            if player.get("team_id") and not player.get("_inactive_player"):
+                team_roster.setdefault(player["team_id"], []).append(player)
+        events_by_player = injury_events_by_player(canonical)
         for team_id, team_players in players_by_team.items():
             regulars_out[team_id] = sum(1 for p in team_players if states.get(p["id"], {}).get("availability_status", "active") != "active"
                                         and float(p.get("_trade_value_minutes_projection") or p.get("minutes_projection") or 0) >= REST_MIN_MINUTES)
@@ -497,7 +505,13 @@ def simulate_health(
                 continue
             team_rest_days = rest_days_since(last_game_date.get(team["id"]), game_date)
             staff = performance_staff_modifiers(canonical, team["id"])
-            for player in players_by_team.get(team["id"], []):
+            team_players = players_by_team.get(team["id"], [])
+            # Tonight's decisions first (who is hurt, who the coach rests), then the eight-player floor, then the game
+            # itself for everyone who plays (fatigue, return ramp, injury draw). The draws are per player and seeded by
+            # game and player, and no decision reads another player's game, so the order does not change results.
+            playing: list[tuple[int, dict[str, Any], dict[str, Any], int, float]] = []
+            rested: list[dict[str, Any]] = []
+            for index, player in enumerate(team_players):
                 state = states.setdefault(player["id"], default_state_dict(player["id"], from_date))
                 # Days off since this player's team last played. The save advances health one day at a time, so the
                 # date is carried on the state (otherwise every first game of a call looked like two days' rest and
@@ -528,7 +542,10 @@ def simulate_health(
                         state.pop("rest_shutdown", None)   # traded: his new team decides
                         shutdown = None
                     if shutdown:
+                        before = dict(state)
                         state["games_rested"] = int(state.get("games_rested") or 0) + 1
+                        rested.append({"index": index, "player": player, "state": state, "before": before,
+                                       "rest_days": rest_days, "entering": entering, "log": None})
                         continue
                     if (team["id"] not in human_teams or team["id"] in coach_rest_teams) and minutes >= REST_MIN_MINUTES:
                         key = (team["id"], game["externalGameId"])
@@ -544,6 +561,7 @@ def simulate_health(
                         decision = rest_decision(assessment, rest_draw(seed, game["externalGameId"], player["id"]))
                         if decision:
                             kind, reason = decision
+                            before = dict(state)
                             rested_tonight[key] = rested_tonight.get(key, 0) + 1
                             if player["id"] in stars:
                                 stars_rested[key] = stars_rested.get(key, 0) + 1
@@ -552,11 +570,32 @@ def simulate_health(
                                           "rest_reason": reason})
                             if kind == "shutdown":
                                 state["rest_shutdown"] = {"team_id": team["id"], "since": date_to_str(game_date), "reason": reason}
-                            rest_log.append({"date": date_to_str(game_date), "game_id": str(game["externalGameId"]),
-                                             "team_id": team["id"], "player_id": player["id"], "kind": kind, "reason": reason,
-                                             "chance": round(assessment["chance"], 4), "miles": context.get("miles"),
-                                             "factors": assessment.get("factors", {})})
+                            entry = {"date": date_to_str(game_date), "game_id": str(game["externalGameId"]),
+                                     "team_id": team["id"], "player_id": player["id"], "kind": kind, "reason": reason,
+                                     "chance": round(assessment["chance"], 4), "miles": context.get("miles"),
+                                     "factors": assessment.get("factors", {})}
+                            rest_log.append(entry)
+                            rested.append({"index": index, "player": player, "state": state, "before": before,
+                                           "rest_days": rest_days, "entering": entering, "log": entry})
                             continue
+                playing.append((index, player, state, rest_days, entering))
+            if rest_on:
+                listed = {player["id"] for player in team_players}
+                outside = [player for player in team_roster.get(team["id"], []) if player["id"] not in listed]
+                recalled = eight_player_floor(team, game, game_date, playing, rested, outside, states, events_by_player,
+                                              config, staff, team_rest_days)
+                for item in recalled:
+                    state = item["state"]
+                    if item["log"] is not None:
+                        rest_log.remove(item["log"])
+                    rest_log.append({"date": date_to_str(game_date), "game_id": str(game["externalGameId"]),
+                                     "team_id": team["id"], "player_id": item["player"]["id"], "kind": "recalled",
+                                     "reason": "recalled to keep eight players available"})
+                    playing.append((item["index"], item["player"], state, item["rest_days"], item["entering"]))
+                playing.sort(key=lambda row: row[0])
+            for _index, player, state, rest_days, entering in playing:
+                minutes = float(player.get("minutes_projection") or 0)
+                stamina = traits.get((player["id"], "stamina_cardio"), 50.0)
                 if int(state.get("return_absence_games") or 0) > 0:
                     advance_return_ramp(state, game_date, staff)
                 # The game is played on tip-off fatigue; tonight's minutes add to it afterwards (shown from tonight on).
@@ -706,15 +745,31 @@ def advance_development(canonical: dict[str, Any] | Any, month: str, seed: int =
     }
 
 
+_EVENTS_BY_PLAYER: dict[str, Any] = {}
+
+
+def injury_events_by_player(canonical: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+    """The league's injury events grouped by player, in list order. Kept for the list object it was built from while
+    that list is unchanged in length and ends (the save only appends events, and every rebuild or refresh copies the
+    list anew); any other list rebuilds it. Read-only for callers. SEASON-SPEED-FLOOR, 2026-11-25."""
+    events = canonical.get("injury_events") or []
+    key = (id(events), len(events), id(events[0]) if events else None, id(events[-1]) if events else None)
+    if _EVENTS_BY_PLAYER.get("key") == key and _EVENTS_BY_PLAYER.get("events") is events:
+        return _EVENTS_BY_PLAYER["by_player"]
+    by_player: dict[str, list[dict[str, Any]]] = {}
+    for event in events:
+        if event.get("player_id"):
+            by_player.setdefault(event["player_id"], []).append(event)
+    _EVENTS_BY_PLAYER.update({"key": key, "events": events, "by_player": by_player})
+    return by_player
+
+
 def sandbox_health_adjusted_pool(canonical: dict[str, Any], game_date: str | None, pool: list[dict[str, Any]]) -> list[dict[str, Any]]:
     if not game_date or not canonical.get("player_health_states"):
         return pool
     game_day = parse_date(game_date)
     states = {state["player_id"]: state for state in canonical.get("player_health_states", [])}
-    events_by_player: dict[str, list[dict[str, Any]]] = {}
-    for event in canonical.get("injury_events", []):
-        if event.get("player_id"):
-            events_by_player.setdefault(event["player_id"], []).append(event)
+    events_by_player = injury_events_by_player(canonical)
     adjusted: list[dict[str, Any]] = []
     for item in pool:
         player_id = item["player"]["id"]
@@ -838,6 +893,7 @@ def fatigue_injury_multiplier(fatigue: float) -> float:
 # no game (Basketball Index: 23%, all 0-1 day entries) and heavy-minute players had 30% fewer multi-game absences than
 # in the real 2025-26 box scores.
 DAYS_PER_GAME_MISSED = 2
+LATER_SEASON_DAYS = 174   # a regular season, late October to mid-April (injury_games_missed)
 
 
 _TEAM_DATES_CACHE: dict[tuple, dict[str, list[str]]] = {}
@@ -875,6 +931,91 @@ def injury_return_date(team_days: list[str] | None, game_date: date, days: int) 
     return im.basketball_return_date(last, DAYS_PER_GAME_MISSED * (games - len(future) + 1))
 
 
+def injury_games_missed(team_days: list[str] | None, game_date: date, return_day: date, days: int) -> int:
+    """The team games an absence is reported as: days // 2 (injury_return_date) while he is back before the next season
+    opens. One running into a later season counts the games he can actually miss, not two days per game through the
+    summer: the rest of this schedule plus each later season's games before his return (82 from about October 21 over
+    LATER_SEASON_DAYS days)."""
+    games = max(0, int(days)) // DAYS_PER_GAME_MISSED
+    future = (team_days or [])[bisect.bisect_right(team_days or [], date_to_str(game_date)):]
+    season_end = parse_date(future[-1]) if future else game_date
+    opener = date(season_end.year + (1 if season_end.month >= 7 else 0), 10, 21)
+    if return_day <= opener:
+        return games
+    later = 0
+    while return_day > opener:
+        later += round(82 * min((return_day - opener).days, LATER_SEASON_DAYS) / LATER_SEASON_DAYS)
+        opener = date(opener.year + 1, 10, 21)
+    return min(games, len(future) + later)
+
+
+MIN_AVAILABLE_PLAYERS = 8   # NBA rule: a team must have eight players available for a game
+
+
+def _injury_free_tonight(state: dict[str, Any] | None, player_events: list[dict[str, Any]], game_day: date) -> bool:
+    """Not hurt tonight by the same test the game's player pool uses (sandbox_health_adjusted_pool), rest aside."""
+    if active_injury_event_on_date(player_events, game_day):
+        return False
+    if state and not player_events and not player_available_on_date(state, game_day):
+        return False
+    return True
+
+
+def eight_player_floor(team: dict[str, Any], game: dict[str, Any], game_date: date,
+                       playing: list[tuple[int, dict[str, Any], dict[str, Any], int, float]],
+                       rested: list[dict[str, Any]], outside: list[dict[str, Any]], states: dict[str, dict[str, Any]],
+                       events_by_player: dict[str, list[dict[str, Any]]], config: dict[str, Any],
+                       staff: dict[str, float], team_rest_days: int) -> list[dict[str, Any]]:
+    """Rest and shutdown decisions never leave a team with fewer than eight available players (SEASON-SPEED-FLOOR,
+    2026-11-25). Late in a season a team out of the race shuts healthy veterans down; with injuries on top it could
+    dress four to seven. When tonight's count falls short, the coach brings back the healthiest of the players he rested
+    or shut down tonight (least fatigue and rust, then his usual minutes, then id) until eight are available; a recalled
+    player's shutdown ends. Injured players stay out, and players the GM chose to rest stay out. Returns the recalled
+    rows (shaped like `rested`), with their rest undone."""
+    tonight = date_to_str(game_date)
+    available = len(playing)
+    candidates = list(rested)
+    for player in outside:
+        state = states.get(player["id"]) or {}
+        if not _injury_free_tonight(state, events_by_player.get(player["id"], []), game_date):
+            continue
+        shutdown = state.get("rest_shutdown")
+        if shutdown and shutdown.get("team_id") == team["id"]:
+            candidates.append({"index": 10_000 + len(candidates), "player": player, "state": None, "before": None,
+                               "rest_days": None, "entering": fatigue_on_date(state, game_date, staff, config), "log": None})
+            continue
+        if state.get("user_rest") or (state.get("rest_game_id") and state.get("rest_date") == tonight) or shutdown:
+            continue
+        available += 1
+    if available >= MIN_AVAILABLE_PLAYERS or not candidates:
+        return []
+
+    def health_key(item: dict[str, Any]) -> tuple[Any, ...]:
+        player = item["player"]
+        state = item["state"] if item["state"] is not None else states.get(player["id"]) or {}
+        usual = float(player.get("_trade_value_minutes_projection") or player.get("minutes_projection") or 0.0)
+        return (round(float(item["entering"] or 0.0) + float(state.get("rust") or 0.0), 4), -usual, str(player["id"]))
+
+    recalled = []
+    for item in sorted(candidates, key=health_key)[:MIN_AVAILABLE_PLAYERS - available]:
+        if item["state"] is not None:
+            state = item["state"]
+            state.clear()
+            state.update(item["before"])
+        else:
+            player = item["player"]
+            state = states.setdefault(player["id"], default_state_dict(player["id"], tonight))
+            previous_game = state.get("last_team_game")
+            item["rest_days"] = (rest_days_since(parse_date(previous_game), game_date)
+                                 if previous_game and previous_game < tonight else team_rest_days)
+            state["last_team_game"] = tonight
+            advance_state_for_date(state, game_date, item["rest_days"], config, staff)
+            item["state"], item["entering"] = state, float(state.get("fatigue") or 0.0)
+        state.pop("rest_shutdown", None)
+        recalled.append(item)
+    return recalled
+
+
 def v2_injury_draw(root, model, canonical, player, traits, state, profile, minutes, game_date, staff, seed, rng,
                    history_cache, new_events, fatigue: float | None = None,
                    team_days: list[str] | None = None) -> dict[str, Any] | None:
@@ -883,7 +1024,9 @@ def v2_injury_draw(root, model, canonical, player, traits, state, profile, minut
     from . import injury_model as im
     pid = player["id"]
     if pid not in history_cache:
-        history_cache[pid] = im.player_history(model, pid, canonical.get("injury_events", []))
+        # player_history keeps only this player's events, in list order; handing it his own events (same order) gives
+        # the same history without scanning every injury in the league's records once per player.
+        history_cache[pid] = im.player_history(model, pid, injury_events_by_player(canonical).get(pid, []))
     history = history_cache[pid] + [im.history_entry(parse_date(e["start_date"]), e["body_part"], im.simulated_event(e))
                                     for e in new_events if e.get("player_id") == pid and e.get("body_part") != "illness"]
     player_traits = {key: traits.get((pid, key), 50.0) for key in ("rim_pressure", "offensive_rebounding", "stamina_cardio")}
@@ -914,7 +1057,7 @@ def v2_injury_draw(root, model, canonical, player, traits, state, profile, minut
         id=stable_id("injury", "v2", pid, date_to_str(game_date), part, label, seed),
         player_id=pid, team_id=player["team_id"], start_date=date_to_str(game_date), return_date=date_to_str(return_day),
         body_area=area, severity=severity, expected_days_missed=days,
-        expected_games_missed=days // DAYS_PER_GAME_MISSED,
+        expected_games_missed=injury_games_missed(team_days, game_date, return_day, days),
         recurrence=recurrence, status="generated_injury_v2", source_ids=["src_injury_model_v2"],
         notes=f"{label} ({im.PART_LABELS.get(part, part)}); duration from a real {part} absence.",
     ))
@@ -1035,9 +1178,7 @@ def season_start_injuries(root: str | Path, canonical: dict[str, Any], states: l
         # Days out on the basketball calendar (July-September skipped), as Basketball Index and the injury model count.
         days_out = max(1, sum(1 for k in range((return_day - start_day).days)
                               if not 7 <= (start_day + timedelta(days=k)).month <= 9))
-        summary = (injury.get("recovery_summary") or {}).get(part) or {}
-        labels = next((shares for limit, shares in summary.get("labels_by_days") or [] if days_out <= limit), {}) or {f"{part} injury": 1.0}
-        label = max(labels, key=lambda name: labels[name])
+        label = im.typical_diagnosis(injury, part, days_out)
         event = to_plain(InjuryEvent(
             id=stable_id("injury", "season_start", player["id"], season, seed),
             player_id=player["id"], team_id=player["team_id"], start_date=date_to_str(start_day),
@@ -2114,7 +2255,13 @@ def expected_games_from_days(days: int) -> int:
 
 
 def parse_date(value: str) -> date:
-    return datetime.strptime(value[:10], "%Y-%m-%d").date()
+    return _parse_day(value[:10])
+
+
+@lru_cache(maxsize=8192)
+def _parse_day(text: str) -> date:
+    # SIM-SPEED-2: the health pass parses the same few hundred dates ~120,000 times a month; a date is immutable.
+    return datetime.strptime(text, "%Y-%m-%d").date()
 
 
 def date_to_str(value: date) -> str:

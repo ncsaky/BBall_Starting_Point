@@ -18,6 +18,7 @@ from unittest.mock import Mock, patch
 import urllib.request
 
 from nba_gm_data import app_server, desktop_runtime
+from tests.local_fixtures import MAIN_CHECKOUT
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,16 +34,31 @@ def load(name, path):
 build = load("windows_build", "packaging/windows/build.py")
 launcher = load("windows_launcher", "packaging/windows/launcher.py")
 
+# The start-screen film is a git-ignored release asset. The main checkout must have it; a worktree or copy doesn't, so
+# there the preflight runs with only that one requirement dropped and every other inventory rule still checked.
+MOVIE = "src/nba_gm_data/gui/assets/startup/video/front-office.mp4"
+
+
+def source_inventory():
+    if MAIN_CHECKOUT or (ROOT / MOVIE).is_file():
+        return build.inventory()
+    with patch.object(build, "REQUIRED", tuple(name for name in build.REQUIRED if name != MOVIE)):
+        return build.inventory()
+
 
 class WindowsBuildTests(unittest.TestCase):
     def test_source_preflight_is_complete_and_excludes_saves(self):
-        _, manifest = build.inventory()
+        _, manifest = source_inventory()
         self.assertFalse(manifest["game_python_dependencies"])
-        self.assertTrue(set(build.REQUIRED).issubset(manifest["input_sha256"]))
+        required = set(build.REQUIRED)
+        self.assertIn(MOVIE, required)
+        if not MAIN_CHECKOUT and not (ROOT / MOVIE).is_file():
+            required.remove(MOVIE)
+        self.assertTrue(required.issubset(manifest["input_sha256"]))
         self.assertFalse(any(n.startswith(("saves/", ".cache/", "dist/")) for n in manifest["input_sha256"]))
 
     def test_inventory_ships_compressed_inputs_but_no_private_or_uncompressed_copies(self):
-        files, _ = build.inventory()
+        files, _ = source_inventory()
         shipped = {p.relative_to(ROOT).as_posix() for p in files}
         self.assertIn("data/canonical/player_inputs_2026_27.json.gz", shipped)
         self.assertNotIn("data/canonical/player_inputs_2026_27.json", shipped)
@@ -60,7 +76,7 @@ class WindowsBuildTests(unittest.TestCase):
                 path = root / name
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_bytes(b"asset")
-            movie = root / "src/nba_gm_data/gui/assets/startup/video/front-office.mp4"
+            movie = root / MOVIE
             for empty in (False, True):
                 with self.subTest(empty=empty):
                     if empty:

@@ -1154,6 +1154,8 @@ def league_activity_copy(event: dict[str, Any]) -> tuple[str, list[str]]:
             total = float(details["annual_salary"]) * years / 1_000_000
             deal = "extension" if kind == "extension" else "deal"
             headline = f"{person['name']} {'is staying with' if kind == 'extension' else 'is joining'} the {team} on a {years}-year, ${total:.1f} million {deal}."
+            if details.get("departure_text"):   # COACHES-FREE-AGENTS: why he left his old team
+                headline = f"{headline[:-1]}, {details['departure_text']}."
             comments.append(f"The agreement pays {person['name']} ${float(details['annual_salary']) / 1_000_000:.1f} million per year across {years} season{'s' if years != 1 else ''}.")
         elif person.get("kind") == "staff":
             role = person.get("role", "staff member").lower()
@@ -2204,7 +2206,7 @@ def player_card_payload(canonical: dict[str, Any], save_path: Path, player_id: s
     result["draft_status"] = player.get("draft_status") or career.get("draft_status")
     result["season"]["season"] = str(save.get("meta", {}).get("season") or CANONICAL_SEASON)
     result["season"]["team_abbrevs"] = [team["abbrev"]] if team.get("abbrev") else []
-    result["career_seasons"] = player_career_seasons(player, save, result["season"])
+    result["career_seasons"] = player_career_seasons(player, save, result["season"], save_path)
     if 'post_creation' in attrs:
         result['offensive_contributions'] = [
             {'key': key, 'label': label, 'rating': attrs[key], 'modeled': True}
@@ -2958,7 +2960,9 @@ def weekly_efficiency_events(active: dict[str, Any], save: dict[str, Any], save_
     """Dated team events with recorded, rather than invented, rotation changes."""
     today = str(save.get("state", {}).get("current_date") or "")
     players = {p["id"]: p for p in active.get("players", [])}
-    injuries = [e for e in save.get("injury_events", []) if e.get("team_id") == team_id and str(e.get("start_date") or "") <= today]
+    from .season_archive import full_injury_events
+    # Injuries of archived seasons keep their full rows in the season archive files (SEASON-ARCHIVE).
+    injuries = [e for e in full_injury_events(save_path, save) if e.get("team_id") == team_id and str(e.get("start_date") or "") <= today]
     logs = [r for r in [*load_history_records(save_path, save, "player_game_logs"), *save.get("player_game_logs", [])] if r.get("team_id") == team_id] if injuries else []
     logs = list({r.get("id", f"{r.get('game_id')}:{r.get('player_id')}"): r for r in logs}.values())
     days = sorted({str(r.get("date") or "")[:10] for r in logs})
@@ -4470,6 +4474,7 @@ def free_agency_room_payload(
             "date": source_event.get("date"),
             "kind": kind,
             "headline": source_event.get("headline"),
+            "departure_text": details.get("departure_text"),   # why he left his old team (franchise_ties)
             "team_ids": list(source_event.get("team_ids") or []),
             "player_id": player_id or None,
             "player_name": (players_by_id.get(player_id) or {}).get("name") or details.get("player_name"),
@@ -5217,12 +5222,15 @@ def draft_lottery_view(canonical: dict[str, Any], order: dict[str, Any], year: s
     pre_order = list(lottery.get("pre_lottery_order") or [])
     odds = lottery.get("odds_by_team") or {}
     context = lottery.get("odds_context_by_team") or {}
+    groups = lottery.get("team_groups") or {}
     odds_rows = [
         {
             "seed": index,
             "team": draft_team_ref(teams, team_id),
             "odds": float(odds.get(team_id) or 0.0),
             "context": context.get(team_id) or "",
+            # 3-2-1 lottery only: group, balls, and the highest and lowest pick the team can get.
+            **(groups.get(team_id) or {}),
         }
         for index, team_id in enumerate(pre_order, start=1)
     ]
@@ -5232,7 +5240,7 @@ def draft_lottery_view(canonical: dict[str, Any], order: dict[str, Any], year: s
         lottery_order = sorted(
             (
                 row for row in order.get("draft_order") or []
-                if int(row.get("round") or 0) == 1 and int(row.get("overall_pick") or 99) <= 14
+                if int(row.get("round") or 0) == 1 and int(row.get("overall_pick") or 99) <= len(pre_order)
             ),
             key=lambda row: int(row.get("overall_pick") or 99),
         )
@@ -5256,6 +5264,7 @@ def draft_lottery_view(canonical: dict[str, Any], order: dict[str, Any], year: s
         "year": str(year),
         "seed": lottery.get("seed") if revealed else None,
         "draw_count": int(lottery.get("draw_count") or 0),
+        "format": lottery.get("format") or "weighted_14",
         "odds": odds_rows,
         "reveal": reveal_rows,
         "revealed": bool(revealed),
@@ -6281,7 +6290,7 @@ def season_slideshow_action(canonical: dict[str, Any], save_path: Path, payload:
         raise AppActionError("Choose the year-end recap or the preseason outlook.")
     current = str((save.get("meta") or {}).get("season") or "")
     season = str(payload.get("season") or current)
-    data = stored_recap(save, season) if kind == "recap" else stored_outlook(save, season)
+    data = stored_recap(save, season, save_path) if kind == "recap" else stored_outlook(save, season, save_path)
     from .season_slides import OUTLOOK_FORMAT
     if kind == "outlook" and data is not None and season == current and data.get("format") != OUTLOOK_FORMAT \
             and str((save.get("state") or {}).get("phase") or "") == "preseason":

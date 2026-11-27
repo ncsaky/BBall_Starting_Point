@@ -71,8 +71,12 @@ LOOP = {
     # Transition chance by how the possession started, times the lineup's transition habit.
     "trans_dreb": .20, "trans_steal": .60, "trans_made": .04, "trans_dead": .06, "k_trans": 1.5,
     # Turnovers: the defense's ball pressure (log-odds per index unit); transition and offensive-foul shares.
+    # S2-TENTH: k_steal_level 1 -> .5 (steal chance of a turnover by the five's average steal weight to this power; the
+    # steal is then credited by each defender's own weight, so at 1 an elite stealer counted twice) and steal_share .62 ->
+    # .628 to hold the league's steals. 4 replays: the real top 20 stealers average 2.31 per 36 (real 2.37; was 2.48),
+    # per-player miss 15.3% -> 13.1%, correlation .884 -> .897. A steal starts a fast break, so this moves games a little.
     # k_press is FITTED with the other team-strength terms below.
-    "k_press": .442, "trans_to": -.15, "off_foul_share": .08, "steal_share": .62, "k_steal_level": 1.0,
+    "k_press": .442, "trans_to": -.15, "off_foul_share": .08, "steal_share": .628, "k_steal_level": .5,
     # FITTED: league turnovers per 100 (the card fit is per used possession; the loop's are per chance). S2-TOTALS-
     # MATCHUPS .13 -> .11 with the matchups on; S2-SCHEMES .11 -> .17: later pieces (the turnover ratings follow-up,
     # the coach, screens) had left turnovers at 13.4 per 100 in both replayed and generated games against a real 14.1,
@@ -257,6 +261,34 @@ LOOP = {
     # question, docs/agents/tasks/s2-usage.md), so season points per player got a little worse (props: off by 11.4% ->
     # 11.6%, threes 10.4% -> 10.9%; betting test unchanged within seed noise). Switch on once that is settled.
     "k_putback_reach": 0.0,
+    # Hold each player's total (S2-TENTH): with the transition or putback tilts on, what a tilt gives a player is taken back
+    # from his half-court draws, so the tilts change his mix of possessions, not how many he ends (the usage rule above is
+    # fitted to totals). Without it the transition tilt moved possessions from slow big men (already under real) to fast
+    # guards, and the putback tilt added possessions to bigs already over real usage. mix_trans: the share of finisher
+    # draws that are transition chances; mix_oreb: offensive rebounds per finisher draw; mix_put_p: the average chance of
+    # an immediate putback (measured in replayed 2025-26 games). 0 = off.
+    "mix_hold": 0.0, "mix_trans": .12, "mix_oreb": .09, "mix_put_p": .40,
+    # Assisted baskets by who is passing (S2-TENTH): the log-odds a made shot is assisted (ASSIST by kind x ast_scale, at
+    # most .97) plus k_ast_team x log(the scorer's four teammates' average assist weight / the league's minutes-weighted
+    # player's) plus ast_team_shift (holds the league's assist level). Real
+    # teams with an elite passer on the floor are assisted more often; with a fixed chance by shot kind, an elite passer
+    # only took a bigger slice of the same total, so Jokic, Cunningham, Giddey, Ball and Doncic ran about 20% short of
+    # their real assists per 36 while the league total was right. 0 = off (the chance by shot kind alone). FITTED
+    # (scripts/research/s2_team_assists.py, s2_usage_fit.py eval, s2_tenth_players.py, s2_props.py; 4 replays of
+    # 2025-26): teams' assisted share of made shots spread .015 across the 30 teams against a real .034 and followed the
+    # real order at .17 (about .025 and .5 at 2-2.5). At 2 the real top 20 passers average 8.2 assists per 36 (was 7.4;
+    # real 9.1; Jokic 8.6 -> 10.3, real 11.1) and players' season assists stay as close to real as before (props: 12.5%
+    # off, 12.3-12.5% before; per game correlation .695 -> .701). 3 matched the teams' spread and the elite better (8.5)
+    # but put mid-level players' season assists further off (13.2%). The shift holds the league's assists per 36. Credit
+    # only, but the extra or missing assister draw moves the random sequence, so games differ from before by chance.
+    "k_ast_team": 2.0, "ast_team_shift": .36,
+    # Blocks (S2-TENTH): the chance a missed shot was blocked is blk_* (by zone) x blk_scale x (the defending five's average
+    # block weight / the league's) to this power; the block is then credited by each defender's own weight. At 1 an elite
+    # shot-blocker counts twice (he raises his five's block chance and takes most of the credit), so the top blockers ran
+    # about 15% over real. 1 and 1 = as before. FITTED (s2_usage_fit.py eval, 4 replays): at .8 / .905 the real top 20
+    # blockers average 2.54 per 36 (real 2.55; was 3.0), league blocks per 36 .72 (real .72; was .80), per-player miss
+    # 28% -> 26%. Credit only (the miss plays on the same way).
+    "k_blk_level": .8, "blk_scale": .905,
     # Shot difficulty: a player who takes tougher shots (shot-difficulty habit T04, log against the league's) meets more
     # contested shots: make log-odds per unit of that on every shot but putbacks and heaves. The skills are shot-making
     # grades; the habit is the decision layer of which shots he chooses. Tried (S2-USAGE): .5-3 with the league level
@@ -282,7 +314,7 @@ STRENGTH_KEYS = ("k_perim", "k_rim", "k_press", "k_create", "k_space", "k_close"
                  "k_beat_make", "k_post", "k_lanes")
 THREE_KINDS = frozenset(i for i, k in enumerate(KINDS) if k[2] == 3 and k[0] != "heave")
 THREE_PULL, THREE_CATCH = KIND_INDEX["three_pull"], KIND_INDEX["three_catch"]
-ASSIST = {"rim_drive": .18, "rim_finish": .93, "floater": .15, "hook": .30, "short_jumper": .40, "mid_catch": .90,
+ASSIST = {"rim_drive": .18, "rim_finish": .93, "floater": .15, "hook": .30, "short_finish": .85, "short_jumper": .40, "mid_catch": .90,
           "mid_pull": .07, "three_corner": .97, "three_catch": .92, "three_pull": .06, "putback": .04,
           "trans_rim": .55, "trans_three": .85, "heave": 0.0}
 ASSIST_BY_KIND = [ASSIST[k[0]] for k in KINDS]
@@ -360,6 +392,7 @@ class TeamState:
         self.coach = None         # stage2.coach.Coach (engine.py); None = the first loop's rotation
         self.screens_on = False   # set by Game: the box score carries screen assists only when screens are played
         self._five_cache: dict = {}
+        self.ast_team: list | None = None   # per slot: the teammates' passing factor on the assisted chance (k_ast_team)
         self.reserve = [False] * n   # outside tonight's planned rotation (garbage time only)
         self.advance = False         # a late timeout moved the ball to the front court (next possession)
         self.scheme = (0.0, 0.0)     # the coach's ball-screen scheme: (aggression, switching) log-odds (stage2.schemes)
@@ -368,7 +401,7 @@ class TeamState:
     # ---- lineup aggregates (recomputed when the five change) ------------------------------------------------------
     REFRESH_KEYS = ("usage_cum", "trans_cum", "three_cum", "ast_w", "reb", "reb_prof", "pace", "trans_pref", "perim", "perim_center", "create",
                     "space", "off_shift", "rim", "press", "stl_level", "blk_level", "ns_level", "ns_draw_cum",
-                    "off_foul_cum", "help", "rot", "lanes")
+                    "off_foul_cum", "help", "rot", "lanes", "ast_team")
 
     def refresh(self) -> None:
         """The five's aggregates; cached per five with the coach (the same fives recur through a game)."""
@@ -395,9 +428,29 @@ class TeamState:
         ks, kp = L0["k_trans_speed"], L0["k_trans_pace"]
         if ks or kp:
             pm = lg["pace_mean"]
-            self.trans_cum = _cum([u * math.exp(ks * c.speed + kp * (c.pace - pm) / .05) for u, c in zip(uw, cs)])
+            tw = [u * math.exp(ks * c.speed + kp * (c.pace - pm) / .05) for u, c in zip(uw, cs)]
+            self.trans_cum = _cum(tw)
         else:
+            tw = None
             self.trans_cum = self.usage_cum
+        kr = L0["k_putback_reach"]
+        if L0["mix_hold"] and (tw is not None or kr):
+            # Hold each player's total share of the lineup's possessions (the usage rule is fitted to totals): what the
+            # transition and putback tilts give a player is taken back from his half-court draws (S2-TENTH).
+            U = sum(uw)
+            t = L0["mix_trans"]
+            extra = [0.0] * len(cs)
+            if tw is not None:
+                T = sum(tw)
+                extra = [t * (a / T - u / U) for a, u in zip(tw, uw)]
+            if kr:
+                p0 = L0["mix_put_p"]
+                z0 = math.log(p0 / (1.0 - p0))
+                r = [c.reb.off_ability * (c.reb.profile.crash + .17 * (1.0 - c.reb.profile.crash)) for c in cs]
+                R = sum(r)
+                m = L0["mix_oreb"]
+                extra = [e + m * ri / R * (_sig(z0 + kr * c.reach) - p0) for e, ri, c in zip(extra, r, cs)]
+            self.usage_cum = _cum([max(.05 * u / U, u / U - e / (1.0 - t)) for u, e in zip(uw, extra)])
         tp = L0["three_pick"]
         self.three_cum = _cum([u * max(1e-3, c.three) ** tp for u, c in zip(uw, cs)]) if tp else self.usage_cum
         ap = L0["ast_power"]
@@ -419,6 +472,13 @@ class TeamState:
         self.press = sum(c.press_d for c in cs) / 5.0 - lg["press_center"]
         self.stl_level = (sum(c.stl_w for c in cs) / 5.0) / lg["stl_mean"]
         self.blk_level = (sum(c.blk_w for c in cs) / 5.0) / lg["blk_mean"]
+        if L0["k_blk_level"] != 1.0:
+            self.blk_level **= L0["k_blk_level"]
+        ka = L0["k_ast_team"]
+        if ka:
+            tot = sum(self.ast_w)
+            ref = 4.0 * lg["ast_mean"] ** ap
+            self.ast_team = [ka * math.log(max(1e-6, (tot - w) / ref)) for w in self.ast_w]
         self.ns_level = (sum(c.ns_mult for c in cs) / 5.0) / lg["ns_mean"]
         self.ns_draw_cum = _cum([c.ns_draw for c in cs])
         self.off_foul_cum = _cum([c.off_foul_w for c in cs])
@@ -471,6 +531,9 @@ class Game:
         self.foul_action = [(L[FOUL_ACTION[a]] if FOUL_ACTION.get(a) else 0.0) + (L["foul_level"] if KZONE[i] < 3 else 0.0)
                             + (L["foul_rim"] if KZONE[i] == 0 else 0.0) for i, a in enumerate(KACTION)]
         self.assist = [a * L["ast_scale"] for a in ASSIST_BY_KIND]
+        self.ast_team_off = not L["k_ast_team"]
+        self.ast_logit = [math.log(min(.97, max(.01, a)) / (1.0 - min(.97, max(.01, a)))) for a in self.assist]
+        self.blk_base = tuple(b * L["blk_scale"] for b in (L["blk_rim"], L["blk_short"], L["blk_mid"], L["blk_three"]))
         craft_by_action = {"drive": L["craft_drive"], "pull_up": L["craft_pull_up"], "post": L["craft_post"],
                            "roll_cut": L["craft_finish"], "putback": L["craft_finish"]}
         self.craft_w = [craft_by_action.get(a, 0.0) for a in KACTION]
@@ -478,7 +541,6 @@ class Game:
         if L["k_rim_self"]:
             self.zone_make[KIND_INDEX["rim_drive"]] -= L["k_rim_self"]
             self.zone_make[KIND_INDEX["rim_finish"]] += L["k_rim_self"] * L["rim_fed_ratio"]
-        self.blk_base = (L["blk_rim"], L["blk_short"], L["blk_mid"], L["blk_three"])
         self.period = 0
         self.t_left = QUARTER_S
         self.events = 0
@@ -1198,7 +1260,8 @@ class Game:
         if pts == 3:
             st[S_3PM] += 1
         self._score(off, de, slot, pts)
-        if self.rng.random() < self.assist[kind]:
+        if self.rng.random() < (self.assist[kind] if self.ast_team_off
+                                else _sig(self.ast_logit[kind] + off.ast_team[slot] + self.L["ast_team_shift"])):
             w = [w if s != slot else 0.0 for s, w in enumerate(off.ast_w)]
             a = _pick(_cum(w), self.rng.random())
             off.stats[off.on[a]][S_AST] += 1
@@ -1389,8 +1452,8 @@ def box_lines(team: TeamState, players: list[dict[str, Any]], items: list[dict[s
     for i, item in enumerate(items):
         st = team.stats[i]
         p = players[i]
-        if team.reserve[i] and team.secs[i] <= 0.0:
-            continue                    # outside the rotation and never needed tonight: not in the box score
+        if team.reserve[i] and team.secs[i] <= 0.0 or p.get("_stage2_empty"):
+            continue                    # outside the rotation and never needed tonight, or an empty spot: not in the box score
         extra = {}
         if coach is not None and coach.injured[i]:
             extra["in_game_injury"] = item.get("health_injury_label") or "injury"

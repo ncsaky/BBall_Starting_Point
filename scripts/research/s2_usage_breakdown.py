@@ -146,8 +146,8 @@ def build_rows(root: Path, s2: dict, s2shots: dict, cur: dict, min_minutes: floa
             eng["rim_fga"] = sum(by[k][1] for k in rim_k)
             eng["rim_fgm"] = sum(by[k][2] for k in rim_k)
             eng["rim_unast_fga"] = by["rim_drive"][1]
-            eng["mid_fga"] = sum(by[k][1] for k in ("floater", "hook", "short_jumper", "mid_catch", "mid_pull"))
-            eng["mid_fgm"] = sum(by[k][2] for k in ("floater", "hook", "short_jumper", "mid_catch", "mid_pull"))
+            eng["mid_fga"] = sum(by[k][1] for k in ("floater", "hook", "short_finish", "short_jumper", "mid_catch", "mid_pull"))
+            eng["mid_fgm"] = sum(by[k][2] for k in ("floater", "hook", "short_finish", "short_jumper", "mid_catch", "mid_pull"))
             eng["pull3_fga"] = by["three_pull"][1]
             eng["pullmid_fga"] = by["mid_pull"][1]
             eng["putback_pts"] = 2 * by["putback"][2] + by["putback"][4] * .7

@@ -269,6 +269,9 @@ class DraftLotteryResult:
     odds_by_team: dict[str, float]
     source_ids: list[str]
     notes: str
+    format: str = "weighted_14"
+    # 3-2-1 lottery: {team id: {group, balls, lowest_pick, highest_pick}}
+    team_groups: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

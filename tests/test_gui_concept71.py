@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import unittest
 
 
@@ -10,8 +11,17 @@ CSS = (ROOT / "src/nba_gm_data/gui/styles.css").read_text(encoding="utf-8")
 class Concept71GuiTests(unittest.TestCase):
     def test_appearance_customization_is_not_exposed(self):
         settings = APP[APP.index("function openSettingsModal"):APP.index("async function openExtensionNegotiation")]
+        # The user approved two preset look choices in Settings: Font (taste deck round 4, bb56f037) and Buttons
+        # (round 6). Free appearance customization (colours, palettes, other font controls) stays unexposed.
+        looks = APP[APP.index("const UI_LOOK_SETTINGS"):APP.index("const UI_LOOK_DATASET")]
+        self.assertEqual(re.findall(r"^  (\w+): \{", looks, re.M), ["glass", "font", "buttons"])
+        self.assertIn('options: [["clear", "Clear"]] }', looks)
+        self.assertNotRegex(settings.lower(), r"""type=["']color["']""")
+        remaining = settings.lower()
+        for approved in ('uilookmenumarkup("font")', 'name === "font"', "ui-font-sample"):
+            remaining = remaining.replace(approved, "")
         self.assertNotIn("primary color", settings.lower())
-        self.assertNotIn("font", settings.lower())
+        self.assertNotIn("font", remaining)
         self.assertNotIn("palette", settings.lower())
         self.assertNotIn("--team-accent", CSS)
 

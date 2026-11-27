@@ -16,6 +16,7 @@ from nba_gm_data.offense_response import (compile_offense,shooting_response,free
 from nba_gm_data.player_model import PlayerInputs,validate_input_section
 from nba_gm_data.schema import to_plain
 from box_score_neutral import box_neutral
+from tests.local_fixtures import needs_local
 from nba_gm_data.shot_geometry import ShotGeometry,GeometryCoefficients
 from experiments.offense_interior.fixtures import offensive_document,combined_fixture
 
@@ -195,6 +196,7 @@ class CoupledGameTests(unittest.TestCase):
                 c,_=combined_fixture();d,_=combined_fixture()
                 self.assertEqual(box_neutral(to_plain(sim.sim_game_with_context(c,'interior_fixture',mode,seed))),box_neutral(to_plain(old.sim_game_with_context(d,'interior_fixture',mode,seed))))  # 6a3c90c/114c7c1/a1e87ee/c29f301 box fixes
 
+    @needs_local('output/offense-interior-interaction-2026-11-13/interior_game.py.reference')
     def test_prior_interior_only_event_path_remains_exact(self):
         from importlib.machinery import SourceFileLoader
         from experiments.interior_defense.fixtures import game_fixture,scenario_profile

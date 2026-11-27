@@ -4,8 +4,9 @@ data/canonical/injury_model_v2.json is built by scripts/build_injury_model.py: f
 Poisson model of injuries per game played, from real player-seasons 2015-16..2025-26. Inputs: age, height, weight,
 workload (possessions per game), rim pressure, offensive rebounding, conditioning (stamina), center/guard, and the
 player's own injury history: recent injuries to the same part (the compounding term) and to other parts, both
-fading over about 1.5 years. Recovery times are real absences for the drawn part, sampled with recent seasons weighted
-more, so diagnoses and durations (including the long tail) follow the evidence instead of hand-set severity bands.
+fading over about 1.5 years. Each injury draws a diagnosis for the part, then a length from that diagnosis's own real
+absences (recent seasons weighted more), so names and durations agree and follow the evidence instead of hand-set
+severity bands.
 """
 from __future__ import annotations
 
@@ -204,20 +205,69 @@ def _days_at(quantiles: list[int], u: float) -> float:
 
 
 def sample_recovery(root: str | Path | None, part: str, rng: random.Random) -> dict[str, Any]:
-    """Days out from the part's real recovery-time distribution, and a diagnosis typical for that length."""
+    """A diagnosis for this body part, then days out from that diagnosis's own recovery times, so the two agree."""
     model = load_model(root) or {}
-    summary = (model.get("recovery_summary") or {}).get(part)
-    if not summary:
+    diagnoses = ((model.get("recovery_summary") or {}).get(part) or {}).get("diagnoses")
+    if not diagnoses:
         return {"label": f"{part} injury", "days": 3, "games": 1, "surgery": 0}
-    days = max(1, int(round(_days_at(summary["quantiles"], rng.random()))))
-    shares = next((labels for limit, labels in summary["labels_by_days"] if days <= limit), {}) or {f"{part} injury": 1.0}
-    marker, running, label = rng.random() * sum(shares.values()), 0.0, next(iter(shares))
-    for name, share in shares.items():
-        running += share
+    marker, running, case = rng.random() * sum(d["share"] for d in diagnoses), 0.0, diagnoses[-1]
+    for row in diagnoses:
+        running += row["share"]
         if marker <= running:
-            label = name
+            case = row
             break
+    days = max(1, int(round(_days_at(case["quantiles"], rng.random()))))
+    label = case["label"]
     return {"label": label, "days": days, "games": 0, "surgery": int("surgery" in str(label).lower())}
+
+
+def recovery_days(part_summary: Mapping[str, Any], points: int = 200) -> Iterable[tuple[int, float]]:
+    """(days, probability) over a part's recovery times: `points` evenly spaced draws of every diagnosis, as
+    sample_recovery makes them. The probabilities sum to 1."""
+    diagnoses = part_summary.get("diagnoses") or []
+    total = sum(d["share"] for d in diagnoses) or 1.0
+    for row in diagnoses:
+        for k in range(points):
+            yield max(1, int(round(_days_at(row["quantiles"], (k + 0.5) / points)))), row["share"] / total / points
+
+
+def typical_diagnosis(model: Mapping[str, Any], part: str, days: int) -> str:
+    """The likeliest diagnosis for an absence of about this many days (season-start injuries, whose length is drawn
+    first): among the part's diagnoses whose range holds it, the one with the most injuries near that length. A length
+    outside every range takes the diagnosis whose range comes closest."""
+    diagnoses = ((model.get("recovery_summary") or {}).get(part) or {}).get("diagnoses")
+    if not diagnoses:
+        return f"{PART_LABELS.get(part, part)} injury"
+    low, high = days / 1.4 - 1.0, days * 1.4 + 1.0
+
+    def fit(row: Mapping[str, Any]) -> tuple[float, float, float]:
+        q = row["quantiles"]
+        gap = max(q[0] / max(1, days), days / max(1, q[-1]), 1.0)   # 1.0 inside the range, larger the further outside
+        near = row["share"] * sum(low <= value <= high for value in q) / len(q) if gap == 1.0 else 0.0
+        return -gap, near, row["share"]
+
+    return str(max(diagnoses, key=fit)["label"])
+
+
+# Diagnoses that take no article: "with knee soreness", "with back spasms".
+NO_ARTICLE_ENDINGS = ("soreness", "spasms", "inflammation", "tendinitis", "fasciitis", "damage")
+
+
+def injury_phrase(diagnosis: str) -> str:
+    """How a sentence continues after "... miss about 12 games": "with an ankle sprain", "with back spasms",
+    "recovering from knee surgery"."""
+    text = str(diagnosis or "").strip()
+    low = text.lower()
+    if low.endswith(" surgery recovery"):
+        return f"recovering from {text[:-len(' recovery')]}"
+    if low == "flu":
+        return "with the flu"
+    if low.endswith(NO_ARTICLE_ENDINGS):
+        return f"with {text}"
+    first = text.split()[0] if text else ""
+    initials = len(first) > 1 and first.isupper()   # read letter by letter: "an ACL tear", "an MCL sprain"
+    vowel = first[:1].upper() in ("AEFHILMNORSX" if initials else "AEIOU")
+    return f"with {'an' if vowel else 'a'} {text}"
 
 
 def severity_for_days(days: int) -> str:
@@ -348,11 +398,11 @@ def return_rust(absence_games: int) -> float:
 @lru_cache(maxsize=32)
 def _mean_games_out(path: str, part: str) -> float:
     model = _load(path) or {}
-    quantiles = ((model.get("recovery_summary") or {}).get(part) or {}).get("quantiles") or []
-    if not quantiles:
+    summary = (model.get("recovery_summary") or {}).get(part) or {}
+    if not summary.get("diagnoses"):
         return 2.0
     # The engine's days-to-games conversion (health.injury_return_date): Basketball Index's two days per game missed.
-    return sum(int(round(_days_at(quantiles, (k + 0.5) / 200.0))) // 2 for k in range(200)) / 200.0
+    return sum((days // 2) * weight for days, weight in recovery_days(summary))
 
 
 def expected_injury_games_82(model: Mapping[str, Any], player: Mapping[str, Any], traits: Mapping[str, float], minutes: float,

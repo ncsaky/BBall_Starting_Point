@@ -98,6 +98,9 @@ Q4_EXIT = {
 # ---- The coach's own numbers. FITTED = set by simulation against the rotation study (scripts/research/
 # s2_coach_check.py); the rest are documented stand-ins. -------------------------------------------------------------
 COACH = {
+    # In-game injuries (S2-TENTH): 1 = he also leaves once the game reaches his drawn share of regulation, not only once
+    # he has played that share of his planned minutes; 0 = the plan share only (S2-COACH).
+    "injury_clock": 1.0,
     # Typical stint (seconds, the median of a lognormal draw per stint) and its spread, by role. FITTED: stints, rests,
     # minutes by quarter (real stint medians: star 528 s, starter 427, sixth man 403, bench 313).
     "stint_star": 560.0, "stint_starter": 460.0, "stint_sixth_man": 560.0, "stint_bench": 540.0, "stint_reserve": 400.0,
@@ -260,6 +263,10 @@ class Coach:
         self.rested_out = [False] * n        # sat down for good in a blowout (back only if the game tightens again)
         self.injured = [False] * n
         self.exit_s = [None if e is None else max(1.0, float(e) * plan_s[i]) for i, e in enumerate(injury_exit)]
+        # S2-TENTH: ... or once the game itself reaches that share of regulation, so a player who plays less than planned
+        # (a blowout, foul trouble) still leaves hurt (before, about 15% of in-game injuries never showed as an exit).
+        clock = c["injury_clock"]
+        self.exit_game_s = [None if e is None or not clock else max(1.0, float(e) * 2880.0) for e in injury_exit]
         self.heat = [0.0] * n                # field-goal points above expectation so far
         self.pending = False                 # a forced change waits for the next stoppage
         self.last_elapsed = 0.0
@@ -326,9 +333,9 @@ class Coach:
         dt_min = max(0.0, elapsed - self.last_elapsed) / 60.0
         self.last_elapsed = elapsed
         on = list(team.on)
-        # Injuries: he leaves once he has played his share of the plan.
+        # Injuries: he leaves once he has played his share of the plan (or the game has reached that share).
         for i in range(n):
-            if self.exit_s[i] is not None and not self.injured[i] and secs[i] >= self.exit_s[i]:
+            if self.exit_s[i] is not None and not self.injured[i] and self._hurt_now(i, elapsed):
                 self.injured[i] = self.done[i] = True
         q4 = period == 4
         regulation = period <= 4
@@ -483,7 +490,7 @@ class Coach:
         team = self.team
         secs, stint = team.secs, team.stint
         for i in range(self.n):
-            if self.exit_s[i] is not None and not self.injured[i] and secs[i] >= self.exit_s[i]:
+            if self.exit_s[i] is not None and not self.injured[i] and self._hurt_now(i, elapsed):
                 return False
         share = min(c["swap_stint_share"], c["swap_starter_share"])
         out = team.out
@@ -492,6 +499,10 @@ class Coach:
                     or stint[i] >= share * self.stint_len[i] or secs[i] > self.plan_now(i)):
                 return False
         return True
+
+    def _hurt_now(self, i: int, elapsed: float) -> bool:
+        g = self.exit_game_s[i]
+        return self.team.secs[i] >= self.exit_s[i] or (g is not None and elapsed >= g)
 
     def _fits(self, five: list[int], i: int) -> bool:
         groups = self.team.groups

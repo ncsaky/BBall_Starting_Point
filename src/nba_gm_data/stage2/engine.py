@@ -18,7 +18,7 @@ from __future__ import annotations
 import random
 from typing import Any
 
-from .cards import card_for, flat_for_player, generic_flat, means_for
+from .cards import EMPTY_ID, card_for, empty_card, flat_for_player, generic_flat, means_for
 from .coach import Coach, roles_for
 from .game import LOOP, Game, TeamState, box_lines, team_line
 from .schemes import scheme_for
@@ -76,7 +76,7 @@ def league_constants(root) -> dict[str, float]:
         rims.append(.6 * r[0] + .4 * sum(r) / 5)
         press.append(sum(c.press_d for c in five) / 5)
     out = {"rim_center": sum(rims) / len(rims), "press_center": sum(press) / len(press),
-           "stl_mean": wmean(lambda c: c.stl_w), "blk_mean": wmean(lambda c: c.blk_w), "ns_mean": wmean(lambda c: c.ns_mult),
+           "stl_mean": wmean(lambda c: c.stl_w), "ast_mean": wmean(lambda c: c.ast_w), "blk_mean": wmean(lambda c: c.blk_w), "ns_mean": wmean(lambda c: c.ns_mult),
            "pace_mean": wmean(lambda c: c.pace), "trans_mean": wmean(lambda c: c.trans_pref),
            "perim_mean": wmean(lambda c: c.perim_d), "create_center": wmean(lambda c: c.create),
            "space_center": wmean(lambda c: c.space),
@@ -146,6 +146,15 @@ def _team_state(context, team, pool, starters, coach, rest_context, is_home, lea
         targets.append(max(0.5, float(item.get("minutes") or 0.0)) if idx < n_plan else 0.0)
         if player.get("id") in starters and idx < n_plan:
             starter_idx.append(idx)
+    # Fewer than five players tonight (S2-TENTH): fill the floor with empty spots (cards.empty_card) rather than fail; the
+    # season loop's own recall (sim.short_handed_recall) normally prevents this, and real players always come first.
+    while len(cards) < 5:
+        n = len(cards)
+        cards.append(empty_card(generic, means, n))
+        players.append({"id": f"{EMPTY_ID}-{n}", "name": "Empty spot", "_stage2_empty": True})
+        items.append({"player": players[-1], "minutes": 0.0, "_reserve": True, "_stage2_empty": True})
+        groups.append("guard")
+        targets.append(0.0)
     ce = coach_effect(coach)
     L = dict(LOOP, **(loop or {}))
     home_mod = (HOME_COURT_RATING if is_home else AWAY_COURT_RATING) * L["home_scale"]

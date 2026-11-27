@@ -20,7 +20,7 @@ from datetime import date, timedelta
 from functools import lru_cache
 from itertools import combinations
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from .schema import (
     CANONICAL_SEASON,
@@ -33,6 +33,10 @@ from .schema import (
     TradeProposal,
     TransactionLog,
     to_plain,
+)
+from .pick_lottery_value import (
+    expected_gain, finish_spread, first_round_slot_value, highest_pick_allowed, known_position_odds, lottery_applies,
+    lottery_pick_slot, position_odds, position_value, sample_draft_position, selected_odds,
 )
 from .spatial import spatial_fit_delta, with_spatial_fit_context
 from .utils import clamp, copy_plain, maybe_float, normalize_name, stable_id
@@ -1442,6 +1446,51 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
     }
 
 
+# AI-TRADES-SENSE: a salary dump costs the team shedding salary something, and a useful player isn't given away. The
+# season review had Orlando send Jonathan Isaac (a 19-minute player it valued at 42) to Memphis for nothing to save
+# $23.7M of tax, accepted only through the bounded-negotiation allowance. In real dumps the team shedding a contract
+# attaches picks when the contract has negative value (trade_tax.absorb_cost prices that), and gets something back
+# (a second-round pick) for a player the other team wants. So a two-team AI deal in which one side receives nothing
+# and sends only players is refused when the player is useful: worth USEFUL_GIVEAWAY_VALUE or more to the team
+# sending him or to the team taking him. A minimum-salary bench player can still be moved for nothing.
+USEFUL_GIVEAWAY_VALUE = 12.0
+
+
+def useful_player_for_nothing(candidate: dict[str, Any]) -> bool:
+    proposal = candidate.get('proposal') or {}
+    if proposal.get('transfers'):
+        return False
+    evaluations = {e.get('perspective_team_id'): e for e in candidate.get('evaluations') or []}
+    for sender, sent, back, receiver in (
+            (proposal.get('from_team_id'), proposal.get('from_assets') or [], proposal.get('to_assets') or [],
+             proposal.get('to_team_id')),
+            (proposal.get('to_team_id'), proposal.get('to_assets') or [], proposal.get('from_assets') or [],
+             proposal.get('from_team_id'))):
+        if back or not sent or any(a.get('kind') != 'player' for a in sent):
+            continue
+        given = float((evaluations.get(sender) or {}).get('outgoing_value') or 0.0)
+        taken = float((evaluations.get(receiver) or {}).get('incoming_asset_value') or 0.0)
+        if max(given, taken) >= USEFUL_GIVEAWAY_VALUE:
+            return True
+    return False
+
+
+def short_changed_core_sale(canonical: dict[str, Any], candidate: dict[str, Any]) -> bool:
+    """TRADE-CORE: an AI contender, or team fresh off a playoff run, would give up one of its best players in a deal it
+    does not itself rate good enough. The "close call" allowance does not cover that (trade_tax.contender_core_outgoing)."""
+    from .trade_tax import contender_core_outgoing
+    proposal = candidate.get('proposal') or {}
+    human = set(canonical.get('_human_team_ids') or [])
+    for evaluation in candidate.get('evaluations') or []:
+        tid = evaluation.get('perspective_team_id')
+        if evaluation.get('accepted') or tid in human:
+            continue
+        for side, team in (('from_assets', 'from_team_id'), ('to_assets', 'to_team_id')):
+            if tid == proposal.get(team) and contender_core_outgoing(canonical, tid, proposal.get(side) or []):
+                return True
+    return False
+
+
 def ai_trade_candidate_accepted(canonical: dict[str, Any], candidate: dict[str, Any]) -> bool:
     if candidate.get("legality", {}).get("status") != "legal":
         return False
@@ -1454,8 +1503,12 @@ def ai_trade_candidate_accepted(canonical: dict[str, Any], candidate: dict[str, 
         evaluations = candidate.get('evaluations') or []
         return ({e.get('perspective_team_id') for e in evaluations} == ids
                 and all(e.get('accepted') for e in evaluations))
+    if useful_player_for_nothing(candidate):
+        return False
     if candidate.get("accepted_by_all"):
         return True
+    if short_changed_core_sale(canonical, candidate):
+        return False
     from .team_planning import core_commitment
     proposal = candidate.get('proposal') or {}
     for side, tid in [('from_assets', proposal.get('from_team_id')), ('to_assets', proposal.get('to_team_id'))]:
@@ -1932,7 +1985,10 @@ def protected_pick_fallback_is_distinct(primary: dict[str, Any] | None, fallback
     )
 
 
-def pick_obligation_validation_errors(canonical_or_save: dict[str, Any], proposal: dict[str, Any] | None, term: dict[str, Any]) -> list[str]:
+def pick_obligation_validation_errors(canonical_or_save: dict[str, Any], proposal: dict[str, Any] | None, term: dict[str, Any], *,
+                                      new_term: bool = True) -> list[str]:
+    """``new_term``: a condition being attached in a trade now (the league's protection limits apply). Pass False when
+    checking a condition that already exists, which keeps whatever range it was agreed with."""
     if not term or term.get("type") in {None, "unprotected"}:
         return []
     errors: list[str] = []
@@ -1940,7 +1996,7 @@ def pick_obligation_validation_errors(canonical_or_save: dict[str, Any], proposa
     has_pick_table = bool(canonical_or_save.get("draft_picks"))
     locked = set(canonical_or_save.get("locked_pick_assets") or [])
     if term.get("type") == "protected_pick":
-        from .pick_rules import protection_bounds
+        from .pick_rules import new_protection_issue, protection_bounds
 
         try:
             protection_bounds(term)
@@ -1961,9 +2017,13 @@ def pick_obligation_validation_errors(canonical_or_save: dict[str, Any], proposa
             errors.append("protected pick primary does not exist")
         primary_round = int((primary or {}).get("round") or term.get("primary_round") or 0)
         try:
-            protection_bounds({**term, "round": primary_round})
+            low, high = protection_bounds({**term, "round": primary_round})
         except ValueError as error:
             errors.append(str(error))
+        else:
+            banned = new_protection_issue(low, high, primary_round) if new_term else ""
+            if banned:
+                errors.append(banned)
         primary_year = pick_season_start(primary or {"season": term.get("season")}) or pick_season_start({"season": term.get("season")}) or 0
         for fallback_id in fallback_ids:
             fallback = picks.get(fallback_id)
@@ -2241,8 +2301,7 @@ def re_trade_hold_issues(canonical: dict[str, Any], proposal: Any) -> list[str]:
     if set(trade_team_ids(proposal)) & set(canonical.get("_human_team_ids") or []):
         return []
     held = re_trade_hold(canonical, transaction_reference_date(canonical, proposal))
-    if not held:
-        return []
+    held_picks = None
 
     def salary(asset: dict[str, Any]) -> float:
         return float(current_salary(contract_for_player(canonical, asset.get("id"))) or 0.0)
@@ -2250,7 +2309,7 @@ def re_trade_hold_issues(canonical: dict[str, Any], proposal: Any) -> list[str]:
     issues = []
     for team_id, outgoing, incoming in trade_team_flows(proposal):
         players_out = [a for a in outgoing if a.get("kind") == "player"]
-        for asset in players_out:
+        for asset in players_out if held else []:
             if held.get(asset.get("id")) != team_id:
                 continue
             mine = salary(asset)
@@ -2259,7 +2318,50 @@ def re_trade_hold_issues(canonical: dict[str, Any], proposal: Any) -> list[str]:
             if not (top and back >= RE_TRADE_HOLD_SALARY_BACK * mine):
                 issues.append(f"{asset.get('label', asset.get('id'))} was acquired by trade less than six months ago "
                               "and can only be moved as the centre of a salary-matching deal.")
+        if held_picks is None:
+            held_picks = re_trade_hold_picks(canonical, transaction_reference_date(canonical, proposal))
+        for asset in outgoing:
+            if asset.get("kind") in {"pick", "pick_swap"} and held_picks.get(asset.get("id")) == team_id:
+                issues.append(f"{asset.get('label', asset.get('id'))} was acquired by trade less than "
+                              f"{PICK_RE_TRADE_HOLD_DAYS} days ago.")
     return issues
+
+
+# AI-TRADES-SENSE: a draft pick an AI team just traded for stays put for a while. The season review had one 2028
+# first-round swap right change hands three times in a month (Washington to Philadelphia Jan 7, to the Lakers Jan 20,
+# to Indiana Feb 5). There is no league rule against it, but real front offices acquire picks to keep or to use in a
+# planned deal, not to pass along within weeks. All-AI trades only; the user's team keeps the real rules.
+PICK_RE_TRADE_HOLD_DAYS = 90
+
+
+def re_trade_hold_picks(canonical: dict[str, Any], as_of_date: str | None = None) -> dict[str, str]:
+    """{pick or swap-right id: team_id} for draft assets an AI team acquired by trade in the last 90 days."""
+    current = parse_iso_date(as_of_date or ((canonical.get("meta") or {}).get("current_date")) or CANONICAL_START_DATE)
+    if current is None:
+        return {}
+    key = (current.isoformat(), len(canonical.get("transaction_logs") or []))
+    memo = canonical.get("_re_trade_hold_picks_memo")
+    if memo and memo[0] == key:
+        return memo[1]
+    human = set(canonical.get("_human_team_ids") or [])
+    earliest = (current - timedelta(days=PICK_RE_TRADE_HOLD_DAYS - 1)).isoformat()
+    held: dict[str, str] = {}
+    for log in sorted((canonical.get("transaction_logs") or []), key=lambda row: str(row.get("date") or "")):
+        if (log.get("transaction_type") != "trade" or str(log.get("date") or "") < earliest
+                or str(log.get("date") or "") > current.isoformat()
+                or log.get("status") not in {"applied_to_save_ledger", "applied"}):
+            continue
+        for team_id, outgoing, incoming in transaction_log_flows(log):
+            for asset in outgoing:
+                if asset.get("kind") in {"pick", "pick_swap"} and held.get(asset.get("id")) == team_id:
+                    held.pop(asset.get("id"), None)
+            if team_id in human:
+                continue
+            for asset in incoming:
+                if asset.get("kind") in {"pick", "pick_swap"} and asset.get("id"):
+                    held[asset["id"]] = team_id
+    canonical["_re_trade_hold_picks_memo"] = (key, held)
+    return held
 
 
 def recently_signed_player_ids(canonical_or_save: dict[str, Any], as_of_date: str | None = None) -> set[str]:
@@ -2308,6 +2410,20 @@ def trade_live_validation_issues(save: dict[str, Any], proposal: dict[str, Any],
                 term.get("current_rights_holder_team_id") or term.get("original_rights_holder_team_id") or term.get("receiver_team_id"),
             )
     locked_picks = set(save.get("locked_pick_assets") or [])
+    # A banned protection must stop the trade: applying it would otherwise drop the condition and move the pick bare.
+    agreed = {obligation.get("id") for obligation in save.get("pick_obligations", [])}
+    for term in proposal.get("pick_obligation_terms") or []:
+        if term.get("type") == "protected_pick" and not (term.get("id") and term.get("id") in agreed):
+            from .pick_rules import new_protection_issue, protection_bounds
+
+            try:
+                low, high = protection_bounds(term)
+            except ValueError as error:
+                issues.append(str(error))
+                continue
+            banned = new_protection_issue(low, high, int(term.get("round") or term.get("primary_round") or 0))
+            if banned:
+                issues.append(banned)
     for term in proposal.get('pick_obligation_terms') or []:
         if term.get('type') != 'pick_swap' or not term.get('pending_asset_grant'):
             continue
@@ -2729,6 +2845,7 @@ def annotate_pick_obligation_context(canonical: dict[str, Any]) -> None:
         for pick_id in obligation.get("fallback_pick_ids") or []:
             locked.add(pick_id)
             by_pick.setdefault(pick_id, []).append({**obligation, "_fallback_lock": True})
+    picks_by_id = None
     for pick in canonical.get("draft_picks", []):
         pick["_active_season"] = str(canonical.get("meta", {}).get("active_season") or CANONICAL_SEASON)
         pick.pop("_obligations", None)
@@ -2741,7 +2858,10 @@ def annotate_pick_obligation_context(canonical: dict[str, Any]) -> None:
         obligations_for_pick = by_pick.get(pick_id, [])
         if obligations_for_pick:
             pick["_obligations"] = obligations_for_pick
-            pick["_protection_value_factor"] = pick_obligation_value_factor(obligations_for_pick)
+            if picks_by_id is None:
+                picks_by_id = {row.get("id"): row for row in canonical.get("draft_picks", [])}
+            pick["_protection_value_factor"] = pick_obligation_value_factor(
+                obligations_for_pick, lambda term: protected_pick_value_factor(pick, term, picks_by_id))
             primary = next((item for item in obligations_for_pick if item.get("type") == "protected_pick" and not item.get("_fallback_lock")), None)
             if primary:
                 pick["protection_summary"] = pick_obligation_label(primary)
@@ -2836,6 +2956,10 @@ def pick_swap_asset_value(canonical: dict[str, Any], obligation: dict[str, Any],
     value_b = pick_asset_value(pick_b, phase)
     if value_a <= 0 or value_b <= 0:
         return 0.0
+    worse = pick_swap_benefit(obligation) == "worse"
+    priced = swap_value_from_odds(obligation, pick_a, pick_b, phase, worse)
+    if priced is not None:
+        return -priced if worse else priced
     spread = abs(value_a - value_b)
     year = pick_season_start(pick_a) or pick_season_start(pick_b) or 2028
     active_year = season_start_from_label(str(canonical.get("meta", {}).get("active_season") or CANONICAL_SEASON))
@@ -2847,7 +2971,41 @@ def pick_swap_asset_value(canonical: dict[str, Any], obligation: dict[str, Any],
     else:
         base *= 0.62
     value = round(clamp(base, 1.0, 42.0), 2)
-    return -value if pick_swap_benefit(obligation) == "worse" else value
+    return -value if worse else value
+
+
+def swap_value_from_odds(obligation: dict[str, Any], pick_a: dict[str, Any], pick_b: dict[str, Any], phase: str,
+                         worse: bool) -> float | None:
+    """The size of a 3-2-1 swap right: how much better (or, for the less favourable side, worse) its holder is on
+    average for being able to end up with the other pick. Trimmed for drafts further out. None before 2027."""
+    odds_a, odds_b = pick_position_odds(pick_a), pick_position_odds(pick_b)
+    if odds_a is None or odds_b is None:
+        return None
+    holder = (obligation.get("current_rights_holder_team_id") or obligation.get("original_rights_holder_team_id")
+              or obligation.get("receiver_team_id"))
+    # The holder's own side of the swap: the pick it owns, else the one that started as its own, else the second
+    # pick (the receiver's pick in every right the game writes).
+    holds_a = False
+    for field in ("current_owner_team_id", "original_team_id"):
+        first, second = pick_a.get(field) == holder, pick_b.get(field) == holder
+        if first != second:
+            holds_a = first
+            break
+    held, other = (odds_a, odds_b) if holds_a else (odds_b, odds_a)
+    round_no = int(pick_a.get("round") or 2)
+    values = tuple(position_value(round_no, position) for position in range(1, 31))
+    # The less favourable side loses whenever the other pick lands later than its own.
+    gain = expected_gain(other, held, values) if worse else expected_gain(held, other, values)
+    gain *= clamp(1.0 - 0.05 * max(0, pick_years_ahead(pick_a) - 1), 0.7, 1.0)
+    return round(max(0.5, gain * pick_phase_multiplier(phase)), 2)
+
+
+def pick_phase_multiplier(phase: str) -> float:
+    if phase in {"rebuilding", "developing"}:
+        return 1.18
+    if phase in {"contending", "contending_with_future_upside"}:
+        return 0.88
+    return 1.0
 
 
 def pick_swap_by_id(canonical: dict[str, Any], obligation_id: str | None) -> dict[str, Any] | None:
@@ -2975,7 +3133,63 @@ def trade_candidate_with_current_asset_labels(canonical: dict[str, Any], candida
     return refreshed
 
 
-def pick_obligation_value_factor(obligations: list[dict[str, Any]]) -> float:
+def pick_position_odds(pick: dict[str, Any]) -> tuple[float, ...] | None:
+    """Where a pick can land within its round, for 3-2-1 drafts; None when it has to be priced the older way."""
+    round_no = int(pick.get("round") or 2)
+    overall = pick.get("overall_pick")
+    if overall:
+        year = pick_season_start(pick)
+        if year is None or not lottery_applies(year):
+            return None
+        position = int(overall) - 30 if round_no == 2 and int(overall) > 30 else int(overall)
+        return known_position_odds(int(clamp(position, 1, 30)))
+    finish = pick.get("projected_finish_rank")
+    if not finish:
+        return None
+    return position_odds(float(finish), pick_years_ahead(pick), round_no, int(pick.get("_highest_allowed_pick") or 1))
+
+
+def pick_years_ahead(pick: dict[str, Any]) -> int:
+    if pick.get("_future_distance_years") is not None:
+        return int(pick["_future_distance_years"])
+    active = season_start_from_label(str(pick.get("_active_season") or CANONICAL_SEASON))
+    return max(0, (pick_season_start(pick) or active + 1) - active)
+
+
+def protected_pick_value_factor(pick: dict[str, Any], obligation: dict[str, Any],
+                                picks_by_id: dict[str, dict[str, Any]]) -> float | None:
+    """What a protected pick is worth against the same pick unprotected: it conveys when it lands outside the range,
+    and the replacement pick conveys when it lands inside. None when the odds aren't known (before 2027)."""
+    from .pick_rules import protection_bounds
+
+    if pick.get("id") != obligation.get("primary_pick_id"):
+        return None
+    odds = pick_position_odds(pick)
+    if odds is None:
+        return None
+    low, high = protection_bounds(obligation)
+    round_no = int(pick.get("round") or 2)
+    offset = 30 if round_no == 2 else 0           # protections are written in overall pick numbers
+    distance = pick_years_ahead(pick)
+    values = [position_value(round_no, position, distance) for position in range(1, 31)]
+    unprotected = sum(chance * value for chance, value in zip(odds, values))
+    if unprotected <= 0:
+        return None
+    kept = sum(chance for position, chance in enumerate(odds, start=1) if low <= position + offset <= high)
+    conveyed = sum(chance * value for position, (chance, value) in enumerate(zip(odds, values), start=1)
+                   if not low <= position + offset <= high)
+    replacement = 0.0
+    fallback = picks_by_id.get(next((pid for pid in obligation.get("fallback_pick_ids") or [] if pid), None))
+    if fallback:
+        slot = float(fallback.get("overall_pick") or fallback.get("projected_pick_slot") or 15.5)
+        slot = slot - 30 if round_no == 2 and slot > 30 else slot
+        years = pick_years_ahead({**fallback, "_active_season": pick.get("_active_season")})
+        replacement = position_value(round_no, clamp(slot, 1, 30), years)
+    return round(clamp((conveyed + kept * replacement) / unprotected, 0.05, 1.0), 3)
+
+
+def pick_obligation_value_factor(obligations: list[dict[str, Any]],
+                                 odds_factor: Callable[[dict[str, Any]], float | None] | None = None) -> float:
     factor = 1.0
     for obligation in obligations:
         if obligation.get("type") == "protected_pick":
@@ -2986,7 +3200,8 @@ def pick_obligation_value_factor(obligations: list[dict[str, Any]]) -> float:
             factor *= 0.15
             continue
         if obligation.get("type") == "protected_pick":
-            factor *= clamp(1.0 - float(top_n) * 0.018, 0.52, 0.98)
+            priced = odds_factor(obligation) if odds_factor else None
+            factor *= clamp(1.0 - float(top_n) * 0.018, 0.52, 0.98) if priced is None else priced
     return round(clamp(factor, 0.05, 1.0), 3)
 
 
@@ -3098,6 +3313,8 @@ def transaction_pick_context_signature(canonical: dict[str, Any]) -> str:
             for obligation in canonical.get("pick_obligations", [])
         ),
         "locked_pick_assets": sorted(canonical.get("locked_pick_assets") or []),
+        # Drafts already held set the lottery's limits on repeat top picks.
+        "own_pick_history": canonical.get("save_own_pick_history") or {},
     }
     digest = hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:24]
     return f"transaction_pick_context_{digest}"
@@ -3137,6 +3354,8 @@ def annotate_pick_value_context(canonical: dict[str, Any]) -> None:
             continue
         if pick.get("overall_pick"):
             pick["projected_pick_slot"] = int(pick.get("overall_pick") or 30)
+            pick.pop("projected_finish_rank", None)
+            pick.pop("_highest_allowed_pick", None)
             continue
         pick_start = pick_season_start(pick)
         if pick_start is not None and pick_start < current_start:
@@ -3145,8 +3364,22 @@ def annotate_pick_value_context(canonical: dict[str, Any]) -> None:
         distance = max(0, (pick_start or current_start + 1) - current_start)
         if distance > 0 and original not in facts:
             facts[original] = _future_slot_facts(canonical, original, values, rosters.get(original, []))
-        pick["projected_pick_slot"] = int(round(future_adjusted_pick_slot(canonical, original, base_slot, distance,
-                                                                          facts=facts.get(original))))
+        finish = future_adjusted_pick_slot(canonical, original, base_slot, distance, facts=facts.get(original))
+        draft_year = pick_start or current_start + 1
+        if lottery_applies(draft_year):
+            # The 3-2-1 lottery: price the draft position the forecast finish is likely to bring, not the finish.
+            round_no = int(pick.get("round") or 2)
+            highest = highest_pick_allowed(canonical, original, draft_year) if round_no == 1 else 1
+            pick["projected_finish_rank"] = round(finish, 2)
+            pick["projected_pick_slot"] = lottery_pick_slot(pick["projected_finish_rank"], distance, round_no, highest)
+        else:
+            highest = 1
+            pick.pop("projected_finish_rank", None)
+            pick["projected_pick_slot"] = int(round(finish))
+        if highest > 1:
+            pick["_highest_allowed_pick"] = highest
+        else:
+            pick.pop("_highest_allowed_pick", None)
         pick["_future_distance_years"] = distance
 
 
@@ -3179,6 +3412,10 @@ def _future_slot_facts(canonical: dict[str, Any], team_id: str, values: dict[str
 
 def future_adjusted_pick_slot(canonical: dict[str, Any], team_id: str, base_slot: int, distance: int, *,
                               facts: tuple[str, float, float] | None = None) -> float:
+    """Forecast league finish (1 = worst record) of the team a pick comes from, ``distance`` years ahead.
+
+    Before the 2027 draft this is also the projected draft position; from 2027 pick_lottery_value turns it into one.
+    """
     if distance <= 0:
         return clamp(float(base_slot), 1, 30)
     phase, avg_top_age, youth_score = facts if facts is not None else _future_slot_facts(canonical, team_id)
@@ -3698,8 +3935,12 @@ def buyer_offer_packages_for_value(
         present = {player['id'] for player in tradable_players}
         tradable_players = tradable_players + [player for player in candidates if player['id'] in filler_ids
                                                and player['id'] not in present and player['id'] not in unavailable]
+    # AI-TRADES-SENSE: an AI team doesn't pass along a pick it just traded for (re_trade_hold_picks).
+    humans = set(canonical.get("_human_team_ids") or [])
+    held_picks = ({pid for pid, tid in re_trade_hold_picks(canonical, as_of_date).items() if tid == buyer["id"]}
+                  if not {buyer["id"], seller["id"]} & humans else set())
     picks = sorted(
-        tradeable_picks_for_team(canonical, buyer["id"]),
+        [pick for pick in tradeable_picks_for_team(canonical, buyer["id"]) if pick["id"] not in held_picks],
         key=lambda pick: pick_offer_preference_score(pick, buyer_state.get("phase", "balanced"), target_value)
             + 8*search_priority(canonical, seller['id'], {'kind': 'pick', 'id': pick['id']}),
         reverse=True,
@@ -3723,7 +3964,7 @@ def buyer_offer_packages_for_value(
     protection_options = {p['id']: ai_pick_protection_options(canonical, buyer, seller, p,
         buyer_state.get('phase', 'neutral')) for p in firsts[:3]} if return_options and direct_player_groups else {}
     swaps = sorted(
-        tradeable_pick_swaps_for_team(canonical, buyer["id"]),
+        [swap for swap in tradeable_pick_swaps_for_team(canonical, buyer["id"]) if swap["id"] not in held_picks],
         key=lambda swap: pick_swap_asset_value(canonical, swap, buyer_state.get("phase", "neutral")),
         reverse=True,
     )[:3]
@@ -4725,8 +4966,8 @@ def evaluate_trade_for_team(
     if outlook and (outlook['issue'] or (outlook['adjustment'] < 0 and net < threshold)):
         decision = 'reject_roster_plan'
     investment = (outlook or {}).get('pick_investment')
-    if investment and (net < -investment['loss_limit'] or ((investment['incoming_rotation_minutes'] < 24 or investment['rotation_gain'] < .25)
-            and investment['net_draft_value_spent'] > investment['capital_limit'])):
+    from .trade_roster import pick_investment_overspent
+    if investment and (net < -investment['loss_limit'] or pick_investment_overspent(investment)):
         accepted = False
         decision = 'reject_pick_investment'
     if premium_issue:
@@ -4743,7 +4984,10 @@ def evaluate_trade_for_team(
     if outlook and outlook['issue']:
         reasons.append(outlook['issue'])
     if decision == 'reject_pick_investment':
-        reasons.append('Too much draft capital for the projected rotation improvement.')
+        reasons.append('Too much draft capital for the projected rotation improvement.'
+                       if investment.get('first_round_purpose', True) else
+                       'A first-round pick buys a rotation player or real young upside, not depth this deal would '
+                       'not play.')
     if net < threshold:
         reasons.append(f'Net value {net:.2f} is below the required {threshold:.2f}.')
     if legality['status'] != 'legal':
@@ -5517,6 +5761,10 @@ def package_value_components(
             if own:
                 adjusted += own_player_premium(canonical, player, perspective_team_id, adjusted, market_value=player_value)["total"]
             else:
+                if adjusted > 0 and not human_view:
+                    # AI-TRADES-SENSE: a buyer pays less for a player who will miss much of the season (trade_injury).
+                    from .trade_injury import injury_discount
+                    adjusted *= 1.0 - injury_discount(canonical, asset["id"], perspective_team_id)
                 adjusted += recently_acquired_player_premium(canonical, player, perspective_team_id, player_value)
             player_adjusted_values.append(adjusted)
             total += adjusted
@@ -5954,6 +6202,20 @@ def salary_matching_issue(canonical: dict[str, Any], proposal: TradeProposal, co
         triggered = (canonical.get("triggered_hard_caps") or {}).get(team_id)
         if triggered and after_total > float(triggered) + 1 and after_total > current_total + 1:
             return f"{team_by_id(canonical, team_id)['abbrev']} is hard-capped at ${float(triggered) / 1e6:.1f}M this season."
+        # AI-TRADES-SENSE: and an AI team keeps room under it to fill a 14-man roster with minimum contracts
+        # (cap_ledger.AI_HARD_CAP_ROSTER_FILL): no trade leaves it short and stuck.
+        if triggered and team_id not in set(canonical.get("_human_team_ids") or []):
+            from .cap_ledger import AI_HARD_CAP_ROSTER_FILL, minimum_salary
+            roster = sum(1 for p in canonical.get("players", []) if p.get("team_id") == team_id
+                         and not p.get("_inactive_player"))
+            moved = (sum(1 for a in incoming if a.get("kind") == "player")
+                     - sum(1 for a in outgoing if a.get("kind") == "player"))
+            fill = float(minimum_salary(active_season, 0))
+            need_before = current_total + max(0, AI_HARD_CAP_ROSTER_FILL - roster) * fill
+            need_after = after_total + max(0, AI_HARD_CAP_ROSTER_FILL - roster - moved) * fill
+            if need_after > float(triggered) + 1 and need_after > need_before + 1:
+                return (f"{team_by_id(canonical, team_id)['abbrev']} would be left without room under its hard cap "
+                        "to fill its roster.")
     active_start = season_start_from_label(active_season)
     for offset in range(1, 4):
         start = active_start + offset
@@ -6115,7 +6377,8 @@ def duplicate_trade_assets(assets: list[dict[str, Any]]) -> set[str]:
 
 def ranked_pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     """Expected value of exactly one guaranteed order statistic, not a leaf."""
-    fields = ("id", "season", "round", "original_team_id", "status", "overall_pick", "projected_pick_slot", "_protection_value_factor")
+    fields = ("id", "season", "round", "original_team_id", "status", "overall_pick", "projected_pick_slot",
+              "projected_finish_rank", "_highest_allowed_pick", "_protection_value_factor")
     leaves = []
     for pid in pick["_ranked_entitlement"]["pool_pick_ids"]:
         row = pick["_ranked_leaf_picks"][pid]
@@ -6134,13 +6397,14 @@ def ranked_pool_expected_values(pool_json: str, phase: str) -> tuple[float, ...]
 
     Farther seasons have wider team-outcome uncertainty. The existing roster
     projection already regresses future slots, so do not regress them twice.
+    From 2027 each scenario is a finish near the forecast and then a lottery draw.
     Actual lottery positions are fixed. No optional-swap premium is added:
     uncertainty enters once through the distribution of selected outcomes.
     """
     leaves = json.loads(pool_json)
     active = season_start_from_label(str(leaves[0].get("_active_season") or CANONICAL_SEASON))
     distance = max(0, (pick_season_start(leaves[0]) or active) - active)
-    spread = min(10.0, 2.0 + 1.3 * distance)
+    spread = finish_spread(distance)
     round_no = int(leaves[0].get("round") or 1)
     offset = 30 if round_no == 2 else 0
     means = []
@@ -6158,8 +6422,16 @@ def ranked_pool_expected_values(pool_json: str, phase: str) -> tuple[float, ...]
     samples = 1 if known else 96
     for pair in range(1 if known else 48):
         deviations = [0.0 if leaf.get("overall_pick") else rng.gauss(0, spread) for leaf in leaves]
+        draws = [rng.random() if leaf.get("projected_finish_rank") and not leaf.get("overall_pick") else None
+                 for leaf in leaves]
         for direction in ([1] if known else [1, -1]):
-            positions = [int(round(clamp(mean + direction * deviation, 1 + offset, 30 + offset))) for mean, deviation in zip(means, deviations)]
+            positions = [
+                int(round(clamp(mean + direction * deviation, 1 + offset, 30 + offset))) if draw is None else
+                offset + sample_draft_position(float(leaf["projected_finish_rank"]), direction * deviation,
+                                               draw if direction == 1 else 1.0 - draw, round_no,
+                                               int(leaf.get("_highest_allowed_pick") or 1))
+                for leaf, mean, deviation, draw in zip(leaves, means, deviations, draws)
+            ]
             ordered = sorted(range(len(leaves)), key=lambda index: (positions[index], leaves[index]["id"]))
             for rank, index in enumerate(ordered):
                 totals[rank] += tables[index][positions[index]]
@@ -6173,6 +6445,20 @@ def nested_pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     ordinary picks. Never sum leaf pick values or price child rights again.
     """
     leaves = pick["_nested_leaf_picks"]
+    active_label = pick.get("_active_season")
+    leaf_odds = {pid: pick_position_odds({**row, "_active_season": active_label or row.get("_active_season")})
+                 for pid, row in leaves.items()}
+    if all(odds is not None for odds in leaf_odds.values()):
+        def outcome(node):
+            if node["type"] == "pick":
+                return leaf_odds[node["pick_id"]]
+            return selected_odds(outcome(node["left"]), outcome(node["right"]), node["benefit"] == "better")
+        round_no = int(pick.get("round") or 2)
+        distance = pick_years_ahead(pick)
+        estimate = sum(chance * position_value(round_no, position, distance) for position, chance
+                       in enumerate(outcome(pick["_nested_entitlement"]["tree"]), start=1))
+        cap = 128.0 if round_no == 1 else 96.0
+        return round(clamp(estimate * pick_phase_multiplier(phase), 1.0, cap), 2)
     values = {pid: pick_asset_value({**row, "_active_season": pick.get("_active_season") or row.get("_active_season")}, phase) for pid, row in leaves.items()}
     active = season_start_from_label(str(pick.get("_active_season") or CANONICAL_SEASON))
     distance = max(0, (pick_season_start(pick) or active) - active)
@@ -6207,7 +6493,7 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     round_no = int(pick.get("round") or 2)
     slot = pick.get("overall_pick") or pick.get("projected_pick_slot")
     try:
-        slot_value = int(slot) if slot is not None else None
+        slot_value = float(slot) if slot is not None else None
     except (TypeError, ValueError):
         slot_value = None
     active_start = season_start_from_label(str(pick.get("_active_season") or pick.get("active_season") or CANONICAL_SEASON))
@@ -6215,21 +6501,7 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     distance = max(0, pick_start - active_start)
     if round_no == 1:
         if slot_value:
-            if slot_value == 1:
-                value = 126.0
-            elif slot_value == 2:
-                value = 118.0
-            elif slot_value == 3:
-                value = 112.0
-            elif slot_value <= 5:
-                value = 108.0 - (slot_value - 4) * 4.5
-            elif slot_value <= 10:
-                value = 96.0 - (slot_value - 6) * 3.0
-            elif slot_value <= 20:
-                value = 87.0 - (slot_value - 10) * 3.1
-            else:
-                value = 54.0 - (slot_value - 20) * 2.25
-            value = clamp(value, 28, 128)
+            value = first_round_slot_value(slot_value)
         elif pick.get("status") == "verified_2026_draft_board" and pick.get("id", "").split("-"):
             try:
                 pick_no = int(pick["id"].split("-")[2])
@@ -6256,10 +6528,7 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
         value -= max(0, distance - 1) * 0.42
     if pick.get("status") == "inferred_future_second_round_scaffold":
         value -= 0.75
-    if phase in {"rebuilding", "developing"}:
-        value *= 1.18
-    if phase in {"contending", "contending_with_future_upside"}:
-        value *= 0.88
+    value *= pick_phase_multiplier(phase)
     distance_noise = 0.0 if pick.get("_ranked_scenario") else deterministic_pick_uncertainty_bonus(pick, distance, round_no)
     value += distance_noise
     value *= float(pick.get("_protection_value_factor") or 1.0)

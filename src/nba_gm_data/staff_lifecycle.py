@@ -16,6 +16,10 @@ from .utils import clamp, normalize_name
 
 
 COORDINATOR_ROLES = {"offensive_coordinator", "defensive_coordinator"}
+# COACHES-FREE-AGENTS: wins per 82 games for each point of a healthy roster's contention strength above the league
+# average. Real 2026-27 preseason win totals move 2.8 wins a point, the 2026-27 almanac season 3.2. (It was 0.5, which
+# expected every team to win between 37 and 44 games, so "below expectations" meant little.)
+WINS_PER_STRENGTH_POINT = 2.8
 EXPERIENCE_SKILLS = {"rotation_management", "scheme_balance", "player_usage", "matchup_adjustment"}
 BIO_SOURCES = {
     "src_espn_coaches_2026",
@@ -174,7 +178,7 @@ def staff_win_expectations(strategic_states: list[dict[str, Any]]) -> dict[str, 
     ceilings = {row["team_id"]: float(row.get("contention_ceiling") or 55) for row in strategic_states}
     league_mean = sum(ceilings.values()) / max(1, len(ceilings))
     return {
-        team_id: round(clamp(0.5 + (ceiling - league_mean) / 170, 0.25, 0.75), 4)
+        team_id: round(clamp(0.5 + (ceiling - league_mean) * WINS_PER_STRENGTH_POINT / 82, 0.2, 0.78), 4)
         for team_id, ceiling in ceilings.items()
     }
 
@@ -264,6 +268,10 @@ def roll_staff_lifecycle(
     preseason = save.setdefault("staff_preseason_expectations", {})
     expectations = preseason.setdefault(season, staff_win_expectations((canonical or {}).get("team_strategic_states", [])))
     results = _season_results(completed, expectations)
+    # COACHES-FREE-AGENTS: reputations move against the summer review's figure (after injuries and departures).
+    for team_id, review in (save.get("staff_season_review") or {}).get(season, {}).items():
+        if team_id in results:
+            results[team_id]["expected_wins"] = round(review["expected_wins"] * results[team_id]["games"] / 82, 2)
     if next_roster and next_roster.get("players"):
         from .schema import to_plain
         from .transactions import build_team_strategic_states

@@ -606,8 +606,12 @@ def map_to_measured(table: Mapping[str, list[float]], x: float) -> float:
 def map_tendency_inputs(inputs: dict[str, Any], scale_map: Mapping[str, Any]) -> dict[str, Any]:
     """Translate estimator-scale T01 (shoot/drive/pass/reset), T08 and the T17 transition share onto the measured
     scales, in place.
-    Used for players without measurements, including generated rookies at install time."""
+    Used for players without measurements, including generated rookies at install time. A generated player's action
+    mix and transition share already come from real players' measured habits (input_estimator, ROOKIE-THREES), so
+    those two are left as they are; his involvement is still built on the estimator's scale and is translated."""
     record = inputs.get("T01")
+    if record and record.get("reason") == "generated":
+        record = None
     mix = _mix(record) if record else None
     if mix and "post" in mix and all(c in mix for c in MEASURED_T01) and all(f"T01:{c}" in scale_map for c in MEASURED_T01):
         mapped = {c: max(1e-4, map_to_measured(scale_map[f"T01:{c}"], float(mix[c]))) for c in MEASURED_T01}
@@ -623,6 +627,8 @@ def map_tendency_inputs(inputs: dict[str, Any], scale_map: Mapping[str, Any]) ->
     # Transition share of the offensive-end effort (T17) on the NBA.com play-type scale (playtype_evidence); the defense
     # share is kept.
     effort = inputs.get("T17")
+    if effort and effort.get("reason") == "generated":
+        effort = None
     mix = _mix(effort) if effort else None
     if mix and "T17:transition_share" in scale_map and all(c in mix for c in ("offense", "defense", "transition")):
         off = float(mix["offense"]) + float(mix["transition"])

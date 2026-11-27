@@ -34,6 +34,7 @@ KINDS = (
     ("rim_finish", "roll_cut", 0, "rim", 2),   # finish off a pass: roll, cut, lob, dump-off
     ("floater", "drive", 1, "short", 2),       # drive that ends in a floater / runner
     ("hook", "post", 1, "short", 2),           # post-up hook / post finish
+    ("short_finish", "roll_cut", 1, "short", 2),  # short-paint finish off a pass: short roll, cut, dump-off (S2-TENTH)
     ("short_jumper", "jumper", 1, "short", 2), # 4-14 ft jumper (turnaround, short pull-up, catch)
     ("mid_catch", "jumper", 2, "mid", 2),      # catch-and-shoot / movement midrange
     ("mid_pull", "pull_up", 2, "mid", 2),      # pull-up midrange
@@ -47,7 +48,7 @@ KINDS = (
 )
 KIND_INDEX = {k[0]: i for i, k in enumerate(KINDS)}
 N_KINDS = len(KINDS)
-HALFCOURT_KINDS = tuple(range(10))
+HALFCOURT_KINDS = tuple(range(11))
 ACTIONS = ("drive", "roll_cut", "post", "jumper", "pull_up", "putback", "transition")
 
 # ---- shooting conversion ---------------------------------------------------------------------------------------
@@ -93,7 +94,14 @@ MENU = {"rim_cut": .55, "rim_roll": .65, "rim_post": .9, "short_post": 2.4, "sho
         # 0 = the first menu. Kept OFF (S2-USAGE): at 1 each player's finishes match real cuts + rolls far better
         # (correlation .66 -> .77) but per-player points get worse (miss 1.47 -> 1.53 per 36), because the rollers it
         # feeds are mostly bigs whose usage is already over real (see docs/agents/tasks/s2-usage.md, ratings questions).
-        "roll_screen": 0.0}
+        "roll_screen": 0.0,
+        # S2-TENTH: powers on the drive (T01 drive), cutting (T09), rolling (T11 roll + slip, after roll_screen) and post
+        # (T01 post) habits inside the rim and short-paint splits. 1 = the first menu.
+        "drive_pow": 1.0, "cut_pow": 1.0, "roll_pow": 1.0, "post_pow": 1.0,
+        # S2-TENTH: weight of short-paint finishes off a pass (short rolls, cuts, dump-offs) in the short-paint split,
+        # times the same cut + roll weight as at the rim. 0 = the first menu (a big's short-paint shots were drives,
+        # post-ups or jumpers only, so rim-running centres took 3-5 post-up hooks per 36 against 0.3-1.4 real post-ups).
+        "short_fin": 0.0}
 # Transition menu: rim vs three by his rim / three habit (T02).
 TRANS = {"rim_base": .45, "three_scale": .6}
 
@@ -264,6 +272,9 @@ def make_table(pid: str, flat: Mapping[str, float]) -> list[float]:
     table[KIND_INDEX["rim_finish"]] = rim("rim_finish")
     table[KIND_INDEX["floater"]] = _finish(p, "floater")
     table[KIND_INDEX["hook"]] = min(.85, max(.15, hook))
+    # A short-paint finish off a pass (push shot, short hook or floater on the roll): halfway between his post finish
+    # and his floater (stand-in; the league's short-paint make rate is checked against real).
+    table[KIND_INDEX["short_finish"]] = .5 * (table[KIND_INDEX["hook"]] + table[KIND_INDEX["floater"]])
     table[KIND_INDEX["short_jumper"]] = short_j
     table[KIND_INDEX["mid_catch"]] = catch2_mid
     table[KIND_INDEX["mid_pull"]] = _jumper(p, "pull2", "pull_up", MID_PULLUP_M)
@@ -298,9 +309,14 @@ def shot_menu(flat: Mapping[str, float], means: Mapping[str, float] | None = Non
     shoot = max(1e-3, float(flat.get("T01.shoot", .25)))
     cut = float(flat.get("T09", .3))
     roll = (float(flat.get("T11.roll", .2)) + float(flat.get("T11.slip", .1))) * screen_rel(flat, means)
+    dp, pp = MENU["drive_pow"], MENU["post_pow"]
+    if dp != 1.0 or pp != 1.0 or MENU["cut_pow"] != 1.0 or MENU["roll_pow"] != 1.0:
+        drive, post = drive ** dp, post ** pp
+        cut, roll = max(1e-3, cut) ** MENU["cut_pow"], max(1e-3, roll) ** MENU["roll_pow"]
     w_rim = (drive, MENU["rim_cut"] * cut * .5 + MENU["rim_roll"] * roll * .5, MENU["rim_post"] * post)
     s = sum(w_rim)
-    w_short = (drive, MENU["short_post"] * post, MENU["short_shoot"] * shoot)
+    w_short = (drive, MENU["short_post"] * post, MENU["short_shoot"] * shoot,
+               MENU["short_fin"] * (MENU["rim_cut"] * cut * .5 + MENU["rim_roll"] * roll * .5))
     ss = sum(w_short)
     catch, pull, move = (max(1e-6, float(flat.get(f"T03.{m}", 1 / 3))) for m in ("catch", "pull_up", "movement"))
     pull_share = pull / (catch + pull + move)
@@ -313,6 +329,7 @@ def shot_menu(flat: Mapping[str, float], means: Mapping[str, float] | None = Non
     menu[KIND_INDEX["floater"]] = short * w_short[0] / ss
     menu[KIND_INDEX["hook"]] = short * w_short[1] / ss
     menu[KIND_INDEX["short_jumper"]] = short * w_short[2] / ss
+    menu[KIND_INDEX["short_finish"]] = short * w_short[3] / ss
     menu[KIND_INDEX["mid_pull"]] = mid * pull_share
     menu[KIND_INDEX["mid_catch"]] = mid * (1 - pull_share)
     menu[KIND_INDEX["three_pull"]] = three * pull_share
@@ -433,6 +450,8 @@ def build_card(pid: str, name: str, flat: Mapping[str, float], means: Mapping[st
     c.scr_w = math.exp(log_linear(SCREEN_ASSISTS_INPUTS, flat))
     roll = (float(flat.get("T11.roll", .2)) + float(flat.get("T11.slip", .1))) * screen_rel(flat, means)
     cut = float(flat.get("T09", .3))
+    if MENU["cut_pow"] != 1.0 or MENU["roll_pow"] != 1.0:
+        cut, roll = max(1e-3, cut) ** MENU["cut_pow"], max(1e-3, roll) ** MENU["roll_pow"]
     c.roll_share = MENU["rim_roll"] * roll / max(1e-6, MENU["rim_roll"] * roll + MENU["rim_cut"] * cut)
     c.screen_q = _index(flat, SCREEN_Q, means) + .5 * (float(flat.get("P04", means.get("P04", 100.0)))
                                                       - means.get("P04", 100.0)) / 15.0
@@ -447,6 +466,26 @@ def build_card(pid: str, name: str, flat: Mapping[str, float], means: Mapping[st
     c.diff = math.log(max(1e-3, float(flat.get("T04", .276)))) - means.get("log_T04", math.log(.276))
     regions = [max(0.0, float(flat.get(f"T02.{r}", .25))) for r in ("rim", "short_paint", "midrange", "three")]
     c.three = regions[3] / (sum(regions) or 1.0)   # his three-point share of shots (T02), for heaves and must-have threes
+    return c
+
+
+EMPTY_ID = "stage2-empty-spot"
+
+
+def empty_card(flat: Mapping[str, float], means: Mapping[str, float], n: int = 0) -> Card:
+    """An empty spot on the floor (S2-TENTH): a team with fewer than five available players plays four (or fewer) against
+    five, as today's engine does, instead of the loop failing. The spot never ends a possession, passes, rebounds,
+    screens, steals or blocks, and defends as badly as the scale allows, so the scorer it is matched with is left open.
+    It is built on league-median inputs only so every number the loop reads exists; it is never in the box score."""
+    c = build_card(f"{EMPTY_ID}-{n}", "Empty spot", flat, means, "guard")
+    tiny = 1e-9
+    c.usage = c.ast_w = c.stl_w = c.blk_w = c.ns_draw = c.off_foul_w = c.scr_w = tiny
+    c.ft, c.three, c.height = .2, tiny, 150.0
+    for k in ("perim_d", "rim_d", "press_d", "contain_d", "closeout_d", "onball_d", "rot_d", "post_d", "lanes_d", "nav",
+              "create", "burst", "screen_q", "foul_ctrl"):
+        setattr(c, k, -4.0)
+    c.space = 0.0
+    c.reb = replace(c.reb, off_ability=tiny, def_ability=tiny, profile=replace(c.reb.profile, height_cm=150.0))
     return c
 
 

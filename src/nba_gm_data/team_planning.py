@@ -38,6 +38,58 @@ HYSTERESIS_TREND = 0.3
 CONTEND_LINE_RANK = 4
 CONTEND_GAP_FREE = 1.0
 CONTEND_GAP_FULL = 6.0
+# AI-TRADES-SENSE: a team that just went deep keeps its window. The season review had Cleveland labelled "exiting" on
+# July 1, right after winning the title, and trading Evan Mobley for tax savings. Real champions and conference
+# finalists with their core under contract run it back (the user: "after a team wins a championship its kind of
+# atypical to move such a big piece"). So until the new season's record speaks (RECORD_GUARD_GAMES), a team that won
+# at least DEEP_RUN_ROUNDS playoff rounds in the latest postseason with most of that core still on the roster stays a
+# contender ("peak"), unless its core is truly aging: a trend at or below DEEP_RUN_AGING_TREND (about a top five
+# averaging 33 years old).
+DEEP_RUN_ROUNDS = 2
+DEEP_RUN_AGING_TREND = -2.0
+DEEP_RUN_CORE_OVERLAP = 0.5
+# TRADE-CORE: winning even one playoff series is a playoff run. It does not change the team's window label, but until
+# the new season's record speaks the team does not sell one of its best players cheaply (trade_tax.contender_core_outgoing).
+PLAYOFF_RUN_ROUNDS = 1
+
+
+def latest_postseason_rounds(canonical, team_id):
+    """Playoff rounds the team won in the latest postseason (0 when it missed or none is on record), counted only
+    while most of that postseason's core is still on the roster."""
+    plan = (canonical.get('team_plans') or {}).get(team_id) or {}
+    outcomes = plan.get('postseason_outcomes') or []
+    if not outcomes:
+        return 0
+    today = str((canonical.get('meta') or {}).get('current_date') or '')
+    try:
+        year, month = int(today[:4]), int(today[5:7])
+    except ValueError:
+        return 0
+    latest = max(outcomes, key=lambda o: str(o.get('year') or ''))
+    recent_year = year if month >= 7 else year - 1
+    try:
+        if int(latest.get('year') or 0) < recent_year:
+            return 0
+    except (TypeError, ValueError):
+        return 0
+    core = set(latest.get('core_ids') or [])
+    if core:
+        here = sum(1 for p in canonical.get('players', []) if p.get('id') in core and p.get('team_id') == team_id)
+        if here / len(core) < DEEP_RUN_CORE_OVERLAP:
+            return 0
+    return int(latest.get('rounds_won') or 0)
+
+
+def fresh_off_playoff_run(canonical, team_id):
+    """The team won a playoff series in the latest postseason (core still there) and the new season has not yet said
+    otherwise: June to September, then its first RECORD_GUARD_GAMES games."""
+    if latest_postseason_rounds(canonical, team_id) < PLAYOFF_RUN_ROUNDS:
+        return False
+    today = str((canonical.get('meta') or {}).get('current_date') or '')
+    if 6 <= int(today[5:7]) <= 9:
+        return True
+    record = (canonical.get('save_team_records') or {}).get(team_id) or {}
+    return float(record.get('wins') or 0) + float(record.get('losses') or 0) < RECORD_GUARD_GAMES
 
 
 def _record_strengths(canonical, rows):
@@ -145,6 +197,8 @@ def window_assessments(canonical, states, valuations):
     ordered = sorted((r['strength'] for r in rows.values()), reverse=True)
     contend_line = ordered[min(CONTEND_LINE_RANK, len(ordered)) - 1]
     n_teams = len(rows)
+    today = str((canonical.get('meta') or {}).get('current_date') or '')
+    month = int(today[5:7]) if len(today) >= 7 and today[5:7].isdigit() else 0
 
     def classify(row, strength, trend):
         trial = dict(row, strength=strength, trend=trend, future_strength=strength + trend)
@@ -167,6 +221,11 @@ def window_assessments(canonical, states, valuations):
                 phase = 'exiting' if row['trend'] < -.5 else 'entering'
             elif standing[tid] > n_teams * 2 / 3 and phase in {'peak', 'entering'}:
                 phase = 'exiting' if row['trend'] < -.5 else 'rebuilding'
+        # Until the new season's record speaks: the summer after the Finals, then its first RECORD_GUARD_GAMES games.
+        new_season_quiet = 6 <= month <= 9 or not (fact and fact[3] >= RECORD_GUARD_GAMES)
+        if (phase != 'peak' and new_season_quiet and row['trend'] > DEEP_RUN_AGING_TREND
+                and latest_postseason_rounds(canonical, tid) >= DEEP_RUN_ROUNDS):
+            phase = 'peak'
         gap = contend_line - row['strength']
         distance = 0.0 if phase == 'peak' else min(1.0, max(0.0, (gap - CONTEND_GAP_FREE) / (CONTEND_GAP_FULL - CONTEND_GAP_FREE)))
         row.update(window_phase=phase, league_rank=rank, contender_index=round(share*100, 3),
