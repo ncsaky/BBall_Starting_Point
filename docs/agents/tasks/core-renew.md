@@ -1,17 +1,51 @@
-# CORE-RENEW: core promises, and the injury rule that switched off a team's protections
+# CORE-RENEW: champions keep their cores, and the injury rule that switched off a team's protections
 
-Progress: 6/6 - done, ready for the coordinator's review
+Progress: 5/5 - done, ready for the coordinator's review
 
 Owner: Claude (side session, worktree `vigilant-cori-6ae562`, branch `claude/vigilant-cori-6ae562`).
 
 ## Report
 
 **TL;DR**
-- Narrowed the injury rule (user's OK, 2026-11-27): only a long injury to one of a team's three best players counts, and
-  it frees only that player. A hurt reserve can no longer put a team's stars up for picks.
-- In offer tests, 34 cheap sales are now refused and none got easier. Two new test runs made 177 trades against 188.
-- No renewal rule was added. The new runs produced one champion trade a fan might question, which the unused draft
-  would block.
+- Champions now keep their core through the summer and the next season (user's choice, 2026-11-27). Boston's earlier
+  sale of Neemias Queta right after winning is now refused.
+- The injury rule is narrowed (user's OK, same day): a hurt reserve can no longer put a team's stars up for picks.
+- Your own offers can still buy some champion players with a great draft pick; that is a pricing problem, not these rules.
+
+### The champion promise
+A team that wins the title keeps its core promised until the next June 30, or until another champion is crowned.
+
+- It ends early if most of the players who won the title have left.
+- The injury and trade-talk exceptions still apply (an injury frees only the injured player).
+- A core player can still go in a deal the champion gains a lot from (at least 20% more than it gives up).
+- When computer teams search for trades, a champion leaves its core out of what it offers.
+- A refused offer says why: "as champions they are keeping this core together".
+
+Two earlier trades judged again on their saved summer:
+
+| Trade | Without the promise | With it |
+|---|---|---|
+| June 30, 2028: champion Boston gives Neemias Queta for Aaron Gordon and a pick | made | refused |
+| July 3, 2027: champion Oklahoma City gives Alex Caruso and two picks for Kristaps Porzingis | made | still accepted, as a large gain; but Oklahoma City would not offer Caruso in its own search |
+
+Offer tests: for the champion in each of 8 test summers, every core player was asked for with the user team's best one
+to three first-round picks plus salary. 19 of 56 were sold, both with and without the promise: a very good pick is
+priced high enough to clear its bar. Among each champion's three best players, only Queta was sold.
+
+### Two test runs with the champion promise (two seasons each, same seeds as before)
+| Trades | First run, injury rule only | First run, with promise | Second run, injury rule only | Second run, with promise |
+|---|---|---|---|---|
+| 2026-27 season | 18 | 18 | 18 | 18 |
+| Summer 2027 | 22 | 22 | 29 | 29 |
+| 2027-28 season | 25 | 16 | 23 | 23 |
+| Summer 2028 | 26 | 28 | 16 | 16 |
+| All | 91 | 84 | 86 | 86 |
+| Core players a champion gave up after its title | 1 | 0 | 0 | 0 |
+
+- The second run is the same until June 30, 2028 (80 of 86 trades identical).
+- The first run splits on July 1, 2027. Its 2027-28 dip (25 to 16) is among other teams: the champion traded no player
+  that season either way. It looks like chance after the histories split, but two runs cannot prove it.
+- Over both runs, trades went 188 (before either change), 177 (injury rule), 170 (both): about 10% fewer in all.
 
 ### The injury rule
 | | Before | Now |
@@ -20,12 +54,8 @@ Owner: Claude (side session, worktree `vigilant-cori-6ae562`, branch `claude/vig
 | What it switches off | for the whole team: the core promise, "picks cannot pay for a star" and "a competing team does not weaken its rotation" | the same three, only for trades of the injured player |
 | A stalled trade talk with a core player | frees the whole team | unchanged |
 
-It applies to computer-to-computer trades and to the user's offers. For any given trade it can only refuse more than
-before, never less. LeBron's exception, textbook trade rules and every player rating are unchanged.
-
-### Offer tests
-Both original test runs' July 1 saves (2027 and 2028), reviewed by the old rule and by the new one: each computer
-team's five best players, asked for with the user team's (Brooklyn's) best one to three first-round picks plus salary.
+For any given trade it can only refuse more than before, never less. In offer tests on the same saves (every computer
+team's five best players, July 1 of 2027 and 2028):
 
 | | Before | Now |
 |---|---|---|
@@ -33,62 +63,30 @@ team's five best players, asked for with the user team's (Brooklyn's) best one t
 | Top-three players sold by teams the old rule had under review (of 66 asked) | 50 | 24 |
 | Top-three players sold by other teams (of 282 asked) | 181 | 181 |
 
-- 34 offers are now refused, including ones for Anthony Edwards, Cade Cunningham, Scottie Barnes, Donovan Mitchell and
-  Victor Wembanyama. No offer got easier.
-- The injured star himself can still be bought (Evan Mobley, out until April 2028, for one very good first and salary).
-- The other players still sold would go for the same offer if nobody on their team were hurt.
+34 offers are now refused, including ones for Anthony Edwards, Cade Cunningham, Scottie Barnes, Donovan Mitchell and
+Victor Wembanyama. The injured star himself can still be bought. In its own two runs this change made 177 trades against
+188, mostly fewer in the first season, where far fewer promises are now switched off.
 
-### Two new test runs (two seasons each, same seeds)
-| Trades | First run before | First run now | Second run before | Second run now |
-|---|---|---|---|---|
-| 2026-27 season | 20 | 18 | 23 | 18 |
-| Summer 2027 | 23 | 22 | 30 | 29 |
-| 2027-28 season | 22 | 25 | 22 | 23 |
-| Summer 2028 | 27 | 26 | 21 | 16 |
-| All | 92 | 91 | 96 | 86 |
-| Teams holding a promise at the 2027 playoffs | 19 | 28 | 21 | 28 |
+## Background: the original question
+Every team promises to keep its core when a career starts (to June 30, 2027); only a big acquisition started another,
+so before these changes 6 to 12 of the 29 computer teams held one after the first summer. In the first two runs I saw no
+unbelievable computer-to-computer trade from this and recommended no renewal. A later run produced the Queta trade, and
+the user chose a champions-only promise. Other playoff teams get no renewal.
 
-Volume is a little lower (6% over both runs), mostly in the first season, where far fewer promises are now switched off.
-Later differences are partly chance: after the first changed trade the two histories drift apart.
-
-Two trades in the new runs a fan might question. Neither is caused by the injury change:
-- June 30, 2028: champion Boston sends its starting center Neemias Queta to Denver for Aaron Gordon (33) and a pick.
-  The champion's promise had lapsed. The drafted renewal would block it.
-- July 2, 2027: New York sends Jalen Brunson and a pick to Memphis for Cam Spencer. New York had won no series and had
-  marked Brunson to move, so a playoff-run renewal would not block it.
-
-## The renewal question (the original task)
-**Confirmed:** every team promises to keep its core when a career starts (to June 30, 2027); only a big acquisition
-starts another. Before the injury change, 6 to 12 of the 29 computer teams held a promise after the first summer.
-Nothing gives a champion a new one. It reads as designed: a one-season trial.
-
-**Judged on the first two runs:** no unbelievable computer-to-computer trade. Six core players moved from teams that had
-reached at least the conference finals, mostly believable upgrades or reserve swaps (champion Oklahoma City's Alex
-Caruso and two picks for Kristaps Porzingis is the one a fan might argue about). The drafted renewal changed none of 94
-offer tests. So it was not added.
-
-**Since then:** the Queta trade above is the first case I would count in its favor.
-
-## Decisions for the user
-1. The renewal, for "champions keep cores". It is drafted in `core-renew-draft.patch` (rebased on the injury change;
-   apply with `git apply`). It keeps the core of any team that won two or more series until the next June 30, so it also
-   stops believable upgrades. A champions-only version is possible but not built.
-2. Follow-ups, none started:
-   - A stalled trade talk with one core player still frees the whole team, as the injury rule used to (3 of 116
-     team-summers in the offer tests).
-   - A team that marks a star to move can accept a weak return (the Brunson trade).
-   - A very good pick buys many teams' best players with nobody hurt (the 181 of 282 above).
+## Still open (none started)
+- A stalled trade talk with one core player still frees the whole team (3 of 116 team-summers in the offer tests).
+- Cheap star sales for great picks, and New York trading Jalen Brunson plus a pick for Cam Spencer: investigated in a
+  separate session (branch `claude/festive-chaplygin-aacfb6`, `docs/agents/tasks/trade-price.md`, report only; two
+  proposed refusals await the user's decision). That report was measured without the changes on this branch.
 
 ## Checks and limits
-- New `tests/test_injury_review.py` (9 tests). Updated two older tests that relied on the old rule and the frozen copy
-  used by the planning speed test.
-- The draft's tests pass with the planning, trade-core and injury tests (51 tests); it was not run over full seasons.
-- Full test suite on a cloud machine: 2,769 tests, 0 failures, 0 errors, 69 skipped. Browser tests were not run
-  (no screen code changed).
+- `tests/test_core_renew.py` (champion promise, 9 tests) and `tests/test_injury_review.py` (9 tests). Updated two older
+  tests and the frozen copy used by the planning speed test for the injury rule.
+- Full test suite on a cloud machine, final code: 2,778 tests, 0 failures, 0 errors, 69 skipped. Browser tests were
+  not run (no screen code changed).
 - Two seeds only. The offer tests use one user team's picks and judge only the selling team. The regular season is
   taken as October 20 to April 12. Nothing was checked in the game's screens.
 
 ## Files
-`src/nba_gm_data/team_planning.py`, `transactions.py` (premium-player rule), `trade_roster.py` (rotation rule), tests,
-this file, `core-renew-draft.patch`, one board row. Run results and scripts are in this worktree's `output/core-renew/`
-(git-ignored). About 7 cloud machine-hours.
+`src/nba_gm_data/team_planning.py`, `transactions.py`, `trade_roster.py`, tests, this file, one board row. Run results
+and scripts are in this worktree's `output/core-renew/` (git-ignored). About 12 cloud machine-hours in all.

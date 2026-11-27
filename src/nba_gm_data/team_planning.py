@@ -51,6 +51,29 @@ DEEP_RUN_CORE_OVERLAP = 0.5
 # TRADE-CORE: winning even one playoff series is a playoff run. It does not change the team's window label, but until
 # the new season's record speaks the team does not sell one of its best players cheaply (trade_tax.contender_core_outgoing).
 PLAYOFF_RUN_ROUNDS = 1
+# CORE-RENEW: the promise to keep a core (``commit_until``) starts with the career and with a major acquisition, so
+# from the second summer most computer teams had none, and a champion could trade a starter weeks after the title. The
+# user's rule: champions keep their cores. A title (TITLE_ROUNDS series won) promises the core until the next June 30
+# (``title_commit_until``), through that summer and the whole next season, while at least DEEP_RUN_CORE_OVERLAP of the
+# players who won it are still there. It ends sooner when another champion is crowned. The injury and trade-demand
+# reviews (``review_frees``) lift it like any other promise.
+TITLE_ROUNDS = 4
+
+
+def title_commitment_end(outcomes, owners, team_id):
+    """The date a title keeps the champion's core promised: June 30 after the title, or '' when the latest postseason on
+    record was not a title or most of the players who won it have left. ``owners`` maps player id to team id."""
+    if not outcomes:
+        return ''
+    latest = max(outcomes, key=lambda o: str(o.get('year') or ''))
+    core = latest.get('core_ids') or []
+    if int(latest.get('rounds_won') or 0) < TITLE_ROUNDS or not core:
+        return ''
+    if sum(owners.get(pid) == team_id for pid in core) / len(core) < DEEP_RUN_CORE_OVERLAP:
+        return ''
+    return f"{int(latest['year']) + 1}-06-30"
+
+
 # INJURY-NARROW: any core player, even a reserve, 90 days from returning used to switch off the team's protections for
 # everyone: the core promise, "picks cannot pay for a star" and "a competing team does not weaken its rotation". A
 # reserve due back before opening night let a user buy a team's best player for a pick. Now only one of the team's
@@ -270,8 +293,16 @@ def core_commitment(canonical, team_id, player_id):
         return False
     plan = canonical.get('team_plans', {}).get(team_id, {})
     today = str(canonical.get('meta', {}).get('current_date') or '')
-    return bool(player_id in plan.get('core_ids', []) and today and today <= plan.get('commit_until', '')
+    until = max(str(plan.get('commit_until') or ''), str(plan.get('title_commit_until') or ''))
+    return bool(player_id in plan.get('core_ids', []) and today and today <= until
                 and not review_frees(plan, [player_id]))
+
+
+def title_promise(canonical, team_id):
+    """The team's core promise currently rests on its title (used to say why it refuses)."""
+    plan = canonical.get('team_plans', {}).get(team_id, {})
+    today = str(canonical.get('meta', {}).get('current_date') or '')
+    return bool(today and today <= str(plan.get('title_commit_until') or ''))
 
 
 def acquisition_date(canonical, team_id, core_ids, values):
@@ -357,10 +388,13 @@ def refresh_team_plans(active, save, stamp):
         phase = state.get('window_phase') or 'rebuilding'
         route = {'peak': 'extend_peak', 'entering': 'patient_growth_then_selective_upgrade',
                  'exiting': 'retool_before_teardown', 'rebuilding': 'acquire_and_develop_foundations'}[phase]
-        if stalled and phase != 'peak' and float(state.get('window_trend') or 0) <= .5 and stamp > (until or ''):
+        title_until = title_commitment_end(outcomes, owners, tid)
+        title_until = title_until if title_until >= stamp else ''
+        held = max(until or '', title_until)
+        if stalled and phase != 'peak' and float(state.get('window_trend') or 0) <= .5 and stamp > held:
             route = 'review_core_ceiling_and_retool_alternatives'
         retool = None
-        if len(core) > 1 and stamp > (until or '') and (route == 'review_core_ceiling_and_retool_alternatives' or phase == 'exiting'):
+        if len(core) > 1 and stamp > held and (route == 'review_core_ceiling_and_retool_alternatives' or phase == 'exiting'):
             eligible = [pid for pid in core if route.startswith('review_') or
                         float(players[pid].get('display_age', players[pid].get('age')) or 27) >= 30]
             if eligible:
@@ -377,6 +411,8 @@ def refresh_team_plans(active, save, stamp):
                  'assessment_note': 'Relative fit/strength and bounded development scenario; not calibrated championship odds.'}
         if injured:
             entry['injury_review_ids'] = injured
+        if title_until:
+            entry['title_commit_until'] = title_until
         plans[tid] = entry
     save['team_plan_review_signature'] = signature
     save['team_plan_review_date'] = stamp

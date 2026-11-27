@@ -4980,8 +4980,13 @@ def evaluate_trade_for_team(
     if legality["status"] == "illegal":
         decision = "illegal_reject"
     reasons = []
+    champions = False
     if commitment_blocked:
-        reasons.append('Core commitment: this return does not justify breaking the current trial window.')
+        from .team_planning import title_promise
+        champions = title_promise(canonical, perspective_team_id)
+        reasons.append('Core commitment: as champions they are keeping this core together, and this return is not '
+                       'enough to change that.' if champions else
+                       'Core commitment: this return does not justify breaking the current trial window.')
     if premium_issue:
         reasons.append(premium_issue)
     if outlook and outlook['issue']:
@@ -5016,7 +5021,9 @@ def evaluate_trade_for_team(
         decision_reasons=reasons,
         notes=(
             evaluation_notes(canonical, perspective_team_id, net, threshold, strategic, personality, legality, accepted=accepted)
-            + (' Core commitment: ordinary return does not justify breaking the current trial window.' if commitment_blocked else '')
+            + ((' Core commitment: an ordinary return does not break up a champion core.' if champions
+                else ' Core commitment: ordinary return does not justify breaking the current trial window.')
+               if commitment_blocked else '')
             + (f' {premium_issue}' if premium_issue else '')
             + (f' Roster-space opportunity credit: {space_bonus:.2f}.' if space_bonus else '')
             + (tax_note(canonical, perspective_team_id, incoming_assets, outgoing_assets, tax_term[0]) if tax_term[0] else '')
