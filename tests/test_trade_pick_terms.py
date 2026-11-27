@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from nba_gm_data.trade_pick_terms import compile_pick_rules, attach_compiled_rules, original_specs_for_rules, candidate_pick_rules
 from nba_gm_data import app_actions as aa, transactions as tx
-from nba_gm_data.save import resolve_pick_obligations_for_year
+from nba_gm_data.save import merge_startup_pick_obligations, resolve_pick_obligations_for_year
 from nba_gm_data.transactions import apply_pick_obligation_terms_to_save
 
 
@@ -53,6 +53,40 @@ class TradePickTermsTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'selected'): self.compile(sides=sides)
         with self.assertRaisesRegex(ValueError,'one condition'): compile_pick_rules(self.data,[self.protected,self.protected],self.sides)
 
+    def test_new_protections_stopping_at_picks_12_through_15_are_refused(self):
+        for low,high in ((1,12),(1,13),(1,14),(1,15),(2,14),(12,12)):
+            with self.subTest(low=low,high=high),self.assertRaisesRegex(ValueError,"league doesn't allow"):
+                self.compile({**self.protected,'from':low,'through':high})
+        for low,high in ((1,11),(1,16),(1,30),(13,30)):
+            with self.subTest(low=low,high=high):
+                self.assertEqual(self.compile({**self.protected,'from':low,'through':high})[2][0]['protected_range'],
+                                 {'from':low,'through':high})
+        data=deepcopy(self.data)
+        for pick in data['draft_picks']:pick['round']=2
+        _,_,terms=compile_pick_rules(data,[{**self.protected,'from':31,'through':45}],self.sides)
+        self.assertEqual(len(terms),1)
+
+    def test_agreed_protections_stand_but_a_new_banned_one_stops_the_trade(self):
+        term={**self.compile()[2][0],'protected_range':{'from':1,'through':14},'protected_top_n':14}
+        self.assertEqual(tx.pick_obligation_validation_errors(self.data,None,term,new_term=False),[])
+        self.assertTrue(any("league doesn't allow" in e for e in tx.pick_obligation_validation_errors(self.data,None,term)))
+        self.assertFalse(tx.validate_pick_obligation_term(self.data,None,term))
+        proposal={'from_team_id':'a','to_team_id':'b','from_assets':[{'kind':'pick','id':'a27'}],'to_assets':[],
+                  'pick_obligation_terms':[term]}
+        issues=tx.trade_live_validation_issues({'pick_obligations':[]},proposal)
+        self.assertTrue(any("league doesn't allow" in issue for issue in issues),issues)
+        self.assertEqual(tx.trade_live_validation_issues({'pick_obligations':[{**term,'status':'active'}]},
+                                                         {**proposal,'from_assets':[]}),[])
+
+    def test_a_career_keeps_a_top_14_protection_agreed_before_the_rule(self):
+        data=deepcopy(self.data)
+        data['draft_picks'][0].update(current_owner_team_id='b',protection_summary='top-14 protected')
+        save={'pick_obligations':[]}
+        self.assertEqual(merge_startup_pick_obligations(save,data),1)
+        self.assertEqual(save['pick_obligations'][0]['protected_range'],{'from':1,'through':14})
+        merge_startup_pick_obligations(save,data)
+        self.assertEqual([o['protected_range']['through'] for o in save['pick_obligations']],[14])
+
     def test_wrong_owner_determined_slots_and_existing_terms_cannot_be_overwritten(self):
         for change in ({'current_owner_team_id':'b'},{'overall_pick':5},{'_obligations':[{'type':'pick_swap'}]},
                        {'protection_summary':'top-5 protected'},{'_obligation_locked':True}):
@@ -84,7 +118,7 @@ class TradePickTermsTests(unittest.TestCase):
     def test_multiple_valid_conditions_are_preserved_as_separate_obligations(self):
         self.data['draft_picks'].append(self.pick('a33','a',2033))
         sides=deepcopy(self.sides);sides[0]['assets'].append({'kind':'pick','value':'a31'})
-        second={'pick_id':'a31','type':'protected_pick','from':8,'through':14,'fallback_pick_ids':['a33']}
+        second={'pick_id':'a31','type':'protected_pick','from':8,'through':11,'fallback_pick_ids':['a33']}
         context,assets,terms=compile_pick_rules(self.data,[self.protected,second],sides)
         self.assertEqual(len(terms),2)
         self.assertEqual(set(context['locked_pick_assets']),{'a29','a33'})

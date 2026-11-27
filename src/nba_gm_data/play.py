@@ -80,6 +80,7 @@ from .narrative import hydrate_social_items, press_cache_entry
 from .staff import ROLE_LABELS, STAFF_SLOTS, fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, staff_budget_snapshot, staff_effect_summary, staff_market_report, staff_role_effect, staff_team_report
 from .schema import CANONICAL_SEASON, CANONICAL_START_DATE, to_plain
 from .traits import TRAIT_LABELS
+from .pick_rules import new_protection_issue
 from .transactions import apply_trade_to_save, apply_trade_to_state, canonical_with_pending_pick_terms, candidate_from_evaluation, clean_pick_protection_summary, contract_for_player, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, market_trade_target_value, pick_asset_value, pick_by_id, pick_display_label, pick_obligation_context_note, pick_season_start, pick_swap_asset_value, pick_swap_display_label, player_by_id, player_health_risk, proposal_asset_identity_keys, protected_pick_fallback_is_distinct, prune_trade_offers_touching_assets, recently_signed_player_ids, recently_traded_player_ids, resolve_team, team_by_id, trade_apply_authorized, trade_candidate_with_current_asset_labels, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_pick_swaps_for_team, tradeable_picks_for_team, with_transaction_context
 from .transactions import trade_team_ids
 from .utils import clamp, stable_id
@@ -1801,15 +1802,20 @@ def prompt_pick_trade_terms(canonical: dict[str, Any], save_path: Path, pick_id:
     protection_choice = pick_number("Protection", 0, 2, default=1)
     if protection_choice == 0:
         return {"type": "unprotected", "primary_pick_id": pick_id}
-    if protection_choice == 1:
-        top_n = pick_number("Top protected through pick", 1, 30, default=4)
-        protected_range = {"from": 1, "through": top_n}
-        label = f"top-{top_n} protected"
-    else:
-        start = pick_number("Protected from pick", 1, 30, default=1)
-        end = pick_number("Protected through pick", start, 30, default=max(start, 14))
-        protected_range = {"from": start, "through": end}
-        label = f"picks {start}-{end} protected"
+    while True:
+        if protection_choice == 1:
+            top_n = pick_number("Top protected through pick", 1, 30, default=4)
+            protected_range = {"from": 1, "through": top_n}
+            label = f"top-{top_n} protected"
+        else:
+            start = pick_number("Protected from pick", 1, 30, default=1)
+            end = pick_number("Protected through pick", start, 30, default=max(start, 10 if start <= 11 else 16))
+            protected_range = {"from": start, "through": end}
+            label = f"picks {start}-{end} protected"
+        banned = new_protection_issue(protected_range["from"], protected_range["through"], int(pick.get("round") or 0))
+        if not banned:
+            break
+        print(banned)
     fallback = choose_fallback_pick_for_protection(active, save, sender_id, pick_id)
     if not fallback:
         pause("Protected picks need a fallback asset in this v1 model. This pick will be treated as unprotected.")

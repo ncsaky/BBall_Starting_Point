@@ -22,6 +22,25 @@ def protection_bounds(term: dict[str, Any]) -> tuple[int, int]:
     return low, high
 
 
+# NBA Board of Governors, 2026-05-28 (the "3-2-1" lottery). Announcement: "Teams will be unable to attach top-12
+# through top-15 protections to newly traded draft picks." Official rules sheet: "Can't protect picks top-12 through
+# top-15 in trades." Protections agreed before that stay as they are, so only new trade terms are checked.
+BANNED_PROTECTION_ENDS = (12, 15)
+
+
+def new_protection_issue(low: int, high: int, round_no: int) -> str:
+    """Why this range can't be attached to a pick in a new trade ("" when it can).
+
+    A range that stops at 12-15 is refused wherever it starts ("picks 2-14" would be a top-14 protection in all but
+    name). Second-round picks are numbered 31-60, so the rule only reaches first-round picks.
+    """
+    first, last = BANNED_PROTECTION_ENDS
+    if round_no != 2 and first <= high <= last:
+        return (f"The league doesn't allow new protections that stop at picks {first} through {last}. "
+                f"Protect through pick {first - 1} or earlier, or {last + 1} or later.")
+    return ""
+
+
 def ordinal(number: int) -> str:
     words = ["", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth", "thirteenth", "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth"]
     if number < 20:

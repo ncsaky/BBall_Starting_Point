@@ -26,6 +26,13 @@ test('incomplete or reused collateral cannot be submitted',()=>{
   assert.equal(api.errors([{...rule,enabled:false}],rows).length,0);
   assert.equal(api.request([{...rule,enabled:false}]).length,0);
 });
+test('first-round protections cannot stop at picks 12 through 15',()=>{
+  for (const through of [12,13,14,15]) assert.match(api.errors([{...rule,through}],rows)[0].message,/league doesn't allow/);
+  for (const through of [11,16,30]) assert.equal(api.errors([{...rule,through}],rows).length,0);
+  const second=[pick('a27',2027,'A',2),pick('a29',2029,'A',2)];
+  const secondRows=[{...rows[0],selected:[second[0]],payload:{picks:second}},rows[1]];
+  assert.equal(api.errors([{...rule,from:31,through:45}],secondRows).length,0);
+});
 test('swaps require a known recipient and matching underlying pick',()=>{
   const swap={...rule,type:'pick_swap',other_pick_id:'b27',benefit:'worse'};
   assert.equal(api.errors([swap],rows).length,0);
