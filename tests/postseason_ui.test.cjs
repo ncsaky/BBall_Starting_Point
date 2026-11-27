@@ -279,7 +279,7 @@ test('only shared Sim controls are exposed, with the normal deadline-style confi
   assert.doesNotMatch(commands, /data-playoff-sim|playoffAdvanceStage|Finish round/);
   assert.doesNotMatch(app, /data-continue-postseason/);
   const storage = new Map();
-  const scope = {state:{currentSave:'save-a',home:{save:{season:'2026-27',current_date:'2027-04-13'}}}, localStorage:{getItem:key=>storage.get(key),setItem:(key,value)=>storage.set(key,value)}, escapeHtml:String, formatWrittenDate:String, renderModal(){}};
+  const scope = {state:{currentSave:'save-a',home:{save:{season:'2026-27',current_date:'2027-04-13'}}}, localStorage:{getItem:key=>storage.get(key),setItem:(key,value)=>storage.set(key,value)}, escapeHtml:String, formatWrittenDate:String, renderModal(){}, firstRunLayout:()=>false};
   vm.createContext(scope);
   vm.runInContext(app.slice(app.indexOf('function postseasonBoundaryDate('), app.indexOf('async function ensureStartingFiveReadyForAdvance(')), scope);
   scope.showPostseasonPrompt({date:'2027-04-13',requested_to_date:'2027-04-13'}, {next_event:true});

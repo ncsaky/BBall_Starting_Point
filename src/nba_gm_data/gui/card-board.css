@@ -34,7 +34,7 @@ body .has-card-board .card-board-canvas {
 .clipboard-calendar:has(> .trade-deadline-calendar-notice) { grid-template-rows:36px 26px 22px minmax(0,1fr); }
 .trade-deadline-calendar-notice { box-sizing:border-box; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:4px 8px; background:#fff0bd; border:1px solid #b98926; color:#35290e; font:11px Tahoma,Arial,sans-serif; }
 body.unified-terminal-ui .has-card-board .clipboard-calendar-day.trade-deadline-day, body.unified-terminal-ui .has-card-board .season-week-day.trade-deadline-day, body.unified-terminal-ui .calendar-cell.trade-deadline-day { background:#fff0bd !important; outline:2px solid #b98926; outline-offset:-2px; }
-body .trade-deadline-day .trade-deadline-day-label { color:#35290e; font:600 10px Tahoma,Arial,sans-serif; text-align:center; }
+body .trade-deadline-day .trade-deadline-day-label { color:#35290e; font:var(--gm-weight-semibold) 10px Tahoma,Arial,sans-serif; text-align:center; }
 body.unified-terminal-ui .has-card-board .season-week-day.trade-deadline-day {
   background:transparent !important;
   outline:0;
@@ -70,7 +70,7 @@ body.unified-terminal-ui .has-card-board .season-week-day.trade-deadline-day .tr
   white-space:nowrap;
   font-size:8px;
 }
-body .trade-deadline-today { background:#fff0bd !important; color:#35290e !important; border-color:#b98926 !important; font-weight:600; white-space:nowrap; }
+body .trade-deadline-today { background:#fff0bd !important; color:#35290e !important; border-color:#b98926 !important; font-weight:var(--gm-weight-semibold); white-space:nowrap; }
 body.unified-terminal-ui .modal-shell.modal-trade-deadline { width:min(520px,calc(100vw - 32px)); }
 body.unified-terminal-ui .modal-trade-deadline .trade-deadline-prompt { color:var(--ui-text); font:12px/1.5 Tahoma,Arial,sans-serif; padding:12px; }
 body.unified-terminal-ui .modal-trade-deadline .trade-deadline-prompt-date { display:block; background:#fff0bd; border:1px solid #b98926; color:#35290e; font-size:16px; padding:8px; }
@@ -89,7 +89,7 @@ body.unified-terminal-ui .modal-trade-deadline .trade-deadline-prompt-actions bu
   box-shadow:inset 1px 1px #89949f !important;
 }
 .clipboard-calendar-head { display:flex; align-items:center; justify-content:space-between; padding:0 6px; }
-.clipboard-calendar-head h2 { margin:0; font:600 14px Tahoma,Arial,sans-serif; }
+.clipboard-calendar-head h2 { margin:0; font:var(--gm-weight-semibold) 14px Tahoma,Arial,sans-serif; }
 .clipboard-calendar-head > div { display:flex; gap:4px; }
 .clipboard-calendar-weekdays, .clipboard-calendar-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); }
 .clipboard-calendar-weekdays { align-items:center; text-align:center; font:11px Tahoma,Arial,sans-serif; color:var(--season-muted); }
@@ -101,16 +101,16 @@ body .has-card-board .clipboard-calendar-day.past { background:var(--season-rais
 body .has-card-board .clipboard-calendar-day.blank { background:transparent !important; }
 body .has-card-board button.clipboard-calendar-day:hover { outline:2px solid var(--season-cyan); outline-offset:-2px; }
 body .has-card-board button.clipboard-calendar-day:focus-visible { outline:2px solid var(--season-cyan); outline-offset:-2px; }
-.clipboard-calendar-date { display:flex; justify-content:space-between; font:600 11px Tahoma,Arial,sans-serif; }
-.clipboard-calendar-date small { font-weight:400; }
+.clipboard-calendar-date { display:flex; justify-content:space-between; font:var(--gm-weight-semibold) 11px Tahoma,Arial,sans-serif; }
+.clipboard-calendar-date small { font-weight:var(--gm-weight-regular); }
 .clipboard-calendar-day.today .clipboard-calendar-date { color:var(--season-cyan); }
 .clipboard-calendar-day.today { outline:2px solid var(--season-cyan); outline-offset:-2px; }
 .clipboard-calendar-matchup { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font:11px Tahoma,Arial,sans-serif; }
 .clipboard-calendar-matchup img { width:30px; height:30px; object-fit:contain; }
-.clipboard-calendar-matchup strong { font-size:11px; font-weight:600; white-space:nowrap; }
+.clipboard-calendar-matchup strong { font-size:11px; font-weight:var(--gm-weight-semibold); white-space:nowrap; }
 .clipboard-calendar-matchup .win { color:color-mix(in srgb, var(--season-green) 50%, #000); }
 .clipboard-calendar-matchup .loss { color:color-mix(in srgb, var(--season-red) 50%, #000); }
-.clipboard-calendar-matchup .national-tv-marker { font:bold 8px Tahoma,Arial,sans-serif; letter-spacing:.04em; padding:0 3px; border:1px solid currentColor; border-radius:2px; opacity:.7; }
+.clipboard-calendar-matchup .national-tv-marker { font:var(--gm-weight-bold) 8px Tahoma,Arial,sans-serif; letter-spacing:.04em; padding:0 3px; border:1px solid currentColor; border-radius:2px; opacity:.7; }
 body .has-card-board .card-board-window[data-board-window="week"] .season-week-panel { grid-template-rows:minmax(0,1fr); }
 body .has-card-board .card-board-window[data-board-window="week"] .season-week-panel.is-expanded { display:block; }
 body .has-card-board .card-board-window[data-board-window="week"] .season-week-days { align-self:center; width:100%; }
@@ -166,7 +166,7 @@ body .has-card-board .card-board-move {
   touch-action:none;
 }
 body .has-card-board .card-board-move:hover { background:transparent; }
-body .has-card-board .card-board-move span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:600 10px Tahoma,"Trebuchet MS",Arial,sans-serif; }
+body .has-card-board .card-board-move span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:var(--gm-weight-semibold) 10px Tahoma,"Trebuchet MS",Arial,sans-serif; }
 body .has-card-board .card-board-move[aria-disabled="true"] { cursor:default; }
 .card-board-window-mark { flex:0 0 9px; height:9px; border:1px solid #6a7d8e; background:var(--season-panel); box-shadow:inset 0 2px #89a6c0; }
 .card-board-window-controls { display:flex; gap:2px; }
@@ -283,7 +283,7 @@ body .has-card-board .season-command-header {
   box-shadow:inset 1px 1px #fff,inset -1px -1px #c7cdd3 !important;
   font-family:Tahoma,"Trebuchet MS",Arial,sans-serif;
 }
-body .has-card-board .season-command-club > span { font-family:Tahoma,"Trebuchet MS",Arial,sans-serif !important; font-weight:600; }
+body .has-card-board .season-command-club > span { font-family:Tahoma,"Trebuchet MS",Arial,sans-serif !important; font-weight:var(--gm-weight-semibold); }
 body .has-card-board .season-command-date {
   display:flex;
   align-items:center;
@@ -334,7 +334,7 @@ body.unified-terminal-ui .modal-settings .settings-save-section > :is(button,a):
 body .has-card-board .card-board-tools > .card-board-control { width:33px; flex-basis:33px; }
 body .has-card-board .card-board-tools > [data-board-snap] { width:62px; flex-basis:62px; gap:3px; padding-inline:4px; }
 body .has-card-board .card-board-tools > [data-board-snap] .shortcut-hint { margin-left:0; }
-body .has-card-board .card-board-trade-badge { align-items:center; background:#c93434; border:1px solid #982727; border-radius:50%; color:#fff !important; display:inline-flex; flex:none; font:700 9px Tahoma,"Trebuchet MS",Arial,sans-serif; height:16px; justify-content:center; line-height:1; min-width:16px; padding:0 3px; }
+body .has-card-board .card-board-trade-badge { align-items:center; background:#c93434; border:1px solid #982727; border-radius:50%; color:#fff !important; display:inline-flex; flex:none; font:var(--gm-weight-bold) 9px Tahoma,"Trebuchet MS",Arial,sans-serif; height:16px; justify-content:center; line-height:1; min-width:16px; padding:0 3px; }
 body .has-card-board .card-board-trade-badge[hidden] { display:none !important; }
 body .has-card-board .card-board-trade-badge.is-popping { animation:card-board-offer-badge-pop .42s cubic-bezier(.2,.9,.3,1.35); }
 @keyframes card-board-offer-badge-pop { 0% { transform:scale(.45); } 58% { transform:scale(1.45); } 78% { transform:scale(.9); } 100% { transform:scale(1); } }
@@ -391,7 +391,7 @@ body .has-card-board .card-board-gallery {
   box-shadow:0 8px 24px #1c304445,inset 1px 1px #fff;
 }
 .card-board-gallery-head { display:flex; align-items:center; justify-content:space-between; height:30px; flex:0 0 30px; padding:3px 5px 3px 10px; border-bottom:1px solid var(--season-line); background:var(--season-raised); }
-body .has-card-board .card-board-gallery-head h2 { margin:0; font:600 12px Tahoma,"Trebuchet MS",Arial,sans-serif !important; }
+body .has-card-board .card-board-gallery-head h2 { margin:0; font:var(--gm-weight-semibold) 12px Tahoma,"Trebuchet MS",Arial,sans-serif !important; }
 .card-board-gallery-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-rows:136px; gap:8px; align-content:start; overflow:auto; min-height:0; padding:10px; overscroll-behavior:contain; }
 .card-board-gallery-entry { min-width:0; background:var(--season-panel); border:1px solid var(--season-soft-line); border-radius:2px; overflow:hidden; }
 .card-board-gallery-entry.is-on-board { border-color:#9ab1c2; }
@@ -532,7 +532,7 @@ body .has-card-board .card-board-thumb-frame { display:grid; position:relative; 
   border:1px solid #8d99a5;
   box-shadow:inset 1px 1px #fff;
   color:#172029;
-  font:600 12px Tahoma,"Trebuchet MS",Arial,sans-serif;
+  font:var(--gm-weight-semibold) 12px Tahoma,"Trebuchet MS",Arial,sans-serif;
 }
 .card-board-window-switcher-items {
   display:flex;
@@ -631,7 +631,7 @@ body .has-card-board [data-board-window="identity"] .spatial-half-courts {
 }
 body .has-card-board [data-board-window="identity"] .spatial-court-head h4 {
   color:var(--season-text);
-  font:600 14px Tahoma,"Trebuchet MS",Arial,sans-serif;
+  font:var(--gm-weight-semibold) 14px Tahoma,"Trebuchet MS",Arial,sans-serif;
 }
 body .has-card-board [data-board-window="identity"] .spatial-court {
   height:auto;
@@ -680,7 +680,7 @@ body.unified-terminal-ui .approved-player-spatial .spatial-half-courts {
 }
 body.unified-terminal-ui .approved-player-spatial .spatial-court-head h4 {
   color:var(--season-text);
-  font:600 14px Tahoma,"Trebuchet MS",Arial,sans-serif;
+  font:var(--gm-weight-semibold) 14px Tahoma,"Trebuchet MS",Arial,sans-serif;
 }
 body.unified-terminal-ui .approved-player-spatial .spatial-court {
   height:auto;
@@ -849,13 +849,13 @@ body .has-card-board [data-board-window^="award-"] .season-award-leader-name {
 }
 body .has-card-board [data-board-window^="award-"] .season-award-leader-name strong {
   font-size:16px;
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
   line-height:1.1;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
 }
-body .has-card-board [data-board-window^="award-"] .season-award-rank { color:var(--award-accent); font-weight:700; text-align:center; }
+body .has-card-board [data-board-window^="award-"] .season-award-rank { color:var(--award-accent); font-weight:var(--gm-weight-bold); text-align:center; }
 body .has-card-board [data-board-window^="award-"] .season-award-leader .season-award-rank { font-size:16px; line-height:1.1; }
 body .has-card-board [data-board-window^="award-"] .season-award-leader > .season-award-team { grid-column:2 / -1; grid-row:2; margin-top:3px; }
 body .has-card-board [data-board-window^="award-"] .season-award-team {
@@ -885,23 +885,23 @@ body .has-card-board [data-board-window^="award-"] .season-award-trophy img { di
 body .has-card-board [data-board-window^="award-"] .season-award-stat-label {
   color:var(--season-text);
   font-size:10px;
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
   grid-row:4;
   text-align:center;
 }
 body .has-card-board [data-board-window^="award-"] .season-award-move-label,
 body .has-card-board [data-board-window^="award-"] .season-award-race > button > .season-rank-change { grid-column:-2 / -1; }
 body .has-card-board [data-board-window^="award-"] .season-award-stat { display:block; min-width:0; text-align:center; }
-body .has-card-board [data-board-window^="award-"] .season-award-stat b { font-size:11px; font-weight:400; }
+body .has-card-board [data-board-window^="award-"] .season-award-stat b { font-size:11px; font-weight:var(--gm-weight-regular); }
 body .has-card-board [data-board-window^="award-"] .season-award-leader .season-award-stat { grid-row:5; }
-body .has-card-board [data-board-window^="award-"] .season-award-leader .season-award-stat b { font-size:15px; font-weight:700; }
+body .has-card-board [data-board-window^="award-"] .season-award-leader .season-award-stat b { font-size:15px; font-weight:var(--gm-weight-bold); }
 body .has-card-board [data-board-window^="award-"] .season-award-stat b.season-award-rating {
   color:color-mix(in srgb, var(--bar-color, #5b86b8) 80%, #000);
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
 }
 body .has-card-board [data-board-window^="award-"] .season-award-race > button > .season-rank-change {
   font-size:11px !important;
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
   text-align:center;
 }
 body .has-card-board [data-board-window^="award-"] .season-award-leader > .season-rank-change { font-size:13px !important; grid-row:5; }
@@ -914,7 +914,7 @@ body .has-card-board [data-board-window^="award-"] .season-award-chaser .season-
 body .has-card-board [data-board-window^="award-"] .season-award-chaser-face { align-self:end; display:block; height:30px; overflow:hidden; width:26px; }
 body .has-card-board [data-board-window^="award-"] .season-award-chaser > strong {
   font-size:11px;
-  font-weight:600;
+  font-weight:var(--gm-weight-semibold);
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
@@ -947,10 +947,10 @@ body .season-factor-box > .season-factor-dot {
   box-shadow:0 0 0 1px rgba(20,33,43,.45);
   box-sizing:border-box;
 }
-body .season-signal-row.season-factor-row > strong.season-factor-value { color:color-mix(in srgb, var(--factor-color, #18232c) 72%, #111) !important; font-weight:700; }
+body .season-signal-row.season-factor-row > strong.season-factor-value { color:color-mix(in srgb, var(--factor-color, #18232c) 72%, #111) !important; font-weight:var(--gm-weight-bold); }
 body .has-card-board [data-board-window="signals"] .season-identity-signals { grid-template-rows:repeat(3,minmax(0,1fr)); }
 body .has-card-board [data-board-window="signals"] .season-identity-signals .season-signal-row > i > b {
-  transition:width 420ms ease,background-color 420ms ease;
+  transition:width var(--gm-motion-data) var(--gm-ease),background-color var(--gm-motion-data) var(--gm-ease);
 }
 body .has-card-board [data-board-window="opponent"] .season-opponent-panel { isolation:isolate; position:relative; }
 body .has-card-board [data-board-window="opponent"] .season-opponent-table { position:relative; }
@@ -987,7 +987,7 @@ body .has-card-board [data-board-window="opponent"] .season-simulation-result-ba
 body .has-card-board [data-board-window="opponent"] .season-simulation-result-banner > strong {
   color:var(--result-color) !important;
   font-size:clamp(34px,5vw,46px);
-  font-weight:800 !important;
+  font-weight:var(--gm-weight-bold) !important;
   letter-spacing:.02em;
   line-height:1;
   text-shadow:0 1px 2px rgba(0,0,0,.45);
@@ -995,7 +995,7 @@ body .has-card-board [data-board-window="opponent"] .season-simulation-result-ba
 body .has-card-board [data-board-window="opponent"] .season-simulation-result-banner > span {
   color:#fff;
   font-size:clamp(10px,1.4vw,13px);
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
   line-height:1.2;
   white-space:nowrap;
 }
@@ -1003,7 +1003,7 @@ body .has-card-board [data-board-window="opponent"] .season-simulation-result-ba
 body .has-card-board [data-board-window="opponent"] .season-simulation-result-banner > small {
   color:rgba(255,255,255,.8);
   font-size:7px;
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
   letter-spacing:.16em;
   position:absolute;
   right:6px;
@@ -1045,7 +1045,7 @@ body .has-card-board .season-efficiency-legend { gap:18px; min-height:20px; padd
 body .has-card-board .card-board-body .season-efficiency-panel.card-board-headerless { grid-template-rows:minmax(0,1fr) auto; }
 body .has-card-board .season-efficiency-legend > span { gap:5px; font-size:10px; }
 body .has-card-board .season-efficiency-legend .legend-label { color:#111; }
-body .has-card-board .season-efficiency-legend strong { font-size:10px; font-weight:600; }
+body .has-card-board .season-efficiency-legend strong { font-size:10px; font-weight:var(--gm-weight-semibold); }
 body .has-card-board .season-efficiency-legend i { width:20px; }
 body .has-card-board .season-efficiency-legend i.offense { border-top-style:dashed; }
 body .has-card-board .season-efficiency-legend i.defense { border-top-style:dotted; }
@@ -1160,7 +1160,7 @@ body .has-card-board .card-board-gallery-group-toggle {
   box-shadow:inset 1px 1px #fff,inset -1px -1px #c7cdd3 !important;
   color:var(--season-text) !important;
   text-align:left;
-  font:600 10px Tahoma,"Trebuchet MS",Arial,sans-serif !important;
+  font:var(--gm-weight-semibold) 10px Tahoma,"Trebuchet MS",Arial,sans-serif !important;
 }
 body .has-card-board .card-board-gallery-group-toggle:hover {
   background:#dce8f2 !important;
@@ -1183,7 +1183,7 @@ body .has-card-board .card-board-gallery-group-toggle:focus-visible {
   border-right:1.5px solid var(--season-muted);
   border-bottom:1.5px solid var(--season-muted);
   transform:rotate(45deg) translateY(-2px);
-  transition:transform 160ms ease;
+  transition:transform var(--gm-motion-open) var(--gm-ease);
 }
 .card-board-gallery-group-toggle[aria-expanded="true"] i {
   transform:rotate(225deg) translate(-1px,-1px);
@@ -1194,7 +1194,7 @@ body .has-card-board .card-board-gallery-group-toggle:focus-visible {
   opacity:0;
   overflow:hidden;
   padding:0 2px;
-  transition:grid-template-rows 170ms ease, opacity 140ms ease, padding 170ms ease;
+  transition:grid-template-rows var(--gm-motion-open) var(--gm-ease), opacity var(--gm-motion-quick) var(--gm-ease), padding var(--gm-motion-open) var(--gm-ease);
 }
 .card-board-gallery-group-items.is-open {
   grid-template-rows:1fr;
@@ -1351,7 +1351,7 @@ body .has-card-board [data-board-window="prospects"] .season-prospect-source-fal
   border-radius:50%;
   box-sizing:border-box;
   color:var(--season-muted);
-  font:700 7px Tahoma,Arial,sans-serif;
+  font:var(--gm-weight-bold) 7px Tahoma,Arial,sans-serif;
 }
 body .has-card-board [data-board-window="prospects"] .season-prospect-open {
   appearance:none;
@@ -1361,7 +1361,7 @@ body .has-card-board [data-board-window="prospects"] .season-prospect-open {
   color:var(--season-text) !important;
   cursor:pointer;
   font-size:11px;
-  font-weight:600;
+  font-weight:var(--gm-weight-semibold);
   min-height:0;
   min-width:0;
   overflow:hidden;
@@ -1377,7 +1377,7 @@ body .has-card-board [data-board-window="prospects"] .season-prospect-open:hover
 body .has-card-board [data-board-window="prospects"] .season-prospect-rating {
   color:color-mix(in srgb, var(--bar-color, #5b86b8) 80%, #000);
   font-size:11px;
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
 }
 /* Draft range: the shown rank, then the box plot (no track; faint guides every 5 or 10 ranks). */
 body .has-card-board [data-board-window="prospects"] .season-prospect-range {
@@ -1387,7 +1387,7 @@ body .has-card-board [data-board-window="prospects"] .season-prospect-range {
   grid-template-columns:20px minmax(56px,1fr);
   min-width:96px;
 }
-body .has-card-board [data-board-window="prospects"] .season-prospect-range-number { font-size:11px; font-weight:400; text-align:right; }
+body .has-card-board [data-board-window="prospects"] .season-prospect-range-number { font-size:11px; font-weight:var(--gm-weight-regular); text-align:right; }
 body .has-card-board [data-board-window="prospects"] .season-prospect-range-number.is-ours { color:#2f6fae; }
 body .has-card-board [data-board-window="prospects"] .season-prospect-range-plot {
   display:block;
@@ -1440,7 +1440,7 @@ body .has-card-board [data-board-window="prospects"] .season-scouted {
   min-width:62px;
 }
 body .has-card-board [data-board-window="prospects"] .season-scouted > i { background:transparent !important; height:6px; }
-body .has-card-board [data-board-window="prospects"] .season-scouted strong { font-size:11px; font-weight:400; text-align:right; }
+body .has-card-board [data-board-window="prospects"] .season-scouted strong { font-size:11px; font-weight:var(--gm-weight-regular); text-align:right; }
 /* Expanded window: the whole class, scrolling under a sticky header. */
 body .has-card-board [data-board-window="prospects"].season-prospects-expanded {
   background:var(--season-panel);
@@ -1489,7 +1489,7 @@ body .has-card-board [data-board-window="staff"] .season-staff-summary small {
 body .has-card-board [data-board-window="staff"] .season-staff-summary strong {
   color:var(--season-text);
   font-size:11px;
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
   flex:0 0 auto;
   justify-self:center;
   white-space:nowrap;
@@ -1508,7 +1508,7 @@ body .has-card-board [data-board-window="staff"] .season-staff-head {
   border-bottom:1px solid var(--season-line);
   color:var(--season-muted);
   font-size:10px;
-  font-weight:600;
+  font-weight:var(--gm-weight-semibold);
 }
 body .has-card-board [data-board-window="staff"] .season-staff-row {
   border-top:1px solid var(--season-soft-line);
@@ -1576,12 +1576,12 @@ body .has-card-board [data-board-window="staff"] .season-staff-person small {
 body .has-card-board [data-board-window="staff"] .season-staff-person strong {
   color:var(--season-text);
   font-size:11px;
-  font-weight:600;
+  font-weight:var(--gm-weight-semibold);
 }
 body .has-card-board [data-board-window="staff"] .season-staff-person small {
   color:#59636b;
   font-size:10px;
-  font-weight:400;
+  font-weight:var(--gm-weight-regular);
 }
 body .has-card-board [data-board-window="staff"] .season-staff-grade {
   gap:6px;
@@ -1591,7 +1591,7 @@ body .has-card-board [data-board-window="staff"] .season-staff-grade em {
   color:var(--season-text);
   font-size:11px;
   font-style:normal;
-  font-weight:400;
+  font-weight:var(--gm-weight-regular);
 }
 body .has-card-board [data-board-window="staff"] .season-staff-grade > i { height:6px; }
 body .has-card-board [data-board-window="staff"] .season-staff-contract {
@@ -1604,7 +1604,7 @@ body .has-card-board [data-board-window="staff"] .season-staff-contract strong {
   display:block;
   color:var(--season-text);
   font-size:11px;
-  font-weight:600;
+  font-weight:var(--gm-weight-semibold);
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
@@ -1738,7 +1738,7 @@ body.unified-terminal-ui .approved-coach-traits h4 {
   display:flex;
   flex:0 0 28px;
   font-size:10px;
-  font-weight:600 !important;
+  font-weight:var(--gm-weight-semibold) !important;
   margin:0 -8px 4px;
   padding:0 8px;
 }
@@ -1866,7 +1866,7 @@ body .has-card-board [data-board-window="staff"] .season-staff-market-head {
 }
 body .has-card-board [data-board-window="staff"] .season-staff-market-head h3 {
   color:#000;
-  font:600 11px Tahoma,Arial,sans-serif;
+  font:var(--gm-weight-semibold) 11px Tahoma,Arial,sans-serif;
   margin:0;
 }
 body .has-card-board [data-board-window="staff"] .season-staff-market-list {
@@ -1916,12 +1916,12 @@ body.unified-terminal-ui .has-card-board .card-board-body :is(
 ) {
   border-bottom:1px solid var(--season-line);
   color:var(--season-text);
-  font-weight:600;
+  font-weight:var(--gm-weight-semibold);
 }
 body.unified-terminal-ui .has-card-board .card-board-body :is(table th,.staff-workspace .data-table th) {
   border-bottom:1px solid var(--season-line);
   color:var(--season-text);
-  font-weight:600;
+  font-weight:var(--gm-weight-semibold);
 }
 
 /* Player links use the same subtle hover treatment as coach links. */
@@ -2022,7 +2022,7 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-rating
   color:var(--ui-text) !important;
   display:flex;
   font-size:11px !important;
-  font-weight:600 !important;
+  font-weight:var(--gm-weight-semibold) !important;
   gap:6px;
   min-height:36px;
   padding:0 4px;
@@ -2140,7 +2140,7 @@ body.unified-terminal-ui .has-card-board [data-board-window="development"] .seas
   border-bottom:1px solid var(--ui-line);
   color:#000;
   font-size:13px;
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
   padding:0;
 }
 body.unified-terminal-ui .has-card-board [data-board-window="development"] .season-development-player { gap:5px; }
@@ -2171,7 +2171,7 @@ body.unified-terminal-ui .has-card-board [data-board-window="development"] .seas
   color:var(--ui-text);
   font-size:11px;
   font-variant-numeric:tabular-nums;
-  font-weight:600;
+  font-weight:var(--gm-weight-semibold);
   position:absolute;
 }
 body.unified-terminal-ui .has-card-board [data-board-window="development"] .season-development-metric strong.positive { color:#4b9932; }
@@ -2224,7 +2224,7 @@ body.unified-terminal-ui .has-card-board .draft-asset-condition {
   border:0;
   border-radius:0;
   font-size:10px;
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
   height:auto;
   right:-1px;
   top:-2px;
@@ -2286,7 +2286,7 @@ body .has-card-board [data-board-window="league-wire"] .season-league-wire-expan
 body .has-card-board [data-board-window="league-wire"] .season-wire-activity-list { display:block; max-width:620px; margin:0 auto; min-height:100%; background:#fff; border-inline:1px solid var(--season-soft-line); }
 body .has-card-board [data-board-window="league-wire"] .season-wire-post { padding:18px 22px 0; border-bottom:1px solid var(--season-line); color:var(--season-text); white-space:normal; }
 body .has-card-board [data-board-window="league-wire"] .wire-post-author { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
-body .has-card-board [data-board-window="league-wire"] .wire-reporter-avatar { display:grid; place-items:center; width:34px; height:34px; flex:none; border-radius:50%; background:#202b32; color:white; font-size:11px; font-weight:700; }
+body .has-card-board [data-board-window="league-wire"] .wire-reporter-avatar { display:grid; place-items:center; width:34px; height:34px; flex:none; border-radius:50%; background:#202b32; color:white; font-size:11px; font-weight:var(--gm-weight-bold); }
 body .has-card-board [data-board-window="league-wire"] .wire-post-author > div { display:grid; gap:3px; }
 body .has-card-board [data-board-window="league-wire"] .wire-post-author strong { font-size:13px; }
 body .has-card-board [data-board-window="league-wire"] .wire-post-author :is(span:not(.wire-reporter-avatar),small) { color:var(--season-muted); font-size:10px; }
@@ -2309,14 +2309,14 @@ body .has-card-board [data-board-window="league-wire"] .wire-staff-portrait img 
 body .has-card-board [data-board-window="league-wire"] .wire-pick-label { align-self:center; text-align:center; font-size:22px; }
 body .has-card-board [data-board-window="league-wire"] .wire-pick-label small { display:block; font-size:11px; margin-top:5px; }
 body .has-card-board [data-board-window="league-wire"] .wire-fallback-logo { width:130px; height:130px; object-fit:contain; align-self:center; margin:20px; }
-body .has-card-board [data-board-window="league-wire"] .wire-post-headline { margin:14px 0; font-size:15px; line-height:1.45; font-weight:700; text-align:left; }
+body .has-card-board [data-board-window="league-wire"] .wire-post-headline { margin:14px 0; font-size:15px; line-height:1.45; font-weight:var(--gm-weight-bold); text-align:left; }
 body .has-card-board [data-board-window="league-wire"] .wire-comments { border-top:1px solid var(--season-soft-line); }
 body .has-card-board [data-board-window="league-wire"] .wire-comments summary { cursor:pointer; padding:12px 0; font-size:11px; color:var(--season-muted); }
 body .has-card-board [data-board-window="league-wire"] .wire-comments summary span { margin-left:8px; }
 body .has-card-board [data-board-window="league-wire"] .wire-comments summary:hover { color:var(--season-text); }
 body .has-card-board [data-board-window="league-wire"] .wire-comment { border-left:2px solid var(--season-soft-line); margin:0 0 16px 16px; padding:3px 0 2px 14px; font-size:12px; line-height:1.5; }
-body .has-card-board [data-board-window="league-wire"] .wire-comment-author { font-weight:700; margin-bottom:8px; }
-body .has-card-board [data-board-window="league-wire"] .wire-comment-author span { color:var(--season-muted); font-size:10px; font-weight:400; }
+body .has-card-board [data-board-window="league-wire"] .wire-comment-author { font-weight:var(--gm-weight-bold); margin-bottom:8px; }
+body .has-card-board [data-board-window="league-wire"] .wire-comment-author span { color:var(--season-muted); font-size:10px; font-weight:var(--gm-weight-regular); }
 body .has-card-board [data-board-window="league-wire"] .wire-comment p { margin:6px 0; }
 body .has-card-board [data-board-window="league-wire"] .wire-comment ul { margin:5px 0; padding:0; list-style:none; display:grid; gap:10px; }
 body .has-card-board [data-board-window="league-wire"] .wire-comment li { display:grid; gap:1px; }
@@ -2431,7 +2431,7 @@ body.unified-terminal-ui .has-card-board [data-board-window="opponent"] .season-
 body.unified-terminal-ui .has-card-board [data-board-window="opponent"] .season-opponent-head {
   border-bottom-color:transparent;
   font-size:7.5px;
-  font-weight:800;
+  font-weight:var(--gm-weight-bold);
 }
 body.unified-terminal-ui .has-card-board [data-board-window="opponent"] .season-opponent-table > .season-opponent-row {
   border-top-color:transparent;
@@ -2493,11 +2493,11 @@ body.unified-terminal-ui .has-card-board [data-board-window="opponent"] .season-
 }
 body.unified-terminal-ui .has-card-board [data-board-window="opponent"] .season-opponent-head [aria-sort="ascending"] .season-opponent-sort-button,
 body.unified-terminal-ui .has-card-board [data-board-window="opponent"] .season-opponent-head [aria-sort="descending"] .season-opponent-sort-button {
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
 }
 body.unified-terminal-ui .has-card-board [data-board-window="opponent"] .season-opponent-head [data-opponent-sort] {
   font-size:7.5px !important;
-  font-weight:800 !important;
+  font-weight:var(--gm-weight-bold) !important;
   -webkit-text-stroke:0.2px currentColor !important;
 }
 body.unified-terminal-ui .has-card-board [data-board-window="opponent"] .season-opponent-head .season-opponent-sort-button:focus-visible {
@@ -2548,7 +2548,7 @@ body .draft-asset-glyph .draft-asset-logos .draft-asset-condition {
   box-sizing:border-box; width:9px; height:9px;
   background:#f5f7fa !important; border:1px solid #65727e !important;
   border-radius:50% !important; color:#25333e;
-  font:700 8px/1 Tahoma,Arial,sans-serif; pointer-events:none;
+  font:var(--gm-weight-bold) 8px/1 Tahoma,Arial,sans-serif; pointer-events:none;
 }
 body .draft-asset-glyph.is-swap .draft-asset-logos { gap:0; isolation:isolate; }
 body .draft-asset-glyph.is-swap .draft-team-mark + .draft-team-mark {
@@ -2651,7 +2651,7 @@ body.unified-terminal-ui .assets-contracts .linked-contracts thead :is(th:nth-ch
 body.unified-terminal-ui .assets-contracts .extension-eligible-contract { background:#fff0a5 !important; color:#594900 !important; }
 body.unified-terminal-ui .assets-contracts button.extension-contract-button:hover { background:#e8d477 !important; color:#332900 !important; }
 .season-league-wire:hover .season-wire-track { animation-play-state:running !important; }
-body .has-card-board [data-board-window="league-wire"] .wire-post-type { background:var(--ui-header); border:1px solid var(--season-line); color:var(--season-text); font-size:24px; font-weight:700; padding:12px; text-align:center; }
+body .has-card-board [data-board-window="league-wire"] .wire-post-type { background:var(--ui-header); border:1px solid var(--season-line); color:var(--season-text); font-size:24px; font-weight:var(--gm-weight-bold); padding:12px; text-align:center; }
 body .has-card-board [data-board-window="league-wire"] .wire-asset-team { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:2px; font-size:15px; }
 body .has-card-board [data-board-window="league-wire"] .wire-asset-team span { font-size:12px; }
 body.unified-terminal-ui .clipboard-player-card--extension .approved-negotiation { height:100%; grid-template-rows:86px minmax(0,1fr); }
@@ -2677,7 +2677,7 @@ body.unified-terminal-ui .offer-player-identity { display:flex; align-items:cent
 body.unified-terminal-ui .offer-player-identity .player-headshot-frame { width:64px; height:72px; flex:0 0 64px; align-self:end; }
 body.unified-terminal-ui .offer-player-headshot { width:100%; height:100%; object-fit:contain; object-position:center bottom; }
 body.unified-terminal-ui .offer-player-identity > div { display:grid; gap:5px; min-width:0; }
-body.unified-terminal-ui .offer-player-identity button { background:transparent; border:0; color:var(--ui-text); font-size:14px; font-weight:700; padding:2px 0; text-align:left; min-height:0; }
+body.unified-terminal-ui .offer-player-identity button { background:transparent; border:0; color:var(--ui-text); font-size:14px; font-weight:var(--gm-weight-bold); padding:2px 0; text-align:left; min-height:0; }
 body.unified-terminal-ui .offer-player-identity button:hover { background:var(--ui-header) !important; color:var(--ui-text) !important; }
 body.unified-terminal-ui .offer-player-identity span { color:var(--ui-muted); font-size:11px; }
 body.unified-terminal-ui .offer-player-overall { margin-left:auto; text-align:center; }
@@ -2716,7 +2716,7 @@ body.unified-terminal-ui .has-card-board :is(.assets-roster,.assets-stats,.asset
 .card-board-layout-menu { width:330px; max-width:calc(100vw - 12px); }
 .card-board-layout-slot { display:grid; grid-template-columns:minmax(0,1fr) 58px 68px; align-items:center; gap:5px; padding:6px; border-top:1px solid #b1bac3; }
 .card-board-layout-slot:first-child { border-top:0; }
-.card-board-layout-slot input { width:100%; min-width:0; height:25px; box-sizing:border-box; appearance:none; background:#fff !important; border:1px solid #405363 !important; border-radius:2px; color:#000 !important; -webkit-text-fill-color:#000; font:600 11px Tahoma,"Trebuchet MS",Arial,sans-serif; opacity:1; padding:0 6px; box-shadow:inset 1px 1px #e2e7eb !important; }
+.card-board-layout-slot input { width:100%; min-width:0; height:25px; box-sizing:border-box; appearance:none; background:#fff !important; border:1px solid #405363 !important; border-radius:2px; color:#000 !important; -webkit-text-fill-color:#000; font:var(--gm-weight-semibold) 11px Tahoma,"Trebuchet MS",Arial,sans-serif; opacity:1; padding:0 6px; box-shadow:inset 1px 1px #e2e7eb !important; }
 .card-board-layout-slot input:focus { background:#fff !important; border-color:#1769aa !important; outline:1px solid #1769aa; outline-offset:-1px; }
 body .has-card-board .card-board-layout-slot button { display:inline-flex; align-items:center; justify-content:center; min-width:0; height:25px; min-height:25px; padding:0 7px; background:#edf0f3 !important; color:#111 !important; border:1px solid var(--season-line) !important; border-radius:2px; font:11px Tahoma,"Trebuchet MS",Arial,sans-serif; box-shadow:inset 1px 1px #fff,inset -1px -1px #c7cdd3 !important; }
 body .has-card-board .card-board-layout-slot button:hover:not(:disabled) { background:#dce8f2 !important; border-color:#6c879d !important; color:#111 !important; }
@@ -2735,11 +2735,11 @@ body .has-card-board .card-board-gallery-entry.is-on-board .card-board-thumbnail
 body .has-card-board .card-board-thumbnail:hover { background:#dce8f2; }
 body .has-card-board .card-board-gallery-entry footer { min-height:48px; padding:5px 7px; gap:5px; }
 .card-board-gallery-entry footer > span { display:grid; gap:3px; min-width:0; }
-.card-board-gallery-entry footer strong { font:600 11px/1.2 Arial,sans-serif; color:#263b4b; }
+.card-board-gallery-entry footer strong { font:var(--gm-weight-semibold) 11px/1.2 Arial,sans-serif; color:#263b4b; }
 .card-board-gallery-entry footer small { font:10px/1.2 Arial,sans-serif; color:#586b7a; }
 .card-board-gallery-state { position:absolute; right:6px; bottom:5px; background:#f6f9fc; border:1px solid #a9bece; border-radius:3px; padding:2px 5px; color:#385d78; font:9px Arial,sans-serif; pointer-events:none; }
 .card-board-window-switcher-panel { width:min(780px,calc(100vw - 32px)); padding:12px; border-radius:6px; gap:12px; background:#e7edf2; }
-.card-board-window-switcher-panel > header { background:transparent; border:0; box-shadow:none; padding:2px 4px; font:600 13px Arial,sans-serif; color:#2b4050; }
+.card-board-window-switcher-panel > header { background:transparent; border:0; box-shadow:none; padding:2px 4px; font:var(--gm-weight-semibold) 13px Arial,sans-serif; color:#2b4050; }
 .card-board-window-switcher-items { display:grid; grid-template-columns:repeat(auto-fit,minmax(98px,1fr)); width:100%; max-height:65dvh; overflow:auto; gap:6px; padding:3px; box-sizing:border-box; }
 body .has-card-board .card-board-window-switcher-items > button { width:100%; min-height:124px; grid-template-rows:56px 30px 12px; padding:8px 5px; gap:5px; align-content:start; background:transparent !important; color:#273f50 !important; border:1px solid transparent; border-radius:5px; box-shadow:none; }
 body .has-card-board .card-board-window-switcher-items > button:hover { background:#dce7ef !important; border-color:#b0c3d1; }
@@ -2750,7 +2750,7 @@ body .has-card-board .card-board-window-switcher-items > button[aria-pressed="tr
 .card-board-window-switcher-name { font:11px/14px Arial,sans-serif; align-self:center; }
 .card-board-window-switcher-state { font:9px/12px Arial,sans-serif; color:#5d7180; }
 @media (prefers-reduced-motion:no-preference) {
-  .card-board-window-switcher-icon svg { transition:transform 120ms ease; }
+  .card-board-window-switcher-icon svg { transition:transform var(--gm-motion-quick) var(--gm-ease); }
   .card-board-window-switcher-items > button[aria-pressed="true"] .card-board-window-switcher-icon svg { transform:translateY(-1px); }
 }
 
@@ -2986,7 +2986,7 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .player-page-gam
   width:100%;
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-page-game-log :is(th,td) { height:36px; padding:0 5px; text-align:center; white-space:nowrap; }
-body.unified-terminal-ui .has-card-board .clipboard-player-card .player-page-game-log th { background:var(--ui-panel); border-bottom:1px solid var(--ui-line); font-weight:600; position:sticky; top:0; z-index:1; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .player-page-game-log th { background:var(--ui-panel); border-bottom:1px solid var(--ui-line); font-weight:var(--gm-weight-semibold); position:sticky; top:0; z-index:1; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-page-game-log td { border-bottom:1px solid var(--ui-soft); }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-page-game-log tbody tr:first-child td { border-top:1px solid var(--ui-soft); }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-page-game-log tbody tr:last-child td { border-bottom:0; }
@@ -3021,7 +3021,7 @@ body.unified-terminal-ui .player-summary-ratings { display:grid; grid-template-c
 body.unified-terminal-ui .player-summary-rating { display:grid; gap:4px; min-width:0; }
 body.unified-terminal-ui .player-summary-rating > small { text-align:center; font:11px Tahoma,Arial,sans-serif; color:#263a4b; }
 body.unified-terminal-ui .player-summary-rating .linked-rating { display:grid; grid-template-columns:31px minmax(20px,1fr); gap:4px; align-items:center; min-width:0; font:11px Tahoma,Arial,sans-serif; }
-body.unified-terminal-ui .player-summary-rating .linked-rating > span { font-weight:400; }
+body.unified-terminal-ui .player-summary-rating .linked-rating > span { font-weight:var(--gm-weight-regular); }
 body.unified-terminal-ui .player-summary-rating i { display:block; height:5px; background:#d4dce2; position:relative; }
 body.unified-terminal-ui .player-summary-rating i > b { display:block; height:100%; width:var(--fill,0%); background:var(--bar-color,#71a8d4); }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages .approved-player-profile-head { grid-template-rows:1fr 1fr; }
@@ -3039,7 +3039,7 @@ body.unified-terminal-ui .modal-shell.modal-trade-room {
 body.unified-terminal-ui .modal-trade-room > .modal-head {
   min-height:26px; padding:4px 7px; background:#dce3e8 !important;
 }
-body.unified-terminal-ui .modal-trade-room > .modal-head h3 { font:700 11px Tahoma,Arial,sans-serif; }
+body.unified-terminal-ui .modal-trade-room > .modal-head h3 { font:var(--gm-weight-bold) 11px Tahoma,Arial,sans-serif; }
 body.unified-terminal-ui .modal-trade-room > .modal-body {
   padding:7px; display:flex; flex-direction:column; overflow:hidden;
   background:#f3f5f6 !important;
@@ -3091,10 +3091,10 @@ body.unified-terminal-ui .modal-trade-room :is(.trade-asset-head,.trade-results-
 body.unified-terminal-ui .modal-trade-room .trade-team-lockup { gap:6px; }
 body.unified-terminal-ui .modal-trade-room .trade-team-lockup img { width:27px; height:27px; }
 body.unified-terminal-ui .modal-trade-room .trade-team-lockup div { gap:2px; }
-body.unified-terminal-ui .modal-trade-room .trade-team-lockup span { font-weight:400; }
+body.unified-terminal-ui .modal-trade-room .trade-team-lockup span { font-weight:var(--gm-weight-regular); }
 body.unified-terminal-ui .modal-trade-room .trade-asset-head select { width:72px; max-width:72px; min-height:23px; }
 body.unified-terminal-ui .modal-trade-room .trade-cap-strip { gap:5px; padding:6px 7px; border-bottom:1px solid #cbd3da; }
-body.unified-terminal-ui .modal-trade-room .trade-cap-strip :is(span,strong) { font-size:10px; font-weight:400; text-transform:none; letter-spacing:0; color:#253644 !important; }
+body.unified-terminal-ui .modal-trade-room .trade-cap-strip :is(span,strong) { font-size:10px; font-weight:var(--gm-weight-regular); text-transform:none; letter-spacing:0; color:#253644 !important; }
 body.unified-terminal-ui .modal-trade-room .trade-cap-strip strong { font-size:11px; white-space:normal; }
 body.unified-terminal-ui .modal-trade-room .trade-cap-strip > i { background:#d8dfe5; height:5px; }
 body.unified-terminal-ui .modal-trade-room .trade-cap-strip > i b { background:#7999b2; }
@@ -3114,11 +3114,11 @@ body.unified-terminal-ui .modal-trade-room .trade-asset-copy { display:grid; gap
 body.unified-terminal-ui .modal-trade-room .trade-asset-copy strong { font-size:11px; overflow-wrap:anywhere; white-space:normal; overflow:visible; text-overflow:clip; }
 body.unified-terminal-ui .modal-trade-room .trade-asset-copy small { font-size:10px; color:#425566 !important; line-height:1.3; white-space:normal; }
 body.unified-terminal-ui .modal-trade-room .trade-asset-value { display:grid; gap:3px; text-align:center; }
-body.unified-terminal-ui .modal-trade-room .trade-asset-value :is(strong,small) { font-size:11px !important; font-weight:400; color:#263a4b !important; }
+body.unified-terminal-ui .modal-trade-room .trade-asset-value :is(strong,small) { font-size:11px !important; font-weight:var(--gm-weight-regular); color:#263a4b !important; }
 body.unified-terminal-ui .modal-trade-room .trade-asset-details { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:4px 8px; padding-top:4px; border-top:1px solid #d6dde2; }
 body.unified-terminal-ui .modal-trade-room .trade-asset-details > span { display:grid; gap:2px; font-size:11px; }
 body.unified-terminal-ui .modal-trade-room .trade-asset-details small { font-size:10px; color:#455867 !important; }
-body.unified-terminal-ui .modal-trade-room .trade-asset-details strong { font-size:11px; font-weight:400; overflow-wrap:anywhere; }
+body.unified-terminal-ui .modal-trade-room .trade-asset-details strong { font-size:11px; font-weight:var(--gm-weight-regular); overflow-wrap:anywhere; }
 body.unified-terminal-ui .modal-trade-room .trade-asset-production { display:block; margin-top:4px; font-size:10px; color:#455867; }
 body.unified-terminal-ui .modal-trade-room .trade-list-empty { padding:13px 9px; color:#425566; font-size:11px; line-height:1.5; }
 body.unified-terminal-ui .modal-trade-room .approved-trade-desk { padding:6px; gap:7px; overflow-y:auto; scrollbar-width:thin; }
@@ -3127,7 +3127,7 @@ body.unified-terminal-ui .modal-trade-room .approved-trade-desk .trade-selected-
 body.unified-terminal-ui .modal-trade-room .approved-trade-desk .trade-selected-package { height:auto; min-height:84px; max-height:310px; }
 body.unified-terminal-ui .modal-trade-room .trade-selected-package { background:#f3f5f6 !important; border:1px solid #a8b3bd !important; border-radius:0 !important; box-shadow:none !important; display:flex; flex-direction:column; min-width:0; padding:0; }
 body.unified-terminal-ui .modal-trade-room .trade-selected-package > header { flex:none; min-height:32px; gap:5px; padding:5px 6px; background:#e3e8ed !important; border-bottom:1px solid #a5b1bc !important; box-shadow:none !important; }
-body.unified-terminal-ui .modal-trade-room .trade-selected-package > header :is(span,strong,small) { font-size:11px; font-weight:400; text-transform:none; letter-spacing:0; color:#253644 !important; }
+body.unified-terminal-ui .modal-trade-room .trade-selected-package > header :is(span,strong,small) { font-size:11px; font-weight:var(--gm-weight-regular); text-transform:none; letter-spacing:0; color:#253644 !important; }
 body.unified-terminal-ui .modal-trade-room .trade-selected-package > header img { width:22px; height:22px; }
 body.unified-terminal-ui .modal-trade-room .trade-package-builder-header { display:flex; flex-wrap:wrap; justify-content:space-between; gap:6px; }
 body.unified-terminal-ui .modal-trade-room .approved-trade-team { background:transparent !important; box-shadow:none !important; border:0 !important; min-height:25px; gap:5px; }
@@ -3142,9 +3142,9 @@ body.unified-terminal-ui .modal-trade-room .trade-selected-row > button { paddin
 body.unified-terminal-ui .modal-trade-room .trade-package-empty { min-height:48px; padding:10px 7px; display:block; }
 body.unified-terminal-ui .modal-trade-room .trade-package-empty p { color:#425566; font-size:11px; line-height:1.5; margin:0; }
 body.unified-terminal-ui .modal-trade-room :is(.approved-trade-values,.approved-trade-cap) { flex:none; background:#f3f5f6 !important; border:1px solid #a5b1bc !important; border-radius:0 !important; box-shadow:none !important; }
-body.unified-terminal-ui .modal-trade-room :is(.approved-trade-values,.approved-trade-cap) > header { min-height:24px; padding:5px 7px; font:700 11px Tahoma,Arial,sans-serif; background:#e3e8ed !important; border-bottom:1px solid #a5b1bc !important; box-shadow:none !important; }
+body.unified-terminal-ui .modal-trade-room :is(.approved-trade-values,.approved-trade-cap) > header { min-height:24px; padding:5px 7px; font:var(--gm-weight-bold) 11px Tahoma,Arial,sans-serif; background:#e3e8ed !important; border-bottom:1px solid #a5b1bc !important; box-shadow:none !important; }
 body.unified-terminal-ui .modal-trade-room .trade-value-team { padding:5px 7px; }
-body.unified-terminal-ui .modal-trade-room .trade-value-team > strong { font-size:11px; font-weight:400; }
+body.unified-terminal-ui .modal-trade-room .trade-value-team > strong { font-size:11px; font-weight:var(--gm-weight-regular); }
 body.unified-terminal-ui .modal-trade-room .approved-value-row { grid-template-columns:minmax(85px,1fr) minmax(90px,1.3fr) 34px; padding:5px 0; gap:6px; font-size:11px; }
 body.unified-terminal-ui .modal-trade-room .approved-value-row span { overflow-wrap:anywhere; }
 body.unified-terminal-ui .modal-trade-room .approved-value-row em { font-size:11px; font-style:normal; }
@@ -3152,14 +3152,14 @@ body.unified-terminal-ui .modal-trade-room .approved-trade-values footer { displ
 body.unified-terminal-ui .modal-trade-room .approved-trade-values footer span { font-size:10px; }
 body.unified-terminal-ui .modal-trade-room .approved-trade-cap-teams { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; padding:6px; }
 body.unified-terminal-ui .modal-trade-room .approved-trade-cap-team { display:flex; flex-direction:column; gap:5px; min-width:0; }
-body.unified-terminal-ui .modal-trade-room .approved-trade-cap-team > strong { color:#253644 !important; font-size:11px; font-weight:400; }
+body.unified-terminal-ui .modal-trade-room .approved-trade-cap-team > strong { color:#253644 !important; font-size:11px; font-weight:var(--gm-weight-regular); }
 body.unified-terminal-ui .modal-trade-room .trade-cap-delta-chart { height:104px; min-height:104px; gap:5px; }
 body.unified-terminal-ui .modal-trade-room .trade-cap-delta-year { min-width:0; }
-body.unified-terminal-ui .modal-trade-room .trade-cap-delta-year :is(span,strong) { font-size:10px; font-weight:400; }
+body.unified-terminal-ui .modal-trade-room .trade-cap-delta-year :is(span,strong) { font-size:10px; font-weight:var(--gm-weight-regular); }
 body.unified-terminal-ui .modal-trade-room .trade-cap-delta-legend { font-size:10px; }
 body.unified-terminal-ui .modal-trade-room .approved-trade-cap-team table { width:100%; margin:0; border-collapse:separate; border-spacing:0; }
 body.unified-terminal-ui .modal-trade-room .approved-trade-cap-team :is(th,td) { text-align:center; padding:4px 2px; font-size:10px; line-height:1.3; overflow-wrap:anywhere; }
-body.unified-terminal-ui .modal-trade-room .approved-trade-cap-team th { font-weight:400; border-bottom:1px solid #9ca8b3; }
+body.unified-terminal-ui .modal-trade-room .approved-trade-cap-team th { font-weight:var(--gm-weight-regular); border-bottom:1px solid #9ca8b3; }
 body.unified-terminal-ui .modal-trade-room .approved-trade-cap-team tbody tr:first-child td { border-top:1px solid #cbd3da; }
 body.unified-terminal-ui .modal-trade-room .approved-trade-cap-team tbody tr:last-child td { border-bottom:0; }
 body.unified-terminal-ui .modal-trade-room .trade-finder-workspace { display:flex; flex-direction:column; gap:7px; min-height:0; }
@@ -3196,20 +3196,20 @@ body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-playe
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-identity .player-headshot-frame { width:44px; height:48px; flex:0 0 44px; align-self:end; display:block; }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-headshot { width:100%; height:100%; max-width:none; max-height:none; object-fit:contain; object-position:center bottom; filter:saturate(.45) contrast(1.05); }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-identity > div { display:grid; gap:3px; min-width:0; }
-body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-identity .trade-player-link { font:700 11px Tahoma,Arial,sans-serif !important; color:#1a2934 !important; padding:0 !important; margin:0; background:transparent !important; border:0 !important; box-shadow:none !important; min-height:0; text-align:left; overflow-wrap:anywhere; }
+body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-identity .trade-player-link { font:var(--gm-weight-bold) 11px Tahoma,Arial,sans-serif !important; color:#1a2934 !important; padding:0 !important; margin:0; background:transparent !important; border:0 !important; box-shadow:none !important; min-height:0; text-align:left; overflow-wrap:anywhere; }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-identity .trade-player-link:hover { color:#16344a !important; background:#dce8f1 !important; }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-identity span { font-size:10px; color:#455867; line-height:1.3; }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-overall { margin-left:auto; text-align:center; flex:0 0 34px; }
-body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-overall :is(strong,small) { font-size:11px; font-weight:400; color:#263a4b; }
+body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-overall :is(strong,small) { font-size:11px; font-weight:var(--gm-weight-regular); color:#263a4b; }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-metrics { padding-top:4px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px 8px; border-top:1px solid #d6dde2; }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-metrics > div:not(.player-evidence-ring) { gap:2px; }
-body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-metrics :is(strong,small) { font-size:11px; color:#263a4b; font-weight:400; overflow-wrap:anywhere; }
+body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-metrics :is(strong,small) { font-size:11px; color:#263a4b; font-weight:var(--gm-weight-regular); overflow-wrap:anywhere; }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-player-metrics small { color:#455867; font-size:10px; }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .player-evidence-ring { display:grid; grid-template-columns:29px minmax(0,1fr); gap:5px; }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .player-evidence-ring > span,
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .player-evidence-ring svg { width:29px; height:29px; }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .player-evidence-ring > span strong { font-size:10px; color:#263a4b; }
-body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .player-evidence-ring b { font-size:10px; color:#344a5a; font-weight:400; }
+body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .player-evidence-ring b { font-size:10px; color:#344a5a; font-weight:var(--gm-weight-regular); }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .player-evidence-ring small { font-size:9px; color:#526574; }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .player-evidence-ring circle { stroke:#d1d9df; }
 body.unified-terminal-ui :is(.modal-trade-room,.modal-trade-offers) .offer-pick { display:flex; gap:7px; align-items:center; padding:8px 7px; border-bottom:1px solid #cbd3da; font-size:11px; line-height:1.4; min-width:0; }
@@ -3278,7 +3278,7 @@ body.unified-terminal-ui .modal-trade-offers > .modal-head > div:first-child {
 }
 body.unified-terminal-ui .modal-trade-offers .modal-head h3 {
   color:#17212a !important; flex:0 1 auto;
-  font:600 10px Tahoma,"Trebuchet MS",Arial,sans-serif !important;
+  font:var(--gm-weight-semibold) 10px Tahoma,"Trebuchet MS",Arial,sans-serif !important;
   line-height:1; margin:0; min-width:0; order:0; overflow:hidden;
   text-overflow:ellipsis; white-space:nowrap;
 }
@@ -3302,7 +3302,7 @@ body.unified-terminal-ui .modal-champion > .modal-head > div:first-child {
 }
 body.unified-terminal-ui .modal-champion .card-board-window-mark { box-shadow:none !important; }
 body.unified-terminal-ui .modal-champion .modal-head h3 {
-  color:#17212a !important; flex:0 1 auto; font:600 10px Tahoma,"Trebuchet MS",Arial,sans-serif !important;
+  color:#17212a !important; flex:0 1 auto; font:var(--gm-weight-semibold) 10px Tahoma,"Trebuchet MS",Arial,sans-serif !important;
   line-height:1; margin:0; min-width:0; order:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 body.unified-terminal-ui .modal-champion .modal-head .card-board-control {
@@ -3386,7 +3386,7 @@ body.unified-terminal-ui .modal-trade-offers .incoming-offer-heading .incoming-o
   white-space:nowrap;
 }
 body.unified-terminal-ui .trade-value-help { padding:4px 8px; color:var(--ui-text); font-size:11px; border-bottom:1px solid var(--ui-line); }
-body.unified-terminal-ui .trade-value-help summary { cursor:pointer; font-weight:bold; }
+body.unified-terminal-ui .trade-value-help summary { cursor:pointer; font-weight:var(--gm-weight-bold); }
 body.unified-terminal-ui .trade-value-help p { margin:4px 0; line-height:1.4; }
 body.unified-terminal-ui .trade-value-help dl { margin:4px 0; }
 body.unified-terminal-ui .trade-value-help dl > div { display:grid; grid-template-columns:110px minmax(0,1fr); gap:6px; padding:3px 0; }
@@ -3476,10 +3476,10 @@ body.unified-terminal-ui .modal-trade-offers .trade-evaluation-panel {
 }
 body.unified-terminal-ui .modal-trade-offers .trade-evaluation-panel.accepted { border-left-color:#39764b; }
 body.unified-terminal-ui .modal-trade-offers .trade-evaluation-panel :is(header,footer) { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0; }
-body.unified-terminal-ui .modal-trade-offers .trade-evaluation-panel header strong { color:#17212a !important; font-size:13px; font-weight:700; }
+body.unified-terminal-ui .modal-trade-offers .trade-evaluation-panel header strong { color:#17212a !important; font-size:13px; font-weight:var(--gm-weight-bold); }
 body.unified-terminal-ui .modal-trade-offers .trade-evaluation-panel header span {
   padding:2px 7px; border:1px solid #b87575; background:#f8e9e9; color:#8f3030 !important;
-  font-size:10px; font-weight:700; line-height:1.35; letter-spacing:.02em; text-transform:uppercase;
+  font-size:10px; font-weight:var(--gm-weight-bold); line-height:1.35; letter-spacing:.02em; text-transform:uppercase;
 }
 body.unified-terminal-ui .modal-trade-offers .trade-evaluation-panel.accepted header span { border-color:#7ca88a; background:#e6f2e8; color:#28623a !important; }
 body.unified-terminal-ui .modal-trade-offers .trade-evaluation-score { display:flex; justify-content:space-between; align-items:center; gap:8px; }
@@ -3494,14 +3494,14 @@ body.unified-terminal-ui .modal-trade-offers .trade-evaluation-details {
 }
 body.unified-terminal-ui .modal-trade-offers .trade-evaluation-details > div { display:grid; align-content:start; gap:3px; min-width:0; }
 body.unified-terminal-ui .modal-trade-offers .trade-evaluation-details dt { color:#536574; font-size:10px; line-height:1.3; }
-body.unified-terminal-ui .modal-trade-offers .trade-evaluation-details dd { margin:0; color:#17212a; font-size:12px; font-weight:700; line-height:1.25; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+body.unified-terminal-ui .modal-trade-offers .trade-evaluation-details dd { margin:0; color:#17212a; font-size:12px; font-weight:var(--gm-weight-bold); line-height:1.25; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
 body.unified-terminal-ui .modal-trade-offers .trade-evaluation-panel p { margin:0; color:#263a4b !important; font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
 body.unified-terminal-ui .modal-trade-offers .approved-trade-values footer { justify-content:center; }
 @supports (interpolate-size: allow-keywords) and selector(details::details-content) {
   body.unified-terminal-ui .modal-trade-offers details.incoming-offer-evaluation { interpolate-size:allow-keywords; }
   body.unified-terminal-ui .modal-trade-offers details.incoming-offer-evaluation::details-content {
     block-size:0; overflow:clip; opacity:0; content-visibility:hidden;
-    transition:block-size 220ms cubic-bezier(.2,.7,.2,1), opacity 170ms ease, content-visibility 220ms allow-discrete;
+    transition:block-size var(--gm-motion-move) var(--gm-ease), opacity var(--gm-motion-open) var(--gm-ease), content-visibility var(--gm-motion-move) var(--gm-ease) allow-discrete;
   }
   body.unified-terminal-ui .modal-trade-offers details.incoming-offer-evaluation[open]::details-content {
     block-size:auto; opacity:1; content-visibility:visible;
@@ -3549,7 +3549,7 @@ body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-standings) 
 body.unified-terminal-ui :is(.modal-box-score,.modal-settings,.modal-standings) .modal-head h3 {
   color:#17212a !important;
   flex:0 1 auto;
-  font:600 10px Tahoma,"Trebuchet MS",Arial,sans-serif !important;
+  font:var(--gm-weight-semibold) 10px Tahoma,"Trebuchet MS",Arial,sans-serif !important;
   line-height:1;
   margin:0;
   min-width:0;
@@ -3611,7 +3611,7 @@ body.unified-terminal-ui .modal-box-score .box-score-player-table thead th {
   border-bottom:1px solid var(--season-line);
   color:var(--season-text);
   font-size:8px;
-  font-weight:600;
+  font-weight:var(--gm-weight-semibold);
 }
 body.unified-terminal-ui .modal-box-score .box-score-player-table .box-score-dnp { position:relative; }
 body.unified-terminal-ui .modal-box-score .box-score-player-table td.box-score-dnp-cell { position:static; text-align:center; padding:3px 5px; width:auto; }
@@ -3634,10 +3634,10 @@ body.unified-terminal-ui .modal-box-score .box-score-comparison-head h4 { white-
 body.unified-terminal-ui .modal-box-score .box-score-comparison-head img { width:40px; height:40px; flex-shrink:0; }
 body.unified-terminal-ui .modal-box-score .box-score-comparison-row { display:grid; grid-template-columns:minmax(90px,1fr) minmax(0,4fr) minmax(90px,1fr); align-items:center; gap:7px 12px; padding:7px 12px; border-bottom:1px solid var(--ui-soft); }
 body.unified-terminal-ui .modal-box-score .box-score-comparison-row:last-child { border-bottom:0; }
-body.unified-terminal-ui .modal-box-score .box-score-comparison-row h4 { grid-column:1/-1; grid-row:1; margin:0; color:var(--ui-text); text-align:center; font:600 12px Tahoma,Arial,sans-serif; }
+body.unified-terminal-ui .modal-box-score .box-score-comparison-row h4 { grid-column:1/-1; grid-row:1; margin:0; color:var(--ui-text); text-align:center; font:var(--gm-weight-semibold) 12px Tahoma,Arial,sans-serif; }
 body.unified-terminal-ui .modal-box-score .box-score-comparison-value { grid-column:1; grid-row:2; display:flex; align-items:center; justify-content:flex-end; gap:7px; color:var(--ui-text); min-width:0; }
 body.unified-terminal-ui .modal-box-score .box-score-comparison-value.is-home { grid-column:3; justify-content:flex-start; }
-body.unified-terminal-ui .modal-box-score .box-score-comparison-value strong { font:600 20px Tahoma,Arial,sans-serif; font-variant-numeric:tabular-nums; }
+body.unified-terminal-ui .modal-box-score .box-score-comparison-value strong { font:var(--gm-weight-semibold) 20px Tahoma,Arial,sans-serif; font-variant-numeric:tabular-nums; }
 body.unified-terminal-ui .modal-box-score .box-score-comparison-value small { color:var(--ui-muted); font:11px Tahoma,Arial,sans-serif; white-space:nowrap; }
 body.unified-terminal-ui .modal-box-score .box-score-comparison-bars { display:grid; grid-column:2; grid-row:2; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0; position:relative; width:100%; max-width:900px; justify-self:center; align-self:center; }
 body.unified-terminal-ui .modal-box-score .box-score-comparison-bars::after { content:""; position:absolute; top:-2px; bottom:-2px; left:50%; width:1px; background:#89949f; z-index:1; }
@@ -3650,7 +3650,7 @@ body.unified-terminal-ui .modal-box-score .box-score-comparison-scale { grid-col
 body.unified-terminal-ui .modal-box-score .box-score-comparison-scale::before { content:""; position:absolute; top:0; left:5%; right:5%; border-top:1px solid #aab4bd; }
 body.unified-terminal-ui .modal-box-score .box-score-scale-tick { position:absolute; top:0; height:4px; border-left:1px solid #89949f; }
 body.unified-terminal-ui .modal-box-score .box-score-scale-tick small { position:absolute; top:5px; left:0; transform:translateX(-50%); color:var(--ui-muted); font:9px/1 Tahoma,Arial,sans-serif; }
-body.unified-terminal-ui .modal-box-score .box-score-comparison-overflow { position:absolute; top:-2px; right:7%; color:var(--ui-text); font:600 13px/1 Tahoma,Arial,sans-serif; }
+body.unified-terminal-ui .modal-box-score .box-score-comparison-overflow { position:absolute; top:-2px; right:7%; color:var(--ui-text); font:var(--gm-weight-semibold) 13px/1 Tahoma,Arial,sans-serif; }
 body.unified-terminal-ui .modal-box-score .box-score-comparison-track.is-away .box-score-comparison-overflow { right:auto; left:7%; }
 @media (max-width:600px) {
   body.unified-terminal-ui .modal-box-score .box-score-comparison-head { grid-template-columns:80px minmax(0,1fr) 80px; column-gap:5px; padding:8px; }
@@ -3684,7 +3684,7 @@ body.unified-terminal-ui .draft-assets-board > strong,
 body.unified-terminal-ui .draft-assets-board > b,
 body.unified-terminal-ui .draft-assets-board > .draft-assets-corner {
   color:#000 !important;
-  font-weight:700 !important;
+  font-weight:var(--gm-weight-bold) !important;
 }
 
 /* Keep the payroll summary as one compact, centered black label and value. */
@@ -3821,7 +3821,7 @@ body.unified-terminal-ui .fantasy-player-radar .player-radar-axis {
   stroke:var(--season-muted); stroke-width:1.1;
 }
 body.unified-terminal-ui .fantasy-player-radar .player-radar-label {
-  fill:var(--ui-text); font-family:Tahoma,Arial,sans-serif; font-weight:400;
+  fill:var(--ui-text); font-family:Tahoma,Arial,sans-serif; font-weight:var(--gm-weight-regular);
 }
 
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages .approved-player-profile-head {
@@ -4042,7 +4042,7 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .player-page-rad
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-page-radars h5 {
   display:flex; align-items:center; justify-content:center; box-sizing:border-box;
-  font-size:16px; font-weight:700; background:var(--ui-header);
+  font-size:16px; font-weight:var(--gm-weight-bold); background:var(--ui-header);
   border-top:1px solid #89949f; border-bottom:1px solid #000;
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-page-radars svg {
@@ -4052,7 +4052,7 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .player-page-rad
   font-size:11px;
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-page-radars .player-radar-value {
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
 }
 
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages .approved-player-spatial {
@@ -4063,7 +4063,7 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages .spatial-court-head h4 {
   display:flex; align-items:center; justify-content:center; box-sizing:border-box;
-  height:34px; margin:0; font-size:16px; font-weight:700;
+  height:34px; margin:0; font-size:16px; font-weight:var(--gm-weight-bold);
   background:var(--ui-header); border-top:1px solid #89949f; border-bottom:1px solid #000;
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages .approved-player-spatial .spatial-half-courts {
@@ -4124,7 +4124,7 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player
   width:62px; height:83px;
 }
 
-body.unified-terminal-ui .season-standings-conference > h3 { font-weight:700; }
+body.unified-terminal-ui .season-standings-conference > h3 { font-weight:var(--gm-weight-bold); }
 /* Equal flank tracks put the bars at the actual center of each column. */
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages {
   --player-rating-bar-width:calc((100cqw - 16px)/3 - 320px);
@@ -4138,7 +4138,7 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages .approved-rating-column h4 {
   display:flex; justify-content:center; align-items:center; gap:8px;
-  font-size:16px !important; font-weight:400 !important;
+  font-size:16px !important; font-weight:var(--gm-weight-regular) !important;
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages .approved-rating-column h4 .rating-category-art {
   margin-left:0;
@@ -4193,7 +4193,7 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .player-page-gam
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-page-game-log th {
   height:20px; padding:0 5px; color:#000;
-  font:700 12px Tahoma,Arial,sans-serif; text-transform:none;
+  font:var(--gm-weight-bold) 12px Tahoma,Arial,sans-serif; text-transform:none;
   background:var(--ui-panel); border-top:1px solid #89949f; border-bottom:1px solid #000;
 }
 
@@ -4221,7 +4221,7 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .player-page-gam
   padding-inline:7px; box-sizing:border-box;
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-page-game-log table thead th {
-  font-family:Tahoma,Arial,sans-serif; font-weight:700 !important; color:#000;
+  font-family:Tahoma,Arial,sans-serif; font-weight:var(--gm-weight-bold) !important; color:#000;
   border-top:0; border-bottom:1px solid #000;
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-page-game-log table tbody tr:first-child td {
@@ -4246,7 +4246,7 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-season
   margin:0; padding:6px 10px; list-style:none; display:grid; gap:4px; align-content:center;
   font:14px/1.3 Tahoma,Arial,sans-serif; color:var(--ui-text); border-top:1px solid var(--terminal-line-soft, #89949f);
 }
-body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-season-line .scouting-notes .scouting-label { font-weight:700; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-season-line .scouting-notes .scouting-label { font-weight:var(--gm-weight-bold); }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-season-line .scouting-notes .scouting-declare-note { font-size:12px; opacity:.8; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-season-line.scouting-profile-line .scouting-notes { border-top:0; overflow:auto; }
 /* In the prospect card the courts fill the lower left, so the college profile takes the game log's place on the
@@ -4299,7 +4299,7 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player
   display:block; width:300px; height:200px; max-width:none;
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages .player-rating-radar .player-radar-label { font-size:11px; }
-body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages .player-rating-radar .player-radar-value { font-weight:700; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages .player-rating-radar .player-radar-value { font-weight:var(--gm-weight-bold); }
 
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages .player-card-page--overview {
   grid-template-rows:102px max-content minmax(260px,1fr);
@@ -4444,7 +4444,7 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospe
   border:1px solid #526371; box-sizing:border-box;
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rating-locked strong {
-  color:var(--ui-muted); font-weight:400;
+  color:var(--ui-muted); font-weight:var(--gm-weight-regular);
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-radar-locked {
   font:11px Tahoma,Arial,sans-serif; fill:var(--ui-text);
@@ -4483,10 +4483,10 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .exte
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .ext-cap {
   zoom:1.34; border:1px solid var(--season-line, #b7c2cb); background:#fff; min-width:0;
 }
-body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .ext-cap > header { min-height:0; padding:4px 8px; font:700 10px Tahoma,Arial,sans-serif; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .ext-cap > header { min-height:0; padding:4px 8px; font:var(--gm-weight-bold) 10px Tahoma,Arial,sans-serif; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .ext-cap-table tbody tr.has-offer th { box-shadow:inset 3px 0 #c2a83b; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .ext-cap-table tbody th small { text-transform:none; }
-body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .ext-cap-table .is-negative { color:#a8434b; font-weight:700; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .ext-cap-table .is-negative { color:#a8434b; font-weight:var(--gm-weight-bold); }
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension [data-extension-analysis-slot] { min-height:0; min-width:0; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .extension-page-response {
   margin:0; padding:6px 8px; border:1px solid #c48a12; background:#fdf7ea; color:var(--ui-text); font:11px Tahoma,Arial,sans-serif;
@@ -4497,7 +4497,7 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .exte
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .extension-page-empty p { margin:8px 0 0; color:var(--ui-muted); }
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension.has-extension-result > .approved-player-pages {
-  filter:grayscale(1); opacity:.32; pointer-events:none; transition:filter 180ms,opacity 180ms;
+  filter:grayscale(1); opacity:.32; pointer-events:none; transition:filter var(--gm-motion-open) var(--gm-ease),opacity var(--gm-motion-open) var(--gm-ease);
 }
 @media(max-width:900px) {
   body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .extension-page-layout { grid-template-columns:minmax(0,1fr); grid-template-rows:auto auto; overflow:auto; }
@@ -4515,7 +4515,7 @@ body.unified-terminal-ui .command-menu > .command-menu-titlebar {
   border:1px solid #6b879e; border-bottom:1px solid var(--ui-line); border-radius:2px 2px 0 0;
   background:#bfd0df; color:var(--ui-text);
 }
-body.unified-terminal-ui .command-menu-title { display:flex; align-items:center; gap:6px; min-width:0; font:600 12px Tahoma,Arial,sans-serif; }
+body.unified-terminal-ui .command-menu-title { display:flex; align-items:center; gap:6px; min-width:0; font:var(--gm-weight-semibold) 12px Tahoma,Arial,sans-serif; }
 body.unified-terminal-ui .command-menu-title .card-board-window-mark { flex:0 0 9px; height:9px; border:1px solid #6a7d8e; background:var(--ui-panel); box-shadow:inset 0 2px #89a6c0; }
 body.unified-terminal-ui .command-menu > .command-menu-titlebar .command-menu-close {
   width:20px; min-width:20px; height:20px; min-height:20px; padding:0; border:1px solid #89949f;
@@ -4556,7 +4556,7 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospe
   width:64px; height:74px; color:#677887;
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-radar-placeholder span {
-  font-size:16px; font-weight:700;
+  font-size:16px; font-weight:var(--gm-weight-bold);
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-radar-placeholder small {
   font-size:12px;
@@ -4570,8 +4570,8 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospe
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range {
   display:flex; flex-direction:column; justify-content:center; align-items:center; gap:3px; color:var(--ui-text);
 }
-body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range b { font-size:15px; font-weight:400; }
-body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range strong { font-size:22px; font-weight:600; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range b { font-size:15px; font-weight:var(--gm-weight-regular); }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range strong { font-size:22px; font-weight:var(--gm-weight-semibold); }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range small { font-size:12px; }
 
 /* Coach profiles use the standard workspace window and compact rating lanes. */
@@ -4593,7 +4593,7 @@ body.unified-terminal-ui .coach-profile-card .coach-profile-portrait img {
 }
 body.unified-terminal-ui .coach-profile-card .coach-profile-portrait .coach-portrait-ink { display:none; }
 body.unified-terminal-ui .coach-profile-card .coach-profile-portrait .coach-portrait-silver { display:block; }
-body.unified-terminal-ui .coach-profile-card .coach-profile-bio h2 { font-size:19px; line-height:1.2; margin:0 0 5px; font-weight:400; }
+body.unified-terminal-ui .coach-profile-card .coach-profile-bio h2 { font-size:19px; line-height:1.2; margin:0 0 5px; font-weight:var(--gm-weight-regular); }
 body.unified-terminal-ui .coach-profile-card .coach-profile-bio p { font-size:13px; line-height:1.35; margin:0; }
 body.unified-terminal-ui .coach-profile-card .coach-profile-contract {
   display:grid; align-content:center; gap:6px; margin:0; padding:12px; min-width:0;
@@ -4605,7 +4605,7 @@ body.unified-terminal-ui .coach-profile-card .coach-profile-panels { display:gri
 body.unified-terminal-ui .coach-profile-card .coach-profile-traits { border:1px solid var(--ui-line); padding:0; min-width:0; }
 body.unified-terminal-ui .coach-profile-card .coach-profile-traits header {
   display:flex; align-items:center; justify-content:center; height:28px; padding:0 8px;
-  background:var(--ui-header); border-bottom:1px solid #000; font-size:13px; font-weight:700;
+  background:var(--ui-header); border-bottom:1px solid #000; font-size:13px; font-weight:var(--gm-weight-bold);
 }
 body.unified-terminal-ui .coach-profile-card .coach-profile-traits > div { padding:0 6px; }
 body.unified-terminal-ui .coach-profile-card .coach-trait-row {
@@ -4620,7 +4620,7 @@ body.unified-terminal-ui .coach-profile-card .coach-trait-row > i { display:bloc
 body.unified-terminal-ui .coach-profile-card .coach-trait-row > i > b { display:block; height:100%; }
 body.unified-terminal-ui .coach-profile-card .coach-league-average { position:absolute; top:-3px; height:15px; width:1px; background:#000; transform:translateX(-.5px); }
 body.unified-terminal-ui .coach-profile-card .coach-profile-overview .coach-trait-row { grid-template-columns:90px minmax(0,1fr) 36px; }
-body.unified-terminal-ui .coach-profile-card .coach-profile-overview .coach-trait-row:first-child { font-weight:700; }
+body.unified-terminal-ui .coach-profile-card .coach-profile-overview .coach-trait-row:first-child { font-weight:var(--gm-weight-bold); }
 
 /* Staff negotiations reuse the coach card, including its portraits and ratings. */
 body.unified-terminal-ui .modal-shell.modal-staff-negotiation {
@@ -4634,7 +4634,7 @@ body.unified-terminal-ui .modal-staff-negotiation > .modal-head {
 }
 body.unified-terminal-ui .modal-staff-negotiation > .modal-head > div:first-child { align-items:center; flex-wrap:nowrap; gap:4px; }
 body.unified-terminal-ui .modal-staff-negotiation > .modal-head h3 {
-  order:0; margin:0; font:700 11px/16px Tahoma,Arial,sans-serif; color:var(--ui-text);
+  order:0; margin:0; font:var(--gm-weight-bold) 11px/16px Tahoma,Arial,sans-serif; color:var(--ui-text);
 }
 body.unified-terminal-ui .modal-staff-negotiation > .modal-head [data-close-modal] {
   display:grid; place-items:center; box-sizing:border-box; width:20px; height:20px; min-height:20px;
@@ -4644,7 +4644,7 @@ body.unified-terminal-ui .modal-staff-negotiation > .modal-head [data-close-moda
 body.unified-terminal-ui .modal-staff-negotiation > .modal-head [data-close-modal] .shortcut-hint { display:none; }
 body.unified-terminal-ui .modal-staff-negotiation > .modal-head [data-close-modal]:hover { background:#f2d5d8; border-color:#bd4b58; }
 body.unified-terminal-ui .modal-staff-negotiation > .modal-body { position:relative; display:block; padding:8px; background:var(--ui-panel); }
-body.unified-terminal-ui .staff-negotiation-content { display:grid; gap:6px; transition:filter 180ms,opacity 180ms; }
+body.unified-terminal-ui .staff-negotiation-content { display:grid; gap:6px; transition:filter var(--gm-motion-open) var(--gm-ease),opacity var(--gm-motion-open) var(--gm-ease); }
 body.unified-terminal-ui .has-staff-result { overflow:hidden; }
 body.unified-terminal-ui .has-staff-result > .staff-negotiation-content { filter:grayscale(1); opacity:.32; pointer-events:none; }
 body.unified-terminal-ui .staff-negotiation-result {
@@ -4672,7 +4672,7 @@ body.unified-terminal-ui .staff-outcome--declined .staff-result-mark { width:360
 body.unified-terminal-ui .staff-result-cross { stroke:currentColor; stroke-width:15; stroke-dasharray:1; stroke-dashoffset:1; }
 body.unified-terminal-ui .staff-result-cross-first { animation:staffMarkDraw 350ms ease-out 100ms both; }
 body.unified-terminal-ui .staff-result-cross-second { animation:staffMarkDraw 350ms ease-out 350ms both; }
-body.unified-terminal-ui .staff-result-copy h2 { margin:0; color:var(--ui-text); font:700 27px/34px Tahoma,Arial,sans-serif; }
+body.unified-terminal-ui .staff-result-copy h2 { margin:0; color:var(--ui-text); font:var(--gm-weight-bold) 27px/34px Tahoma,Arial,sans-serif; }
 body.unified-terminal-ui .staff-result-copy p { max-width:450px; margin:10px 0 0; color:var(--ui-text); font:14px/21px Tahoma,Arial,sans-serif; overflow-wrap:anywhere; }
 body.unified-terminal-ui .staff-negotiation-result > button { min-width:170px; min-height:32px; padding:6px 18px; background:var(--ui-header); border:1px solid var(--ui-line); border-radius:1px; box-shadow:inset 1px 1px #fff; color:var(--ui-text); font:13px Tahoma,Arial,sans-serif; }
 body.unified-terminal-ui .staff-negotiation-result > button:hover { background:#dce8f2; }
@@ -4735,10 +4735,10 @@ body.unified-terminal-ui .staff-negotiation-profiles .coach-profile-contract {
   display:flex; align-items:center; justify-content:center; gap:6px; padding:0; border:0; white-space:nowrap;
 }
 body.unified-terminal-ui .coach-profile-card .coach-profile-bio .coach-profile-context {
-  font-size:11px; font-weight:700; margin:0 0 5px; color:var(--ui-muted);
+  font-size:11px; font-weight:var(--gm-weight-bold); margin:0 0 5px; color:var(--ui-muted);
 }
 body.unified-terminal-ui .coach-profile-card .coach-profile-grade-change { margin:8px 4px 0; font:12px/18px Tahoma,Arial,sans-serif; }
-body.unified-terminal-ui .coach-profile-card .coach-profile-grade-change strong { font-weight:700; }
+body.unified-terminal-ui .coach-profile-card .coach-profile-grade-change strong { font-weight:var(--gm-weight-bold); }
 body.unified-terminal-ui .staff-negotiation-budget {
   display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); padding:8px 0;
   border:1px solid var(--ui-line); background:var(--ui-panel); text-align:center;
@@ -4750,7 +4750,7 @@ body.unified-terminal-ui .staff-negotiation-budget strong { font:13px Tahoma,Ari
 body.unified-terminal-ui .staff-contract-offer { margin:0; border:1px solid var(--ui-line); background:var(--ui-panel); }
 body.unified-terminal-ui .staff-contract-offer > header {
   display:flex; justify-content:center; align-items:center; height:28px; padding:0 8px;
-  background:var(--ui-header); border-bottom:1px solid #000; font-size:13px; font-weight:700;
+  background:var(--ui-header); border-bottom:1px solid #000; font-size:13px; font-weight:var(--gm-weight-bold);
 }
 body.unified-terminal-ui .staff-contract-controls {
   display:grid; grid-template-columns:minmax(0,180px) 24px minmax(0,180px); justify-content:center; align-items:end; gap:8px 12px;
@@ -4778,9 +4778,9 @@ body.unified-terminal-ui .staff-offer-interest.is-low { --offer-interest-color:#
 body.unified-terminal-ui .staff-offer-interest.is-medium { --offer-interest-color:#c7a638; }
 body.unified-terminal-ui .staff-offer-interest.is-high { --offer-interest-color:#4b9a63; }
 body.unified-terminal-ui .staff-offer-interest > div { display:flex; align-items:center; justify-content:space-between; color:var(--ui-text); font:11px Tahoma,Arial,sans-serif; line-height:1; }
-body.unified-terminal-ui .staff-offer-interest > div strong { color:var(--offer-interest-color); font:700 11px Tahoma,Arial,sans-serif !important; font-variant-numeric:tabular-nums; }
+body.unified-terminal-ui .staff-offer-interest > div strong { color:var(--offer-interest-color); font:var(--gm-weight-bold) 11px Tahoma,Arial,sans-serif !important; font-variant-numeric:tabular-nums; }
 body.unified-terminal-ui .staff-offer-interest > i { display:block; box-sizing:border-box; width:100%; height:9px; overflow:hidden; background:var(--ui-soft); }
-body.unified-terminal-ui .staff-offer-interest > i > b { display:block; width:0; height:100%; background:var(--offer-interest-color); transition:width 150ms ease,background-color 150ms ease; }
+body.unified-terminal-ui .staff-offer-interest > i > b { display:block; width:0; height:100%; background:var(--offer-interest-color); transition:width var(--gm-motion-open) var(--gm-ease),background-color var(--gm-motion-open) var(--gm-ease); }
 body.unified-terminal-ui .staff-contract-controls button {
   grid-column:1 / -1; justify-self:center; min-width:280px; max-width:100%;
   min-height:28px; padding:4px 10px; border:1px solid var(--ui-line); border-radius:2px;
@@ -4843,7 +4843,7 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .exte
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .extension-peer-point:focus { stroke:var(--ui-text); outline:none; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .extension-offer-point { fill:#b49a2e; stroke:var(--ui-panel); stroke-width:2; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .extension-analysis-footer { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:3px 12px; border-top:1px solid var(--ui-soft); color:var(--ui-muted); font:13px Tahoma,Arial,sans-serif; }
-body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .extension-analysis-footer b { font-weight:400; color:var(--ui-text); }
+body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .extension-analysis-footer b { font-weight:var(--gm-weight-regular); color:var(--ui-text); }
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .extension-analysis-footer .ui-command { min-height:24px; height:24px; white-space:nowrap; font-size:12px; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .extension-chart-key { display:flex; align-items:center; gap:6px; white-space:nowrap; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .extension-chart-key i { display:inline-block; width:18px; height:10px; }
@@ -4875,7 +4875,7 @@ body.unified-terminal-ui .modal-shell.modal-wide.modal-player-finder {
 }
 body.unified-terminal-ui .modal-player-finder > .modal-head.card-board-titlebar { flex:0 0 24px; border:0; border-bottom:1px solid var(--ui-line); padding:2px 4px; overflow:hidden; }
 body.unified-terminal-ui .modal-player-finder > .modal-head > div:first-child { display:flex; align-items:center; gap:6px; height:19px; min-width:0; }
-body.unified-terminal-ui .modal-player-finder .modal-head h3 { margin:0; color:#17212a !important; font:600 10px Tahoma,Arial,sans-serif !important; line-height:1; }
+body.unified-terminal-ui .modal-player-finder .modal-head h3 { margin:0; color:#17212a !important; font:var(--gm-weight-semibold) 10px Tahoma,Arial,sans-serif !important; line-height:1; }
 body.unified-terminal-ui .modal-player-finder .modal-head .eyebrow { display:none; }
 body.unified-terminal-ui .modal-player-finder .modal-head [data-close-modal] { flex:0 0 19px; width:19px !important; padding:2px !important; }
 body.unified-terminal-ui .modal-player-finder .modal-head .shortcut-hint { display:none !important; }
@@ -4896,8 +4896,8 @@ body.unified-terminal-ui .modal-player-finder .player-finder-remove { padding:0;
 body.unified-terminal-ui .modal-player-finder .player-finder-table-wrap { flex:0 1 auto; min-height:0; max-height:calc(100dvh - 170px); overflow:auto; margin:0; padding:0; border:0; background:#fff; }
 body.unified-terminal-ui .modal-player-finder .player-finder-table { table-layout:fixed; width:100%; min-width:1024px; margin:0; border:0; border-collapse:separate; border-spacing:0; background:#fff; }
 body.unified-terminal-ui .modal-player-finder .player-finder-table :is(th,td) { box-sizing:border-box; height:30px; padding:0 6px; text-align:left; white-space:nowrap; border:0; color:var(--ui-text); font:10px Tahoma,Arial,sans-serif; vertical-align:middle; }
-body.unified-terminal-ui .modal-player-finder .player-finder-table th { position:sticky; z-index:1; top:0; height:23px; background:#f3f4f5; border-bottom:1px solid #17212a; font-weight:700; }
-body.unified-terminal-ui .modal-player-finder .player-finder-table th button { display:block; width:100%; border:0; background:transparent; color:inherit; padding:0; min-height:0; height:22px; font:700 10px Tahoma,Arial,sans-serif; font-weight:700 !important; text-align:left; }
+body.unified-terminal-ui .modal-player-finder .player-finder-table th { position:sticky; z-index:1; top:0; height:23px; background:#f3f4f5; border-bottom:1px solid #17212a; font-weight:var(--gm-weight-bold); }
+body.unified-terminal-ui .modal-player-finder .player-finder-table th button { display:block; width:100%; border:0; background:transparent; color:inherit; padding:0; min-height:0; height:22px; font:var(--gm-weight-bold) 10px Tahoma,Arial,sans-serif; font-weight:var(--gm-weight-bold) !important; text-align:left; }
 body.unified-terminal-ui .modal-player-finder .player-finder-table td { border-bottom:1px solid var(--ui-soft); }
 body.unified-terminal-ui .modal-player-finder .player-finder-table tbody tr:first-child td { border-top:1px solid #a6afb9; }
 body.unified-terminal-ui .modal-player-finder .player-finder-table tbody tr:last-child td { border-bottom:0; }
@@ -4907,7 +4907,7 @@ body.unified-terminal-ui .modal-player-finder .player-finder-table :is(th,td):fi
 body.unified-terminal-ui .modal-player-finder .player-finder-identity { height:30px; display:flex; align-items:center; gap:7px; min-width:0; }
 body.unified-terminal-ui .modal-player-finder .player-headshot-frame { flex:0 0 28px; width:28px; height:29px; align-self:end; align-items:end; overflow:hidden; }
 body.unified-terminal-ui .modal-player-finder .roster-player-headshot { height:100%; width:100%; object-fit:cover; object-position:top center; }
-body.unified-terminal-ui .modal-player-finder .summary-player-name-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+body.unified-terminal-ui .modal-player-finder .summary-player-name-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:var(--gm-weight-semibold); }
 body.unified-terminal-ui .modal-player-finder .assets-rating-bar { display:grid; grid-template-columns:29px minmax(0,1fr); gap:5px; padding-right:6px; width:100%; }
 body.unified-terminal-ui .modal-player-finder .assets-rating-bar i { width:100%; min-width:0; height:3px; background:#000; }
 body.unified-terminal-ui .modal-player-finder .player-evidence-ring { display:flex; justify-content:flex-start; gap:0; width:28px; }
@@ -4922,7 +4922,7 @@ body.unified-terminal-ui .modal-shell.modal-player-finder > .modal-head.card-boa
 body.unified-terminal-ui .modal-player-finder .modal-head .card-board-window-mark { order:0; }
 body.unified-terminal-ui .modal-player-finder .modal-head h3 { order:1; }
 body.unified-terminal-ui .modal-player-finder > .modal-body { background:#f3f4f5; }
-body.unified-terminal-ui .modal-player-finder .player-finder-table th { text-transform:none; font-weight:700; }
+body.unified-terminal-ui .modal-player-finder .player-finder-table th { text-transform:none; font-weight:var(--gm-weight-bold); }
 body.unified-terminal-ui .modal-player-finder .modal-head .card-board-control { display:inline-flex; align-items:center; justify-content:center; flex:0 0 19px; width:19px !important; height:19px; min-height:19px; padding:2px !important; border:1px solid #8d99a5; border-radius:2px; background:#edf0f3; color:var(--season-text); box-shadow:none !important; }
 body.unified-terminal-ui .modal-player-finder .modal-head .card-board-control:hover { background:#f2d5d8; border-color:#bd4b58; }
 body.unified-terminal-ui .modal-player-finder .modal-head .card-board-control:active { box-shadow:none !important; }
@@ -4940,7 +4940,7 @@ body.unified-terminal-ui .modal-player-finder [data-finder-trade] {
 }
 body.unified-terminal-ui .modal-player-finder [data-finder-trade]:hover:not(:disabled) { background:#dce8f2 !important; border-color:#6c879d !important; color:#17212a !important; }
 body.unified-terminal-ui .modal-player-finder [data-finder-trade]:active:not(:disabled) { box-shadow:inset 1px 1px #89949f !important; }
-body.unified-terminal-ui .modal-player-finder .player-finder-table th:last-child { font-weight:700 !important; }
+body.unified-terminal-ui .modal-player-finder .player-finder-table th:last-child { font-weight:var(--gm-weight-bold) !important; }
 body.unified-terminal-ui .modal-player-finder .player-finder-table-wrap { margin:0 8px; }
 body.unified-terminal-ui .modal-player-finder :is(.player-finder-search > [data-player-finder-add],.player-finder-filter > :is([data-finder-operator],[data-finder-remove])) {
   align-items:center; box-sizing:border-box; display:inline-flex; justify-content:center;
@@ -4970,14 +4970,14 @@ body.unified-terminal-ui .modal-waivers > .modal-head.card-board-titlebar {
   background:#bfd0df !important; border:0; border-bottom:1px solid #6b879e;
 }
 body.unified-terminal-ui .modal-waivers > .modal-head > div { display:flex; align-items:center; gap:6px; }
-body.unified-terminal-ui .modal-waivers .modal-head h3 { margin:0; font:600 10px Tahoma,Arial,sans-serif; }
+body.unified-terminal-ui .modal-waivers .modal-head h3 { margin:0; font:var(--gm-weight-semibold) 10px Tahoma,Arial,sans-serif; }
 body.unified-terminal-ui .modal-waivers .card-board-window-mark { order:0; }
 body.unified-terminal-ui .modal-waivers .modal-head h3 { order:1; }
 body.unified-terminal-ui .modal-waivers > .modal-body { display:block; min-height:0; height:auto; padding:6px; overflow:auto; background:#f3f4f5; }
 body.unified-terminal-ui .modal-waivers .table-wrap { display:block; min-height:0; height:auto; max-height:none; margin:0; padding:0; }
 body.unified-terminal-ui .modal-waivers table { width:100%; margin:0; table-layout:auto; border-collapse:collapse; }
 body.unified-terminal-ui .modal-waivers :is(th,td) { padding:5px 7px; font:12px Tahoma,Arial,sans-serif; color:#17212a; text-align:left; border-bottom:1px solid #c4ced7; }
-body.unified-terminal-ui .modal-waivers th { font-weight:700; background:#e3e9ef; border-bottom-color:#8d99a5; }
+body.unified-terminal-ui .modal-waivers th { font-weight:var(--gm-weight-bold); background:#e3e9ef; border-bottom-color:#8d99a5; }
 body.unified-terminal-ui .modal-waivers summary { padding:6px; font:12px Tahoma,Arial,sans-serif; cursor:pointer; }
 body.unified-terminal-ui .modal-waivers .ui-command {
   min-height:24px; padding:3px 8px; background:#edf0f3 !important; background-image:none !important;
@@ -4996,7 +4996,7 @@ body.unified-terminal-ui .has-card-board .season-row-motion {
   color:#245f3e;
   display:inline-flex;
   flex:0 0 auto;
-  font:700 10px/1 Tahoma,Arial,sans-serif;
+  font:var(--gm-weight-bold) 10px/1 Tahoma,Arial,sans-serif;
   justify-content:center;
   margin-left:auto;
   min-width:9px;
@@ -5024,13 +5024,13 @@ body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table {
 }
 body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table :is(th,td) {
   box-sizing:border-box; height:26px; padding:0 4px; border:0; text-align:right; white-space:nowrap;
-  vertical-align:middle; color:var(--season-text); font:400 10px Tahoma,"Trebuchet MS",Arial,sans-serif;
+  vertical-align:middle; color:var(--season-text); font:var(--gm-weight-regular) 10px Tahoma,"Trebuchet MS",Arial,sans-serif;
   overflow:hidden; text-overflow:ellipsis; background-clip:padding-box;
 }
 body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table :is(.playoff-stats-col-player,.playoff-stats-col-team) { text-align:left; }
 body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table thead th {
   position:sticky; top:0; z-index:2; height:20px; background:#fff;
-  border-bottom:1px solid var(--season-line); font-size:8px; font-weight:700;
+  border-bottom:1px solid var(--season-line); font-size:8px; font-weight:var(--gm-weight-bold);
 }
 body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table tbody tr:first-child > :is(th,td) { border-top:1px solid var(--season-soft-line); }
 body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table tbody tr > :is(th,td) { border-bottom:1px solid var(--season-soft-line); }
@@ -5038,7 +5038,7 @@ body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table tbody tr:last
 body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table thead th button {
   appearance:none; display:block; width:100%; height:100%; min-height:0 !important; margin:0; padding:0 !important;
   border:0 !important; border-radius:0; background:transparent !important; box-shadow:none !important;
-  color:inherit !important; cursor:pointer; font:inherit; font-size:8px !important; font-weight:700 !important;
+  color:inherit !important; cursor:pointer; font:inherit; font-size:8px !important; font-weight:var(--gm-weight-bold) !important;
   text-align:inherit; text-transform:none; transform:none !important;
 }
 body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table thead th button:focus-visible { outline:1px solid #42667a; outline-offset:-1px; }
@@ -5068,7 +5068,7 @@ body.unified-terminal-ui .playoff-stats-panel .playoff-stats-team img { width:16
 body.unified-terminal-ui .playoff-stats-panel .playoff-stats-empty td { height:48px; text-align:center; color:var(--season-muted); }
 
 /* Prospect injury marker: past history count, current injury cross, projected risk word. */
-.prospect-injury-marker { display:inline-flex; align-items:center; gap:4px; margin-left:6px; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; vertical-align:middle; }
+.prospect-injury-marker { display:inline-flex; align-items:center; gap:4px; margin-left:6px; font-size:9px; font-weight:var(--gm-weight-bold); text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; vertical-align:middle; }
 .prospect-injury-marker .prospect-injury-history { opacity:.75; }
 .prospect-injury-risk-moderate { color:#b7791f; }
 .prospect-injury-risk-high { color:#c0392b; }
@@ -5095,7 +5095,7 @@ body .has-card-board [data-board-window="minutes"] .season-minutes-head > span:n
 .season-minute-rest {
   align-items:center; background:#edf0f3; border:1px solid #8d99a5; border-radius:2px;
   box-shadow:inset 1px 1px #fff,inset -1px -1px #c7cdd3; color:#5b86b8;
-  cursor:pointer; display:grid; font:bold 8px/1 Tahoma,"Trebuchet MS",Arial,sans-serif;
+  cursor:pointer; display:grid; font:var(--gm-weight-bold) 8px/1 Tahoma,"Trebuchet MS",Arial,sans-serif;
   grid-column:4; height:14px; justify-content:center; letter-spacing:-.5px; min-height:14px; padding:0; width:16px;
 }
 .season-minute-rest:hover:not(:disabled) { background:#dce7f3; border-color:#5b86b8; }
@@ -5111,7 +5111,7 @@ body.unified-terminal-ui .player-rest-status.player-resting > span { color:#fff 
 }
 .minutes-coach-rest input { height:11px; margin:0; width:11px; }
 .minutes-coach-rest span { font-size:8px; text-transform:none; }
-.settings-coach-rest { align-items:center; cursor:pointer; display:flex; font-weight:bold; gap:6px; }
+.settings-coach-rest { align-items:center; cursor:pointer; display:flex; font-weight:var(--gm-weight-bold); gap:6px; }
 .settings-coach-rest + p { color:var(--muted, #6b7680); font-size:12px; margin:0; max-width:58ch; }
 .season-rest-menu {
   background:#f7f8fa; border:1px solid #8d99a5; box-shadow:2px 2px 0 rgba(0,0,0,.25); color:#1d2730;
@@ -5123,7 +5123,7 @@ body.unified-terminal-ui .player-rest-status.player-resting > span { color:#fff 
 }
 .season-rest-menu button:hover, .season-rest-menu button:focus-visible { background:#dce7f3; border-color:#5b86b8; outline:none; }
 .season-rest-menu button.award-warning { color:#a8434b; }
-.season-rest-menu button.cancel { color:#a8434b; font-weight:bold; }
+.season-rest-menu button.cancel { color:#a8434b; font-weight:var(--gm-weight-bold); }
 .season-rest-menu small { color:#5d6872; font-size:10px; padding:3px 2px 0; }
 
 /* Decline watch (veterans): red down arrow with expected overall change per year. */
@@ -5132,7 +5132,7 @@ body.unified-terminal-ui .player-decline-watch strong { color:#c4585f; }
 
 /* Draft boards (2026-11-19): consensus beside your scouts' board. Shared table style: double header rule, small
    bold headings, stripes, whole-row hover, sorted-column shading. */
-.draft-prospect-table.draft-two-boards thead th { border-bottom:2px solid var(--season-line, var(--line-soft)); font-size:8px; font-weight:700; }
+.draft-prospect-table.draft-two-boards thead th { border-bottom:2px solid var(--season-line, var(--line-soft)); font-size:8px; font-weight:var(--gm-weight-bold); }
 .draft-prospect-table.draft-two-boards tbody tr:nth-child(even) td { background-color:#eef1f3; }
 .draft-prospect-table.draft-two-boards tbody tr:is(:hover,:focus-within) td { background-color:#dce8f2; }
 .draft-prospect-table.draft-two-boards tbody tr.is-selected td { background-color:color-mix(in srgb, var(--accent) 16%, transparent); }
@@ -5147,8 +5147,8 @@ body.unified-terminal-ui .player-decline-watch strong { color:#c4585f; }
 .draft-prospect-table.draft-two-boards :is(th,td).draft-col-type { width:126px; }
 .draft-prospect-table.draft-two-boards :is(th,td).draft-col-fit { width:62px; }
 .draft-prospect-table.draft-two-boards :is(th,td).draft-col-status { width:96px; }
-.draft-rank-spread { display:inline-block; margin-left:5px; font-size:9px; color:var(--muted, #6b7785); font-weight:400; }
-.draft-rank-move { display:inline-block; margin-left:4px; font-size:9px; font-weight:700; }
+.draft-rank-spread { display:inline-block; margin-left:5px; font-size:9px; color:var(--muted, #6b7785); font-weight:var(--gm-weight-regular); }
+.draft-rank-move { display:inline-block; margin-left:4px; font-size:9px; font-weight:var(--gm-weight-bold); }
 .draft-rank-move.is-up { color:#2f8a57; }
 .draft-rank-move.is-down { color:#c4585f; }
 .draft-scout-read { font-size:10px; white-space:nowrap; }
@@ -5159,8 +5159,8 @@ body.unified-terminal-ui .player-decline-watch strong { color:#c4585f; }
 .prospect-two-boards b { white-space:nowrap; }
 .prospect-two-boards small { white-space:normal; line-height:1.2; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards { max-width:230px; text-align:center; }
-body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards b { font-size:13px; font-weight:600; }
-body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards strong { font-size:14px; font-weight:600; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards b { font-size:13px; font-weight:var(--gm-weight-semibold); }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards strong { font-size:14px; font-weight:var(--gm-weight-semibold); }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards small { font-size:11px; }
 
 /* Draft-night Prospect Board (2026-11-19 UI batch): the expanded Upcoming Prospects design, enlarged, on the shared
@@ -5174,12 +5174,12 @@ body.unified-terminal-ui .draft-night-board { background:#fff; }
 }
 .draft-board-clock { display:flex; align-items:center; gap:9px; min-width:0; }
 .draft-board-clock .draft-team-logo { flex:0 0 34px; width:34px; height:34px; }
-.draft-board-clock p { margin:0; color:var(--season-muted, #5d6b77); font:700 9px Tahoma,"Trebuchet MS",Arial,sans-serif; text-transform:uppercase; letter-spacing:.04em; }
-.draft-board-clock h4 { margin:1px 0 0; font:700 18px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-text, #1d2a33); }
+.draft-board-clock p { margin:0; color:var(--season-muted, #5d6b77); font:var(--gm-weight-bold) 9px Tahoma,"Trebuchet MS",Arial,sans-serif; text-transform:uppercase; letter-spacing:.04em; }
+.draft-board-clock h4 { margin:1px 0 0; font:var(--gm-weight-bold) 18px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-text, #1d2a33); }
 .draft-board-decision { display:grid; gap:2px; min-width:0; }
-.draft-board-decision span { color:var(--season-muted, #5d6b77); font:700 9px Tahoma,"Trebuchet MS",Arial,sans-serif; text-transform:uppercase; letter-spacing:.04em; }
-.draft-board-decision strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:400 13px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-text, #1d2a33); }
-.draft-board-filter { display:flex; align-items:center; gap:6px; font:700 9px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-muted, #5d6b77); text-transform:uppercase; }
+.draft-board-decision span { color:var(--season-muted, #5d6b77); font:var(--gm-weight-bold) 9px Tahoma,"Trebuchet MS",Arial,sans-serif; text-transform:uppercase; letter-spacing:.04em; }
+.draft-board-decision strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:var(--gm-weight-regular) 13px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-text, #1d2a33); }
+.draft-board-filter { display:flex; align-items:center; gap:6px; font:var(--gm-weight-bold) 9px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-muted, #5d6b77); text-transform:uppercase; }
 .draft-board-filter select { min-height:26px; font:12px Tahoma,"Trebuchet MS",Arial,sans-serif; text-transform:none; }
 .draft-board-note { flex:0 0 auto; margin:0; padding:4px 10px; border-bottom:1px solid var(--season-soft-line, #d5dde3); color:var(--season-muted, #5d6b77); font:10px Tahoma,"Trebuchet MS",Arial,sans-serif; }
 .draft-night-board .draft-news-strip { flex:0 0 auto; padding:4px 10px; border-bottom:1px solid var(--season-soft-line, #d5dde3); font:11px Tahoma,"Trebuchet MS",Arial,sans-serif; background:#fff6e0; }
@@ -5192,9 +5192,9 @@ body.unified-terminal-ui .draft-night-board { background:#fff; }
 }
 .draft-night-board .draft-pick-reveal.is-last-pick { border-left-color:#9aaab7; background:#f6f8fa; }
 .draft-night-board .draft-pick-reveal .draft-team-logo { width:30px; height:30px; }
-.draft-pick-reveal-number { color:#3c556c; font:700 11px Tahoma,"Trebuchet MS",Arial,sans-serif; white-space:nowrap; text-transform:uppercase; letter-spacing:.03em; }
+.draft-pick-reveal-number { color:#3c556c; font:var(--gm-weight-bold) 11px Tahoma,"Trebuchet MS",Arial,sans-serif; white-space:nowrap; text-transform:uppercase; letter-spacing:.03em; }
 .draft-pick-reveal-text { display:grid; min-width:0; gap:1px; }
-.draft-pick-reveal-text strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:700 14px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-text, #1d2a33); }
+.draft-pick-reveal-text strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:var(--gm-weight-bold) 14px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-text, #1d2a33); }
 .draft-pick-reveal-text small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:11px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-muted, #5d6b77); }
 .draft-pick-reveal-text .draft-pick-why { opacity:1; font-size:11px; }
 .draft-playback-skip { white-space:nowrap; }
@@ -5208,15 +5208,15 @@ body.unified-terminal-ui .draft-night-board { background:#fff; }
 .draft-board-table.draft-prospect-table :is(th,td) {
   box-sizing:border-box; height:32px; padding:0 6px; border:0; border-bottom:1px solid var(--season-soft-line, #d5dde3);
   vertical-align:middle; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  color:var(--season-text, #1d2a33); font:400 12px Tahoma,"Trebuchet MS",Arial,sans-serif; background-clip:padding-box;
+  color:var(--season-text, #1d2a33); font:var(--gm-weight-regular) 12px Tahoma,"Trebuchet MS",Arial,sans-serif; background-clip:padding-box;
 }
 body.unified-terminal-ui .draft-board-table.draft-prospect-table :is(th,td) { padding:0 6px; font-size:12px; }
 .draft-board-table.draft-prospect-table thead th {
   position:sticky; top:0; z-index:2; height:24px; background:#fff; color:var(--season-text, #1d2a33);
-  border-bottom:2px solid var(--season-line, #b7c2cb); font-size:9px; font-weight:700; text-transform:none;
+  border-bottom:2px solid var(--season-line, #b7c2cb); font-size:9px; font-weight:var(--gm-weight-bold); text-transform:none;
 }
 body.unified-terminal-ui .draft-board-table.draft-prospect-table thead th { font-size:9px; }
-.draft-board-table .draft-sort-button { width:auto; padding:0 !important; border:0 !important; background:transparent !important; box-shadow:none !important; color:inherit !important; font:inherit; font-size:9px !important; font-weight:700 !important; cursor:pointer; text-transform:none; min-height:0 !important; }
+.draft-board-table .draft-sort-button { width:auto; padding:0 !important; border:0 !important; background:transparent !important; box-shadow:none !important; color:inherit !important; font:inherit; font-size:9px !important; font-weight:var(--gm-weight-bold) !important; cursor:pointer; text-transform:none; min-height:0 !important; }
 .draft-board-table thead th > .draft-sort-button { width:100%; text-align:inherit; }
 .draft-board-table .draft-sort-button:focus-visible { outline:1px solid #42667a; outline-offset:1px; }
 .draft-nowpot-sorts { display:inline-flex; align-items:center; gap:4px; }
@@ -5236,21 +5236,21 @@ body.unified-terminal-ui .draft-board-table.draft-prospect-table thead th { font
 .draft-board-table tbody tr.is-drafted td { color:#7d8a95; }
 .draft-board-table tbody tr.is-drafted .draft-prospect-name { color:#7d8a95; text-decoration:line-through; text-decoration-color:#c4585f; }
 .draft-board-table .draft-col-consensus { text-align:left; }
-.draft-board-rank { display:inline-block; min-width:20px; font-weight:700; }
+.draft-board-rank { display:inline-block; min-width:20px; font-weight:var(--gm-weight-bold); }
 .draft-board-table .draft-rank-spread { margin-left:6px; font-size:10px; }
 .draft-board-name { display:flex; align-items:center; gap:7px; min-width:0; }
 .draft-board-name .season-prospect-origin { flex:0 0 20px; width:20px; height:20px; object-fit:contain; display:inline-grid; place-items:center; font-size:14px; line-height:1; }
-.draft-board-name .season-prospect-source-fallback { border:1px solid #9aaab7; border-radius:50%; font:700 8px Tahoma,Arial,sans-serif; color:#5d6b77; }
-.draft-board-table .draft-prospect-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:400 12px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-text, #1d2a33); text-transform:none; }
+.draft-board-name .season-prospect-source-fallback { border:1px solid #9aaab7; border-radius:50%; font:var(--gm-weight-bold) 8px Tahoma,Arial,sans-serif; color:#5d6b77; }
+.draft-board-table .draft-prospect-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:var(--gm-weight-regular) 12px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-text, #1d2a33); text-transform:none; }
 .draft-board-nowpot { display:inline-flex; align-items:baseline; gap:4px; }
-.draft-board-nowpot strong { color:var(--season-muted, #5d6b77); font-weight:400; font-size:11px; }
+.draft-board-nowpot strong { color:var(--season-muted, #5d6b77); font-weight:var(--gm-weight-regular); font-size:11px; }
 .draft-board-nowpot i { color:var(--season-muted, #5d6b77); font-style:normal; font-size:10px; }
-.draft-board-nowpot b { font-weight:700; font-size:13px; }
+.draft-board-nowpot b { font-weight:var(--gm-weight-bold); font-size:13px; }
 .draft-board-yours { display:inline-flex; align-items:baseline; gap:2px; }
 .draft-board-table .draft-board-scouted { display:grid; grid-template-columns:minmax(0,1fr) 32px; align-items:center; gap:6px; }
 .draft-board-table .draft-board-scouted i { display:block; height:6px; background:#172228; overflow:hidden; }
 .draft-board-table .draft-board-scouted i b { display:block; height:100%; width:var(--fill,0%); background:var(--bar-color,#5b86b8); }
-.draft-board-table .draft-board-scouted strong { font-size:11px; font-weight:400; text-align:right; color:var(--season-text, #1d2a33); }
+.draft-board-table .draft-board-scouted strong { font-size:11px; font-weight:var(--gm-weight-regular); text-align:right; color:var(--season-text, #1d2a33); }
 .draft-board-table .draft-scout-read { font-size:11px; }
 .draft-board-table td.draft-col-fit, .draft-board-table th.draft-col-fit { text-align:right; padding-right:12px; }
 .draft-board-table .available-badge, .draft-board-table .drafted-badge { font-size:9px; padding:2px 5px; border-radius:2px; }
@@ -5281,7 +5281,7 @@ body.unified-terminal-ui .playoff-injuries-scope button {
   font:10px Tahoma,"Trebuchet MS",Arial,sans-serif; border-radius:0; box-shadow:inset 1px 1px #fff, inset -1px -1px #c7cdd3; cursor:pointer;
 }
 body.unified-terminal-ui .playoff-injuries-scope button + button { border-left:0; }
-body.unified-terminal-ui .playoff-injuries-scope button[aria-pressed="true"] { background:#d1dde8; box-shadow:inset 1px 1px #9aaab7; font-weight:700; }
+body.unified-terminal-ui .playoff-injuries-scope button[aria-pressed="true"] { background:#d1dde8; box-shadow:inset 1px 1px #9aaab7; font-weight:var(--gm-weight-bold); }
 body.unified-terminal-ui .playoff-injuries-scope button:focus-visible { outline:2px solid #42667a; outline-offset:-2px; }
 .playoff-injuries-count { color:var(--season-muted); font:10px Tahoma,"Trebuchet MS",Arial,sans-serif; white-space:nowrap; }
 body.unified-terminal-ui .playoff-stats-panel .playoff-injuries-table { min-width:544px; }
@@ -5304,20 +5304,20 @@ body.unified-terminal-ui .playoff-stats-panel .playoff-injuries-table tbody tr.i
 .required-clipboard-card .required-decision-workspace:has(> .cutdown-workspace) { height:100%; min-height:0; }
 .cutdown-workspace { display:flex; flex-direction:column; width:100%; height:100%; min-height:0; background:#fff; color:var(--season-text, #1d2a33); font:12px Tahoma,"Trebuchet MS",Arial,sans-serif; }
 .cutdown-head { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:16px; flex:0 0 auto; padding:10px 14px; border-bottom:1px solid var(--season-line, #b7c2cb); background:var(--season-raised, #eef2f5); }
-.cutdown-title p { margin:0; color:var(--season-muted, #5d6b77); font:700 9px Tahoma,Arial,sans-serif; text-transform:uppercase; letter-spacing:.04em; }
-body.unified-terminal-ui .cutdown-title h3 { margin:2px 0 3px; font:700 18px Tahoma,"Trebuchet MS",Arial,sans-serif; text-transform:none; letter-spacing:0; }
+.cutdown-title p { margin:0; color:var(--season-muted, #5d6b77); font:var(--gm-weight-bold) 9px Tahoma,Arial,sans-serif; text-transform:uppercase; letter-spacing:.04em; }
+body.unified-terminal-ui .cutdown-title h3 { margin:2px 0 3px; font:var(--gm-weight-bold) 18px Tahoma,"Trebuchet MS",Arial,sans-serif; text-transform:none; letter-spacing:0; }
 .cutdown-title span { color:var(--season-muted, #5d6b77); font-size:11px; }
 .cutdown-counter { display:grid; justify-items:end; gap:1px; padding:6px 12px; border:1px solid #c98b8f; border-left:4px solid #c4585f; background:#fff4f4; min-width:220px; }
 .cutdown-counter.is-ready { border-color:#7fb08f; border-left-color:#2f8a57; background:#f1f8f3; }
-.cutdown-counter strong { font:400 15px Tahoma,Arial,sans-serif; }
-.cutdown-counter strong b { font-size:24px; font-weight:700; color:#a8434b; }
+.cutdown-counter strong { font:var(--gm-weight-regular) 15px Tahoma,Arial,sans-serif; }
+.cutdown-counter strong b { font-size:24px; font-weight:var(--gm-weight-bold); color:#a8434b; }
 .cutdown-counter.is-ready strong b { color:#2f8a57; }
-.cutdown-counter span { font:700 9px Tahoma,Arial,sans-serif; text-transform:uppercase; color:var(--season-muted, #5d6b77); }
+.cutdown-counter span { font:var(--gm-weight-bold) 9px Tahoma,Arial,sans-serif; text-transform:uppercase; color:var(--season-muted, #5d6b77); }
 .cutdown-counter small { font-size:10px; color:var(--season-muted, #5d6b77); }
 .cutdown-scroll { flex:1 1 auto; min-height:0; overflow:auto; }
 .cutdown-table { table-layout:fixed; width:100%; min-width:960px; border-collapse:separate; border-spacing:0; background:#fff; }
-.cutdown-table :is(th,td) { box-sizing:border-box; height:33px; padding:0 6px; border:0; border-bottom:1px solid var(--season-soft-line, #d5dde3); text-align:left; vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font:400 12px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-text, #1d2a33); background-clip:padding-box; }
-.cutdown-table thead th { position:sticky; top:0; z-index:2; height:24px; background:#fff; border-bottom:2px solid var(--season-line, #b7c2cb); font-size:9px; font-weight:700; text-transform:none; letter-spacing:0; }
+.cutdown-table :is(th,td) { box-sizing:border-box; height:33px; padding:0 6px; border:0; border-bottom:1px solid var(--season-soft-line, #d5dde3); text-align:left; vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font:var(--gm-weight-regular) 12px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-text, #1d2a33); background-clip:padding-box; }
+.cutdown-table thead th { position:sticky; top:0; z-index:2; height:24px; background:#fff; border-bottom:2px solid var(--season-line, #b7c2cb); font-size:9px; font-weight:var(--gm-weight-bold); text-transform:none; letter-spacing:0; }
 body.unified-terminal-ui .cutdown-table thead th { text-transform:none; letter-spacing:0; color:var(--season-text, #1d2a33); }
 .cutdown-table tbody tr { background-color:#fff; }
 .cutdown-table tbody tr:nth-child(even) { background-color:#eef1f3; }
@@ -5325,7 +5325,7 @@ body.unified-terminal-ui .cutdown-table thead th { text-transform:none; letter-s
 .cutdown-table tbody tr.is-releasing { background-color:#fbe9ea; }
 .cutdown-table tbody tr.is-releasing:is(:hover,:focus-within) { background-color:#f6d9db; }
 .cutdown-table tbody tr.is-releasing .cutdown-player-name { text-decoration:line-through; text-decoration-color:#c4585f; }
-.cutdown-table tbody td.is-chosen { background-color:rgba(196,88,95,.14); font-weight:700; }
+.cutdown-table tbody td.is-chosen { background-color:rgba(196,88,95,.14); font-weight:var(--gm-weight-bold); }
 .cutdown-table tbody th { padding:0; position:relative; background-color:transparent; }
 body.unified-terminal-ui .cutdown-table tbody :is(th,td) { background-color:transparent; }
 body.unified-terminal-ui .cutdown-table tbody td.is-chosen { background-color:rgba(196,88,95,.14); }
@@ -5336,12 +5336,12 @@ body.unified-terminal-ui .cutdown-player-name { min-height:0; padding:0; border:
 .cutdown-player-name:is(:hover,:focus-visible) { text-decoration:underline; }
 .cutdown-player small { color:#2f6f8f; font-size:9px; }
 .cutdown-contract, .cutdown-quote { display:grid; line-height:1.1; }
-.cutdown-contract small, .cutdown-quote small { color:var(--season-muted, #5d6b77); font-size:9px; font-weight:400; overflow:hidden; text-overflow:ellipsis; }
+.cutdown-contract small, .cutdown-quote small { color:var(--season-muted, #5d6b77); font-size:9px; font-weight:var(--gm-weight-regular); overflow:hidden; text-overflow:ellipsis; }
 .cutdown-quote abbr { text-decoration:none; }
 .cutdown-choice { display:inline-flex; }
 body.unified-terminal-ui .cutdown-choice button { min-height:22px; padding:1px 8px; border:1px solid #8d99a5; border-radius:0; background:#edf0f3; color:var(--season-text, #1d2a33); box-shadow:inset 1px 1px #fff, inset -1px -1px #c7cdd3; font:11px Tahoma,"Trebuchet MS",Arial,sans-serif; cursor:pointer; text-transform:none; }
 body.unified-terminal-ui .cutdown-choice button + button { border-left:0; }
-body.unified-terminal-ui .cutdown-choice button.is-active { font-weight:700; box-shadow:inset 1px 1px #9aaab7; }
+body.unified-terminal-ui .cutdown-choice button.is-active { font-weight:var(--gm-weight-bold); box-shadow:inset 1px 1px #9aaab7; }
 body.unified-terminal-ui .cutdown-choice button.cutdown-choice-keep.is-active { background:#d7eadc; border-color:#6f9c7c; }
 body.unified-terminal-ui .cutdown-choice button:is(.cutdown-choice-waive,.cutdown-choice-buyout).is-active { background:#c4585f; border-color:#a8434b; color:#fff; }
 body.unified-terminal-ui .cutdown-choice button:focus-visible { outline:2px solid #42667a; outline-offset:-2px; position:relative; z-index:1; }
@@ -5349,7 +5349,7 @@ body.unified-terminal-ui .cutdown-choice button:focus-visible { outline:2px soli
 .cutdown-foot > div { display:grid; flex:1 1 auto; min-width:0; }
 .cutdown-foot > div strong { font-size:12px; }
 .cutdown-foot > div span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--season-muted, #5d6b77); font-size:11px; }
-body.unified-terminal-ui .cutdown-foot .cutdown-confirm:not(:disabled) { background:#a8434b; border-color:#7f2f36; color:#fff; font-weight:700; }
+body.unified-terminal-ui .cutdown-foot .cutdown-confirm:not(:disabled) { background:#a8434b; border-color:#7f2f36; color:#fff; font-weight:var(--gm-weight-bold); }
 
 /* Window icons (window-icons.js): each window's own icon on its title-bar tab and in the window switcher. */
 body .has-card-board .card-board-window-mark.has-window-icon,
@@ -5381,7 +5381,7 @@ body.unified-terminal-ui .modal-shell.modal-settings.modal-photo-credits { width
 .photo-credits-table th[data-credit-col="use"] { width:150px; }
 .photo-credits-table th[data-credit-col="author"] { width:26%; }
 .photo-credits-table th[data-credit-col="licence"] { width:120px; }
-.photo-credits-table thead th { position:sticky; top:0; z-index:1; background:var(--ui-panel, #f4f6f8); border-bottom:2px solid var(--ui-line, #9aa7b3); font-size:10px; font-weight:700; padding:3px 6px; text-align:left; }
+.photo-credits-table thead th { position:sticky; top:0; z-index:1; background:var(--ui-panel, #f4f6f8); border-bottom:2px solid var(--ui-line, #9aa7b3); font-size:10px; font-weight:var(--gm-weight-bold); padding:3px 6px; text-align:left; }
 .photo-credits-table thead th button { all:unset; cursor:pointer; font:inherit; }
 .photo-credits-table tbody tr:nth-child(even) { background:color-mix(in srgb, var(--ui-soft, #dde3e8) 45%, transparent); }
 .photo-credits-table tbody tr:hover { background:color-mix(in srgb, var(--ui-soft, #dde3e8) 95%, transparent); }
@@ -5392,5 +5392,5 @@ body.unified-terminal-ui .modal-shell.modal-settings.modal-photo-credits { width
 .photo-credits-table td.photo-credit-face img { display:block; width:100%; height:100%; object-fit:cover; object-position:center bottom; filter:saturate(.45) contrast(1.05); }
 /* Settings > Board background: three choices; the chosen one gets a light tint and an underline (never black). */
 .settings-board-theme { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.settings-board-theme > span { font-weight: 700; margin-right: 4px; }
+.settings-board-theme > span { font-weight: var(--gm-weight-bold); margin-right: 4px; }
 body.unified-terminal-ui .settings-board-theme button[aria-pressed="true"] { background: #dfe8f0 !important; color: #1f3346 !important; box-shadow: inset 0 -2px #50799c; }

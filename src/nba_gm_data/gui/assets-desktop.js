@@ -469,12 +469,16 @@ function refreshAssetsSurface(target = null) {
     wireAssetsCards(card.parentElement,rows,seasons);
   }
 }
+// A group is one screenful: six rows in a board window; on a page it fills the height (user, 2026-11-26: the top
+// sixteen, and each team's whole list up to sixteen).
+function leagueBlockGroupSize() { return globalThis.CardPages?.enabled?.() ? 16 : 6; }
 function leagueBlockGroups(rows) {
-  const top=[...rows].sort((a,b)=>Number(b.overall||0)-Number(a.overall||0)).slice(0,6);
+  const size=leagueBlockGroupSize();
+  const top=[...rows].sort((a,b)=>Number(b.overall||0)-Number(a.overall||0)).slice(0,size);
   const groups=[{label:'Top league targets',rows:top}];
   const byTeam=new Map();
   rows.forEach(row=>{const key=row.team_abbrev||'NBA';if(!byTeam.has(key))byTeam.set(key,[]);byTeam.get(key).push(row);});
-  [...byTeam.keys()].sort().forEach(team=>groups.push({label:team,team_abbrev:team,rows:byTeam.get(team).slice(0,6)}));
+  [...byTeam.keys()].sort().forEach(team=>groups.push({label:team,team_abbrev:team,rows:byTeam.get(team).slice(0,size)}));
   return groups;
 }
 function leagueBlockMarkup(rows) {
@@ -590,6 +594,6 @@ function mountDashboardCardBoard(target) {
       restored.push(entry.id);
     }
     return clipboardPlayerCardWindows().filter(card=>restored.includes(card.id));
-  },onVisibilityChange:(id,visible)=>{const entry=state.clipboardPlayerCards.find(item=>item.id===id);if(entry) entry.windowOpen=visible;},onLayoutRestored:wirePlayerGameScoreCharts,onOpen:id=>loadOpenedAssetsCard(target,id),onExpandedChange:(id,expanded,card)=>id==="picks"?setDraftAssetsCardExpanded(expanded,card):id==="development"?setDevelopmentCardExpanded(expanded,card):id==="standings"?setStandingsCardExpanded(expanded,card):id==="week"?setWeekCardExpanded(expanded,card):id==="prospects"?setProspectsCardExpanded(expanded,card):id==="staff"?setStaffCardExpanded(expanded,card):id==="league-wire"?setLeagueWireCardExpanded(expanded,card):undefined,onTradeMenuAction:action=>action==="offers"?openTradeOffersModal():action==="market"?openTradeMarketBoard():openTradeRoomModal(action),lockedCards:clipboardLockedCards(),entryLayout:typeof clipboardEntryLayout==="function"?clipboardEntryLayout():null,phaseCommands:clipboardPhaseCommands(),toolbarActions:{simulationDisabled:!editable,tradeDisabled,offerCount:Number(state.data.dashboardOffers?.offers?.length||0)},phaseContext:(state.hydrating || !state.home) ? null : dashboardPhaseKind()==="playoffs" ? `${state.home?.save?.season || ""}:postseason-v2:playoffs` : dashboardPhaseKind()==="draft" && ["odds","reveal"].includes(state.draftPresentationStage) ? `${state.home?.save?.season || ""}:lottery-v2:draft` : `${state.home?.save?.season || ""}:${state.home?.save?.phase || ""}:${dashboardPhaseKind()}`});
+  },onVisibilityChange:(id,visible)=>{const entry=state.clipboardPlayerCards.find(item=>item.id===id);if(entry) entry.windowOpen=visible;},onLayoutRestored:wirePlayerGameScoreCharts,onOpen:id=>loadOpenedAssetsCard(target,id),onExpandedChange:(id,expanded,card)=>id==="picks"?setDraftAssetsCardExpanded(expanded,card):id==="development"?setDevelopmentCardExpanded(expanded,card):id==="standings"?setStandingsCardExpanded(expanded,card):id==="week"?setWeekCardExpanded(expanded,card):id==="prospects"?setProspectsCardExpanded(expanded,card):id==="staff"?setStaffCardExpanded(expanded,card):id==="league-wire"?setLeagueWireCardExpanded(expanded,card):undefined,onTradeMenuAction:action=>action==="offers"?openTradeOffersModal():action==="market"?openTradeMarketBoard():openTradeRoomModal(action),lockedCards:clipboardLockedCards(),entryLayout:typeof clipboardEntryLayout==="function"?clipboardEntryLayout():null,phaseCommands:(window.CardPages?.enabled?.() && window.GameProgress?.dockMarkup()) || clipboardPhaseCommands(),toolbarActions:{simulationDisabled:!editable,tradeDisabled,offerCount:Number(state.data.dashboardOffers?.offers?.length||0)},phaseContext:(state.hydrating || !state.home) ? null : dashboardPhaseKind()==="playoffs" ? `${state.home?.save?.season || ""}:postseason-v2:playoffs` : dashboardPhaseKind()==="draft" && ["odds","reveal"].includes(state.draftPresentationStage) ? `${state.home?.save?.season || ""}:lottery-v2:draft` : `${state.home?.save?.season || ""}:${state.home?.save?.phase || ""}:${dashboardPhaseKind()}`});
   dashboard.querySelectorAll('.card-board-body.assets-desktop').forEach(root=>wireAssetsCards(root.parentElement,rows,seasons));
 }

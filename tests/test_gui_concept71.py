@@ -13,8 +13,12 @@ class Concept71GuiTests(unittest.TestCase):
         settings = APP[APP.index("function openSettingsModal"):APP.index("async function openExtensionNegotiation")]
         # The user approved two preset look choices in Settings: Font (taste deck round 4, bb56f037) and Buttons
         # (round 6). Free appearance customization (colours, palettes, other font controls) stays unexposed.
+        # "motion" is the on/off switch for the arena background's slow drift. The user chose the movement itself
+        # ("slow drift and cross-fade", UI polish pass Stage C checkpoint 3 answer `bg-motion`); the switch to turn
+        # it off was built with it at checkpoint 4 (176963b5), and the user confirmed keeping it on 2026-11-26.
         looks = APP[APP.index("const UI_LOOK_SETTINGS"):APP.index("const UI_LOOK_DATASET")]
-        self.assertEqual(re.findall(r"^  (\w+): \{", looks, re.M), ["glass", "font", "buttons"])
+        self.assertEqual(re.findall(r"^  (\w+): \{", looks, re.M), ["glass", "font", "buttons", "motion"])
+        self.assertIn('options: [["off", "Off"], ["on", "On"]] }', looks)
         self.assertIn('options: [["clear", "Clear"]] }', looks)
         self.assertNotRegex(settings.lower(), r"""type=["']color["']""")
         remaining = settings.lower()

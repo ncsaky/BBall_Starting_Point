@@ -38,7 +38,7 @@ test('pages have unique ids, a sidebar group and a label', () => {
   const ids = pages.PAGES.map((page) => page.id);
   assert.equal(new Set(ids).size, ids.length);
   for (const page of pages.PAGES) {
-    assert.ok(['now', 'team', 'office', 'league'].includes(page.group), page.id);
+    assert.ok(['now', 'home', 'team', 'office', 'league'].includes(page.group), page.id);
     assert.ok(page.label, page.id);
     assert.ok(page.layout || page.slideshow, page.id);
   }
@@ -77,7 +77,13 @@ test('step screens stay out of the sidebar and the footer sits outside the page'
   const {pages} = load();
   const steps = pages.PAGES.filter((page) => page.step).map((page) => page.id);
   assert.equal(steps.slice(-2).join(), 'roster-moves,set-roster', 'the preseason ends on Set The Roster');
-  for (const id of ['draft-room', 'free-agency', 'free-agency-checklist']) assert.ok(steps.includes(id), id);
+  // The draft, the checklist and free agency are Home tabs while they are on (user, 2026-11-26), not step screens.
+  for (const id of ['draft-room', 'free-agency', 'free-agency-checklist']) {
+    const page = pages.PAGES.find((item) => item.id === id);
+    assert.ok(!steps.includes(id), id);
+    assert.equal(page.group, 'home', id);
+    assert.equal(page.phaseHome, true, id);
+  }
   const source = read('card-pages.js');
   assert.doesNotMatch(source, /\["now", ""\]/);
   assert.match(source, /<\/div>\n\s*<footer class="pages-foot">/);
@@ -90,5 +96,292 @@ test('a player is a page of the app, not a pop-up window', () => {
   assert.match(board, /clipboard-player-card--coach/, 'coach cards stay pop-ups');
   assert.match(source, /data-pages-detail-back/);
   assert.match(source, /event\.key === "Escape" && currentPage === DETAIL/);
-  assert.match(read('card-pages.css'), /\.pages-shell\.is-detail \.pages-title \{ display: none; \}/);
+  // A player's page is headed like any other: his name is the title and his card's own pages are the tabs.
+  assert.doesNotMatch(read('card-pages.css'), /\.pages-shell\.is-detail \.pages-title \{ display: none; \}/);
+  assert.match(source, /function renderDetailHead\(frame\) \{/);
+  assert.match(source, /\(frame\?\.querySelector\("\.approved-profile-name h3"\) \|\| frame\?\.querySelector\("\.approved-profile-name"\)\)\?\.textContent\.trim\(\)/, 'only the name, not his bio lines');
+  assert.match(source, /data-pages-card-page="\$\{index\}" aria-selected="\$\{!page\.hidden\}"/);
+  assert.match(source, /const short = \(title\) => String\(title \|\| ""\)\.split\(\/\[,&\]\/\)\[0\]\.trim\(\);/, '"Season, Games & Contract" reads "Season"');
+  assert.match(source, /holder\?\._showPlayerCardPage\(Number\(cardTab\.dataset\.pagesCardPage\)\);/, 'a tab shows that page of his card');
+  assert.match(source, /detailWatch\.observe\(frame, \{childList: true, subtree: true, attributes: true, attributeFilter: \["hidden"\]\}\);/, 'the header follows the card as it fills in');
+});
+
+// ---- UI polish pass, Stage B: Home is the progress screen, one button moves time, a four-screen welcome, sounds.
+function loadProgress(save, extra = {}) {
+  const context = {
+    document: {addEventListener() {}},
+    state: {home: {save}, data: extra.data || {}, hydrating: false, draftPresentationStage: extra.stage || ''},
+    dashboardPhaseKind: () => extra.kind || '', requiredClipboardDecision: () => extra.required || '',
+    offseasonCalendar: () => extra.dates || {}, tradeDeadlineDate: () => '2027-02-05',
+    teamLabel: (team) => String(team?.abbrev || team || ''), userTeam: () => 'PHI', rosterRows: () => [],
+  };
+  context.window = context;
+  vm.createContext(context);
+  vm.runInContext(read('progress.js'), context);
+  return context.window.GameProgress;
+}
+const baseSave = (patch) => ({phase: 'regular_season', current_date: '2026-12-25', pending_counts: {}, legal_actions: ['trades', 'extensions', 'advance'], user_team_record: {wins: 16, losses: 12}, ...patch});
+
+test('every phase of the save has a step on the year strip', () => {
+  const progress = loadProgress(baseSave());
+  assert.equal(progress.YEAR.length, 7);
+  for (const phase of ['fantasy_draft', 'preseason', 'regular_season', 'play_in', 'playoffs', 'draft_lottery', 'draft', 're_signing', 'free_agency', 'offseason', 'training_camp']) {
+    const rule = progress.PHASES[phase];
+    assert.ok(rule && rule.title && rule.step >= 0 && rule.step < 7, phase);
+  }
+});
+
+test('in season the one button sims to the next game, with a week and a month beside it', () => {
+  const progress = loadProgress(baseSave(), {data: {dashboard: {next_games: [{date: '2026-12-28', is_home: false, opponent_team: 'OKC'}], extension_window_open: true}}});
+  const dock = progress.dock(progress.context());
+  assert.equal(dock.main.label, 'Sim to next game');
+  assert.equal(dock.main.sub, 'to Dec 28 · at OKC');
+  assert.match(dock.main.attrs, /data-advance="next-game" data-advance-date="2026-12-28"/);
+  assert.equal(dock.more.map((button) => button.label).join(), 'Week,Month');
+  assert.equal(dock.main.blocked, false);
+  const markup = progress.dockMarkup();
+  assert.ok(markup.indexOf('progress-more') < markup.indexOf('progress-go'), 'the main button comes last (far right)');
+  assert.equal(progress.heading(progress.context()).sub, '16 – 12');
+});
+
+test('a job that blocks the clock is first in the list and named by the button', () => {
+  const save = baseSave({phase: 'preseason', current_date: '2027-10-20', pending_counts: {roster_minimum: 1}});
+  const progress = loadProgress(save, {required: 'cutdown', kind: 'cutdown', data: {cutdown: {short: {count: 13, minimum: 14}}}});
+  const context = progress.context();
+  const jobs = progress.jobs(context);
+  assert.equal(jobs[0].kind, 'must');
+  assert.equal(jobs[0].label, 'Sign 1 more player');
+  assert.equal(jobs[0].detail, '13 of 14');
+  const dock = progress.dock(context);
+  assert.equal(dock.main.label, 'Sign 1 more player');
+  assert.equal(dock.main.blocked, true);
+  assert.match(dock.main.attrs, /data-pages-go="roster-moves"/);
+  assert.doesNotMatch(dock.main.attrs, /data-advance|data-phase-command/, 'a blocked button never moves time');
+  assert.match(progress.dockMarkup(), /class="ui-command progress-go is-blocked"/);
+  // Two short: the game's pending figure is still 1.
+  const two = loadProgress(save, {required: 'cutdown', kind: 'cutdown', data: {cutdown: {short: {count: 12, minimum: 14}}}});
+  assert.equal(two.jobs(two.context())[0].label, 'Sign 2 more players');
+  assert.equal(progress.blockingKey(), 'Sign 1 more player');
+});
+
+test('deadline day: the list warns and the button says what it closes', () => {
+  const progress = loadProgress(baseSave({current_date: '2027-02-05'}));
+  const context = progress.context();
+  assert.equal(progress.heading(context).title, 'Trade deadline');
+  assert.equal(progress.jobs(context)[0].kind, 'warn');
+  assert.equal(progress.dock(context).main.label, 'Sim past the deadline');
+  assert.match(read('app.js'), /if \(firstRunLayout\(\)\) return landHomeForStop\("The sim stopped: today is the trade deadline\."\);/);
+});
+
+test('closed actions show as closed rows, from the save\'s own legal actions', () => {
+  const progress = loadProgress(baseSave({phase: 'playoffs', current_date: '2027-04-30', legal_actions: ['extensions', 'advance']}), {kind: 'playoffs'});
+  const jobs = progress.jobs(progress.context());
+  const trades = jobs.find((job) => job.label === 'Trades');
+  assert.equal(trades.kind, 'shut');
+  assert.equal(trades.go, null);
+  assert.equal(jobs.at(-1).kind, 'shut', 'closed rows come last');
+  assert.equal(progress.dock(progress.context()).main.label, 'Sim one game per series');
+});
+
+test('the sidebar carries the phase and the to-do list; Home lands first, and step screens lead back to it', () => {
+  const {pages} = load();
+  // Only a few pages in the sidebar (user, 2026-11-26); everything else is a tab of one of them.
+  assert.deepEqual(Array.from(pages.GROUPS, ([id]) => id), ['home', 'team', 'office', 'league']);
+  const tabs = (group) => Array.from(pages.PAGES).filter((page) => page.group === group).map((page) => page.id);
+  // Home: the phase's own tabs first (listed only in their phase), then Today, Minutes and Schedule.
+  assert.deepEqual(tabs('home'), ['draft-room', 'free-agency-checklist', 'free-agency', 'home-playoffs', 'home', 'minutes', 'schedule']);
+  assert.match(read('card-pages.js'), /const homeId = \(\) => visiblePages\(\)\.find\(page => page\.phaseHome/, 'Home lands on the phase tab while one is on');
+  for (const id of ['roster', 'stats', 'development', 'staff', 'identity', 'profile']) assert.ok(tabs('team').includes(id), id);
+  assert.deepEqual(tabs('office'), ['contracts', 'trades', 'scouting']);
+  for (const id of ['standings', 'news', 'awards', 'playoffs', 'playoff-stats']) assert.ok(tabs('league').includes(id), id);
+  const source = read('card-pages.js');
+  assert.match(source, /progressEl\.className = "pages-progress";/);
+  assert.match(source, /progressEl\.querySelector\("\.progress-rail"\)\.innerHTML = progress\(\)\.listMarkup\(/, 'the to-do list is in the sidebar, on every page');
+  assert.match(source, /class="pages-tabs" role="tablist"/);
+  assert.match(source, /if \(!stays \|\| newlyBlocked \|\| called\) return homeId\(\);/);
+  assert.match(source, /class="pages-control pages-step-home" data-pages-go="home"/);
+  assert.doesNotMatch(source, /pages-step-back|Continue: |nbaGmPage:v1|is-progress|progress-area/, 'no step-to-step buttons, no remembered page across loads, no list on the page');
+  assert.match(read('assets-desktop.js'), /phaseCommands:\(window\.CardPages\?\.enabled\?\.\(\) && window\.GameProgress\?\.dockMarkup\(\)\) \|\| clipboardPhaseCommands\(\)/);
+});
+
+test('the welcome is four screens, skippable, remembered, and goes before the Preseason Outlook', () => {
+  const app = read('app.js');
+  const steps = app.slice(app.indexOf('const FIRST_RUN_STEPS = ['), app.indexOf('];', app.indexOf('const FIRST_RUN_STEPS = [')));
+  assert.equal((steps.match(/\{title:/g) || []).length, 4);
+  assert.match(app, /const tutorialSteps = \(\) => \(firstRunLayout\(\) \? FIRST_RUN_STEPS : GAME_TUTORIAL_STEPS\);/);
+  assert.match(app, /class="first-run-skip" data-tutorial-action="skip">Skip</);
+  assert.match(app, /if \(firstRunDue\(\)\) return;/);
+  assert.match(app, /els\.gameTutorial\.classList\.remove\("is-first-run"\);[\s\S]*?maybeOpenSeasonSlideshow\(\);/);
+  assert.doesNotMatch(app, /PAGES_TUTORIAL_STEPS/);
+  for (const id of ['minutes', 'signals', 'development', 'staff', 'week', 'efficiency']) assert.match(app.slice(app.indexOf('const PAGE_SECTION_TIPS'), app.indexOf('function firstRunTeamSlide')), new RegExp(`\\b${id}: "`), `the ${id} tip is kept behind its i mark`);
+  assert.match(read('card-pages.js'), /PAGE_SECTION_TIPS\[item\.id\]/);
+});
+
+test('sound is made in the browser, on and quiet by default, clicks off, with switches in Settings', () => {
+  const listeners = {};
+  const context = {document: {hidden: false, addEventListener: (type, fn) => { listeners[type] = fn; }}, localStorage: {getItem: () => null, setItem() {}}, Date, Math, JSON};
+  context.window = context;
+  vm.createContext(context);
+  vm.runInContext(read('sound.js'), context);
+  const sound = context.window.GameSound;
+  assert.deepEqual({...sound.settings()}, {on: true, volume: 40, clicks: false});
+  for (const name of ['continue', 'win', 'loss', 'must', 'deal', 'pick', 'reveal', 'blocked', 'news', 'champion', 'click']) assert.ok(sound.names().includes(name), name);
+  assert.equal(sound.play('win'), false, 'nothing plays before the player has clicked or pressed a key');
+  assert.equal(sound.set({volume: 250}).volume, 100);
+  assert.equal(sound.set({on: false}).on, false);
+  assert.doesNotMatch(read('sound.js'), /new Audio\(|\.mp3|\.wav|\.ogg|fetch\(/, 'no sound files');
+  const app = read('app.js');
+  for (const hook of ['data-sound-choice', 'data-sound-volume', 'data-sound-clicks']) assert.ok(app.includes(hook), hook);
+  assert.match(app, /globalThis\.GameSound\?\.result\(recordBefore, state\.home\?\.save\?\.user_team_record\);/);
+});
+
+test('shared style values: one sheet, loaded first, and no italic or stray weights left in the game\'s stylesheets', () => {
+  const tokens = read('tokens.css');
+  for (const name of ['--gm-size-page', '--gm-size-row', '--gm-size-small', '--gm-weight-regular', '--gm-weight-semibold', '--gm-weight-bold', '--gm-ink', '--gm-must', '--gm-line-strong', '--gm-radius-card', '--gm-space-5', '--gm-glass-page', '--gm-motion-open', '--gm-ease']) assert.ok(tokens.includes(`${name}:`), name);
+  assert.match(tokens, /--gm-size-small: 11px;/, 'the floor is 11px');
+  assert.match(tokens, /prefers-reduced-motion: reduce/);
+  const html = read('index.html');
+  const sheets = [...html.matchAll(/href="\/([^"?]+\.css)/g)].map((match) => match[1]);
+  assert.equal(sheets[0], 'tokens.css');
+  for (const sheet of sheets.filter((name) => name !== 'tokens.css')) {
+    const css = read(sheet);
+    assert.doesNotMatch(css, /font-style\s*:\s*(italic|oblique)|\bfont\s*:\s*italic/, `${sheet}: no italic`);
+    assert.doesNotMatch(css, /font-weight\s*:\s*(\d{3}|bold|bolder|lighter)\b/, `${sheet}: weights come from the shared values`);
+  }
+  for (const sheet of ['progress.css', 'full-pages.css']) assert.doesNotMatch(read(sheet).replace(/rgba?\([^)]*\)|#ffb0b0/g, ''), /font-size\s*:\s*\d|font:\s*[^;]*\b\d+px/, `${sheet}: sizes come from the shared values`);
+});
+
+// ---- Stage C: pages rebuilt at full size.
+const walk = (node, out = []) => { if (!node) return out; out.push(node); for (const item of node.items || []) walk(typeof item === 'string' ? {type: 'card', id: item} : item, out); return out; };
+const cardsOf = (layout) => walk(layout).filter((node) => node.type === 'card');
+
+test('Home in season: Today is the front page; the rotation and the next opponent are the Minutes tab', () => {
+  const {pages} = load();
+  const layout = pages.PAGES.find((page) => page.id === 'home').layout({available: () => true});
+  assert.ok(layout.full, 'laid out at real sizes, not scaled as one picture');
+  assert.deepEqual(cardsOf(layout).map((card) => card.id), ['front']);
+  const minutes = pages.PAGES.find((page) => page.id === 'minutes');
+  assert.equal(minutes.group, 'home');
+  assert.deepEqual(Array.from(minutes.layout({available: () => true}).items, (column) => cardsOf(column).map((card) => card.id)), [['minutes'], ['opponent']]);
+  assert.match(read('card-board.js'), /\["front", "\.season-front-panel", "Today"\]/);
+  assert.match(read('app.js'), /season-front-panel">\$\{globalThis\.CardPages\?\.enabled\?\.\(\) \? globalThis\.HomeFront\?\.markup/);
+});
+
+test('Roster and Stats are full-size tabs; Contracts keeps the payroll chart and the draft assets in proportion; Trades is a full-size tab', () => {
+  const {pages} = load();
+  for (const id of ['roster', 'stats', 'trades']) assert.ok(pages.PAGES.find((page) => page.id === id).layout({available: () => true}).full, id);
+  assert.deepEqual(cardsOf(pages.PAGES.find((page) => page.id === 'roster').layout({available: () => true})).map((card) => card.id), ['roster']);
+  const contracts = pages.PAGES.find((page) => page.id === 'contracts').layout({available: () => true});
+  assert.ok(contracts.full);
+  const byId = Object.fromEntries(cardsOf(contracts).map((card) => [card.id, card]));
+  assert.equal(byId.payroll.natural, 'fit', 'the payroll chart is enlarged as one piece, never stretched');
+  assert.equal(byId.picks.natural, 'width');
+  assert.equal(byId.contracts.natural, undefined, 'the table is laid out at real sizes');
+  assert.deepEqual(cardsOf(pages.PAGES.find((page) => page.id === 'trades').layout({available: () => true})).map((card) => card.id), ['league-block', 'team-block', 'team-wants']);
+  assert.match(read('assets-desktop.js'), /function leagueBlockGroupSize\(\) \{ return globalThis\.CardPages\?\.enabled\?\.\(\) \? 16 : 6; \}/, 'a page shows sixteen targets a group');
+});
+
+test('a full-size page is sized from its area, re-laid when its contents arrive, and its sheet reads the shared values', () => {
+  const source = read('card-pages.js');
+  assert.match(source, /if \(stage\.pagesFull\) return layoutFull\(el, stage, slots\);/);
+  assert.match(source, /small < 1 \? small : large > 1 \? large : 1/, 'scale 1 between the size it fits in and the roomy size');
+  assert.match(source, /new MutationObserver\(/);
+  assert.match(source, /frame\.style\.zoom = String\(/, 'a picture keeps its proportions');
+  const css = read('full-pages.css');
+  assert.match(css, /\.pages-stage\.is-full/);
+  for (const rule of css.split('\n').filter((line) => /\{/.test(line) && !/^\s*(\/\*|@|--|[a-z-]+:)/.test(line) && !line.startsWith(' '))) {
+    assert.match(rule, /\.is-full|\.pages-tabs/, `only full-size pages and the tabs are touched: ${rule.slice(0, 90)}`);
+  }
+  assert.doesNotMatch(css, /font-style\s*:\s*italic|font-weight\s*:\s*\d/);
+});
+
+test('the year strip runs across the top of the page: segments as long as their part of the year, filled as far as today', () => {
+  const context = {window: {}, document: {addEventListener() {}}, state: {home: {save: {phase: 'regular_season', current_date: '2026-12-25'}}, data: {}}};
+  vm.createContext(context);
+  vm.runInContext(`${read('progress.js')}`, context);
+  const progress = context.window.GameProgress;
+  const spans = Array.from(progress.yearSpans('2026-12-25'), (span) => ({...span}));
+  assert.equal(spans.reduce((sum, span) => sum + span.days, 0), 365);
+  assert.equal(Math.max(...spans.map((span) => span.days)), spans[1].days, 'the regular season is the longest segment');
+  assert.ok(spans[1].through > .3 && spans[1].through < .45, 'Dec 25 is a bit over a third of the way through the season');
+  const source = read('card-pages.js');
+  assert.match(source, /<div class="pages-year"><\/div>\n\s*<header class="pages-head">/, 'above the title, in the page, not in the sidebar');
+  assert.match(source, /shell\.querySelector\("\.pages-year"\)\.innerHTML = progress\(\)\.yearMarkup\(\);/);
+  assert.match(read('progress.js'), /style="flex-grow:\$\{spans\[index\]\.days\}"/);
+  assert.match(read('progress.js'), /index < step \? 1 : index > step \? 0 : Math\.max\(\.04, Math\.min\(1, spans\[index\]\.through\)\)/);
+});
+
+test('Standings, Schedule and Development are full-size tabs, each holding its one card', () => {
+  const {pages} = load();
+  for (const [id, card] of [['standings', 'standings'], ['schedule', 'week'], ['development', 'development']]) {
+    const layout = pages.PAGES.find((page) => page.id === id).layout({available: () => true});
+    assert.ok(layout.full, `${id} is laid out at real sizes`);
+    assert.deepEqual(Array.from(cardsOf(layout), (node) => node.id), [card]);
+    assert.equal(cardsOf(layout)[0].natural, undefined, `${id} is not scaled as a picture`);
+  }
+});
+
+test('Staff, Identity and Profile are full-size tabs; the heat maps and charts keep their proportions', () => {
+  const {pages} = load();
+  for (const [id, cards] of [['staff', ['staff']], ['identity', ['identity', 'signals', 'morale']], ['profile', ['offense', 'defense', 'factors', 'efficiency']]]) {
+    const layout = pages.PAGES.find((page) => page.id === id).layout({available: () => true});
+    assert.ok(layout.full, `${id} is laid out at real sizes`);
+    assert.deepEqual(Array.from(cardsOf(layout), (node) => node.id), cards);
+  }
+  const picture = (id, card) => cardsOf(pages.PAGES.find((page) => page.id === id).layout({available: () => true})).find((node) => node.id === card);
+  assert.equal(picture('identity', 'identity').natural, 'fit');
+  for (const card of ['offense', 'defense', 'factors', 'efficiency']) assert.equal(picture('profile', card).natural, 'fit');
+});
+
+test('Draft, News and Awards are full-size tabs; the pictures keep their proportions', () => {
+  const {pages} = load();
+  const layoutOf = (id) => pages.PAGES.find((page) => page.id === id).layout({available: () => true});
+  for (const [id, cards] of [['scouting', ['prospects', 'picks']], ['news', ['league-wire']], ['awards', ['award-mvp', 'award-dpoy', 'award-roty']]]) {
+    const layout = layoutOf(id);
+    assert.ok(layout.full, `${id} is laid out at real sizes`);
+    assert.deepEqual(Array.from(cardsOf(layout), (node) => node.id), cards);
+  }
+  const draft = cardsOf(layoutOf('scouting'));
+  assert.equal(draft[0].natural, undefined, 'the prospect board is laid out at real sizes');
+  assert.equal(draft[1].natural, 'fit', 'the draft-assets grid keeps its proportions');
+  for (const node of cardsOf(layoutOf('awards'))) assert.equal(node.natural, 'fit', node.id);
+  // News is laid out at real sizes: a feed with a headline list beside it (news-page.js), not one enlarged post.
+  for (const node of cardsOf(layoutOf('news'))) assert.equal(node.natural, undefined, node.id);
+});
+
+test('Playoff Stats, Playoffs and Two-Way Places are full-size tabs; the bracket keeps its proportions', () => {
+  const {pages} = load();
+  const layoutOf = (id) => pages.PAGES.find((page) => page.id === id).layout({available: () => true});
+  for (const [id, cards] of [['playoff-stats', ['phase-playoffs-leaders', 'phase-playoffs-injuries']], ['playoffs', ['phase-playoffs-bracket']], ['roster-moves', ['phase-cutdown-decision']]]) {
+    const layout = layoutOf(id);
+    assert.ok(layout.full, `${id} is laid out at real sizes`);
+    assert.deepEqual(Array.from(cardsOf(layout), (node) => node.id), cards);
+  }
+  assert.equal(cardsOf(layoutOf('playoffs'))[0].natural, 'fit', 'the bracket is enlarged as one picture');
+  assert.equal(cardsOf(layoutOf('roster-moves'))[0].natural, undefined, 'the roster table is laid out at real sizes');
+});
+
+test('Set The Roster and the Offseason Checklist are full-size step screens', () => {
+  const {pages} = load();
+  const layoutOf = (id) => pages.PAGES.find((page) => page.id === id).layout({available: () => true});
+  for (const [id, cards] of [['set-roster', ['phase-set_roster-checklist']], ['free-agency-checklist', ['phase-free_agency-checklist']]]) {
+    const layout = layoutOf(id);
+    assert.ok(layout.full, `${id} is laid out at real sizes`);
+    assert.deepEqual(Array.from(cardsOf(layout), (node) => node.id), cards);
+  }
+});
+
+test('The draft room (three states) and Free Agency are full-size step screens', () => {
+  const {pages} = load();
+  const draft = pages.PAGES.find((page) => page.id === 'draft-room');
+  const only = (id) => draft.layout({available: (card) => card === id});
+  const lottery = only('phase-draft-lottery'), results = only('phase-draft-summary'), night = only('phase-draft-board');
+  for (const [layout, cards] of [[lottery, ['phase-draft-lottery']], [results, ['phase-draft-summary', 'phase-draft-trades']], [night, ['phase-draft-board', 'phase-draft-order']]]) {
+    assert.ok(layout.full, 'each draft state is laid out at real sizes');
+    assert.deepEqual(Array.from(cardsOf(layout), (node) => node.id), cards);
+  }
+  assert.equal(cardsOf(lottery)[0].natural, 'fit', 'the lottery is a picture, enlarged as one piece');
+  const agency = pages.PAGES.find((page) => page.id === 'free-agency').layout({available: () => true});
+  assert.ok(agency.full);
+  assert.deepEqual(Array.from(cardsOf(agency), (node) => node.id), ['phase-free_agency-market', 'phase-free_agency-wire']);
 });

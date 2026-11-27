@@ -46,6 +46,24 @@
         "design_concepts/new_player_card"
       ],
       "port": 8790
+    },
+    {
+      "name": "polish-preview",
+      "runtimeExecutable": "/Users/noahtyler/Developer/BBall_data/BBall_Starting_Point/.venv/bin/python",
+      "runtimeArgs": [
+        "-m",
+        "nba_gm_data.app_server",
+        "--root",
+        "/Users/noahtyler/Developer/BBall_data/BBall_Starting_Point/.claude/worktrees/ui-polish-stage-a-1a8e03",
+        "--save-dir",
+        "/Users/noahtyler/Developer/BBall_data/BBall_Starting_Point/.claude/worktrees/ui-polish-stage-a-1a8e03/output/ui-polish/saves",
+        "--port",
+        "8775"
+      ],
+      "env": {
+        "PYTHONPATH": "/Users/noahtyler/Developer/BBall_data/BBall_Starting_Point/.claude/worktrees/ui-polish-stage-a-1a8e03/src"
+      },
+      "port": 8775
     }
   ]
 }

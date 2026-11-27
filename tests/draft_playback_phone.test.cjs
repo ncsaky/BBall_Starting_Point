@@ -138,6 +138,7 @@ test('multi-pick draft playback waits for each trade alert before revealing the 
     refreshDashboardAfterPhaseMutation: async (_phase, room) => { scope.state.data.draft=room; order.push('refresh'); },
     updateDraftPlaybackCard: () => order.push(scope.state.draftPlaybackReveal ? `pick:${scope.state.data.draft.state.current_index}` : 'final'),
     showToast: () => order.push('complete'),
+    renderDashboard: () => order.push('redraw'),
     Math,
   };
   vm.createContext(scope);
@@ -153,6 +154,8 @@ test('multi-pick draft playback waits for each trade alert before revealing the 
     'trade-batch:2','pick:1','pick:2',
   ]);
   assert.ok(order.indexOf('final') > order.indexOf('pick:2'));
+  // The footer and sidebar are redrawn for the pick the draft stopped on.
+  assert.ok(order.indexOf('redraw') > order.indexOf('final'));
   assert.equal(scope.state.draftPlaybackRunning,false);
   assert.equal(scope.state.busyDepth,0);
 });

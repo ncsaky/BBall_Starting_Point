@@ -1,0 +1,974 @@
+/* Pop-ups on the shared style values (UI polish pass, Stage C; user, 2026-11-26: "the pop-ups" next). The trade room,
+   the box score, Player Finder, staff talks and the other windows that open over the page (#modalRoot) keep their
+   layouts; this sheet brings their type, lines, fills and buttons onto tokens.css: no white or cream strips, no black
+   bars, 13px rows on 30px lines (--gm-row-h-popup), 11px bold table headings on one solid line, glass pills.
+
+   Every rule starts from #modalRoot, so pages and the board are untouched. One section per pop-up. */
+
+
+/* ---- Trade Builder and Trade Finder (the trade room) ---- */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-toolbar {
+  background: var(--gm-glass-tile) !important;
+  border: 1px solid var(--gm-line) !important;
+  border-radius: var(--gm-radius-tile) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-side,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-lower,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-verdict,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-brief,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results {
+  background: var(--gm-glass-tile) !important;
+  border: 1px solid var(--gm-line) !important;
+  border-radius: var(--gm-radius-tile) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll {
+  background: transparent !important;
+  border: 1px solid var(--gm-line) !important;
+  border-radius: var(--gm-radius-tile) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-button {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  background: var(--gm-glass-tile) !important;
+  border: 1px solid var(--gm-line) !important;
+  border-radius: var(--gm-radius-pill) !important;
+  color: var(--gm-ink) !important;
+  min-height: 28px !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-button.is-primary {
+  background: var(--gm-glass-button) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-button:hover:not(:disabled) {
+  background: var(--gm-glass-button-hover) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-button:disabled {
+  opacity: .75 !important;
+  color: var(--gm-ink-2) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-text-button:disabled {
+  background: transparent !important;
+  color: var(--gm-ink-2) !important;
+  opacity: .75 !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-text-button {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-accent) !important;
+  background: transparent !important;
+  border: 0 !important;
+  text-decoration: none !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-text-button:hover {
+  background: var(--gm-glass-tile-hover) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .glass-select {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  background: var(--gm-glass-tile) !important;
+  border: 1px solid var(--gm-line) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-step {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tabs button,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-filter button,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-lower-tabs button {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-side-team {
+  font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-side-verb {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink-2) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-side-total {
+  font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tiles-head {
+  font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+  border-bottom: 1.5px solid var(--gm-line-strong) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tiles-head > * {
+  font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tile {
+  border-bottom: 1px solid var(--gm-line-row) !important;
+  background: transparent !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tile:hover {
+  background: var(--gm-glass-tile-hover) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tile-name,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tile-name .player-name-text {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tile-roles {
+  font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tile-roles .role-text {
+  font: var(--gm-weight-semibold) var(--gm-size-small)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tile-roles.tr-tile-terms {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tile-value,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tile-contract,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tile-meta {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tile-ovr {
+  font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tile-remove {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink-2) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tile-remove:hover {
+  background: var(--gm-glass-tile-hover) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tile-note,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tile-details summary {
+  font: var(--gm-weight-semibold) var(--gm-size-small)/1.2 var(--gm-font) !important;
+  color: var(--gm-accent) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tile-details {
+  font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-tile-conditions {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-salary {
+  border-top: 1px solid var(--gm-line-row) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-salary-line,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-salary-line *,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-salary-status {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-salary-line b,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-salary-line strong {
+  font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-salary-status.is-good {
+  color: var(--gm-good) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-salary-status.is-bad {
+  color: var(--gm-bad) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll-head {
+  font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll {
+  --tr-chart-k: 1.3 !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll-phase,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll-phase em,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll-frame em {
+  font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink-2) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .salary-horizon-year > span,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .salary-horizon-year > strong,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .salary-horizon-year small {
+  font: var(--gm-weight-regular) calc(var(--gm-size-small) / var(--tr-chart-k, 1))/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+  letter-spacing: -.02em !important;
+  white-space: nowrap !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .salary-horizon-legend {
+  font: var(--gm-weight-regular) calc(var(--gm-size-small) / var(--tr-chart-k, 1))/1.2 var(--gm-font) !important;
+  color: var(--gm-ink-2) !important;
+  white-space: nowrap !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll-frames {
+  padding-top: 0 !important;
+  padding-bottom: 4px !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll-layer .salary-horizon-legend {
+  bottom: -3px !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .salary-horizon-legend span {
+  font: inherit !important;
+  color: var(--gm-ink-2) !important;
+  white-space: nowrap !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll-table {
+  border-collapse: collapse !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll-table thead th {
+  font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+  border-bottom: 1.5px solid var(--gm-line-strong) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll-table td,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll-table tbody th {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+  border-bottom: 1px solid var(--gm-line-row) !important;
+  height: 26px !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll-table tbody th {
+  font: var(--gm-weight-semibold) var(--gm-size-small)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll-table td.is-up {
+  color: var(--gm-bad) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll-table td.is-down {
+  color: var(--gm-good) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-answer-word {
+  font: var(--gm-weight-bold) var(--gm-size-button)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-answer-line,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-answer-teams,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-answer-teams li em {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-answer .trade-market-competition {
+  background: var(--gm-glass-tile) !important;
+  border: 1px solid var(--gm-line) !important;
+  border-radius: var(--gm-radius-tile) !important;
+  color: var(--gm-ink) !important;
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-answer .trade-counter-offer {
+  color: var(--gm-ink) !important;
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-dial.is-waiting path {
+  stroke: rgba(255, 255, 255, .35) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-dial.is-blocked path {
+  stroke: var(--gm-bad) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-final-toggle,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-final-toggle span {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room input[type="checkbox"] {
+  background: transparent !important;
+  border: 1px solid var(--gm-line-strong) !important;
+}
+/* A ticked box is filled blue with a white tick; the rule above had left it looking empty. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room input[type="checkbox"]:checked {
+  background: var(--gm-pick) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.6 6.3l2.3 2.3 4.6-5' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat !important;
+  border-color: var(--gm-pick) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-terms-pop {
+  background: rgba(3, 8, 13, .45) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-terms-card {
+  background: var(--gm-glass-popup) !important;
+  border: 1px solid var(--gm-line) !important;
+  border-radius: var(--gm-radius-card) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-terms-card h4,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-terms-card h3 {
+  font: var(--gm-weight-bold) var(--gm-size-section)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-terms-card p,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-terms-card label,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-terms-card span {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-terms-card select,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-terms-card input {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+  background: var(--gm-glass-tile) !important;
+  border: 1px solid var(--gm-line) !important;
+  border-radius: var(--gm-radius-tile) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-ledger th,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-ledger .sort-label,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-ledger .sort-head {
+  font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-ledger-player,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-ledger-pick {
+  border-bottom: 1px solid var(--gm-line-row) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-ledger-player .trade-player-link {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-role-pair .role-text {
+  font: var(--gm-weight-semibold) var(--gm-size-small)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-pager {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-trade-values {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-value-row,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-value-row > span,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-value-row em,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-value-asset {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+  font-style: normal !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-value-row .tr-value-asset,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-value-row.net > span {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-value-row {
+  border-bottom: 1px solid var(--gm-line-row) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-value-team,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-value-team strong {
+  font: var(--gm-weight-bold) var(--gm-size-section)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-value-help summary,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-trade-values summary,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-lower-body summary {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-accent) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-lower-body p,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-lower-body label {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+
+/* ---- Incoming Offers ---- */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .modal-head .eyebrow {
+  font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink-2) !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .incoming-offer {
+  background: var(--gm-glass-tile) !important;
+  border: 1px solid var(--gm-line) !important;
+  border-radius: var(--gm-radius-tile) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .incoming-offer-heading {
+  background: transparent !important;
+  border-bottom: 1px solid var(--gm-line-row) !important;
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .incoming-offer-heading * {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .incoming-offer-side {
+  background: transparent !important;
+  border-color: var(--gm-line-row) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .trade-legal-badge {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-good) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .trade-legal-badge.illegal {
+  color: var(--gm-bad) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .trade-wants-strip {
+  background: transparent !important;
+  border-top: 1px solid var(--gm-line-row) !important;
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .incoming-offer-analysis-row {
+  background: transparent !important;
+  border-top: 1px solid var(--gm-line-row) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .incoming-offer-analysis-row * {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .tr-text-button {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-accent) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .tr-button {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  background: var(--gm-glass-tile) !important;
+  border: 1px solid var(--gm-line) !important;
+  border-radius: var(--gm-radius-pill) !important;
+  color: var(--gm-ink) !important;
+}
+/* One main action per offer: Accept is the frosted pill, Decline is plain text beside it. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .tr-button.is-primary {
+  background: var(--gm-glass-button) !important;
+  border-color: var(--gm-line-strong) !important;
+  font-weight: var(--gm-weight-bold) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .tr-button.is-primary:hover {
+  background: var(--gm-glass-button-hover) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .tr-tile-name,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .tr-tile-name .player-name-text {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .tr-tile-value,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .tr-tile-contract,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .tr-tile-meta,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .tr-tile-roles {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .tr-tile-ovr {
+  font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .tr-tile-details summary {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-accent) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .tr-tile-details p {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .trade-evaluation-panel {
+  background: var(--gm-glass-tile) !important;
+  border: 1px solid var(--gm-line) !important;
+  border-radius: var(--gm-radius-tile) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .trade-evaluation-panel p {
+  background: transparent !important;
+  color: var(--gm-ink) !important;
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .trade-evaluation-panel dt {
+  font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink-2) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .trade-evaluation-panel dd {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-value-row,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-value-row > span,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-value-row em,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .tr-value-asset,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .trade-value-team,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .trade-decision-reasons * {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+  font-style: normal !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .tr-value-asset,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .trade-value-team {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+
+/* ---- Trade Market ---- */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board {
+  background: transparent !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-section,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .front-office-read {
+  background: var(--gm-glass-tile) !important;
+  border: 1px solid var(--gm-line) !important;
+  border-radius: var(--gm-radius-tile) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-section h4,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-section h3,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-section > header,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-section > div:first-child {
+  background: transparent !important;
+  border-bottom: 1px solid var(--gm-line) !important;
+  color: var(--gm-ink) !important;
+  font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .front-office-read h4,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .front-office-read h3 {
+  font: var(--gm-weight-bold) var(--gm-size-section)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .front-office-read * {
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .front-office-read p,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .front-office-read li {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .ext-info {
+  font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+  background: var(--gm-glass-tile) !important;
+  border: 1px solid var(--gm-line) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-table {
+  background: transparent !important;
+  border-collapse: collapse !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-table th,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-table .sort-head,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-table th * {
+  background: transparent !important;
+  font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+  border: 0 !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-table thead th {
+  border-bottom: 1.5px solid var(--gm-line-strong) !important;
+  padding: 6px 8px !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-table td {
+  font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+  border-bottom: 1px solid var(--gm-line-row) !important;
+  background: transparent !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-table tbody tr:hover td {
+  background: var(--gm-glass-tile-hover) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-player {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .tr-rating {
+  font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-table thead th {
+  box-shadow: inset 0 -1.5px 0 var(--gm-line-strong) !important;
+  border-bottom: 0 !important;
+  text-align: center !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-table thead th:first-child {
+  text-align: left !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-table th button.sort-head {
+  text-align: center !important;
+  justify-content: center !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-table th:first-child button.sort-head {
+  text-align: left !important;
+  justify-content: flex-start !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board table tbody tr:nth-child(even) > * {
+  background: transparent !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-table th:first-child,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-table td:first-child {
+  min-width: 230px !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-lower-body em,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-lower-body .sort-label,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-lower-body .sort-head {
+  font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-payroll > .salary-horizon-chart {
+  width: 252px !important;
+  height: 228px !important;
+  padding-bottom: 24px !important;
+  box-sizing: border-box !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .incoming-offer-analysis-actions .tr-text-button {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: var(--gm-radius-pill) !important;
+  color: var(--gm-ink) !important;
+  padding: 4px 14px !important;
+  min-height: 28px !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .incoming-offer-analysis-actions .tr-text-button:hover {
+  background: var(--gm-glass-tile-hover) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .tr-tile-details > p {
+  background: var(--gm-glass-popup) !important;
+  border: 1px solid var(--gm-line) !important;
+  border-radius: var(--gm-radius-tile) !important;
+  color: var(--gm-ink) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room [data-back-finder],
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room [data-trade-add-team] {
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--gm-accent) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room [data-back-finder]:hover:not(:disabled),
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room [data-trade-add-team]:hover:not(:disabled) {
+  background: var(--gm-glass-tile-hover) !important;
+  color: var(--gm-ink) !important;
+  text-decoration: none !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-player {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-player > * {
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  flex: 0 0 auto !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-table {
+  table-layout: auto !important;
+  width: 100% !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-table th:first-child,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-market-board .trade-market-table td:first-child {
+  width: 250px !important;
+  min-width: 250px !important;
+  overflow: visible !important;
+}
+
+/* Smaller windows: the payroll chart is a little smaller so its table still fits; the payroll line keeps to one row. */
+@media (max-height: 859px) {
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll {
+  --tr-chart-k: 1.1 !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll-table td,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll-table tbody th,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-payroll-table thead th {
+  height: 20px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+}
+@media (max-width: 1400px) {
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-salary-line,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-salary-line *,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-salary-status {
+  font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font) !important;
+}
+}
+
+
+/* ================= The Builder's two pages (user, 2026-11-26): "The deal" and "What it does". ================= */
+
+/* The page switch: two numbered steps at the top of the Builder. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-steps { display: flex; align-items: center; gap: var(--gm-space-2); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-steps > button {
+  display: inline-flex !important; align-items: center; gap: var(--gm-space-2); height: 34px !important; min-height: 0 !important; margin: 0 !important;
+  padding: 0 var(--gm-space-4) 0 var(--gm-space-1) !important; border-radius: var(--gm-radius-pill) !important; background: transparent !important;
+  border: 1px solid transparent !important; box-shadow: none !important; color: var(--gm-ink-2) !important; cursor: pointer;
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-steps > button > i { display: grid; place-items: center; width: 24px; height: 24px; border-radius: var(--gm-radius-pill); border: 1px solid var(--gm-line-strong); font: var(--gm-weight-bold) var(--gm-size-small)/1 var(--gm-font); font-style: normal; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-steps > button:hover:not(:disabled) { background: var(--gm-glass-tile) !important; color: var(--gm-ink) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-steps > button[aria-current="step"] { background: var(--gm-glass-button) !important; border-color: var(--gm-line-strong) !important; color: var(--gm-ink) !important; font-weight: var(--gm-weight-bold) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-steps > button > i { color: inherit !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-steps > button[aria-current="step"] > i { background: var(--gm-glass-button-hover); border-color: var(--gm-ink); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-steps > button:disabled { opacity: .45; cursor: default; }
+
+/* The step bar's right end: where the deal stands, and the way on. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-steps-onward { margin-left: auto; display: flex; align-items: center; gap: var(--gm-space-4); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-steps-count { display: flex; gap: var(--gm-space-4); color: var(--gm-ink-2); font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-steps-count b { color: var(--gm-ink); font-weight: var(--gm-weight-bold); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-steps-onward > .tr-button { height: 34px !important; min-height: 0 !important; padding: 0 var(--gm-space-4) !important; border-radius: var(--gm-radius-pill) !important; background: var(--gm-glass-button) !important; border: 1px solid var(--gm-line-strong) !important; color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-row)/1 var(--gm-font) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-steps-onward > .tr-button:hover:not(:disabled) { background: var(--gm-glass-button-hover) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-steps-onward > .tr-button:disabled { opacity: .45; }
+
+/* ---------- Step 1, pick assets: both teams' lists side by side, the whole height. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-pick { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; grid-template-rows: auto minmax(0, 1fr) !important; gap: var(--gm-space-2) !important; height: 100% !important; overflow: hidden !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-pick > .tr-pick-body { display: grid !important; grid-template-columns: repeat(var(--tr-lists, 2), minmax(0, 1fr)); gap: var(--gm-space-3); min-height: 0; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-pick.is-multi > .tr-pick-body { grid-template-rows: auto minmax(0, 1fr); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-pick:not(.is-multi) .tr-pick-body .tr-col-ht,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-pick:not(.is-multi) .tr-pick-body .tr-col-runway,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-pick:not(.is-multi) .tr-pick-body .tr-col-injury,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-pick:not(.is-multi) .tr-pick-body .tr-col-roles { display: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-pick .tr-picker-head .tr-partner-picker { display: flex; align-items: center; gap: var(--gm-space-1); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-pick .tr-picker-head .tr-picker-verb { margin-left: var(--gm-space-2); color: var(--gm-ink); font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font); }
+
+/* ---------- Step 2, the deal: each side's box takes the height (room for a dozen assets), the answer beside them. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-deal { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; grid-template-rows: auto minmax(0, 1fr) !important; gap: var(--gm-space-2) !important; height: 100% !important; overflow: hidden !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-deal > .tr-deal-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: var(--gm-space-3); min-height: 0; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-deal .tr-stage { display: grid !important; grid-template-columns: repeat(var(--tr-sides, 2), minmax(0, 1fr)) !important; gap: var(--gm-space-3) !important; min-width: 0; min-height: 0; align-items: stretch; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-deal .tr-side { display: grid !important; grid-template-rows: auto minmax(0, 1fr) auto !important; min-height: 0; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-deal .tr-tiles { max-height: none !important; min-height: 0; overflow-y: auto; scrollbar-width: thin; align-content: start; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-deal .tr-partner-picker .tr-picker-verb { display: none; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-deal .tr-verdict {
+  display: flex !important; flex-direction: column; gap: var(--gm-space-3); min-width: 0; min-height: 0; padding: var(--gm-space-4) !important;
+  background: var(--gm-glass-tile) !important; border: 1px solid var(--gm-line) !important; border-radius: var(--gm-radius-card) !important; overflow: hidden;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-deal .tr-verdict > #tradeRead { flex: 1 1 auto; min-height: 0; overflow: auto; scrollbar-width: thin; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-deal .tr-verdict .tr-answer { display: flex !important; flex-direction: column; align-items: center; text-align: center; gap: var(--gm-space-1); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-deal .tr-verdict .tr-answer > .tr-dial { width: 190px; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-deal .tr-verdict .tr-verdict-actions { flex: 0 0 auto; display: flex; align-items: center; gap: var(--gm-space-2); padding-top: var(--gm-space-3); border-top: 1px solid var(--gm-line); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-deal .tr-verdict #evaluateTrade { flex: 1; }
+
+/* ---------- Step 3, what it does: one section at a time (the team, on the court, the money). */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-effect { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; grid-template-rows: auto auto minmax(0, 1fr) !important; gap: var(--gm-space-2) !important; height: 100% !important; overflow: hidden !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-head { display: flex; align-items: center; gap: var(--gm-space-4); min-width: 0; padding: var(--gm-space-1) 0 var(--gm-space-2); border-bottom: 1px solid var(--gm-line); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-teams { flex: 0 0 auto; display: inline-flex; gap: 2px; padding: 3px; border-radius: var(--gm-radius-pill); background: var(--gm-glass-tile); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-teams > button {
+  display: inline-flex !important; align-items: center; gap: var(--gm-space-2); height: 30px !important; min-height: 0 !important; margin: 0 !important; padding: 0 var(--gm-space-3) !important;
+  border-radius: var(--gm-radius-pill) !important; background: transparent !important; border: 1px solid transparent !important; box-shadow: none !important; color: var(--gm-ink-2) !important; cursor: pointer;
+  font: var(--gm-weight-semibold) var(--gm-size-row)/1 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-teams > button > img { width: 20px; height: 20px; object-fit: contain; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-teams > button[aria-selected="true"] { background: var(--gm-glass-button) !important; border-color: var(--gm-line-strong) !important; color: var(--gm-ink) !important; font-weight: var(--gm-weight-bold) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-summary { flex: 1 1 auto; min-width: 0; margin: 0; display: flex; align-items: center; gap: var(--gm-space-3); overflow: hidden; white-space: nowrap; color: var(--gm-ink-2); font: var(--gm-weight-regular) var(--gm-size-row)/1.3 var(--gm-font); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-summary > span { overflow: hidden; text-overflow: ellipsis; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-summary b { color: var(--gm-ink); font-weight: var(--gm-weight-bold); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-summary > i { flex: 0 0 auto; font-style: normal; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-tabs { flex: 0 0 auto; display: inline-flex; gap: 2px; padding: 3px; border-radius: var(--gm-radius-pill); background: var(--gm-glass-tile); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-tabs > button {
+  height: 30px !important; min-height: 0 !important; margin: 0 !important; padding: 0 var(--gm-space-4) !important; border-radius: var(--gm-radius-pill) !important; background: transparent !important;
+  border: 1px solid transparent !important; box-shadow: none !important; color: var(--gm-ink-2) !important; cursor: pointer; font: var(--gm-weight-semibold) var(--gm-size-row)/1 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-tabs > button[aria-selected="true"] { background: var(--gm-glass-button) !important; border-color: var(--gm-line-strong) !important; color: var(--gm-ink) !important; font-weight: var(--gm-weight-bold) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-body { min-width: 0; min-height: 0; overflow: hidden auto; scrollbar-width: thin; padding-top: var(--gm-space-2); }
+/* The team: four headline ratings, then every other rating beside who plays. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-team { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); column-gap: var(--gm-space-7); row-gap: var(--gm-space-4); max-width: 1240px; margin: 0 auto; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-heroes { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: var(--gm-space-5); padding: var(--gm-space-2) 0 var(--gm-space-4); border-bottom: 1px solid var(--gm-line); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-hero { display: grid; row-gap: var(--gm-space-1); min-width: 0; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-hero > small { color: var(--gm-ink-2); font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-hero-figure { display: flex; align-items: baseline; gap: var(--gm-space-2); white-space: nowrap; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-hero-figure > em { color: var(--gm-ink-2); font: var(--gm-weight-regular) var(--gm-size-figure)/1.1 var(--gm-font); font-style: normal; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-hero-figure > i { color: var(--gm-ink-3); font: var(--gm-weight-regular) var(--gm-size-figure)/1.1 var(--gm-font); font-style: normal; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-hero-figure > b { color: var(--gm-ink); font: var(--gm-weight-bold) var(--gm-size-lead)/1.05 var(--gm-font); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-hero-foot { display: flex; align-items: baseline; gap: var(--gm-space-3); white-space: nowrap; color: var(--gm-ink); font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-hero-foot i { font-style: normal; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-hero-foot .is-up { color: var(--gm-good); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-hero-foot .is-down { color: var(--gm-bad); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-team > section { min-width: 0; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-body h4 { margin: var(--gm-space-2) 0 var(--gm-space-1) !important; color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-section)/1.2 var(--gm-font) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-wait { margin: var(--gm-space-3) 0; color: var(--gm-ink-2); font: var(--gm-weight-regular) var(--gm-size-row)/1.3 var(--gm-font); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table { width: 100%; border-collapse: collapse; table-layout: auto; color: var(--gm-ink); font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font); font-variant-numeric: tabular-nums; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table thead th { padding: 0 var(--gm-space-2) var(--gm-space-1); text-align: right; white-space: nowrap; background: transparent !important; border: 0 !important; border-bottom: 1.5px solid var(--gm-line-strong) !important; color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table thead th:first-child, html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table tbody th { text-align: left; padding-left: 0; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table tbody th, html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table tbody td { height: 28px; padding: 0 var(--gm-space-2); text-align: right; white-space: nowrap; background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--gm-line-row) !important; color: var(--gm-ink) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table tbody th { text-align: left; padding-left: 0; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table tbody th > small { margin-left: var(--gm-space-2); color: var(--gm-ink-2); font: var(--gm-weight-regular) var(--gm-size-small)/1 var(--gm-font); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table tbody td > b { font-weight: var(--gm-weight-bold); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table tr.is-main th { font-weight: var(--gm-weight-bold) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table tr.is-main:nth-child(4) > * { border-bottom-color: var(--gm-line-strong) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table td.tr-effect-change.is-up, html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table td.tr-effect-rank.is-up { color: var(--gm-good) !important; font-weight: var(--gm-weight-bold) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table td.tr-effect-change.is-down, html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table td.tr-effect-rank.is-down { color: var(--gm-bad) !important; font-weight: var(--gm-weight-bold) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table td.tr-effect-rank > i { font-style: normal; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table.tr-effect-minutes { margin-bottom: var(--gm-space-2); }
+
+/* The heat maps: one pair that fades from before to after and back; the switch holds either. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .trade-identity-toolbar > div { display: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .trade-identity-toolbar { justify-content: center !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .tr-identity-page { display: block !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .trade-identity-toolbar { display: flex !important; margin: 0 0 var(--gm-space-1) !important; color: var(--gm-ink-2); font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-identity-fade { display: grid; justify-items: center; gap: var(--gm-space-2); overflow: hidden; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-fade-switch { display: inline-flex; gap: 2px; padding: 3px; border-radius: var(--gm-radius-pill); background: var(--gm-glass-tile); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-fade-switch > button {
+  height: 26px !important; min-height: 0 !important; margin: 0 !important; padding: 0 var(--gm-space-3) !important; border-radius: var(--gm-radius-pill) !important; background: transparent !important;
+  border: 1px solid transparent !important; box-shadow: none !important; color: var(--gm-ink-2) !important; cursor: pointer; font: var(--gm-weight-semibold) var(--gm-size-small)/1 var(--gm-font) !important;
+}
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-fade-switch > button[aria-pressed="true"] { background: var(--gm-glass-button) !important; border-color: var(--gm-line-strong) !important; color: var(--gm-ink) !important; font-weight: var(--gm-weight-bold) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-identity-fade .trade-identity-comparison { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; grid-template-rows: auto !important; justify-items: center; width: max-content; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-identity-fade .trade-identity-comparison > section { grid-area: 1 / 1 !important; display: grid !important; grid-template-columns: minmax(0, 1fr) !important; justify-items: center; row-gap: var(--gm-space-1); transition: opacity var(--gm-motion-scene) var(--gm-ease); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-body .trade-identity-fade .trade-identity-comparison > section > h4 { margin: 0 !important; text-align: center; font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-identity-fade .trade-identity-comparison > section:first-child .spatial-legends { display: grid !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-identity-fade[data-fade="before"] .trade-identity-comparison > section.is-after,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-identity-fade[data-fade="after"] .trade-identity-comparison > section.is-before { opacity: 0; pointer-events: none; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-identity-fade[data-fade="auto"] .trade-identity-comparison > section.is-before { animation: tr-fade-before calc(var(--gm-motion-scene) * 6) var(--gm-ease) infinite; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-identity-fade[data-fade="auto"] .trade-identity-comparison > section.is-after { animation: tr-fade-after calc(var(--gm-motion-scene) * 6) var(--gm-ease) infinite; }
+@keyframes tr-fade-before { 0%, 36% { opacity: 1; } 50%, 86% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes tr-fade-after { 0%, 36% { opacity: 0; } 50%, 86% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-identity-fade[data-fade="auto"] .trade-identity-comparison > section.is-before { animation: none; opacity: 0; }
+  html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-identity-fade[data-fade="auto"] .trade-identity-comparison > section.is-after { animation: none; opacity: 1; }
+}
+
+/* On the court: the maps as large as the page allows, the minutes behind them open at the side. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court { height: auto !important; overflow: visible !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .tr-identity-page { display: grid !important; grid-template-columns: minmax(0, 1fr) 320px; column-gap: var(--gm-space-6); align-items: start; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .trade-identity-toolbar { grid-column: 1 / -1; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .trade-inferred-minutes { min-width: 0; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .trade-inferred-minutes > summary { list-style: none; cursor: default; pointer-events: none; color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-section)/1.2 var(--gm-font) !important; margin-bottom: var(--gm-space-1); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .trade-inferred-minutes > summary::-webkit-details-marker { display: none; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .trade-inferred-minutes table { width: 100%; border-collapse: collapse; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .trade-inferred-minutes thead th { padding: 0 var(--gm-space-2) var(--gm-space-1); text-align: right; background: transparent !important; border: 0 !important; border-bottom: 1.5px solid var(--gm-line-strong) !important; color: var(--gm-ink) !important; text-transform: none !important; letter-spacing: 0 !important; font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .trade-inferred-minutes tbody th, html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .trade-inferred-minutes tbody td { height: 26px; padding: 0 var(--gm-space-2); text-align: right; white-space: nowrap; background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--gm-line-row) !important; color: var(--gm-ink) !important; text-transform: none !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .trade-inferred-minutes thead th:first-child, html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .trade-inferred-minutes tbody th { text-align: left; padding-left: 0; }
+/* The money: the team's payroll on the left; each team's salary check and the values on the right. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-money { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--gm-space-7); align-items: start; max-width: 1320px; margin: 0 auto; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-money > section { min-width: 0; height: auto !important; min-height: 0 !important; overflow: visible !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-money .tr-payroll-frames { grid-template-columns: minmax(0, 1fr) !important; justify-items: center; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-money .tr-effect-value { height: auto !important; min-height: 0 !important; overflow: visible !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-checks { display: grid; margin-bottom: var(--gm-space-4); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-check { display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: center; min-height: 40px; border-bottom: 1px solid var(--gm-line-row); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-check > strong { display: flex; align-items: center; gap: var(--gm-space-2); color: var(--gm-ink); font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-check > strong > img { width: 20px; height: 20px; object-fit: contain; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .tr-identity-page { min-height: 0 !important; height: auto !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table thead th:first-child { text-align: left !important; }
+/* The value bars under the maps: the name keeps its room, the bar takes what is left. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-value .approved-trade-values .approved-value-row { grid-template-columns: minmax(132px, 1.2fr) minmax(48px, 1fr) 44px !important; column-gap: var(--gm-space-2) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-value .trade-value-team > strong { font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+/* On a narrow window the two teams' values stack instead of squeezing. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-value :has(> .trade-value-team) { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important; column-gap: var(--gm-space-4) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table th, html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table th > small { text-transform: none !important; letter-spacing: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-deal .tr-side { height: 100% !important; max-height: none !important; align-self: stretch !important; box-sizing: border-box; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .tr-identity-page > .trade-identity-toolbar { grid-row: 1; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .tr-identity-page > .trade-identity-fade { grid-column: 1 !important; grid-row: 2 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .tr-identity-page > .trade-inferred-minutes { grid-column: 2 !important; grid-row: 2 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-deal .tr-stage { height: 100% !important; align-self: stretch !important; align-items: stretch !important; grid-auto-rows: minmax(0, 1fr) !important; grid-template-rows: minmax(0, 1fr) !important; }
+/* The deal's rows have the room: the name is never cut while the box is this wide. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-deal:not(.is-multi) .tr-tile,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-builder.tr-page-deal:not(.is-multi) .tr-tiles-head { grid-template-columns: 56px minmax(160px, 1.5fr) minmax(92px, 1fr) 84px 28px 78px 20px !important; }
+
+/* "What it does", sharpened: a bar beside each rating and each player's minutes (the tick is now, the bar is after);
+   rows a little taller; the payroll without a box of its own, so the three sections read as one page each. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table tbody th, html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table tbody td { height: 32px; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table td.tr-effect-bar { width: 34%; padding: 0 var(--gm-space-3) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table td.tr-effect-bar > i { position: relative; display: block; height: 6px; border-radius: var(--gm-radius-pill); background: var(--gm-line); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table td.tr-effect-bar > i > u { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: var(--gm-ink-2); text-decoration: none; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table td.tr-effect-bar.is-up > i > u { background: var(--gm-good); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table td.tr-effect-bar.is-down > i > u { background: var(--gm-bad); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-table td.tr-effect-bar > i > s { position: absolute; top: -4px; width: 2px; height: 14px; margin-left: -1px; background: var(--gm-ink); text-decoration: none; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-team { padding-top: var(--gm-space-2); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-heroes { column-gap: var(--gm-space-7); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-hero { padding: var(--gm-space-2) 0; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-money .tr-payroll, html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-money .tr-payroll-frame { background: transparent !important; border: 0 !important; box-shadow: none !important; padding-left: 0 !important; padding-right: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-money .tr-payroll-head h4 { margin: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-effect-court .trade-identity-toolbar { margin-bottom: var(--gm-space-2) !important; }
+
+
+/* ================= The Finder in two steps (user, checkpoint 14): "Pick assets" and "Found trades". ================= */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-steps-found { margin-left: var(--gm-space-1); color: var(--gm-ink); font: var(--gm-weight-bold) var(--gm-size-row)/1 var(--gm-font); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-steps-onward > .tr-text-button { color: var(--gm-accent) !important; font: var(--gm-weight-semibold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-steps-onward > .tr-text-button:disabled { color: var(--gm-ink-3) !important; cursor: default; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder.tr-finder-page { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; grid-template-rows: auto minmax(0, 1fr) !important; gap: var(--gm-space-2) !important; height: 100% !important; overflow: hidden !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-page > .tr-finder-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(400px, 480px); grid-template-rows: minmax(0, 1fr); gap: var(--gm-space-3); min-height: 0; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-body > .tr-picker { height: 100% !important; min-height: 0; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-body .tr-picker .tr-col-name,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-body .tr-picker .tr-col-name .trade-player-link,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-body .tr-picker .tr-col-name .player-name-text { max-width: none !important; overflow: visible !important; text-overflow: clip !important; white-space: normal !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-body .tr-picker td.tr-col-contract { overflow: visible !important; text-overflow: clip !important; white-space: normal !important; }
+/* Height and runway stay off this list, as before, so the trade value fits inside the card instead of off its edge. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-body .tr-picker .tr-col-ht,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-body .tr-picker .tr-col-runway { display: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-body .tr-picker table.trade-ledger th.tr-col-value,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-body .tr-picker table.trade-ledger td.tr-col-value { width: 124px !important; min-width: 0 !important; padding-right: var(--gm-space-2) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-body .tr-picker table.trade-ledger { width: 100% !important; min-width: 0 !important; }
+
+/* What is being shopped or wanted: the chosen assets, any pick conditions, the payroll. No boxes inside it. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-body > .tr-finder-brief { display: flex !important; flex-direction: column; align-content: stretch; min-width: 0; min-height: 0; overflow-x: hidden !important; overflow-y: auto !important; scrollbar-width: thin; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-brief > * { flex: none; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-brief .trade-selection-count { color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-brief > .tr-tiles { max-height: none !important; overflow: visible !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-brief .tr-tiles-empty { height: auto !important; min-height: 64px !important; border: 0 !important; background: transparent !important; color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.4 var(--gm-font) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-brief .trade-pick-terms { border: 0 !important; border-bottom: 1px solid var(--gm-line-row) !important; border-radius: var(--gm-radius-row) !important; background: transparent !important; margin: 0 var(--gm-space-3) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-brief .trade-finder-cap { border: 0 !important; padding: var(--gm-space-3) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-brief .trade-finder-cap > header { display: flex; align-items: center; justify-content: center; gap: var(--gm-space-2); margin-bottom: var(--gm-space-2) !important; color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+
+/* An asset in the side column or in a found trade: name and overall, roles and value, contract. Nothing is cut. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-page .tr-tiles > .tr-tile { display: grid !important; grid-template-columns: 56px minmax(0, 1fr) auto 24px !important; grid-template-areas: "face main ovr remove" "face roles roles remove" "face contract value remove"; align-items: center !important; column-gap: var(--gm-space-3) !important; row-gap: var(--gm-space-1) !important; height: auto !important; padding: var(--gm-space-2) var(--gm-space-2) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-page .tr-tile > .tr-tile-face { grid-area: face; align-self: end; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-page .tr-tile > .tr-tile-main { grid-area: main; min-width: 0; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-page .tr-tile .tr-tile-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--gm-space-2); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-page .tr-tile .tr-tile-name,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-page .tr-tile .tr-tile-name .player-name-text { max-width: none !important; overflow: visible !important; text-overflow: clip !important; white-space: normal !important; text-align: left !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-page .tr-tile > .tr-tile-ovr { grid-area: ovr; justify-self: end; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-page .tr-tile > .tr-tile-roles { grid-area: roles; display: flex !important; flex-direction: row !important; flex-wrap: wrap; align-items: baseline !important; justify-content: flex-start !important; gap: var(--gm-space-3) !important; text-align: left !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-page .tr-tile > .tr-tile-roles .tr-tile-note { text-align: left !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-page .tr-tile > .tr-tile-value { grid-area: value; justify-self: end; width: 112px; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-page .tr-tile > .tr-tile-contract { grid-area: contract; justify-self: start; text-align: left !important; white-space: normal !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-page .tr-tile > .tr-tile-contract:empty { display: none; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-page .tr-tile > .tr-tile-remove { grid-area: remove; justify-self: center; }
+
+/* Found trades: the whole window, a column each when there is room, set apart by a line and space. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-page > .tr-finder-results { display: block !important; min-height: 0; overflow: hidden !important; border: 0 !important; background: transparent !important; box-shadow: none !important; padding: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results > .trade-results-list { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(min(100%, 620px), 1fr)) !important; grid-auto-rows: max-content !important; align-content: start !important; column-gap: var(--gm-space-6) !important; row-gap: var(--gm-space-5) !important; height: 100% !important; max-height: none !important; overflow-y: auto !important; scrollbar-width: thin; padding: var(--gm-space-1) var(--gm-space-3) !important; box-sizing: border-box; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .trade-candidate-card { border: 0 !important; border-top: 1px solid var(--gm-line-strong) !important; border-radius: var(--gm-radius-row) !important; background: transparent !important; box-shadow: none !important; overflow: visible !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .trade-candidate-head { display: flex !important; align-items: center; justify-content: space-between; gap: var(--gm-space-3); min-height: 40px; padding: 0 var(--gm-space-2) !important; border: 0 !important; background: transparent !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .trade-candidate-head > div { display: flex; align-items: baseline; gap: var(--gm-space-3); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .trade-candidate-head > div > span { color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; text-transform: none !important; letter-spacing: 0 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .trade-candidate-head > div > strong { color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-section)/1.2 var(--gm-font) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .trade-legal-badge { border: 0 !important; background: transparent !important; padding: 0 !important; color: var(--gm-good) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.2 var(--gm-font) !important; text-transform: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .trade-legal-badge.illegal { color: var(--gm-bad) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .trade-legal-badge.review { color: var(--gm-warn) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .incoming-offer-package { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important; column-gap: var(--gm-space-5) !important; border: 0 !important; background: transparent !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .incoming-offer-side { min-width: 0; border: 0 !important; background: transparent !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .incoming-offer-side > header { display: flex !important; align-items: center; gap: var(--gm-space-2); min-height: 32px; padding: 0 var(--gm-space-2) !important; border: 0 !important; border-bottom: 1.5px solid var(--gm-line-strong) !important; background: transparent !important; color: var(--gm-ink) !important; font: var(--gm-weight-bold) var(--gm-size-row)/1.2 var(--gm-font) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .incoming-offer-side > header > img { width: 20px; height: 20px; object-fit: contain; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .incoming-offer-side > header > strong { color: var(--gm-ink) !important; font: inherit !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .incoming-offer-side .tr-tiles { max-height: none !important; overflow: visible !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .trade-wants-strip { border: 0 !important; background: transparent !important; padding: var(--gm-space-2) !important; color: var(--gm-ink-2) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.4 var(--gm-font) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .trade-candidate-card > footer { display: flex !important; justify-content: flex-end; padding: var(--gm-space-2) !important; border: 0 !important; background: transparent !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .incoming-offer-evaluation { border: 0 !important; background: transparent !important; padding: 0 var(--gm-space-2) !important; color: var(--gm-ink) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .incoming-offer-evaluation > summary { color: var(--gm-accent) !important; cursor: pointer; font: var(--gm-weight-semibold) var(--gm-size-row)/2 var(--gm-font) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .trade-results-empty { grid-column: 1 / -1; border: 0 !important; background: transparent !important; color: var(--gm-ink) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results > .trade-results-list > .tr-effect-wait { grid-column: 1 / -1; justify-self: center; }
+/* Trade analysis, opened: no boxes, and the margin's words sit above its bar. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .trade-evaluation-panel { display: flex !important; flex-direction: column; border: 0 !important; border-top: 1px solid var(--gm-line-row) !important; border-radius: var(--gm-radius-row) !important; background: transparent !important; box-shadow: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .trade-evaluation-panel > * { flex: none; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .trade-evaluation-score { align-items: center; min-height: 28px; height: auto !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-results .tr-margin-meter { margin-top: var(--gm-space-1) !important; margin-bottom: var(--gm-space-2) !important; }
+/* A small window: injury risk steps aside and the side column narrows, so contract and value are never cut off. */
+@media (max-width: 1400px) {
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-page > .tr-finder-body { grid-template-columns: minmax(0, 1fr) 372px; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-body .tr-picker .tr-col-injury { display: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-body .tr-picker table.trade-ledger th.tr-col-value,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-body .tr-picker table.trade-ledger td.tr-col-value { width: 108px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-body .tr-picker table.trade-ledger th,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-body .tr-picker table.trade-ledger td { padding-left: var(--gm-space-1) !important; padding-right: var(--gm-space-1) !important; }
+}
+/* A short window: the payroll chart is drawn a little smaller, as one piece, so the whole side column is in view. */
+@media (max-height: 820px) {
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-brief .tr-finder-payroll > .salary-horizon-chart { zoom: .78; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-brief .trade-finder-cap { padding-top: var(--gm-space-2) !important; padding-bottom: var(--gm-space-1) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-brief .tr-finder-payroll { gap: var(--gm-space-1) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-page .tr-finder-brief .tr-tiles > .tr-tile { padding-top: var(--gm-space-1) !important; padding-bottom: var(--gm-space-1) !important; row-gap: 0 !important; }
+}
+/* A pick condition being edited: one field under the next, so nothing runs off the side column. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-brief .trade-pick-rule-fields { display: grid !important; grid-template-columns: 22px minmax(0, 1fr) 28px !important; row-gap: var(--gm-space-2) !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-brief .trade-pick-rule-fields > label:not(.trade-pick-enabled) { grid-column: 2 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-brief .trade-pick-rule-fields > .trade-pick-enabled { grid-column: 1; grid-row: 1; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-brief .trade-pick-rule-fields > button { grid-column: 3; grid-row: 1; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .tr-finder-brief .trade-protected-range > div { display: grid !important; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important; align-items: center; gap: var(--gm-space-2); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .trade-pick-rule .trade-icon-button img { filter: brightness(0) invert(1); }
+
+/* The colour key under the value bars shows each colour, and the names above it are written out in full. */
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-trade-values footer > span::before,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-trade-values footer > span::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: var(--gm-space-1); border-radius: 2px; vertical-align: -1px; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-trade-values footer > span.value-quality::before,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-trade-values footer > span.value-quality::before { background: rgb(106, 166, 202); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-trade-values footer > span.value-age_upside::before,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-trade-values footer > span.value-age_upside::before { background: rgb(73, 185, 166); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-trade-values footer > span.value-contract::before,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-trade-values footer > span.value-contract::before { background: rgb(221, 185, 87); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-trade-values footer > span.value-scarcity::before,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-trade-values footer > span.value-scarcity::before { background: rgb(166, 139, 196); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-trade-values footer > span.value-playoffs::before,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-trade-values footer > span.value-playoffs::before { background: rgb(223, 137, 93); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-trade-values footer > span.value-health::before,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-trade-values footer > span.value-health::before { background: rgb(214, 90, 97); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-trade-values footer > span.value-fit::before,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-trade-values footer > span.value-fit::before { background: rgb(119, 185, 102); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-trade-values footer > span.value-role::before,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-trade-values footer > span.value-role::before { background: rgb(105, 146, 208); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-trade-values footer > span.value-draft_capital::before,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-trade-values footer > span.value-draft_capital::before { background: rgb(207, 158, 75); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-trade-values footer > span.value-swap_value::before,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-trade-values footer > span.value-swap_value::before { background: rgb(207, 158, 75); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-trade-values footer > span.value-asset_value::before,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-trade-values footer > span.value-asset_value::before { background: rgb(154, 166, 172); }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-value-row,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-value-row { grid-template-columns: minmax(170px, 1.2fr) minmax(60px, 2fr) 48px !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-value-row .tr-value-asset,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-value-row .tr-value-asset > span,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-room .approved-value-row > span:first-child,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-value-row .tr-value-asset,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-value-row .tr-value-asset > span,
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-trade-offers .approved-value-row > span:first-child { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }

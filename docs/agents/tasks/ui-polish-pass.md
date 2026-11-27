@@ -2,7 +2,93 @@
 
 _Owner: a Fable 5.2 session started by the user (2026-11-25), in its own worktree. Coordinator: Claude (main chat)._
 
-Progress: 0/9 - not started
+Progress: 5/5 - checkpoint 19 (answers built, a season played through); waiting on the user
+
+## Handover (2026-11-26): finishing on a cheaper model
+
+The user asked (2026-11-26) to finish the last items on a cheaper model to save usage, then make their own edits.
+The Fable session that did Stages A to C (checkpoints 1 to 14) wrote this section for whoever continues. Everything
+decided so far is in the checkpoint reports below and in `docs/UI_STYLE_GUIDE.md`; you do not need the old chat.
+
+**Start here**
+1. Read `AGENTS.md`, `CLAUDE.md`, the "Standing UI rules" and "Boundaries" sections of this file, and
+   `docs/UI_STYLE_GUIDE.md` (its "Preserve" and "Never do" sections are binding).
+2. Read the user's checkpoint 14 answers: page https://claude.ai/artifact/XuGrBpFHKywQ8yyTiCgEdC, collection
+   `decisions` (the artifact data tool, action `list`). Keys: `lottery-card` (good | change), `pick-range`
+   (range | barred | leave), `wire-why` (good | change), `next` (trade-rest | sweep | start). A `note` field holds
+   anything they typed. What they wrote there is their direction; follow it over the order below.
+
+**What is left, in this order unless the user's `next` answer says otherwise**
+1. **The 0.0% lottery teams** (`pick-range`). On the odds card (`draftLotteryOddsWorkspace` in `gui/app.js`) teams
+   barred from the top pick show 0.0% with no reason. Each `lottery.odds` row carries `highest_pick` and
+   `lowest_pick`. "range": a small "picks 2 to 16" on every row. "barred": a short note only on rows whose
+   `highest_pick` is above 1. "leave": nothing. The card's `small` is hidden by an old rule in `styles.css`; add
+   the new rule in `gui/full-pages.css` beside the other lottery rules. Test save: `c14_playoffs.json` (below).
+2. **The Finder** in the trade room (`renderTradeFinder` in `gui/app.js`, about line 10050). Restyle it to match the
+   Builder and the Market (`gui/popups.css`, `gui/trade-market.css`): glass, no boxes, hairlines, readable sizes.
+   Do not change what it shows. Asset lists in the trade room scroll on purpose; do not page them.
+3. **The start screen** (`renderStartup` in `gui/app.js`, about line 2865): same look as the rest of the game.
+4. **The final sweep** (plan step 9): take a picture of every page and state, compare each with the style guide,
+   and fix what does not match. Screens nobody has looked at closely yet: a prospect's page, coach cards (still
+   pop-ups), the season picker when open, hover states, the year-end slides, the signing-day recap. The contrast
+   checker is `output/ui-workbench/audit.js` in the main checkout (`__check()`).
+
+**Decided: do not do these**
+- Rebuilding the player's page at its real size. It is drawn large and shrunk, with a `zoom` rule in
+  `gui/player-page.css` cancelling that for text. It works and is tested; the user approved these tabs.
+- Heat maps in the trade room from the game's own team map (they still use `trade-projection.js` minutes).
+- Four factors and morale after a trade: the engine has no forecast. The coordinator has a task card for it
+  (`project_four_factors`, `project_trade_morale`). Never show made-up numbers.
+- Music files or more arena photos: any download needs the user's yes first (file name, source, size).
+- Merging to main or pushing. The coordinator does that with the user's OK.
+
+**How to look at the game**
+- Test server: `polish-preview` in `.claude/launch.json` (port 8775, saves in `output/ui-polish/saves`). Never use
+  the user's game on port 8766. Restart the server after any Python change.
+- Pictures: `cd output/ui-polish && SHOT_SLOT=1 node shots.mjs scn/<name>.mjs`. A scenario is
+  `export default {save, prefix, steps: [[name, code, waitMs], ...]}`; a step named "" runs its code without a
+  picture and prints what the code returns; pictures land in `shots/<prefix>-<name>.jpg`. `SHOT_W=1280 SHOT_H=760`
+  gives the small window. Copy a recent scenario (`scn/pc5.mjs` a player page, `scn/st.mjs` the Storylines page,
+  `scn/c14i.mjs` the lottery) rather than writing one from nothing. Look at every picture you take.
+- After pressing a sim button in a scenario, wait on `state.busy`, not only `state.simulationRunning`.
+- Saves: `playtest.json` (midseason, OKC), `st_*.json` (one per phase), and copies made for checkpoint 14:
+  `c14_playoffs.json` (draft night with a real 16-team lottery; the lottery screen has to be switched to by hand,
+  see `scn/c14i.mjs`), `c14_fa.json` (free agency with one signing that states a reason), `c14_finals.json`.
+  Copy a save before any scenario that sims. At most two heavy jobs at once on this laptop.
+
+**How to change things**
+- Styles: add rules to the page's own sheet with the long prefix the sheet already uses and `!important`; use only
+  values from `gui/tokens.css` (`--gm-*`). The tests fail on literal font sizes, numeric weights, italic and hex
+  colours in the newer sheets.
+- Bump the cache version in `gui/index.html` after any CSS or JS change (now `polish-c54`; replace it everywhere
+  in that file with the next number).
+- Tests before every checkpoint: `nice -n 10 /Users/noahtyler/Developer/BBall_data/BBall_Starting_Point/.venv/bin/python scripts/run_tests_parallel.py --js --workers 2`
+  (all 60 files pass today), **and** the Python tests that read the interface's source, which the browser run
+  misses: `PYTHONPATH=src <that python> -m unittest tests.test_gui_concept71 tests.test_gui_concept74`. Write long
+  test output to a file and search it; do not print it.
+- A new card needs an entry in `gui/card-board.js` `CARDS`, a panel in `seasonCommandDashboardMarkup`, a page in
+  `gui/card-pages.js` and its own icon in `gui/window-icons.js` (a test checks icons are unique).
+- `.venv` in the worktree is a link the coordinator added. Leave it out of commits.
+
+**Checkpoints (the user's routine)**
+After each item or two: before and after pictures, tests passing, one published page with the pictures, what is not
+done or not seen, and a few decisions (your pick first) that save to the page's `decisions` collection; record the
+answers and a report at the bottom of this file; commit on the branch, not pushed; stop and wait for "Answered,
+continue". Templates: `output/ui-polish/checkpoint-tools/` (`build_c14.py` builds a page from the previous one in
+`output/ui-polish/sitep/`; `docs_c14.py`; `commit_c14.txt`). Write to the user in plain everyday language, lead
+with what changed, and say plainly what was not checked.
+
+**Mistakes made earlier in this task, to check for before showing the user anything**
+- Names or labels cut off with "..." (the user's most repeated complaint after contrast). Widen the column.
+- Striped table rows, boxes around sections, grey text on grey, a black-on-white field. The look is glass,
+  hairlines and space.
+- A tab or page that scrolls at the usual window size, or a list that leaves a half row showing.
+- Extra words: kicker lines, a caption repeating its heading, a legend restating the title.
+- A number the game did not send. If the data is missing, say so on the page or leave it out.
+- A change that looked fine at 16 rows or one size and broke another: compare with the old picture, and check the
+  small window.
+- Class names that collide with the game's own (`.is-win` did; prefix new classes).
+- Trusting a helper's report without opening its pictures.
 
 ## Why (the user's words, 2026-11-25)
 1. "The card content is literally just removed from their cards and pasted exactly the same as they were onto the
@@ -100,6 +186,989 @@ and first run, and the token sheet. End with a short list of decisions the user 
 - Keep this file's Progress line and resume state current; reread it after any context compaction.
 
 ## Resume state
-- [ ] Stage A
-- [ ] Stage B
-- [ ] Stage C
+- [x] Stage A: done 2026-11-25, published as one page: https://claude.ai/artifact/5BDfbWFKX68gDLMaKUqKLJ ("Polish Pass Stage A").
+      **Waiting on the user's eight decisions** (they save into the page's `decisions` collection; read them with the
+      artifact data tool before starting Stage B).
+- [x] Stage B: done 2026-11-25, published as one page: https://claude.ai/artifact/T1zGSZJcDDJ5js8ATMqzDc ("Polish Pass
+      Stage B"). Built from the user's Stage A answers (all eight as proposed, no notes). **Waiting on four decisions**
+      (the page's `decisions` collection): where Stage C starts, landing after an ordinary sim, undecided rookie options
+      on opening night, the sounds.
+- [ ] Stage C. Built from the user's four Stage B answers (home-first, stay, block, keep: all as proposed).
+      - [x] Checkpoint 1 (2026-11-26): Home (in season, preseason, playoffs), Roster, Contracts. Page:
+            https://claude.ai/artifact/5KVWHDqgWp3oe2gy5WhTC1 ("Polish Pass Stage C"). **Waiting on three decisions** (the page's `decisions` collection):
+            `summer-home` (contracts | roster-small | note), `trades-rows` (more | six), `next-pages`
+            (planned | steps | note).
+      - [x] Checkpoint 2 (2026-11-26): the sidebar carries the to-do list; four pages with tabs; Trades and summer Home
+            rebuilt; welcome text rewritten. Page: https://claude.ai/artifact/TWVA9sPeLM8BA2nz9EZXb5.
+      - [x] Checkpoint 3 (2026-11-26): background options as pictures; Standings, Schedule, Development rebuilt;
+            Home has standings under the next game and no week strip. Page:
+            https://claude.ai/artifact/MEuxkg2VnNosDHY8GG5cES. **Waiting on five decisions.**
+      - [x] Checkpoint 4 (2026-11-26): backgrounds rebuilt (treatment C, phase photos, a moving layer); Staff,
+            Identity, Profile rebuilt; a music shortlist. Page: https://claude.ai/artifact/J3LFyTZsyd2XSEdJ7dEFXM.
+            **Waiting on four decisions**, and a yes in the chat before any music download.
+      - [x] Checkpoint 5 (2026-11-26): the last six tabs; music (four CC0 tracks); the staff list scrolls; a
+            play-through. Page: https://claude.ai/artifact/Kd86FRvNrWNjY7BvnLiBdZ. **Waiting on four decisions.**
+      - [x] Checkpoint 6 (2026-11-26): News and Awards redone; Set The Roster, the offseason checklist, the draft
+            room and free agency rebuilt. Page: https://claude.ai/artifact/UjzCSZ8WoXbc3pZxJanq7Q. **Waiting on
+            four decisions.**
+      - [ ] Next, as the user picks: the pop-ups, draft / playoffs / free agency as Home tabs, more arena photos,
+            then step 9 (the final sweep)
+            (pattern work: a cheaper model can do it from `docs/UI_STYLE_GUIDE.md` "Full-size pages"), then the step
+            screens.
+
+## Stage A report (2026-11-25)
+
+Nothing in `src/` changed. Stage A is the audit and the design.
+
+**What was done**
+1. 45 screens captured at 12 points of the game year, from copies of the test saves on a private server (port 8775,
+   launch entry `polish-preview`). Not captured: the extension card and the shortcut list (would not open from the
+   script), fantasy draft, staff retention, multiplayer (no test save reaches them).
+2. Phase map: seven phases, the one button of each, what blocks it, what is open and what is closed.
+3. Main progress screen: Home becomes it (year strip, a to-do list with required jobs first, one button that only
+   moves time). Mockup with nine phase states.
+4. First run: four short screens, then the Preseason Outlook, then Home (today: 9 slides + 11 text cards).
+5. Style values: 7 text sizes, 3 weights, 4 corner sizes, about 20 colours, 4 motion timings, 5 glass levels, and a
+   sound plan made in the browser (11 draft sounds, playable on the page).
+6. Page-by-page list with measurements, and before/after mockups for Home, Roster and Trades.
+
+**Measurements (regular-season save, 1512 x 900; share of page covered by cards / share of text under 11px)**
+Home 59% / 86%, Roster 52% / 23%, Trades 43% / 72%, Contracts 57% / 19%, Schedule 94% / 8%, Standings 73% / 1%,
+Development 62% / 84%, Team Identity 57% / 28%, Scouting 61% / 71%, Awards 42% / 3%, Two-Way Places 86% / 15%.
+Stylesheets today: 24 files, 28,116 lines, 86 text sizes, 21 weights, 44 corner sizes, 1,340 colour values, 60 motion
+timings, 4,014 `!important`.
+
+**Findings worth keeping**
+- A new save starts on Oct 20 (the day before opening night), in preseason, not in the offseason. Its phase chip reads
+  "Step 4 of 4" and the first screen is the keep-or-waive table.
+- The footer button means three things (go to another screen, move time, return to a step).
+- Home is dead outside the season ("No upcoming game", "No standings yet").
+- White or cream fills on glass: trade market header, free-agency cap strip, playoff bracket boxes, the deadline-day
+  calendar square, the date strip in the deadline and season-end prompts (text nearly invisible). Black bars in the box
+  score. The start screen, first-run guide and command list are still the old grey style.
+- Draft night shows three equal buttons; on the path from the offseason checklist the lottery reveal never appeared.
+- Rule gaps: minutes, waive/buy out and the trade block have no phase rule; the post-deadline trade block and the
+  pending-coach-decision block are enforced only in the browser (engine side is outside this task: for the
+  coordinator); the `draft_lottery` phase name is never entered; there is no All-Star break.
+
+**Working files (git-ignored, in this worktree's `output/ui-polish/`)**
+`make_stages.py` (builds save copies at each phase; each copy gets its own history file, which a plain file copy
+breaks), `shots.mjs` + `scn/*.mjs` (headless screenshots and table scraping), `site/` (the published page:
+`src.html` is the source, `index.html` the built file, `shots/`, `faces/`, `img/`).
+
+**Decisions asked of the user**
+1. Home becomes the progress screen. 2. What the button does when a job blocks it. 3. First run. 4. Smallest text
+(11px floor proposed). 5. Italic (never, proposed). 6. Two tables with the same rows (one table with a picker,
+proposed). 7. Sound. 8. Things shown twice.
+
+## Stage B report (2026-11-25)
+
+**What changed, in plain words**
+- **Home is the progress screen.** Top: the phase, one line under it, and a seven-step year strip. Left: a to-do list
+  (red rows block the clock, yellow is a deadline today, green is done, dashed grey is closed). Beside it: the cards
+  that matter in that phase (the season cards while games are on; playoff stats in the playoffs; roster, payroll and
+  picks from the lottery to camp). You land on Home when a save loads, when a phase begins and when the game stops by
+  itself; an ordinary sim leaves you on the page you were on.
+- **One button, bottom right, only moves time.** Label says what happens, small line says to which date; a week, a
+  month and the like stand to its left. When a job blocks it the button turns red, carries the job's name and opens the
+  job. The "Step N of 4" chip, the Back / Next / Continue step buttons, the deadline-day button and the two pause
+  windows (trade deadline, season end) are gone in the pages layout. Step screens open from Home's list and have a
+  Home button at their title.
+- **First run.** Four short screens drawn from the save (your team, the year, the one button, your pages), then the
+  Preseason Outlook, then Home. Skippable, remembered (same key as before), replayable from Settings. The old guide's
+  page tips sit behind a small "i" beside those section titles.
+- **Sound.** Made in the browser (`gui/sound.js`), on and quiet (40%), clicks off. Settings > Sound: switch, volume,
+  clicks. Eleven sounds, each tied to one event.
+- **Shared style values.** `gui/tokens.css`, loaded first; the sheet is in `docs/UI_STYLE_GUIDE.md`. Moved onto it in
+  all 23 loaded stylesheets: text weights (12 -> 3; the old "medium", 25 places, became semibold), italic (16 -> 0),
+  transition timings and easing (17 and 7 -> 4 and 1). The page title, Home's new parts, the footer button and the
+  welcome read every value from it. NOT moved: text sizes, colours, corner sizes (cards have fixed layouts; page by
+  page in Stage C). The forced-override count is about unchanged.
+
+**Files**
+New: `gui/tokens.css`, `gui/progress.js`, `gui/progress.css`, `gui/sound.js`. Changed: `gui/card-pages.js` (Home's
+structure and sizing, landing rule, no step buttons, "i" tips), `gui/card-pages.css` (13 dead rules removed, title on
+the shared values, pages cross-fade), `gui/app.js` (welcome, sound hooks and settings, stops on Home, no step chip in
+the sidebar), `gui/assets-desktop.js` (the footer's buttons come from `GameProgress.dockMarkup()`), `gui/index.html`
+(new files, every cache version bumped to `polish-b1`), 23 stylesheets (the weight / italic / transition swap),
+`docs/UI_STYLE_GUIDE.md` (token sheet, progress-screen rules), 8 test files (7 updated for the new values, 9 new
+tests in `tests/sidebar_pages.test.cjs`).
+
+**Checks**
+- Played on copies (port 8775): a brand-new save from the start screen through the welcome, the outlook, a blocking
+  job, the season start, two games and a week; a December save simmed to the trade deadline; a deadline-day save
+  simmed to the end of the regular season and into the play-in; Home captured at nine points of the year. No page
+  errors.
+- Every page re-captured after the stylesheet swap and compared with its Stage A picture: about 1% of each changed
+  (title, sidebar, footer); nothing moved.
+- Browser tests: 48 of 49 files pass. `startup_video.test.cjs` cannot run in this worktree (the start-screen video is
+  git-ignored and absent here); it is unrelated to this work.
+- Not run: the full Python suite (no engine, save or ratings code touched). Of the Python files that read GUI text,
+  `test_gui_concept71` and `test_gui_concept74` each have one old check that fails with and without these changes
+  (the Settings "font" check; a prospects-card check); two more error on the same missing video.
+- Not exercised (no test save reaches them): fantasy draft (keeps its old controls; the footer falls back to them),
+  staff retention, multiplayer, the board layout.
+
+**Known gaps, for Stage C**
+- Home's six cards are still the old cards, drawn at 86% scale (about 91% before): 93% of Home's text is under 11px
+  (was 86%). Rebuilding them at 13px is Home's page conversion, proposed as the first Stage C page.
+- Differences from the Stage A pictures: Standings is beside the minutes (not under the list); the draft board and the
+  free-agent market stay on their own screens (not on Home); Home in summer shows roster, payroll and picks.
+- Duplicates not yet removed (signals and morale on Team Identity; Two-Way Places as its own page in season).
+- The Font row in Settings is a little tight on its last option; white strips and black bars in pop-ups untouched.
+- For the coordinator (unchanged from Stage A): trading after the deadline and simming with a coach decision pending
+  are stopped only in the browser.
+
+**Working files** (git-ignored, `output/ui-polish/`): `codemod.py` (the stylesheet swap; re-running it finds nothing
+left), `scn/home.mjs`, `scn/first.mjs`, `scn/flow.mjs`, `scn/flow2.mjs`, `scn/stops.mjs`, `scn/pages.mjs`,
+`scn/measure.mjs`; `siteb/` (the published page).
+
+## Stage C, checkpoint 1 report (2026-11-26)
+
+**What changed, in plain words**
+- **A page can now be laid out at real sizes** instead of fixed-size cards shrunk as one picture. A layout in
+  `gui/card-pages.js` marked `full: {fits, roomy}` is drawn at scale 1 on any page area between those two sizes (a
+  smaller window shrinks the whole page, a much larger one grows it, at most 1.25). Its rows and columns take
+  `basis` (a fixed share) or `fill` (what is left); a section that is a picture takes `natural: "fit" | "width"` and
+  is enlarged as one piece (CSS zoom) so it keeps its shape; a page with `views` shows one section at a time behind a
+  picker at its title. The to-do list is a section of Home's layout (`TODO`). All styling is in the new
+  `gui/full-pages.css`, every rule under `.pages-stage.is-full`, every value from `tokens.css`. A page that has not
+  been rebuilt takes the old path untouched.
+- **Home** (season, preseason): the list with the standings under it, the rotation with the week under it, then the
+  next game, signals and morale. 13px rows, 11px bold headings, rows sharing the height (34px for 15 players).
+  The next game's header is two lined-up lines; deadline day is a ring and a label, not a cream square; a long job
+  name wraps. **Playoffs:** the same without standings and week; the playoff stats table left Home (too wide).
+  **Lottery to camp:** unchanged, still the scaled cards (decision asked).
+- **Roster**: one table the page's width (42px rows, the same 16 columns), Ratings | Stats behind a picker.
+- **Contracts**: the table at 13px, draft assets under it, the payroll chart enlarged 1.57 times in its own shape.
+
+**Measured** (regular-season test save, 1512 x 900; share of text under 11px, before -> after): Home 93% -> 2% (the
+sort triangles), Roster 23% -> 0%, Contracts 19% -> 7% (the draft-assets grid's labels). Page area used: Roster 52%
+-> 94%, Contracts 57% -> 80%.
+
+**Files**: new `gui/full-pages.css`; `gui/card-pages.js` (full layouts, views, natural sections, re-layout when a
+section's contents arrive); `gui/index.html` (new sheet, cache versions `polish-c1`); `docs/UI_STYLE_GUIDE.md`
+("Full-size pages"); tests: `tests/sidebar_pages.test.cjs` (3 new), `tests/table_style.test.cjs` (sheet order).
+
+**Checks**: on copies (port 8775): sorting, a minutes change, a sim from Home, a player page and back, the picker,
+Home on a new save, on deadline day, in the playoffs, at 1280 x 760 (82%) and 1728 x 1050 (scale 1); every page not
+rebuilt captured again and unchanged. A bug found and fixed on the way: the enlarged payroll chart stayed enlarged
+on Trades. Browser tests 48 of 49 (the 49th needs the absent start-screen video). Full Python suite not run (no
+engine or save code touched).
+
+**Known gaps**
+- Windows under 1512 x 900 shrink the page (1280 x 760: 82%, rows about 10.6px).
+- Long opponent names end in an ellipsis (as before). Draft-assets labels are still about 10px.
+- Two-Way Places is still its own page in season; signals and morale are still also on Team Identity.
+- Between playoff rounds Next Opponent has no game to show (pre-existing; now one plain line).
+- Trades: the league block shows 6 rows a group by design (`leagueBlockGroups` in `assets-desktop.js`); filling the
+  page means showing more, which is a content change: asked.
+
+**Working files** (git-ignored, `output/ui-polish/`): `scn/page.mjs` (one page, optional picker option),
+`scn/tour.mjs` (Contracts first, then every page), `sitec/` (the published page).
+
+## Stage C, checkpoint 2 report (2026-11-26)
+
+**The user's Stage C answers** (page 1's `decisions`): summer Home = contracts, payroll and picks; league targets
+fill the height; then the other pages in the planned order. Notes, in their words: the to-do list makes more sense in
+the sidebar "along with only a few pages"; "a lot of the current pages should be more like tabs on a page from a
+shorter selection of pages, but we can have more tabs"; "I don't like the way you force a lot of cards together on
+the pages" (these are "some of my biggest current issues"); the backgrounds are "kind of overpowering ... just you
+slapping a color filter over a photo ... we need more neutral colors and more accents of the team colors"; and the
+welcome text "sounds so much like an AI wrote it".
+
+**What changed**
+- **Sidebar** (`card-pages.js`, `progress.css`): the phase and its line, then the to-do list, on every page; four
+  pages under it (Home, Team, Front Office, League). 224px wide (was 184).
+- **Year bar** (user, mid-turn: "across the main header of the page ... each segment to vary in length depending on
+  how long it is ... each segment will only fill as far through it as we are"): a row at the top of every page
+  (`.pages-year`, `GameProgress.yearMarkup` / `yearSpans`). Segment lengths are days between the league calendar's
+  month-day boundaries; the current segment (from the save's phase) fills by today's date within them.
+- **Tabs**: every old sidebar page is a tab of one of the four (`GROUPS`; a page's `group`). The sidebar opens a page
+  on the tab last used there. Tabs: Home (Today, Schedule); Team (Two-Way Places in season, Roster, Stats,
+  Development, Staff, Identity, Profile); Front Office (Contracts, Trades, Draft); League (Standings, News, Awards,
+  Playoffs, Playoff Stats). `CardPages.go(id)` opens a tab by id.
+- **Fewer things per screen**: Home is the rotation with the week under it, and the next game. Standings, signals and
+  morale left Home (Standings tab; Identity tab). Development and Staff, Heat maps and the radars, Standings and the
+  league wire, Trades and the payroll chart no longer share a page.
+- **Trades** rebuilt at full size: sixteen league targets a group (was six; `leagueBlockGroupSize`), your block and
+  what teams want beside them.
+- **Home from the lottery to camp**: contracts, payroll and picks at full size.
+- **Welcome text** rewritten as plain labels (team name and "Projected 18th of 30"; "The year"; "To do" with one
+  instruction; "Pages" listing the four pages and their tabs).
+- Removed: the page-level to-do list and its layout node, the Ratings | Stats picker (they are tabs now).
+
+**Not done**
+- The background (the colour filter over the arena photos): not touched. Proposed next: three treatments on two
+  arenas for the user to pick from, before changing all thirty.
+- Still the older cards inside their tabs (scaled, with empty room beside them): Schedule, Development, Staff,
+  Identity, Profile, Draft, Standings, News, Awards, the playoff tabs, Two-Way Places, and every step screen.
+- Home's right column is half empty under the next game (six or seven opponent rows).
+- Signals and morale are small on the Identity tab. Two-Way Places is still its own tab in season.
+
+**Checks**: every tab captured on the regular-season copy; Home on a new save, in the playoffs, in free agency and in
+late summer; the four welcome screens. Browser tests 48 of 49 (the 49th needs the absent video); the page tests were
+rewritten for the new structure. Not played end to end again after the restructure (no sim, no step-screen walk).
+
+**Working files**: `scn/home.mjs`, `scn/page.mjs` and `shots.mjs` now open tabs through `CardPages.go`; `sited/` is
+the published page.
+
+## Stage C, checkpoint 3 report (2026-11-26)
+
+**The user's checkpoint 2 answers**: the page map is good ("more important to master each of these ... tabs than
+... the organization"); later, the draft, the playoffs and free agency should take over Home with a tab of their own
+while they are on; backgrounds: natural photos with team colour as accents, and ideas: several pictures per team
+(different spots of the arena by page or by phase), slight movement, transitions between places, background music
+("free chill beats"); Home's right column: standings, and delete the week strip from Home (a smaller copy of the
+Schedule tab); next: backgrounds, then the remaining tabs.
+
+**What changed**
+- Home: the week strip is gone; your conference's standings sit under the next game (not in the playoffs).
+- Standings, Schedule and Development rebuilt at full size. Done by a Sonnet subagent from a written brief and the
+  style guide, reviewed from its pictures; one fix after review (played games' logos kept in colour on Schedule).
+- Background options, as pictures only (nothing changed in the game): `output/ui-polish/bg/make.py` makes three
+  treatments from the photos already picked and credited in the main checkout's `output/ui-workbench/arena` (read
+  only): A natural, B team colour kept (hue-selective saturation), C neutral and darker. Shown behind Home for OKC,
+  BOS and DEN, plus Boston's two other photos behind Team and Front Office.
+
+**Waiting on five decisions** (page https://claude.ai/artifact/MEuxkg2VnNosDHY8GG5cES, collection `decisions`):
+`bg-treatment` (b | a | c | note), `bg-spots` (by-page | by-phase | one), `bg-motion` (drift-fade | fade | none),
+`music` (list | browser | later), `draft-home` (office | team | note).
+
+**Notes for whoever continues**
+- Music needs files: the task rule stands (no downloads without the user's yes). The proposal is a list of free
+  tracks with licence and size for approval first.
+- Movement reverses the style guide's "never anything looping": ask before building (asked).
+- Still old cards: Staff, Identity, Profile, Draft, News, Awards, the playoff tabs, Two-Way Places, the step screens.
+- Not replayed end to end since the restructure (no sim, no step-screen walk).
+
+## Stage C, checkpoint 4 report (2026-11-26)
+
+**The user's checkpoint 3 answers**: background treatment C (neutral and darker; "very hard to see a difference
+between these options"); a different photo by phase; slow drift and cross-fade; bring a list of free music tracks to
+approve; the Draft tab stays under Front Office.
+
+**What changed**
+- **Backgrounds**: all thirty arenas rebuilt in treatment C; 29 playoff and offseason photos for the 19 teams with
+  more than one credited photo (`gui/assets/arenas/*-playoffs.jpg`, `*-offseason.jpg`, `phases.json`, `credits.json`;
+  `output/ui-polish/bg/build_all.py`). Charlotte and Cleveland keep their drawn arenas, muted.
+- **One moving layer** (`gui/arena.js`, `gui/arena.css`): the picture is an `<img>` on a fixed layer behind the game
+  (the look sheets strip background images from every element, and `.dashboard-shell` had a light fill that had to
+  go transparent). Slow drift, a lean per sidebar page, a cross-fade on a change of picture; Settings > Look >
+  Background movement; off under reduced motion. Picture addresses carry a version so browsers fetch rebuilt ones.
+- **Staff, Identity, Profile** rebuilt (Sonnet subagent, reviewed). A card may now pin its own size for `natural`
+  sections (`size: [w, h]`), because the board's default window sizes change with the viewport.
+- New tokens: `--gm-motion-scene` 1.2s, `--gm-motion-drift` 90s (the arena layer only).
+
+**Music (nothing downloaded)**: a subagent read each track's own OpenGameArt page. Shortlist: "Chill lofi inspired
+[loop edit]" (omfgdude / qubodup, CC0, ogg 2.4 MB), "lofi hip hop" (omfgdude, CC0, ogg 1.5 MB), "Sleepy Head"
+(Tsorthan Grove, CC0, flac 32.1 MB), "A Day In, Night Out" loop (Tsorthan Grove, CC0, flac 12.3 MB), "Diminishing
+Returns" (tcarisland, CC BY 4.0, mp3 7.7 MB), "Downtempo" (biggius, CC BY 4.0, mp3 2.5 MB). Licences are the
+uploaders' own statements; nobody listened to them. Downloading needs the user's yes in the chat. `ffmpeg` is
+installed for converting the FLACs.
+
+**Waiting on four decisions** (page https://claude.ai/artifact/J3LFyTZsyd2XSEdJ7dEFXM, collection `decisions`):
+`music-tracks` (cc0 | all | none), `staff-list` (pages | scroll | as-is), `bg-dark` (good | lighter | note), `next`
+(tabs | home-phases | steps).
+
+**Known gaps**
+- The drift was not watched moving (captures emulate reduced motion): the layer, the switch and the phase pictures
+  were checked from the page's state and still pictures.
+- Available staff shows the rows that fit (19 of about 30); the rest need the role picker. Asked.
+- Some arenas are close to black (Cleveland, a few offseason photos). Asked.
+- Still old cards: Draft, News, Awards, the playoff tabs, Two-Way Places, the step screens.
+- Not replayed end to end since the restructure.
+
+## Music added (2026-11-26, after checkpoint 4)
+
+The user approved downloading the four public-domain tracks in the chat ("Yes, those four"). The four checkpoint 4
+decisions on the page were still unanswered at that point (`staff-list`, `bg-dark`, `next`; `music-tracks` is
+settled by the chat answer).
+
+- Downloaded from OpenGameArt after re-reading each track's page (each states CC0): `chilllofir-loop.ogg`,
+  `lofihiphop.ogg`, `sleepy_head_0.flac`, `a_day_in_night_out_loop.flac` (48 MB; originals kept, git-ignored, in
+  `output/ui-polish/music/raw/`, with the saved pages in `music/pages/`).
+- Converted with ffmpeg to 128 kbps MP3, loudness levelled to -18 LUFS: `gui/assets/music/*.mp3` (8.9 MB in all)
+  and `tracks.json` (title, artist, licence, source, what was changed).
+- `gui/music.js`: off by default; shuffled order; each track fades in and out; a track under two minutes plays twice;
+  waits for a click; pauses while the tab is hidden. Settings > Sound: Music (with the track playing and Next
+  track), Music volume. The tracks are listed in Settings > Credits > Photo and music credits.
+- Checked in the preview: off by default, switching on fetches and plays a track, Next track changes it, switching
+  off pauses. Nobody has listened to the tracks in the game: the level and the fades are untested by ear.
+- Tests: `tests/music.test.cjs` (3), `tests/photo_credits.test.cjs` updated for the renamed list. Browser tests 50
+  of 51 (the 51st needs the absent start-screen video).
+
+## Stage C, checkpoint 5 report (2026-11-26)
+
+**The user's checkpoint 4 answers**: all six music tracks (on the page; the chat yes covered the four CC0 ones, so
+the two CC BY ones still need a yes in the chat); the available staff list scrolls; the arenas' darkness is good; next:
+the last five tabs.
+
+**What changed**
+- Every tab is now a `full` layout (17 of 17). This round, by two Sonnet subagents from written briefs, reviewed from
+  their pictures: Draft (the prospect board at page width, whole rows between 34 and 42px, its sixty rows still
+  scrolling inside it as before; draft assets under it), News and Awards (enlarged whole with `natural`; both leave
+  empty room), Playoff Stats (two tables at real sizes), Playoffs (the bracket enlarged whole; white boxes replaced
+  by glass; the user's series marked through `data-yours`, set in `layoutFull`), Two-Way Places and Opening Roster
+  (the same card: real sizes, all rows fit; Details and Rules open as small glass pop-ups).
+- Available staff scrolls (user's pick), headings pinned.
+- Roster's columns rebalanced after the sidebar widened (role names were cut); a role cell never clips.
+
+**Played through after the restructure** (copies, port 8775): a brand-new Milwaukee save from the start screen (13 s
+to build; welcome, Outlook, Home with two red rookie-option jobs and the blocked button); every to-do job on four
+saves opens its screen and step screens have their Home button; a sim from Home, a week from Roster (stays), the
+year bar and the record move; Front Office reopens on its last tab. Not replayed: the deadline and season-end stops,
+the draft itself, a signing. The earlier "new save will not create" scare was the capture script clicking before the
+button was enabled.
+
+**Waiting on four decisions** (page https://claude.ai/artifact/Kd86FRvNrWNjY7BvnLiBdZ, collection `decisions`):
+`music-two` (yes | no; also needs a chat yes), `news` (feed | two | as-is), `awards` (more-rows | bigger | as-is),
+`next` (steps | home-phases | photos).
+
+**Known gaps**: the step screens other than Opening Roster are still scaled cards; News and Awards are thin; names
+are cut on Playoff Stats; the bracket uses the top 40% of its page; the cutdown and Sign Players screens (same card as
+Opening Roster) were not reachable; nobody has listened to the music or watched the drift.
+
+## Two more tracks (2026-11-26, after checkpoint 5)
+
+The user said yes in the chat ("Yes, add both"). Both pages were re-read first (each states CC-BY 4.0; authors
+tcarisland and biggius): `diminishingreturnsinstr_0.mp3` (7.7 MB) and `downtempo_0.mp3` (2.5 MB), re-encoded to
+128 kbps MP3 and levelled like the others (`gui/assets/music/diminishing-returns.mp3`, `downtempo.mp3`; the folder is
+15 MB with six tracks). `tracks.json` carries the title, artist, source, licence link and what was changed for each,
+and the game's credits list shows them, which is what CC BY 4.0 asks for. tcarisland's page asks, without requiring
+it, to be told when his music is used (a contact form on tcarisland.no): left to the user. The checkpoint 5 page's
+decisions were still unanswered.
+
+## Stage C, checkpoint 6 report (2026-11-26)
+
+**The user's checkpoint 5 answers**: News: "I like the scrollable social media as a concept ... you can reorganize as
+much as you like ... The objective is to keep the user engaged and informed on the season they are in"; Awards: more
+rows, "feel free to get experimental"; the two CC BY tracks: yes (done); next: the step screens.
+
+**What changed**
+- **News** (done on the main model): the feed keeps its posts, drawn two across and scrolling; `gui/news-page.js`
+  adds beside it a list of every headline (date, kind, team logos, one line) with filters (All, Your team, Trades,
+  Contracts, Staff, Other as present). A headline scrolls the feed to its post; a filter narrows both. Built from
+  `state.home.league_events` through `normalizeLeagueEvent`: no new data. Styles in `gui/news-awards.css`.
+- **Awards**: ten candidates a race on a page (four in a board window: `seasonAwardsCard`), cards pinned taller.
+- **Step screens** (two Sonnet subagents, reviewed from pictures): Set The Roster; the offseason checklist with the
+  Offer Builder (`.fa-builder`); the draft room's three arrangements (lottery, draft night, results); the free-agent
+  market with its builder and signing wire. All `full` layouts in `card-pages.js`, CSS appended to `full-pages.css`.
+  `layoutFull`'s whole-row fitting now also covers the draft board, the draft summary and the market.
+- White fills made glass: the free-agency cap strip, the offer salary field, Set The Roster's room boxes, the
+  lottery's "moved up" boxes.
+
+**Judgment calls the helpers made, reported to the user**: the checklist's tables are reordered by CSS (the user's
+own decisions first, "Around the league" last); the market's ask-change marks are one triangle and the amount.
+
+**Findings for the coordinator (outside this task)**: neither lottery test save opens on the lottery, and a copy
+advanced from the Finals went straight to draft night: the lottery phase is not entered (also a Stage A finding). The
+lottery card was checked by forcing it to draw.
+
+**Waiting on four decisions** (page https://claude.ai/artifact/UjzCSZ8WoXbc3pZxJanq7Q, collection `decisions`):
+`news-ok` (good | change), `awards-ok` (good | change), `checklist-order` (mine-first | as-before), `next`
+(popups | home-phases | sweep | photos).
+
+**Known gaps**: pop-ups untouched (trade room, box score, player finder, staff talks); the start screen; draft /
+playoffs / free agency as Home tabs; names cut on the free-agent market; the Offer Builder's rules text still stands
+in the open; fantasy draft, staff retention, cutdown and Sign Players screens unreachable in the test saves; the
+music and the background drift still untried by a person. `saves/st_draft_done.json` (a test copy) has a new
+modified time from being loaded during the helper's lottery hunt; it still opens on the finished draft.
+
+## Stage C, checkpoint 7 report (2026-11-26)
+
+**The user's answers to checkpoint 6**: News good. Awards: "the table underneath the leading person ... doesn't have
+field headers. It should have field headers and the cell with the leader and their headshot and the award image has
+sharp corners and it's a sharp box. It should probably not look like that. Other than that it looks pretty good."
+Checklist order stays (own decisions first). Next: the pop-ups.
+
+**What changed**
+- **Awards**: a headings row over each race's table on a page (`seasonAwardColumns` in `app.js`: #, Player, Team,
+  the award's stats, Change, on the chasers' own column grid); the leader band has the card radius and a hairline;
+  the leader's change in rank now sits under its "Change" label (old rules put the labels on grid row 5, so it fell
+  to row 1). Cards pinned at 340 by 500. Styles in `gui/news-awards.css`.
+- **Trade pop-ups** (Sonnet subagent, reviewed from pictures): Trade Builder (deal, pick, Value and Team identity
+  views), Trade Finder, Incoming Offers, Trade Market. All in the new `gui/popups.css`, every rule under `#modalRoot`,
+  token values only; test `tests/popups_style.test.cjs`. The Market's white strip and black headings are gone and its
+  table sizes its columns to fit so names stay on one line; the Builder's payroll chart is enlarged whole (1.3, or
+  1.1 on a short window).
+- **Other pop-ups** (second Sonnet subagent): box score (both views), Player Finder, staff talks, League Leaders,
+  in the new `gui/popups-game.css`; test `tests/popups_game_style.test.cjs`.
+- **Changed after review** (main model): box score comparison bars keep each team's own colour, lifted to a minimum
+  lightness (`oklch(from ... max(l, .66) c h)`, with a `color-mix` fallback) instead of grey and accent blue for
+  every game; on Incoming Offers, Accept Trade is the one frosted pill and Decline is plain text (they had come out
+  as two near-identical pills).
+
+**Checked**: browser tests, 53 of 54 files pass (the start-video one cannot here). Settings and the Trades tab are
+pixel-identical with and without `popups.css`. A pick's "Details" panel was opened and looked at. No button that
+changes a save was pressed (Ask, Propose, Accept, Decline, Shop).
+
+**Waiting on four decisions** (page https://claude.ai/artifact/SeJrGwfx6mz5vyzR4kMVpA, collection `decisions`):
+`awards-ok` (good | change), `popups-ok` (good | change), `accept-button` (frosted | blue), `next`
+(home-phases | rest-popups | sweep | photos).
+
+**Known gaps**: the contract extension window and the player card are built outside `#modalRoot`, so neither
+pop-up sheet reaches them; at 1280 by 760 the Builder's payroll table is cut at the bottom, the partner picker
+overlaps "gives" and long names are cut (all there before; the first slightly worse with the larger chart);
+League Leaders is the finder's table, not Player, Team, stat (needs a change to how it is built); the Value tab's
+"Roster value" bar is coloured inline; the Market's "Decision by" shows ISO dates; `popups.css` loads early in
+`index.html`, so its rules carry extra specificity. Still open from before: Home phase tabs, the start screen, more
+arena photos, the final sweep, and nobody has listened to the music or watched the background move.
+
+## Stage C, checkpoint 8 report (2026-11-26)
+
+**The user's answers to checkpoint 7** (their words where quoted): Accept Trade stays a frosted pill. Awards good
+"other than the fact that there's names being shortened in their fields". Next: draft, playoffs and free agency as
+Home tabs. On the pop-ups, a note that sets the direction for two screens:
+- Home: "I don't like that the homepage just shows a couple tables. It should show stuff that would be most
+  engaging to a player like the trade market, any ongoing trade rumors, standings, things going against expectation,
+  league leaders, winners, the state of your team, injuries, signings, whatever deadlines are coming up".
+- Trade room: "too much stuff is spread out"; the Market "isn't centered ... not full"; the heat maps should "fade
+  from one to the other instead of having them one on top of the other"; the pop-ups do not "show enough of the
+  change that happens after a trade like for example the four factors or the overall, the morale"; so "consolidate
+  all of those onto one page and then expand the trade asset selection page": one page "where you pick what assets
+  go and you see legality", the next "what would that trade actually entail for your team".
+
+**What changed**
+- **Home › Today is a front page** (`gui/home-front.js`, `gui/home-front.css`, card id `front`, panel
+  `.season-front-panel` in `seasonCommandDashboardMarkup`): a strip for your team (last result, next game, last
+  five, the four moods, who is out), then three columns: headlines and the latest day's scores; your conference
+  with "Against expectation"; trade talk (offers waiting, the Market's shopped players, days to the deadline) and
+  the PTS / REB / AST leaders. Every line opens what it summarises. Lists show whole rows only (rows that do not fit
+  get a 0-height implicit grid row). Before the season and in the playoffs the game loads no standings, scores or
+  leaders for a phase screen, so the middle column lists the games ahead or is dropped.
+- **Display-only server additions** (`app_actions.py`): `dashboard_trends_payload` returns `roster_ranks` (every
+  team's `team_identity_report` overall and rank, already computed there); the summary leaders' rows carry
+  `headshot_url`.
+- **Home's tabs**: Today, Minutes (the old Home: the rotation with the next opponent; only while games are played),
+  Schedule. The draft room, the offseason checklist, free agency and the playoff bracket are Home tabs listed first
+  while they are on (`phaseHome`), and Home lands on them (`homeId()`); they are no longer step screens. Pages take
+  an optional `when`.
+- **Awards**: cards drawn at 396 by 590 so no name is cut (ten of 27 were); the leader's content is centred in its
+  band.
+
+**Checked**: browser tests, 54 of 55 files (new `tests/home_front.test.cjs`; `sidebar_pages` and `tables_icons`
+updated; the start-video file cannot pass here). Clicked on Home: a score (box score opened), the standings
+heading (tab opened), a leader (player card opened). Landings checked on the playoffs, draft, free agency,
+re-signing, camp and preseason saves. `tests.test_gui_concept74` has one failure
+(`test_rating_and_scouting_bars_use_solid_sampled_color`) that is on the branch without this round's change.
+
+**Trade room: what the code and engine reading found** (plan on the page, nothing built)
+- The Builder already has two views (`state.tradeView` "pick" / "deal") and three lower tabs
+  (`state.tradeInsightPage` 0 payroll, 1 value, 3 identity). The heat maps are inline SVG built in the browser
+  (`trade-projection.js`), before and after as separate sections.
+- The engine can compute for a hypothetical roster, with display-only code in `app_actions.py`:
+  `team_identity_report` (overall, offence, defence, depth and the other metrics, with ranks) on a copied canonical;
+  `spatial.team_spatial_profile` with a roster and minutes (real team heat maps); `trade_roster.roster_projection`
+  (rotation strength, minutes, forced cuts); `trade_tax.luxury_tax_bill` / `tax_saved`.
+- It cannot: forecast four factors for a roster (Profile's are season results), or project morale or chemistry
+  after a trade (morale moves only after games and press answers). Both would be engine work for the coordinator.
+
+**From the coordinator (main 00f5c384, to fold in when those screens come up; data arrives with the next merge)**:
+the lottery card's "Four picks drawn" / "14 → 1" text is wrong when `lottery.format` is "3-2-1" (16 picks drawn);
+hide the reveal's "jumped into the top four" notice for 3-2-1; 16 rows must fit the lottery card; the year-end
+slide's "of 14" should use `lottery_teams`; the player page's season strip needs a playoff line
+(`career_seasons[].playoffs`). Details: `docs/agents/tasks/lottery-playoff-stats.md` on main.
+
+**Waiting on four decisions** (page https://claude.ai/artifact/PesnDwmQszkPJQZAicJhb3, collection `decisions`):
+`home-ok` (good | change), `phase-tabs` (good | change), `trade-plan` (ratings | ratings-only | wait), `next`
+(trade-room | home-more | rest-popups | sweep).
+
+**Known gaps**: Home is thinner before the season and in the playoffs (no league data loaded there); the offseason
+Today tab is unchanged (contracts, payroll, picks); the market request was not timed on a slow machine; the trade
+room rebuild, the extension window and player card, the start screen, more arena photos and the final sweep
+remain; nobody has listened to the music or watched the background move.
+
+## Stage C, checkpoint 9 report (2026-11-26)
+
+**The user's answers to checkpoint 8**: the new Home good; phase tabs good; trade plan = build page 2 with the team
+ratings and ask the coordinator for real forecasts of four factors and morale; next = rebuild the trade room in two
+pages.
+
+**What changed**
+- **The Builder is two pages** (`renderTradeBuilder` in `app.js`; `state.tradeView` keeps its values: "pick" is
+  page 1, "deal" page 2; a `.tr-steps` bar switches). Page 1, "The deal" (`.tr-page-deal`): for two teams both
+  asset lists side by side (`assetColumn` twice, the partner picker at the head of the partner's list:
+  `tradePartnerPicker`), then a dock with each side's tiles and salary check (`tradeDealSide(..., {plain})`) and the
+  answer with Ask; three or more teams keep one list at a time with the strip. Page 2, "What it does"
+  (`tradeEffectPage`, `.tr-page-effect`): a team switch, then team ratings before and after with league ranks and
+  "Who plays" (`tradeEffectRatings`), the heat maps as one pair that fades (`.trade-identity-fade`, switch Before /
+  Fade / After in `state.tradeFade`), the value bars, and that team's payroll (`tradePayrollAnimation(participants,
+  only)`). The lower tabs are gone; `state.tradeInsightPage` is no longer read by the Builder.
+- **New display-only action `trade_team_impact`** (`trade_team_impact_payload` in `app_actions.py`): runs
+  `team_identity_report` on the league and on a copy with each traded player's `team_id` swapped (the copy drops the
+  `_`-prefixed caches, which index the real rosters), and returns each involved team's metrics and ranks before and
+  after plus `team_rotation_projection` minutes before and after. Nothing is saved. About 3.6 s for a four-player
+  deal on the test save, 0.4 s with no moves. Loaded when page 2 opens (`loadTradeImpact`, keyed on the moves).
+- Styles appended to `gui/popups.css`; tests in `tests/trade_two_pages.test.cjs`; `tests/popups_style.test.cjs`
+  now skips `@keyframes` steps when it collects selectors.
+- The asset lists scroll, as before: `glass-clear.css` hides the pager on purpose ("Scrolling is fine for the asset
+  list (round 8)"), so `fitTradeAssetPages` must not be called on render (it would hide rows with no way to reach
+  them; tried and reverted this round).
+
+**Checked in the game** (copies only): ticked two players a side; opened page 2; switched to the partner; held the
+maps on Before and After; went back (selection kept); on a throwaway copy pressed Ask (answer drawn) and added a
+third team. Accept and Propose were not pressed. Both pages captured at 1512 by 900 and 1280 by 760. Browser tests:
+55 of 56 files.
+
+**Engine request sent to the coordinator** (the user's choice): a roster-based four-factors projection and a morale
+effect or projection for trades. The coordinator put it up as a task card for the user ("Trade forecasts: four
+factors and morale for a proposed deal"; planned functions `project_four_factors(canonical, save, team_id, roster)`
+and `project_trade_morale(canonical, save, proposal)`) and will send the function names and shapes when done. Until
+then page 2 shows neither.
+
+**Waiting on three decisions** (page https://claude.ai/artifact/FE3fnTECUK7jUyicZbXUAf, collection `decisions`): `deal-page`
+(good | change), `effect-page` (good | change), `next` (trade-rest | home-more | rest-popups | sweep).
+
+**Known gaps**: the Finder and the Market are unchanged (the user: the Market "isn't centered ... not full"); the
+heat maps are still built in the browser from `trade-projection.js` minutes, not the coach's projection
+(`spatial.team_spatial_profile` could replace them); at 1280 by 760 the dock's contract column is cut and page 2's
+left and middle columns scroll; `trade_team_impact_payload` has no Python unit test; speed not measured on a slow
+machine. Still open from before: Home before the season and in the playoffs, the offseason Home, the extension
+window and player card, the start screen, more arena photos, the coordinator's lottery and playoff-line items, the
+final sweep.
+
+## Stage C, checkpoint 10 report (2026-11-26)
+
+**The user's answers to checkpoint 9** (their words where quoted): next = finish the trade room.
+- Deal page good, but: "each team's box that shows their selected assets for the trade [should be] large enough to
+  accommodate the average number of assets in a trade, and then some, so avoid scrolling so much. This is why I
+  think the checkbox list of assets and the page showing the assets that have been selected should be separate,
+  and then the what-it-does section is still separate from that."
+- Effect page good broadly: "it could be okay to segment some of the stuff in here to be on pages like What it
+  does: Spatially, What it does: Financially ... We would just need to make sure we fill each of those pages up
+  enough yet not too much."
+- Anything else: "see if you can show league narratives somewhere on the home page ... about your own team or about
+  the league ... unhappy players/fans/coaches, those demanding changes, those under/overperforming, those waiting on
+  specific things. I'm not asking for really any new infrastructure, but just like real life it is fun to follow a
+  narrative and see its conclusion ... we have those events happening and panning out, but nothing really watching
+  them to evolve the narratives. Like a player can refuse to re-sign and then get traded, but I don't think we
+  dramatize those things enough over the entire saga."
+
+**What changed**
+- **The Builder is three steps** (`renderTradeBuilder`; `state.tradeView` is "pick", "deal" or "effect"): 1 Pick
+  assets (`.tr-page-pick`: only the lists), 2 The deal (`.tr-page-deal`: each side's `tradeDealSide` box takes the
+  height, about 16 assets before it scrolls; names in full; the answer and Ask beside them), 3 What it does
+  (`.tr-page-effect`). The step bar carries one "way on" button.
+- **What it does is in sections** (`state.tradeEffectTab`: team, court, money): `tradeEffectTeam` (the four
+  headline ratings large, every other rating, who plays; data from `tradeEffectData`), the heat maps with the
+  minutes behind them open at the side (`tradeIdentityPage({openMinutes: true})`; the maps are enlarged to the
+  width and height they are given), `tradeEffectMoney` (one team's payroll, each team's salary check, the values).
+- **The Market** (Sonnet subagent from a written brief, reviewed): `gui/trade-market.js` (`TradeMarketView.markup`)
+  and `gui/trade-market.css` (classes `tm-`), hooked from `renderTradeMarket`. A tall row a player with the
+  interested teams' logos, the stage, the decision date and "Make an offer" (`data-market-build` /
+  `data-market-player`, wired in `app.js` to `openTradeRoomModal("builder", {targetTeam, targetPlayerId})`); bidding
+  wars first, sold last; the assistant GM's read at the side. `tests/trade_market.test.cjs`.
+- **Storylines on Home** (`storylines()` and `stories()` in `gui/home-front.js`): threads keyed by player or by
+  team and job, built from `state.home.league_events.events` (trade_demand; extension with no salary = talks
+  stalled or team passed; trade; signed extension; free_agent_signing; staff_fire then staff_hire), the trade
+  market's rows (`started`, `stage`, `interested_count`, `decide_by`), the award races' `previous_week_rank`, and
+  the user's players' current morale parts. Steps are dated and sorted; a thread is closed when its last step is a
+  trade, a signing or a hire; a lone "talks stalled" or "on the market" is not a thread. Up to four are shown, the
+  last three steps each, the user's team first. Scores moved to the right column.
+- Tests: `tests/trade_builder_steps.test.cjs` (replaces `trade_two_pages`), storyline tests in
+  `tests/home_front.test.cjs`. Browser tests: 56 of 57 files.
+
+**What the save reading found for storylines** (for whoever extends them)
+- In the browser today: the eight "transaction" kinds of league event (last 60, with `player_ids`, `team_ids`,
+  `details`, `activity_groups` carrying names and faces), the trade market's last ten days, award races with a
+  one-week comparison, the user's morale parts (current only), every team's record and roster rank.
+- In the save, needing a display-only payload addition: `injury_events` (start and return dates, league-wide),
+  `team_game_logs` (streaks), `staff_firing_history` and `job_security` (hot seat), `re_signing_rights`,
+  `offseason_decisions`, the market's raw `shopping` entries (`reasons`, `bids`), full transaction logs with
+  `trade_reasons`, injury / major_stat_line / award league events (the `league_events` action takes a `kind`).
+- Does not exist (engine work): links between events; morale, confidence or roster-rating history; a
+  `contract_satisfaction` that changes; what an unhappy player wants; trade demands by the user's players or for
+  any reason other than stalled talks; a refusal-to-re-sign event; stored rejections of the user's extension offers.
+
+**From the coordinator (main 644d139b, to fold in after merging main)**: free-agent departures carry a reason
+(`departure_text`, such as "leaving MIN chasing his first championship"); `freeAgencySigningWirePanel` should show
+`move.departure_text` (today only in the hover headline) and `signingDayRecap` should add
+`departed[].departure_text`. Details: `docs/agents/tasks/coaches-free-agents.md` on main, "Follow-ups". The
+coordinator also put the trade forecasts up as a task card for the user ("Trade forecasts: four factors and morale
+for a proposed deal"; planned `project_four_factors` and `project_trade_morale`).
+
+**Waiting on five decisions** (page https://claude.ai/artifact/48vExRmFXi6XWbWJPtPujW, collection `decisions`):
+`builder-steps` (good | change), `effect-sections` (good | change), `storylines` (good | change), `offseason-home`
+(front | keep), `next` (more-stories | trade-rest | rest-popups | sweep).
+
+**Known gaps**: no storylines in the offseason (Today is contracts, payroll and picks there); a saga's first step
+can fall out of the 60-event window; the Finder is unchanged; the heat maps still use `trade-projection.js`
+minutes; the Market's sold / final-offer / own-offer states were not seen in a real save; Ask, Accept and Propose
+were not pressed this round. Still open from before: Home before the season and in the playoffs, the extension
+window and player card, the start screen, more arena photos, the coordinator's lottery and playoff-line items, the
+final sweep.
+
+## Stage C, checkpoint 11 report (2026-11-26)
+
+**The user's answers to checkpoint 10** (their words where quoted): the Builder's steps good; the effect sections
+"look a little shoddy on [their] own, but I like the division"; the offseason Today tab becomes the front page;
+next = more storylines. On storylines: "I definitely like to see how the storylines evolve, that's a big thing.
+One thing about the trades: they evolve by getting more and more revealing, like not knowing who might be involved
+in a trade, revealing a few assets at a time, and then the picture of the final trade becoming more clear as it
+gets closer to being completed (unless there's a falling out or some new development, which makes things
+interesting, and it would be great to show that to the user so they could experience it)."
+
+**What changed**
+- **New display-only action `home_storylines`** (`home_storylines_payload` in `app_actions.py`; about 0.35 s on the
+  test save; nothing saved): `talks` (the trade market's negotiations of the last 30 days that do not involve a
+  human team: buyer, seller, player, status, outcome, how it ended, and every round with its date and each side's
+  offer), `shopped` (shopping entries with their bids, leader, winner, dates), `streaks` (five or more in a row,
+  or seven or more that ended in the last four days; needs a game in the last six days), `injuries` (26 or more
+  projected minutes, eight or more games, still out or back within five days), `hot_seats` (AI teams 20 or more
+  games in and eight or more wins per 82 below the expectation the coach review uses; needs a recent game).
+  `gui/home-front.js` asks for it once a game day with the market and stores it in `state.data.homeStories`.
+- **Trade rumors reveal by round** (`storylines()` in `gui/home-front.js`): round 1 "A and B opened trade talks"
+  (thread named for the two teams; the player appears nowhere), round 2 "The talks are about X" (the thread takes
+  his name and face), round 3 on "A has offered ..." and each changed offer, a final offer, then "Done: X to A",
+  "Talks broke off: ..." or "He was traded elsewhere". A player already public (asked out, shopped, or with several
+  suitors once one has named him) is named from the start. A sale in the open: "A team from the West leads the
+  bidding", then the leader and its offer, then "Sold to ..." or "No deal: SELLER kept him".
+- **More storylines**: streaks ("First of 14 straight wins", "Beaten by MIA"), key injuries (15 games or more, or
+  just back, or yours; "Out for the season" when the return is after June 30), coaches under pressure (merges into
+  the fire and hire thread). Ranking: the heaviest step, plus size (streak length, games missed, wins below pace),
+  plus yours, minus closed, minus staleness (days since the last step that has happened; a streak, a hot seat, a
+  mood or an award lead counts as today). Home shows five, at most two of one family unless they are the user's.
+  Step dates carry the year when it is not this year.
+- **Home's Today tab is the front page all year** (`homeLayout` in `card-pages.js`; `offseason()` in
+  `home-front.js`): from the lottery to camp the strip leads with payroll, cap room and roster
+  (`statusDashboard.cap_summary`), the middle column is "Biggest deals" (`moves()`: signed extensions and
+  free-agent signings by total value), the right column is trade talk, "Can be extended" (`eligible()`) and the
+  games ahead.
+- **What it does, sharpened** (`tradeEffectTeam` in `app.js`, `gui/popups.css`): a bar beside every rating and every
+  player's minutes (tick = now, bar = after), taller rows, the payroll without its own box.
+- Tests: fifteen in `tests/home_front.test.cjs` (each rumor stage, the sale, streaks, injuries, hot seats, the mix,
+  the offseason page, the server action read as source). Browser tests: 56 of 57 files.
+
+**Found and fixed on the way**: last season's streaks and coach paces showed in the summer (the game logs and
+records stay until rollover); both now need a game in the last six days.
+
+**From the coordinator, still to fold in after merging main**: the 3-2-1 lottery card and reveal, the year-end
+slide's "of 14", the player page's playoff line, and free-agent departure reasons on the signing wire and the
+signing-day recap.
+
+**Waiting on five decisions** (page https://claude.ai/artifact/Tq8Sn3j827RkwJFCwKk9zN, collection `decisions`): `rumor-pace` (good | slower | change),
+`story-mix` (good | change), `summer-front` (good | change), `effect-sharper` (good | more), `next`
+(story-page | trade-rest | rest-popups | sweep).
+
+**Known gaps**: rumor stages past round two (offer, final offer, falling-out) are covered by tests but were not
+seen in a real save; Home shows five of the test save's 53 storylines and there is no page listing them all;
+rumors are not ranked by how good the player is (no rating in the payload); in the offseason the injury storylines
+are last season's long absences; `home_storylines_payload` has no Python unit test; the court section of What it
+does was not touched. Engine work the user has not been asked to request: refusals to re-sign, demands by the
+user's own players, what an unhappy player wants, morale history.
+
+## Stage C, checkpoint 12 report (2026-11-26)
+
+**The user's answers to checkpoint 11**: rumor pace "slower" (keep the player hidden a round longer, hint at his
+position first); the storyline mix good; the offseason front page good; the sharpened effect sections good; next =
+the extension window and the player card.
+
+**What changed**
+- **Rumors a round slower** (`storylines()` in `gui/home-front.js`): round 1 the two teams, round 2 a hint ("The
+  talks are about a young forward on SAC": guard / forward / center from his position, young at 23 or under,
+  veteran at 31 or over), round 3 "It is NAME", round 4 on the offer. Talks that die before round 3 stay under the
+  two teams' names. Weights: target 82, hint 78, talks 66 (a hint-stage rumor now outranks a second hot seat).
+- **A player's page has a real header** (`renderDetailHead` in `gui/card-pages.js`): the title is his name
+  (`.approved-profile-name h3`), the tabs are his card's own pages (`data-pages-card-page`, labels from each
+  `data-page-title` up to its first comma or ampersand: Season, Ratings, Health, and Contract Extension when he
+  is eligible); a tab calls the card's `_showPlayerCardPage`; a MutationObserver keeps the header in step as the
+  card fills in. `card-pages.css` no longer hides the title on a detail page. Before, the header kept the tabs of
+  the page you came from.
+- **The player's page is readable** (`gui/player-page.css`, Sonnet subagent, reviewed; every rule under
+  `.card-board-window.is-detail-card`): `layoutDetail` draws the card at 2100 by 1270 and shrinks it to about 0.58,
+  which is why its text was 5 to 9px; the sheet sets `zoom: calc(1 / var(--pages-scale, 1))` on
+  `.approved-player-card.approved-player-pages` so sizes inside are real, then lays the three pages out at 11px and
+  13px. The old page bar and the name `h3` are hidden (the header carries them). Changed after review: no striped
+  rows in the health table; the identity strip is hidden on the Ratings tab and each mix title stays on one line,
+  so that tab fits without scrolling at 1512 by 900.
+- **The contract extension page** (`gui/extension-window.css`, second Sonnet subagent, reviewed; every rule under
+  `.is-detail-card .player-card-page--extension`): no boxes; a glass salary field; slider marks that do not
+  overlap; the verdict as a coloured dot and plain words; chosen option pills frosted; the cap table's headings in
+  full; chart labels readable (sized from the plot's width with a container query unit and `calc()` division).
+- Tests: `tests/player_page_style.test.cjs`, `tests/extension_window_style.test.cjs`, the player-page header in
+  `tests/sidebar_pages.test.cjs`, the rumor test rewritten in `tests/home_front.test.cjs`. Browser tests: 58 of 59
+  files.
+
+**Waiting on five decisions** (page https://claude.ai/artifact/MvsXT5Cv8sZgJDqk18puPh, collection `decisions`):
+`player-page` (good | change), `ratings-strip` (fit | strip), `ext-close` (yes | no), `rumor-pace-2`
+(good | change), `next` (story-page | trade-rest | merge-main | sweep).
+
+**Known gaps**: the extension verdict has no "close" state (99% of his price shows red; needs a tone from the
+page's code); the player's page is still drawn large and shrunk, with the zoom rule cancelling it for text (a
+rebuild at real size belongs in the final sweep); at 1280 by 760 the Ratings tab scrolls; not looked at: the season
+picker open, hover states, a prospect's page, coach cards (still pop-ups); the extension chart's label sizing needs
+a browser with `calc()` length division. Still open: a Storylines page, the Finder, engine heat maps, the start
+screen, the coordinator's items after merging main, the final sweep.
+
+## Stage C, checkpoint 13 report (2026-11-26)
+
+**The user's answers to checkpoint 12**: the Ratings tab without the top strip is fine; an amber close state on the
+extension page: yes; the rumor pace is good; next = a Storylines page; the player's page: "Good sections: Ratings,
+Health. ... The first section should be the players career stats. Tabs for playoffs and regular season and per36.
+Then also maybe just a 1 row table for their contract, and a projected ovr by age table like we have in the
+extensions. Look at the JFresh dylan larkin game page reference ... Maybe a financial page? Not sure if enough info
+... Give the hotspots their own page ... I'd put a storylines or narratives or 'things to watch' kind of section in
+there here somewhere."
+
+**What changed**
+- **A player's first tab is his career** (`gui/player-career.js`, new; `window.PlayerCareer`): the contract as one
+  row (`contractRow`, from `salary_seasons`: a column a season, the first free-agent year, the total); the career
+  table (`careerRows` / `careerTable`: a row a season oldest first and a Career line; switches `data-pp-scope`
+  regular | playoffs and `data-pp-mode` game | per36; per 36 scales the counting numbers only; playoffs read
+  `career_seasons[].playoffs`, which this branch does not have until main is merged); Things to watch (`watch`:
+  the storylines he is in from `HomeFront.storylines`, then last contract season, extension eligible, decline
+  watch or room to grow, games lost to injury); Projected overall by age (`outlookChart`, lazy-loaded).
+- **Hotspots have their own tab**: in `openPlayerCard`'s markup (`gui/app.js`, `careerFirst` / `careerShift`) the
+  page version of a non-prospect's card is Career, Hotspots, Ratings, Health (+ Contract Extension). Prospects and
+  the floating card keep their old first page.
+- **`player_outlook`** (display-only action in `app_actions.py`): `ability_projection(active, player, start,
+  start + 5)`, the same scenario model the extension page draws. No save is written.
+- **League > Storylines** (`storiesPage()` in `gui/home-front.js`; card `storylines`, panel
+  `.season-stories-panel`, page entry in `gui/card-pages.js`, icon `thread`): every storyline in a list, filter
+  pills by kind (only kinds with something in them), the chosen one's whole history on the right with a button to
+  his page / the standings / the news. On Home the Storylines heading and every storyline row open this page
+  (`data-front-story`).
+- **Stars lead in rumors**: `home_storylines` now sends each player's displayed overall; the ranking adds up to
+  +24 for a star and down to -12 for a deep-bench player (75 is neutral).
+- **The extension page's close state** (`extensionVerdictClose` in `gui/app.js`): a no at 90% to under 100% of his
+  price reads "Close, but he says no" with an amber dot and bar (`.fa-verdict-no.is-close` in
+  `gui/extension-window.css`). The answer itself is unchanged.
+- Styles: Career and Hotspots rules appended to `gui/player-page.css`; Storylines page rules appended to
+  `gui/home-front.css`. Cache version `polish-c50`.
+- Tests: `tests/player_career.test.cjs` (10 tests); `tests/home_front.test.cjs` updated for the Storylines heading
+  button. Browser tests: 58 of 59 files (only `startup_video.test.cjs`, as before).
+
+**Waiting on five decisions** (page https://claude.ai/artifact/UULHN3WKdNgcVZsbdiYwoj, collection `decisions`):
+`career-tab` (good | change), `money-tab` (no | yes), `hotspots-tab` (good | change), `stories-page`
+(good | change), `next` (merge-main | trade-rest | sweep | start).
+
+**Known gaps**: the Playoffs switch is empty until main's `career_seasons[].playoffs` is merged (never seen with
+real numbers); a big window leaves the lower third of the Career tab empty for a mid-length career; no separate
+money tab (judged one row's worth; asked); the star bonus was only tested with made-up talks; not seen in the game:
+a two-team season, a 20-season career, hover states on the Storylines page; no Python unit tests for
+`player_outlook` or the `overall` field in `home_storylines`.
+
+**For the coordinator (ratings, not display)**: Thomas Sorber, 20, shows "Room to grow: 2.3 of 5" beside a
+projected overall of 76.9 at 20 to 77.1 at 25 from `ability_projection`. Both are shown as the game gives them.
+
+## Stage C, checkpoint 14 report (2026-11-26)
+
+**The user's answers to checkpoint 13**: the Career tab good; no money tab; Hotspots on their own tab good; the
+Storylines page good; next = merge main and fold in the coordinator's items.
+
+**What changed**
+- **Main merged into the branch** (57 commits, through 903fd10b; no conflicts).
+- **The lottery under the 3-2-1 format** (`gui/app.js`): `lotteryDrawsEveryPick(lottery)` reads `lottery.format`.
+  The odds card says "All 16 picks drawn" (the old format keeps "Four picks drawn ..."); the reveal counts down
+  from `reveal.total` and shows no "jumped into the top four" notice; `lotteryRevealState`
+  (`gui/simulation-presentation.js`) reports no promoted teams for 3-2-1. Both grids get `--lottery-rows` (half
+  the teams) and `gui/full-pages.css` uses it for the row count: the grids fill a column at a time and had seven
+  fixed rows, so teams 15 and 16 spilled into a third column. The reveal's rows share the height (they were 48px
+  fixed) so eight fit without scrolling.
+- **Year-end slide** (`gui/season-slideshow.js`): "Lottery position N of `lottery_teams`" (14 when absent).
+- **Playoff lines**: the Career tab's Playoffs switch (checkpoint 13) reads `career_seasons[].playoffs`, which
+  the merge brought in. No code change; seen with real numbers on a copy of the Finals test save.
+- **Why a free agent left**: `freeAgencySigningWirePanel` shows `move.departure_text` on a line of its own
+  (`.fa-wire-why`, wraps); `signingDayRecap` appends `departed[].departure_text` after "signed with TEAM".
+- Tests: `tests/main_followups.test.cjs` (5 tests), a 3-2-1 case in `tests/simulation_presentation.test.cjs`, the
+  recap's reason in `tests/offseason_checklist.test.cjs`. Browser tests: all 60 files (main's change makes the
+  start-video test skip when the video is missing). Cache version `polish-c54`.
+
+**How it was checked**: a copy of `st_playoffs.json` was played through to draft night under the merged code, which
+gave a real 2027 lottery (format 3-2-1, 16 teams). The lottery screen was switched to by hand
+(`state.draftPresentationStage`), because the game still goes straight to draft night. A copy of `st_fa_open.json`
+was played four market days; one of 30 signings carried a reason (the save predates `free_agent_origins`).
+
+**Waiting on four decisions** (page https://claude.ai/artifact/XuGrBpFHKywQ8yyTiCgEdC, collection `decisions`):
+`lottery-card` (good | change), `pick-range` (range | barred | leave), `wire-why` (good | change), `next`
+(trade-rest | sweep | start).
+
+**Known gaps**: the year-end slide's count and the recap's reason line are tested but were not seen in the game;
+playoff history starts with the save (real earlier playoff runs are not loaded: on the coordinator's list for
+others); the Python suite was not rerun on the merged branch (browser tests only, per the light-testing rule for
+UI work); the odds card shows 0.0% for teams barred from the top pick without saying why (rows carry
+`highest_pick` / `lowest_pick`; asked).
+
+**For the coordinator**: the lottery screen is still skipped (third report: the game goes from re-signing straight
+to draft night with `presentation_stage` "reveal" already set); the test save's departed free agent (Luka Garza)
+has `departure_text` null because the save predates the origins record.
+
+**After checkpoint 14 (2026-11-26)**: the coordinator's full Python run on the branch (2,749 tests) had one failure,
+`tests/test_gui_concept71.py` (Settings looks expected glass, font, buttons; found "motion", the Background
+movement switch from checkpoint 4). The user was asked and said to keep the switch; the test now allows it
+(6071d437 and the commit after it). The branch's browser tests alone had not caught this since checkpoint 4.
+
+## Stage C, checkpoint 15 report (2026-11-26, a Sonnet 5.5 session)
+
+**The user's answers to checkpoint 14**: the lottery card good; the 0.0% teams "leave"; the signing wire's reason
+good; next = "trade-rest" ("The Finder, and the heat maps from the game's own team map"). The handover above lists
+those heat maps under "do not do", so only the Finder was built and the heat maps are asked again.
+
+**What changed**
+- **The Finder is two steps** (`renderTradeFinder` in `app.js`; `state.tradeFinderView` "pick" | "results", with the
+  Builder's `.tr-steps` bar): step 1 the asset list beside what is shopped (tiles, pick conditions, payroll); step 2
+  the found trades, two across. Find trades moves to step 2; changing assets falls back to step 1; changing the team
+  shopped to searches again and stays on step 2 ("Finding trades…", `state.tradeFinderSearching`). `tradeResultCards`
+  and the search request are unchanged.
+- Styles appended to `gui/popups.css`. Height and growth runway stay off the Finder's list (as before) so the value
+  column is on screen; at 1400px wide or less injury risk goes too and the side column narrows; at 820px tall or less
+  the payroll chart is zoomed to .78.
+- **Fixed on the way**: ticked checkboxes in the whole trade room looked empty (the pop-up sheet's `background`
+  shorthand wiped the tick); a pick condition being edited ran off the Finder's side column.
+- Tests: `tests/trade_finder_steps.test.cjs` (6). Browser tests: all 61 files; `test_gui_concept71` and
+  `test_gui_concept74` pass. Cache version `polish-c62`.
+
+**How it was checked** (copy `playtest.json`, port 8775, 1512 by 900 and 1280 by 760): shopped two players, shopped a
+pick and added a protection, searched, opened Trade analysis (both pages), switched to acquiring from ATL, searched,
+opened an offer in the Builder and came back, cleared, changed the team shopped to (a search with no match).
+
+**Waiting on three decisions** (page https://claude.ai/artifact/Jk4wDXBit2uHT8Nqvr4KNM, collection `decisions`):
+`finder-steps` (good | change), `heat-maps` (build | leave), `next` (start | sweep).
+
+**Known gaps**: found trades show a dash for roles (the search results carry none; true before); the colour key under
+the value bars in Trade analysis has no colour squares (for the sweep); a long result list, an opened analysis and
+the side column during a condition edit still scroll; the sentence "You can review each returned offer in the builder"
+no longer shows (its empty results panel is not reachable before a search); not seen: swap-right or two conditions,
+hover states, windows under 1280 by 760, more than three results; no Python changed, full suite not run.
+
+## Stage C, checkpoint 16 report (2026-11-26)
+
+**The user's answers to checkpoint 15**: the Finder's two steps good; the heat maps "leave"; next = the start screen.
+
+**What changed**
+- `gui/startup.css` rewritten below the film / photo backdrop (that part unchanged): the three panels, the multiplayer
+  lobby and the loading box are the dark glass with token values; no white fills, no Arial.
+- The start screen's selects use the game's glass menus (`glass-select.js` SCOPE gains `#startupScreen`; the hidden
+  team select is skipped, the wheel stays the control). A long menu scrolls inside the window.
+- `renderStartup` redraws the lobby only when its markup changed (`lobbyMarkup`): the two-second check used to shut
+  open menus and wipe typed rule values.
+- Removed the old blue primary-button rules from `ui-polish.css`. In `index.html`: "Choose your franchise · preview
+  highlights" and the "Join code" hint in sentence case.
+- Tests: `tests/start_screen_glass.test.cjs` (4). Browser tests: all 62 files; `test_gui_concept71` and
+  `test_gui_concept74` pass. Cache version `polish-c65`.
+
+**How it was checked** (port 8775, 1512 by 900 and 1280 by 760): each panel, the save menu, entering a save, creating
+a new Milwaukee save (removed afterwards), a broken save file (removed afterwards), a lobby with one manager (claim,
+ready, change a rule through the menu and save, leave), the loading box.
+
+**Waiting on three decisions** (page https://claude.ai/artifact/6HpYHz3NdHu3PV2mf8tSZX, collection `decisions`):
+`start-look` (good | change), `extra-lines` (cut | keep), `next` (sweep | stop).
+
+**Known gaps**: not seen over the start-screen film (not in this worktree); export, restore, recover, join by code, a
+second manager, starting a multiplayer league and windows under 1280 by 760 not tried; no Python changed, full suite
+not run.
+
+## Stage C, checkpoint 17 report: the final sweep (2026-11-27)
+
+**The user's answers to checkpoint 16**: the start screen good; the repeated lines "cut"; next = the final sweep.
+
+**What changed**
+- Start screen and lobby: "Choose your franchise · preview highlights", "Selected team", the film sentence,
+  "Multiplayer Lobby" and "Franchises" are gone.
+- A prospect on a page: Hotspots is its own tab (the maps were drawn over the college tables). `app.js`
+  `prospectCourt`; the floating card is unchanged.
+- A closed page no longer fades (`card-pages.css` dims only its controls).
+- Readability: the blocked-payment box in free agency; preseason Home morale labels; close salary marks take up to
+  three rows (`positionSalaryMarks`); the extension chart's two axis lines; a long name keeps the page title on one
+  line; the season picker above its table; Report an Issue's padding; the value bars' colour key and full pick names;
+  "Over the tax by" on the year-end slide.
+- Names: a name too long for its column takes a second line (roster, playoff stats and injuries, free agency,
+  checklist, Home); contract rows are 24px on windows 820px tall or less so the colour key covers nobody.
+- Text under 11px raised (awards, news, draft assets, bracket labels, slides, Settings, the finder shortcut).
+- Tests: `tests/final_sweep_fixes.test.cjs`. Browser tests: all 63 files; `test_gui_concept71` and
+  `test_gui_concept74` pass. Cache version `polish-c83`.
+
+**How it was checked** (copies, port 8775): every page on `playtest`, `st_new`, `st_playoffs`, `st_draft`,
+`st_resign`, `st_fa_open`, `st_camp`, `st_finals_done`; pop-ups, hover states, both slideshows, a prospect's page,
+the season picker, signing day; the changed pages also at 1280 by 760. Tools in `output/ui-polish/`: `scn/sw.mjs` +
+`sweep-check.js` (the sweep and its report), `scn/ba.mjs` with `OLD_GUI=oldgui` (before pictures from an earlier
+copy of the interface, served through the screenshot tool).
+
+**Waiting on five decisions** (page https://claude.ai/artifact/PGaohigd2QwMND42drqBV6, collection `decisions`):
+`sweep` (good | change), `long-names` (wrap | wider), `coach-card` (close | keep), `captions` (info | keep), `next`
+(stop | more).
+
+**Known gaps**: at 1280 by 760 a page shrinks as one piece (text under 11px; the extension page and a prospect's
+Ratings tab scroll a little; true before); boxes remain on the coach card, staff talks, news posts and parts of Trade
+analysis; long pick conditions clip inside a news post and fill a headline; wrapped names make some rows taller;
+disabled offer buttons are faint; the Finder's value rows were not re-pictured; not seen: fantasy draft, staff
+retention, cutdown, Sign Players, the board layout, the lottery screen this round, the start screen over its film,
+windows under 1280 by 760; no Python changed, full suite not run.
+
+## Round after the final sweep: the user's checkpoint 17 answers (2026-11-27)
+
+Sweep fixes good. Long names: second line, and (their note) "i dislike when rows are non-uniform in their
+dimensions, so for any name that is short enough to be on one line, make their rows ... wide enough to fit two rows,
+and then center the singular row of text vertically". Coach card: close on page change. Captions: behind an "i".
+Next: one more round. Their "Anything else" note:
+1. "When trading or signings are closed, don't show the buttons to even open those pages."
+2. "The contract extension page as the first page on the player card looks pretty good. Much better than the 'Offer
+   builder' side bar on the right in the free agency. I want to make the contract extension page that is the first
+   page on the player card the only way to negotiate signings ... a unified look whenever dealing with player
+   signings. Just delete the offer builder side bar and refit that page and make the contract extension page work
+   with the free agency/options and make it the popup that is needed to actually do the signing from ... LMK how it
+   goes"
+3. "Just keep looking for natural UI/UX issues while playing the game. i trust your nose ... (I am saying I would
+   allow new visual features and stuff ...) one core thing is I still think aspects of the game feel a bit still
+   mechanical rather than human, like the trade negotiations and the player and coach interactions on your team, but
+   those are larger and we probably need a smarter model ... we can do it later, we have a lot more simple UI/UX
+   work we can do first for a few days"
+
+### Report (checkpoint 18)
+
+Done:
+- Closed trading or signings: their buttons, the Find column and the Free Agency tab are gone (this includes the
+  market's Trade Room button).
+- Long names: uniform two-line rows; explaining lines behind an "i"; a coach card closes on page change.
+- One signing page: the side-bar offer builder is deleted. Signing opens the player's page with the offer as its
+  first tab ("Contract Offer", "Re-signing Offer" or "Offer Sheet").
+- Found on the way and fixed: the salary slider rounded the top legal salary up (and the minimum down), so the most
+  you could offer came back "blocked"; the cap's reasons printed twice; the Sign button off screen at 1280 by 760;
+  signing-wire lines ending in dots; the market's last column clipped; the injury list's "Expected back" and ratings
+  clipped; "Tradable from 2028-01-15" now a written date.
+
+Checked on copies of saves (`output/ui-polish/saves/sub_*`): a re-signing refused and accepted, an open-market offer
+refused and one that signed, a two-way, a camp invite, renouncing a cap hold, entry from a market row by keyboard,
+comparison, player name and checklist, a regular-season save (no offer tab), 1512 by 900 and 1280 by 760. All browser
+test files and the two Python interface tests pass.
+
+Not checked: a signed offer sheet and a completed sign-and-trade (no test save allows either; both use the same
+"close the page" step as the paths that were tested), the draft-day signing-closed state this round beyond the
+earlier picture, windows under 1280 by 760, the full Python tests (no Python changed).
+
+Seen and left alone (game rules, not interface):
+- A camp invite is allowed for every free agent: a player asking about $23M accepted one at his minimum.
+- "The most you can pay" can be a salary the cap then blocks (the full mid-level for a team over the first apron).
+- The offer opens on the highest salary, so for an expensive player it starts "Blocked by the cap".
+
+**Waiting on decisions** (checkpoint 18 page, collection `decisions`).
+
+## Checkpoint 19 (2026-11-27): answers to checkpoint 18, then a season played through the interface
+
+Answers: signing form "keep as his page"; first offer "start on one the cap allows"; next "more"; their note:
+"the trades tab shouldn't even exist when it is an illegal time to make trades"; and "I feel like we're probably at a
+point where I could playtest very soon, don't you think?" Last season's numbers: not answered (left as is).
+
+Done: Trades tab hidden when closed; offers open on payable terms. Then one copied save was played from training
+camp 2027 to preseason 2028 (`output/ui-polish/scn/play.mjs`). No script errors. Found and fixed:
+- Sign Players showed no player list; Set The Roster cut off "Decline".
+- "Sim to next game" moved one league day, usually two or three presses a game.
+- After a draft sim the footer and sidebar stayed at the first pick.
+- Home: "Checking the market…" stuck after a sim; 0.0 leaders before any game; "Full" at 12 players; text in dots.
+- "Sign 1 more player" when two were needed (the game's pending figure is a yes/no flag).
+- Near-white confirm box; Staff Retention squeezed with salaries cut off; draft summary reasons and prospect names in
+  dots; raw dates; last summer's ticker moves without a year.
+
+Checked: all browser tests and the two Python interface tests; before and after pictures. Staff Retention's new
+layout was checked with made-up data on screen (no test save is waiting on a coach decision after the run).
+
+Not checked: signed offer sheet, completed sign-and-trade, fantasy draft, windows under 1280 by 760, the full Python
+tests (no Python changed), a second season.
+
+Not interface, seen while playing: sims are slow on this laptop (14 days took 36 s in the server alone; months took
+77 to 124 s in the browser; free-agency days about 25 to 30 s; the jump to preseason 93 s). The target is 10 to 20 s
+a month. This branch changes no engine code. Camp-invite and max-offer rule fixes are in a separate session
+(`claude/dreamy-yonath-57ede0`, uncommitted, not reviewed); it noted two-way deals still ignore a player's asking
+price. Main has no commits this branch lacks.
+

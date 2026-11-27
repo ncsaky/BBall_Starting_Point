@@ -133,8 +133,10 @@ const UI_LOOK_SETTINGS = {
   font: { key: "nbaGmFont", label: "Font", fallback: "helvetica", options: [["helvetica", "Helvetica Neue"], ["modern", "SF Pro"], ["rounded", "Rounded"], ["avenir", "Avenir Next"], ["classic", "Classic (Tahoma)"]] },
   // Round 6: the user couldn't pick one button style, so all four are offered.
   buttons: { key: "nbaGmButtons", label: "Buttons", fallback: "pill", options: [["pill", "Glass pill"], ["solid", "Solid pill"], ["square", "Rounded square"], ["segmented", "Segmented"]] },
+  // The arena picture behind the glass drifts slowly and leans with the page (arena.js; user, 2026-11-26).
+  motion: { key: "nbaGmBackgroundMotion", label: "Background movement", fallback: "on", options: [["off", "Off"], ["on", "On"]] },
 };
-const UI_LOOK_DATASET = { glass: "glass", font: "uiFont", buttons: "uiButtons" };
+const UI_LOOK_DATASET = { glass: "glass", font: "uiFont", buttons: "uiButtons", motion: "uiMotion" };
 function uiLook(name) {
   const setting = UI_LOOK_SETTINGS[name];
   let saved = "";
@@ -272,7 +274,7 @@ function gameCommands() {
     {label:"Settings", keys:"g ,", run:openSettingsModal, available:ready},
     {label:"Year-end recap", run:() => openLatestSeasonSlideshow("recap"), available:() => ready() && seasonSlideshowsAvailable().some(row => row.kind === "recap")},
     {label:"Preseason outlook", run:() => openLatestSeasonSlideshow("outlook"), available:() => ready() && seasonSlideshowsAvailable().some(row => row.kind === "outlook")},
-    {label:dashboardPhaseKind() === "playoffs" ? "One game per series" : "Next event / one pick", keys:"s e", run:click('[data-advance="next-event"], #fantasySimOne, #draftSimCurrent, #faAdvanceDay, #reSignAdvanceDay'), available:available('[data-advance="next-event"], #fantasySimOne, #draftSimCurrent, #faAdvanceDay, #reSignAdvanceDay')},
+    {label:dashboardPhaseKind() === "playoffs" ? "One game per series" : "Next event / one pick", keys:"s e", run:click('[data-advance="next-event"], [data-advance="next-game"], #fantasySimOne, #draftSimCurrent, #faAdvanceDay, #reSignAdvanceDay'), available:available('[data-advance="next-event"], [data-advance="next-game"], #fantasySimOne, #draftSimCurrent, #faAdvanceDay, #reSignAdvanceDay')},
     {label:dashboardPhaseKind() === "playoffs" ? "One full series" : "Simulate week", keys:"s w", run:click('[data-advance="week"]'), available:available('[data-advance="week"]')},
     {label:dashboardPhaseKind() === "playoffs" ? "Finish playoffs" : "Simulate month", keys:"s m", run:click('[data-advance="month"]'), available:available('[data-advance="month"]')},
     {label:"Simulate to my pick", keys:"s p", run:click('#draftToUser, #fantasyToUser'), available:available('#draftToUser, #fantasyToUser')},
@@ -334,6 +336,45 @@ function wireEvents() {
     globalThis.CardPages.setMode(button.dataset.layoutModeChoice);
     button.parentElement.querySelectorAll("[data-layout-mode-choice]").forEach(other => other.setAttribute("aria-pressed", String(other === button)));
     const modal = state.modal; render(); state.modal = modal; renderModal();
+  });
+  // Settings > Sound: the switches apply at once; the slider plays a sample when let go.
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest?.("[data-sound-choice], [data-sound-clicks]");
+    if (!button || !globalThis.GameSound) return;
+    const clicks = button.hasAttribute("data-sound-clicks");
+    const on = (clicks ? button.dataset.soundClicks : button.dataset.soundChoice) === "on";
+    globalThis.GameSound.set(clicks ? {clicks: on} : {on});
+    button.parentElement.querySelectorAll(clicks ? "[data-sound-clicks]" : "[data-sound-choice]").forEach(other => other.setAttribute("aria-pressed", String(other === button)));
+    if (on) globalThis.GameSound.play(clicks ? "click" : "continue", {force: true});
+  });
+  document.addEventListener("input", (event) => {
+    const slider = event.target.closest?.("[data-sound-volume]");
+    if (!slider || !globalThis.GameSound) return;
+    globalThis.GameSound.set({volume: Number(slider.value)});
+    if (slider.nextElementSibling) slider.nextElementSibling.textContent = `${slider.value}%`;
+  });
+  document.addEventListener("change", (event) => {
+    if (event.target.closest?.("[data-sound-volume]")) globalThis.GameSound?.play("win", {force: true});
+  });
+  // Settings > Sound > Music: its switch, its volume, and the skip button; the track's name follows the player.
+  document.addEventListener("click", (event) => {
+    const music = globalThis.GameMusic;
+    if (!music) return;
+    const button = event.target.closest?.("[data-music-choice]");
+    if (button) {
+      music.set({on: button.dataset.musicChoice === "on"});
+      button.parentElement.querySelectorAll("[data-music-choice]").forEach(other => other.setAttribute("aria-pressed", String(other === button)));
+      if (!music.settings().on) document.querySelectorAll("[data-music-track]").forEach(label => { label.textContent = ""; });
+    } else if (event.target.closest?.("[data-music-skip]")) music.skip();
+  });
+  document.addEventListener("input", (event) => {
+    const slider = event.target.closest?.("[data-music-volume]");
+    if (!slider || !globalThis.GameMusic) return;
+    globalThis.GameMusic.set({volume: Number(slider.value)});
+    if (slider.nextElementSibling) slider.nextElementSibling.textContent = `${slider.value}%`;
+  });
+  globalThis.GameMusic?.onChange?.((track) => {
+    document.querySelectorAll("[data-music-track]").forEach(label => { label.textContent = track ? track.title : ""; });
   });
   // Settings > Card transparency: applies while the slider moves.
   document.addEventListener("input", (event) => {
@@ -470,11 +511,14 @@ function wireEvents() {
     if (!button) return;
 
     const mode = button.dataset.advance;
+    // Pages layout, deadline day: the footer's buttons say they close trading, so pressing one is the confirmation.
+    if (firstRunLayout() && button.closest(".pages-dock") && state.home?.save?.current_date === tradeDeadlineDate()) acknowledgeTradeDeadline(tradeDeadlineDate());
 
     if (dashboardPhaseKind() === "playoffs" && ["next-event", "week", "month"].includes(mode)) {
       return advance({ next_event:true, postseason_sim:{"next-event":"game", week:"series", month:"all"}[mode] });
     }
     if (mode === "next-event") return advance({ next_event: true });
+    if (mode === "next-game") return advance({ to_date: button.dataset.advanceDate, next_event: false });
     if (mode === "week") return advance({ days: 7, checkpoint_days: 7 });
     if (mode === "month") return advance({ days: 31, checkpoint_days: 31 });
     if (mode === "deadline") return advanceToMilestone("deadline");
@@ -547,6 +591,16 @@ async function apiGet(path) {
   return response.json();
 }
 
+// Sounds that follow what the game reports back: a deal that went through, a pick that is in (sound.js).
+function soundForAction(name, result) {
+  const sound = globalThis.GameSound;
+  if (!sound) return;
+  const status = String(result?.status || result?.result?.status || result?.decision || "");
+  if (["draft_apply_current", "draft_sim_current"].includes(name)) sound.play("pick");
+  else if (["apply_trade_candidate", "sign_and_trade_submit"].includes(name)) { if (!/reject|invalid|illegal|block|fail|error/i.test(status)) sound.play("deal"); }
+  else if (["submit_extension_offer", "respond_user_trade_offer", "submit_free_agent_offer", "offer_sheet_decision"].includes(name)) { if (/accept|agree|signed|complet|execut|match/i.test(status)) sound.play("deal"); }
+}
+
 async function action(name, payload = {}, options = {}) {
   if (state.tutorial) throw new Error("Finish the tutorial before using game actions.");
   if (state.draftPlaybackRunning && !["home", "team_dashboard"].includes(name)) throw new Error("Wait for the draft simulation to finish.");
@@ -593,6 +647,7 @@ async function action(name, payload = {}, options = {}) {
     const data = await response.json();
     if (!response.ok || data.ok === false) throw new Error(data.error || `${response.status} ${response.statusText}`);
     feedbackSucceeded = true;
+    globalThis.soundForAction?.(name, data.result);
     return data.result;
   } finally {
     globalThis.GameFeedback?.recordAction(name, Date.now() - feedbackStarted, feedbackSucceeded);
@@ -1145,72 +1200,92 @@ const GAME_TUTORIAL_STEPS = [
   },
 ];
 
-// The same tour for the pages layout (branch sidebar-pages): the sidebar, the pages and the next step instead of
-// windows, the gallery and title bars. Each card step opens the page that holds the card.
-const PAGES_TUTORIAL_STEPS = [
-  {
-    title: "Welcome to your front office",
-    target: [".pages-nav", ".pages-sidebar"],
-    body: "Every part of your franchise has a page in the sidebar: the team, the front office and the league. The screens for the moment (the opening roster, the draft, free agency) follow one another: the button at the bottom right moves you on.",
-  },
-  {
-    title: "Pages and pop-ups",
-    target: [".pages-sheet"],
-    body: "Each page lays its cards out to fill the screen. Clicking a player opens their own page (Back or Esc returns); box scores and the trade room open as pop-ups over the page. A section title with an arrow opens that section's full page. [ and ] step through the pages.",
-  },
-  {
-    title: "Set the rotation",
-    card: "minutes",
-    target: ['[data-pages-slot="minutes"]', ".season-minutes-panel"],
-    body: "Minutes are one of your most direct coaching decisions. Slider changes save immediately and rebalance unlocked players to 240 team minutes. Blue sliders are your fixed targets; actual game minutes can vary with health and overtime. Use player cards for ratings and context.",
-  },
-  {
-    title: "How team performance is made",
-    card: "signals",
-    target: ['[data-pages-slot="signals"]', ".season-identity-panel"],
-    body: "Game results and box scores come from the players on the floor and the minutes they get, shaped by lineup fit, morale, fatigue, injuries and coaching. Overall rating is only one input: role fit and deployment matter too. The box score reflects those interactions rather than simply repeating player ratings.",
-  },
-  {
-    title: "Health and development",
-    card: "development",
-    target: ['[data-pages-slot="development"]', ".season-development-panel"],
-    body: "Fatigue and injuries affect who is ready to play, so balance workload with recovery. Player Development separates season growth/regression from the latest month. Treat those trends as a trajectory to manage, not a guaranteed outcome.",
-  },
-  {
-    title: "Your coaching staff",
-    card: "staff",
-    target: ['[data-pages-slot="staff"]', ".season-staff-panel"],
-    body: "Coaching Staff sits beside Player Development: review coaches, roles, grades and payroll, and hire from the available staff below. Coaching is part of your team context, alongside the players and their deployment.",
-  },
-  {
-    title: "Read the season",
-    card: "week",
-    target: ['[data-pages-slot="week"]', ".season-week-panel"],
-    body: "The calendar keeps played games and upcoming dates together; open a game for its result and box score. Next Opponent adds form, ratings and availability so you can put each matchup in context. Schedule shows the whole month.",
-  },
-  {
-    title: "Compare efficiency",
-    card: "efficiency",
-    target: ['[data-pages-slot="efficiency"]', ".season-efficiency-panel"],
-    body: "Weekly Efficiency compares your offense and defense with the league average, then shows the net difference. Use it to diagnose where the team is gaining or giving up ground beyond the win-loss record.",
-  },
-  {
-    title: "Explore a trade",
-    target: ['[data-pages-go="trades"]', ".pages-nav"],
-    body: "The Trades page holds the league's trading block, your own block and what teams want; its buttons open the trade finder, builder, incoming offers and the market. The finder suggests packages to evaluate; it does not execute them.",
-  },
-  {
-    title: "Advance the league",
-    target: [".pages-dock", "[data-card-board-tools]"],
-    body: "The next step always sits at the bottom right: Sim To Next Event, with a week or a month behind the arrow, or the phase's own button (Start The Season, Go To Draft Night) when there is one. Advancing changes the save: games resolve and league events may occur.",
-  },
-  {
-    title: "Shortcuts when you need them",
-    target: [".pages-finder", ".pages-nav"],
-    body: "Press ? for the shortcut reference or Cmd/Ctrl+K to search commands. [ and ] move between pages; S then E advances to the next event, and S then W/M advances a week or a month. You can replay this tour from Settings.",
-  },
+// The welcome for the pages layout (UI polish pass, Stage B; user decision 3): four short screens in the slideshow
+// style, drawn from the save itself, then the Preseason Outlook, then Home. The page tips the old eleven-card tour
+// carried sit behind the small "i" beside each section title (PAGE_SECTION_TIPS).
+const FIRST_RUN_STEPS = [
+  {title: "Team", next: "Next", body: firstRunTeamSlide},
+  {title: "The year", next: "Next", body: firstRunYearSlide},
+  {title: "To do", next: "Next", body: firstRunButtonSlide},
+  {title: "Pages", next: "", body: firstRunPagesSlide},
 ];
-const tutorialSteps = () => (globalThis.CardPages?.enabled?.() ? PAGES_TUTORIAL_STEPS : GAME_TUTORIAL_STEPS);
+const PAGE_SECTION_TIPS = {
+  minutes: "Minutes are one of your most direct coaching decisions. Slider changes save immediately and rebalance unlocked players to 240 team minutes. Blue sliders are your fixed targets; actual game minutes can vary with health and overtime. Use player cards for ratings and context.",
+  signals: "Game results and box scores come from the players on the floor and the minutes they get, shaped by lineup fit, morale, fatigue, injuries and coaching. Overall rating is only one input: role fit and deployment matter too. The box score reflects those interactions rather than simply repeating player ratings.",
+  development: "Fatigue and injuries affect who is ready to play, so balance workload with recovery. Player Development separates season growth/regression from the latest month. Treat those trends as a trajectory to manage, not a guaranteed outcome.",
+  staff: "Coaching Staff sits beside Player Development: review coaches, roles, grades and payroll, and hire from the available staff below. Coaching is part of your team context, alongside the players and their deployment.",
+  week: "The calendar keeps played games and upcoming dates together; open a game for its result and box score. Next Opponent adds form, ratings and availability so you can put each matchup in context. Schedule shows the whole month.",
+  efficiency: "Weekly Efficiency compares your offense and defense with the league average, then shows the net difference. Use it to diagnose where the team is gaining or giving up ground beyond the win-loss record.",
+  "league-block": "The Trades page holds the league's trading block, your own block and what teams want; its buttons open the trade finder, builder, incoming offers and the market. The finder suggests packages to evaluate; it does not execute them.",
+};
+
+function firstRunTeamSlide() {
+  const team = userTeam();
+  const dash = state.data.statusDashboard || state.data.dashboard || {};
+  const identity = dash.team_identity || {};
+  const rank = Number(identity.ranks?.overall || 0);
+  const count = Number(identity.league_team_count || identity.team_count || 30);
+  // The same overall the Minutes table shows (healthy rating; the injury drop is shown there, not here).
+  const overall = (row) => Number(playerOverallToday(row)?.healthy ?? NaN);
+  const stars = [...rosterRows(dash)].filter((row) => Number.isFinite(overall(row))).sort((a, b) => overall(b) - overall(a)).slice(0, 3);
+  const logo = teamLogoSrc(team);
+  return `${logo ? `<img class="first-run-logo" src="${escapeAttr(logo)}" alt="" />` : ""}
+    <h2 id="gameTutorialTitle">${escapeHtml(String(dashboardTeamName(team) || team))}</h2>
+    ${rank ? `<p id="gameTutorialCopy">Projected ${rank}${["th", "st", "nd", "rd"][rank % 100 > 10 && rank % 100 < 14 ? 0 : rank % 10] || "th"} of ${count}</p>` : `<p id="gameTutorialCopy"></p>`}
+    <div class="first-run-stars">${stars.map((row) => `<div>${playerHeadshotMarkup(row, "first-run-face")}<b>${escapeHtml(overall(row).toFixed(0))}</b><span>${escapeHtml(row.name || "")}</span></div>`).join("")}</div>`;
+}
+
+function firstRunYearSlide() {
+  const progress = globalThis.GameProgress, c = progress?.context();
+  const head = c ? progress.heading(c) : {step: 0, sub: ""};
+  return `<h2 id="gameTutorialTitle">The year</h2>
+    ${progress?.yearMarkup?.("first-run-year") || ""}
+    <p id="gameTutorialCopy">${escapeHtml(head.sub || "")}</p>`;
+}
+
+function firstRunButtonSlide() {
+  const progress = globalThis.GameProgress;
+  return `<h2 id="gameTutorialTitle">To do</h2>
+    <div class="first-run-demo"><div class="progress-rail" inert>${(progress?.listMarkup(() => false) || "").replace(/<h3>.*?<\/h3>/, "").replace(/<button type="button" class="progress-job([^"]*)"[^>]*>/g, '<div class="progress-job$1">').replaceAll("</button>", "</div>")}</div><div class="first-run-dock pages-dock" inert><div class="card-board-phase-actions">${(progress?.dockMarkup() || "").replace(/ id="[^"]*"/g, "").replace(/ data-(?:phase-command|advance|pages-go)="[^"]*"/g, "")}</div></div></div>
+    <p id="gameTutorialCopy">Red rows have to be done before you can sim.</p>`;
+}
+
+function firstRunPagesSlide() {
+  // The sidebar's pages, each with its tabs (the playoff tabs appear with the playoffs).
+  const pages = globalThis.CardPages;
+  const groups = (pages?.GROUPS || []).map(([id, name]) => [name, (pages.PAGES || []).filter((page) => page.group === id && !/^playoff/.test(page.id)).map((page) => String(page.label))]);
+  return `<h2 id="gameTutorialTitle">Pages</h2>
+    <div class="first-run-pages">${groups.map(([name, items]) => `<div><b>${escapeHtml(name)}</b>${items.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>`).join("")}</div>
+    <p id="gameTutorialCopy"></p>`;
+}
+
+function renderFirstRun() {
+  const index = state.tutorial.index, steps = FIRST_RUN_STEPS, step = steps[index], last = index === steps.length - 1;
+  const outlook = Boolean(state.home?.save?.season_slideshow?.pending);
+  els.gameTutorial.hidden = false;
+  els.gameTutorial.classList.add("is-first-run");
+  els.gameTutorial.innerHTML = `
+    <article class="first-run" role="dialog" aria-modal="true" aria-labelledby="gameTutorialTitle" aria-describedby="gameTutorialCopy" tabindex="-1">
+      <div class="first-run-sheet">
+        <header class="first-run-head"><span>Welcome</span><span>${String(index + 1).padStart(2, "0")} / ${String(steps.length).padStart(2, "0")}</span></header>
+        <div class="first-run-body" aria-live="polite">${step.body()}</div>
+      </div>
+      <footer class="first-run-foot">
+        <button type="button" class="first-run-skip" data-tutorial-action="skip">Skip</button>
+        <div class="first-run-dots" aria-hidden="true">${steps.map((_, n) => `<i class="${n === index ? "is-now" : ""}"></i>`).join("")}</div>
+        <button type="button" class="first-run-back" data-tutorial-action="previous" ${index === 0 ? "disabled" : ""}>Back</button>
+        <button type="button" class="first-run-next" data-tutorial-action="next">${last ? (outlook ? "See the league" : "Go to Home") : "Next"}</button>
+      </footer>
+    </article>`;
+  requestAnimationFrame(() => state.tutorial && els.gameTutorial.querySelector('[data-tutorial-action="next"]')?.focus({ preventScroll: true }));
+}
+function firstRunLayout() { return Boolean(globalThis.CardPages?.enabled?.() && globalThis.GameProgress); }
+// A save's first run is still to come: the welcome goes first, the Preseason Outlook after it.
+function firstRunDue() {
+  if (!firstRunLayout() || state.tutorial || state.view !== "dashboard" || !state.currentSave || state.home?.save?.postseason_exit_required) return false;
+  try { return !localStorage.getItem(TUTORIAL_COMPLETED_KEY); } catch { return false; }
+}
+const tutorialSteps = () => (firstRunLayout() ? FIRST_RUN_STEPS : GAME_TUTORIAL_STEPS);
 
 function queueFirstRunTutorial() {
   if (state.home?.save?.postseason_exit_required) return;
@@ -1239,6 +1314,12 @@ function finishGameTutorial() {
   document.getElementById("app").inert = false;
   els.gameTutorial.hidden = true;
   els.gameTutorial.innerHTML = "";
+  if (els.gameTutorial.classList.contains("is-first-run")) {
+    // The welcome leads into the Preseason Outlook when one is waiting, then Home.
+    els.gameTutorial.classList.remove("is-first-run");
+    document.querySelector('.pages-nav-item[data-pages-go="home"]')?.click();
+    maybeOpenSeasonSlideshow();
+  }
   const returnFocus = state.tutorialReturnFocus;
   state.tutorialReturnFocus = null;
   if (returnFocus?.isConnected && !returnFocus.disabled) returnFocus.focus({ preventScroll: true });
@@ -1319,6 +1400,7 @@ function resolveGameTutorialTarget(step) {
 
 function renderGameTutorial() {
   if (!state.tutorial) return;
+  if (firstRunLayout()) return renderFirstRun();
   const index = state.tutorial.index;
   const step = tutorialSteps()[index];
   const last = index === tutorialSteps().length - 1;
@@ -1395,7 +1477,7 @@ function positionGameTutorial(target) {
 }
 
 function repositionGameTutorial() {
-  if (!state.tutorial) return;
+  if (!state.tutorial || firstRunLayout()) return;
   const target = resolveGameTutorialTarget(tutorialSteps()[state.tutorial.index]);
   positionGameTutorial(target);
 }
@@ -1616,9 +1698,11 @@ async function advance(payload) {
   state.simulationId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   state.simulationStopRequested = false;
   state.simulationProcessedGames = new Set();
+  const recordBefore = {...(state.home?.save?.user_team_record || {})};
   try {
     return await advanceSave(payload, state.simulationId);
   } finally {
+    globalThis.GameSound?.result(recordBefore, state.home?.save?.user_team_record);
     window.AssistantGMPhone?.setSimulationPlaybackActive(false);
     state.simulationRunning = false;
     state.simulationId = "";
@@ -1736,9 +1820,9 @@ async function advanceSave(payload, simulationId) {
     window.CardBoard?.open("phase-set_roster-checklist");
   } else if (result.status === "stopped" || result.result?.status === "stopped") {
     const stoppedDate = result.result?.through_date || state.home?.save?.current_date;
-    showToast(`Simulation stopped at ${stoppedDate || "the current date"}.`);
+    showToast(`Simulation stopped at ${formatDashboardShortDate(stoppedDate) || "the current date"}.`);
   } else {
-    showToast(`Advanced to ${state.home?.save?.current_date || "next date"}`);
+    showToast(`Advanced to ${formatDashboardShortDate(state.home?.save?.current_date) || "the next date"}`);
   }
 }
 
@@ -1959,6 +2043,7 @@ async function processSimulationTradeOffers(event) {
       displayedCount=Math.min(nextCount,displayedCount+1);
       window.CardBoard?.updateOfferCount(displayedCount,{animate:true});
     }
+    globalThis.GameSound?.play("news");
     await window.AssistantGMPhone?.presentSimulationTradeOffer({
       teamAbbrev:simulationOfferTeamAbbrev(offer),
       date:event.date?formatWrittenDate(event.date):'Today',
@@ -2537,6 +2622,7 @@ function maybeOpenSeasonSlideshow() {
   const pending = state.home?.save?.season_slideshow?.pending;
   if (!pending || !state.currentSave || state.slideshowOpening || window.SeasonSlideshow?.isOpen()) return;
   if (state.modal || state.tutorial || state.simulationRunning || state.hydrating || state.multiplayer?.session) return;
+  if (firstRunDue()) return;   // the welcome first; it opens this when it ends
   state.seasonSlideshowAutoKeys ||= new Set();
   const key = `${state.currentSave}:${pending.kind}:${pending.season}`;
   if (state.seasonSlideshowAutoKeys.has(key)) return;
@@ -2564,6 +2650,7 @@ function maybeCelebrateChampion() {
     const spin=(index*53)%500-250;
     return `<i class="champion-confetti-piece" style="--x:${x}%;--delay:${(index%9)*42}ms;--drift:${drift}px;--spin:${spin}deg;--confetti-color:${confettiColors[index%confettiColors.length]}"></i>`;
   }).join('');
+  globalThis.GameSound?.play("champion");
   state.modal = {kind:'champion',title:'NBA Champions',body:`<section class="champion-celebration"><div class="champion-confetti" aria-hidden="true">${confetti}</div><img class="champion-trophy" src="/assets/header-art/exports/trophy-press-ink.png" alt="Championship trophy"/><h2>${escapeHtml(dashboardTeamName(champion) || champion)}</h2><p>${escapeHtml(state.home.save.season)} NBA Champions</p><button type="button" class="ui-command" data-champion-bracket data-close-modal>View Bracket</button></section>`};
   renderModal();
 }
@@ -2605,6 +2692,9 @@ function showTradeDeadlinePrompt(checkpoint = {}, payload = {}) {
   if (!checkpoint.date && state.modal?.kind === "tradeDeadline") return;
   const deadline = checkpoint.date || tradeDeadlineDate();
   if (hasAcknowledgedTradeDeadline(deadline)) return;
+  // Pages layout: no pause window. The sim has stopped on Home, whose list carries the deadline and whose button
+  // reads "Sim past the deadline".
+  if (firstRunLayout()) return landHomeForStop("The sim stopped: today is the trade deadline.");
   const followingDay = new Date(`${deadline}T00:00:00Z`);
   followingDay.setUTCDate(followingDay.getUTCDate() + 1);
   const target = checkpoint.requested_to_date > deadline ? checkpoint.requested_to_date : followingDay.toISOString().slice(0, 10);
@@ -2633,7 +2723,21 @@ function hasReviewedPostseason(date) {
   try { return localStorage.getItem(postseasonReviewKey(date)) === "1"; } catch { return false; }
 }
 
+// A stop the game makes by itself (pages layout): back to Home, one line saying why.
+function landHomeForStop(message) {
+  globalThis.CardPages?.landHome?.();
+  globalThis.GameSound?.play("must");
+  showToast(message);
+}
+
 function showPostseasonPrompt(checkpoint) {
+  if (firstRunLayout()) {
+    // Pages layout: Home shows the postseason and its button; the bracket has its own page.
+    state.postseasonReviewedSave = state.currentSave;
+    state.postseasonReviewedDate = checkpoint.date;
+    try { localStorage.setItem(postseasonReviewKey(checkpoint.date), "1"); } catch {}
+    return landHomeForStop("The regular season is over. The postseason is next.");
+  }
   state.modal = {
     kind:"postseason", title:"Regular Season Complete", subtitle:"", postseasonBoundary:checkpoint.date,
     body:`<section class="trade-deadline-prompt"><strong class="trade-deadline-prompt-date">${escapeHtml(formatWrittenDate(state.home?.save?.current_date || checkpoint.date))}</strong><p>The regular season is over. The sim is paused before postseason games begin.</p><p>Review the bracket, including the play-in, then choose a sim command to continue.</p><div class="trade-deadline-prompt-actions"><button type="button" class="ui-command" data-review-postseason>Review Bracket</button></div></section>`,
@@ -2770,6 +2874,7 @@ function renderStartup() {
     grid.hidden = false;
     els.multiplayerLobby.hidden = true;
     els.multiplayerLobby.innerHTML = "";
+    els.multiplayerLobby.lobbyMarkup = "";
     return;
   }
   grid.hidden = true;
@@ -2778,10 +2883,9 @@ function renderStartup() {
   const isHost = league.host_manager_id === manager.id;
   const claimedByTeam = new Map((league.managers || []).filter((row) => row.team_id).map((row) => [row.team_id, row]));
   const allReady = Boolean(league.managers?.length) && league.managers.every((row) => row.ready);
-  els.multiplayerLobby.innerHTML = `
+  const markup = `
     <header class="multiplayer-lobby-head">
       <div>
-        <p class="eyebrow">Multiplayer Lobby</p>
         <h2>${escapeHtml(league.name || "Shared League")}</h2>
         <p>${league.managers?.length || 0} human GM${league.managers?.length === 1 ? "" : "s"} · AI controls every open team</p>
       </div>
@@ -2792,7 +2896,7 @@ function renderStartup() {
     <div class="multiplayer-lobby-layout">
       <section class="lobby-team-board">
         <div class="section-head">
-          <div><p class="eyebrow">Franchises</p><h3>Claim Your Team</h3></div>
+          <h3>Claim Your Team</h3>
           <span>${claimedByTeam.size}/30 claimed</span>
         </div>
         <div class="lobby-team-grid">
@@ -2857,6 +2961,11 @@ function renderStartup() {
         </div>
       </aside>
     </div>`;
+  // The lobby is checked every two seconds. Redraw it only when something on it changed, so an open menu stays open
+  // and a number being typed is not wiped.
+  if (els.multiplayerLobby.lobbyMarkup === markup) return;
+  els.multiplayerLobby.lobbyMarkup = markup;
+  els.multiplayerLobby.innerHTML = markup;
   wireMultiplayerLobby();
 }
 
@@ -3135,13 +3244,21 @@ function applyTeamGlass(team = userTeam()) {
   // The board behind the glass is the team's arena (the user picked each picture, 2026-11-24).
   const root = document.documentElement;
   if (TEAM_BRAND_COLORS[team]) {
-    root.style.setProperty("--arena-image", `url("/assets/arenas/${team}.jpg")`);
+    // The picture follows the phase of the year where the team has more than one photo, and lives on one moving
+    // layer behind the game (arena.js). The variable stays as the still picture for anything that reads it.
+    const phase = state.home?.save?.phase || "";
+    root.style.setProperty("--arena-image", `url("${globalThis.ArenaBackdrop?.urlFor?.(team, phase) || `/assets/arenas/${team}.jpg`}")`);
     root.dataset.arena = team;
+    globalThis.ArenaBackdrop?.show?.(team, phase);
   } else {
     root.style.removeProperty("--arena-image");
     delete root.dataset.arena;
+    globalThis.ArenaBackdrop?.hide?.();
   }
 }
+
+// The list of phase pictures arrives a moment after the page: show the right one then.
+globalThis.addEventListener?.("arena-phases-ready", () => { try { if (state.home) applyTeamGlass(); } catch { /* no save open yet */ } });
 
 function renderDashboardTab(rows) {
   applyTeamGlass();
@@ -3219,7 +3336,7 @@ function seasonCommandDashboardMarkup(rows, dash, editable, viewedTeam) {
         <span>${escapeHtml(dashboardTeamName(viewedTeam))}</span>
         <div class="season-command-date">
           <time datetime="${escapeAttr(save.current_date || "")}">${escapeHtml(dateLabel)}</time>
-          ${offseasonStepsChip(save.phase) || `<span>${escapeHtml(seasonPhaseLabel(save.phase || "season"))}</span>`}
+          ${globalThis.CardPages?.enabled?.() && globalThis.GameProgress ? "" : offseasonStepsChip(save.phase) || `<span>${escapeHtml(seasonPhaseLabel(save.phase || "season"))}</span>`}
         </div>
         ${viewedTeam !== userTeam() ? `<button type="button" data-dashboard-team-reset>My Team</button>` : ""}
         ${viewedTeam !== userTeam() && dash.front_office_read ? teamFrontOfficeButton(dash.front_office_read) : ""}
@@ -3231,6 +3348,8 @@ function seasonCommandDashboardMarkup(rows, dash, editable, viewedTeam) {
       </div>
     </header>
     <main class="season-command-grid">
+      <section class="season-command-panel season-front-panel">${globalThis.CardPages?.enabled?.() ? globalThis.HomeFront?.markup?.() || "" : ""}</section>
+      <section class="season-command-panel season-stories-panel">${globalThis.CardPages?.enabled?.() ? globalThis.HomeFront?.storiesPage?.() || "" : ""}</section>
       <div class="season-diagnostics-row">
         <section class="season-command-panel season-identity-panel">${seasonIdentityCard(rows, dash)}</section>
         <div class="season-signals-panel">${seasonTeamSignalsCard(dash)}</div>
@@ -4605,11 +4724,13 @@ function seasonAwardsCard(editable) {
   return `<div class="season-awards-grid">${races.map(([label, leaders]) => {
     const award = label.toLowerCase();
     const stats = SEASON_AWARD_STATS[label] || SEASON_AWARD_STATS.MVP;
-    const [leader, ...chasers] = leaders.slice(0, 4);
+    // A board window has room for the leader and three chasers; a page lists all ten candidates (user, 2026-11-26).
+    const [leader, ...chasers] = leaders.slice(0, globalThis.CardPages?.enabled?.() ? 10 : 4);
     return `<section class="season-command-panel season-award-card" data-award="${award}" style="--award-stat-count:${stats.length}">
       <header class="season-award-head"><h3>${label}</h3></header>
       ${leader ? `<div class="season-award-race">
         ${seasonAwardLeader(leader, label, stats)}
+        ${globalThis.CardPages?.enabled?.() ? seasonAwardColumns(stats) : ""}
         ${chasers.map((row, index) => seasonAwardChaser(row, index + 2, stats)).join("")}
       </div>` : `<div class="empty">No candidates yet.</div>`}
     </section>`;
@@ -4673,6 +4794,16 @@ function seasonAwardLeader(row, label, stats) {
 }
 
 // Second to fourth: one table-style row each (rank, small face, name, team, the same stats, the weekly move).
+// The chasers' column headings, on a page (user, 2026-11-26: "it should have field headers"). The same cells as a
+// chaser's row, in the same order: rank, face, name, team, the award's stats, the change in rank.
+function seasonAwardColumns(stats) {
+  return `<div class="season-award-columns" role="row">
+      <span>#</span><span></span><span class="is-name">Player</span><span>Team</span>
+      ${stats.map(([key, statLabel]) => `<span data-stat="${key}">${statLabel}</span>`).join("")}
+      <span>Change</span>
+    </div>`;
+}
+
 function seasonAwardChaser(row, rank, stats) {
   return `<button type="button" class="season-award-chaser" data-dashboard-player-card="${escapeAttr(row.player_id)}">
       <b class="season-award-rank">${row.rank || rank}</b>
@@ -5259,7 +5390,7 @@ function seasonLeagueWire(expanded = false) {
       const logo = teamLogoSrc(team);
       return logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(team)}" />` : "";
     }).join("");
-    return `<span class="season-wire-item">${marks}<em>${escapeHtml(formatDashboardShortDate(normalized.date) || normalized.date)}</em><strong>${escapeHtml(normalized.text)}</strong></span>`;
+    return `<span class="season-wire-item">${marks}<em>${escapeHtml(wireTickerDate(normalized.date, state.home?.save?.current_date))}</em><strong>${escapeHtml(normalized.text)}</strong></span>`;
   }).join("");
   return `<footer class="season-league-wire"><div class="season-wire-window"><div class="season-wire-track">${items || `<span class="season-wire-item"><strong>No recent league events.</strong></span>`}</div></div></footer>`;
 }
@@ -6309,11 +6440,11 @@ function draftDashboardWorkspace() {
             <div class="draft-board-decision">${current.selection
               ? `<span>${userOnClock ? "Your pick" : "AI selection"}</span><strong>${userOnClock ? (selectedProspect ? escapeHtml(selectedProspect.name) : "Choose a prospect from the board") : `Next: pick #${escapeHtml(currentPick)}`}</strong>`
               : `<span>All ${escapeHtml(draft.state?.total_picks || "")} selections are in</span>`}</div>
+            ${pageInfoMark(`Consensus: the median of all 30 teams' scouting. Your board: ${boardContext}'s scouts, talent only${draft.draft_board?.month_label ? ` (${draft.draft_board.month_label} update)` : ""}. ${userOnClock ? "Click a row, or press Enter on it, to choose your pick." : "Rows become selectable when your team is on the clock."}`)}
             <label class="draft-board-filter"><span>Show</span><select id="draftBoardFilter" aria-label="Prospect availability filter"><option value="available" ${state.draftBoardFilter === "available" ? "selected" : ""}>Available</option><option value="all" ${state.draftBoardFilter === "all" ? "selected" : ""}>All prospects</option></select></label>
           </header>
           ${draftPickStage(draft, freshPick)}
           ${(draft.trade_news || []).length ? `<div class="draft-news-strip"><strong>Breaking:</strong> ${escapeHtml((draft.trade_news || []).map((item) => item.headline || textValue(item)).join(" · "))}</div>` : ""}
-          <p class="draft-board-note">Consensus: the median of all 30 teams' scouting. Your board: ${escapeHtml(boardContext)}'s scouts, talent only${draft.draft_board?.month_label ? ` (${escapeHtml(draft.draft_board.month_label)} update)` : ""}. ${userOnClock ? "Click a row, or press Enter on it, to choose your pick." : "Rows become selectable when your team is on the clock."}</p>
           ${draftProspectBoard(visibleBoard, userOnClock, state.selectedDraftProspect, freshPick)}
         </section>
         <aside class="draft-ledger-column">
@@ -6372,10 +6503,10 @@ function draftPickStage(draft, freshPick) {
 
 function draftLotteryOddsWorkspace(draft) {
   const lottery = draft.lottery || {};
-  return `<div class="draft-lottery-card">
+  return `<div class="draft-lottery-card" style="--lottery-rows:${Math.ceil((lottery.odds || []).length / 2) || 7}">
     <header class="draft-lottery-summary"><strong>${escapeHtml(draft.year || "")} Draft Lottery</strong><span>No. 1 Odds</span></header>
     <div class="draft-odds-grid">${(lottery.odds || []).map((row) => `<article class="draft-odds-row"><span class="draft-seed">${escapeHtml(row.seed)}</span>${draftTeamLogo(row.team)}<strong>${escapeHtml(teamLabel(row.team))}</strong><em>${(Number(row.odds || 0) * (Number(row.odds || 0) <= 1 ? 100 : 1)).toFixed(1)}%</em>${row.context ? `<small>${escapeHtml(row.context)}</small>` : ""}</article>`).join("") || `<div class="empty">Lottery odds are not available for this fixed draft order.</div>`}</div>
-    <footer class="draft-lottery-note">Four picks drawn · Remaining teams follow record order.</footer>
+    <footer class="draft-lottery-note">${lotteryDrawsEveryPick(lottery) ? `All ${(lottery.odds || []).length} picks drawn` : "Four picks drawn · Remaining teams follow record order."}</footer>
   </div>`;
 }
 
@@ -6385,20 +6516,23 @@ function draftLotteryGridPicks(total) {
   return Array.from({length:Math.max(0, Number(total) || 0)},(_,i)=>i+1);
 }
 
+// From the 2027 draft the lottery is the NBA's "3-2-1" format: 16 teams, every pick drawn (lottery.format).
+function lotteryDrawsEveryPick(lottery) { return lottery?.format === "3-2-1"; }
+
 function draftLotteryRevealWorkspace(draft) {
   const lottery = draft.lottery || {};
   const count = lotteryRevealCount(draft);
   const reveal = GameSimulation.lotteryRevealState(lottery,count);
   const visible = new Map(reveal.revealed.map(row=>[Number(row.pick),row]));
-  const jumping = (lottery.odds || []).filter(row=>reveal.promoted.includes(row.team.id) && !reveal.revealed.some(p=>p.original_team?.id===row.team.id));
-  return `<div class="draft-lottery-card draft-reveal-shell" aria-label="Draft lottery reveal">
+  const jumping = lotteryDrawsEveryPick(lottery) ? [] : (lottery.odds || []).filter(row=>reveal.promoted.includes(row.team.id) && !reveal.revealed.some(p=>p.original_team?.id===row.team.id));
+  return `<div class="draft-lottery-card draft-reveal-shell" aria-label="Draft lottery reveal" style="--lottery-rows:${Math.ceil(reveal.total / 2) || 7}">
     <header class="draft-lottery-summary"><strong>${escapeHtml(draft.year || "")} Draft Lottery</strong><span>${reveal.complete ? 'Order Complete' : `Next: #${reveal.nextPick}`}</span></header>
     <div class="draft-reveal-grid">${draftLotteryGridPicks(reveal.total).map(pick=>{
       const row = visible.get(pick);
       if (!row) return `<article class="draft-reveal-row is-unrevealed" data-lottery-pick="${pick}"><span class="draft-pick-number">${pick}</span><div class="lottery-envelope" aria-hidden="true"></div><strong>Unrevealed</strong><span>—</span></article>`;
       return `<article class="draft-reveal-row${row === reveal.revealed.at(-1) ? ' is-latest' : ''}" data-lottery-pick="${pick}" data-revealed="true"><span class="draft-pick-number">${pick}</span>${draftTeamLogo(row.original_team)}<div><strong>${escapeHtml(teamLabel(row.original_team))}</strong><small>Seed ${escapeHtml(row.starting_seed || pick)}${row.ownership_changed ? ` · Pick → ${escapeHtml(teamLabel(row.owner_team))}` : ''}</small></div><em class="${Number(row.movement)>0?'up':Number(row.movement)<0?'down':''}">${Number(row.movement)>0?`↑${row.movement}`:Number(row.movement)<0?`↓${Math.abs(row.movement)}`:'—'}</em></article>`;
     }).join('')}</div>
-    <footer class="draft-lottery-note${jumping.length ? ' lottery-jump-notice' : ''}" role="status">${jumping.length ? `${jumping.map(row=>escapeHtml(teamLabel(row.team))).join(', ')} jumped into the top four` : reveal.complete ? 'Lottery complete' : '14 → 1'}</footer>
+    <footer class="draft-lottery-note${jumping.length ? ' lottery-jump-notice' : ''}" role="status">${jumping.length ? `${jumping.map(row=>escapeHtml(teamLabel(row.team))).join(', ')} jumped into the top four` : reveal.complete ? 'Lottery complete' : `${reveal.total} → 1`}</footer>
   </div>`;
 }
 
@@ -6456,6 +6590,7 @@ async function runLotteryReveal() {
       await GameSimulation.wait(1100);
       if (!state.lotteryRevealRunning || state.currentSave !== save || state.lotteryRunId !== runId) break;
       state.lotteryRevealCount += 1;
+      globalThis.GameSound?.play("reveal");
       try { localStorage.setItem(key,String(state.lotteryRevealCount)); } catch {}
       const panel = document.querySelector('[data-board-window="phase-draft-lottery"] .draft-lottery-card');
       if (panel) panel.outerHTML = draftLotteryRevealWorkspace(draft);
@@ -6569,7 +6704,7 @@ function completedDraftSummary(rows) {
 }
 
 function completedDraftTradeRecap(rows) {
-  return `<div class="draft-trade-recap-list">${rows.map((row, index) => `<article class="draft-trade-recap-item"><span>${row.overall_pick ? `Pick #${escapeHtml(row.overall_pick)}` : `Trade ${index + 1}`}</span><strong>${escapeHtml(row.headline || textValue(row))}</strong>${row.date ? `<small>${escapeHtml(row.date)}</small>` : ""}</article>`).join("") || `<div class="draft-trade-recap-empty"><strong>No draft-night trades</strong><p>All selections were made without a trade.</p></div>`}</div>`;
+  return `<div class="draft-trade-recap-list">${rows.map((row, index) => `<article class="draft-trade-recap-item"><span>${row.overall_pick ? `Pick #${escapeHtml(row.overall_pick)}` : `Trade ${index + 1}`}</span><strong>${escapeHtml(row.headline || textValue(row))}</strong>${row.date ? `<small>${escapeHtml(formatWrittenDate(row.date) || row.date)}</small>` : ""}</article>`).join("") || `<div class="draft-trade-recap-empty"><strong>No draft-night trades</strong><p>All selections were made without a trade.</p></div>`}</div>`;
 }
 
 function draftTeamLogo(team) {
@@ -6606,7 +6741,6 @@ function freeAgencyDashboardWorkspace() {
   ensureFreeAgencySelection(room);
   return `<div class="fa-room" data-free-agency-room>
     ${phaseFreeAgencyMarketCard(room)}
-    ${freeAgencyOfferBuilderPanel(room)}
     ${freeAgencySigningWirePanel(room)}
     ${room.offseason_checklist ? offseasonChecklistPanel(room) : ""}
   </div>`;
@@ -6747,7 +6881,7 @@ function offseasonItemActions(item, editable) {
   }
   if (item.kind === "own_free_agent") {
     const hold = (state.data.freeagency?.cap_ledger?.current?.holds || []).find((row) => String(row.player_id) === String(item.player_id));
-    return `<button type="button" class="ui-command" data-offseason-negotiate="${pid}">Negotiate</button>
+    return `${typeof signingsOpen !== "function" || signingsOpen() ? `<button type="button" class="ui-command" data-offseason-negotiate="${pid}">Negotiate</button>` : ""}
       ${hold?.renounce ? `<button type="button" class="ui-command" data-fa-renounce="${pid}" title="${escapeAttr(hold.renounce.loses)}">Renounce</button>` : ""}`;
   }
   if (item.kind === "rookie_extension") return `<button type="button" class="ui-command" data-offseason-extend="${pid}">Extend</button>`;
@@ -6866,7 +7000,7 @@ function signingDayRecap(room) {
   const userId = room.team?.id;
   const mine = (room.league_moves || []).filter((move) => (move.team_ids || []).includes(userId)
     && FREE_AGENCY_SIGNING_KINDS.has(move.kind));
-  const departed = (room.offseason_checklist?.departed || []).map((row) => ({headline: `${row.name} signed with ${row.team_abbrev}.`}));
+  const departed = (room.offseason_checklist?.departed || []).map((row) => ({headline: `${row.name} signed with ${row.team_abbrev}${row.departure_text ? `, ${row.departure_text}` : ""}.`}));
   const line = (move) => `<li>${escapeHtml(move.headline || move.player_name || "")}${move.aav_millions ? ` <small>${money(move.aav_millions)}${move.years ? ` × ${move.years}` : ""}</small>` : ""}</li>`;
   return `<div class="offseason-recap">
     <section><h4>Your signings</h4>${mine.length ? `<ul>${mine.slice(0, 8).map(line).join("")}</ul>` : "<p>None yet.</p>"}</section>
@@ -7027,11 +7161,7 @@ function wireOffseasonChecklist(panel) {
     decideQualifyingOffer(button.dataset.playerId || "", button.dataset.offseasonQo || "")));
   panel.querySelectorAll("[data-offer-sheet-match]").forEach((button) => button.addEventListener("click", () => decideOfferSheet(button.dataset.offerSheetMatch || "", true)));
   panel.querySelectorAll("[data-offer-sheet-pass]").forEach((button) => button.addEventListener("click", () => decideOfferSheet(button.dataset.offerSheetPass || "", false)));
-  panel.querySelectorAll("[data-offseason-negotiate]").forEach((button) => button.addEventListener("click", () => {
-    state.selectedFreeAgent = button.dataset.offseasonNegotiate || null;
-    refreshFreeAgencyPanels({ market: true, builder: true });
-    window.CardBoard?.open("phase-free_agency-selected");
-  }));
+  panel.querySelectorAll("[data-offseason-negotiate]").forEach((button) => button.addEventListener("click", () => openFreeAgentNegotiation(button.dataset.offseasonNegotiate || "")));
   panel.querySelectorAll("[data-fa-renounce]").forEach((button) => button.addEventListener("click", () => renounceCapHold(button.dataset.faRenounce || "")));
   panel.querySelectorAll("[data-offseason-extend]").forEach((button) => button.addEventListener("click", () => openExtensionNegotiation(button.dataset.offseasonExtend || "")));
   panel.querySelectorAll("[data-offseason-cutdown]").forEach((button) => button.addEventListener("click", () => openRosterView()));
@@ -7116,13 +7246,15 @@ function freeAgencyOpenRosterSpots(room = state.data.freeagency || {}) {
 // any legal way to pay lets you offer him: Bird rights, cap room or an exception's remaining budget).
 function freeAgencyPlayerMinimum(player, room = state.data.freeagency || {}) {
   const value = Number(player?.legal?.min_millions);
-  return Number.isFinite(value) && value > 0 ? value : freeAgencyMinimum(room);
+  // Rounded up to the slider's tenth: rounding down offered a salary under his real minimum, which nothing can pay.
+  return Number.isFinite(value) && value > 0 ? Math.ceil(value * 10 - 1e-6) / 10 : freeAgencyMinimum(room);
 }
 
 function freeAgencyPlayerMaximum(player, room = state.data.freeagency || {}) {
   const value = Number(player?.legal?.most_you_can_pay_millions);
   const top = Number.isFinite(value) && value > 0 ? value : Math.max(freeAgencyMaxOffer(room), Number(player?.bird_rights?.limit_millions || 0));
-  return Math.max(freeAgencyPlayerMinimum(player, room), top);
+  // Rounded down to the slider's tenth, so the top of the slider is a salary that can really be paid.
+  return Math.max(freeAgencyPlayerMinimum(player, room), Math.floor(top * 10 + 1e-6) / 10);
 }
 
 // "Fits our room": he would sign a guaranteed offer you can legally make, and you have an open roster spot.
@@ -7163,7 +7295,7 @@ function phaseFreeAgencyMarketCard(room = state.data.freeagency || {}) {
     <header class="fa-market-head">
       <div class="fa-market-title">
         ${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(userTeam())} logo" />` : ""}
-        <div><p>${escapeHtml(day)} · ${escapeHtml(rows.length)} of ${escapeHtml(total)} players</p><h3>${escapeHtml(title)}</h3><span>${escapeHtml(note)}</span></div>
+        <div><p>${escapeHtml(day)} · ${escapeHtml(rows.length)} of ${escapeHtml(total)} players</p><h3>${escapeHtml(title)}${pageInfoMark(note)}</h3></div>
       </div>
       <div class="fa-cap-chips" aria-label="${escapeAttr(`${room.signing_season || "Next season"} cap position`)}" title="${escapeAttr(`Your ${room.signing_season || "next-season"} books, the season a new contract starts. Cap room counts cap holds and empty roster spots; the tax and the aprons count signed salaries only.`)}">
         ${chip("Roster", room.roster_count == null ? "—" : `${room.roster_count} / ${freeAgencyRosterMaximum(room)}`, Number(room.roster_count) >= freeAgencyRosterMaximum(room) ? "over" : "")}
@@ -7184,7 +7316,7 @@ function phaseFreeAgencyMarketCard(room = state.data.freeagency || {}) {
       <label class="fa-filter-check" title="${escapeAttr(`Only players who would sign a guaranteed offer from you that fits under your cap limit, while you have an open roster spot (${room.roster_count ?? "?"} of ${freeAgencyRosterMaximum(room)} used; rosters are cut to ${freeAgencyRosterMaximum(room)} before opening night)`)}"><input type="checkbox" data-fa-filter-afford ${filters.afford ? "checked" : ""} /> <span>Fits our room</span></label>
       <button type="button" class="ui-command" data-fa-filter-reset>Reset</button>
       <button type="button" class="ui-command${compareMode ? " is-active" : ""}" data-fa-compare-toggle aria-pressed="${compareMode}">${escapeHtml(compareLabel)}</button>
-      <span class="fa-market-links"><button type="button" class="ui-command" data-fa-open-roster>My Roster</button><button type="button" class="ui-command" data-fa-open-trade>Trade Room</button><button type="button" class="ui-command" data-open-waivers>Waivers</button></span>
+      <span class="fa-market-links"><button type="button" class="ui-command" data-fa-open-roster>My Roster</button>${tradingOpen() ? `<button type="button" class="ui-command" data-fa-open-trade>Trade Room</button>` : ""}<button type="button" class="ui-command" data-open-waivers>Waivers</button></span>
     </div>
     <div class="fa-market-scroll">${freeAgencyMarketTable(rows, room)}</div>
   </section>`;
@@ -7374,9 +7506,48 @@ function freeAgencyOfferDraft(player, room = state.data.freeagency || {}) {
       // decrease) and the final-season option ("none", "player", "team").
       path: "rising",
       option: "none",
+      // Not touched yet: if the cap blocks these terms, the page moves to ones it allows (freeAgencyStartStep).
+      auto: true,
     };
   }
   return state.freeAgentOfferDrafts[key];
+}
+
+// The signing page opens on an offer you can make (user, 2026-11-27). When the game says the opening terms cannot be
+// paid, these are tried in turn, largest salary first: each way of paying that the cap sheet shows money in. The game's
+// quote decides every one; nothing here says what is legal.
+function freeAgencyStartCandidates(player, room, draft) {
+  const minimum = freeAgencyPlayerMinimum(player, room);
+  const fewest = player.offer_sheet ? Number(player.offer_sheet.min_years || 2) : 1;
+  const books = room.cap_ledger?.current || {};
+  const ways = [
+    ...(player.bird_rights ? [{ most: Number(player.bird_rights.limit_millions), longest: draft.years }] : []),
+    { most: Number(books.cap_room_millions), longest: draft.years },
+    ...Object.values(books.exceptions || {}).filter((row) => row.available).map((row) => ({ most: Number(row.balance_millions), longest: Number(row.max_years) })),
+    { most: minimum, longest: 2 },
+  ];
+  const seen = new Set([`${draft.aav}:${draft.years}`]);
+  return ways.map((way) => ({
+    aav: roundOfferTenth(Math.min(Number(draft.aav), Math.floor(way.most * 10 + 1e-6) / 10)),
+    years: Math.max(fewest, Math.min(Number(draft.years), way.longest || draft.years)),
+  })).filter((terms) => {
+    const key = `${terms.aav}:${terms.years}`;
+    if (!(terms.aav >= minimum - 1e-9) || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).sort((a, b) => b.aav - a.aav || b.years - a.years);
+}
+
+// One step of that search, after a quote arrives. True when the terms changed and the page should ask again. When
+// nothing can be paid the opening terms come back, with the reasons.
+function freeAgencyStartStep(player, room, draft, quote) {
+  if (!draft.auto || !quote) return false;
+  if (quote.ok || player.offer_sheet?.blocked_reason || player.signing_blocked_reason) { draft.auto = false; return false; }
+  if (draft.auto === true) draft.auto = { first: { aav: draft.aav, years: draft.years }, left: freeAgencyStartCandidates(player, room, draft) };
+  const next = draft.auto.left.shift();
+  Object.assign(draft, next || draft.auto.first);
+  if (!next) draft.auto = false;
+  return true;
 }
 
 const CONTRACT_PATH_LABELS = { rising: "Rising", flat: "Flat", declining: "Declining" };
@@ -7538,16 +7709,37 @@ function freeAgencyMaxYears(player, rules = {}) {
   return Math.min(Number(rules.max_years || 5), Number(player?.bird_rights?.max_years || rules.outside_max_years || 4));
 }
 
-function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
-  const candidates = room.candidates || [];
-  const player = candidates.find((candidate) => String(candidate.id) === String(state.selectedFreeAgent || "")) || null;
+// One place to negotiate (user, 2026-11-27): a free agent is signed on his own page, the first tab, laid out like
+// the contract extension page. There is no offer builder beside the market or the checklist any more.
+const FREE_AGENCY_SIGNING_VIEWS = [["pay", "How it's paid"], ["bids", "Rival bids"], ["cap", "Your cap sheet"], ["other", "Other ways"]];
+const FREE_AGENCY_SIGNING_TITLES = {pay: "How It's Paid", bids: "Rival Bids", cap: "Your Cap Sheet", other: "Other Ways To Add Him"};
+
+function freeAgencySigningTitle(player, room = state.data.freeagency || {}) {
+  return player?.offer_sheet ? "Offer Sheet" : freeAgencyRoomState(room).exclusive ? "Re-signing Offer" : "Contract Offer";
+}
+
+function freeAgencySigningPage(room, player) {
+  const title = freeAgencySigningTitle(player, room);
+  return `<section class="player-card-page player-card-page--extension player-card-page--signing" data-player-page="0" data-page-title="${title}" aria-label="${title}">${freeAgencySigningLayout(room, player.id)}</section>`;
+}
+
+// What he asks for. The "signs with you from" figure follows the length you choose.
+function freeAgencyFloorMarkup(player, preview) {
+  const floor = freeAgencyAcceptFloor(player, preview.years, "guaranteed");
+  const loose = freeAgencyAcceptFloor(player, preview.years, "non_guaranteed");
+  const term = `${preview.years} year${preview.years === 1 ? "" : "s"}`;
+  const words = Number.isFinite(floor)
+    ? `${term}, guaranteed: ${money(floor)}; without a guarantee: ${Number.isFinite(loose) ? money(loose) : "no salary"}. Your offer is judged by the same rule as rival bids.`
+    : `No salary beats the best rival bid for ${term}. His bar drops each day.`;
+  return `<div title="${escapeAttr(words)}"><dt>Signs with you from <i class="ext-info" aria-hidden="true">i</i></dt><dd><strong>${Number.isFinite(floor) ? money(floor) : "Not today"}</strong><span class="ext-hint">${escapeHtml(words)}</span></dd></div>`;
+}
+
+function freeAgencySigningLayout(room, playerId) {
+  const player = (room.candidates || []).find((candidate) => String(candidate.id) === String(playerId)) || null;
+  if (!player) return `<div class="extension-page-layout" data-free-agency-builder data-fa-builder-player=""><p class="extension-analysis-empty">He is no longer a free agent.</p></div>`;
   const { exclusive, open } = freeAgencyRoomState(room);
-  if (!player) {
-    return `<section class="fa-panel fa-builder" data-free-agency-builder aria-label="Offer builder"><div class="fa-empty">${candidates.length ? "Choose a player in the market to build an offer." : "No free agents are available."}</div></section>`;
-  }
   const draft = freeAgencyOfferDraft(player, room);
   const preview = freeAgencyOfferPreview(player, room, draft);
-  const ratings = player.ratings || {};
   const minimum = freeAgencyPlayerMinimum(player, room);
   const maximum = freeAgencyPlayerMaximum(player, room);
   const sheet = player.offer_sheet || null;
@@ -7555,65 +7747,27 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
   const legal = clipboardLegalActions().has("free_agent_signings");
   const shortlisted = state.freeAgentShortlistIds.includes(player.id);
   const safe = preview.safe;
-  const stat = (label, value) => `<span><small>${label}</small><strong>${draftMetric(value)}</strong></span>`;
-  const rating = (label, value) => `<span class="fa-id-rating player-rating-bar" style="${playerRatingBarStyle(value)}"><small>${label}</small><strong>${draftMetric(value)}</strong><i aria-hidden="true"><b style="${playerRatingBarStyle(value)}"></b></i></span>`;
   const radio = (name, value, label, checked, disabled = false, title = "") => `<button type="button" role="radio" aria-checked="${checked}" class="${checked ? "is-active" : ""}" data-fa-offer-${name}="${escapeAttr(value)}" tabindex="${checked ? 0 : -1}"${disabled ? " disabled" : ""}${title ? ` title="${escapeAttr(title)}"` : ""}>${escapeHtml(label)}</button>`;
+  const info = `<i class="ext-info" aria-hidden="true">i</i>`;
+  const limit = `${money(minimum)} his minimum (${player.legal?.years_of_service ?? "?"} years in the league) to ${money(maximum)}, the most a legal way to pay lets you offer${Number(player.legal?.max_millions) > maximum + 0.05 ? ` (his maximum is ${money(player.legal.max_millions)})` : ""}.${player.bird_rights ? ` ${player.bird_rights.text}` : ""}`;
+  const guaranteeWords = preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on ${room.offer_rules?.non_guaranteed_until || "January 10"}; release him before then and you owe nothing. He asks more for this.`;
+  const routeWords = "Bird rights, cap room, the minimum, the mid-level or the bi-annual. The engine picks the first legal one unless you choose.";
+  const pct = Number(preview.terms?.max_raise ? Math.round(preview.terms.max_raise * 100) : (player.bird_rights && ["full", "early"].includes(player.bird_rights.level) ? 8 : 5));
+  const path = draft.path || "rising";
+  const option = draft.option || "none";
+  const pathButtons = ["rising", "flat", "declining"].map((value) => radio("path", value, CONTRACT_PATH_LABELS[value], path === value, Boolean(sheet) && value === "declining", sheet && value === "declining" ? "Offer sheets rise or stay flat" : contractShapeTitle(value, pct))).join("");
+  const optionButtons = ["none", "player", "team"].map((value) => radio("option", value, CONTRACT_OPTION_LABELS[value], option === value, Boolean(sheet) && value !== "none", sheet && value !== "none" ? "Offer sheets in this game carry no option" : contractOptionTitle(value))).join("");
   const bids = (room.active_offers || [])
     .filter((offer) => String(offer.player_id || "") === String(player.id))
     .sort((a, b) => Number(b.interest_score || 0) - Number(a.interest_score || 0) || Number(b.aav_millions || 0) - Number(a.aav_millions || 0));
   const bar = Number(player.sign_bar_today);
   const history = (room.user_offer_history || []).filter((row) => String(row.player_id) === String(player.id));
   const lastResult = state.freeAgentOfferResults?.[`${state.currentSave || ""}:${player.id}`];
-  return `<section class="fa-panel fa-builder" data-free-agency-builder data-fa-builder-player="${escapeAttr(player.id)}" aria-label="Offer builder for ${escapeAttr(player.name)}">
-    <header class="fa-builder-identity">
-      ${playerHeadshotMarkup(player, "approved-profile-headshot") || playerHeadshotMarkup({ is_prospect: true }, "approved-profile-headshot")}
-      <div class="fa-builder-name"><p>${exclusive ? "Re-sign your player" : "Free agent"}</p><h3>${playerNameWithInjuryMarkup(player)}</h3><span>${escapeHtml([player.position, Number.isFinite(Number(player.age)) ? `${Math.round(Number(player.age))} years` : "", player.height].filter(Boolean).join(" · "))}</span></div>
-      <div class="fa-builder-ratings">${rating("OVR", ratings.overall)}${rating("OFF", ratings.offense ?? ratings.overall)}${rating("DEF", ratings.defense)}</div>
-      <div class="fa-builder-actions"><button type="button" class="ui-command" data-fa-intel-card="${escapeAttr(player.id)}">Player Card</button><button type="button" class="ui-command fa-star${shortlisted ? " is-active" : ""}" data-fa-shortlist="${escapeAttr(player.id)}" aria-pressed="${shortlisted}">${shortlisted ? "★ Shortlisted" : "☆ Shortlist"}</button></div>
-    </header>
-    <div class="fa-builder-scroll">
-      <section class="approved-card-panel fa-builder-season"><header>Last Season</header><div>${stat("GP", player.games)}${stat("MPG", player.previous_mpg)}${stat("PTS", player.ppg)}${stat("REB", player.rpg)}${stat("AST", player.apg)}${stat("STL", player.spg)}${stat("BLK", player.bpg)}${stat("TO", player.topg)}</div></section>
-      <section class="approved-card-panel fa-builder-market"><header>What He Wants</header><dl>
-        <div><dt title="His market ask per season: what rival teams bid against. It moves each day.">Market ask</dt><dd><strong>${money(player.ask_millions)}</strong>${freeAgencyAskChange(player.ask_change_millions)}<small>rival teams bid against this</small></dd></div>
-        <div><dt title="The salary your offer must reach today for him to sign it, by the same rule as rival bids: his interest (salary against his market ask, years, your team) must reach today's bar and beat the best rival bid.">Signs with you from</dt><dd>${Number.isFinite(freeAgencyAcceptFloor(player, preview.years, "guaranteed"))
-          ? `<strong>${money(freeAgencyAcceptFloor(player, preview.years, "guaranteed"))}</strong><small>${preview.years} year${preview.years === 1 ? "" : "s"}, guaranteed · ${Number.isFinite(freeAgencyAcceptFloor(player, preview.years, "non_guaranteed")) ? money(freeAgencyAcceptFloor(player, preview.years, "non_guaranteed")) : "no salary"} without a guarantee</small>`
-          : `<strong>Not today</strong><small>no salary beats the best rival bid for ${preview.years} year${preview.years === 1 ? "" : "s"}</small>`}</dd></div>
-        <div><dt>Longest deal</dt><dd><strong>${safe >= 5 ? "5 years" : safe < 1 ? "None" : `${safe} year${safe === 1 ? "" : "s"}`}</strong><small>${safe >= 5 ? "the league maximum" : "he plans to retire after that"}</small></dd></div>
-      </dl></section>
-      <section class="approved-card-panel fa-builder-offer"><header>Your Offer</header>
-        <div class="fa-offer-field fa-offer-salary">
-          <label for="faOfferAav"><small>Salary per season</small></label>
-          <span class="money-input"><b>$</b><input id="faOfferAav" type="number" inputmode="decimal" min="${minimum.toFixed(1)}" max="${maximum.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-fa-offer-aav aria-describedby="faOfferAavHelp"><b>M</b></span>
-          <div class="salary-track"><input type="range" min="${minimum.toFixed(1)}" max="${maximum.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-fa-offer-range aria-label="Salary per season, in millions" />
-            ${salaryMarksMarkup([
-              ...(Number.isFinite(preview.floorOffer) ? [{ label: "His price", value: preview.floorOffer, attr: "data-fa-offer-set", title: `What he signs for from you: ${money(preview.floorOffer)}` }] : []),
-              { label: "Market ask", value: Number(player.ask_millions), attr: "data-fa-offer-set", title: `His market ask: ${money(player.ask_millions)}` },
-              { label: "Minimum", value: minimum, attr: "data-fa-offer-set", title: `His minimum: ${money(minimum)}` },
-            ])}</div>
-          <small id="faOfferAavHelp">${money(minimum)} his minimum (${escapeHtml(player.legal?.years_of_service ?? "?")} years in the league) to ${money(maximum)}, the most a legal way to pay lets you offer${Number(player.legal?.max_millions) > maximum + 0.05 ? ` (his maximum is ${money(player.legal.max_millions)})` : ""}</small>
-          ${player.bird_rights ? `<p class="fa-offer-note fa-offer-bird">${escapeHtml(player.bird_rights.text)}</p>` : ""}
-        </div>
-        <div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferYearsLabel">Years</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferYearsLabel">${[1, 2, 3, 4, 5].map((years) => radio("years", years, String(years), preview.years === years, years > preview.maxYears || years < (preview.minYears || 1), sheet && (years > preview.maxYears || years < preview.minYears) ? `An offer sheet runs ${preview.minYears} to ${preview.maxYears} seasons` : years > preview.maxYears ? "Only a team with full Bird rights can offer a fifth year" : years > safe ? `He plans to retire after ${safe} season${safe === 1 ? "" : "s"}; he refuses ${years} years` : "")).join("")}</div></div>
-        <div class="fa-offer-field"><small id="faOfferGuaranteeLabel">Guarantee</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferGuaranteeLabel">${radio("guarantee", "true", "Guaranteed", preview.guaranteed)}${radio("guarantee", "false", "Non-guaranteed", !preview.guaranteed, Boolean(sheet), sheet ? "Offer sheets are fully guaranteed" : "")}</div>
-          <p class="fa-offer-note">${preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on ${escapeHtml(room.offer_rules?.non_guaranteed_until || "January 10")}; release him before then and you owe nothing. He asks more for this.`}</p></div></div>
-        ${(() => {
-          // CONTRACT-TERMS: salary path and final-season option selectors (offer sheets stay rising or flat, no option).
-          const pct = Number(preview.terms?.max_raise ? Math.round(preview.terms.max_raise * 100) : (player.bird_rights && ["full", "early"].includes(player.bird_rights.level) ? 8 : 5));
-          const path = draft.path || "rising";
-          const option = draft.option || "none";
-          const pathButtons = ["rising", "flat", "declining"].map((value) => radio("path", value, CONTRACT_PATH_LABELS[value], path === value, Boolean(sheet) && value === "declining", sheet && value === "declining" ? "Offer sheets rise or stay flat" : contractShapeTitle(value, pct))).join("");
-          const optionButtons = ["none", "player", "team"].map((value) => radio("option", value, CONTRACT_OPTION_LABELS[value], option === value, Boolean(sheet) && value !== "none", sheet && value !== "none" ? "Offer sheets in this game carry no option" : contractOptionTitle(value))).join("");
-          return `<div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferPathLabel">Salary path</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferPathLabel" data-fa-path-group>${pathButtons}</div></div>
-            <div class="fa-offer-field"><small id="faOfferOptionLabel">Option on the last season</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferOptionLabel" data-fa-option-group>${optionButtons}</div></div></div>`;
-        })()}
-        <div class="fa-offer-field"><label for="faOfferRoute"><small>How you pay</small></label><select id="faOfferRoute" data-fa-offer-route aria-describedby="faOfferRouteHelp"><option value="">Best legal way</option>${routes.map((row) => `<option value="${escapeAttr(row.route)}" ${draft.route === row.route ? "selected" : ""}>${escapeHtml(row.short)}</option>`).join("")}</select><p id="faOfferRouteHelp" class="fa-offer-note">Bird rights, cap room, the minimum, the mid-level or the bi-annual. The engine picks the first legal one unless you choose.</p></div>
-        <p class="fa-offer-note fa-offer-options" data-fa-offer-shape>${escapeHtml(freeAgencyShapeNote(preview, draft))}</p>
-        ${sheet ? freeAgencyOfferSheetMarkup(player, draft, preview) : ""}
-      </section>
-      <div data-fa-offer-preview>${freeAgencyOfferPreviewMarkup(preview)}</div>
-      ${freeAgencyOtherDealsMarkup(player, room)}
-      ${freeAgencyCapSheetMarkup(room)}
-      <section class="approved-card-panel fa-builder-bids"><header>${exclusive ? "Rival Bids" : `Rival Bids · ${bids.length}`}</header>${exclusive
+  const other = freeAgencyOtherDealsMarkup(player, room);
+  const views = FREE_AGENCY_SIGNING_VIEWS.filter(([key]) => key !== "other" || other);
+  const view = views.some(([key]) => key === state.freeAgentSigningView) ? state.freeAgentSigningView : "pay";
+  const count = { bids: exclusive ? 0 : bids.length };
+  const bidsMarkup = `<div class="fa-builder-bids">${exclusive
         ? `<p class="fa-muted">Exclusive window: no other team may bid until free agency opens.</p>`
         : bids.length ? `<ol>${bids.map((offer, index) => {
           const team = teamLabel(offer.team_id || offer.team_abbrev || "");
@@ -7621,14 +7775,52 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
           const interest = Number(offer.interest_score || 0);
           const ready = Number.isFinite(bar) && interest >= bar;
           return `<li class="${index === 0 ? "is-leading" : ""}">${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(team)} logo" />` : `<b>${escapeHtml(team)}</b>`}<strong>${money(offer.aav_millions)} × ${escapeHtml(offer.years || 1)}</strong><span class="fa-mood fa-mood-${ready ? "hot" : "cool"}" title="${escapeAttr(`Interest ${interest.toFixed(1)}${Number.isFinite(bar) ? `; he needs ${bar.toFixed(0)} today to sign it` : ""}`)}"><i aria-hidden="true"><b style="width:${clampNumber(interest, 0, 100)}%"></b>${Number.isFinite(bar) ? `<u style="left:${clampNumber(bar, 0, 100)}%"></u>` : ""}</i><em>${interest.toFixed(0)}</em></span><small>${index === 0 ? (ready ? "Leading · ready to sign" : "Leading") : `Day ${escapeHtml(offer.day || 1)}`}</small></li>`;
-        }).join("")}</ol><p class="fa-muted">He settles rival bids at the end of each day: the best bid signs once its interest reaches ${Number.isFinite(bar) ? bar.toFixed(0) : "today's bar"}. Your offer is judged the same way, on the spot: it must reach that bar and beat the leading bid.</p>` : `<p class="fa-muted">No rival bids yet.</p>`}</section>
-      ${history.length || lastResult ? `<section class="approved-card-panel fa-builder-history"><header>Your Offers To Him</header><ol>${[
+        }).join("")}</ol><p class="fa-muted">He settles rival bids at the end of each day: the best bid signs once its interest reaches ${Number.isFinite(bar) ? bar.toFixed(0) : "today's bar"}. Your offer is judged the same way, on the spot: it must reach that bar and beat the leading bid.</p>` : `<p class="fa-muted">No rival bids yet.</p>`}</div>
+      ${history.length || lastResult ? `<div class="fa-builder-history"><h4>Your Offers To Him</h4><ol>${[
         ...(lastResult ? [lastResult] : []),
         ...history.filter((row) => !lastResult || row.date !== lastResult.date || Number(row.aav_millions) !== Number(lastResult.aav_millions)),
-      ].slice(0, 4).map((row) => `<li><span>${escapeHtml(String(row.date || "").slice(5))}</span><strong>${money(row.aav_millions)} × ${escapeHtml(row.years || 1)}${row.guaranteed === false ? " non-gtd" : ""}</strong><em class="${row.accepted ? "is-yes" : "is-no"}">${escapeHtml(row.accepted ? "Signed" : row.decision === "retirement_risk" ? "Declined: retiring" : row.decision === "blocked" ? "Blocked" : `Declined${row.needed_millions ? ` · needed ${money(row.needed_millions)}` : ""}`)}</em></li>`).join("")}</ol></section>` : ""}
-    </div>
-    <footer class="fa-builder-foot" data-fa-offer-foot>${freeAgencyOfferFootMarkup(player, preview, { legal, open, exclusive })}</footer>
-  </section>`;
+      ].slice(0, 4).map((row) => `<li><span>${escapeHtml(String(row.date || "").slice(5))}</span><strong>${money(row.aav_millions)} × ${escapeHtml(row.years || 1)}${row.guaranteed === false ? " non-gtd" : ""}</strong><em class="${row.accepted ? "is-yes" : "is-no"}">${escapeHtml(row.accepted ? "Signed" : row.decision === "retirement_risk" ? "Declined: retiring" : row.decision === "blocked" ? "Blocked" : `Declined${row.needed_millions ? ` · needed ${money(row.needed_millions)}` : ""}`)}</em></li>`).join("")}</ol></div>` : ""}
+`;
+  const body = { pay: `${sheet ? freeAgencyOfferSheetMarkup(player, draft, preview) : ""}<div data-fa-slot="pay">${freeAgencyPayMarkup(preview, sheet?.blocked_reason)}</div>`, bids: bidsMarkup, cap: freeAgencyCapSheetMarkup(room), other };
+  return `<div class="extension-page-layout" data-free-agency-builder data-fa-builder-player="${escapeAttr(player.id)}" aria-label="Contract offer for ${escapeAttr(player.name)}">
+      <div class="fa-panel fa-builder ext-builder">
+        <div class="fa-builder-scroll">
+          <section class="approved-card-panel fa-builder-market"><header>What He Wants${exclusive ? "" : `<button type="button" class="ui-command fa-star signing-star${shortlisted ? " is-active" : ""}" data-fa-shortlist="${escapeAttr(player.id)}" aria-pressed="${shortlisted}">${shortlisted ? "★ Shortlisted" : "☆ Shortlist"}</button>`}</header><dl>
+            <div title="His market ask per season: what rival teams bid against. It moves each day."><dt>Market ask ${info}</dt><dd><strong>${money(player.ask_millions)}</strong>${freeAgencyAskChange(player.ask_change_millions)}</dd></div>
+            <div class="signing-floor" data-fa-slot="floor">${freeAgencyFloorMarkup(player, preview)}</div>
+            <div title="${safe >= 5 ? "The league maximum" : "He plans to retire after that"}"><dt>Longest deal ${info}</dt><dd><strong>${safe >= 5 ? "5 years" : safe < 1 ? "None" : `${safe} year${safe === 1 ? "" : "s"}`}</strong></dd></div>
+          </dl></section>
+          <section class="approved-card-panel fa-builder-offer"><header>Your Offer</header>
+            <div class="fa-offer-field fa-offer-salary" title="${escapeAttr(limit)}">
+              <label for="faOfferAav"><small>Salary per season ${info}</small></label>
+              <span class="money-input"><b>$</b><input id="faOfferAav" type="number" inputmode="decimal" min="${minimum.toFixed(1)}" max="${maximum.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-fa-offer-aav aria-describedby="faOfferAavHelp"><b>M</b></span>
+              <div class="salary-track"><input type="range" min="${minimum.toFixed(1)}" max="${maximum.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-fa-offer-range aria-label="Salary per season, in millions" />
+                ${salaryMarksMarkup([
+                  ...(Number.isFinite(preview.floorOffer) ? [{ label: "His price", value: preview.floorOffer, attr: "data-fa-offer-set", title: `What he signs for from you: ${money(preview.floorOffer)}` }] : []),
+                  { label: "Market ask", value: Number(player.ask_millions), attr: "data-fa-offer-set", title: `His market ask: ${money(player.ask_millions)}` },
+                  { label: "Minimum", value: minimum, attr: "data-fa-offer-set", title: `His minimum: ${money(minimum)}` },
+                ])}</div>
+              <small id="faOfferAavHelp" class="ext-hint">${escapeHtml(limit)}</small>
+            </div>
+            <div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferYearsLabel">Years</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferYearsLabel">${[1, 2, 3, 4, 5].map((years) => radio("years", years, String(years), preview.years === years, years > preview.maxYears || years < (preview.minYears || 1), sheet && (years > preview.maxYears || years < preview.minYears) ? `An offer sheet runs ${preview.minYears} to ${preview.maxYears} seasons` : years > preview.maxYears ? "Only a team with full Bird rights can offer a fifth year" : years > safe ? `He plans to retire after ${safe} season${safe === 1 ? "" : "s"}; he refuses ${years} years` : "")).join("")}</div></div>
+              <div class="fa-offer-field" title="${escapeAttr(guaranteeWords)}"><small id="faOfferGuaranteeLabel">Guarantee ${info}</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferGuaranteeLabel">${radio("guarantee", "true", "Guaranteed", preview.guaranteed)}${radio("guarantee", "false", "Non-guaranteed", !preview.guaranteed, Boolean(sheet), sheet ? "Offer sheets are fully guaranteed" : "")}</div>
+                <p class="fa-offer-note ext-hint">${escapeHtml(guaranteeWords)}</p></div></div>
+            <div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferPathLabel">Salary path</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferPathLabel" data-fa-path-group>${pathButtons}</div></div>
+              <div class="fa-offer-field"><small id="faOfferOptionLabel">Option on the last season</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferOptionLabel" data-fa-option-group>${optionButtons}</div></div></div>
+            <div class="fa-offer-field signing-route" title="${escapeAttr(routeWords)}"><label for="faOfferRoute"><small>How you pay ${info}</small></label><select id="faOfferRoute" data-fa-offer-route aria-describedby="faOfferRouteHelp"><option value="">Best legal way</option>${routes.map((row) => `<option value="${escapeAttr(row.route)}" ${draft.route === row.route ? "selected" : ""}>${escapeHtml(row.short)}</option>`).join("")}</select><p id="faOfferRouteHelp" class="fa-offer-note ext-hint">${routeWords}</p></div>
+            <p class="fa-offer-note fa-offer-options ext-hint" data-fa-offer-shape>${escapeHtml(freeAgencyShapeNote(preview, draft))}</p>
+          </section>
+        </div>
+        <div data-fa-slot="verdict">${freeAgencyVerdictMarkup(preview)}</div>
+        <footer class="fa-builder-foot" data-fa-offer-foot>${freeAgencyOfferFootMarkup(player, preview, { legal, open, exclusive })}</footer>
+      </div>
+      <div class="extension-page-impact" data-signing-open="${view}">
+        <section class="approved-card-panel fa-offer-cap ext-cap" data-fa-slot="cap">${freeAgencyCapTableMarkup(preview)}</section>
+        <section class="approved-card-panel extension-analysis signing-more"><header><span data-signing-title>${FREE_AGENCY_SIGNING_TITLES[view]}</span><div class="extension-analysis-tabs" role="tablist" aria-label="More about this offer">${views.map(([key, label]) => `<button type="button" role="tab" data-signing-tab="${key}" aria-selected="${key === view}">${label}${count[key] ? ` · ${count[key]}` : ""}</button>`).join("")}</div></header>
+          ${views.map(([key]) => `<div class="signing-view" data-signing-view="${key}"${key === view ? "" : " hidden"}>${body[key]}</div>`).join("")}
+        </section>
+      </div>
+    </div>`;
 }
 
 // FA-REAL slice 4: the other ways to add a player: a two-way contract, a camp deal (Exhibit 10), a sign-and-trade.
@@ -7653,7 +7845,7 @@ function freeAgencyOtherDealsMarkup(player, room = state.data.freeagency || {}) 
     : `${snt.rights_abbrev} holds his rights: they re-sign him and trade him to you. You send back salary (if you're over the cap) and a pick; you become hard-capped at the first apron.`)}</small></div>
     <span class="fa-edge-buttons"><button type="button" class="ui-command" data-fa-snt-open>${snt.role === "sender" ? "Find a partner" : `Ask ${escapeHtml(snt.rights_abbrev)}`}</button></span></div>
     ${state.signAndTrade?.player_id === String(player.id) ? freeAgencySignAndTradeMarkup(player, room) : ""}` : "";
-  return `<section class="approved-card-panel fa-builder-edge" data-fa-edge><header>Other Ways To Add Him</header>${twoWay}${campRow}${sntRow}</section>`;
+  return `<section class="approved-card-panel fa-builder-edge" data-fa-edge>${twoWay}${campRow}${sntRow}</section>`;
 }
 
 function freeAgencySignAndTradeMarkup(player, room) {
@@ -7720,6 +7912,7 @@ async function freeAgencySignAndTrade(player, step, extra = {}) {
     return;
   }
   state.signAndTrade = null;
+  closeSigningCards(player.id);
   showToast(`Sign-and-trade done: ${player.name}.`);
   const room = await action("free_agency_room", { ...savePayload(), team: userTeam(), seed: 7 });
   await refreshDashboardAfterPhaseMutation("freeagency", room);
@@ -7736,6 +7929,7 @@ async function freeAgencyRosterEdgeSign(player, kind, years = 1) {
   }
   showToast(kind === "camp" ? `${player.name} invited to camp` : `${player.name} signed to a two-way contract`);
   state.selectedFreeAgent = null;
+  closeSigningCards(player.id);
   const room = await action("free_agency_room", { ...savePayload(), team: userTeam(), seed: 7 });
   await refreshDashboardAfterPhaseMutation("freeagency", room);
 }
@@ -7757,9 +7951,19 @@ function freeAgencyOfferSheetMarkup(player, draft, preview) {
     </div>`;
 }
 
-function freeAgencyOfferPreviewMarkup(preview) {
+function freeAgencyVerdictMarkup(preview) {
   const verdict = preview.verdict;
   const meter = clampNumber(preview.ratio * 100, 0, 150);
+  // A no within a tenth of his price is amber and says so, as on the extension page. It is still a no.
+  const close = verdict.tone === "no" && !preview.offerSheet && Number(preview.ratio) >= 0.9 && Number(preview.ratio) < 1;
+  return `<section class="approved-card-panel fa-offer-verdict ext-verdict fa-verdict-${verdict.tone}${close ? " is-close" : ""}" role="status" aria-live="polite">
+      <header>Will He Sign?</header>
+      <div class="fa-verdict-line" title="${escapeAttr(verdict.detail)}"><strong>${escapeHtml(close ? "Close, but he says no" : verdict.headline)}</strong> <i class="ext-info" aria-hidden="true">i</i><span class="ext-hint">${escapeHtml(verdict.detail)}</span></div>
+      ${Number.isFinite(preview.floor) ? `<div class="fa-verdict-meter" title="Your salary against the salary he needs from you (100% signs)"><i><b style="width:${meter / 1.5}%"></b><u style="left:${100 / 1.5}%"></u></i><em>${Math.round(preview.ratio * 100)}% of his price</em></div>` : ""}
+    </section>`;
+}
+
+function freeAgencyCapTableMarkup(preview) {
   const rows = preview.seasons.map((row, index) => {
     const tone = row.apronRoom < 0 ? "is-hard" : row.taxRoom < 0 ? "is-tax" : "";
     return `<tr class="${row.salary ? "has-offer" : ""} ${tone}">
@@ -7772,29 +7976,36 @@ function freeAgencyOfferPreviewMarkup(preview) {
       <td class="${row.apronRoom < 0 ? "is-negative" : ""}">${signedMoney(row.apronRoom)}</td>
     </tr>`;
   }).join("");
+  return `<header>Cap Position With This Offer <i class="ext-info" aria-hidden="true" title="${escapeAttr(`${preview.seasons[0] ? shortSeasonLabel(preview.seasons[0].season) : "Next season"} payroll counts cap holds for your unsigned free agents and a minimum charge for each empty spot below 12; later seasons count signed contracts only.`)}">i</i></header>
+      <table class="fa-cap-table ext-cap-table" aria-label="Payroll by season with this offer">
+        <colgroup><col style="width:12%"><col style="width:15%"><col style="width:13%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:15%"></colgroup>
+        <thead><tr><th scope="col">Season</th><th scope="col" title="Cap payroll: signed salaries, dead money and, this season, cap holds and empty-spot charges">Payroll</th><th scope="col" title="What this contract counts on the cap that season">Offer</th><th scope="col" title="Tax payroll after this offer (signed salaries and dead money)">After</th><th scope="col" title="Cap room after this offer">Cap room</th><th scope="col" title="Room under the luxury tax after this offer">Tax room</th><th scope="col" title="Room under the first apron after this offer">1st apron</th></tr></thead>
+        <tbody>${rows || `<tr><td colspan="7" class="fa-empty">No cap seasons available.</td></tr>`}</tbody>
+      </table>
+      <p class="fa-muted ext-hint">* ${escapeHtml(preview.seasons[0] ? shortSeasonLabel(preview.seasons[0].season) : "Next season")} payroll counts cap holds for your unsigned free agents and a minimum charge for each empty spot below 12; later seasons count signed contracts only.</p>`;
+}
+
+function freeAgencyPayMarkup(preview, said = "") {
   const quote = preview.quote;
   const paidWith = !quote ? `<p class="fa-muted fa-pay-pending">Checking how you can pay…</p>` : quote.ok
     ? `<dl class="fa-pay-terms">
         <div><dt>Paid with</dt><dd><strong>${escapeHtml(quote.label || "")}</strong></dd></div>
         <div><dt>Salary by year</dt><dd>${quote.schedule.map((row) => `<span title="${escapeAttr(row.cap_charge_millions !== row.salary_millions ? `Counts ${money(row.cap_charge_millions)} on the cap: the league pays the rest of a veteran's one-year minimum` : "")}">${escapeHtml(shortSeasonLabel(row.season))} ${money(row.salary_millions)}</span>`).join(" · ")}<small>${escapeHtml(money(quote.total_millions))} total${Number(quote.raise_pct) > 0 ? `, ${quote.raise_pct}% raises` : Number(quote.raise_pct) < 0 ? `, ${-quote.raise_pct}% decreases` : ", flat"}${preview.terms?.option && preview.terms.option !== "none" ? `, ${CONTRACT_OPTION_LABELS[preview.terms.option].toLowerCase()} on ${escapeHtml(shortSeasonLabel(quote.schedule[quote.schedule.length - 1]?.season || ""))}` : ""}</small></dd></div>
         ${quote.locks ? `<div><dt>Locks in</dt><dd class="${quote.hard_cap ? "fa-pay-lock" : ""}">${escapeHtml(quote.locks)}</dd></div>` : ""}
-        <div><dt>Tradable from</dt><dd>${escapeHtml(quote.trade_eligible_date || "—")}</dd></div>
+        <div><dt>Tradable from</dt><dd>${escapeHtml(formatWrittenDate(quote.trade_eligible_date) || quote.trade_eligible_date || "—")}</dd></div>
       </dl>`
-    : `<p class="fa-pay-blocked">${escapeHtml(quote.message || "No legal way to pay this.")}</p><ul class="fa-pay-routes">${(quote.routes || []).filter((row) => row.reason && row.route !== "bird" || row.ok).map((row) => `<li class="${row.ok ? "is-ok" : ""}"><b>${escapeHtml(row.short)}</b> ${escapeHtml(row.ok ? "would work" : row.reason)}</li>`).join("")}</ul>`;
-  return `<section class="approved-card-panel fa-offer-verdict fa-verdict-${verdict.tone}" role="status" aria-live="polite">
-      <header>Will He Sign?</header>
-      <div class="fa-verdict-line"><strong>${escapeHtml(verdict.headline)}</strong><span>${escapeHtml(verdict.detail)}</span></div>
-      ${Number.isFinite(preview.floor) ? `<div class="fa-verdict-meter" title="Your salary against the salary he needs from you (100% signs)"><i><b style="width:${meter / 1.5}%"></b><u style="left:${100 / 1.5}%"></u></i><em>${Math.round(preview.ratio * 100)}% of his price</em></div>` : ""}
-    </section>
-    <section class="approved-card-panel fa-offer-pay" role="status" aria-live="polite"><header>How It's Paid</header>${paidWith}</section>
-    <section class="approved-card-panel fa-offer-cap"><header>Cap Position With This Offer</header>
-      <table class="fa-cap-table" aria-label="Payroll by season with this offer">
-        <colgroup><col style="width:12%"><col style="width:15%"><col style="width:13%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:15%"></colgroup>
-        <thead><tr><th scope="col">Season</th><th scope="col" title="Cap payroll: signed salaries, dead money and, this season, cap holds and empty-spot charges">Payroll</th><th scope="col" title="What this contract counts on the cap that season">Offer</th><th scope="col" title="Tax payroll after this offer (signed salaries and dead money)">After</th><th scope="col" title="Cap room after this offer">Cap room</th><th scope="col" title="Room under the luxury tax after this offer">Tax room</th><th scope="col" title="Room under the first apron after this offer">1st apron</th></tr></thead>
-        <tbody>${rows || `<tr><td colspan="7" class="fa-empty">No cap seasons available.</td></tr>`}</tbody>
-      </table>
-      <p class="fa-muted">* ${escapeHtml(preview.seasons[0] ? shortSeasonLabel(preview.seasons[0].season) : "Next season")} payroll counts cap holds for your unsigned free agents and a minimum charge for each empty spot below 12; later seasons count signed contracts only.</p>
-    </section>`;
+    : freeAgencyBlockedMarkup(quote, said);
+  return paidWith;
+}
+
+// No legal way to pay: the headline once, then one line per way. The game's message repeats every way's reason after
+// its first sentence, so only that sentence heads the list when the list is there.
+function freeAgencyBlockedMarkup(quote, said = "") {
+  const rows = (quote.routes || []).filter((row) => row.reason && row.route !== "bird" || row.ok);
+  const full = String(quote.message || "No legal way to pay this.");
+  const repeats = rows.some((row) => row.reason && full.includes(`${row.short}: ${row.reason}`));
+  const message = repeats ? full.split(/(?<=\.)\s/)[0] : full;
+  return `${said && message === said ? "" : `<p class="fa-pay-blocked">${escapeHtml(message)}</p>`}<ul class="fa-pay-routes">${rows.map((row) => `<li class="${row.ok ? "is-ok" : ""}"><b>${escapeHtml(row.short)}</b> ${escapeHtml(row.ok ? "would work" : row.reason)}</li>`).join("")}</ul>`;
 }
 
 // FA-REAL: your books as the cap ledger sees them, with the holds you can renounce (before/after room shown).
@@ -7812,7 +8023,7 @@ function freeAgencyCapSheetMarkup(room = state.data.freeagency || {}) {
       <td>${money(hold.amount_millions)}</td>
       <td>${hold.renounce ? signedMoney(hold.renounce.cap_room_after_millions) : "—"}</td>
       <td>${hold.renounce ? `<button type="button" class="ui-command" data-fa-renounce="${escapeAttr(hold.player_id)}" title="${escapeAttr(hold.renounce.loses)}">Renounce</button>` : ""}</td></tr>`).join("");
-  return `<section class="approved-card-panel fa-cap-sheet" data-fa-cap-sheet><header>Your Cap Sheet · ${escapeHtml(shortSeasonLabel(ledger.season))}</header>
+  return `<section class="approved-card-panel fa-cap-sheet" data-fa-cap-sheet aria-label="Your cap sheet ${escapeAttr(shortSeasonLabel(ledger.season))}">
     <dl class="fa-cap-lines">
       ${line("Signed salaries", money(now.signed_millions))}
       ${line("Dead money", money(now.dead_millions))}
@@ -7843,7 +8054,7 @@ function freeAgencyOfferFootMarkup(player, preview, { legal = true, open = true,
   const label = preview.offerSheet ? "Sign Offer Sheet" : preview.accepts ? `${exclusive ? "Re-sign" : "Sign"} for ${money(preview.aav)} × ${preview.years}` : "Make Offer";
   const paid = preview.quote?.ok ? `paid with ${preview.quote.label}` : preview.quote ? "no legal way to pay" : "checking how you pay";
   return `<div><strong>${escapeHtml(money(preview.aav))} first year × ${escapeHtml(preview.years)} yr${preview.years === 1 ? "" : "s"} · ${escapeHtml(money(preview.total))} total</strong><span>${escapeHtml(reason || `${preview.guaranteed ? "Guaranteed" : "Non-guaranteed"} · ${paid} · ${preview.verdict.headline.toLowerCase()}`)}</span></div>
-    <button type="button" class="ui-command fa-submit${preview.accepts && !disabled ? " is-ready" : ""}" data-fa-submit-offer="${escapeAttr(player.id)}" ${disabled ? "disabled" : ""}>${escapeHtml(label)}</button>`;
+    <button type="button" class="ui-command fa-submit extension-submit${preview.accepts && !disabled ? " is-ready" : ""}" data-fa-submit-offer="${escapeAttr(player.id)}" ${disabled ? "disabled" : ""}>${escapeHtml(label)}</button>`;
 }
 
 // ---- Signing wire --------------------------------------------------------------------------------------------------
@@ -7853,6 +8064,8 @@ function freeAgencyWireKind(kind) {
   if (String(kind || "") === "trade") return "trade";
   return "other";
 }
+
+function sentenceCase(text) { const value = String(text || ""); return value.charAt(0).toUpperCase() + value.slice(1); }
 
 function freeAgencySigningWirePanel(room = state.data.freeagency || {}) {
   const userId = room.team?.id || "";
@@ -7882,7 +8095,7 @@ function freeAgencySigningWirePanel(room = state.data.freeagency || {}) {
         ? `${teams[0] || ""} · ${money(move.aav_millions)}${move.years ? ` × ${move.years}` : ""}${move.years ? ` · ${money(Number(move.aav_millions) * Number(move.years))} total` : ""}`
         : String(move.headline || "").replace(/^Trade completed:\s*/, "");
       const when = freeAgencyWireDate(move.date, room.as_of_date);
-      return `<li class="fa-wire-row fa-wire-${kind}${ours ? " is-ours" : ""}"><time datetime="${escapeAttr(when.date)}"${when.title ? ` title="${escapeAttr(when.title)}"` : ""}>${escapeHtml(when.label)}</time><span class="fa-wire-logos">${logos}</span><div><strong>${escapeHtml(title)}</strong><span title="${escapeAttr(move.headline || "")}">${escapeHtml(terms)}</span></div></li>`;
+      return `<li class="fa-wire-row fa-wire-${kind}${ours ? " is-ours" : ""}"><time datetime="${escapeAttr(when.date)}"${when.title ? ` title="${escapeAttr(when.title)}"` : ""}>${escapeHtml(when.label)}</time><span class="fa-wire-logos">${logos}</span><div><strong>${escapeHtml(title)}</strong><span title="${escapeAttr(move.headline || "")}">${escapeHtml(terms)}</span>${kind === "signing" && move.departure_text ? `<span class="fa-wire-why">${escapeHtml(sentenceCase(move.departure_text))}</span>` : ""}</div></li>`;
     }).join("") || `<li class="fa-empty">${moves.length ? "No moves of this kind yet." : "No league moves yet."}</li>`}</ol>
   </section>`;
 }
@@ -8765,7 +8978,6 @@ function tradeRoomModalBody() {
           </div>
         </div>` : `
         <div class="tr-toolbar-controls">
-          ${state.tradeView === "deal" && typeof tradeWorkspaceParticipants === "function" && tradeWorkspaceParticipants().some(row => row.selected.length) ? `<button type="button" class="tr-button is-primary tr-add-change" data-trade-view-switch="pick"><img src="/assets/window-icons/plus.svg" alt="">Add or change players</button>` : ""}
           <div class="trade-add-participant"><select id="tradeAddTeam" aria-label="Additional trade team"><option value="">Add a team…</option>${extraTeams.map(team => `<option value="${escapeAttr(team.abbrev)}">${escapeHtml(team.abbrev)} ${escapeHtml(team.name || "")}</option>`).join("")}</select><button type="button" class="tr-text-button" data-trade-add-team aria-label="Add team to trade" ${(state.tradeAdditionalTeams || []).length >= 4 ? "disabled" : ""}>Add</button></div>
         </div>`}
     </div>
@@ -8827,7 +9039,7 @@ function tradeSalaryGauge(flow, {bars = true} = {}) {
 }
 
 // One side of the deal: who gives what, as compact tiles, with that team's salary picture underneath.
-function tradeDealSide(row, participants, fresh = "") {
+function tradeDealSide(row, participants, fresh = "", options = {}) {
   const {team, side, payload = {}, selected = []} = row;
   const multi = participants.length > 2;
   const receives = tradeReceivedAssets(team, participants);
@@ -8841,14 +9053,16 @@ function tradeDealSide(row, participants, fresh = "") {
       <label class="trade-partner-field" for="tradePartner"><span class="sr-only">Trade partner</span><select id="tradePartner">${state.teams.filter(item => item.abbrev !== userTeam() && !(state.tradeAdditionalTeams || []).includes(item.abbrev)).map(item => `<option value="${escapeAttr(item.abbrev)}" ${item.abbrev === state.tradePartner ? "selected" : ""}>${escapeHtml(item.abbrev)}</option>`).join("")}</select></label>
       <button type="button" class="tr-step" data-trade-team-step="1" aria-label="Next trade partner">›</button>
     </div>` : `<button type="button" class="tr-side-team" data-trade-team-roster="${escapeAttr(team)}" title="${escapeAttr(`${team} roster · ${recordText}`)}">${logo}<strong>${escapeHtml(team)}</strong></button>`;
+  const sideHead = options.plain ? `<button type="button" class="tr-side-team" data-trade-team-roster="${escapeAttr(team)}" title="${escapeAttr(`${team} roster · ${recordText}`)}">${logo}<strong>${escapeHtml(team)}</strong></button>` : partnerPicker;
   const remove = side.startsWith("extra:") ? `<button type="button" class="tr-text-button tr-side-remove" data-trade-remove-team="${escapeAttr(team)}" aria-label="Remove ${escapeAttr(team)} from trade" title="Remove ${escapeAttr(team)}">×</button>` : "";
   const total = selectedTradeValue(selected);
   const colorOf = (index) => TRADE_ASSET_COLORS[index % TRADE_ASSET_COLORS.length];
   const tiles = selected.length
     ? selected.map((asset, index) => tradeDealTile(asset, {removeSide: side, routeFrom: multi ? team : "", fresh: fresh === `${side}:${asset.kind}:${asset.id}`, color: colorOf(index)})).join("")
+    : options.plain ? `<li class="tr-tiles-empty"><span>Nothing yet. Tick players or picks in ${escapeHtml(team)}'s list.</span></li>`
     : `<li class="tr-tiles-empty"><button type="button" class="tr-text-button" data-trade-roster-side="${escapeAttr(side)}" data-trade-view="pick">Choose from ${escapeHtml(team)}'s list</button></li>`;
   return `<section class="tr-side${state.tradeRosterSide === side ? " is-picking" : ""}" data-tr-side="${escapeAttr(side)}" ${teamBrandStyle(team)}>
-    <header class="tr-side-head">${partnerPicker}<span class="tr-side-verb">gives</span>${selected.length ? tradeSideTotalBar(selected, total, participants, colorOf, team) : ""}${remove}</header>
+    <header class="tr-side-head">${sideHead}<span class="tr-side-verb">gives</span>${selected.length ? tradeSideTotalBar(selected, total, participants, colorOf, team) : ""}${remove}</header>
     <ul class="tr-tiles" data-trade-scroll="selected-${escapeAttr(side)}" aria-label="${escapeAttr(team)} gives">${selected.length ? `<li class="tr-tiles-head" aria-hidden="true"><span></span><span>Player</span>${participants.length > 2 ? "<span>To</span>" : ""}<span>Roles</span><span>Value</span><span>OVR</span><span>Contract</span>${remove || side ? "<span></span>" : ""}</li>` : ""}${tiles}</ul>
     ${tradeSalaryGauge(flow, {bars: false})}
   </section>`;
@@ -9033,8 +9247,14 @@ async function setTradeWorkspaceTeam(team) {
       if (save !== state.currentSave || team !== state.tradeFinderScope) return;
       state.data.tradeRuleCounterparty = {team,payload};
     }
+    state.tradeFinderSearching = Boolean(searched && state.selectedFrom.length);
     renderTradeRoom();
-    if (searched && state.selectedFrom.length) await runTradeSearch();
+    if (searched && state.selectedFrom.length) {
+      try { await runTradeSearch(); }
+      finally {
+        if (state.tradeFinderSearching) { state.tradeFinderSearching = false; renderTradeRoom(); }
+      }
+    }
     return;
   }
   state.tradePartner = team;
@@ -9177,6 +9397,15 @@ function renderTradeMarket(root) {
     body.innerHTML = `<div class="trade-results-empty"><strong>Loading the trade market…</strong></div>`;
     return;
   }
+  // The Market as a page of its own (trade-market.js): a row a player, the teams circling him, and a way straight
+  // into an offer. The table below stays as the fallback.
+  if (globalThis.TradeMarketView?.markup) {
+    body.innerHTML = globalThis.TradeMarketView.markup(board, {partner: state.tradePartner, readMarkup: frontOfficeReadMarkup});
+    body.querySelector("[data-open-trade-offers]")?.addEventListener("click", () => openTradeOffersModal().catch(error => showToast(error.message || String(error), true)));
+    body.querySelectorAll("[data-market-build]").forEach(button => button.addEventListener("click", () => openTradeRoomModal("builder", {targetTeam: button.dataset.marketBuild, targetPlayerId: button.dataset.marketPlayer}).catch(error => showToast(error.message || String(error), true))));
+    wireDashboardPlayerCards(body);
+    return;
+  }
   const rows = board.shopped || [];
   const stage = row => row.stage === "sold" ? `Sold to ${row.sold_to || "another team"}` : row.stage === "bidding war" ? `Bidding war${row.rounds ? ` · ${row.rounds} round${row.rounds === 1 ? "" : "s"}` : ""}` : "Taking offers";
   const yoursLabel = row => row.your_offer === "leading" ? "Your offer leads" : row.your_offer === "outbid" ? "You have been outbid" : row.you_interested ? "You asked" : "";
@@ -9231,54 +9460,58 @@ function renderTradeBuilder(root) {
   const freshVerdict = Boolean(state.tradeVerdictFresh);
   state.tradeVerdictFresh = false;
   const ask = multi ? "Ask every team" : candidate ? "Ask again" : `Ask ${state.tradePartner}`;
-  // Two views (taste deck round 2: the one-page room felt cramped). Picking shows one team's list at a time and fills
-  // the window; the deal view shows the trade, its four-year payroll change and the other side's answer by Ask.
-  if (!["pick", "deal"].includes(state.tradeView)) state.tradeView = empty ? "pick" : "deal";
+  // Three steps (user, 2026-11-26): "the checkbox list of assets and the page showing the assets that have been
+  // selected should be separate, and then the what-it-does section is still separate from that". state.tradeView:
+  // "pick" (both teams' lists), "deal" (what each side gives, the salary check, the other side's answer) and
+  // "effect" (what the trade would mean for a team, in sections).
+  if (!["pick", "deal", "effect"].includes(state.tradeView)) state.tradeView = empty ? "pick" : "deal";
   const view = empty ? "pick" : state.tradeView;
   const strip = participants.map(row => `<button type="button" class="tr-strip-side${row.side === current.side ? " is-current" : ""}" data-trade-roster-side="${escapeAttr(row.side)}">${teamLogoSrc(row.team) ? `<img src="${escapeAttr(teamLogoSrc(row.team))}" alt="" />` : ""}<strong>${escapeHtml(row.team)}</strong><span>${row.selected.length ? row.selected.map(asset => escapeHtml(asset.kind === "player" ? (asset.name || "").split(" ").slice(-1)[0] : tradePickText(asset).short)).join(", ") : "nothing yet"}</span></button>`).join('<i aria-hidden="true">⇄</i>');
-  const viewSwitch = (target, label, primary = false) => `<button type="button" class="${primary ? "tr-button is-primary" : "tr-text-button"}" data-trade-view="${target}" ${target === "deal" && empty ? "disabled" : ""}>${label}</button>`;
-  // Round 6 (no scrolling): the payroll chart is the first of the deal's tabs (Payroll, Value, Team identity) instead
-  // of a section the page had to scroll past.
-  const lowerPage = [0, 1, 3].includes(page) ? page : 0;
-  const lowerBody = lowerPage === 0
-    ? tradePayrollAnimation(participants)
-    : lowerPage === 1
-    ? `<div class="tr-value-page">${multi ? tradeMultiValuePreview(participants) : `<div class="trade-team-decisions">${(candidate?.evaluations || []).map(tradeEvaluationPanel).join("")}</div>${tradeSegmentedValueBoard(candidate, state.selectedFrom, state.selectedTo, userTeam(), state.tradePartner)}`}</div>`
-    : `<div class="tr-identity-page">${tradeIdentityPage()}</div>`;
+  const step = (target, number, label) => `<button type="button" data-trade-view="${target}" ${view === target ? 'aria-current="step"' : ""} ${target !== "pick" && empty ? "disabled" : ""}><i>${number}</i>${label}</button>`;
+  const counts = participants.map(row => `<span><b>${escapeHtml(row.team)}</b> ${row.selected.length ? `gives ${row.selected.length}` : "nothing yet"}</span>`).join("");
+  const onward = view === "pick" ? `<span class="tr-steps-count">${counts}</span><button type="button" class="tr-button is-primary" data-trade-view="deal" ${empty ? "disabled" : ""}>The deal ›</button>`
+    : view === "deal" ? `<button type="button" class="tr-button is-primary" data-trade-view="effect">What it does ›</button>` : "";
+  const steps = `<nav class="tr-steps" aria-label="Trade steps">${step("pick", 1, "Pick assets")}${step("deal", 2, "The deal")}${step("effect", 3, "What it does")}<span class="tr-steps-onward">${onward}</span></nav>`;
+  // Two teams: both lists side by side. More teams: one list at a time, chosen from the strip.
+  const lists = multi
+    ? `<div class="tr-pick-bar"><div class="tr-strip">${strip}</div></div>${assetColumn(`${current.team} gives`, current.payload, current.side, current.team)}`
+    : participants.map(row => assetColumn(`${row.team} gives`, row.payload, row.side, row.team, row.side === "to" ? {tabs: tradePartnerPicker(row.team, row.payload)} : {})).join("");
   body.innerHTML = view === "pick" ? `
-    <div class="trade-builder-layout tr-builder is-picking${multi ? " is-multi" : ""}">
-      <div class="tr-pick-bar"><div class="tr-strip">${strip}</div>${viewSwitch("deal", "Review deal ›", true)}</div>
-      <div class="tr-pick-body">${assetColumn(`${current.team} gives`, current.payload, current.side, current.team)}</div>
+    <div class="trade-builder-layout tr-builder tr-page-pick${multi ? " is-multi" : ""}">
+      ${steps}
+      <div class="tr-pick-body" style="--tr-lists:${multi ? 1 : participants.length}">${lists}</div>
       ${tradePickTermsPopover()}
-    </div>` : `
-    <div class="trade-builder-layout tr-builder is-deal${multi ? " is-multi" : ""}">
-      <div class="tr-deal-main">
+    </div>` : view === "deal" ? `
+    <div class="trade-builder-layout tr-builder tr-page-deal${multi ? " is-multi" : ""}">
+      ${steps}
+      <div class="tr-deal-body">
         <section class="tr-stage" style="--tr-sides:${participants.length}">
           ${participants.map(row => tradeDealSide(row, participants, fresh)).join("")}
         </section>
-        <section class="tr-lower">
-          <nav class="tr-lower-tabs" aria-label="Trade details">${[[0, "Payroll"], [1, "Value"], [3, "Team identity"]].map(([index, label]) => `<button type="button" data-trade-page="${index}" aria-pressed="${lowerPage === index}" class="${lowerPage === index ? "active" : ""}">${label}</button>`).join("")}</nav>
-          <div class="tr-lower-body" data-trade-page-body="${lowerPage}">${lowerBody}</div>
-        </section>
+        <aside class="tr-verdict${freshVerdict ? " is-fresh" : ""}" aria-label="The other side's answer">
+          <div id="tradeRead">${tradeReadout(candidate)}</div>
+          <div class="tr-verdict-actions">
+            <label class="trade-final-toggle" title="A final offer gets a yes or no, never a counter-offer."><input type="checkbox" id="tradeFinalOffer" ${state.tradeFinalOffer ? "checked" : ""}> Final offer</label>
+            <button type="button" id="evaluateTrade" class="${canApply || counterOpen ? "tr-text-button" : "tr-button is-primary"}" ${tradePickRuleErrors().length || empty ? "disabled" : ""}>${escapeHtml(ask)}</button>
+          </div>
+        </aside>
       </div>
-      <aside class="tr-verdict${freshVerdict ? " is-fresh" : ""}" aria-label="The other side's answer">
-        <div id="tradeRead">${tradeReadout(candidate)}</div>
-        <div class="tr-verdict-actions">
-          <label class="trade-final-toggle" title="A final offer gets a yes or no, never a counter-offer."><input type="checkbox" id="tradeFinalOffer" ${state.tradeFinalOffer ? "checked" : ""}> Final offer</label>
-          <button type="button" id="evaluateTrade" class="${canApply || counterOpen ? "tr-text-button" : "tr-button is-primary"}" ${tradePickRuleErrors().length || empty ? "disabled" : ""}>${escapeHtml(ask)}</button>
-        </div>
-      </aside>
+      ${tradePickTermsPopover()}
+    </div>` : `
+    <div class="trade-builder-layout tr-builder tr-page-effect${multi ? " is-multi" : ""}">
+      ${steps}
+      ${tradeEffectPage(participants, candidate, multi)}
       ${tradePickTermsPopover()}
     </div>`;
   wireTradePickTermsPopover(body);
-  body.querySelectorAll("[data-trade-view]").forEach(button => button.addEventListener("click", () => { state.tradeView = button.dataset.tradeView; if (state.tradeView === "deal") state.tradePayrollPlayed = false; renderTradeRoom(); }));
+  body.querySelectorAll("[data-trade-view]").forEach(button => button.addEventListener("click", () => { state.tradeView = button.dataset.tradeView; if (state.tradeView === "effect") state.tradePayrollPlayed = false; renderTradeRoom(); }));
   body.querySelector("[data-trade-payroll-replay]")?.addEventListener("click", () => {
     const section = body.querySelector(".tr-payroll");
     section.classList.remove("is-playing", "is-settled");
     void section.offsetWidth;
     section.classList.add("is-playing");
   });
-  if (view === "deal" && !state.tradePayrollPlayed) state.tradePayrollPlayed = true;
+  if (view === "effect" && !state.tradePayrollPlayed) state.tradePayrollPlayed = true;
   body.querySelectorAll("[data-trade-roster-side]").forEach(button => button.addEventListener("click", () => { state.tradeRosterSide = button.dataset.tradeRosterSide; state.tradeView = "pick"; renderTradeRoom(); }));
   body.querySelectorAll("[data-trade-remove-team]").forEach(button => button.addEventListener("click", () => removeTradeParticipant(button.dataset.tradeRemoveTeam)));
   body.querySelectorAll("[data-trade-page]").forEach(button => button.addEventListener("click", () => { state.tradeInsightPage = Number(button.dataset.tradePage); renderTradeRoom(); }));
@@ -9287,7 +9520,27 @@ function renderTradeBuilder(root) {
   body.querySelectorAll("[data-trade-team-step]").forEach(button => button.addEventListener("click", () => handle(stepTradeWorkspaceTeam(Number(button.dataset.tradeTeamStep)))));
   body.querySelectorAll("[data-trade-identity-team]").forEach(button => button.addEventListener("click", () => { state.tradeIdentityTeam = button.dataset.tradeIdentityTeam; renderTradeRoom(); }));
   body.querySelector("[data-trade-identity-retry]")?.addEventListener("click", () => loadTradeIdentity(true));
-  if (view === "deal" && lowerPage === 3) loadTradeIdentity().catch(error => showToast(error.message, true));
+  if (view === "effect") {
+    loadTradeIdentity().catch(error => showToast(error.message, true));
+    loadTradeImpact().catch(error => showToast(error.message, true));
+  }
+  body.querySelectorAll("[data-trade-effect-tab]").forEach(button => button.addEventListener("click", () => { state.tradeEffectTab = button.dataset.tradeEffectTab; if (state.tradeEffectTab === "money") state.tradePayrollPlayed = false; renderTradeRoom(); }));
+  // The pair of maps is drawn at its own size and enlarged as one piece to the width it is given.
+  const maps = body.querySelector(".trade-identity-fade .trade-identity-comparison");
+  if (maps) {
+    maps.style.zoom = "";
+    const room = maps.parentElement.clientWidth, own = maps.offsetWidth;
+    const page = body.querySelector(".tr-effect-body");
+    const tall = page ? page.getBoundingClientRect().bottom - maps.getBoundingClientRect().top - 12 : Infinity;
+    if (room > 0 && own > 0) maps.style.zoom = String(Math.max(.7, Math.min(2.2, room / own * .95, tall / Math.max(1, maps.offsetHeight))));
+  }
+  body.querySelector("[data-trade-impact-retry]")?.addEventListener("click", () => loadTradeImpact(true).catch(error => showToast(error.message, true)));
+  body.querySelectorAll("[data-trade-fade]").forEach(button => button.addEventListener("click", () => {
+    state.tradeFade = button.dataset.tradeFade;
+    const box = body.querySelector(".trade-identity-fade");
+    if (box) box.dataset.fade = state.tradeFade;
+    body.querySelectorAll("[data-trade-fade]").forEach(item => item.setAttribute("aria-pressed", String(item === button)));
+  }));
   wireTradeAssetControls(body);
   body.querySelector("#tradeFinalOffer")?.addEventListener("change", event => { state.tradeFinalOffer = Boolean(event.target.checked); });
   body.querySelector("#evaluateTrade")?.addEventListener("click", () => evaluateBuiltTrade().catch(error => showToast(error.message || String(error), true)));
@@ -9297,6 +9550,141 @@ function renderTradeBuilder(root) {
   body.querySelector("#declineCounterTrade")?.addEventListener("click", () => { state.tradeCandidate = {...state.tradeCandidate, counter_offer: null}; state.tradeCounterChain = null; showToast("Counter-offer declined"); tradeResponseEffect("declined"); renderTradeRoom(); });
   body.querySelectorAll("[data-trade-team-roster]").forEach((button) => button.addEventListener("click", () => openTeamRosterCard(button.dataset.tradeTeamRoster)));
   wireDashboardPlayerCards(body);
+}
+
+// The trade partner's picker (previous / logo / select / next): in the deal's side header, and at the head of the
+// partner's list on the deal page.
+function tradePartnerPicker(team, payload = {}) {
+  const record = payload.record || {};
+  const recordText = `${Number(record.wins || 0)}-${Number(record.losses || 0)}`;
+  const logo = teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : "";
+  return `<div class="trade-partner-navigation tr-partner-picker">
+      <button type="button" class="tr-step" data-trade-team-step="-1" aria-label="Previous trade partner">‹</button>
+      <button type="button" class="tr-side-team" data-trade-team-roster="${escapeAttr(team)}" title="${escapeAttr(`${team} roster · ${recordText}`)}">${logo}</button>
+      <label class="trade-partner-field" for="tradePartner"><span class="sr-only">Trade partner</span><select id="tradePartner">${state.teams.filter(item => item.abbrev !== userTeam() && !(state.tradeAdditionalTeams || []).includes(item.abbrev)).map(item => `<option value="${escapeAttr(item.abbrev)}" ${item.abbrev === state.tradePartner ? "selected" : ""}>${escapeHtml(item.abbrev)}</option>`).join("")}</select></label>
+      <button type="button" class="tr-step" data-trade-team-step="1" aria-label="Next trade partner">›</button>
+      <strong class="tr-picker-verb">gives</strong>
+    </div>`;
+}
+
+// ---- "What it does": one page for what the trade would mean for a team (user, 2026-11-26). Everything on it is
+// computed by the game: the team ratings and the coach's minutes come from the trade_team_impact action
+// (team_identity_report and team_rotation_projection on the roster as it would be); the payroll and the values are
+// the ones the deal page uses. The game has no forecast of four factors or of morale after a trade, so neither is
+// shown here.
+const TRADE_EFFECT_RATINGS = [
+  ["overall", "Overall", true], ["offense", "Offense", true], ["defense", "Defense", true], ["depth", "Depth", true],
+  ["spacing", "Spacing"], ["creation", "Shot creation"], ["playmaking", "Playmaking"], ["rim_pressure", "Rim pressure"],
+  ["rebounding", "Rebounding"], ["rim_protection", "Rim protection"], ["on_ball_defense", "On-ball defense"],
+  ["team_defense", "Team defense"], ["athleticism", "Athleticism"],
+];
+
+function tradeImpactRequest(participants = tradeWorkspaceParticipants()) {
+  const legs = new Map();
+  for (const row of participants) for (const asset of row.selected) {
+    if (asset.kind !== "player") continue;
+    const to = tradeAssetDestination(row.team, asset, participants);
+    if (!legs.has(to)) legs.set(to, []);
+    legs.get(to).push(String(asset.id));
+  }
+  return {teams: participants.map(row => row.team), moves: [...legs].map(([to_team, player_ids]) => ({to_team, player_ids: player_ids.sort()}))};
+}
+
+async function loadTradeImpact(force = false) {
+  const request = tradeImpactRequest();
+  const key = JSON.stringify([state.currentSave, state.home?.save?.current_date, request]);
+  if (!force && state.tradeImpact?.key === key) return;
+  const impact = {key, status: "loading", data: null, error: ""};
+  state.tradeImpact = impact;
+  const save = state.currentSave;
+  try {
+    impact.data = await action("trade_team_impact", {...savePayload(), ...request});
+    impact.status = "ready";
+  } catch (error) {
+    impact.status = "error";
+    impact.error = error.message || "The change could not be worked out.";
+  }
+  if (state.tradeImpact === impact && save === state.currentSave && state.modal?.kind === "tradeRoom" && state.tradeView === "effect") renderTradeRoom();
+}
+
+// The team's ratings before and after, as rows {id, label, main, before, after, change, rankBefore, rankAfter, moved},
+// and the coach's minutes that change; null while the game is still working it out.
+function tradeEffectData(team) {
+  const impact = state.tradeImpact;
+  const key = JSON.stringify([state.currentSave, state.home?.save?.current_date, tradeImpactRequest()]);
+  if (!impact || impact.key !== key || impact.status === "loading") return {wait: `<p class="tr-effect-wait" role="status">Working out the change…</p>`};
+  if (impact.status === "error") return {wait: `<p class="tr-effect-wait" role="status">${escapeHtml(impact.error)} <button type="button" class="tr-text-button" data-trade-impact-retry>Try again</button></p>`};
+  const row = (impact.data?.teams || []).find(item => item.abbrev === team);
+  if (!row) return {wait: `<p class="tr-effect-wait">No ratings for ${escapeHtml(team)}.</p>`};
+  const ratings = TRADE_EFFECT_RATINGS.map(([id, label, main]) => {
+    const before = Number(row.before.metrics?.[id]), after = Number(row.after.metrics?.[id]);
+    if (!Number.isFinite(before) || !Number.isFinite(after)) return null;
+    const rankBefore = Number(row.before.ranks?.[id]) || 0, rankAfter = Number(row.after.ranks?.[id]) || 0;
+    return {id, label, main: Boolean(main), before, after, change: Math.round((after - before) * 10) / 10, rankBefore, rankAfter, moved: rankAfter && rankBefore ? rankBefore - rankAfter : 0};
+  }).filter(Boolean);
+  const moved = new Set(impact.data.moved_player_ids || []);
+  const minutes = (row.minutes || []).map(item => ({...item, change: Number(item.after || 0) - Number(item.before || 0), traded: moved.has(item.player_id)}))
+    .filter(item => Math.abs(item.change) >= 0.5).sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
+  return {ratings, minutes, count: Number(impact.data.league_team_count || 30)};
+}
+
+// "What it does" › The team: the four headline ratings large, then every other rating and who plays.
+function tradeEffectTeam(team) {
+  const data = tradeEffectData(team);
+  if (data.wait) return `<div class="tr-effect-team">${data.wait}</div>`;
+  const ordinal = (n) => { const ends = ["th", "st", "nd", "rd"], v = n % 100; return n + (ends[(v - 20) % 10] || ends[v] || ends[0]); };
+  const tone = (value) => value > 0 ? " is-up" : value < 0 ? " is-down" : "";
+  const signed = (value, digits = 1) => value ? `${value > 0 ? "+" : "−"}${Math.abs(value).toFixed(digits)}` : "–";
+  const rank = (item) => item.rankBefore ? `${ordinal(item.rankBefore)}${item.moved ? ` <i aria-hidden="true">→</i> ${ordinal(item.rankAfter)}` : ""}` : "";
+  const heroes = data.ratings.filter(item => item.main).map(item => `<div class="tr-effect-hero">
+      <small>${item.label}</small>
+      <span class="tr-effect-hero-figure"><em>${item.before.toFixed(1)}</em><i aria-hidden="true">→</i><b>${item.after.toFixed(1)}</b></span>
+      <span class="tr-effect-hero-foot"><b class="tr-effect-change${tone(item.change)}">${signed(item.change)}</b><span class="tr-effect-rank${tone(item.moved)}" title="League rank of ${data.count}">${rank(item)}</span></span>
+    </div>`).join("");
+  // Beside each rating, where it sits now (the tick) and after the trade (the bar), on the scale the ratings share.
+  const low = 40, high = 85;
+  const place = (value) => Math.max(0, Math.min(100, (value - low) / (high - low) * 100)).toFixed(1);
+  const bar = (item) => `<td class="tr-effect-bar${tone(item.change)}" aria-hidden="true"><i><u style="width:${place(item.after)}%"></u><s style="left:${place(item.before)}%"></s></i></td>`;
+  const rest = data.ratings.filter(item => !item.main).map(item => `<tr><th scope="row">${item.label}</th>${bar(item)}<td>${item.before.toFixed(1)}</td><td><b>${item.after.toFixed(1)}</b></td>
+      <td class="tr-effect-change${tone(item.change)}">${signed(item.change)}</td><td class="tr-effect-rank${tone(item.moved)}" title="League rank of ${data.count}">${rank(item)}</td></tr>`).join("");
+  const minuteBar = (item) => `<td class="tr-effect-bar${tone(item.change)}" aria-hidden="true"><i><u style="width:${Math.min(100, Number(item.after || 0) / 40 * 100).toFixed(1)}%"></u><s style="left:${Math.min(100, Number(item.before || 0) / 40 * 100).toFixed(1)}%"></s></i></td>`;
+  const minuteRows = data.minutes.slice(0, 12).map(item => `<tr><th scope="row">${escapeHtml(item.name || "")}${item.traded ? `<small>${item.after == null ? "leaves" : "arrives"}</small>` : ""}</th>${minuteBar(item)}<td>${item.before == null ? "–" : Number(item.before).toFixed(0)}</td><td><b>${item.after == null ? "–" : Number(item.after).toFixed(0)}</b></td>
+      <td class="tr-effect-change${tone(item.change)}">${signed(item.change, 0)}</td></tr>`).join("");
+  return `<div class="tr-effect-team">
+      <div class="tr-effect-heroes">${heroes}</div>
+      <section><h4>Every rating</h4>
+        <table class="tr-effect-table" data-no-sort aria-label="${escapeAttr(team)} team ratings before and after the trade"><thead><tr><th scope="col">Rating</th><th scope="col" aria-hidden="true"></th><th scope="col">Now</th><th scope="col">After</th><th scope="col">Change</th><th scope="col">League rank</th></tr></thead><tbody>${rest}</tbody></table></section>
+      <section><h4 title="The coach's projected minutes a game, now and with the new roster">Who plays</h4>
+        ${minuteRows ? `<table class="tr-effect-table tr-effect-minutes" data-no-sort aria-label="Minutes a game before and after the trade"><thead><tr><th scope="col">Player</th><th scope="col" aria-hidden="true"></th><th scope="col">Now</th><th scope="col">After</th><th scope="col">Change</th></tr></thead><tbody>${minuteRows}</tbody></table>` : `<p class="tr-effect-wait">Nobody's minutes change.</p>`}</section>
+    </div>`;
+}
+
+// "What it does" › The money: the team's payroll over four seasons, each team's salary check, and the values.
+function tradeEffectMoney(participants, viewed, candidate, multi) {
+  const value = multi ? tradeMultiValuePreview(participants) : `<div class="trade-team-decisions">${(candidate?.evaluations || []).map(tradeEvaluationPanel).join("")}</div>${tradeSegmentedValueBoard(candidate, state.selectedFrom, state.selectedTo, userTeam(), state.tradePartner)}`;
+  const checks = participants.map(row => `<div class="tr-effect-check"><strong>${teamLogoSrc(row.team) ? `<img src="${escapeAttr(teamLogoSrc(row.team))}" alt="" />` : ""}${escapeHtml(row.team)}</strong>${tradeSalaryGauge(tradeSalaryFlow(row.team, row.payload, row.selected, tradeReceivedAssets(row.team, participants)), {bars: false})}</div>`).join("");
+  return `<div class="tr-effect-money">
+      <section class="tr-lower-body" data-trade-page-body="0">${tradePayrollAnimation(participants, viewed.team)}</section>
+      <section class="tr-effect-money-side">
+        <h4>Salary check</h4><div class="tr-effect-checks">${checks}</div>
+        <h4>Value</h4><div class="tr-effect-value tr-lower-body" data-trade-page-body="1"><div class="tr-value-page">${value}</div></div>
+      </section>
+    </div>`;
+}
+
+function tradeEffectPage(participants, candidate, multi) {
+  const context = tradeIdentityContext();
+  const viewed = participants.find(row => row.side === context.side) || participants[0];
+  const tab = ["team", "court", "money"].includes(state.tradeEffectTab) ? state.tradeEffectTab : "team";
+  const names = (row) => row.selected.length ? row.selected.map(asset => escapeHtml(asset.kind === "player" ? asset.name || "" : tradePickText(asset).short)).join(", ") : "nothing";
+  const teams = `<div class="tr-effect-teams" role="tablist" aria-label="Whose team">${participants.map(row => `<button type="button" role="tab" data-trade-identity-team="${escapeAttr(row.side)}" aria-selected="${row.side === viewed.side}">${teamLogoSrc(row.team) ? `<img src="${escapeAttr(teamLogoSrc(row.team))}" alt="" />` : ""}<span>${escapeHtml(row.team)}</span></button>`).join("")}</div>`;
+  const tabs = `<div class="tr-effect-tabs" role="tablist" aria-label="What it does">${[["team", "The team"], ["court", "On the court"], ["money", "The money"]].map(([id, label]) => `<button type="button" role="tab" data-trade-effect-tab="${id}" aria-selected="${tab === id}">${label}</button>`).join("")}</div>`;
+  const summary = participants.map(row => `<span><b>${escapeHtml(row.team)}</b> gives ${names(row)}</span>`).join('<i aria-hidden="true">⇄</i>');
+  const section = tab === "team" ? tradeEffectTeam(viewed.team)
+    : tab === "court" ? `<div class="tr-effect-court tr-lower-body" data-trade-page-body="3"><div class="tr-identity-page">${tradeIdentityPage({openMinutes: true})}</div></div>`
+    : tradeEffectMoney(participants, viewed, candidate, multi);
+  return `<header class="tr-effect-head">${teams}${tabs}<p class="tr-effect-summary">${summary}</p></header>
+    <div class="tr-effect-body" data-effect-tab="${tab}">${section}</div>`;
 }
 
 function tradePickParticipants() {
@@ -9584,7 +9972,7 @@ function tradeFourYearImplications(userPayload, partnerPayload, outgoing, incomi
 // change from the trade animated so you see it happen). One frame per team: its payroll today with the players it
 // sends outlined, which then gives way to its payroll after the trade with the arrivals outlined. Plays once on
 // opening; the Replay button plays it again. Same chart, colours and scale as the payroll window.
-function tradePayrollAnimation(participants) {
+function tradePayrollAnimation(participants, only = "") {
   const seasons = [...new Set(participants.flatMap(row => Object.keys(row.payload?.cap_by_year || {})))].sort().slice(0, 4);
   if (seasons.length < 4) return `<div class="trade-package-empty">Scheduled payroll unavailable</div>`;
   const teams = participants.map(row => {
@@ -9596,7 +9984,7 @@ function tradePayrollAnimation(participants) {
     const cap = team.payload.cap_by_year?.[season] || {};
     return [Number(cap.salary_total_millions || 0), Number(cap.tax_line_millions || 0), Number(cap.hard_cap_millions || 0), team.after[index].payroll || 0];
   }))) * 1.06;
-  const frames = teams.map(({team, payload, sends, receives, after}) => {
+  const frames = teams.filter(({team}) => !only || team === only).map(({team, payload, sends, receives, after}) => {
     const leaving = sends.filter(asset => asset.kind === "player").map(asset => String(asset.id));
     const arriving = receives.filter(asset => asset.kind === "player").map(asset => String(asset.id));
     const removed = new Set(leaving);
@@ -9614,7 +10002,7 @@ function tradePayrollAnimation(participants) {
   }).join("");
   return `<section class="tr-payroll${state.tradePayrollPlayed ? " is-settled" : " is-playing"}" aria-label="Four-year payroll, now and after the trade">
       <header class="tr-payroll-head"><h4>Payroll, next four seasons</h4><button type="button" class="tr-text-button" data-trade-payroll-replay>Replay</button></header>
-      <div class="tr-payroll-frames" style="--tr-frames:${teams.length}">${frames}</div>
+      <div class="tr-payroll-frames" style="--tr-frames:${only ? 1 : teams.length}">${frames}</div>
     </section>`;
 }
 
@@ -9765,32 +10153,45 @@ function renderTradeFinder(root) {
   const fresh = state.tradeFreshAsset || "";
   state.tradeFreshAsset = "";
   const scopeName = state.tradeFinderScope || "the league";
-  body.innerHTML = `
-    <div class="trade-finder-layout tr-finder">
-      ${assetColumn(`${finderTeam} ${targetMode ? "target" : "available"} assets`, userAssets, side, finderTeam)}
-      <div class="trade-finder-workspace tr-finder-workspace">
-        <section class="trade-finder-brief tr-finder-brief" ${teamBrandStyle(userTeam())}>
+  // Two steps, like the Builder (checkpoint 14, "finish the trade room"): what you shop or want on the first page, the
+  // trades the game found on the second, so each has the whole window. state.tradeFinderView is "pick" or "results".
+  const searching = Boolean(state.tradeFinderSearching);
+  const searched = state.tradeSearchCompleted || searching;
+  const view = state.tradeFinderView === "results" && searched ? "results" : "pick";
+  const step = (target, number, label, count = "") => `<button type="button" data-finder-view="${target}" ${view === target ? 'aria-current="step"' : ""} ${target === "results" && !searched ? "disabled" : ""}><i>${number}</i>${label}${count === "" ? "" : `<b class="tr-steps-found">${count}</b>`}</button>`;
+  const clear = `<button id="clearTradeMarket" type="button" class="tr-text-button" ${selection.length || state.tradeResults.length ? "" : "disabled"}>Clear</button>`;
+  const find = `<button id="runTrade" type="button" class="tr-button is-primary" ${selection.length && !tradePickRuleErrors().length ? "" : "disabled"}>Find trades</button>`;
+  const steps = `<nav class="tr-steps" aria-label="Finder steps">${step("pick", 1, "Pick assets")}${step("results", 2, "Found trades", state.tradeResults.length || "")}<span class="tr-steps-onward">${clear}${view === "pick" ? find : ""}</span></nav>`;
+  body.innerHTML = view === "pick" ? `
+    <div class="trade-finder-layout tr-finder tr-finder-page is-pick">
+      ${steps}
+      <div class="tr-finder-body">
+        ${assetColumn(`${finderTeam} ${targetMode ? "target" : "available"} assets`, userAssets, side, finderTeam)}
+        <section class="trade-finder-brief tr-finder-brief" data-trade-scroll="finder-brief" ${teamBrandStyle(userTeam())}>
           <header class="tr-side-head"><span class="tr-side-team">${teamLogoSrc(finderTeam) ? `<img src="${escapeAttr(teamLogoSrc(finderTeam))}" alt="" />` : ""}<strong>${targetMode ? `Get from ${escapeHtml(finderTeam)}` : `Shop to ${escapeHtml(scopeName)}`}</strong></span><span class="trade-selection-count">${selection.length} of 2</span></header>
           <ul class="tr-tiles" data-trade-scroll="selected-${escapeAttr(side)}">${selection.length ? selection.map(asset => tradeDealTile(asset, {removeSide: side, fresh: fresh === `${side}:${asset.kind}:${asset.id}`})).join("") : `<li class="tr-tiles-empty"><span>Choose up to two assets from the list</span></li>`}</ul>
-          <div class="trade-finder-cap"><header>${teamLogoSrc(userTeam()) ? `<img src="${escapeAttr(teamLogoSrc(userTeam()))}" alt="" />` : ""}<span>${escapeHtml(userTeam())} payroll, next four seasons</span></header>${tradeFinderPayrollChart(targetMode, selection) || tradeCapDeltaChart(capRows)}</div>
           ${selection.some(asset => asset.kind !== "player") || (state.tradePickRules || []).length ? tradePickTermsMarkup() : ""}
-          <div class="trade-finder-actions"><button id="clearTradeMarket" type="button" class="tr-text-button" ${selection.length || state.tradeResults.length ? "" : "disabled"}>Clear</button><button id="runTrade" type="button" class="tr-button is-primary" ${selection.length && !tradePickRuleErrors().length ? "" : "disabled"}>Find trades</button></div>
-        </section>
-        <section class="trade-finder-results tr-finder-results">
-          <div class="trade-results-head"><strong>Found trades</strong><span>${state.tradeResults.length || ""}</span></div>
-          <div id="tradeResults" class="trade-results-list scroll-list" aria-live="polite">${tradeResultCards(state.tradeResults)}</div>
+          <div class="trade-finder-cap"><header>${teamLogoSrc(userTeam()) ? `<img src="${escapeAttr(teamLogoSrc(userTeam()))}" alt="" />` : ""}<span>${escapeHtml(userTeam())} payroll, next four seasons</span></header>${tradeFinderPayrollChart(targetMode, selection) || tradeCapDeltaChart(capRows)}</div>
         </section>
       </div>
+    </div>` : `
+    <div class="trade-finder-layout tr-finder tr-finder-page is-results">
+      ${steps}
+      <section class="trade-finder-results tr-finder-results">
+        <div id="tradeResults" class="trade-results-list" data-trade-scroll="finder-results" aria-live="polite">${searching ? `<p class="tr-effect-wait" role="status">Finding trades…</p>` : tradeResultCards(state.tradeResults)}</div>
+      </section>
     </div>`;
   wireTradeAssetControls(body);
   wireTradeInsightPagers(body);
-  body.querySelector("#runTrade").addEventListener("click", () => runTradeSearch().catch(error => showToast(error.message || String(error), true)));
+  body.querySelectorAll("[data-finder-view]").forEach(button => button.addEventListener("click", () => { state.tradeFinderView = button.dataset.finderView; renderTradeRoom(); }));
+  body.querySelector("#runTrade")?.addEventListener("click", () => runTradeSearch().catch(error => showToast(error.message || String(error), true)));
   body.querySelector("#clearTradeMarket").addEventListener("click", () => {
     state.tradePickRules = [];
     state.selectedFrom = [];
     state.selectedTo = [];
     state.tradeResults = [];
     state.tradeSearchCompleted = false;
+    state.tradeFinderView = "pick";
     renderTradeRoom();
   });
   body.querySelectorAll("[data-inspect-finder]").forEach((button) => {
@@ -9907,8 +10308,10 @@ async function runTradeSearch() {
   if (save !== state.currentSave || target !== (state.tradeFinderTargetTeam || null) || scope !== (state.tradeFinderScope || "")) return;
   const currentSelection = state.tradeFinderTargetTeam ? state.selectedTo : state.selectedFrom;
   if (selectionKey !== JSON.stringify([currentSelection.map(asset => `${asset.kind}:${asset.id}`).sort(),tradePickRulesRequest()])) return;
+  state.tradeFinderSearching = false;
   state.tradeResults = data.candidates || data.offers || [];
   state.tradeSearchCompleted = true;
+  state.tradeFinderView = "results";
   renderTradeRoom();
 }
 
@@ -10067,6 +10470,35 @@ function clipboardLegalActions() {
   return new Set(state.home?.save?.legal_actions || state.data.dashboard?.legal_actions || []);
 }
 
+// When trading or signings are closed, the buttons that open them are not shown at all (user, 2026-11-27).
+function tradingOpen() {
+  const legal = clipboardLegalActions();
+  return !legal.size || legal.has("trades") || legal.has("draft_trades");
+}
+function signingsOpen() {
+  const legal = clipboardLegalActions();
+  const room = state.data.freeagency || {};
+  const over = room.phase !== "re_signing" && room.state?.status === "completed";
+  return !legal.size || (legal.has("free_agent_signings") && !over);
+}
+
+// An explaining line, kept behind a small "i" (user, 2026-11-27).
+function pageInfoMark(text) {
+  return `<span class="ss-info page-info"><i class="g-info" tabindex="0" aria-label="${escapeAttr(text)}">i</i><span class="ss-info-tip" aria-hidden="true">${escapeHtml(text)}</span></span>`;
+}
+
+// A coach card floats over the page it was opened on: leaving the page closes it, unless it is pinned.
+function closeCoachCards() {
+  const coaches = (state.clipboardPlayerCards || []).filter(entry => entry.kind === "coach");
+  for (const entry of coaches) {
+    const close = document.querySelector(`[data-board-close="${CSS.escape(entry.id)}"]`);
+    if (close?.closest(".card-board-window")?.classList.contains("is-pinned")) continue;
+    close?.click();
+    state.clipboardPlayerCards = state.clipboardPlayerCards.filter(item => item !== entry);
+  }
+}
+if (typeof document !== "undefined" && document.addEventListener) document.addEventListener("gm:pagechange", () => closeCoachCards());
+
 // [width, height, sizing revision] for phase cards that open together. A new revision resets a saved size once.
 // Draft-night cards take the window's height (between 420 and 820 pixels) so the board shows as many rows as fit.
 const draftNightCardHeight = () => Math.round(Math.min(820, Math.max(420, (window.innerHeight || 900) - 160)));
@@ -10111,9 +10543,9 @@ function clipboardEntryLayout() {
         && state.data.freeagency.offseason_checklist) {
       // Side by side with the offer builder ("Negotiate" fills it); the market and wire are one click away (a second
       // row of tall cards does not fit the window, so the board would leave it closed anyway).
-      return {rows: [["phase-free_agency-checklist", "phase-free_agency-selected"]]};
+      return {rows: [["phase-free_agency-checklist"]]};
     }
-    return {rows: [["phase-free_agency-market", "phase-free_agency-selected", "phase-free_agency-wire"]]};
+    return {rows: [["phase-free_agency-market", "phase-free_agency-wire"]]};
   }
   return null;
 }
@@ -10139,7 +10571,6 @@ function seasonalClipboardCards(dashboard) {
     // One room: the market table, the offer builder (selected player, offer, cap position, rival bids) and the wire.
     free_agency: [
       ["market", "[data-free-agency-market-card]", "Free-Agent Market"],
-      ["selected", "[data-free-agency-builder]", "Offer Builder"],
       ["wire", "[data-free-agency-wire]", "Signing Wire"],
       ["checklist", "[data-offseason-checklist]", "Offseason Checklist"],
     ],
@@ -10243,6 +10674,8 @@ function setRosterClipboardCard() {
 function maybeOpenSetRosterWindow() {
   const list = state.data.setRoster;
   if (!list || !(list.items || []).length || !window.CardBoard) return;
+  // Pages layout: Home's to-do list carries these jobs; nothing opens by itself.
+  if (globalThis.CardPages?.enabled?.() && globalThis.GameProgress) return;
   const key = `nbaGmSetRosterSeen:${state.currentSave}:${list.season}:${list.pending_count ? "pending" : "open"}`;
   try {
     if (localStorage.getItem(key)) return;
@@ -10430,11 +10863,13 @@ async function playDraftSimulation(finalRoom, events, appliedCount) {
       // Skip jumps straight to the final room; the trade alerts still appear once.
       if (state.draftPlaybackSkip) break;
       if (event.type === "trade") {
+        globalThis.GameSound?.play("news");
         await showTradeAlerts();
         continue;
       }
       if (event.type !== "pick") continue;
       revealedPicks += 1;
+      globalThis.GameSound?.play("pick");
       state.draftPlaybackReveal = event;
       state.data.draft = GameSimulation.draftPlaybackFrame(finalRoom, events, revealedPicks);
       updateDraftPlaybackCard();
@@ -10450,6 +10885,9 @@ async function playDraftSimulation(finalRoom, events, appliedCount) {
     updateDraftPlaybackCard();
     state.busyDepth = Math.max(0, state.busyDepth - 1);
     setBusy(state.busyDepth > 0 || state.hydrating);
+    // The footer and the sidebar were drawn at the first pick: draw them again for where the draft now stands, or they
+    // keep saying "Pick 1 is up" and "Sim to my pick" when you are on the clock.
+    renderDashboard();
     window.AssistantGMPhone?.setDraftPlaybackActive?.(false);
     if(typeof maybeShowWantReminder==='function')maybeShowWantReminder();
   }
@@ -10486,7 +10924,7 @@ async function draftAdvanceStage() {
   applyPhaseRouting();
   await ensureViewData(true);
   render();
-  showToast(`Advanced to ${state.home?.save?.current_date || "next stage"}`);
+  showToast(`Advanced to ${formatDashboardShortDate(state.home?.save?.current_date) || "the next stage"}`);
 }
 
 function renderFreeAgency() {
@@ -10593,14 +11031,15 @@ function wireFreeAgencyMarketPanel(panel) {
   rows.forEach((row, index) => {
     row.addEventListener("click", (event) => {
       if (event.target.closest("button, input, select, a, label")) return;
-      selectFreeAgent(row.dataset.faSelect || "");
+      selectFreeAgent(row.dataset.faSelect || "", { focusRow: false });
+      openFreeAgentNegotiation(row.dataset.faSelect || "");
     });
     row.addEventListener("keydown", (event) => {
       if (event.target !== row) return;
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
-        selectFreeAgent(row.dataset.faSelect || "");
-        if (event.key === "Enter") focusFreeAgencyBuilder();
+        selectFreeAgent(row.dataset.faSelect || "", { focusRow: false });
+        openFreeAgentNegotiation(row.dataset.faSelect || "");
       } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         event.preventDefault();
         const next = rows[index + (event.key === "ArrowDown" ? 1 : -1)];
@@ -10622,7 +11061,7 @@ function wireFreeAgencyShortlistButtons(panel) {
   }));
 }
 
-// Selecting a player: mark the row in place (no table rebuild, scroll kept) and rebuild only the offer builder.
+// Selecting a player marks his row in place (no table rebuild, scroll kept).
 function selectFreeAgent(playerId, { focusRow = true } = {}) {
   if (!playerId) return;
   state.selectedFreeAgent = playerId;
@@ -10638,18 +11077,22 @@ function selectFreeAgent(playerId, { focusRow = true } = {}) {
       row.scrollIntoView?.({ block: "nearest" });
     }
   });
-  refreshFreeAgencyPanels({ builder: true });
-}
-
-function focusFreeAgencyBuilder() {
-  if (window.CardBoard?.isOpen && !window.CardBoard.isOpen("phase-free_agency-selected")) window.CardBoard.open("phase-free_agency-selected");
-  els.content.querySelector("[data-free-agency-builder] [data-fa-offer-aav]")?.focus();
 }
 
 function wireFreeAgencyBuilderPanel(panel) {
+  if (panel.dataset.faWired) return;
+  panel.dataset.faWired = "1";
+  panel.querySelectorAll("[data-signing-tab]").forEach((tab) => tab.addEventListener("click", () => {
+    state.freeAgentSigningView = tab.dataset.signingTab;
+    panel.querySelectorAll("[data-signing-tab]").forEach((other) => other.setAttribute("aria-selected", String(other === tab)));
+    panel.querySelectorAll("[data-signing-view]").forEach((view) => { view.hidden = view.dataset.signingView !== tab.dataset.signingTab; });
+    const side = panel.querySelector("[data-signing-open]");
+    if (side) side.dataset.signingOpen = tab.dataset.signingTab;
+    const title = panel.querySelector("[data-signing-title]");
+    if (title) title.textContent = FREE_AGENCY_SIGNING_TITLES[tab.dataset.signingTab] || "";
+  }));
   const room = state.data.freeagency || {};
   const player = freeAgencyCandidate(panel.dataset.faBuilderPlayer || "");
-  panel.querySelectorAll("[data-fa-intel-card]").forEach((button) => button.addEventListener("click", () => freeAgentPlayerCard(button.dataset.faIntelCard || "")));
   wireFreeAgencyShortlistButtons(panel);
   if (!player) return;
   const draft = freeAgencyOfferDraft(player, room);
@@ -10660,8 +11103,17 @@ function wireFreeAgencyBuilderPanel(panel) {
   const update = () => {
     const preview = freeAgencyOfferPreview(player, room, draft);
     if (!preview.quote) requestFreeAgencyQuote(player, { ...draft, aav: preview.aav, years: preview.years }, update);
-    const slot = panel.querySelector("[data-fa-offer-preview]");
-    if (slot) slot.innerHTML = freeAgencyOfferPreviewMarkup(preview);
+    if (freeAgencyStartStep(player, room, draft, preview.quote)) {
+      if (number) number.value = draft.aav.toFixed(1);
+      if (range) range.value = String(draft.aav);
+      update();
+      return;
+    }
+    const fill = (name, markup) => { const slot = panel.querySelector(`[data-fa-slot="${name}"]`); if (slot) slot.innerHTML = markup; };
+    fill("verdict", freeAgencyVerdictMarkup(preview));
+    fill("cap", freeAgencyCapTableMarkup(preview));
+    fill("pay", freeAgencyPayMarkup(preview, player.offer_sheet?.blocked_reason));
+    fill("floor", freeAgencyFloorMarkup(player, preview));
     const foot = panel.querySelector("[data-fa-offer-foot]");
     const { exclusive, open } = freeAgencyRoomState(room);
     if (foot) {
@@ -10686,13 +11138,16 @@ function wireFreeAgencyBuilderPanel(panel) {
     });
     const shape = panel.querySelector("[data-fa-offer-shape]");
     if (shape) shape.textContent = freeAgencyShapeNote(preview, draft);
-    const note = panel.querySelector("[data-fa-offer-guarantee]")?.closest(".fa-offer-field")?.querySelector(".fa-offer-note");
-    if (note) note.textContent = preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on ${room.offer_rules?.non_guaranteed_until || "January 10"}; release him before then and you owe nothing. He asks more for this.`;
+    const guarantee = panel.querySelector("[data-fa-offer-guarantee]")?.closest(".fa-offer-field");
+    const words = preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on ${room.offer_rules?.non_guaranteed_until || "January 10"}; release him before then and you owe nothing. He asks more for this.`;
+    const note = guarantee?.querySelector(".fa-offer-note");
+    if (note) { note.textContent = words; guarantee.setAttribute("title", words); }
   };
   const setSalary = (value, { fromRange = false, commit = false } = {}) => {
     const parsed = Number(value);
     if (!Number.isFinite(parsed)) return;
     const salary = commit || fromRange ? roundOfferTenth(clampNumber(parsed, minimum, maximum)) : parsed;
+    draft.auto = false;
     draft.aav = roundOfferTenth(clampNumber(salary, minimum, maximum));
     if (number && (commit || fromRange)) number.value = draft.aav.toFixed(1);
     if (range) range.value = String(draft.aav);
@@ -10706,13 +11161,13 @@ function wireFreeAgencyBuilderPanel(panel) {
   const wireRadios = (selector, apply) => {
     const buttons = [...panel.querySelectorAll(selector)];
     buttons.forEach((button, index) => {
-      button.addEventListener("click", () => { apply(button); update(); });
+      button.addEventListener("click", () => { draft.auto = false; apply(button); update(); });
       button.addEventListener("keydown", (event) => {
         const step = ["ArrowRight", "ArrowDown"].includes(event.key) ? 1 : ["ArrowLeft", "ArrowUp"].includes(event.key) ? -1 : 0;
         if (!step) return;
         event.preventDefault();
         const next = buttons[(index + step + buttons.length) % buttons.length];
-        apply(next); update(); next.focus();
+        draft.auto = false; apply(next); update(); next.focus();
       });
     });
   };
@@ -10733,7 +11188,7 @@ function wireFreeAgencyBuilderPanel(panel) {
       other.classList.toggle("is-active", active); other.setAttribute("aria-checked", String(active));
     });
   });
-  panel.querySelector("[data-fa-offer-route]")?.addEventListener("change", (event) => { draft.route = event.target.value || ""; update(); });
+  panel.querySelector("[data-fa-offer-route]")?.addEventListener("change", (event) => { draft.auto = false; draft.route = event.target.value || ""; update(); });
   panel.querySelectorAll("[data-fa-renounce]").forEach((button) => button.addEventListener("click", () => renounceCapHold(button.dataset.faRenounce || "")));
   panel.querySelector("[data-fa-submit-offer]")?.addEventListener("click", () => submitFreeAgentOffer(player.id));
   // FA-REAL slice 4: two-way, camp invite and sign-and-trade.
@@ -10810,10 +11265,11 @@ function refreshFreeAgencyPanels({ market = false, builder = false, wire = false
   const caret = active && typeof active.selectionStart === "number" ? [active.selectionStart, active.selectionEnd] : null;
   const replace = (selector, markup) => {
     els.content.querySelectorAll(selector).forEach((panel) => {
+      const own = typeof markup === "function" ? markup(panel) : markup;
       const scroll = panel.querySelector(".fa-market-scroll, .fa-builder-scroll, .fa-wire-list");
       const position = scroll ? [scroll.scrollLeft, scroll.scrollTop] : null;
       const holder = document.createElement("div");
-      holder.innerHTML = markup;
+      holder.innerHTML = own;
       const next = holder.firstElementChild;
       if (!next) return;
       panel.replaceWith(next);
@@ -10823,7 +11279,7 @@ function refreshFreeAgencyPanels({ market = false, builder = false, wire = false
     });
   };
   if (market) replace("[data-free-agency-market-card]", phaseFreeAgencyMarketCard(room));
-  if (builder) replace("[data-free-agency-builder]", freeAgencyOfferBuilderPanel(room));
+  if (builder) replace("[data-free-agency-builder]", (panel) => freeAgencySigningLayout(room, panel.dataset.faBuilderPlayer));
   if (wire) replace("[data-free-agency-wire]", freeAgencySigningWirePanel(room));
   if (focus) {
     const target = els.content.querySelector(focus);
@@ -10840,18 +11296,36 @@ function freeAgencyCandidate(playerId) {
   return (state.data.freeagency?.candidates || []).find((player) => String(player.id) === String(playerId));
 }
 
-// "Build Offer" from a player card or the comparison: select him in the room and bring the offer builder forward.
+// Negotiating with a free agent: his page opens with the offer as its first tab. Every way in comes here.
 async function openFreeAgentNegotiation(playerId) {
   const player = freeAgencyCandidate(playerId);
   if (!player) return;
-  state.selectedFreeAgent = player.id;
   if (["freeAgentComparison", "freeAgentPlayer"].includes(state.modal?.kind)) closeModal();
-  if (!els.content.querySelector("[data-free-agency-builder]")) {
-    await openClipboardWindow("freeagency");
-  }
   selectFreeAgent(player.id, { focusRow: false });
-  window.CardBoard?.open?.("phase-free_agency-selected");
-  requestAnimationFrame(() => els.content.querySelector("[data-free-agency-builder] [data-fa-offer-aav]")?.focus({ preventScroll: true }));
+  const detail = await loadPlayerCardDetail(player.id);
+  if (!detail) return;
+  const context = { playerId: player.id, detail };
+  await openPlayerCardOnClipboard({
+    key: `signing:${player.id}`, title: `${player.name || "Free Agent"} · ${freeAgencySigningTitle(player)}`, kind: "signing", context,
+    body: signingCardBody(context),
+  });
+}
+
+// The page as the room stands now: the offer comes first while he can be signed; otherwise it is his plain page.
+function signingCardBody(context) {
+  const room = state.data.freeagency || {};
+  const player = freeAgencyCandidate(context.playerId);
+  const detail = player ? { ...context.detail, ratings: player.ratings || context.detail.ratings, name: player.name } : context.detail;
+  return approvedPlayerCardBody(detail, { signing: player && signingsOpen() ? { room, player } : null });
+}
+
+// A signing that goes through closes his offer page and takes you back to where you were.
+function closeSigningCards(playerId) {
+  const cards = (state.clipboardPlayerCards || []).filter((entry) => entry.kind === "signing" && String(entry.context?.playerId) === String(playerId));
+  for (const entry of cards) {
+    document.querySelector(`[data-board-close="${CSS.escape(entry.id)}"]`)?.click();
+    state.clipboardPlayerCards = state.clipboardPlayerCards.filter((item) => item !== entry);
+  }
 }
 
 function freeAgentOfferSummary(player) {
@@ -11569,7 +12043,8 @@ function inputsProfilePage(profile) {
 
 function approvedPlayerCardBody(detail, options = {}) {
   const extension = options.extension || null;
-  const pageOffset = extension ? 1 : 0;
+  const signing = options.signing || null;
+  const pageOffset = extension || signing ? 1 : 0;
   const ratings = detail.ratings || options.ratings || {};
   const season = detail.season || {};
   const offenseAxes = [["Shooting", ratings.shooting], ["Spacing", ratings.spacing], ["Creation", ratings.creation], ["Passing", ratings.passing], ["Rim pressure", ratings.rim_pressure], ["Portability", ratings.portability]].filter(([, value]) => detail.is_prospect || value != null);
@@ -11578,24 +12053,39 @@ function approvedPlayerCardBody(detail, options = {}) {
     if (detail.is_prospect && axes.some(([,value]) => value == null)) return `<div class="player-rating-radar prospect-radar-placeholder" role="img" aria-label="${escapeAttr(title)} locked until its ratings are scouted">${prospectLockIcon()}<span>Profile locked</span><small>Scout all profile ratings to unlock</small></div>`;
     return axes.length >= 3 ? fantasyPlayerRadar(title, axes, `${tone} player-rating-radar`, false) : `<div class="player-page-empty">${escapeHtml(title)} profile unavailable.</div>`;
   };
+  // On a page (not the small floating card) a contracted player's first tab is his career (player-career.js; user,
+  // 2026-11-27) and the heat maps are a tab of their own. Prospects keep their college page.
+  const careerFirst = !detail.is_prospect && Boolean(globalThis.CardPages?.enabled?.()) && Boolean(globalThis.PlayerCareer);
+  // A prospect's page splits the same way: with the maps under the college tables they were drawn over each other.
+  const prospectCourt = Boolean(detail.is_prospect) && Boolean(globalThis.CardPages?.enabled?.());
+  const careerShift = careerFirst || prospectCourt ? 1 : 0;
+  const court = `<section class="approved-card-panel approved-player-spatial player-overview-court">${spatialHeatmapMarkup(detail.spatial_profile, { compact: true })}</section>`;
   return `<div class="approved-player-card approved-player-pages${detail.is_prospect ? " approved-prospect-pages" : ""}" data-player-pages>
-    <div class="player-page-bar"><span data-player-page-title>${extension ? "Contract Extension" : detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}</span><div class="player-page-nav"><button type="button" class="ui-command" data-player-page-step="-1" aria-label="Previous player card page" title="Previous page">‹</button><button type="button" class="ui-command" data-player-page-step="1" aria-label="Next player card page" title="Next page">›</button><span data-player-page-count aria-live="polite" aria-atomic="true">1/${(extension ? 1 : 0) + 2 + (detail.is_prospect ? 0 : 1)}</span></div></div>
+    <div class="player-page-bar"><span data-player-page-title>${extension ? "Contract Extension" : signing ? freeAgencySigningTitle(signing.player, signing.room) : detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}</span><div class="player-page-nav"><button type="button" class="ui-command" data-player-page-step="-1" aria-label="Previous player card page" title="Previous page">‹</button><button type="button" class="ui-command" data-player-page-step="1" aria-label="Next player card page" title="Next page">›</button><span data-player-page-count aria-live="polite" aria-atomic="true">1/${(extension ? 1 : 0) + 2 + (detail.is_prospect ? 0 : 1) + careerShift}</span></div></div>
     <section class="approved-player-identity player-page-identity"><div class="approved-player-profile-head"><span class="profile-headshot-wrap">${playerHeadshotMarkup(detail, "approved-profile-headshot")}${detail.team?.abbrev && typeof teamLogoSrc === "function" && teamLogoSrc(detail.team.abbrev) ? `<img class="profile-team-badge" src="${escapeAttr(teamLogoSrc(detail.team.abbrev))}" alt="${escapeAttr(detail.team.name || detail.team.abbrev)}" title="${escapeAttr(detail.team.name || detail.team.abbrev)}" />` : ""}</span><div class="approved-profile-name"><h3>${escapeHtml(detail.name || options.name || "Player")}</h3><p>${escapeHtml([detail.position, detail.age != null ? `${detail.age} years` : "", detail.height].filter(Boolean).join(" · "))}</p><p class="player-draft-details">${escapeHtml(detail.is_prospect ? [detail.college_profile ? detail.source_team : (detail.scouting_profile?.where || detail.source_team), detail.college_profile?.coach ? `Coach ${detail.college_profile.coach}` : "", `${detail.draft_year} draft class`].filter(Boolean).join(" · ") : detail.draft_position ? `${detail.draft_year || 'Draft'} · Pick #${detail.draft_position}` : detail.draft_status==='undrafted' ? `Undrafted${detail.draft_year?` · ${detail.draft_year}`:''}` : detail.draft_year ? `Draft year ${detail.draft_year}` : 'Draft details unavailable')}</p></div>${playerSummaryRatings(detail)}</div>${typeof playerHeaderFacts === "function" ? playerHeaderFacts(detail) : playerCardEvidence(detail)}${options.actions || ""}</section>
     ${extension ? extensionNegotiationPage(extension.room, extension.selectedPlayerId, extension.response, detail, extension.draft) : ""}
-    <section class="player-card-page player-card-page--overview" data-player-page="${pageOffset}" data-page-title="${detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}" aria-label="Season statistics, recent games, game score and contract">
+    ${signing ? freeAgencySigningPage(signing.room, signing.player) : ""}
+    ${careerFirst ? `<section class="player-card-page player-card-page--overview player-card-page--career" data-player-page="${pageOffset}" data-page-title="Career, Contract & Outlook" aria-label="Career statistics, contract and outlook"${signing ? " hidden" : ""}>
+      ${globalThis.PlayerCareer.page(detail)}
+    </section>
+    <section class="player-card-page player-card-page--overview player-card-page--hotspots" data-player-page="${pageOffset + 1}" data-page-title="Hotspots" aria-label="Shooting and defense by zone" hidden>
+      <section class="approved-card-panel approved-player-spatial player-overview-court">${spatialHeatmapMarkup(detail.spatial_profile, { compact: true })}</section>
+    </section>` : `<section class="player-card-page player-card-page--overview" data-player-page="${pageOffset}" data-page-title="${detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}" aria-label="Season statistics, recent games, game score and contract">
       ${detail.scouting_profile && !detail.college_profile ? scoutingProfileStrip(detail.scouting_profile) : playerSeasonStrip(season, detail.career_seasons || [])}
       ${detail.college_profile ? collegeProfileStrip(detail.college_profile, detail.scouting_profile) : ""}
       ${/* Round 10: the heat maps are this page's main display (recent games, the game-score chart and the payroll
           share left the page; the contract is in the header). */ ""}
-      <section class="approved-card-panel approved-player-spatial player-overview-court">${spatialHeatmapMarkup(detail.spatial_profile, { compact: true })}</section>
-    </section>
-    <section class="player-card-page player-card-page--details${detail.inputs_profile ? " player-card-page--layers" : ""}" data-player-page="${pageOffset + 1}" data-page-title="Ratings & Profiles" aria-label="Complete ratings and radar profiles" hidden>
+      ${prospectCourt ? "" : court}
+    </section>${prospectCourt ? `<section class="player-card-page player-card-page--overview player-card-page--hotspots" data-player-page="${pageOffset + 1}" data-page-title="Hotspots" aria-label="Shooting and defense by zone" hidden>
+      ${court}
+    </section>` : ""}`}
+    <section class="player-card-page player-card-page--details${detail.inputs_profile ? " player-card-page--layers" : ""}" data-player-page="${pageOffset + 1 + careerShift}" data-page-title="Ratings & Profiles" aria-label="Complete ratings and radar profiles" hidden>
       ${detail.inputs_profile ? inputsProfilePage(detail.inputs_profile) : `<div class="approved-player-identity-ratings" aria-label="Complete ratings">${playerCardGroupedRatings(ratings, detail, {
         Offense: radar("Offensive shape", offenseAxes, "offense"),
         Defense: radar("Defense / physical", defenseAxes, "defense")
       })}</div>`}
     </section>
-    ${detail.is_prospect ? "" : `<section class="player-card-page player-card-page--health" data-player-page="${pageOffset + 2}" data-page-title="Health & Injury Outlook" aria-label="Injury body map and outlook" hidden>${injuryBodyMapPanel(detail)}</section>`}
+    ${detail.is_prospect ? "" : `<section class="player-card-page player-card-page--health" data-player-page="${pageOffset + 2 + careerShift}" data-page-title="Health & Injury Outlook" aria-label="Injury body map and outlook" hidden>${injuryBodyMapPanel(detail)}</section>`}
   </div>`;
 }
 
@@ -11698,8 +12188,9 @@ document.addEventListener('click',event=>{
 function clipboardPlayerCardWindows(cardId = null) {
   const saveId = String(state.currentSave || "");
   return (state.clipboardPlayerCards || []).filter(entry => entry.saveId === saveId && (!cardId || entry.id === cardId)).map(entry => {
+    if (entry.kind === "signing") entry.body = signingCardBody(entry.context);
     const card = document.createElement("div");
-    card.className = `clipboard-player-card${entry.kind === "fantasy" ? " clipboard-player-card--fantasy" : entry.kind === "extension" ? " clipboard-player-card--extension" : entry.kind === "coach" ? " clipboard-player-card--coach" : ""}`;
+    card.className = `clipboard-player-card${entry.kind === "fantasy" ? " clipboard-player-card--fantasy" : entry.kind === "extension" ? " clipboard-player-card--extension" : entry.kind === "signing" ? " clipboard-player-card--extension clipboard-player-card--signing" : entry.kind === "coach" ? " clipboard-player-card--coach" : ""}`;
     if(entry.kind==="extension") card.dataset.extensionEntryId=entry.id;
     card.innerHTML = entry.body;
     wirePlayerCardPages(card, entry);
@@ -11713,6 +12204,8 @@ function clipboardPlayerCardWindows(cardId = null) {
       const close=async()=>{ const applied=Boolean(entry.context?.extensionApplied); if(applied) entry.context.extensionApplied=false; card.closest('.card-board-window')?.querySelector('[data-board-close]')?.click(); state.clipboardPlayerCards=state.clipboardPlayerCards.filter(item=>item.id!==entry.id); if(applied){ showToast(`${entry.context.outcome?.message||"Player signed an extension."}`); await refreshHome(); } };
       wireExtensionNegotiationModal(card,entry.context,redraw,close);
       if(entry.context?.outcome) mountPlayerExtensionOutcome(card,entry.context,close);
+    } else if (entry.kind === "signing") {
+      wireFreeAgencyRoom(card);
     } else if (entry.kind === "freeAgent") {
       card.addEventListener("click", event => {
         const button = event.target.closest("[data-fa-card-negotiate]");
@@ -11737,7 +12230,7 @@ function clipboardPlayerCardWindows(cardId = null) {
       });
     }
     const isFantasyCard = entry.kind === "fantasy";
-    const isExtensionCard = entry.kind === "extension";
+    const isExtensionCard = entry.kind === "extension" || entry.kind === "signing";
     const sizeRevision = Number(entry.sizeRevision) || 0;
     return {
       id:entry.id,
@@ -11779,7 +12272,7 @@ async function openPlayerCardOnClipboard({key, title, body, kind = "player", con
   if (!entry && kind === "extension") entry = state.clipboardPlayerCards.find(item => item.saveId === saveId && item.key === `dashboard:${context?.selectedPlayerId}`);
   if (!entry) {
     state.clipboardPlayerCardSequence += 1;
-    entry = {id:`player-card-${state.clipboardPlayerCardSequence}`, saveId, key, title, body, kind, width:kind === "coach" ? 900 : kind === "fantasy" ? 1120 : kind === "extension" ? 1530 : 2100, height:kind === "coach" ? 252 : kind === "fantasy" ? 700 : kind === "extension" ? 900 : 1270, sizeRevision:kind === "extension" ? 9 : 6};
+    entry = {id:`player-card-${state.clipboardPlayerCardSequence}`, saveId, key, title, body, kind, width:kind === "coach" ? 900 : kind === "fantasy" ? 1120 : kind === "extension" || kind === "signing" ? 1530 : 2100, height:kind === "coach" ? 252 : kind === "fantasy" ? 700 : kind === "extension" || kind === "signing" ? 900 : 1270, sizeRevision:kind === "extension" || kind === "signing" ? 9 : 6};
     state.clipboardPlayerCards.push(entry);
   } else {
     const extensionSizeUpdate = kind === "extension" && (Number(entry.sizeRevision) || 0) < 9
@@ -11788,7 +12281,7 @@ async function openPlayerCardOnClipboard({key, title, body, kind = "player", con
     Object.assign(entry, {key, title, body, kind, ...extensionSizeUpdate});
   }
   entry.context=context;
-  if(kind==="extension") entry.page=0;
+  if(kind==="extension" || kind==="signing") entry.page=0;
 
   if (state.view !== "dashboard") {
     state.view = "dashboard";
@@ -11814,6 +12307,8 @@ async function dashboardPlayerCard(playerId) {
   const player = rosterRows(state.data.dashboard || {}).find((row) => String(row.id) === String(playerId));
   const detail = await loadPlayerCardDetail(playerId);
   if (!detail) return;
+  // A free agent you can sign is negotiated with wherever you open him.
+  if (!tradeReturn && state.data.freeagency && freeAgencyCandidate(playerId) && signingsOpen()) return openFreeAgentNegotiation(playerId);
   const returnLabel = tradeReturn?.kind === "tradeOffers" ? "Back to Offers" : tradeReturn?.activeTab === "finder" ? "Back to Trade Finder" : "Back to Trade Builder";
   await openPlayerCardOnClipboard({
     key:`dashboard:${playerId}`,
@@ -11829,16 +12324,14 @@ async function freeAgentPlayerCard(playerId) {
   const player = freeAgencyCandidate(playerId);
   // Round 13: offseason tables use this button for the user's own players too; they get their regular card.
   if (!player) return dashboardPlayerCard(playerId);
+  if (signingsOpen()) return openFreeAgentNegotiation(playerId);
   const detail = await loadPlayerCardDetail(playerId);
   if (!detail) return;
   await openPlayerCardOnClipboard({
     key:`free-agent:${playerId}`,
     title:`${player.name || "Free Agent"} · Player Card`,
     kind:"freeAgent",
-    body:approvedPlayerCardBody(
-      { ...detail, ratings: player.ratings || detail.ratings, name: player.name },
-      { actions: `<button type="button" class="approved-player-primary-action" data-fa-card-negotiate="${escapeAttr(player.id)}">Build Offer</button>` },
-    ),
+    body:approvedPlayerCardBody({ ...detail, ratings: player.ratings || detail.ratings, name: player.name }),
   });
 }
 
@@ -11863,7 +12356,7 @@ function openFreeAgentComparison() {
       <div class="free-agent-comparison-market"><span>${escapeHtml(player.offer_count || 0)} active offer${Number(player.offer_count || 0) === 1 ? "" : "s"}</span>${freeAgentOfferSummary(player)}</div>
       <div class="free-agent-comparison-stats"><span><small>GP</small><b>${escapeHtml(player.games || 0)}</b></span><span><small>MPG</small><b>${draftMetric(player.previous_mpg)}</b></span><span><small>PTS</small><b>${draftMetric(player.ppg)}</b></span><span><small>REB</small><b>${draftMetric(player.rpg)}</b></span><span><small>AST</small><b>${draftMetric(player.apg)}</b></span><span><small>STL</small><b>${draftMetric(player.spg)}</b></span><span><small>BLK</small><b>${draftMetric(player.bpg)}</b></span><span><small>TO</small><b>${draftMetric(player.topg)}</b></span></div>
       <div class="free-agent-comparison-ratings">${ratingFields.map(([label, key]) => `<div><span>${escapeHtml(label)}</span><i><b style="width:${clampNumber(Number(player.ratings?.[key] || 0), 0, 99)}%"></b></i><strong>${draftMetric(player.ratings?.[key])}</strong></div>`).join("")}</div>
-      <button type="button" class="free-agency-negotiate-button" data-fa-comparison-negotiate="${escapeAttr(player.id)}">Negotiate</button>
+      ${signingsOpen() ? `<button type="button" class="free-agency-negotiate-button" data-fa-comparison-negotiate="${escapeAttr(player.id)}">Negotiate</button>` : ""}
     </article>`).join("")}</div>`,
   };
   renderModal();
@@ -11896,6 +12389,7 @@ async function submitFreeAgentOffer(playerId = state.selectedFreeAgent) {
   if (!await askConfirm(question)) return;
   const result = await action("submit_free_agent_offer", { ...savePayload(), player_id: player.id, team: userTeam(), years: preview.years, guaranteed: preview.guaranteed, aav_millions: preview.aav, route: draft.route || "", raise_pct: freeAgencyRaisePct(player, draft), salary_path: draft.path || "rising", option: draft.option || "none", backload: Boolean(draft.backload), auto_apply: true, seed: 7 });
   state.freeAgentQuotes = {};
+  if ((result.offer_sheet && result.status === "offer_sheet_signed") || result.apply_result?.status === "applied") closeSigningCards(player.id);
   if (result.offer_sheet) {
     // FA-REAL slice 3: an offer sheet is signed when he agrees; his team then has a day to match.
     if (result.status === "offer_sheet_signed") showToast(`${player.name} signed your offer sheet: ${terms}. ${player.restricted?.team_abbrev || "His team"} has until the end of ${result.sheet?.match_deadline || "tomorrow"} to match.`);
@@ -11954,7 +12448,7 @@ async function freeAgencyAdvanceStage() {
   if (state.view === "freeagents" || state.view === "freeagency") state.view = "dashboard";
   await ensureViewData(true);
   render();
-  showToast(`Advanced to ${state.home?.save?.current_date || "next phase"}`);
+  showToast(`Advanced to ${formatDashboardShortDate(state.home?.save?.current_date) || "the next phase"}`);
 }
 
 function expandedStaffMarkup(report, slots, market) {
@@ -12774,9 +13268,10 @@ function playerFinderValue(row,key) {
 
 function playerFinderTable(rows) {
   const finder=state.playerFinder || {};
-  const fields=[["player","Player",260],["team","Team",48],["position","Pos",40],["age","Age",36],["height_inches","Height",54],["overall","OVR",104],["offense","OFF",104],["defense","DEF",104],["health_risk","Risk",56],["upside_remaining","Runway",60],["find","Find",58]];
+  const fields=[["player","Player",260],["team","Team",48],["position","Pos",40],["age","Age",36],["height_inches","Height",54],["overall","OVR",104],["offense","OFF",104],["defense","DEF",104],["health_risk","Risk",56],["upside_remaining","Runway",60],["find","Find",58]].filter(([key])=>key!=="find" || typeof tradingOpen!=="function" || tradingOpen());
+  const canFind=fields.some(([key])=>key==="find");
   const head=fields.map(([key,label])=>`<th scope="col" ${key!=="find"?`aria-sort="${finder.sortField===key?(finder.sortDirection==='asc'?'ascending':'descending'):'none'}"`:""}>${key==='find'?label:`<button type="button" data-finder-sort="${key}">${label}${finder.sortField===key?`<i class="sort-tri" aria-hidden="true">${finder.sortDirection==='asc'?'▲':'▼'}</i>`:''}</button>`}</th>`).join('');
-  const body=rows.map(row=>`<tr data-finder-player="${escapeAttr(row.id)}" tabindex="0" aria-label="Open player card for ${escapeAttr(row.name)}"><td><span class="player-finder-identity">${playerHeadshotMarkup(row,'roster-player-headshot') || playerHeadshotMarkup({is_prospect:true},'roster-player-headshot')}${playerNameWithInjuryMarkup(row)}</span></td><td>${teamLogoSrc(row.team_abbrev)?`<span class="player-finder-team-logo" title="${escapeAttr(row.team_abbrev)}"><img src="${escapeAttr(teamLogoSrc(row.team_abbrev))}" alt="${escapeAttr(row.team_abbrev)} logo" loading="lazy" decoding="async"></span>`:escapeHtml(row.team_abbrev || "FA")}</td><td>${escapeHtml(compactPos(row.position))}</td><td>${escapeHtml(row.age == null ? "—" : Math.floor(row.age))}</td><td>${escapeHtml(heightFromRow(row) || "—")}</td>${['overall','offense','defense'].map(key=>`<td>${compactRatingBar(playerFinderValue(row,key))}</td>`).join('')}<td>${injuryRiskBody(row.health_risk,row.injury_body)}</td><td>${row.upside_remaining==null?'—':playerEvidenceRing('Growth runway',row.upside_remaining,5,playerUpsideColor(row.upside_remaining),' / 5')}</td><td><button type="button" class="ui-command" data-finder-trade="${escapeAttr(row.id)}" aria-label="Find trades for ${escapeAttr(row.name)}" ${!row.team_id || row.team_abbrev==='FA'?'disabled title="Free agents cannot be traded"':'title="Open Trade Finder with this player selected"'}>Find</button></td></tr>`).join('');
+  const body=rows.map(row=>`<tr data-finder-player="${escapeAttr(row.id)}" tabindex="0" aria-label="Open player card for ${escapeAttr(row.name)}"><td><span class="player-finder-identity">${playerHeadshotMarkup(row,'roster-player-headshot') || playerHeadshotMarkup({is_prospect:true},'roster-player-headshot')}${playerNameWithInjuryMarkup(row)}</span></td><td>${teamLogoSrc(row.team_abbrev)?`<span class="player-finder-team-logo" title="${escapeAttr(row.team_abbrev)}"><img src="${escapeAttr(teamLogoSrc(row.team_abbrev))}" alt="${escapeAttr(row.team_abbrev)} logo" loading="lazy" decoding="async"></span>`:escapeHtml(row.team_abbrev || "FA")}</td><td>${escapeHtml(compactPos(row.position))}</td><td>${escapeHtml(row.age == null ? "—" : Math.floor(row.age))}</td><td>${escapeHtml(heightFromRow(row) || "—")}</td>${['overall','offense','defense'].map(key=>`<td>${compactRatingBar(playerFinderValue(row,key))}</td>`).join('')}<td>${injuryRiskBody(row.health_risk,row.injury_body)}</td><td>${row.upside_remaining==null?'—':playerEvidenceRing('Growth runway',row.upside_remaining,5,playerUpsideColor(row.upside_remaining),' / 5')}</td>${canFind?`<td><button type="button" class="ui-command" data-finder-trade="${escapeAttr(row.id)}" aria-label="Find trades for ${escapeAttr(row.name)}" ${!row.team_id || row.team_abbrev==='FA'?'disabled title="Free agents cannot be traded"':'title="Open Trade Finder with this player selected"'}>Find</button></td>`:''}</tr>`).join('');
   return `<table class="player-finder-table"><colgroup>${fields.map(([, ,width])=>`<col style="width:${width}px">`).join('')}</colgroup><thead><tr>${head}</tr></thead><tbody>${body || '<tr><td colspan="11" class="player-finder-empty">No players match these filters.</td></tr>'}</tbody></table>`;
 }
 
@@ -13013,8 +13508,9 @@ function openSettingsModal() {
         ${layoutModeMenuMarkup()}
         ${boardThemeMenuMarkup()}
         ${typeof cardTransparencyMenuMarkup === "function" ? cardTransparencyMenuMarkup() : ""}
-        ${typeof uiLookMenuMarkup === "function" ? uiLookMenuMarkup("font") + uiLookMenuMarkup("buttons") : ""}
+        ${typeof uiLookMenuMarkup === "function" ? uiLookMenuMarkup("font") + uiLookMenuMarkup("buttons") + uiLookMenuMarkup("motion") : ""}
       </section>
+      ${soundMenuMarkup(onOff)}
       ${slideshows ? `<section class="settings-group"><h4>Season slideshows</h4>${slideshows}</section>` : ""}
       <section class="settings-group">
         <h4>Help</h4>
@@ -13022,7 +13518,7 @@ function openSettingsModal() {
       </section>
       <section class="settings-group">
         <h4>Credits</h4>
-        <div class="settings-actions"><a class="artwork-credits-link" href="/assets/game-art/CREDITS.md" target="_blank" rel="noopener">Artwork credits</a><button type="button" data-photo-credits>Photo credits</button></div>
+        <div class="settings-actions"><a class="artwork-credits-link" href="/assets/game-art/CREDITS.md" target="_blank" rel="noopener">Artwork credits</a><button type="button" data-photo-credits>Photo and music credits</button></div>
       </section>
       <footer class="settings-foot"><button class="settings-return-button" data-return-save-selection>Back to Save Selection</button></footer>`,
   };
@@ -13058,6 +13554,10 @@ async function openPhotoCreditsModal() {
   const generatedImages = Object.values(generated.faces || {}).reduce((total, face) => total + (face.stages || []).length, 0);
   const rows = (stock.photos || []).map(photo => ({file: photo.file, use: photo.use, subject: photo.title, author: photo.author, authorUrl: photo.author_url, licence: photo.licence, licenceUrl: photo.licence_url, source: photo.source_url}));
   for (const photo of arenas.photos || []) rows.push({file: photo.file, use: `Arena background (${photo.team}), ${photo.edited}`, subject: photo.title, author: photo.author, licence: photo.licence, licenceUrl: photo.licence_url, source: photo.source_url});
+  // Background music (assets/music/tracks.json): public domain, credited as a courtesy.
+  let music = {};
+  try { music = (await fetch("/assets/music/tracks.json", {cache: "no-cache"}).then(response => response.json())) || {}; } catch (error) { music = {}; }
+  for (const track of music.tracks || []) rows.push({file: `assets/music/${track.file}`, use: `Background music, ${track.edited}`, subject: track.title, author: track.artist, licence: track.licence, licenceUrl: track.licence_url, source: track.source_url});
   const reference = {};
   for (const [kind, entries] of [["Real head coach", real.coaches], ["Real prospect", real.prospects]]) {
     for (const entry of Object.values(entries || {})) {
@@ -13081,7 +13581,7 @@ async function openPhotoCreditsModal() {
   const referenceText = Object.entries(reference).sort((a, b) => b[1] - a[1]).map(([site, count]) => `${escapeHtml(site)} (${count})`).join(", ");
   state.modal = {
     kind: "photoCredits",
-    title: "Photo credits",
+    title: "Photo and music credits",
     subtitle: "",
     body: `<div class="photo-credits">
       ${generatedPeople ? `<p class="photo-credits-generated">Made-up coaches, staff, draft prospects and the players they become get AI-generated faces of fictional people first: no real person is depicted. They were made with OpenAI's image tool, with older photos of each person for later in their career (${generatedPeople} fictional people, ${generatedImages} portraits).</p>` : ""}
@@ -13110,6 +13610,29 @@ function sortPhotoCredits(root, key) {
 }
 
 // Settings rows: the label (with an optional "i" for the explanation) on the left, the control on the right.
+// Settings > Sound (sound.js): on or off, how loud, and whether every button clicks.
+function soundMenuMarkup(onOff) {
+  const sound = globalThis.GameSound?.settings();
+  if (!sound) return "";
+  return `<section class="settings-group">
+        <h4>Sound</h4>
+        ${settingsRow("Sound", onOff("data-sound-choice", sound.on), "Results, news, deals and jobs that need you. Made in the game itself.")}
+        ${settingsRow("Volume", `<div class="settings-slider"><input type="range" min="0" max="100" step="5" value="${sound.volume}" data-sound-volume aria-label="Sound volume"><output>${sound.volume}%</output></div>`)}
+        ${settingsRow("Button clicks", onOff("data-sound-clicks", sound.clicks), "A soft click on every button.")}
+        ${musicMenuRows(onOff)}
+      </section>`;
+}
+
+// Settings > Sound: background music (music.js). Its own switch and volume; the track playing, with a skip button.
+function musicMenuRows(onOff) {
+  const music = globalThis.GameMusic?.settings();
+  if (!music) return "";
+  const track = globalThis.GameMusic.current();
+  // The track playing and its skip button sit beside the switch (the Settings window has no room for another row).
+  return `${settingsRow("Music", `<div class="settings-music">${onOff("data-music-choice", music.on)}<span class="settings-track" data-music-track>${track ? escapeHtml(track.title) : ""}</span><button type="button" class="settings-skip" data-music-skip>Next track</button></div>`, "Six free tracks. They are listed under Photo and music credits.")}
+        ${settingsRow("Music volume", `<div class="settings-slider"><input type="range" min="0" max="100" step="5" value="${music.volume}" data-music-volume aria-label="Music volume"><output>${music.volume}%</output></div>`)}`;
+}
+
 function settingsRow(label, control, info = "") {
   const tip = String(info).replace(/"/g, "&quot;");
   return `<div class="settings-row"><span class="settings-label">${label}${info ? `<i class="g-info" tabindex="0" title="${tip}" aria-label="${tip}">i</i>` : ""}</span><div class="settings-control">${control}</div></div>`;
@@ -13140,7 +13663,9 @@ function cardTransparencyMenuMarkup() {
 }
 
 function uiLookMenuMarkup(name) {
-  const setting = UI_LOOK_SETTINGS[name], current = uiLook(name);
+  const setting = UI_LOOK_SETTINGS[name];
+  if (!setting) return "";
+  const current = uiLook(name);
   const buttons = setting.options.map(([key, label]) => `<button type="button" data-ui-look="${name}" data-ui-look-choice="${key}" aria-pressed="${key === current}"${name === "font" ? ` class="ui-font-sample is-${key}"` : ""}${name === "buttons" ? ` class="ui-button-sample is-${key}"` : ""}>${label}</button>`);
   return settingsRow(setting.label, settingsPill(setting.label, buttons.join("")));
 }
@@ -13375,11 +13900,20 @@ function extensionShapeEffect(factor, path, option) {
   return ` ${pieces.join("; ").replace(/^./, (c) => c.toUpperCase())}: he counts it as ${Math.round(Math.abs(factor - 1) * 100)}% ${factor > 1 ? "more" : "less"} than the same first-season salary, flat with no option.`;
 }
 
+// A no that is within a tenth of the salary he would sign for reads as close (amber), not as a flat no (user,
+// 2026-11-27). The answer itself is unchanged: it is still a no until the offer reaches his price.
+function extensionVerdictClose(preview) {
+  return preview?.verdict?.tone === "no" && Number.isFinite(preview.price) && Number(preview.ratio) >= 0.9 && Number(preview.ratio) < 1;
+}
+function extensionVerdictClass(preview) {
+  return `approved-card-panel fa-offer-verdict ext-verdict fa-verdict-${preview.verdict.tone}${extensionVerdictClose(preview) ? " is-close" : ""}`;
+}
+
 function extensionVerdictMarkup(preview) {
   const verdict = preview.verdict;
   const meter = clampNumber(preview.ratio * 100, 0, 150);
   return `<header>Will He Sign?</header>
-    <div class="fa-verdict-line" title="${escapeAttr(verdict.detail)}"><strong>${escapeHtml(verdict.headline)}</strong> <i class="ext-info" aria-hidden="true">i</i><span class="ext-hint">${escapeHtml(verdict.detail)}</span></div>
+    <div class="fa-verdict-line" title="${escapeAttr(verdict.detail)}"><strong>${escapeHtml(extensionVerdictClose(preview) ? "Close, but he says no" : verdict.headline)}</strong> <i class="ext-info" aria-hidden="true">i</i><span class="ext-hint">${escapeHtml(verdict.detail)}</span></div>
     ${Number.isFinite(preview.price) ? `<div class="fa-verdict-meter" title="Your salary against the salary he needs from you (100% signs)"><i><b style="width:${meter / 1.5}%"></b><u style="left:${100 / 1.5}%"></u></i><em>${Math.round(preview.ratio * 100)}% of his price</em></div>` : ""}`;
 }
 
@@ -13470,7 +14004,7 @@ function extensionNegotiationPage(room, selectedPlayerId, response = null, detai
           </section>
           ${status}
         </div>
-        <section class="approved-card-panel fa-offer-verdict ext-verdict fa-verdict-${preview.verdict.tone}" data-extension-verdict role="status" aria-live="polite">${extensionVerdictMarkup(preview)}</section>
+        <section class="${extensionVerdictClass(preview)}" data-extension-verdict role="status" aria-live="polite">${extensionVerdictMarkup(preview)}</section>
         <footer class="fa-builder-foot" data-extension-foot>${extensionOfferFootMarkup(preview, true)}</footer>
       </form>
       <div class="extension-page-impact">
@@ -13638,7 +14172,7 @@ function updateExtensionPreview(modal = state.modal, root = els.modalRoot) {
   const premium = Number(candidate.security_premium_pct?.non_guaranteed);
   if (note) note.textContent = preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on January 10; release him before then and you owe nothing. He asks ${Number.isFinite(premium) ? `${premium.toFixed(1)}%` : ""} more for this.`;
   const verdict = root.querySelector("[data-extension-verdict]");
-  if (verdict) { verdict.className = `approved-card-panel fa-offer-verdict ext-verdict fa-verdict-${preview.verdict.tone}`; verdict.innerHTML = extensionVerdictMarkup(preview); }
+  if (verdict) { verdict.className = extensionVerdictClass(preview); verdict.innerHTML = extensionVerdictMarkup(preview); }
   const cap = root.querySelector("[data-extension-cap]");
   if (cap) cap.innerHTML = extensionCapTableMarkup(preview, candidate);
   const foot = root.querySelector("[data-extension-foot]");
@@ -14668,7 +15202,7 @@ function positionSalaryMarks(scope) {
     const marks = [...track.querySelectorAll(".salary-mark")]
       .map((mark) => ({ mark, value: Number(mark.dataset.salaryMarkValue) }))
       .sort((a, b) => a.value - b.value);
-    let lastTop = -1;
+    const rows = [-1, -1, -1];  // where the last label of each of the three rows sits
     marks.forEach(({ mark, value }) => {
       mark.hidden = !Number.isFinite(value);
       if (mark.hidden) return;
@@ -14682,10 +15216,14 @@ function positionSalaryMarks(scope) {
       // Labels at either end of the track lean inward so they stay inside it.
       mark.classList.toggle("is-start", share < 0.12);
       mark.classList.toggle("is-end", share > 0.88);
-      // A mark close to the previous one drops its label a row so the two never overlap.
-      const low = lastTop >= 0 && share - lastTop < 0.18;
-      mark.classList.toggle("is-low", low);
-      if (!low) lastTop = share;
+      // A mark close to the one before it drops its label a row (or two), so labels never overlap. A label is about
+      // 70px wide, and one at the left end leans right, so on a narrow track the gap has to be bigger.
+      const room = (last) => (track.clientWidth ? Math.max(0.18, (last < 0.12 ? 100 : 72) / track.clientWidth) : 0.18);
+      let row = rows.findIndex((last) => last < 0 || share - last >= room(last));
+      if (row < 0) row = rows.length - 1;
+      mark.classList.toggle("is-low", row === 1);
+      mark.classList.toggle("is-lower", row === 2);
+      rows[row] = share;
     });
   });
 }
@@ -15570,6 +16108,13 @@ function formatWrittenDate(value) {
     year: "numeric",
     timeZone: "UTC",
   });
+}
+
+// A move from last summer says its year: "Jul 3" in June reads as a date that has not come yet.
+function wireTickerDate(value, today) {
+  const label = formatDashboardShortDate(value) || String(value || "");
+  const old = (Date.parse(String(today || "").slice(0, 10)) - Date.parse(String(value || "").slice(0, 10))) / 86400000 > 270;
+  return old ? `${label}, ${String(value).slice(0, 4)}` : label;
 }
 
 function formatDashboardShortDate(value) {
@@ -16853,7 +17398,7 @@ function tradeIdentityContext() {
   return {key,team,side:participant.side,players,after,changed:outgoing.some(row => row.kind === "player") || incoming.some(row => row.kind === "player")};
 }
 
-function tradeIdentityPage() {
+function tradeIdentityPage(options = {}) {
   const context = tradeIdentityContext();
   const preview = state.tradeIdentityPreview;
   const toolbar = `<div class="trade-identity-toolbar"><div>${tradeWorkspaceParticipants().map(({side,team}) => `<button type="button" class="trade-identity-logo" data-trade-identity-team="${escapeAttr(side)}" aria-pressed="${context.side === side}" aria-label="${escapeAttr(team)}" title="${escapeAttr(team)}">${teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : ""}<span>${escapeHtml(team)}</span></button>`).join("")}</div><span title="Illustrative minutes, not a saved rotation. Current injuries excluded; coaching, chemistry and lineups are not re-simulated.">Rotation-weighted projection · 240 minutes</span></div>`;
@@ -16866,7 +17411,11 @@ function tradeIdentityPage() {
   const b = window.TradeProjection.combine(after, preview.profiles, `trade-${context.team}-after`);
   if (!a || !b) return `${toolbar}<div class="trade-identity-empty">Complete spatial reference data is unavailable for this rotation.</div>`;
   const beforeById = new Map(before.map(row => [row.id,row.minutes]));
-  return `${toolbar}<div class="trade-identity-comparison"><section><h4>Before trade</h4>${spatialHeatmapMarkup(a,{compact:true})}</section><section><h4>After trade</h4>${spatialHeatmapMarkup(b,{compact:true})}</section></div><details class="trade-inferred-minutes"><summary>Inferred minutes</summary><table><thead><tr><th>Player</th><th>Before</th><th>After</th><th>Change</th></tr></thead><tbody>${[...new Map([...before,...after].map(row => [row.id,row])).values()].map(row => { const old = beforeById.get(row.id) || 0; const next = after.find(item => item.id === row.id)?.minutes || 0; return `<tr><th>${escapeHtml(row.name || row.label)}</th><td>${old}</td><td>${next}</td><td>${next-old > 0 ? "+" : ""}${next-old}</td></tr>`; }).join("")}</tbody></table></details>`;
+  // One pair of maps that fades from before to after and back (user, 2026-11-26: "have the heat fade from one to
+  // the other instead of having them one on top of the other"); the switch holds either one.
+  const fade = ["before", "after"].includes(state.tradeFade) ? state.tradeFade : "auto";
+  const fadeSwitch = `<div class="tr-fade-switch" role="group" aria-label="Which maps">${[["before", "Before"], ["auto", "Fade"], ["after", "After"]].map(([value, label]) => `<button type="button" data-trade-fade="${value}" aria-pressed="${fade === value}">${label}</button>`).join("")}</div>`;
+  return `${toolbar}<div class="trade-identity-fade" data-fade="${fade}">${fadeSwitch}<div class="trade-identity-comparison"><section class="is-before"><h4>Before the trade</h4>${spatialHeatmapMarkup(a,{compact:true})}</section><section class="is-after"><h4>After the trade</h4>${spatialHeatmapMarkup(b,{compact:true})}</section></div></div><details class="trade-inferred-minutes"${options.openMinutes ? " open" : ""}><summary>Minutes behind these maps</summary><table><thead><tr><th>Player</th><th>Before</th><th>After</th><th>Change</th></tr></thead><tbody>${[...new Map([...before,...after].map(row => [row.id,row])).values()].map(row => { const old = beforeById.get(row.id) || 0; const next = after.find(item => item.id === row.id)?.minutes || 0; return `<tr><th>${escapeHtml(row.name || row.label)}</th><td>${old}</td><td>${next}</td><td>${next-old > 0 ? "+" : ""}${next-old}</td></tr>`; }).join("")}</tbody></table></details>`;
 }
 
 async function loadTradeIdentity(force = false) {
@@ -16878,7 +17427,7 @@ async function loadTradeIdentity(force = false) {
   const save = state.currentSave;
   try {
     for (let index=0; index<players.length; index+=2) {
-      if (state.tradeIdentityPreview !== preview || save !== state.currentSave || state.modal?.kind !== "tradeRoom" || state.tradeInsightPage !== 3) { preview.status = "cancelled"; return; }
+      if (state.tradeIdentityPreview !== preview || save !== state.currentSave || state.modal?.kind !== "tradeRoom" || state.tradeView !== "effect") { preview.status = "cancelled"; return; }
       const results = await Promise.all(players.slice(index,index+2).map(row => action("player_card", {...savePayload(),player_id:row.id})));
       if (state.tradeIdentityPreview !== preview || save !== state.currentSave) return;
       results.forEach((result,offset) => { preview.profiles[players[index+offset].id] = result.spatial_profile; preview.loaded++; });
@@ -16887,7 +17436,7 @@ async function loadTradeIdentity(force = false) {
     }
     preview.status = "ready";
   } catch (error) { preview.status = "error"; preview.error = error.message || "Spatial preview could not be loaded."; }
-  if (state.tradeIdentityPreview === preview && state.modal?.kind === "tradeRoom" && state.tradeInsightPage === 3) renderTradeRoom();
+  if (state.tradeIdentityPreview === preview && state.modal?.kind === "tradeRoom" && state.tradeView === "effect") renderTradeRoom();
 }
 
 function tradeAssetTable(assets, options = {}) {
@@ -17782,6 +18331,7 @@ function askConfirm(message, { confirmLabel = "Confirm", cancelLabel = "Cancel",
 }
 
 function showToast(message, isError = false) {
+  if (isError) globalThis.GameSound?.play("blocked");
   els.toast.textContent = message;
   els.toast.classList.toggle("bad", isError);
   els.toast.hidden = false;

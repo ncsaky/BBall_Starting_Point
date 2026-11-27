@@ -100,7 +100,7 @@ test('workspace renders the table in the existing leaders card slot, with an emp
 test('table styling follows the shared table preferences', () => {
   const block = css.slice(css.indexOf('/* Playoff Stats card'));
   assert.ok(block.length > 100);
-  assert.match(block, /thead th \{[^}]*border-bottom:1px solid var\(--season-line\)[^}]*font-size:8px; font-weight:700;/, 'small bold header with a rule');
+  assert.match(block, /thead th \{[^}]*border-bottom:1px solid var\(--season-line\)[^}]*font-size:8px; font-weight:var\(--gm-weight-bold\);/, 'small bold header with a rule');
   assert.match(block, /tbody tr:first-child > :is\(th,td\) \{ border-top:1px solid var\(--season-soft-line\); \}/, 'second rule makes the double header border');
   assert.match(block, /tbody tr:nth-child\(even\) \{ background-color:#eef1f3; \}/, 'alternating rows');
   assert.match(block, /tbody tr:is\(:hover,:focus-within\) \{ background-color:#dce8f2; \}/, 'whole-row hover');

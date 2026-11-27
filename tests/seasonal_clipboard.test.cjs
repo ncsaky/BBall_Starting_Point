@@ -148,8 +148,8 @@ test('prospect and staff extensions do not retain navigation keybinds and card t
   const css = fs.readFileSync(path.join(gui,'card-board.css'),'utf8');
   assert.doesNotMatch(appSource,/label:"Prospects", keys:"g p"|label:"Coaching staff", keys:"g s"/);
   assert.doesNotMatch(interfaceSource,/\[data-dashboard-view="draft"\].*G P|\[data-dashboard-view="staff"\].*G S/);
-  assert.match(css,/\.season-minutes-head,[\s\S]*?\.assets-block-head\s*\)\s*\{\s*border-bottom:1px solid var\(--season-line\);\s*color:var\(--season-text\);\s*font-weight:600;/);
-  assert.match(css,/\.card-board-body :is\(table th,\.staff-workspace \.data-table th\)\s*\{\s*border-bottom:1px solid var\(--season-line\);\s*color:var\(--season-text\);\s*font-weight:600;/);
+  assert.match(css,/\.season-minutes-head,[\s\S]*?\.assets-block-head\s*\)\s*\{\s*border-bottom:1px solid var\(--season-line\);\s*color:var\(--season-text\);\s*font-weight:var\(--gm-weight-semibold\);/);
+  assert.match(css,/\.card-board-body :is\(table th,\.staff-workspace \.data-table th\)\s*\{\s*border-bottom:1px solid var\(--season-line\);\s*color:var\(--season-text\);\s*font-weight:var\(--gm-weight-semibold\);/);
 });
 
 test('window titles replace only redundant headings, preserving informative headers', () => {

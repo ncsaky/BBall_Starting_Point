@@ -95,21 +95,21 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell :is(.m
 }
 html[data-glass="clear"] body .has-card-board .card-board-titlebar :is(.card-board-move, .card-board-title, strong, h2, h3),
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell :is(.modal-head, .modal-header) :is(h2, h3, strong) {
-  color: #fff !important; font-weight: 700 !important; letter-spacing: -.005em; font-size: 15px !important;
+  color: #fff !important; font-weight: var(--gm-weight-bold) !important; letter-spacing: -.005em; font-size: 15px !important;
 }
 /* Modal backdrop: the board dims and blurs a little behind a pop-up. */
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot#modalRoot.modal-root { background: rgba(3, 8, 14, .16) !important; }
 
 /* ---------- Section titles: big, bold, white (JFresh's "Bio", "Attributes", "Career Stats"). */
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) :is(.approved-card-panel > header, .tr-side-head strong, .tr-payroll-head h4, .trade-results-head strong, .trade-finder-cap > header, .pc4-group > h4, .season-command-panel > header) {
-  color: #fff !important; font-weight: 700 !important; background: transparent !important; border: 0 !important; box-shadow: none !important;
+  color: #fff !important; font-weight: var(--gm-weight-bold) !important; background: transparent !important; border: 0 !important; box-shadow: none !important;
 }
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot) .approved-card-panel { background: transparent !important; border: 0 !important; box-shadow: none !important; }
 
 /* ---------- Tables: no fills, no stripes. Bold white header text over one hairline; a hairline between rows; a faint
    lift on hover; the sorted column barely tinted. */
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) table thead th {
-  background: transparent !important; color: #fff !important; font-weight: 700 !important;
+  background: transparent !important; color: #fff !important; font-weight: var(--gm-weight-bold) !important;
   box-shadow: inset 0 -1px 0 var(--jf-head-line) !important; border: 0 !important;
 }
 html[data-glass="clear"] body.unified-terminal-ui .has-card-board .card-board-body table > thead > tr > th:first-child::before,
@@ -126,7 +126,7 @@ html[data-glass="clear"] body.unified-terminal-ui [data-house-table] > [data-hou
 html[data-glass="clear"] body.unified-terminal-ui [data-house-table] > [data-house-row][data-house-alt] { background-color: transparent !important; box-shadow: inset 0 -1px 0 var(--g-row-line) !important; }
 html[data-glass="clear"] body.unified-terminal-ui [data-house-table] > [data-house-row]:is(:hover, :focus-within) { background-color: var(--g-hover) !important; }
 html[data-glass="clear"] body.unified-terminal-ui [data-house-table] > [data-house-head] { background: transparent !important; box-shadow: inset 0 -1px 0 var(--jf-head-line) !important; }
-html[data-glass="clear"] body.unified-terminal-ui [data-house-table] > [data-house-head] * { color: #fff !important; font-weight: 700 !important; }
+html[data-glass="clear"] body.unified-terminal-ui [data-house-table] > [data-house-head] * { color: #fff !important; font-weight: var(--gm-weight-bold) !important; }
 
 /* ---------- The standard long pill: a faint frosted tray, white labels, the chosen option a brighter frosted pill with
    bold white text (JFresh's chosen tab is bold; the "1st Line" chip is a light pill). Keep / Waive / Buy out keep their
@@ -135,10 +135,10 @@ html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .car
   background: rgba(255, 255, 255, .07) !important; border: 1px solid rgba(255, 255, 255, .10) !important; box-shadow: none !important;
 }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .settings-pill, [role="tablist"]) > :is(button, a) {
-  color: #e6eef5 !important; font-weight: 500 !important;
+  color: #e6eef5 !important; font-weight: var(--gm-weight-semibold) !important;
 }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .settings-pill, [role="tablist"]) > :is(button, a):is(.active, .is-active, [aria-pressed="true"], [aria-selected="true"]) {
-  color: #fff !important; font-weight: 700 !important;
+  color: #fff !important; font-weight: var(--gm-weight-bold) !important;
 }
 html[data-glass="clear"] .tab-slide-pill { background: rgba(255, 255, 255, .22) !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22), 0 2px 8px rgba(0, 0, 0, .18) !important; }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window.card-board-window, .season-slideshow.season-slideshow) :is(.tabs, .tr-tabs, .tr-filter, .tr-lower-tabs, .dev-views, .spatial-court-tabs, .settings-pill, [role="tablist"]) > :is(button, a):is(.active, .is-active, [aria-pressed="true"], [aria-selected="true"]):not(:has(~ .tab-slide-pill)) {
@@ -150,7 +150,7 @@ html[data-glass="clear"] .cutdown-choice-thumb:is(.is-waive, .is-buyout) { backg
 /* ---------- Buttons: primary actions a frosted light chip with bold white text; ordinary buttons plain light text with a
    faint chip on hover; text links stay text. */
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-window, .season-command-header, .season-slideshow) :is(.tr-button.is-primary, .ui-command.is-primary, button.primary, .is-primary:is(button, a)) {
-  background: var(--jf-chip) !important; color: #fff !important; font-weight: 700 !important;
+  background: var(--jf-chip) !important; color: #fff !important; font-weight: var(--gm-weight-bold) !important;
   border: 1px solid var(--jf-chip-edge) !important; box-shadow: none !important; border-radius: 999px !important;
 }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-window, .season-command-header, .season-slideshow) :is(.tr-button.is-primary, .ui-command.is-primary, button.primary, .is-primary:is(button, a)):hover:not(:disabled) { background: var(--jf-chip-hover) !important; }
@@ -175,13 +175,13 @@ html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot, .card-board-wi
 
 /* ---------- Player card: JFresh's big bold name; labels bold white, values regular (Bio / Contract rows); section titles
    larger and bold. */
-html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-profile-name h3 { font-size: 27px !important; font-weight: 700 !important; letter-spacing: -.01em; color: #fff !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-profile-name h3 { font-size: 27px !important; font-weight: var(--gm-weight-bold) !important; letter-spacing: -.01em; color: #fff !important; }
 html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-profile-name p { color: #e6eef5 !important; font-size: 14px !important; }
-html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card :is(.player-header-fact > small, .player-summary-rating > small) { color: #fff !important; font-weight: 700 !important; }
-html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .player-header-fact > span { font-weight: 400 !important; }
-html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card :is(.approved-card-panel > header, .approved-season-line > header, .approved-season-line > strong) { font-size: 17px !important; font-weight: 700 !important; color: #fff !important; }
-html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-season-line small { color: #fff !important; font-weight: 700 !important; }
-html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-season-line strong { font-weight: 400 !important; color: #fff !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card :is(.player-header-fact > small, .player-summary-rating > small) { color: #fff !important; font-weight: var(--gm-weight-bold) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .player-header-fact > span { font-weight: var(--gm-weight-regular) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card :is(.approved-card-panel > header, .approved-season-line > header, .approved-season-line > strong) { font-size: 17px !important; font-weight: var(--gm-weight-bold) !important; color: #fff !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-season-line small { color: #fff !important; font-weight: var(--gm-weight-bold) !important; }
+html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .approved-season-line strong { font-weight: var(--gm-weight-regular) !important; color: #fff !important; }
 html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card :is(.player-page-bar, .approved-player-identity) { background: transparent !important; border-color: var(--jf-line) !important; }
 
 /* ---------- Pop-ups let the team colour through (JFresh's Larkin card): the trade room is the same faint lift as every
@@ -189,7 +189,7 @@ html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card :is(.pl
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-shell.modal-shell.modal-shell.modal-trade-room { background: var(--card-surface) !important; }
 html[data-glass="clear"] .settings-slider { display: flex; align-items: center; gap: 12px; }
 html[data-glass="clear"] .settings-slider input[type="range"] { flex: 1; min-width: 200px; margin: 0; accent-color: #3d8fe0; cursor: pointer; }
-html[data-glass="clear"] .settings-slider output { min-width: 4ch; color: #fff; font-size: 13px; font-weight: 700; text-align: right; }
+html[data-glass="clear"] .settings-slider output { min-width: 4ch; color: #fff; font-size: 13px; font-weight: var(--gm-weight-bold); text-align: right; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot#modalRoot.modal-root { background: rgba(3, 8, 14, .16) !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .modal-shell.modal-trade-room :is(.tr-toolbar, .tr-pick-bar, .tr-side, .tr-verdict, .tr-lower, .tr-picker, .tr-payroll, .tr-finder-brief, .tr-finder-results, .trade-room-toolbar) {
   background: rgba(255, 255, 255, .035) !important; border: 1px solid var(--jf-line) !important; box-shadow: none !important;
@@ -204,7 +204,7 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-tr
 html[data-glass="clear"] body .has-card-board .card-board-window .card-board-control.card-board-control {
   width: 22px !important; height: 22px !important; min-width: 0 !important; padding: 0 !important;
   background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 50% !important;
-  display: inline-grid !important; place-items: center; opacity: .62; transition: opacity .15s ease, background-color .15s ease;
+  display: inline-grid !important; place-items: center; opacity: .62; transition: opacity var(--gm-motion-open) var(--gm-ease), background-color var(--gm-motion-open) var(--gm-ease);
 }
 html[data-glass="clear"] body .has-card-board .card-board-window .card-board-control.card-board-control img { width: 11px !important; height: 11px !important; filter: brightness(0) invert(1) !important; }
 html[data-glass="clear"] body .has-card-board .card-board-window .card-board-control.card-board-control:is(:hover, :focus-visible) { opacity: 1; background: rgba(255, 255, 255, .14) !important; }
@@ -237,7 +237,7 @@ html[data-glass="clear"] body.unified-terminal-ui .draft-asset-glyph .draft-asse
 html[data-glass="clear"] body.unified-terminal-ui .draft-asset-glyph .draft-asset-condition svg * { fill: currentColor !important; stroke: currentColor !important; }
 html[data-glass="clear"] body.unified-terminal-ui .draft-asset-glyph .draft-asset-owner { background: transparent !important; border: 0 !important; box-shadow: none !important; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .65)); }
 /* Value tab: "OKC sends" as a real heading. */
-html[data-glass="clear"] body.unified-terminal-ui .approved-trade-values .trade-value-team > strong { font-size: 16px !important; font-weight: 700 !important; color: #fff !important; padding: 2px 0 8px !important; margin-bottom: 4px; border-bottom: 1px solid var(--jf-head-line); display: flex !important; align-items: center; }
+html[data-glass="clear"] body.unified-terminal-ui .approved-trade-values .trade-value-team > strong { font-size: 16px !important; font-weight: var(--gm-weight-bold) !important; color: #fff !important; padding: 2px 0 8px !important; margin-bottom: 4px; border-bottom: 1px solid var(--jf-head-line); display: flex !important; align-items: center; }
 html[data-glass="clear"] body.unified-terminal-ui .approved-trade-values .trade-value-team > strong .tr-team-mark img { width: 26px !important; height: 26px !important; }
 /* The verdict dial: the price marker and needle dark, so they read on the pale waiting arc. */
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-dial .tr-dial-price { stroke: #0b1520 !important; stroke-width: 3 !important; }
@@ -273,16 +273,16 @@ html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-menu, .glass-s
 html[data-glass="clear"] body.unified-terminal-ui .card-board-menu :is(button, a)[role="menuitem"],
 html[data-glass="clear"] body.unified-terminal-ui .card-board-menu > :is(button, a) {
   background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 8px !important;
-  min-height: 30px !important; padding: 0 10px !important; color: #fff !important; font-weight: 500 !important;
+  min-height: 30px !important; padding: 0 10px !important; color: #fff !important; font-weight: var(--gm-weight-semibold) !important;
   display: flex !important; align-items: center; justify-content: space-between; gap: 18px;
 }
 html[data-glass="clear"] body.unified-terminal-ui .card-board-menu :is(button, a):is(:hover, :focus-visible) { background: rgba(255, 255, 255, .13) !important; }
-html[data-glass="clear"] body.unified-terminal-ui .card-board-menu .shortcut-hint { background: transparent !important; border: 0 !important; color: rgba(255, 255, 255, .55) !important; font-weight: 600 !important; box-shadow: none !important; }
+html[data-glass="clear"] body.unified-terminal-ui .card-board-menu .shortcut-hint { background: transparent !important; border: 0 !important; color: rgba(255, 255, 255, .55) !important; font-weight: var(--gm-weight-semibold) !important; box-shadow: none !important; }
 html[data-glass="clear"] body.unified-terminal-ui .glass-select-list > .glass-select-option { min-height: 30px !important; border-radius: 8px !important; padding: 6px 12px !important; }
 html[data-glass="clear"] body.unified-terminal-ui .glass-select-list > .glass-select-option[aria-selected="true"] { background: rgba(255, 255, 255, .16) !important; }
 html[data-glass="clear"] body.unified-terminal-ui button.glass-select.glass-select,
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot button.glass-select {
-  min-height: 25px !important; background: rgba(255, 255, 255, .12) !important; border: 1px solid rgba(255, 255, 255, .24) !important; font-weight: 600 !important;
+  min-height: 25px !important; background: rgba(255, 255, 255, .12) !important; border: 1px solid rgba(255, 255, 255, .24) !important; font-weight: var(--gm-weight-semibold) !important;
 }
 
 /* ---------- Round 13 quick fixes. */
@@ -292,7 +292,7 @@ html[data-glass="clear"] *::-webkit-scrollbar { width: 0 !important; height: 0 !
 /* Pop-up close: a plain, slightly heavier white X, no bubble. */
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot :is(.modal-close-icon, [data-close-modal]) {
   background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 50% !important;
-  color: #fff !important; opacity: .8; font-size: 20px !important; font-weight: 700 !important; -webkit-text-stroke: .4px currentColor;
+  color: #fff !important; opacity: .8; font-size: 20px !important; font-weight: var(--gm-weight-bold) !important; -webkit-text-stroke: .4px currentColor;
 }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot :is(.modal-close-icon, [data-close-modal]):hover { opacity: 1; background: rgba(255, 255, 255, .12) !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot :is(.modal-close-icon, [data-close-modal]) img { filter: brightness(0) invert(1) !important; width: 13px !important; height: 13px !important; }
@@ -304,7 +304,7 @@ html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .player
 /* Value tab headings: centred, abbreviation and "sends" both bold with a space between. */
 html[data-glass="clear"] body.unified-terminal-ui .approved-trade-values .trade-value-team > strong { justify-content: center !important; gap: 6px !important; }
 html[data-glass="clear"] body.unified-terminal-ui .approved-trade-values .trade-value-team > strong .tr-team-mark { gap: 8px !important; }
-html[data-glass="clear"] body.unified-terminal-ui .approved-trade-values .trade-value-team > strong .tr-team-mark b { font-weight: 700 !important; }
+html[data-glass="clear"] body.unified-terminal-ui .approved-trade-values .trade-value-team > strong .tr-team-mark b { font-weight: var(--gm-weight-bold) !important; }
 /* Team Wants: the add button's + white. */
 html[data-glass="clear"] body.unified-terminal-ui .card-board-window[data-board-window="team-wants"] button img { filter: brightness(0) invert(1) !important; }
 /* Four-Year Payroll Share: softer colours on the glass. */
@@ -340,13 +340,13 @@ html[data-glass="clear"] body.unified-terminal-ui .card-board-window[data-board-
 html[data-glass="clear"] body.unified-terminal-ui .card-board-window[data-board-window="contracts"] .player-evidence-ring > div { display: none !important; }
 html[data-glass="clear"] body.unified-terminal-ui .card-board-window[data-board-window="contracts"] .player-evidence-ring,
 html[data-glass="clear"] body.unified-terminal-ui .card-board-window[data-board-window="contracts"] .player-evidence-ring > span { display: block !important; width: auto !important; height: auto !important; position: static !important; text-align: center; }
-html[data-glass="clear"] body.unified-terminal-ui .card-board-window[data-board-window="contracts"] .player-evidence-ring strong { position: static !important; font-size: 12px !important; font-weight: 600 !important; color: #fff !important; }
+html[data-glass="clear"] body.unified-terminal-ui .card-board-window[data-board-window="contracts"] .player-evidence-ring strong { position: static !important; font-size: 12px !important; font-weight: var(--gm-weight-semibold) !important; color: #fff !important; }
 html[data-glass="clear"] body.unified-terminal-ui .card-board-window[data-board-window="contracts"] td { white-space: nowrap; }
 /* Upcoming Prospects: names as plain bold text (no pill); headshot, school logo and name centred in the row; a longer
    scouted bar; the League rank range drawn in light, high-contrast marks with a key under the table. */
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-name { display: flex !important; align-items: center !important; gap: 8px; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-name > * { align-self: center !important; margin-block: 0 !important; }
-html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-open { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; color: #fff !important; font-weight: 700 !important; border-radius: 0 !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-open { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; color: #fff !important; font-weight: var(--gm-weight-bold) !important; border-radius: 0 !important; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-open:hover { text-decoration: underline; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] td.season-prospect-col-scouted { width: 150px; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-scouted { grid-template-columns: minmax(0, 1fr) 34px !important; width: 140px; }
@@ -357,7 +357,7 @@ html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] :i
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] :is(.season-prospect-range-box, .season-prospect-legend .is-box) { background: rgba(124, 192, 255, .55) !important; border: 1px solid #a9d6ff !important; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] :is(.season-prospect-range-median, .season-prospect-legend .is-median) { background: #fff !important; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] :is(.season-prospect-range-ours, .season-prospect-ours-key) { background: #ffd27a !important; border-color: #0b1520 !important; }
-html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-range-number { color: #fff !important; font-weight: 600 !important; font-size: 12px !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-range-number { color: #fff !important; font-weight: var(--gm-weight-semibold) !important; font-size: 12px !important; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; padding: 8px 10px 4px; font-size: 11px; color: #d5e1ea; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-legend > span { display: inline-flex; align-items: center; gap: 6px; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-legend i { display: inline-block; position: relative; flex: none; }
@@ -373,10 +373,10 @@ html[data-glass="clear"] body .has-card-board .season-award-trophy img { backgro
    bold at the right; more room between rows. */
 html[data-glass="clear"] body .has-card-board .season-identity-signals { display: grid !important; gap: 7px !important; padding: 8px 12px !important; }
 html[data-glass="clear"] body .has-card-board .season-signal-row { display: grid !important; grid-template-columns: 92px minmax(0, 1fr) 44px !important; align-items: center !important; gap: 10px !important; }
-html[data-glass="clear"] body .has-card-board .season-signal-row > span { color: #fff !important; font-size: 13px !important; font-weight: 500 !important; }
+html[data-glass="clear"] body .has-card-board .season-signal-row > span { color: #fff !important; font-size: 13px !important; font-weight: var(--gm-weight-semibold) !important; }
 html[data-glass="clear"] body .has-card-board .season-signal-row > i { height: 5px !important; border-radius: 3px !important; background: rgba(255, 255, 255, .13) !important; overflow: hidden; border: 0 !important; }
 html[data-glass="clear"] body .has-card-board .season-signal-row > i > b { border-radius: 3px !important; height: 100% !important; opacity: .9; }
-html[data-glass="clear"] body .has-card-board .season-signal-row > strong { color: #fff !important; font-size: 13px !important; font-weight: 700 !important; text-align: right; }
+html[data-glass="clear"] body .has-card-board .season-signal-row > strong { color: #fff !important; font-size: 13px !important; font-weight: var(--gm-weight-bold) !important; text-align: right; }
 /* League Block / Team Block: the contract column only as wide as its text, so the value sits right after it; the value
    as a number beside a thin rounded bar (like the trade room), not a number stacked over a block. */
 html[data-glass="clear"] body.unified-terminal-ui :is(.assets-block-table, .team-block-table) :is(.assets-block-head, .assets-block-row) {
@@ -386,7 +386,7 @@ html[data-glass="clear"] body.unified-terminal-ui .team-block-table :is(.assets-
   grid-template-columns: 48px minmax(140px, 1.4fr) 26px 28px repeat(3, 56px) minmax(var(--block-contract-width, 100px), 118px) minmax(110px, 1fr) 40px !important;
 }
 html[data-glass="clear"] body.unified-terminal-ui .block-value-meter { display: grid !important; grid-template-columns: 34px minmax(0, 1fr) !important; align-items: center !important; gap: 8px !important; width: 100% !important; }
-html[data-glass="clear"] body.unified-terminal-ui .block-value-meter > b { color: #fff !important; font-weight: 700 !important; font-size: 12px !important; text-align: right; }
+html[data-glass="clear"] body.unified-terminal-ui .block-value-meter > b { color: #fff !important; font-weight: var(--gm-weight-bold) !important; font-size: 12px !important; text-align: right; }
 html[data-glass="clear"] body.unified-terminal-ui .block-value-bar { display: block !important; height: 5px !important; border-radius: 3px !important; background: rgba(255, 255, 255, .13) !important; overflow: hidden; border: 0 !important; }
 html[data-glass="clear"] body.unified-terminal-ui .block-value-bar > i { display: block !important; height: 100% !important; border-radius: 3px; opacity: .9; }
 html[data-glass="clear"] body.unified-terminal-ui .assets-block-row .block-find-trade { border-radius: 999px !important; background: rgba(255, 255, 255, .10) !important; border: 1px solid rgba(255, 255, 255, .22) !important; color: #fff !important; width: 38px !important; height: 20px !important; }
@@ -405,9 +405,9 @@ html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-tr
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-to { display: flex; align-items: center; min-width: 0; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-to .tr-tile-route { display: inline-flex !important; align-items: center; gap: 5px; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-to .tr-route-logo { width: 20px; height: 20px; object-fit: contain; flex: none; }
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-to button.glass-select { min-height: 22px !important; padding: 0 7px 0 9px !important; font-weight: 700 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot .tr-tile-to button.glass-select { min-height: 22px !important; padding: 0 7px 0 9px !important; font-weight: var(--gm-weight-bold) !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .tr-side-head .trade-partner-field button.glass-select {
-  background: transparent !important; border: 0 !important; padding: 0 4px !important; font-size: 15px !important; font-weight: 700 !important; min-height: 0 !important;
+  background: transparent !important; border: 0 !important; padding: 0 4px !important; font-size: 15px !important; font-weight: var(--gm-weight-bold) !important; min-height: 0 !important;
 }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .tr-side-head .trade-partner-field button.glass-select:hover { background: rgba(255, 255, 255, .10) !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-builder.is-multi .tr-tiles-head > span:nth-child(6) { display: block !important; }
@@ -426,12 +426,12 @@ html[data-glass="clear"] .season-slideshow .ss-story-rich { display: grid !impor
 html[data-glass="clear"] .season-slideshow .ss-story-rich .ss-story-logo { width: 52px; height: 52px; object-fit: contain; filter: drop-shadow(0 3px 8px rgba(0, 0, 0, .35)); }
 html[data-glass="clear"] .season-slideshow .ss-story-body { min-width: 0; display: grid; gap: 6px; }
 html[data-glass="clear"] .season-slideshow .ss-story-body :is(h4, p) { margin: 0 !important; overflow-wrap: anywhere; }
-html[data-glass="clear"] .season-slideshow .ss-story-body h4 { font-size: 16px !important; font-weight: 700 !important; color: #fff !important; }
+html[data-glass="clear"] .season-slideshow .ss-story-body h4 { font-size: 16px !important; font-weight: var(--gm-weight-bold) !important; color: #fff !important; }
 html[data-glass="clear"] .season-slideshow .ss-story-body p { font-size: 13px !important; color: #e3ebf2 !important; line-height: 1.4; }
 html[data-glass="clear"] .season-slideshow .ss-story-faces { display: flex; gap: 6px; }
 html[data-glass="clear"] .season-slideshow .ss-story-face img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; object-position: top; background: rgba(255, 255, 255, .08); }
 html[data-glass="clear"] .season-slideshow .ss-story-stat { display: grid; justify-items: end; text-align: right; min-width: 70px; }
-html[data-glass="clear"] .season-slideshow .ss-story-stat b { font-size: 30px; font-weight: 800; line-height: 1; color: #fff; letter-spacing: -.02em; }
+html[data-glass="clear"] .season-slideshow .ss-story-stat b { font-size: 30px; font-weight: var(--gm-weight-bold); line-height: 1; color: #fff; letter-spacing: -.02em; }
 html[data-glass="clear"] .season-slideshow .ss-story-stat small { font-size: 11px; color: #c9d5e0; max-width: 90px; }
 html[data-glass="clear"] .season-slideshow .ss-story-stat.is-bad b { color: #ffb3b3 !important; }
 html[data-glass="clear"] .season-slideshow .ss-injury-name { color: #ffc6c6; }
@@ -440,7 +440,7 @@ html[data-glass="clear"] .season-slideshow .ss-injury-name { color: #ffc6c6; }
 html[data-glass="clear"] .season-slideshow .ss-prospects .ss-school { display: inline-flex; align-items: center; gap: 8px; }
 html[data-glass="clear"] .season-slideshow .ss-prospects .ss-school img { width: 22px; height: 22px; object-fit: contain; }
 html[data-glass="clear"] .season-slideshow .ss-your-rank { display: inline-flex; align-items: baseline; gap: 6px; }
-html[data-glass="clear"] .season-slideshow .ss-rank-diff { font-size: 11px; font-weight: 700; }
+html[data-glass="clear"] .season-slideshow .ss-rank-diff { font-size: 11px; font-weight: var(--gm-weight-bold); }
 html[data-glass="clear"] .season-slideshow .ss-rank-diff.is-up { color: #86e0a2; }
 html[data-glass="clear"] .season-slideshow .ss-rank-diff.is-down { color: #ffb3b3; }
 html[data-glass="clear"] .season-slideshow .ss-scouted { display: grid; grid-template-columns: 90px auto; align-items: center; gap: 8px; }
@@ -448,7 +448,7 @@ html[data-glass="clear"] .season-slideshow .ss-scouted > i { display: block; hei
 html[data-glass="clear"] .season-slideshow .ss-scouted > i > b { display: block; height: 100%; background: #7cc0ff; border-radius: 3px; }
 html[data-glass="clear"] .season-slideshow .ss-range-col { min-width: 190px; }
 html[data-glass="clear"] .season-slideshow .season-prospect-range { display: grid; grid-template-columns: 22px minmax(150px, 1fr); align-items: center; gap: 8px; }
-html[data-glass="clear"] .season-slideshow .season-prospect-range-number { color: #fff; font-weight: 700; text-align: right; }
+html[data-glass="clear"] .season-slideshow .season-prospect-range-number { color: #fff; font-weight: var(--gm-weight-bold); text-align: right; }
 html[data-glass="clear"] .season-slideshow .season-prospect-range-plot { position: relative; height: 14px; display: block; }
 html[data-glass="clear"] .season-slideshow .season-prospect-range-plot > i { display: block; position: absolute; }
 html[data-glass="clear"] .season-slideshow .season-prospect-range-guide { background: rgba(255, 255, 255, .16); top: 0; bottom: 0; width: 1px; }
@@ -477,13 +477,13 @@ html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .injury
 html[data-glass="clear"] body.unified-terminal-ui .injury-body-figure.is-real .injury-body-fill { fill: color-mix(in srgb, var(--injury-body-tone) 18%, rgba(255, 255, 255, .08)); stroke: none; }
 html[data-glass="clear"] body.unified-terminal-ui .injury-body-figure.is-real .injury-body-outline { fill: none !important; stroke: rgba(255, 255, 255, .85) !important; stroke-width: .9 !important; }
 html[data-glass="clear"] body.unified-terminal-ui .injury-body-figure.is-real .injury-body-detail { fill: rgba(255, 255, 255, .7) !important; stroke: none !important; }
-html[data-glass="clear"] body.unified-terminal-ui .injury-body-figure.is-real .injury-body-view-label { fill: #fff; font-size: 11px; font-weight: 700; text-anchor: middle; }
+html[data-glass="clear"] body.unified-terminal-ui .injury-body-figure.is-real .injury-body-view-label { fill: #fff; font-size: 11px; font-weight: var(--gm-weight-bold); text-anchor: middle; }
 html[data-glass="clear"] body.unified-terminal-ui .clipboard-player-card .injury-body-figures > svg.injury-body-figure.is-real { width: 250px !important; height: 570px !important; }
 /* The same figure in the light (frosted) look. */
 .injury-body-figure.is-real .injury-body-fill { fill: color-mix(in srgb, var(--injury-body-tone, #dedccc) 22%, #eef2f5); }
 .injury-body-figure.is-real .injury-body-outline { fill: none; stroke: #33424f; stroke-width: .9; }
 .injury-body-figure.is-real .injury-body-detail { fill: #33424f; }
-.injury-body-figure.is-real .injury-body-view-label { font-size: 11px; font-weight: 700; text-anchor: middle; }
+.injury-body-figure.is-real .injury-body-view-label { font-size: 11px; font-weight: var(--gm-weight-bold); text-anchor: middle; }
 
 /* ---------- Round 14. Sorted columns: only the header shows the sort (no shading down the column's cells). */
 html[data-glass="clear"] body.unified-terminal-ui :is(.card-board-window, #modalRoot, .season-slideshow) :is(td, th).is-sorted-value,
@@ -498,11 +498,11 @@ html[data-glass="clear"] body.unified-terminal-ui .has-card-board .offseason-dea
 /* League Block caption: "Top league targets" starts where the window title starts and the page count ends where the
    close X ends; the page arrows are small round text buttons sized to the bar. */
 html[data-glass="clear"] body .has-card-board .assets-block-caption { padding: 0 3px 0 6px !important; box-sizing: border-box; align-items: center !important; }
-html[data-glass="clear"] body .has-card-board .assets-block-caption .league-block-group-label { color: #fff !important; font-weight: 700 !important; font-size: 12px !important; }
+html[data-glass="clear"] body .has-card-board .assets-block-caption .league-block-group-label { color: #fff !important; font-weight: var(--gm-weight-bold) !important; font-size: 12px !important; }
 html[data-glass="clear"] body .has-card-board .assets-block-nav { display: inline-flex !important; gap: 2px !important; }
 html[data-glass="clear"] body.unified-terminal-ui :is(#modalRoot#modalRoot, .card-board-window) .assets-block-caption .assets-block-nav > button[data-assets-block-nav] { width: 18px !important; height: 18px !important; min-height: 0 !important; min-width: 0 !important; padding: 0 !important; border-radius: 50% !important; background: transparent !important; border: 0 !important; color: #fff !important; font-size: 14px !important; line-height: 18px !important; opacity: .75; }
 html[data-glass="clear"] body .has-card-board .assets-block-nav button:hover { opacity: 1; background: rgba(255, 255, 255, .14) !important; }
-html[data-glass="clear"] body .has-card-board .assets-block-caption > b { color: #d5e1ea !important; font-weight: 600 !important; }
+html[data-glass="clear"] body .has-card-board .assets-block-caption > b { color: #d5e1ea !important; font-weight: var(--gm-weight-semibold) !important; }
 /* Contracts: the colour key under the table. */
 html[data-glass="clear"] body .has-card-board .asset-contract-key { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; padding: 8px 10px 6px; font-size: 11px; color: #d5e1ea; }
 html[data-glass="clear"] body .has-card-board .asset-contract-key span { display: inline-flex; align-items: center; gap: 6px; }
@@ -526,13 +526,13 @@ html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .s
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-face img { width: 100% !important; height: 100% !important; object-fit: cover; object-position: top; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] :is(.season-prospect-name, .season-prospect-list-expanded .season-prospect-name) { height: auto !important; min-height: 42px; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-id { display: grid; gap: 1px; min-width: 0; }
-html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-id > b { color: #fff; font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: transparent !important; border: 0 !important; padding: 0 !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-id > b { color: #fff; font-weight: var(--gm-weight-bold); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: transparent !important; border: 0 !important; padding: 0 !important; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-id > small { color: #c9d5e0; font-size: 11px; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-school { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-school img { width: 20px; height: 20px; object-fit: contain; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-your-rank { display: inline-flex; align-items: baseline; gap: 5px; }
-html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-your-rank b { color: #fff; font-weight: 700; }
-html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-rank-diff { font-size: 11px; font-weight: 700; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-your-rank b { color: #fff; font-weight: var(--gm-weight-bold); }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-rank-diff { font-size: 11px; font-weight: var(--gm-weight-bold); }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-rank-diff.is-up { color: #86e0a2; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-rank-diff.is-down { color: #ffb3b3; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .ss-scouted { display: grid; grid-template-columns: 80px auto; align-items: center; gap: 8px; }
@@ -542,20 +542,20 @@ html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .s
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-range { grid-template-columns: minmax(120px, 1fr) !important; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] .season-prospect-range-number { display: none !important; }
 html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] thead th { border: 0 !important; outline: 0 !important; }
-html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] thead th > button { background: transparent !important; border: 0 !important; box-shadow: none !important; color: #fff !important; font-weight: 700 !important; padding: 0 !important; }
+html[data-glass="clear"] body .has-card-board [data-board-window="prospects"] thead th > button { background: transparent !important; border: 0 !important; box-shadow: none !important; color: #fff !important; font-weight: var(--gm-weight-bold) !important; padding: 0 !important; }
 
 /* ---------- Trade room (round 14). "Add" (beside Add a team), "Back to results" and "Choose from …'s list" are plain
    text links, no boxes. */
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room :is([data-trade-add-team], [data-back-finder]) {
-  background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 6px !important; color: #d8eaff !important; font-weight: 700 !important; min-height: 0 !important;
+  background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 6px !important; color: #d8eaff !important; font-weight: var(--gm-weight-bold) !important; min-height: 0 !important;
 }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room :is([data-trade-add-team], [data-back-finder]):hover:not(:disabled) { text-decoration: underline; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-tiles-empty { border: 0 !important; background: transparent !important; box-shadow: none !important; outline: 0 !important; }
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-tiles-empty > button { background: transparent !important; border: 0 !important; box-shadow: none !important; color: #d8eaff !important; font-weight: 600 !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-tiles-empty > button { background: transparent !important; border: 0 !important; box-shadow: none !important; color: #d8eaff !important; font-weight: var(--gm-weight-semibold) !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-tiles-empty > button:hover { text-decoration: underline; }
 /* The partner picker: the same plain bold header as the other teams (no tinted box), with only a small chevron; in a
    three-team deal no step arrows, so every team header matches. */
-html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-side-head .trade-partner-field button.glass-select { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 4px !important; font-size: 15px !important; font-weight: 700 !important; color: #fff !important; }
+html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-side-head .trade-partner-field button.glass-select { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 4px !important; font-size: 15px !important; font-weight: var(--gm-weight-bold) !important; color: #fff !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-side-head .trade-partner-field button.glass-select:hover { background: rgba(255, 255, 255, .10) !important; }
 html[data-glass="clear"] body.unified-terminal-ui #modalRoot#modalRoot .modal-trade-room .tr-builder.is-multi .tr-side-head .tr-step { display: none !important; }
 /* Three teams: a wider To column so its logo + abbreviation never touch the value. */
@@ -573,7 +573,7 @@ html[data-glass="clear"] body .has-card-board .season-signal-row { grid-template
 
 /* ---------- The sorted field (playtest 2026-11-24): no shaded or bold column, only a small white triangle beside the
    heading. Tables that draw their own mark use these classes; plain headings carry a .sort-label span. */
-body.unified-terminal-ui :is(.sort-tri, .house-sort-arrow, .season-prospect-sort-arrow) { display: inline-block; margin-left: 4px; font-size: 7px !important; font-style: normal; font-weight: 700; line-height: 1; vertical-align: middle; color: #fff !important; text-decoration: none; }
+body.unified-terminal-ui :is(.sort-tri, .house-sort-arrow, .season-prospect-sort-arrow) { display: inline-block; margin-left: 4px; font-size: 7px !important; font-style: normal; font-weight: var(--gm-weight-bold); line-height: 1; vertical-align: middle; color: #fff !important; text-decoration: none; }
 body.unified-terminal-ui .house-sort-arrow:empty { display: none; }
 body.unified-terminal-ui th[aria-sort="ascending"] > .sort-label::after,
 body.unified-terminal-ui .photo-credits-table th[aria-sort="ascending"] > button::after { content: "▲"; margin-left: 4px; font-size: 7px; vertical-align: middle; color: #fff; }

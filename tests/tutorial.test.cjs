@@ -39,7 +39,7 @@ test('tour supports skip, arrow navigation, Escape, focus trapping, and blocks a
 
 test('tour has a replay entry, an accessible dialog, and the 2000s modal-card styling', () => {
   assert.match(html, /id="gameTutorial" class="game-tutorial"/);
-  assert.match(html, /href="\/tutorial\.css"/);
+  assert.match(html, /href="\/tutorial\.css/);
   assert.match(app, /id="replayGameTutorial">Replay Tutorial/);
   assert.match(app, /role="dialog" aria-modal="true" aria-labelledby="gameTutorialTitle"/);
   assert.match(css, /\.game-tutorial-titlebar/);

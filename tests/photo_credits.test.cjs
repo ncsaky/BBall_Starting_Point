@@ -31,7 +31,8 @@ async function openCredits(withGenerated = true) {
 }
 
 test('settings offer a Photo credits view', () => {
-  assert.match(app, /<button type="button" data-photo-credits>Photo credits<\/button>/);
+  // The list also names the background music since the UI polish pass (music.test.cjs).
+  assert.match(app, /<button type="button" data-photo-credits>Photo and music credits<\/button>/);
   assert.match(app, /querySelector\("\[data-photo-credits\]"\)\?\.addEventListener\("click", openPhotoCreditsModal\)/);
 });
 

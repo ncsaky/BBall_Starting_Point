@@ -1,0 +1,33 @@
+/* The arena behind the glass, as one fixed layer that can move (arena.js). Loaded with the other look sheets; its
+   timings are the shared values. */
+#arenaBackdrop {
+  position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+  background: var(--jf-team-deep, #0a1420);
+  --arena-x: 0%; --arena-y: 0%;
+}
+/* Two pictures, one on show: a change of picture is a cross-fade. Each is a little larger than the screen so it can
+   lean and drift without showing an edge. */
+#arenaBackdrop > .arena-layer {
+  position: absolute; left: -5%; top: -5%; width: 110%; height: 110%; max-width: none; display: block; opacity: 0;
+  object-fit: cover; object-position: center;
+  transform: translate(var(--arena-x), var(--arena-y));
+  transition: opacity var(--gm-motion-scene) ease, transform var(--gm-motion-scene) var(--gm-ease);
+  animation: arena-drift var(--gm-motion-drift) ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+#arenaBackdrop > .arena-layer.is-on { opacity: 1; }
+/* The drift: a slow push in and a small slide, there and back. It adds to the lean (individual transform properties). */
+@keyframes arena-drift {
+  from { scale: 1; translate: -.6% .3%; }
+  to { scale: 1.045; translate: .6% -.4%; }
+}
+/* Movement off (Settings > Look, or the computer asks for less motion): the picture stands still and changes by a cut. */
+html[data-ui-motion="off"] #arenaBackdrop > .arena-layer { animation: none; transform: none; transition: none; }
+@media (prefers-reduced-motion: reduce) { #arenaBackdrop > .arena-layer { animation: none; transform: none; transition: none; } }
+
+/* With the layer on show, the page and the board stop painting the picture themselves. */
+html[data-glass="clear"][data-arena][data-arena-live] body .season-command-dashboard.has-card-board.has-card-board,
+html[data-glass="clear"][data-arena][data-arena-live] body.unified-terminal-ui #app .dashboard-shell.dashboard-shell,
+html[data-glass="clear"][data-arena][data-arena-live] body.unified-terminal-ui.unified-terminal-ui {
+  background-image: none !important; background-color: transparent !important;
+}

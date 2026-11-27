@@ -612,6 +612,12 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return league_standings(canonical, save_path)
     if action in {"dashboard_summary_leaders", "dashboard-summary-leaders"}:
         return dashboard_summary_leaders_payload(canonical, save_path, limit=int(payload.get("limit") or 10))
+    if action == "trade_team_impact":
+        return trade_team_impact_payload(canonical, save_path, payload)
+    if action == "home_storylines":
+        return home_storylines_payload(canonical, save_path)
+    if action == "player_outlook":
+        return player_outlook_payload(canonical, save_path, str(payload.get("player_id") or ""))
     if action == "dashboard_trends":
         return dashboard_trends_payload(canonical, save_path, str(payload.get("team") or user_team_abbrev(canonical, save_path)))
     if action == "league_leaders":
@@ -2478,6 +2484,7 @@ def dashboard_summary_leaders_payload(
                 {
                     "player_id": item.get("player_id"),
                     "player_name": item.get("player_name"),
+                    "headshot_url": item.get("headshot_url"),  # display only: Home's leaders show the face
                     "team_id": item.get("team_id"),
                     "team_abbrev": item.get("team_abbrev"),
                     "position": item.get("position"),
@@ -2568,7 +2575,281 @@ def dashboard_trends_payload(
             "scale": "points_per_100_possessions",
         },
         "four_factors": four_factors,
+        # Display only (Home's "against expectation" list): every team's roster rating and its league rank, the same
+        # team_identity_report numbers the Team Signals card shows for one team. Already computed above.
+        "roster_ranks": [
+            {
+                "team_id": team_id,
+                "overall": (report.get("metrics") or {}).get("overall"),
+                "rank": (report.get("ranks") or {}).get("overall"),
+            }
+            for team_id, report in identity_by_team.items()
+        ],
     }
+
+
+def trade_team_impact_payload(canonical: dict[str, Any], save_path: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    """Display only (the trade room's "what it does" page): the trading teams' ratings and league ranks before and
+    after the proposed player moves.
+
+    Runs team_identity_report (the numbers Team > Identity shows) on the league as it is, then on a copy in which
+    each traded player wears his new team. Nothing is saved or changed. Picks do not move these ratings. Coaching,
+    chemistry and morale are not re-simulated: the after column is the same arithmetic over the new roster and the
+    minutes the coach's projection gives it."""
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = canonical_with_save(canonical, save)
+    teams_by_id = {team["id"]: team for team in active.get("teams", [])}
+    players_by_id = {player.get("id"): player for player in active.get("players", [])}
+    moves: dict[str, str] = {}
+    involved: list[str] = []
+
+    def note(team_id: str | None) -> None:
+        if team_id in teams_by_id and team_id not in involved:
+            involved.append(team_id)
+
+    for query in payload.get("teams") or []:
+        note(resolve_team(active, str(query))["id"])
+    for leg in payload.get("moves") or []:
+        destination = resolve_team(active, str(leg.get("to_team")))["id"]
+        note(destination)
+        for player_id in leg.get("player_ids") or []:
+            player = players_by_id.get(str(player_id))
+            if player is None or player.get("team_id") == destination:
+                continue
+            note(player.get("team_id"))
+            moves[str(player_id)] = destination
+    before = team_identity_report(active, save)
+    after = before
+    hypothetical = active
+    if moves:
+        # A fresh league view: the internal caches (keys starting with "_") index the real rosters.
+        hypothetical = {key: value for key, value in active.items() if not str(key).startswith("_")}
+        hypothetical["players"] = [
+            {**player, "team_id": moves[player["id"]]} if player.get("id") in moves else player
+            for player in active.get("players", [])
+        ]
+        after = team_identity_report(hypothetical, save)
+
+    def minutes(team_id: str) -> list[dict[str, Any]]:
+        # The coach's projected minutes (the ones the ratings above are weighted by), now and with the new roster.
+        now = team_rotation_projection(active, save, team_id, integer=False)
+        then = team_rotation_projection(hypothetical, save, team_id, integer=False) if moves else now
+        rows = []
+        for player_id in {*now, *then}:
+            was, will = float(now.get(player_id) or 0.0), float(then.get(player_id) or 0.0)
+            if was <= 0 and will <= 0:
+                continue
+            player = players_by_id.get(player_id) or {}
+            rows.append({
+                "player_id": player_id,
+                "name": player.get("name"),
+                "before": round(was, 1) if player_id in now else None,
+                "after": round(will, 1) if player_id in then else None,
+            })
+        rows.sort(key=lambda row: (-(row["after"] or 0.0), -(row["before"] or 0.0), row["name"] or ""))
+        return rows
+
+    def side(report: dict[str, dict[str, Any]], team_id: str) -> dict[str, Any]:
+        row = report.get(team_id) or {}
+        return {"metrics": row.get("metrics") or {}, "ranks": row.get("ranks") or {}}
+
+    return {
+        "league_team_count": len(teams_by_id),
+        "moved_player_ids": sorted(moves),
+        "teams": [
+            {
+                "team_id": team_id,
+                "abbrev": teams_by_id[team_id].get("abbrev"),
+                "before": side(before, team_id),
+                "after": side(after, team_id),
+                "minutes": minutes(team_id),
+            }
+            for team_id in involved
+        ],
+    }
+
+
+def player_outlook_payload(canonical: dict[str, Any], save_path: Path, player_id: str) -> dict[str, Any]:
+    """Display only (a player's page, "Projected overall by age"): the same scenario model the extension page and the
+    Player Development graph show (extension_analysis.ability_projection: the middle path and its range), for one
+    player over this season and the next five. Read-only; a player without a team has no projection."""
+    from .extension_analysis import ability_projection
+
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = canonical_with_save(canonical, save)
+    player = next((row for row in active.get("players", []) if row.get("id") == player_id), None)
+    start = int(str((save.get("meta") or {}).get("season") or CANONICAL_SEASON)[:4])
+    if player is None or not player.get("team_id") or player.get("_inactive_player"):
+        return {"player_id": player_id, "start_season": start, "projection": []}
+    return {"player_id": player_id, "start_season": start, "projection": ability_projection(active, player, start, start + 5)}
+
+
+def home_storylines_payload(canonical: dict[str, Any], save_path: Path) -> dict[str, Any]:
+    """Display only (Home's storylines): what the save already records about trade talks, shopped players, streaks,
+    key injuries and coaches under pressure, gathered for the front page.
+
+    Nothing here is simulated or predicted, and nothing is saved. Trade talks are the trade market's own ledger
+    (each round of a negotiation with its date and what was on the table); streaks come from this season's game
+    logs; injuries from the injury log; a coach's pressure is the same wins-against-expectation number the firing
+    review uses. The user's own negotiations are left out: they know those."""
+    from .save import human_controlled_team_ids
+    from .staff import current_staff_slot, staff_win_gap
+    from .staff_lifecycle import staff_win_expectations
+
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = canonical_with_save(canonical, save)
+    today = str((save.get("state") or {}).get("current_date") or "")[:10]
+    teams = {team["id"]: team for team in active.get("teams", [])}
+    players = {player.get("id"): player for player in active.get("players", [])}
+    humans = human_controlled_team_ids(save)
+
+    def abbrev(team_id: Any) -> str:
+        return str(teams.get(team_id, {}).get("abbrev") or str(team_id or "").replace("team_", "").upper())
+
+    def conference(team_id: Any) -> str:
+        return str(teams.get(team_id, {}).get("conference") or "")
+
+    def days_back(days: int) -> str:
+        return (date.fromisoformat(today) - timedelta(days=days)).isoformat() if today else ""
+
+    overalls: dict[Any, float | None] = {}
+
+    def overall(player_id: Any) -> float | None:
+        # The displayed overall (the same number his page shows), so a star's story can lead.
+        if player_id not in overalls:
+            try:
+                overalls[player_id] = round(float(player_display_attribute_summary(active, player_id)["overall"]), 1) if player_id in players else None
+            except (KeyError, TypeError, ValueError):
+                overalls[player_id] = None
+        return overalls[player_id]
+
+    def person(player_id: Any, fallback_name: Any = None) -> dict[str, Any]:
+        player = players.get(player_id) or {}
+        return {
+            "player_id": player_id,
+            "overall": overall(player_id),
+            "name": player.get("name") or fallback_name,
+            "headshot_url": player.get("headshot_url"),
+            "position": compact_position(player.get("position")) if player else None,
+            "age": player.get("display_age", player.get("age")),
+            "team": abbrev(player.get("team_id")) if player.get("team_id") else None,
+        }
+
+    def offer(row: dict[str, Any] | None) -> dict[str, list[str]]:
+        return {abbrev(team_id): [str(label) for label in labels or []] for team_id, labels in (row or {}).items()}
+
+    book = save.get("trade_market") or {}
+    recent = days_back(30)
+    talks = []
+    for negotiation in (book.get("negotiations") or {}).values():
+        buyer, seller = negotiation.get("buyer_id"), negotiation.get("seller_id")
+        last = str(negotiation.get("last_date") or negotiation.get("opened") or "")
+        if buyer in humans or seller in humans or not last or last < recent:
+            continue
+        death = negotiation.get("death") or {}
+        talks.append({
+            "key": negotiation.get("key"),
+            "player": person(negotiation.get("player_id"), negotiation.get("player_name")),
+            "buyer": abbrev(buyer),
+            "buyer_conference": conference(buyer),
+            "seller": abbrev(seller),
+            "opened": negotiation.get("opened"),
+            "status": negotiation.get("status"),
+            "outcome": negotiation.get("outcome"),
+            "closed_date": negotiation.get("closed_date"),
+            "ended": {"date": death.get("date"), "cancelled": death.get("cancelled"),
+                      "final_by": [abbrev(team_id) for team_id in death.get("final_by") or []]} if death else None,
+            "rounds": [
+                {"date": row.get("date"), "offer": offer(row.get("offer")),
+                 "final_by": [abbrev(team_id) for team_id in row.get("final_by") or []]}
+                for row in negotiation.get("rounds") or []
+            ],
+        })
+    shopped = []
+    for entry in (book.get("shopping") or {}).values():
+        seller = entry.get("seller_id")
+        last = str(entry.get("last_date") or entry.get("started") or "")
+        if seller in humans or not last or last < recent:
+            continue
+        shopped.append({
+            "player": person(entry.get("player_id"), entry.get("player_name")),
+            "seller": abbrev(seller),
+            "started": entry.get("started"),
+            "status": entry.get("status"),
+            "decide_by": entry.get("decide_by"),
+            "interested": [abbrev(team_id) for team_id in entry.get("interested") or []],
+            "bids": [
+                {"date": bid.get("date"), "leader": abbrev(bid.get("leader")), "leader_conference": conference(bid.get("leader")),
+                 "bidders": [abbrev(team_id) for team_id in bid.get("bidders") or []], "offer": offer(bid.get("offer"))}
+                for bid in entry.get("bids") or []
+            ],
+            "sold_date": entry.get("sold_date") or entry.get("agreed_date"),
+            "winner": abbrev(entry.get("winner") or entry.get("moved_to")) if (entry.get("winner") or entry.get("moved_to")) else None,
+            "cancel_reason": entry.get("cancel_reason"),
+        })
+
+    # Streaks: each team's run of results up to today, and a long run that ended in the last few days.
+    by_team: dict[str, list[dict[str, Any]]] = {}
+    for log in save.get("team_game_logs") or []:
+        if log.get("team_id") in teams and log.get("result") in {"W", "L"} and str(log.get("date") or "") <= today:
+            by_team.setdefault(log["team_id"], []).append(log)
+    streaks = []
+    for team_id, logs in by_team.items():
+        logs.sort(key=lambda row: str(row.get("date")))
+        runs: list[list[dict[str, Any]]] = []
+        for log in logs:
+            if runs and runs[-1][-1].get("result") == log.get("result"):
+                runs[-1].append(log)
+            else:
+                runs.append([log])
+        current = runs[-1]
+        if str(current[-1].get("date") or "") < days_back(6):
+            continue  # no game in the last week: the season is over, so this is not a live streak
+        if len(current) >= 5:
+            streaks.append({"team": abbrev(team_id), "result": current[0]["result"], "length": len(current), "since": current[0].get("date")})
+        elif len(runs) >= 2 and len(runs[-2]) >= 7 and str(current[0].get("date") or "") >= days_back(4):
+            streaks.append({"team": abbrev(team_id), "result": runs[-2][0]["result"], "length": len(runs[-2]), "since": runs[-2][0].get("date"),
+                            "ended": current[0].get("date"), "ended_by": abbrev(current[0].get("opponent_team_id"))})
+
+    # Key injuries: regulars (26 projected minutes or more) out for eight games or more, still out or just back.
+    injuries = []
+    just_back = days_back(5)
+    for event in save.get("injury_events") or []:
+        start, back = str(event.get("start_date") or ""), str(event.get("return_date") or "")
+        if not start or start > today or not back or back < just_back:
+            continue
+        if float(event.get("player_minutes_projection") or 0.0) < 26.0 or int(event.get("expected_games_missed") or 0) < 8:
+            continue
+        if event.get("player_id") not in players:
+            continue
+        injuries.append({
+            "player": person(event.get("player_id")),
+            "start_date": start,
+            "return_date": back,
+            "returned": back <= today,
+            "diagnosis": event.get("diagnosis"),
+            "expected_games_missed": int(event.get("expected_games_missed") or 0),
+        })
+
+    # Coaches under pressure: the review's own measure, wins per 82 games against the preseason expectation.
+    season = str((save.get("meta") or {}).get("season") or "")
+    expectations = (save.get("staff_preseason_expectations") or {}).get(season)
+    if expectations is None:
+        expectations = staff_win_expectations(active.get("team_strategic_states", []))
+    hot_seats = []
+    for team_id in teams:
+        if team_id in humans:
+            continue
+        games, gap = staff_win_gap((save.get("team_records") or {}).get(team_id, {}), float(expectations.get(team_id, 0.5)))
+        if games < 20 or gap > -8.0 or team_id not in by_team or str(by_team[team_id][-1].get("date") or "") < days_back(6):
+            continue  # a pace only means something while the season is being played
+        head = current_staff_slot(save, team_id, "head_coach") or {}
+        if not head.get("name"):
+            continue
+        hot_seats.append({"team": abbrev(team_id), "staff_id": head.get("id"), "name": head.get("name"), "headshot_url": head.get("headshot_url"),
+                          "games": games, "wins_vs_expected_per_82": round(gap, 1)})
+
+    return {"date": today, "talks": talks, "shopped": shopped, "streaks": streaks, "injuries": injuries, "hot_seats": hot_seats}
 
 
 def league_efficiency_average(save: dict[str, Any]) -> float:

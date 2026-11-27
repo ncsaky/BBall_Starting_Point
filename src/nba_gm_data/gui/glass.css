@@ -65,7 +65,7 @@ body .has-card-board .is-active > .card-board-titlebar {
 body .has-card-board .card-board-move,
 body .has-card-board .card-board-move span:last-child,
 body.unified-terminal-ui .modal-shell > :is(.card-board-titlebar, .modal-head) :is(h2, h3, strong, span) {
-  color: var(--glass-on-dark) !important; font-size: 12px !important; font-weight: 600 !important; letter-spacing: .1px;
+  color: var(--glass-on-dark) !important; font-size: 12px !important; font-weight: var(--gm-weight-semibold) !important; letter-spacing: .1px;
 }
 body .has-card-board .card-board-window-mark { display: none; }
 body .has-card-board .card-board-titlebar .card-board-control,
@@ -127,7 +127,7 @@ body .has-card-board .card-board-menu > button { background: transparent !import
 body .has-card-board .card-board-menu > button:hover:not(:disabled) { background: rgba(47, 111, 183, .12) !important; color: var(--glass-ink) !important; }
 /* The phase's main action: one filled blue button (white text on #2563b0 is about 6:1). */
 body .has-card-board .card-board-phase-actions > button {
-  background: #2563b0 !important; border: 1px solid #5d93d6 !important; border-radius: 6px !important; color: #fff !important; font-weight: 700 !important; box-shadow: 0 2px 8px rgba(37, 99, 176, .35) !important;
+  background: #2563b0 !important; border: 1px solid #5d93d6 !important; border-radius: 6px !important; color: #fff !important; font-weight: var(--gm-weight-bold) !important; box-shadow: 0 2px 8px rgba(37, 99, 176, .35) !important;
 }
 body .has-card-board .card-board-phase-actions > button:hover:not(:disabled) { background: #1d559c !important; color: #fff !important; }
 /* The offseason steps chip on the dark bar: a light chip with dark text, never grey on grey. */
@@ -213,11 +213,11 @@ body.unified-terminal-ui [data-house-table] > [data-house-head] { border-bottom:
 /* Team Identity view tabs (round 3: try a new style): a segmented control. A soft tray, the chosen view raised in
    white with dark blue bold text; the others dark ink, a light lift on hover. No black, no white-on-grey. */
 body .spatial-heatmap .spatial-court-head h4.spatial-court-tabs { gap: 2px !important; padding: 2px !important; background: rgba(20, 32, 44, .08) !important; border: 0 !important; border-radius: 7px !important; }
-body .spatial-heatmap .spatial-court-tabs .spatial-court-group-label { color: var(--glass-ink-soft) !important; font-weight: 700 !important; padding: 0 6px 0 4px !important; }
+body .spatial-heatmap .spatial-court-tabs .spatial-court-group-label { color: var(--glass-ink-soft) !important; font-weight: var(--gm-weight-bold) !important; padding: 0 6px 0 4px !important; }
 body .spatial-heatmap .spatial-court-tabs .spatial-court-tab { background: transparent !important; border: 0 !important; border-radius: 5px !important; color: var(--glass-ink) !important; box-shadow: none !important; }
 body .spatial-heatmap .spatial-court-tabs .spatial-court-tab:hover { background: rgba(255, 255, 255, .7) !important; color: var(--glass-ink) !important; }
 body .spatial-heatmap .spatial-court-tabs .spatial-court-tab[aria-pressed="true"],
-body .spatial-heatmap .spatial-court-tabs .spatial-court-tab[aria-pressed="true"]:hover { background: #fff !important; color: #10406f !important; font-weight: 700 !important; box-shadow: 0 1px 3px rgba(10, 20, 30, .2) !important; }
+body .spatial-heatmap .spatial-court-tabs .spatial-court-tab[aria-pressed="true"]:hover { background: #fff !important; color: #10406f !important; font-weight: var(--gm-weight-bold) !important; box-shadow: 0 1px 3px rgba(10, 20, 30, .2) !important; }
 
 /* Contrast fixes from the round 3 check (measured against the real backgrounds). */
 body.unified-terminal-ui .season-opponent-header-rating > small { color: var(--glass-ink-soft) !important; }

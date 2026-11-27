@@ -98,7 +98,7 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 - **No numbered section headers** ("Technique and recognition", not "1. Technique…"), no "each bar adds to 100%" or "how often" captions: implicit things stay unsaid (round 6).
 - **Draft pick details** (protections, swaps) open in a Details drop-down, not a hover.
 - **Explanations are hover info, not visible text** (round 5): subtitles under section headers and notes like "Projected overall: line is…" become an info mark with hover text.
-- **Section headers inside a table or list** (Shooting, Rebounding…) are visibly different from rows (italic small caps or similar).
+- **Section headers inside a table or list** (Shooting, Rebounding…) are visibly different from rows: small bold capitals (never italic; user, 2026-11-25).
 - **Status (kept, declined, signed...):** a coloured icon plus plain black text, regular weight. No coloured pill chips.
 - **Roles:** in tables and tiles, roles get their own column(s) as coloured text, not chips, not under the player's name and not hidden in hover text. Offense and defense roles read as a pair.
 - **Small flags** (resting, the "Zz" mark) are a small superscript on the value they qualify (minutes or fatigue), not a column of their own.
@@ -179,6 +179,288 @@ Distilled from the user's taste deck: round 1 (2026-11-23 night, 49 cards), roun
 
 ### Motion
 - Slides can animate rows in (falling into place) instead of hard cuts. Keep it quick.
+
+## Shared style values (the token sheet, 2026-11-25)
+
+One file holds the values every surface shares: `src/nba_gm_data/gui/tokens.css` (loaded first). They are the values
+the glass look already used most, named once. The user approved them at the Stage A checkpoint of the UI polish pass
+(11px floor, never italic, sound on and quiet). New rules use them; an old rule moves onto them when its page is
+rebuilt. Don't add a literal size, colour, corner or timing to a stylesheet when one of these fits.
+
+**Type** (nothing under 11px; digits always line up)
+
+| Use | Size | Weight | Name |
+|---|---|---|---|
+| A slide's headline (the welcome, season slideshows) | 56px | bold | `--gm-size-display` |
+| Page title | 28px | semibold | `--gm-size-page` |
+| Section title | 18px | bold | `--gm-size-section` |
+| The one number a section leads with | 34px | bold | `--gm-size-lead` |
+| Key figure | 20px | bold | `--gm-size-figure` |
+| The main button | 16px | bold | `--gm-size-button` |
+| Names (semibold), row text and values (regular), controls | 13px | semibold / regular | `--gm-size-row` |
+| Table headings (bold), the one subtext (regular) | 11px | bold / regular | `--gm-size-small` |
+
+Three weights only: regular 400, semibold 600, bold 700 (`--gm-weight-*`). Bold for headings, lead numbers and table
+headings; semibold for names and labels; regular for values. **No italic anywhere**: emphasis is weight or colour, and
+section labels inside a table are small bold capitals. Capitals only for sidebar group labels, section labels inside a
+table and news banners; sentence case elsewhere.
+
+**Colours**
+
+| Use | Value | Name |
+|---|---|---|
+| Text | `#ffffff` | `--gm-ink` |
+| Second text | `#d5e1ea` | `--gm-ink-2` |
+| Dimmest allowed (about 7:1 on the page glass) | `#a8b9c7` | `--gm-ink-3` |
+| Accent, links, "you", the current step | `#7cc0ff` | `--gm-accent` |
+| The chosen option in a picker | `#3b82d6` | `--gm-pick` |
+| Must do, counts | `#ff5d5d` | `--gm-must` |
+| Injury, loss, over the cap | `#ff9a9a` | `--gm-bad` |
+| Deadline, tax line, extension-eligible | `#f2c46d` | `--gm-warn` |
+| Done, win, growth | `#86e0a2` | `--gm-good` |
+
+The rating colour scale (60 to 98, red to blue) is unchanged and stays where it is defined.
+
+**Lines and corners**: one solid line under a table heading (1.5px, `--gm-line-strong`); one hairline between rows and
+around cards (`--gm-line`, `--gm-line-row`); keyboard focus ring `--gm-focus`. Four corner sizes: 0 rows, 8px tiles and
+fields, 16px cards, pop-ups and the page, full pills for buttons, pickers and bars (`--gm-radius-*`).
+
+**Spacing**: 4, 8, 12, 16, 24, 32, 48 (`--gm-space-1` to `-7`). 24 between columns, 32 between sections. Each level
+starts 8px further right than the one above it: page title, section title, table heading, row. Rows are 34px on a page
+(a lone table may stretch its rows to fill, up to 42px) and 30px in a pop-up.
+
+**Glass levels**: the arena picture; the frame (sidebar and footer, `--gm-glass-frame`); the page
+(`--gm-glass-page`, driven by Settings > Card transparency); a tile (`--gm-glass-tile`); a pop-up
+(`--gm-glass-popup`). One hairline each, no gradients, nothing filled white, cream or black.
+
+**Motion**: four timings and one curve. Quick 0.12s (hover, press, a tick); Open 0.17s (pop-ups and menus: the zoom);
+Move 0.24s (a picker's pill sliding, pages cross-fading, rows falling into place); Data 0.45s (bars and charts changing,
+once). Easing `cubic-bezier(.2, .8, .2, 1)` (`--gm-ease`). Never slide-ups, bounces or loops. Everything that reads
+these values stops when the computer asks for reduced motion.
+
+**Sound** (`gui/sound.js`): made in the browser, no files. On and quiet by default (volume 40%), button clicks off;
+Settings > Sound has the switch, the volume and the clicks switch. Continue (the main button moves time), win and loss
+(your result after a sim), must do (a job starts to block the clock), deal (a trade, signing or extension goes
+through), pick (a draft selection), reveal (a lottery envelope), blocked (the game refuses an action), news (a trade
+offer or draft-night trade arrives), champion (once a year), click (every button, own switch).
+
+**Music** (`gui/music.js`, `gui/assets/music/`, 2026-11-26): six tracks the user approved (four public domain, two
+CC BY 4.0, whose credit in Settings > Credits is required and must stay), off until switched on in Settings > Sound,
+with its own volume. Tracks fade in and out and play in a shuffled order. A new track
+is a download: list it for the user (title, artist, licence, size, source) and get a yes first; add it to
+`tracks.json` so it shows in the credits.
+
+**What has moved onto these values so far** (Stage B): every stylesheet's text weights (12 different, now 3), italic
+(16 uses, now none) and transition timings and easing (17 timings and 7 curves, now 4 and 1); the page title, the
+sidebar frame's new parts, Home's progress parts, the footer button, the welcome. Still literal in the old
+stylesheets, moving page by page in Stage C: text sizes, colours and corner sizes (the cards have fixed layouts, so
+these cannot be swapped blind).
+
+## The progress screen and the one button (2026-11-25)
+
+- **Home is the progress screen.** Its top shows the phase and one line under it, with the seven-step year strip
+  (Preseason, Season, Playoffs, Who to keep, Free agency, Summer, Camp). Its left column is the to-do list. You land
+  on it when a save loads, when a phase begins, and whenever the game stops by itself.
+- **The to-do list**: red rows block the clock and come first; a yellow row is a deadline today; then what is open;
+  green rows are done; dashed grey rows are closed (from the save's own `legal_actions`, so the list cannot disagree
+  with what the game accepts). A row opens its page or step screen; a step screen has a Home button at its title.
+- **One button, bottom right, only moves time.** Its label says what happens and its small line says to which date.
+  Quieter choices (a week, a month, finish the draft) stand to its left. When a job blocks it, the button turns
+  must-do red, carries the job's name and opens the job; it never fails with a message.
+- No pause windows for the trade deadline or the end of the regular season: the sim stops on Home with one line
+  saying why.
+- The logic lives in `gui/progress.js` (one rule table, `PHASES`); `card-pages.js` places it.
+
+## The sidebar and the tabs (user, 2026-11-26)
+
+- **The sidebar is the spine, on every page:** team and date; the phase with one line under it; the to-do list; then
+  only a few pages (Home, Team, Front Office, League); the search field; Settings.
+- **The year bar runs across the top of every page, not in the sidebar** (user, 2026-11-26). Each of its seven
+  segments is as long as its part of the year (the regular season is the longest), and the current one fills only as
+  far as today.
+- **Everything else is a tab** at the page's title (the standard long pill). More tabs is fine; more sidebar pages is
+  not.
+- **A tab shows one thing, or a couple that belong together** (the rotation and the next game; a table and its
+  chart). Do not force many cards onto one page (user: "one of my biggest current issues").
+- Home's first tab is "Today": the rotation, and the next game with your conference's standings under it; from the
+  lottery to camp it is contracts, payroll and picks (user's picks). No small copy of another tab on Home: the week
+  strip was removed because the Schedule tab is one click away (user, 2026-11-26).
+- **Plain words on the welcome screens.** No slogans or paired punchy sentences ("One button moves time", "Red jobs
+  come first. The rest can wait."): the user reads them as machine-written. A title is a plain label ("To do",
+  "Pages"); a line under it says one concrete thing or is left out.
+
+## The arena behind the glass (2026-11-26)
+
+- **Neutral photos, team colour as accents** (user: the single colour grade over every photo was "kind of
+  overpowering ... slapping a color filter over a photo"). Each arena photo keeps its own colours, muted, a little
+  more contrast, darker toward the edges, bright floors and screens eased down so white text reads (treatment C, the
+  user's pick). Team colour belongs in small places: the year bar, the current page, your row in a table.
+- **A different photo by phase** where the team has more than one credited photo: the season, the playoffs, the
+  offseason (`gui/assets/arenas/<TEAM>.jpg`, `-playoffs.jpg`, `-offseason.jpg`, `phases.json`; built by
+  `output/ui-polish/bg/build_all.py` from the photos in the main checkout's `output/ui-workbench/arena`). Eleven teams
+  have one photo and keep it all year. New photos are downloads: ask the user first.
+- **It moves, a little** (user: "a more alive background so it feels less static"): one fixed layer behind the game
+  (`gui/arena.js`, `gui/arena.css`) drifts slowly (`--gm-motion-drift`, 90s there and back), cross-fades when the
+  picture changes and leans a little toward a different side for each sidebar page (`--gm-motion-scene`, 1.2s). This
+  is the one exception to "nothing loops". Settings > Look > Background movement turns it off; so does the computer's
+  reduced-motion setting. Tables and text never move.
+- Rebuilt pictures need a new `VERSION` in `arena.js`, or browsers keep the old ones.
+
+## Full-size pages (2026-11-26)
+
+A page is no longer cards pasted at card size and shrunk as one picture. A rebuilt page is laid out at real sizes and
+its sections share the page's width and height. The rules live in `gui/full-pages.css`; the layouts in
+`gui/card-pages.js` (a layout marked `full`).
+
+- **Sizes are the shared values, drawn at scale 1**: 13px rows and names, 11px bold table headings, 18px bold section
+  titles. A page states the smallest area it fits in and a roomy one; between them nothing is scaled. A smaller window
+  shrinks the whole page as one piece; a larger one grows it a little (at most 1.25).
+- **Rows share the height.** A table's rows stretch to fill what the section is given, up to the page row height
+  (34px), or 42px for a table that is alone on its page. They never scroll and never grow past that: spare room stays
+  at the bottom.
+- **A headshot fills its row** and stands on the row's line.
+- **Heading text and row text start at the same place**, 8px in from the section title; one 1.5px line under the
+  headings, one hairline between rows, no fills.
+- **Pictures keep their proportions** (the payroll chart, the draft-assets grid): the card is drawn at its own size
+  and enlarged as one piece to fit its room. Never restyled, never stretched.
+- **The same rows in two tables are two tabs of one page** (Team: Roster | Stats).
+- **Nothing is cut to make room.** A name that cannot fit takes a second line (final sweep, 2026-11-27; asked at
+  checkpoint 17); a role never does (give the column the width). A long to-do job takes a second line.
+- **A closed page stays readable**: it says it is closed and dims only its buttons.
+- **Rebuilt so far:** every tab of the four sidebar pages and the step screens (Opening Roster, Set The Roster, the
+  offseason checklist, the draft room, free agency). Not reachable in the test saves, so not rebuilt: fantasy draft,
+  staff retention, cutdown, Sign Players. Pop-ups are untouched.
+- **News is a page, not a card** (user, 2026-11-26: keep the scrolling social feed; "keep the user engaged and
+  informed on the season they are in"): the feed two across, and beside it every headline with filters
+  (`gui/news-page.js`). Awards list ten candidates a race.
+- **Lists that may scroll** (the user's exceptions to "nothing scrolls"): available staff and the News feed and
+  headlines; the draft boards, the free-agent market, the offseason checklist and the playoff tables scrolled before
+  and still do. Their headings stay pinned.
+
+## Home is a front page (user, 2026-11-26)
+- Home's Today tab is what keeps a player reading, not a pair of tables: your team now (last result, next game,
+  form, morale, who is out), the league (headlines, scores), the table (standings, teams against expectation) and
+  the market (offers, who is being shopped, leaders). `gui/home-front.js`.
+- No boxes on it: sections are set apart by space, a heading and one line. One strong strip at the top, then columns.
+- Every line opens what it summarises (a box score, a player, a tab, the trade room). Nothing on it is a dead end.
+- Only numbers the game already holds. "Against expectation" compares a team's rank by record with its rank by
+  roster rating; no forecast is invented.
+- A list shows whole rows only; what does not fit is behind its heading.
+- A phase that has its own room (the draft, the offseason checklist, free agency, the playoffs) takes Home's first
+  tab while it is on, and Home opens there.
+
+## The trade room's steps (user, 2026-11-26)
+- A deal is three steps, each its own page: 1 Pick assets (only the lists, both teams side by side), 2 The deal
+  (each side's box takes the height: room for a dozen assets and more without scrolling; the salary check; the other
+  team's answer and Ask), 3 What it does. The step bar shows where you are and has one button for the way on.
+- What it does is in sections, one at a time, each "filled enough yet not too much": the team (four headline
+  ratings large, then the rest and who plays), on the court (the heat maps), the money (payroll, salary checks,
+  values).
+- It shows only what the game computes for the roster as it would be. A number the game cannot forecast (four
+  factors, morale, wins) is left out until the engine provides it.
+- Before and after of the same picture share one place and fade between each other, with a switch to hold either.
+- The asset lists scroll (round 8); they are not paged.
+- The Finder has two steps with the same step bar: Pick assets (the list, and beside it what is shopped, its
+  conditions and the payroll) and Found trades (offers two across, set apart by a line, no boxes). Find trades is the
+  step bar's one button.
+- A ticked box is blue with a white tick.
+- The Market is a page of tall rows, a player each, with the interested teams as logos and a button straight into
+  an offer; it fills the window.
+
+## Storylines (user, 2026-11-26)
+- "It is fun to follow a narrative and see its conclusion." Home leads with storylines: a thread about one person
+  or one job, its steps dated in order, and one word for where it stands (Wants out, Bidding war, Job open, Traded).
+- Every step is something the game recorded (a league event, a market row, the award race's weekly ranks, today's
+  morale). Nothing is predicted, and a step with no stored date says "Now".
+- A routine event alone (talks stalled, on the market) is not a storyline; it becomes one when something follows.
+- The user's own team comes first; open threads before closed ones.
+- A storyline evolves (user: "I definitely like to see how the storylines evolve, that's a big thing"). A trade
+  rumor comes out a piece at a time: first only that two teams are talking, then who it is about, then what is on
+  the table, then the end, a deal or a falling-out. Each step is a real round of the game's own negotiation; the
+  page withholds, it never invents. A player who is already public is named from the start. Pace (user, checkpoint
+  11: "slower"): the two teams, then a hint (his position; young or veteran), then the name, then the offer.
+- Home shows a mix: five storylines, at most two of one kind unless they are the user's. Recent beats old.
+- The front page is Home's Today tab all year: results lead while games are played, the payroll and the roster in
+  the offseason.
+- League has a Storylines tab: every storyline in one list (filter pills by kind, shown only for kinds that have
+  something), and the chosen one's whole history beside it, a dated step a line, newest last. A storyline on Home
+  opens it there.
+- In rumors a star outranks a bench player at the same stage (by the overall his page shows).
+
+## The start screen (2026-11-26)
+- The panels, the multiplayer lobby and the loading box are the same dark glass as the game, over the film or the
+  photo backdrop: white text, hairlines, frosted pills, one bold main button a panel.
+- Its drop-downs are the game's glass menus; the team is chosen on the logo wheel.
+- Styles: `gui/startup.css`.
+
+## A player's page (2026-11-26)
+- A player is a page like any other: his name is the page title, and Career, Hotspots, Ratings, Health (and
+  Contract Extension when he can sign one) are its tabs in the usual place. No small "1/3" with arrows.
+- The Career tab comes first (user, checkpoint 12, after the JFresh Dylan Larkin page): the contract as one row,
+  the career table (Regular season | Playoffs, Per game | Per 36), things to watch about him (his storylines,
+  then plain facts the game knows), and his projected overall by age. No boxes; a heading, a line, space.
+- The court maps have the Hotspots tab to themselves.
+- Each tab fits without scrolling at the usual window size and has nothing under 11px. The Ratings tab leaves the
+  top strip (photo, OVR / OFF / DEF, contract) to the other tabs to do it.
+- The heat maps, range bars and body map keep their colours and shapes; only their size and the text around them
+  changed.
+- On the extension page: fields are glass, never a white box; the answer is a coloured dot and plain words; the
+  chosen option in a row is a frosted pill and the others plain text on a faint tray.
+- A no within a tenth of his price is amber and says "Close, but he says no". It is still a no.
+- Code: `gui/player-career.js` (the Career tab). Styles: `gui/player-page.css` and `gui/extension-window.css`, both scoped to the page version of the card
+  (`.card-board-window.is-detail-card`), so the floating version is untouched.
+
+## The lottery and the signing wire (2026-11-26)
+- The lottery card takes its row count from the number of teams (two columns, half the teams each: seven rows for
+  the old 14-team lottery, eight for the 16-team one). Nothing scrolls and nothing spills into a third column.
+- Its wording follows the format the game reports: "All 16 picks drawn" and a countdown from 16 under the 3-2-1
+  lottery; no "jumped into the top four" notice there, because every pick is drawn.
+- A reason the game states (why a free agent left) is shown where the move is shown, as a line of its own that
+  wraps. It is never left to a hover.
+
+## Pop-ups (2026-11-26)
+- Pop-up styling lives in two sheets: `gui/popups.css` (the trade room and incoming offers) and
+  `gui/popups-game.css` (box score, Player Finder, staff talks, League Leaders). Every rule sits under `#modalRoot`
+  and uses token values only, so nothing leaks onto pages; `tests/popups_style.test.cjs` and
+  `tests/popups_game_style.test.cjs` enforce both.
+- One main action per group of buttons: it is the frosted pill with bold text; the other action beside it is plain
+  text (Accept Trade and Decline).
+- A status is a coloured mark and plain words ("✓ Legal", "✕ Takes back $19.7M too much"), never a boxed chip.
+- Team-coloured bars keep the team's colour, lifted to a minimum lightness so black and navy teams still show on
+  dark glass. They are not replaced by grey and accent blue.
+- A chart with small labels is enlarged as one piece (its shape kept), never by resizing its text alone.
+- Award tables on a page carry a headings row on the same column grid as their rows (user, 2026-11-26: "it should
+  have field headers"); the leader band is rounded like a card, not a sharp box.
+- The contract extension window and the player card are built outside `#modalRoot`: these sheets do not reach them.
+
+## One signing page (user, 2026-11-27)
+- Every negotiated signing happens on the player's page, laid out like the contract extension tab: re-signing, an
+  open-market offer, an offer sheet, and under "Other ways" the two-way, camp and sign-and-trade deals. There is no
+  side-bar offer builder; do not bring one back. ("It just makes more to have a unified look.")
+- Left: what he wants, your offer, whether he signs, the button. Right: the cap table, then one panel with the tabs
+  How it's paid, Rival bids, Your cap sheet, Other ways. The cap sheet is long and takes the whole right side.
+- It opens on an offer the cap allows: if the game says the first terms cannot be paid, the page moves to the
+  largest it accepts. Once the user changes anything, it leaves their terms alone.
+- It opens from a free-agent row, the checklist's Negotiate, the comparison window and a player's name. A signing
+  that goes through closes it and returns you to where you were.
+- In a short window the verdict and the button stay on screen and each side scrolls by itself.
+- One-click signings (a two-way on the roster screen, "Sign Players", waivers) are not negotiations and are unchanged.
+
+## Closed things, rows and captions (user, 2026-11-27)
+- When trading or signings are closed, the buttons and tabs that would open them are not shown, the Trades tab
+  included (user, checkpoint 18). The sidebar says they are closed.
+- Every row of a list is the same height, tall enough for a name on two lines, and a one-line name sits in the middle
+  of it. No ending a name in dots.
+- A news line too long for its two lines fades out; the whole text is on hover.
+- A line explaining how something works sits behind a small "i" beside the title.
+- A coach card closes when you change page, unless pinned.
+
+## The clock and confirmations (2026-11-27, from playing a season)
+- A button does what its words say: "Sim to next game" goes through that game in one press.
+- Dates on screen are written ("Jun 27"), and a move from last summer says its year.
+- "Please confirm" is a glass box with one main button.
+- A list that is the point of a screen must be checked on that screen: Sign Players showed no list and Set The
+  Roster hid "Decline" while every page-by-page picture looked fine, because no test save sat on those screens.
 
 ## Preserve (the user's favourites; don't redesign)
 - Team Identity heat maps at the current hexagon size (round 3: "looks great"). The tab style there still needs a new try.

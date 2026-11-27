@@ -1,0 +1,86 @@
+/* Shared style values (UI polish pass, Stage B, 2026-11-25). The one place every surface reads its sizes, weights,
+   colours, lines, corners, spacing, glass levels and motion from. Loaded first. The sheet with examples is in
+   docs/UI_STYLE_GUIDE.md ("Shared style values").
+
+   These are the values the glass look already used most, named once: not a new look. New rules use them; old rules
+   move onto them as each page is rebuilt. Don't add a literal size, colour, corner or timing to a stylesheet when one
+   of these fits. */
+:root {
+  /* ---- Type. Nothing under 11px. Bold: headings, lead numbers, table headings. Semibold: names and labels.
+     Regular: values and row text. No italic anywhere. */
+  --gm-font: var(--jf-font, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", Arial, sans-serif);
+  --gm-size-display: 56px;   /* a slide's headline (the welcome and the season slideshows only) */
+  --gm-size-page: 28px;      /* page title */
+  --gm-size-section: 18px;   /* section title */
+  --gm-size-lead: 34px;      /* the one number a section leads with */
+  --gm-size-figure: 20px;    /* key figure */
+  --gm-size-button: 16px;    /* the main button */
+  --gm-size-row: 13px;       /* names, row text, controls */
+  --gm-size-small: 11px;     /* table headings, the one subtext: the floor */
+  --gm-weight-regular: 400;
+  --gm-weight-semibold: 600;
+  --gm-weight-bold: 700;
+
+  /* ---- Text and signal colours. */
+  --gm-ink: #ffffff;         /* text */
+  --gm-ink-2: #d5e1ea;       /* second text */
+  --gm-ink-3: #a8b9c7;       /* dimmest allowed (about 7:1 on the page glass) */
+  --gm-accent: #7cc0ff;      /* links, "you", the current step */
+  --gm-pick: #3b82d6;        /* the chosen option in a picker */
+  --gm-must: #ff5d5d;        /* must do, counts */
+  --gm-bad: #ff9a9a;         /* injury, loss, over the cap */
+  --gm-warn: #f2c46d;        /* deadline, tax line, extension-eligible */
+  --gm-good: #86e0a2;        /* done, win, growth */
+
+  /* ---- Lines and corners. One solid line under a table heading; one hairline between rows and around cards. */
+  --gm-line-strong: rgba(255, 255, 255, .55);
+  --gm-line: rgba(255, 255, 255, .13);
+  --gm-line-row: rgba(255, 255, 255, .10);
+  --gm-focus: #9fcbff;
+  --gm-radius-row: 0px;
+  --gm-radius-tile: 8px;     /* tiles, fields */
+  --gm-radius-card: 16px;    /* cards, pop-ups, the page */
+  --gm-radius-pill: 999px;   /* buttons, pickers, bars */
+
+  /* ---- Spacing. Each level starts 8px further right than the one above it. */
+  --gm-space-1: 4px;
+  --gm-space-2: 8px;
+  --gm-space-3: 12px;
+  --gm-space-4: 16px;
+  --gm-space-5: 24px;        /* between columns */
+  --gm-space-6: 32px;        /* between sections */
+  --gm-space-7: 48px;
+  --gm-row-h: 34px;          /* a row on a page (a lone table may stretch its rows to 42px) */
+  --gm-row-h-popup: 30px;
+
+  /* ---- Glass levels: arena (the picture), frame (sidebar and footer), page, tile, pop-up. One hairline each, no
+     gradients. Settings > Card transparency keeps driving the page and the pop-up through --card-surface. */
+  --gm-glass-frame: rgba(3, 8, 13, .20);
+  --gm-glass-page: var(--card-surface, rgba(13, 27, 48, .66));
+  --gm-glass-tile: rgba(255, 255, 255, .07);
+  --gm-glass-tile-hover: rgba(255, 255, 255, .14);
+  --gm-glass-button: rgba(255, 255, 255, .22);
+  --gm-glass-button-hover: rgba(255, 255, 255, .32);
+  --gm-glass-popup: rgba(9, 18, 32, .86);
+
+  /* ---- Motion. Quick: hover, press, a tick. Open: pop-ups and menus (the zoom). Move: a picker's pill sliding,
+     pages cross-fading. Data: bars and charts changing, once. One easing curve. Never slide-ups, bounces or loops:
+     the one thing that moves by itself is the arena picture behind the glass (scene, drift). */
+  --gm-motion-quick: .12s;
+  --gm-motion-open: .17s;
+  --gm-motion-move: .24s;
+  --gm-motion-data: .45s;
+  --gm-ease: cubic-bezier(.2, .8, .2, 1);
+  /* The arena behind the glass only (user, 2026-11-26): a change of picture or page, and its slow drift. */
+  --gm-motion-scene: 1.2s;
+  --gm-motion-drift: 90s;
+}
+
+/* The computer asks for less motion: every transition that reads these values stops. */
+@media (prefers-reduced-motion: reduce) {
+  :root { --gm-motion-quick: .001s; --gm-motion-open: .001s; --gm-motion-move: .001s; --gm-motion-data: .001s; --gm-motion-scene: .001s; }
+}
+
+/* Never italic (user, Stage A decision 5): emphasis is weight or colour. Low priority on purpose, so a rule that
+   needs upright text for another reason is not disturbed. */
+:where(em, i, cite, dfn, var, address) { font-style: normal; }

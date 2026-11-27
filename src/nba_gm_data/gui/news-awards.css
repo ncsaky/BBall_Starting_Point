@@ -1,0 +1,79 @@
+/* League › News and League › Awards as full-size pages (UI polish pass, 2026-11-26; news-page.js, card-pages.js).
+   Every value comes from tokens.css; every rule starts from .pages-stage.is-full. */
+
+/* ---------- News: the headline list on the left, the feed of posts in two columns beside it. */
+html[data-layout="pages"] .pages-page[data-pages-page="news"] .pages-stage.is-full .pages-slot-body { flex-direction: row; gap: var(--gm-space-5); }
+html[data-layout="pages"] .pages-stage.is-full .news-index { flex: 0 0 340px; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .news-index h2 { flex: 0 0 auto; height: 34px; margin: 0; display: flex; align-items: center; color: var(--gm-ink); font: var(--gm-weight-bold) var(--gm-size-section)/1.2 var(--gm-font) !important; }
+html[data-layout="pages"] .pages-stage.is-full .news-filters { flex: 0 0 auto; display: flex; flex-wrap: wrap; gap: var(--gm-space-1); padding: 0 0 var(--gm-space-2); border-bottom: 1.5px solid var(--gm-line-strong); }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .news-filters > button {
+  height: 26px !important; min-height: 0 !important; margin: 0 !important; padding: 0 var(--gm-space-3) !important; border-radius: var(--gm-radius-pill) !important;
+  background: transparent !important; border: 1px solid transparent !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  color: var(--gm-ink-2) !important; font: var(--gm-weight-semibold) var(--gm-size-small)/1 var(--gm-font) !important; cursor: pointer;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .news-filters > button:hover { color: var(--gm-ink) !important; background: var(--gm-glass-tile) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .news-filters > button[aria-selected="true"] { color: var(--gm-ink) !important; font-weight: var(--gm-weight-bold) !important; background: var(--gm-glass-button) !important; border-color: rgba(255, 255, 255, .22) !important; }
+/* The list of headlines scrolls (it is the whole season's news); the feed beside it scrolls on its own. */
+html[data-layout="pages"] .pages-stage.is-full .news-rows { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .28) transparent; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .news-row {
+  display: grid !important; grid-template-columns: 46px minmax(0, 1fr) auto; grid-template-areas: "date kind logos" "text text text"; column-gap: var(--gm-space-2); row-gap: 2px; align-items: center;
+  width: 100%; height: auto !important; min-height: 0 !important; margin: 0 !important; padding: var(--gm-space-2) var(--gm-space-1) var(--gm-space-2) var(--gm-space-2) !important; box-sizing: border-box;
+  background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--gm-line-row) !important; border-radius: 0 !important; box-shadow: none !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important; text-align: left; cursor: pointer; color: var(--gm-ink) !important;
+  transition: background-color var(--gm-motion-quick) var(--gm-ease);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .news-row:hover { background: var(--gm-glass-tile) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .news-row:focus-visible { outline: 2px solid var(--gm-focus); outline-offset: -2px; }
+html[data-layout="pages"] .pages-stage.is-full .news-row > time { grid-area: date; color: var(--gm-ink-2); font: var(--gm-weight-regular) var(--gm-size-small)/1.2 var(--gm-font); font-variant-numeric: tabular-nums; }
+html[data-layout="pages"] .pages-stage.is-full .news-row > .news-kind { grid-area: kind; color: var(--gm-accent); letter-spacing: .06em; text-transform: uppercase; font: var(--gm-weight-bold) var(--gm-size-small)/1.2 var(--gm-font); }
+html[data-layout="pages"] .pages-stage.is-full .news-row.is-mine > .news-kind { color: var(--gm-warn); }
+html[data-layout="pages"] .pages-stage.is-full .news-row > .news-logos { grid-area: logos; display: flex; gap: 3px; }
+html[data-layout="pages"] .pages-stage.is-full .news-row > .news-logos img { width: 18px; height: 18px; object-fit: contain; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .news-row > b { grid-area: text; color: var(--gm-ink) !important; font: var(--gm-weight-regular) var(--gm-size-row)/1.3 var(--gm-font) !important; }
+html[data-layout="pages"] .pages-stage.is-full .news-none { margin: 0; padding: var(--gm-space-3) var(--gm-space-2); color: var(--gm-ink-2); font: var(--gm-weight-regular) var(--gm-size-row)/1.3 var(--gm-font); }
+
+/* The feed: the posts as they are drawn, two across, scrolling together. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-league-wire-expanded {
+  display: flex !important; flex-direction: column; align-items: stretch !important; align-self: stretch; flex: 1 1 0; width: auto !important; max-width: none !important; height: auto !important; min-width: 0; min-height: 0 !important;
+  margin: 0 !important; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; overflow: hidden !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-wire-activity-list {
+  /* A post is composed 478px wide: the feed is drawn a little smaller so two stand side by side on a 1512px window,
+     and a wider window fits more. */
+  zoom: .87; flex: 1 1 0; align-self: stretch; min-height: 0 !important; display: grid !important; grid-template-columns: repeat(auto-fill, 478px) !important; gap: var(--gm-space-3) !important; align-content: start; justify-content: start;
+  width: auto !important; max-width: none !important; height: auto !important; margin: 0 !important; padding: 0 var(--gm-space-1) 0 0 !important; overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain;
+  background: transparent !important; border: 0 !important;
+  scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .28) transparent; scroll-snap-type: none !important;
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-wire-post {
+  width: 478px !important; min-width: 0 !important; max-width: none !important; margin: 0 !important; box-sizing: border-box;
+  background: var(--gm-glass-tile) !important; border: 1px solid var(--gm-line) !important; border-radius: var(--gm-radius-card) !important; box-shadow: none !important;
+  scroll-margin-top: var(--gm-space-1);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-wire-post[hidden] { display: none !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-wire-post.is-chosen { animation: news-chosen 1.2s ease; }
+@keyframes news-chosen { 0%, 100% { box-shadow: 0 0 0 0 rgba(124, 192, 255, 0); } 25% { box-shadow: 0 0 0 3px rgba(124, 192, 255, .55); } }
+/* The feed's frame takes the rest of the row beside the headline list. */
+html[data-layout="pages"] body .season-command-dashboard.is-pages .pages-page[data-pages-page="news"] .pages-stage.is-full .card-board-window.is-page-card { flex: 1 1 0 !important; min-width: 0 !important; }
+html[data-layout="pages"] body .season-command-dashboard.is-pages .pages-page[data-pages-page="news"] .pages-stage.is-full .card-board-window.is-page-card > .card-board-body { align-items: stretch !important; }
+
+/* ---------- Awards: the leader's band is a soft rounded tile, not a sharp box (user, 2026-11-26), and the chasers
+   have column headings. The cards are enlarged whole, so sizes here are the card's own (about 1.16 times smaller
+   than they appear): a heading is the small size once enlarged. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-card .season-award-leader { border-radius: var(--gm-radius-card) !important; border: 1px solid var(--gm-line) !important; overflow: hidden; justify-content: center !important; align-content: center !important; }
+/* The leader's own numbers: headings on one line, values under them, and his change in rank under "Change" (it sat
+   alone above the first heading). */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-leader-stats > .season-award-stat-label { grid-row: 1 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-leader-stats > .season-award-stat { grid-row: 2 !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-leader-stats > .season-rank-change { grid-row: 2 !important; grid-column: -2 / -1 !important; justify-self: center; font-size: var(--gm-size-row) !important; }
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-columns {
+  display: grid; grid-template-columns: 18px 26px minmax(0, 1fr) 16px repeat(var(--award-stat-count, 4), 30px) 38px; column-gap: 4px; align-items: end;
+  height: 30px; padding: 0 8px 4px 0; box-sizing: border-box; border-bottom: 1.5px solid var(--gm-line-strong);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-columns > span {
+  text-align: center; white-space: nowrap; overflow: visible; color: var(--gm-ink);
+  font: var(--gm-weight-bold) calc(var(--gm-size-small) * .86)/1.2 var(--gm-font);
+}
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-columns > span.is-name { text-align: left; }
+/* "Team" is wider than its logo column: it ends at the logo's right edge and runs back over the name column's spare room. */
+html[data-layout="pages"] body.unified-terminal-ui #app .pages-stage.is-full .season-award-columns > span:nth-child(4) { display: flex; justify-content: flex-end; }

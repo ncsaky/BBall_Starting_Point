@@ -151,7 +151,7 @@ test('Skip stops the reveals, keeps the trade alerts once, and lands on the fina
     window: {AssistantGMPhone: {setDraftPlaybackActive() {}, presentDraftTrades: async () => { alerts += 1; }}},
     GameSimulation: {draftPlaybackFrame: (room, events, count) => ({frame: count}), wait: async () => { scope.state.draftPlaybackSkip = frames >= 2; }, reducedMotion: () => false},
     refreshDashboardAfterPhaseMutation: async () => {}, updateDraftPlaybackCard: () => { frames += 1; },
-    setBusy() {}, showToast() {}, maybeShowWantReminder: undefined,
+    setBusy() {}, showToast() {}, renderDashboard() {}, maybeShowWantReminder: undefined,
   };
   vm.createContext(scope);
   vm.runInContext(slice('async function playDraftSimulation(', 'function updateDraftPlaybackCard('), scope);

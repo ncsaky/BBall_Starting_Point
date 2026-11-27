@@ -89,7 +89,7 @@
   color: #17212a;
   display: flex;
   font-size: 12px;
-  font-weight: 750;
+  font-weight: var(--gm-weight-bold);
   justify-content: space-between;
   min-height: 34px;
   padding: 0 11px;
@@ -103,14 +103,14 @@
 .game-tutorial-kicker {
   color: #465969;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: var(--gm-weight-bold);
   margin: 0 0 7px;
 }
 
 .game-tutorial-content h2 {
   color: #18212a;
   font-size: 23px;
-  font-weight: 720;
+  font-weight: var(--gm-weight-bold);
   line-height: 1.18;
   margin: 0 0 10px;
 }

@@ -37,7 +37,9 @@
     const sequence = [...(lottery.reveal || [])].sort((a,b)=>Number(b.pick)-Number(a.pick));
     const revealed = sequence.slice(0,Math.max(0,count));
     const promoted = new Set(), remaining = new Map((lottery.odds || []).map(row=>[row.team.id,row]));
-    if (Number(lottery.draw_count) > 0) for (const row of revealed) {
+    // "Promoted" (a team that jumped into the four drawn picks) only means something in the old format; under
+    // the 3-2-1 lottery every pick is drawn.
+    if (lottery.format !== "3-2-1" && Number(lottery.draw_count) > 0) for (const row of revealed) {
       const id = row.original_team?.id;
       remaining.delete(id);
       if (Number(row.pick) > 4 && Number(row.starting_seed) > 0) {

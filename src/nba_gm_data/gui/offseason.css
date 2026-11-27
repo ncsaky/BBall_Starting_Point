@@ -11,7 +11,7 @@
 .offseason-stops { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin: 0; padding: 6px 12px; list-style: none; }
 .offseason-stops li { display: grid; grid-template-columns: 18px 1fr; column-gap: 6px; align-items: center; padding: 4px 6px; border: 1px solid var(--season-soft-line, #d5dde3); border-radius: 3px; color: #5c6b75; background: #f6f8f9; min-width: 0; }
 .offseason-stops li b { grid-row: span 2; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #d1dde8; color: #1d2a33; font-size: 10px; }
-.offseason-stops li span { font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.offseason-stops li span { font-size: 11px; font-weight: var(--gm-weight-bold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .offseason-stops li small { font-size: 9.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .offseason-stops li.is-current { border-color: #42667a; background: #e3ebf1; color: #1d2a33; box-shadow: inset 3px 0 #42667a; }
 .offseason-stops li.is-current b { background: #42667a; color: #fff; }
@@ -20,21 +20,21 @@
 .offseason-empty { margin: 14px 12px; font-size: 12px; color: #5c6b75; }
 .offseason-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-size: 11px; }
 .offseason-table thead th { position: sticky; top: 0; z-index: 2; height: 24px; padding: 0 6px; text-align: left; background: #fff;
-  border-bottom: 2px solid var(--season-line, #b7c2cb); font-size: 9px; font-weight: 700; color: var(--season-text, #1d2a33); }
+  border-bottom: 2px solid var(--season-line, #b7c2cb); font-size: 9px; font-weight: var(--gm-weight-bold); color: var(--season-text, #1d2a33); }
 .offseason-table tbody tr { background: #fff; }
 .offseason-table tbody tr:nth-child(even) { background: #eef1f3; }
 .offseason-table tbody tr:is(:hover, :focus-within) { background: #dce8f2; }
 .offseason-table tbody tr.is-pending { box-shadow: inset 3px 0 #c2862a; }
-.offseason-table tbody :is(th, td) { padding: 5px 6px; vertical-align: top; text-align: left; font-weight: 400; border-bottom: 1px solid var(--season-soft-line, #d5dde3); }
+.offseason-table tbody :is(th, td) { padding: 5px 6px; vertical-align: top; text-align: left; font-weight: var(--gm-weight-regular); border-bottom: 1px solid var(--season-soft-line, #d5dde3); }
 .offseason-table small { display: block; margin-top: 2px; font-size: 9.5px; color: #5c6b75; }
 .offseason-table .offseason-due { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .offseason-table .offseason-money { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.offseason-table .offseason-player .fa-player-name { appearance: none; border: 0; padding: 0; background: none; font: inherit; font-weight: 700; color: #1d2a33; cursor: pointer; text-align: left; }
+.offseason-table .offseason-player .fa-player-name { appearance: none; border: 0; padding: 0; background: none; font: inherit; font-weight: var(--gm-weight-bold); color: #1d2a33; cursor: pointer; text-align: left; }
 .offseason-table .offseason-player .fa-player-name:hover { text-decoration: underline; }
 .offseason-table .offseason-text { line-height: 1.35; }
 .offseason-table .offseason-actions { display: flex; flex-wrap: wrap; gap: 4px; }
 .offseason-table .offseason-actions .ui-command { min-height: 22px; padding: 2px 7px; font-size: 10.5px; }
-.offseason-chip { display: inline-block; padding: 1px 6px; border-radius: 9px; font-size: 10px; font-weight: 700; background: #e3ebf1; color: #1d2a33; white-space: nowrap; }
+.offseason-chip { display: inline-block; padding: 1px 6px; border-radius: 9px; font-size: 10px; font-weight: var(--gm-weight-bold); background: #e3ebf1; color: #1d2a33; white-space: nowrap; }
 .offseason-chip.is-pending { background: #f6e2bf; color: #6b4610; }
 .offseason-chip:is(.is-declined, .is-not_tendered, .is-withdrawn) { background: #f0dcdc; color: #6d2323; }
 .offseason-chip:is(.is-exercised, .is-tendered, .is-accepted, .is-signed, .is-done) { background: #dbeadc; color: #1f4f25; }
@@ -50,16 +50,16 @@
 }
 
 /* The house skin styles row headers (th) as small grey header cells; the checklist's player column is body text. */
-body.unified-terminal-ui .offseason-table tbody th.offseason-player { background: transparent !important; font-size: 11px !important; font-weight: 700 !important; text-transform: none !important; letter-spacing: 0 !important; color: #1d2a33 !important; }
-body.unified-terminal-ui .offseason-table tbody th.offseason-player .fa-player-name { font-size: 11px !important; font-weight: 700 !important; color: #1d2a33 !important; }
-body.unified-terminal-ui .offseason-table thead th { font-size: 9px !important; font-weight: 700 !important; }
+body.unified-terminal-ui .offseason-table tbody th.offseason-player { background: transparent !important; font-size: 11px !important; font-weight: var(--gm-weight-bold) !important; text-transform: none !important; letter-spacing: 0 !important; color: #1d2a33 !important; }
+body.unified-terminal-ui .offseason-table tbody th.offseason-player .fa-player-name { font-size: 11px !important; font-weight: var(--gm-weight-bold) !important; color: #1d2a33 !important; }
+body.unified-terminal-ui .offseason-table thead th { font-size: 9px !important; font-weight: var(--gm-weight-bold) !important; }
 
 /* FA-REAL slice 3: a rival's offer sheet for one of your restricted free agents: the Match or Pass countdown. */
 .offer-sheet-decision { margin: 8px 12px 10px; border: 1px solid #c2862a; border-radius: 4px; background: #fffaf0; box-shadow: inset 4px 0 #c2862a; }
 .offer-sheet-decision > header { display: flex; justify-content: flex-start; align-items: center; gap: 24px; padding: 8px 10px 6px 14px; }
-.offer-sheet-decision > header p { margin: 0; font-size: 10px; font-weight: 700; color: #6b4610; text-transform: uppercase; letter-spacing: .02em; }
+.offer-sheet-decision > header p { margin: 0; font-size: 10px; font-weight: var(--gm-weight-bold); color: #6b4610; text-transform: uppercase; letter-spacing: .02em; }
 .offer-sheet-decision > header h4 { margin: 2px 0; font-size: 15px; }
-.offer-sheet-decision > header h4 .fa-player-name { appearance: none; border: 0; padding: 0; background: none; font: inherit; font-weight: 700; color: #1d2a33; cursor: pointer; }
+.offer-sheet-decision > header h4 .fa-player-name { appearance: none; border: 0; padding: 0; background: none; font: inherit; font-weight: var(--gm-weight-bold); color: #1d2a33; cursor: pointer; }
 .offer-sheet-decision > header span { font-size: 11px; color: #34424c; }
 .offer-sheet-clock { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; min-width: 120px; padding: 4px 10px; border-radius: 4px; background: #f6e2bf; color: #6b4610; }
 .offer-sheet-clock strong { font-size: 14px; }
@@ -68,11 +68,11 @@ body.unified-terminal-ui .offseason-table thead th { font-size: 9px !important; 
 .offer-sheet-table { margin: 0 10px 0 14px; width: calc(100% - 24px); }
 .offer-sheet-facts { display: grid; grid-template-columns: 110px 1fr; gap: 3px 10px; margin: 8px 10px 0 14px; font-size: 11px; line-height: 1.35; }
 .offer-sheet-facts > div { display: contents; }
-.offer-sheet-facts dt { font-weight: 700; color: #5c6b75; }
+.offer-sheet-facts dt { font-weight: var(--gm-weight-bold); color: #5c6b75; }
 .offer-sheet-facts dd { margin: 0; color: #1d2a33; }
 .offer-sheet-facts .is-negative { color: #a8434b; }
 .offer-sheet-decision > footer { display: flex; gap: 8px; justify-content: flex-start; padding: 8px 10px 10px; }
-.offer-sheet-decision > footer .ui-command { min-width: 90px; min-height: 28px; font-weight: 700; }
+.offer-sheet-decision > footer .ui-command { min-width: 90px; min-height: 28px; font-weight: var(--gm-weight-bold); }
 .offer-sheet-table :is(thead th, tbody td):not(:first-child), body.unified-terminal-ui .offer-sheet-table thead th:not(:first-child) { text-align: right !important; }
 .offer-sheet-clock.is-due small { color: #fff; }
 
@@ -81,7 +81,7 @@ body.unified-terminal-ui .offseason-table thead th { font-size: 9px !important; 
 .cutdown-guarantee small { color: var(--season-muted, #5d6b77); font-size: 10px; overflow: hidden; text-overflow: ellipsis; }
 .cutdown-guarantee.is-full small { color: #1d2a33; }
 .cutdown-guarantee.is-camp small, .cutdown-guarantee.is-none small { color: #2f6f4a; }
-.cutdown-tag { justify-self: start; padding: 0 4px; border: 1px solid #b7c2cb; border-radius: 3px; font: 700 9px Tahoma, Arial, sans-serif; font-style: normal; color: #34424c; background: #eef2f5; }
+.cutdown-tag { justify-self: start; padding: 0 4px; border: 1px solid #b7c2cb; border-radius: 3px; font: var(--gm-weight-bold) 9px Tahoma, Arial, sans-serif; font-style: normal; color: #34424c; background: #eef2f5; }
 .cutdown-tag.is-camp { border-color: #c2862a; background: #fff4e0; color: #6b4610; }
 .cutdown-choice-twoway.is-active { background: #2f6f9a !important; color: #fff !important; }
 .cutdown-twoways { margin: 10px 12px 12px; border: 1px solid #b7c2cb; background: #fbfcfd; }
@@ -94,7 +94,7 @@ body.unified-terminal-ui .offseason-table thead th { font-size: 9px !important; 
 .cutdown-twoway-row:hover { background: #dce8f2; }
 .cutdown-twoway-row small { color: #5d6b77; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cutdown-twoway-row.is-open { grid-template-columns: minmax(150px, 1.3fr) 4fr; padding-left: 12px; }
-.cutdown-twoway-open { font-weight: 700; color: #5d6b77; }
+.cutdown-twoway-open { font-weight: var(--gm-weight-bold); color: #5d6b77; }
 .cutdown-twoway-games { display: grid; grid-template-columns: 60px auto; align-items: center; gap: 6px; }
 .cutdown-twoway-games i { display: block; height: 6px; background: #d5dde3; }
 .cutdown-twoway-games i b { display: block; height: 100%; background: #2f6f9a; }
@@ -119,9 +119,9 @@ body.unified-terminal-ui .offseason-table thead th { font-size: 9px !important; 
 .offseason-stops li span { font-size: 12.5px; overflow: visible; }
 .offseason-stops li small { font-size: 11px; }
 .offseason-waiting { display: inline-grid; place-items: center; min-width: 17px; height: 17px; margin-left: 4px; padding: 0 4px; border-radius: 9px;
-  background: #c2862a; color: #fff; font-size: 10.5px; font-style: normal; font-weight: 700; vertical-align: 1px; }
+  background: #c2862a; color: #fff; font-size: 10.5px; font-style: normal; font-weight: var(--gm-weight-bold); vertical-align: 1px; }
 .offseason-scroll { padding: 4px 12px 12px; }
-.offseason-scroll h4 { margin: 12px 0 6px; font-size: 16px; font-weight: 750; color: #18212a; }
+.offseason-scroll h4 { margin: 12px 0 6px; font-size: 16px; font-weight: var(--gm-weight-bold); color: #18212a; }
 .offseason-table { font-size: 12px; }
 .offseason-table tbody tr.is-pending { box-shadow: none; }
 .offseason-table tbody :is(th, td) { vertical-align: middle; height: 30px; padding: 0 6px; }
@@ -139,4 +139,4 @@ body.unified-terminal-ui .offseason-table thead th { font-size: 9px !important; 
 .offseason-table tbody tr { height: 31px; }
 .offseason-player-cell .player-headshot-frame { height: 30px !important; max-height: 30px; line-height: 0; }
 .offseason-player-cell .player-headshot-frame svg { display: block; width: 100%; height: 100%; }
-body.unified-terminal-ui .offseason-scroll h4 { font-weight: 750 !important; }
+body.unified-terminal-ui .offseason-scroll h4 { font-weight: var(--gm-weight-bold) !important; }

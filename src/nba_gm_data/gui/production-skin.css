@@ -97,7 +97,7 @@ body.unified-terminal-ui .modal-trade-room > .modal-head {
 
 body.unified-terminal-ui .modal-trade-room > .modal-head h3 {
   color:#17212a !important;
-  font:600 15px Tahoma,"Trebuchet MS",Arial,sans-serif;
+  font:var(--gm-weight-semibold) 15px Tahoma,"Trebuchet MS",Arial,sans-serif;
 }
 
 body.unified-terminal-ui .modal-trade-room > .modal-head .eyebrow { color:#4b6173 !important; }
@@ -167,7 +167,7 @@ body.unified-terminal-ui .modal-trade-room .trade-room-toolbar .tabs button.acti
   border:1px solid #234a67 !important;
   box-shadow:inset 1px 1px #9bbbd1,inset -1px -1px #1b4360,0 1px 2px #20384a45 !important;
   color:#fff !important;
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
 }
 
 body.unified-terminal-ui .modal-trade-room .trade-room-kicker,
@@ -260,7 +260,7 @@ body.unified-terminal-ui .modal-trade-room :is(.trade-evaluate-button,.trade-exe
   border-radius:2px !important;
   box-shadow:inset 1px 1px #9abbd1,inset -1px -1px #1a4360,0 2px 3px #1d354653 !important;
   color:#fff !important;
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
   text-shadow:0 1px #1c4560;
 }
 
@@ -368,7 +368,7 @@ body.unified-terminal-ui .modal-trade-room .trade-package-builder-header > .appr
 body.unified-terminal-ui .modal-trade-room .trade-package-builder-header > .approved-trade-team strong {
   color:#17212a !important;
   font-size:11px;
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
 }
 
 body.unified-terminal-ui .modal-trade-room .trade-package-builder-header > .approved-trade-team small {
@@ -386,7 +386,7 @@ body.unified-terminal-ui .modal-trade-room .trade-package-builder-header .trade-
 body.unified-terminal-ui .modal-trade-room .trade-package-builder-header .trade-package-total span {
   color:#293b48 !important;
   font-size:8px;
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
   letter-spacing:.04em;
   text-transform:uppercase;
 }
@@ -395,7 +395,7 @@ body.unified-terminal-ui .modal-trade-room .trade-package-builder-header .trade-
 body.unified-terminal-ui .modal-trade-room .trade-selected-package > header > strong {
   color:#193f58 !important;
   font-size:13px;
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
 }
 
 body.unified-terminal-ui .modal-trade-room .trade-builder-package > .trade-selected-list {
@@ -438,7 +438,7 @@ body.unified-terminal-ui .modal-trade-room .trade-builder-package .trade-package
 body.unified-terminal-ui .modal-trade-room .trade-asset-value strong {
   color:#315a78 !important;
   font-size:13px;
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
   text-shadow:none;
 }
 
@@ -470,13 +470,13 @@ body.unified-terminal-ui .modal-trade-room .approved-trade-cap .approved-trade-c
 body.unified-terminal-ui .modal-trade-room .approved-trade-cap .approved-trade-cap-team th {
   color:#405463 !important;
   font-size:7px;
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
 }
 
 body.unified-terminal-ui .modal-trade-room .approved-trade-cap .approved-trade-cap-team td {
   color:#263b4a !important;
   font-size:8px;
-  font-weight:600;
+  font-weight:var(--gm-weight-semibold);
 }
 
 body.unified-terminal-ui .modal-trade-room .trade-asset-meter {
@@ -573,12 +573,12 @@ body.unified-terminal-ui .box-score-team-identity small {
 }
 body.unified-terminal-ui .box-score-team-identity h4 {
   color:#17212a;
-  font:600 15px Tahoma,"Trebuchet MS",Arial,sans-serif;
+  font:var(--gm-weight-semibold) 15px Tahoma,"Trebuchet MS",Arial,sans-serif;
   margin:2px 0;
 }
 body.unified-terminal-ui .box-score-team-score {
   color:var(--ui-text);
-  font:600 30px Tahoma,"Trebuchet MS",Arial,sans-serif;
+  font:var(--gm-weight-semibold) 30px Tahoma,"Trebuchet MS",Arial,sans-serif;
 }
 
 body.unified-terminal-ui .box-score-team-totals {
@@ -600,7 +600,7 @@ body.unified-terminal-ui .box-score-team-totals small {
 body.unified-terminal-ui .box-score-team-totals strong {
   color:#17212a;
   font-size:11px;
-  font-weight:700;
+  font-weight:var(--gm-weight-bold);
 }
 
 body.unified-terminal-ui .box-score-player-table-wrap {
