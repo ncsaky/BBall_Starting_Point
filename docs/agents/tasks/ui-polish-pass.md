@@ -907,3 +907,8 @@ UI work); the odds card shows 0.0% for teams barred from the top pick without sa
 **For the coordinator**: the lottery screen is still skipped (third report: the game goes from re-signing straight
 to draft night with `presentation_stage` "reveal" already set); the test save's departed free agent (Luka Garza)
 has `departure_text` null because the save predates the origins record.
+
+**After checkpoint 14 (2026-11-26)**: the coordinator's full Python run on the branch (2,749 tests) had one failure,
+`tests/test_gui_concept71.py` (Settings looks expected glass, font, buttons; found "motion", the Background
+movement switch from checkpoint 4). The user was asked and said to keep the switch; the test now allows it
+(6071d437 and the commit after it). The branch's browser tests alone had not caught this since checkpoint 4.
