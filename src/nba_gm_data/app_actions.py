@@ -30,6 +30,7 @@ from .contract_ai import (
 from .draft import draft_board_report, generate_draft_order, whole_prospect_age
 from .diagnostics import diagnostic_runtime
 from .extension_analysis import extension_analysis_payload
+from .four_factor_projection import project_four_factors, project_league_four_factors  # trade room, Profile tab (TRADE-FORECASTS)
 from .fantasy_draft import (
     apply_fantasy_draft_pick,
     fantasy_draft_room,
@@ -152,6 +153,7 @@ from .transactions import (
     with_transaction_context,
 )
 from .pick_presentation import draft_assets_display, pick_presentation, swap_presentation
+from .trade_morale import project_trade_morale  # trade room (TRADE-FORECASTS)
 from .utils import copy_plain, stable_id
 
 
@@ -2910,6 +2912,14 @@ def dashboard_four_factors(
             logs_by_game.setdefault(game_id, []).append(row)
 
     results: dict[str, dict[str, float]] = {}
+    projections: list[dict[str, dict[str, Any]]] = []
+
+    def preseason_projection() -> dict[str, dict[str, Any]]:
+        if not projections:
+            from .four_factor_projection import project_league_four_factors
+            projections.append(project_league_four_factors(active, save))
+        return projections[0]
+
     for team in active.get("teams", []):
         team_id = str(team.get("id") or "")
         rows = logs_by_team.get(team_id, [])
@@ -2938,6 +2948,12 @@ def dashboard_four_factors(
                 "oreb": oreb / max(1.0, oreb + opponent_dreb),
                 "ftr": fta / max(1.0, fga),
             }
+        elif (projected := preseason_projection().get(team_id)) is not None:
+            # Before a team's first game: the engine's expected box score for its roster and the coach's projected
+            # minutes (four_factor_projection; TRADE-FORECASTS). On the real 2025-26 rosters and minutes it tracked the
+            # real season far better than the identity formula below (correlation with real eFG% .87 vs .55, free-throw
+            # rate .87 vs .59, turnover % .74 vs .67, offensive rebound % .78 vs .73; docs/agents/tasks/trade-forecasts.md).
+            results[team_id] = dict(projected["fractions"]["offense"])
         else:
             results[team_id] = {
                 "efg": 0.515 + (float(identity.get("spacing") or 50.0) - 50.0) * 0.0017,
