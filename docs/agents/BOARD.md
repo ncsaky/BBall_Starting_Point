@@ -5,7 +5,17 @@ Single source of truth for who is doing what. Rules are in `/AGENTS.md`. Coordin
 _Last updated: 2026-11-20 (KEEP-STARS row added by its Opus agent)._
 _Last updated: 2026-11-20 by Claude Code (OVERNIGHT-EXTENSIONS agent)._
 
-## Where things stand (handover snapshot, 2026-11-16)
+_Last updated: 2026-11-28 by Claude Code (coordinator consolidation)._
+
+## Where things stand (2026-11-28)
+
+- **Playable game:** the UI polish pass is merged (full pages, Home as the progress screen, first-run welcome, sound, shared style values). The user continues UI work in **Codex** for a day or so (rows UI-PLAYTEST-ANNOTATIONS, RATINGS-ONBOARDING-DESIGN). Full test suite green on main.
+- **Today's engine (normal play):** merged Nov 25-27: per-season archive files, 3-2-1 lottery from 2027, per-season playoff stats, injury names that match lengths, drafted players' habits from real neighbours, shooting splits (3P/FT follow ratings), AI trades that make sense, pick values under the new lottery, playoff teams keep their core, coaches judged against expectations, loyal free agents state motives, eight-player floor, month sim ~17 s in season 1 (25-27 s later seasons). Ratings loader now prefers the committed `.json.gz` (the game had been on Nov 23 ratings until 2026-11-26).
+- **Waiting to merge (branch `integration/overnight-2026-11-28` = main + these three; Azure full suite and a 3-season run started 2026-11-28):** CORE-RENEW (`claude/vigilant-cori-6ae562`, champions keep their core through the next season), TRADE-PRICE (`claude/festive-chaplygin-aacfb6`, refusal-only price floors the user approved), TRADE-FORECASTS (`claude/dreamy-goldwasser-0f64ba`, four factors for any roster, trades move stored morale).
+- **Stage 2 (off in normal play):** ten pieces merged. Beats today's engine on win probability (.197 vs .201), level on spreads, behind on totals (realistic game-to-game swing) and on per-player scoring split (inputs). Multi-season runs work behind `NBA_GM_SAVE_ENGINE=stage2`.
+- **Open follow-ups:** lottery screen sometimes skipped (offseason flow); flat growth projection for young players (Sorber); 2P% 57% vs 55% (score model ~1 pt TS too efficient); 12.7 players used per game vs 10.8 (coach rotation); too few 40-minute star nights; today's turnovers 15.0 vs 14.1 by season 4; stars signing for ~$16M in free agency; camp deals and sign-and-trades give no departure reason; option decisions untouched; no Python tests for `trade_team_impact`, `home_storylines`, `player_outlook`; overtime box lines make every shot.
+
+## Where things stood (handover snapshot, 2026-11-16)
 
 - **Playable game:** private friends beta. GUI files have **not changed since Oct 30**. Nearly all of the user's Oct 29 wishlist (`docs/MINIMUM_COMPLETION_BACKLOG_2026_10_29.md`) is open. See the status table below.
 - **Player model (track B):** the 94-input model is approved, and its schema/persistence are implemented (Nov 12–13). Ratings evidence research is extensive (`docs/ratings-evidence-2026-10-29/`), but **no rating changes have been applied to game data**.
