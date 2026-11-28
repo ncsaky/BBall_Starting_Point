@@ -372,10 +372,11 @@ def trade_roster_outlook(canonical, team_id, incoming, outgoing):
     role_opportunity = role_opportunity_outlook(canonical, team_id, incoming_ids, outgoing_ids, before, after)
     adjustment += role_opportunity['adjustment']
     plan = canonical.get('team_plans', {}).get(team_id, {})
-    reviewing = bool(plan.get('review_exception') or plan.get('route') == 'review_core_ceiling_and_retool_alternatives')
     values = tx.player_asset_values_by_id(canonical)
     best_departing = max((float(values.get(pid, {}).get('on_court_value') or 0) for pid in outgoing_ids), default=0)
     principal_ids = [pid for pid in outgoing_ids if float(values.get(pid, {}).get('on_court_value') or 0) >= best_departing-4]
+    from .team_planning import review_frees
+    reviewing = bool(review_frees(plan, principal_ids) or plan.get('route') == 'review_core_ceiling_and_retool_alternatives')
     burdened = bool(principal_ids) and all(float(values.get(pid, {}).get('contract_surplus') or 0) <= -16
                    or float(values.get(pid, {}).get('health_risk') or 0) >= 30 for pid in principal_ids)
     salary_relief = (tx.package_salary(canonical, outgoing) or 0)-(tx.package_salary(canonical, incoming) or 0)

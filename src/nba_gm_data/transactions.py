@@ -4863,7 +4863,10 @@ def premium_return_issue(canonical, team_id, incoming_assets, outgoing_assets):
                 and market_trade_target_value(player, value) >= price*.6):
             return None
     plan = canonical.get('team_plans', {}).get(team_id, {})
-    reviewing = bool(plan.get('review_exception') or plan.get('route') == 'review_core_ceiling_and_retool_alternatives')
+    from .team_planning import review_frees
+    # An injury review lets picks pay only for the injured player, never for another premium player sent with him.
+    reviewing = bool(review_frees(plan, [p['id'] for p in premium])
+                     or plan.get('route') == 'review_core_ceiling_and_retool_alternatives')
     if not competitive or reviewing:
         firsts = [pick_asset_value(pick_by_id(canonical, pid), state.get('phase', 'neutral'))
                   for pid in sorted({a['id'] for a in incoming_assets if a.get('kind') == 'pick'})
@@ -4977,8 +4980,13 @@ def evaluate_trade_for_team(
     if legality["status"] == "illegal":
         decision = "illegal_reject"
     reasons = []
+    champions = False
     if commitment_blocked:
-        reasons.append('Core commitment: this return does not justify breaking the current trial window.')
+        from .team_planning import title_promise
+        champions = title_promise(canonical, perspective_team_id)
+        reasons.append('Core commitment: as champions they are keeping this core together, and this return is not '
+                       'enough to change that.' if champions else
+                       'Core commitment: this return does not justify breaking the current trial window.')
     if premium_issue:
         reasons.append(premium_issue)
     if outlook and outlook['issue']:
@@ -5013,7 +5021,9 @@ def evaluate_trade_for_team(
         decision_reasons=reasons,
         notes=(
             evaluation_notes(canonical, perspective_team_id, net, threshold, strategic, personality, legality, accepted=accepted)
-            + (' Core commitment: ordinary return does not justify breaking the current trial window.' if commitment_blocked else '')
+            + ((' Core commitment: an ordinary return does not break up a champion core.' if champions
+                else ' Core commitment: ordinary return does not justify breaking the current trial window.')
+               if commitment_blocked else '')
             + (f' {premium_issue}' if premium_issue else '')
             + (f' Roster-space opportunity credit: {space_bonus:.2f}.' if space_bonus else '')
             + (tax_note(canonical, perspective_team_id, incoming_assets, outgoing_assets, tax_term[0]) if tax_term[0] else '')

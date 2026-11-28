@@ -51,6 +51,56 @@ DEEP_RUN_CORE_OVERLAP = 0.5
 # TRADE-CORE: winning even one playoff series is a playoff run. It does not change the team's window label, but until
 # the new season's record speaks the team does not sell one of its best players cheaply (trade_tax.contender_core_outgoing).
 PLAYOFF_RUN_ROUNDS = 1
+# CORE-RENEW: the promise to keep a core (``commit_until``) starts with the career and with a major acquisition, so
+# from the second summer most computer teams had none, and a champion could trade a starter weeks after the title. The
+# user's rule: champions keep their cores. A title (TITLE_ROUNDS series won) promises the core until the next June 30
+# (``title_commit_until``), through that summer and the whole next season, while at least DEEP_RUN_CORE_OVERLAP of the
+# players who won it are still there. It ends sooner when another champion is crowned. The injury and trade-demand
+# reviews (``review_frees``) lift it like any other promise.
+TITLE_ROUNDS = 4
+
+
+def title_commitment_end(outcomes, owners, team_id):
+    """The date a title keeps the champion's core promised: June 30 after the title, or '' when the latest postseason on
+    record was not a title or most of the players who won it have left. ``owners`` maps player id to team id."""
+    if not outcomes:
+        return ''
+    latest = max(outcomes, key=lambda o: str(o.get('year') or ''))
+    core = latest.get('core_ids') or []
+    if int(latest.get('rounds_won') or 0) < TITLE_ROUNDS or not core:
+        return ''
+    if sum(owners.get(pid) == team_id for pid in core) / len(core) < DEEP_RUN_CORE_OVERLAP:
+        return ''
+    return f"{int(latest['year']) + 1}-06-30"
+
+
+# INJURY-NARROW: any core player, even a reserve, 90 days from returning used to switch off the team's protections for
+# everyone: the core promise, "picks cannot pay for a star" and "a competing team does not weaken its rotation". A
+# reserve due back before opening night let a user buy a team's best player for a pick. Now only one of the team's
+# INJURY_REVIEW_TOP best players (by on-court value) who will miss INJURY_REVIEW_SEASON_DAYS of regular season, about
+# half of one, opens a review, and the review frees only him (review_frees). A stalled trade talk with a core player
+# (core_trade_pressure_review) still opens the whole team, as before.
+INJURY_REVIEW = 'serious_core_injury_review'
+INJURY_REVIEW_TOP = 3
+INJURY_REVIEW_SEASON_DAYS = 90
+SEASON_OPENS, SEASON_ENDS = (10, 20), (4, 12)  # the regular season, about: (month, day)
+
+
+def season_days_missed(from_day, return_day):
+    """Days of regular season between two ISO dates: what an injury still costs. Summer days count for nothing."""
+    start, back = date.fromisoformat(from_day), date.fromisoformat(return_day)
+    return sum(max(0, (min(back, date(year + 1, *SEASON_ENDS)) - max(start, date(year, *SEASON_OPENS))).days)
+               for year in range(start.year - 1, back.year + 1))
+
+
+def review_frees(plan, player_ids):
+    """The team's open review lets a trade that sends these players skip its protections. An injury review covers only
+    trades whose players are all the injured ones; any other review covers the whole team."""
+    exception = (plan or {}).get('review_exception')
+    if exception != INJURY_REVIEW:
+        return bool(exception)
+    ids = set(player_ids)
+    return bool(ids) and ids <= set(plan.get('injury_review_ids') or [])
 
 
 def latest_postseason_rounds(canonical, team_id):
@@ -243,8 +293,16 @@ def core_commitment(canonical, team_id, player_id):
         return False
     plan = canonical.get('team_plans', {}).get(team_id, {})
     today = str(canonical.get('meta', {}).get('current_date') or '')
-    return bool(player_id in plan.get('core_ids', []) and today and today <= plan.get('commit_until', '')
-                and not plan.get('review_exception'))
+    until = max(str(plan.get('commit_until') or ''), str(plan.get('title_commit_until') or ''))
+    return bool(player_id in plan.get('core_ids', []) and today and today <= until
+                and not review_frees(plan, [player_id]))
+
+
+def title_promise(canonical, team_id):
+    """The team's core promise currently rests on its title (used to say why it refuses)."""
+    plan = canonical.get('team_plans', {}).get(team_id, {})
+    today = str(canonical.get('meta', {}).get('current_date') or '')
+    return bool(today and today <= str(plan.get('title_commit_until') or ''))
 
 
 def acquisition_date(canonical, team_id, core_ids, values):
@@ -305,11 +363,13 @@ def refresh_team_plans(active, save, stamp):
             until = f'{start_year+1}-06-30'
         if acquired and acquired > previous.get('major_acquisition_date', ''):
             until = max(until or '', (date.fromisoformat(acquired)+timedelta(days=365)).isoformat())
-        exception = None
-        for h in save.get('health_states', []):
-            if h.get('player_id') in core and h.get('availability_status') == 'out' and h.get('return_date'):
-                if (date.fromisoformat(h['return_date'])-date.fromisoformat(stamp)).days >= 90:
-                    exception = 'serious_core_injury_review'
+        best = sorted((pid for pid, owner in owners.items() if owner == tid and not players[pid].get('_inactive_player')),
+                      key=lambda pid: (-float(values.get(pid, {}).get('on_court_value') or 0), pid))[:INJURY_REVIEW_TOP]
+        injured = sorted({h['player_id'] for h in save.get('health_states', [])
+                          if h.get('player_id') in core and h.get('player_id') in best
+                          and h.get('availability_status') == 'out' and h.get('return_date')
+                          and season_days_missed(stamp, h['return_date']) >= INJURY_REVIEW_SEASON_DAYS})
+        exception = INJURY_REVIEW if injured else None
         if any(pid in set(save.get('ai_trade_pressure_player_ids') or []) for pid in core):
             exception = 'core_trade_pressure_review'
         overlap = len(set(old_core) & set(core))/max(1, len(old_core))
@@ -328,10 +388,13 @@ def refresh_team_plans(active, save, stamp):
         phase = state.get('window_phase') or 'rebuilding'
         route = {'peak': 'extend_peak', 'entering': 'patient_growth_then_selective_upgrade',
                  'exiting': 'retool_before_teardown', 'rebuilding': 'acquire_and_develop_foundations'}[phase]
-        if stalled and phase != 'peak' and float(state.get('window_trend') or 0) <= .5 and stamp > (until or ''):
+        title_until = title_commitment_end(outcomes, owners, tid)
+        title_until = title_until if title_until >= stamp else ''
+        held = max(until or '', title_until)
+        if stalled and phase != 'peak' and float(state.get('window_trend') or 0) <= .5 and stamp > held:
             route = 'review_core_ceiling_and_retool_alternatives'
         retool = None
-        if len(core) > 1 and stamp > (until or '') and (route == 'review_core_ceiling_and_retool_alternatives' or phase == 'exiting'):
+        if len(core) > 1 and stamp > held and (route == 'review_core_ceiling_and_retool_alternatives' or phase == 'exiting'):
             eligible = [pid for pid in core if route.startswith('review_') or
                         float(players[pid].get('display_age', players[pid].get('age')) or 27) >= 30]
             if eligible:
@@ -346,6 +409,10 @@ def refresh_team_plans(active, save, stamp):
                  'review_exception': exception, 'route': route, 'postseason_outcomes': outcomes[-4:],
                  'retool_candidate_id': retool,
                  'assessment_note': 'Relative fit/strength and bounded development scenario; not calibrated championship odds.'}
+        if injured:
+            entry['injury_review_ids'] = injured
+        if title_until:
+            entry['title_commit_until'] = title_until
         plans[tid] = entry
     save['team_plan_review_signature'] = signature
     save['team_plan_review_date'] = stamp

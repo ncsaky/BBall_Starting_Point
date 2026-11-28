@@ -34,7 +34,7 @@ class TradeRosterTests(unittest.TestCase):
         self.assertIsNone(self.forecast(data)['issue'])
         data = self.fixture(); data['team_plans']['a'] = {'route': 'review_core_ceiling_and_retool_alternatives'}
         self.assertIsNone(self.forecast(data)['issue'])
-        data['team_plans']['a'] = {'review_exception': 'serious_core_injury_review'}
+        data['team_plans']['a'] = {'review_exception': 'serious_core_injury_review', 'injury_review_ids': ['0']}
         self.assertIsNone(self.forecast(data)['issue'])
 
     def test_financial_exit_requires_an_actual_costly_contract_and_material_relief(self):
